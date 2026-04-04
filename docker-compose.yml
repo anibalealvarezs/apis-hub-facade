@@ -62,8 +62,9 @@ services:
 
 networks:
     facade_network:
-        driver: bridge
+        external: true
         name: ${FACADE_NETWORK_NAME:-apis-hub-facade-network}
+
 
 volumes:
     facade-postgres:
