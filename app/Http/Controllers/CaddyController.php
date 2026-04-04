@@ -20,9 +20,14 @@ class CaddyController extends Controller
             return response('No domain provided', 400);
         }
 
-        // Assuming your setup is client1.yourdomain.com
-        // We'll extract the subdomain part
+        // Always allow the main domains
+        if (in_array($domain, ['apis-hub.cloud', 'dev.apis-hub.cloud'])) {
+            return response('OK', 200);
+        }
+
+        // Allow project subdomains
         $subdomain = explode('.', $domain)[0];
+
 
         $projectExists = Project::where('subdomain', $subdomain)
             ->where('is_active', true)
