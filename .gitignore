@@ -33,3 +33,7 @@ Thumbs.db
 IMPLEMENTATION_PLAN.md
 USER_WORKFLOW.md
 .antigravityrules
+
+.env-dev
+
+.env-prod
