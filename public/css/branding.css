@@ -1,0 +1,63 @@
+:root {
+    /* APIs Hub Brand Tokens */
+    --brand-blue: #00a7f9;
+    --brand-teal: #00cac4;
+    --brand-dark: #3b3b3b;
+    --brand-slate: #494949;
+    
+    --glow-shadow: 0 0 15px -3px rgba(0, 167, 249, 0.4);
+}
+
+/* Glassmorphism Panels & Cards */
+.fi-sidebar {
+    backdrop-filter: blur(12px) !important;
+    background-color: rgba(255, 255, 255, 0.75) !important;
+    border-right: 1px solid rgba(0, 167, 249, 0.1) !important;
+}
+
+.dark .fi-sidebar {
+    background-color: rgba(15, 23, 42, 0.85) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fi-section, .fi-wi-stats-overview-stat-ctn {
+    @apply backdrop-blur-sm bg-white/60 border border-slate-200/50 shadow-sm rounded-2xl !important;
+}
+
+.dark .fi-section, .dark .fi-wi-stats-overview-stat-ctn {
+    background-color: rgba(30, 41, 59, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Custom Gradients & Accents */
+.fi-header-heading {
+    @apply font-extrabold tracking-tight text-brand-dark dark:text-white !important;
+}
+
+.fi-main-ctn {
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.04) 0, transparent 40%), 
+        radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.04) 0, transparent 40%) !important;
+}
+
+.dark .fi-main-ctn {
+    background-color: #0b0f1a !important;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
+        radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%) !important;
+}
+
+/* High-Density Tables */
+.fi-ta-content {
+    @apply text-sm !important;
+}
+
+.fi-ta-row:hover {
+    @apply bg-brand-blue/5 transition-colors duration-200 !important;
+}
+
+/* Unicorn Progress Bars & Buttons */
+.fi-btn-color-primary {
+    @apply shadow-glow hover:shadow-glow-intense transition-all duration-300 transform hover:-translate-y-0.5 !important;
+}
