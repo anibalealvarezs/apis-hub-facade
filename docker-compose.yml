@@ -4,7 +4,9 @@ services:
             context: .
             dockerfile: Dockerfile
         image: apis-hub-facade-app
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-app
         restart: always
+
         shm_size: '256mb'
         volumes:
             - ".:/var/www/html"
@@ -32,6 +34,7 @@ services:
 
     postgres:
         image: 'postgres:16'
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-db
         ports:
             - "${FORWARD_DB_PORT:-5432}:5432"
         environment:
@@ -49,6 +52,7 @@ services:
 
     redis:
         image: 'redis:alpine'
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-redis
         ports:
             - "${FORWARD_REDIS_PORT:-6379}:6379"
         volumes:
@@ -59,6 +63,7 @@ services:
             test: ["CMD", "redis-cli", "ping"]
             retries: 3
             timeout: 5s
+
 
 networks:
     facade_network:
