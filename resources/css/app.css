@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    /* APIs Hub Identity */
+    --color-brand-blue: #00a7f9;
+    --color-brand-teal: #00cac4;
+    --color-brand-dark: #3b3b3b;
+    --color-brand-slate: #494949;
+
+    /* Glows & Gradients */
+    --shadow-glow: 0 0 20px -5px var(--color-brand-blue);
+    --bg-mesh: radial-gradient(at 0% 0%, hsla(199,95%,51%,0.15) 0, transparent 50%), 
+               radial-gradient(at 100% 100%, hsla(177,100%,39%,0.15) 0, transparent 50%);
+}
+
+/* Silicon Valley Unicorn Utilities */
+.glass-panel {
+    @apply backdrop-blur-md bg-white/70 border border-white/20 dark:bg-slate-900/70 dark:border-slate-800/50;
+}
+
+.glow-hover:hover {
+    box-shadow: var(--shadow-glow);
+    @apply transition-all duration-300;
+}
+
+.text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-blue to-brand-teal;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.shadow-glow-intense {
+    box-shadow: 0 0 30px -5px var(--color-brand-blue);
+}
