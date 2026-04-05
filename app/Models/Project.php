@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -39,10 +40,12 @@ class Project extends Model
         'error_count',
         'facebook_user_token',
         'google_refresh_token',
+        'public_api_key',
     ];
 
     /**
      * Relationship: Each project instance belongs to a specific User account (Owner).
+
      */
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -86,7 +89,9 @@ class Project extends Model
         'app_api_key' => 'encrypted',
         'remote_admin_api_key' => 'encrypted',
         'remote_app_api_key' => 'encrypted',
+        'public_api_key' => 'encrypted',
     ];
+
 
     /**
      * Get the server that hosts this project.

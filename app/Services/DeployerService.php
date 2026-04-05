@@ -44,8 +44,17 @@ class DeployerService
         $commands[] = "echo '{$envContent}' > {$path}/.env";
 
         // 3. Fire deployment (full-deploy.sh)
-        // This script in apis-hub will generate its own docker-compose.yml
         $commands[] = "cd {$path} && sh bin/full-deploy.sh";
+
+        // 4. Register in Caddy (Reverse Proxy for the specific container)
+        $caddyVhostPath = "/etc/caddy/vhosts/{$project->subdomain}.caddy";
+        $caddyHost = "{$project->subdomain}.apis-hub.cloud";
+        $containerName = "apis-hub-{$project->subdomain}"; // Corresponds to DEPLOYMENT_NAME in .env
+        
+        $caddyConfig = "{$caddyHost} {
+    reverse_proxy {$containerName}:80
+}";
+        $commands[] = "echo '{$caddyConfig}' > {$caddyVhostPath} && caddy reload";
 
         return $this->runSshCommands($server, $commands);
     }
@@ -112,5 +121,24 @@ EOT;
         }
 
         return ['status' => 'success', 'output' => $result->output()];
+    }
+
+    /**
+     * Fully remove a project's infrastructure from the server.
+     */
+    public function removeInstance(Project $project)
+    {
+        $server = $project->server;
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+
+        Log::info("Starting infrastructure removal for project '{$project->name}' (subdomain: {$project->subdomain}) on server {$server->ip_address}");
+
+        $commands = [
+            "if [ -d {$path} ]; then cd {$path} && docker-compose down -v; fi", // Stop and remove volumes if exists
+            "rm -rf {$path}",                // Finally, remove the project directory
+            "docker container prune -f",      // Clean dangling containers
+        ];
+
+        return $this->runSshCommands($server, $commands);
     }
 }

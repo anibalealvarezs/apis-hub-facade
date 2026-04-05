@@ -13,26 +13,33 @@ class RegisterProject extends RegisterTenant
 {
     public static function getLabel(): string
     {
-        return 'Deploy Your APIs Hub Instance';
+        return 'Create Your APIs Hub Project';
     }
 
     public function getTitle(): string
     {
-        return 'Deploy Instance';
+        return 'Setup Your New Project';
     }
 
     protected function getSubmitFormAction(): \Filament\Actions\Action
     {
         return parent::getSubmitFormAction()
-            ->label('Provision Instance Now');
+            ->label('Create Project & Deploy');
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return SyncSettings::getUrl([
+            'tenant' => $this->tenant,
+        ]);
     }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Instance Deployment')
-                    ->description('Provision a new dedicated APIs Hub instance on our high-performance infrastructure.')
+                Section::make('Project Setup')
+                    ->description('Define your project identity. This will create a dedicated workspace on our high-performance cloud infrastructure.')
                     ->schema([
                         TextInput::make('name')
                             ->label('Project / Business Name')
@@ -41,27 +48,54 @@ class RegisterProject extends RegisterTenant
                         TextInput::make('subdomain')
                             ->label('Subdomain / Unique Identifier')
                             ->prefix('https://')
-                            ->suffix('.apis-hub.dev')
+                            ->suffix('.apis-hub.cloud')
                             ->placeholder('acme')
                             ->required()
                             ->unique('projects', 'subdomain')
-                            ->alphaDash(),
+                            ->alphaDash()
+                            ->helperText('Caution: This identifier is permanent and cannot be changed after creation.'),
                     ]),
             ]);
     }
 
     protected function handleRegistration(array $data): Model
     {
+        $server = \App\Models\Server::where('is_ready', true)->first();
+        
+        if (!$server) {
+            \Filament\Notifications\Notification::make()
+                ->title('No Ready Server Found')
+                ->body('Could not assign a server to your project. Deployment will be queued.')
+                ->warning()
+                ->send();
+        }
+
         $project = Project::create([
             'name' => $data['name'],
             'subdomain' => $data['subdomain'],
-            'owner_id' => auth()->id(), // Ensuring the current user is recorded as owner
-            // Generating default monitoring/admin tokens
+            'server_id' => $server?->id,
+            'user_id' => auth()->id(), 
+            'git_repo' => 'https://github.com/anibalealvarezs/apis-hub.git', // Default repo
+            'git_branch' => 'master',
             'monitoring_token' => (string) \Illuminate\Support\Str::uuid(),
             'remote_admin_api_key' => bin2hex(random_bytes(32)),
+            'is_active' => true,
         ]);
 
         $project->users()->attach(auth()->user());
+
+        if ($server) {
+            // Trigger actual remote deployment
+            $deployer = app(\App\Services\DeployerService::class);
+            $deployer->deploy($project);
+            
+            \Filament\Notifications\Notification::make()
+                ->title('Project Created & Deployment Started')
+                ->body('The infrastructure is being provisioned. Please configure your data synchronization settings.')
+                ->success()
+                ->persistent()
+                ->send();
+        }
 
         return $project;
     }

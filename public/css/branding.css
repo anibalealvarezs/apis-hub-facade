@@ -61,3 +61,39 @@
 .fi-btn-color-primary {
     @apply shadow-glow hover:shadow-glow-intense transition-all duration-300 transform hover:-translate-y-0.5 !important;
 }
+
+/* Branded Flash Notifications & Glassmorphism */
+.fi-no-notification {
+    backdrop-filter: blur(12px) !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(0, 167, 249, 0.2) !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 167, 249, 0.2) !important;
+    border-radius: 1rem !important;
+}
+
+.dark .fi-no-notification {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.fi-no-notification-title {
+    color: var(--brand-dark) !important;
+    font-weight: 700 !important;
+}
+
+.dark .fi-no-notification-title {
+    color: #ffffff !important;
+}
+
+.fi-no-notification-body {
+    color: var(--brand-slate) !important;
+}
+
+.dark .fi-no-notification-body {
+    color: #94a3b8 !important;
+}
+
+.fi-no-notification-icon {
+    color: var(--brand-blue) !important;
+}
