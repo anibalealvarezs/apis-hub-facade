@@ -17,19 +17,26 @@ class RemoteEngineService
         $baseDomain = config('app.network_domain');
         $domain = "{$project->subdomain}.{$baseDomain}";
 
+        // 🛠️ Local/Demo Environment Hack: Connect directly to the master node container or port
+        $protocol = 'https';
+        if ($project->subdomain === 'alpha') {
+            $domain = 'localhost:10000';
+            $protocol = 'http';
+        }
+
         $apiKey = $project->remote_admin_api_key;
         if (!$apiKey) {
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
         // Initialize SDK with base protocol and API Key
-        // SDK handles /api prefix internally for management routes
         return new ApisHubApi(
-            baseUrl: "https://{$domain}",
+            baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
             debugMode: config('app.debug', false)
         );
     }
+
 
     /**
      * Execute a task via the SDK with centralized error handling.
@@ -110,7 +117,16 @@ class RemoteEngineService
     }
 
     /**
+     * Perform an action on a specific container (e.g. "start", "stop").
+     */
+    public function containerAction(Project $project, string $name, string $action)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->containerAction($name, $action));
+    }
+
+    /**
      * Fetch the most recent heartbeat diagnostics from the node.
+
      */
     public function getHeartbeat(Project $project)
     {

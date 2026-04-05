@@ -59,9 +59,27 @@
                                         <h3 class="font-bold text-gray-900 dark:text-white uppercase text-sm tracking-widest">
                                             {{ str_replace('-', ' ', $job['entity']) }}
                                         </h3>
-                                        <x-filament::badge :color="$statusColor" :icon="$statusIcon">
-                                            {{ $job['status_text'] }}
-                                        </x-filament::badge>
+                                        <div class="flex items-center gap-x-2">
+                                            @php
+                                                $totalCCount = $job['container_stats']['total'] ?? 0;
+                                                $compCCount = ($job['container_stats']['completed'] ?? 0) + ($job['container_stats']['COMPLETED'] ?? 0);
+                                            @endphp
+                                            @if($totalCCount > 0)
+                                                @if($totalCCount === $compCCount)
+                                                    <x-filament::badge color="success" icon="heroicon-m-check-badge" size="xs">
+                                                        CACHED
+                                                    </x-filament::badge>
+                                                @else
+                                                    <span class="text-[10px] font-bold text-gray-400">
+                                                        {{ $compCCount }}/{{ $totalCCount }}
+                                                    </span>
+                                                @endif
+                                            @endif
+                                            <x-filament::badge :color="$statusColor" :icon="$statusIcon">
+                                                {{ $job['status_text'] }}
+                                            </x-filament::badge>
+                                        </div>
+
                                     </div>
 
                                     <div class="space-y-2 text-sm">
@@ -84,7 +102,62 @@
                                             {{ $job['message'] }}
                                         </div>
                                     @endif
+
+                                    {{-- 📜 Execution History Timeline --}}
+                                    @if(!empty($job['history']))
+                                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-[10px] uppercase font-bold text-gray-400">Recent History</span>
+                                            </div>
+                                            <div class="flex gap-x-1.5 overflow-x-auto pb-1">
+                                                @foreach($job['history'] as $hist)
+                                                    @php
+                                                        // JobStatus::completed->value = 3, failed->value = 4
+                                                        $histColor = match($hist['status']) {
+                                                            3 => 'success',
+                                                            4 => 'danger',
+                                                            default => 'gray',
+                                                        };
+                                                        $histTooltip = ($hist['status'] == 3 ? 'Completed' : 'Failed') . " at " . $hist['date'];
+                                                    @endphp
+                                                    <div 
+                                                        class="h-2.5 w-2.5 rounded-full bg-{{ $histColor }}-500 cursor-help flex-shrink-0" 
+                                                        title="{{ $histTooltip }}"
+                                                    ></div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- 🛰️ Infrastructure Controls (Phase 5) --}}
+
+                                    @if(isset($job['instance_name']) && preg_match('/-[0-9]{4}-[0-9]{2}$/', $job['instance_name']))
+                                        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between gap-x-2">
+                                            <span class="text-[10px] uppercase font-bold text-gray-400">Scale Control</span>
+                                            <div class="flex gap-x-2">
+                                                <x-filament::button 
+                                                    wire:click="toggleContainer('{{ $job['instance_name'] }}', 'start')" 
+                                                    size="xs" 
+                                                    color="success" 
+                                                    icon="heroicon-m-play"
+                                                    outlined
+                                                >
+                                                    Start
+                                                </x-filament::button>
+                                                <x-filament::button 
+                                                    wire:click="toggleContainer('{{ $job['instance_name'] }}', 'stop')" 
+                                                    size="xs" 
+                                                    color="danger" 
+                                                    icon="heroicon-m-stop"
+                                                    outlined
+                                                >
+                                                    Stop
+                                                </x-filament::button>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
+
                             @endforeach
                         </div>
                     </section>

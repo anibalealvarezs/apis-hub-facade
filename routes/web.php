@@ -19,3 +19,5 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check']);
 
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
+
+Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');

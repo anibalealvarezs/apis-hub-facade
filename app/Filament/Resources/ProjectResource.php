@@ -7,12 +7,15 @@ use App\Filament\Resources\ProjectResource\Pages\EditProject as EditPage;
 use App\Filament\Resources\ProjectResource\Pages\ListProjects as ListPage;
 use App\Models\Project;
 use App\Services\DeployerService;
+use App\Services\RemoteEngineService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProjectResource extends Resource
 {
@@ -48,12 +51,26 @@ class ProjectResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->helperText('Assign a subdomain (e.g. "client1") for the instance. Full URL will be: subdomain.' . config('app.network_domain')),
+                            ->live(onBlur: true)
+                            ->disabled(fn (?Project $record) => $record !== null)
+                            ->afterStateUpdated(function ($state, Forms\Set $set, $get) {
+                                if (empty($get('db_name'))) {
+                                    $set('db_name', 'apis_hub_' . str_replace('-', '_', $state));
+                                }
+                                if (empty($get('db_user'))) {
+                                    $set('db_user', 'user_' . str_replace('-', '_', $state));
+                                }
+                                if (empty($get('db_password'))) {
+                                    $set('db_password', \Illuminate\Support\Str::random(16));
+                                }
+                            })
+                            ->helperText('Assign a subdomain (e.g. "client1") for the instance. Checked against DB. Full URL will be: subdomain.' . config('app.network_domain')),
                         Forms\Components\Toggle::make('is_active')
                             ->required()
                             ->default(true),
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
+                            ->default(fn () => filament()->auth()->id())
                             ->searchable()
                             ->preload()
                             ->label('Account Holder')
@@ -71,6 +88,8 @@ class ProjectResource extends Resource
                             ->default('main'),
                         Forms\Components\Select::make('server_id')
                             ->relationship('server', 'name')
+                            ->default(1)
+                            ->disabled(fn (?Project $record) => $record !== null)
                             ->required()
                             ->searchable()
                             ->preload(),
@@ -81,23 +100,28 @@ class ProjectResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('db_name')
                             ->placeholder('Auto-generated if empty')
+                            ->disabled(fn (?Project $record) => $record !== null)
                             ->maxLength(255),
                         Forms\Components\TextInput::make('db_user')
                             ->placeholder('Auto-generated if empty')
+                            ->disabled(fn (?Project $record) => $record !== null)
                             ->maxLength(255),
                         Forms\Components\TextInput::make('db_password')
                             ->password()
                             ->revealable()
+                            ->disabled(fn (?Project $record) => $record !== null)
                             ->dehydrated(fn ($state) => filled($state))
                             ->placeholder('Auto-generated if empty'),
                     ])->columns(3),
+
+
 
                 Forms\Components\Section::make('API Credentials (Encrypted)')
                     ->description('These secrets are injected into the project instance\'s .env file.')
                     ->collapsible()
                     ->collapsed()
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                  Forms\Components\Group::make([
                                     Forms\Components\Placeholder::make('FB')->label('Facebook API'),
@@ -112,6 +136,15 @@ class ProjectResource extends Resource
                                         ->password()
                                         ->revealable()
                                         ->dehydrated(fn ($state) => filled($state)),
+                                ]),
+                                Forms\Components\Group::make([
+                                    Forms\Components\Placeholder::make('Pub')->label('Public Access'),
+                                    Forms\Components\TextInput::make('public_api_key')
+                                        ->label('Public API Key')
+                                        ->password()
+                                        ->revealable()
+                                        ->disabled()
+                                        ->helperText('Used by external consumers.'),
                                 ]),
                             ]),
                     ]),
@@ -160,6 +193,7 @@ class ProjectResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -167,7 +201,7 @@ class ProjectResource extends Resource
                     ->label('Check Engine')
                     ->icon('heroicon-o-shield-check')
                     ->color('info')
-                    ->action(function (Project $record, \App\Services\RemoteEngineService $service) {
+                    ->action(function (Project $record, RemoteEngineService $service) {
                         $response = $service->getStatus($record);
                         $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
 
@@ -183,7 +217,7 @@ class ProjectResource extends Resource
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalDescription('This will trigger a background redeployment via the Node\'s internal API. Continue?')
-                    ->action(function (Project $record, \App\Services\RemoteEngineService $service) {
+                    ->action(function (Project $record, RemoteEngineService $service) {
                         $response = $service->triggerRedeploy($record);
                         
                         Notification::make()
@@ -198,8 +232,8 @@ class ProjectResource extends Resource
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalDescription('This will perform a full SSH-based deployment on the remote server. Continue?')
-                    ->action(function (Project $record, \App\Services\DeployerService $service) {
-                        $result = $service->deploy($record);
+                    ->action(function (Project $record, DeployerService $deployer) {
+                        $result = $deployer->deploy($record);
                         
                         if (($result['status'] ?? '') === 'success') {
                             Notification::make()
@@ -214,11 +248,75 @@ class ProjectResource extends Resource
                                 ->send();
                         }
                     }),
+
+                Tables\Actions\Action::make('rotateApiKey')
+                    ->label('Rotate Public Key')
+                    ->icon('heroicon-o-key')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will generate a new Public API Key and PUSH IT to the remote node. Existing consumers with the old key will be broken. Continue?')
+                    ->action(function (Project $record, RemoteEngineService $service) {
+                        $newKey = \Illuminate\Support\Str::random(48);
+                        $record->update(['public_api_key' => $newKey]);
+                        
+                        // Push to Node
+                        $service->updateCredentials($record, [
+                            'APP_API_KEY' => $newKey
+                        ]);
+
+                        Notification::make()
+                            ->title('Key Rotated & Pushed')
+                            ->body('The new key has been synchronized with the remote instance.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('hardDelete')
+                    ->label('HARD DELETE (INFRA)')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Permanent Infrastructure & Project Removal')
+                    ->modalDescription('This will PERMANENTLY remove all server containers, volumes, and project files, then delete from database. This cannot be undone. Continue?')
+                    ->action(function (Project $record, DeployerService $deployer) {
+                        // 1. SSH into server and clean up
+                        $result = $deployer->removeInstance($record);
+                        
+                        if ($result['status'] === 'success') {
+                            // 2. Perform Hard Delete in DB
+                            $record->forceDelete();
+                            
+                            Notification::make()
+                                ->title('Project & Infrastructure Deleted')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Cleanup Failed')
+                                ->body('The infrastructure removal failed. DB record kept for manual inspection: ' . ($result['output'] ?? ''))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn () => auth()->user()?->is_admin ?? false),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('Archive Project')
+                    ->successNotificationTitle('Project archived (Soft deleted)'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
             ]);
     }
 

@@ -16,5 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if (!config('app.debug') && ($request->is('api/*') || $request->expectsJson())) {
+                return response()->json([
+                    'status' => 'error',
+                    'error' => 'Internal Server Error',
+                    'message' => 'An unexpected error occurred. Please contact support.',
+                ], 500);
+            }
+        });
     })->create();
+

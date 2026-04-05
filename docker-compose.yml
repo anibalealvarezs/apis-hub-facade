@@ -1,12 +1,12 @@
 services:
-    facade-app:
+    # --- The Stable Master ---
+    master:
         build:
             context: .
             dockerfile: Dockerfile
         image: apis-hub-facade-app
-        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-app
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-master
         restart: always
-
         shm_size: '256mb'
         volumes:
             - ".:/var/www/html"
@@ -18,11 +18,11 @@ services:
             - postgres
             - redis
 
-    nginx:
+    # --- Gateway (Nginx) ---
+    gateway:
         image: nginx:alpine
-        container_name: ${NGINX_CONTAINER_NAME:-apis-hub-facade-nginx}
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-gateway
         ports:
-
             - "${APP_PORT:-8001}:80"
         volumes:
             - ".:/var/www/html"
@@ -30,7 +30,26 @@ services:
         networks:
             - facade_network
         depends_on:
-            - facade-app
+            - master
+
+    # --- Background Worker ---
+    worker:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-worker
+        restart: always
+        command: php artisan queue:work --tries=3
+        volumes:
+            - ".:/var/www/html"
+            - "facade-storage-framework:/var/www/html/storage/framework"
+            - "facade-storage-logs:/var/www/html/storage/logs"
+        networks:
+            - facade_network
+        depends_on:
+            - master
+            - postgres
+            - redis
 
     postgres:
         image: 'postgres:16'
@@ -64,12 +83,10 @@ services:
             retries: 3
             timeout: 5s
 
-
 networks:
     facade_network:
         external: true
         name: ${FACADE_NETWORK_NAME:-apis-hub-facade-network}
-
 
 volumes:
     facade-postgres:
@@ -80,5 +97,3 @@ volumes:
         driver: local
     facade-storage-logs:
         driver: local
-
-
