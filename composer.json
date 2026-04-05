@@ -10,13 +10,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "anibalealvarezs/apis-hub-api": "dev-main",
+        "anibalealvarezs/google-api": "dev-main",
         "filament/filament": "^3.2",
+        "google/recaptcha": "^1.3",
         "jeffgreco13/filament-breezy": "^2.6",
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.17",
         "laravel/socialite": "^5.26",
         "laravel/tinker": "^2.10.1",
-        "anibalealvarezs/apis-hub-api": "dev-main"
+        "predis/predis": "^3.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -74,9 +77,6 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
-        ],
-        "pre-package-uninstall": [
-            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
     "repositories": [
@@ -91,7 +91,7 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {

@@ -76,4 +76,40 @@ class DataSync extends Page
                 }),
         ];
     }
+
+    /**
+     * Perform an infrastructure action on a specific container.
+     */
+    public function toggleContainer(string $name, string $action): void
+    {
+        try {
+            $service = app(RemoteEngineService::class);
+            $tenant = Filament::getTenant();
+            
+            $response = $service->containerAction($tenant, $name, $action);
+            
+            if ($response && ($response['success'] ?? false)) {
+                Notification::make()
+                    ->title("Container $action successful")
+                    ->body("$name has been $action" . "ed.")
+                    ->success()
+                    ->send();
+            } else {
+                 Notification::make()
+                    ->title("Failed to $action container")
+                    ->body($response['error'] ?? 'Unknown error.')
+                    ->danger()
+                    ->send();
+            }
+        } catch (\Exception $e) {
+             Notification::make()
+                ->title("Error")
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+
+        $this->refreshData();
+    }
 }
+

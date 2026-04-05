@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\VerifyReCaptcha;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->emailVerification()
+
             ->brandLogo(asset('images/branding/apishub-trans-620.png'))
             ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-600.png'))
             ->brandLogoHeight('3rem')
@@ -42,6 +45,40 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::head.start',
                 fn () => \Illuminate\Support\Facades\Blade::render('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">')
+            )
+            ->renderHook(
+                'panels::auth.login.form.after',
+                fn () => \Illuminate\Support\Facades\Blade::render("
+                    <div id='recaptcha-script-container-admin'>
+                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}'></script>
+                        <script>
+                            function injectAdminReCaptcha() {
+                                if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
+                                    grecaptcha.enterprise.ready(function() {
+                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'login'}).then(function(token) {
+                                            let forms = document.querySelectorAll('form');
+                                            forms.forEach(form => {
+                                                let input = form.querySelector('input[name=\"recaptcha_token\"]');
+                                                if (!input) {
+                                                    input = document.createElement('input');
+                                                    input.type = 'hidden';
+                                                    input.name = 'recaptcha_token';
+                                                    form.appendChild(input);
+                                                }
+                                                input.value = token;
+                                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                            });
+                                        });
+                                    });
+                                }
+                            }
+                            document.addEventListener('DOMContentLoaded', injectAdminReCaptcha);
+                            window.addEventListener('livewire:load', injectAdminReCaptcha);
+                            setInterval(injectAdminReCaptcha, 60000);
+                        </script>
+                        <p class='text-xs text-gray-400 text-center mt-4'>Protected by Google reCAPTCHA v3</p>
+                    </div>
+                ")
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -63,6 +100,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                VerifyReCaptcha::class,
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
