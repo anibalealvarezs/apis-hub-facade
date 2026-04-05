@@ -75,13 +75,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/apis-hub-api.git",
-                "reference": "0556bdc0c8ad2291d3b7154b68c62ca449e05809"
+                "reference": "7baa5b1f858d54ed83820805d7271ee3fd896bea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-0556bdc0c8ad2291d3b7154b68c62ca449e05809-zip-cc0e2e.zip",
-                "reference": "0556bdc0c8ad2291d3b7154b68c62ca449e05809",
-                "shasum": "8013523a663de3202e24fb9aea67833dc5a90538"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-7baa5b1f858d54ed83820805d7271ee3fd896bea-zip-52c91f.zip",
+                "reference": "7baa5b1f858d54ed83820805d7271ee3fd896bea",
+                "shasum": "a6295702e21d069f57d17d7367217931ea444e3e"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "dev-main",
@@ -141,7 +141,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/apis-hub-api/issues"
             },
-            "time": "2026-04-04T01:15:54+00:00"
+            "time": "2026-04-05T01:56:03+00:00"
         },
         {
             "name": "anibalealvarezs/google-api",

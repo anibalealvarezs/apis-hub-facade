@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\Tenancy\RegisterTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterProject extends RegisterTenant
 {
@@ -74,7 +75,7 @@ class RegisterProject extends RegisterTenant
             'name' => $data['name'],
             'subdomain' => $data['subdomain'],
             'server_id' => $server?->id,
-            'user_id' => auth()->id(), 
+            'user_id' => Auth::id(), 
             'git_repo' => 'https://github.com/anibalealvarezs/apis-hub.git', // Default repo
             'git_branch' => 'master',
             'monitoring_token' => (string) \Illuminate\Support\Str::uuid(),
@@ -82,7 +83,7 @@ class RegisterProject extends RegisterTenant
             'is_active' => true,
         ]);
 
-        $project->users()->attach(auth()->user());
+        $project->users()->attach(Auth::user());
 
         if ($server) {
             // Trigger actual remote deployment
