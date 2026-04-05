@@ -21,7 +21,11 @@
 }
 
 .fi-section, .fi-wi-stats-overview-stat-ctn {
-    @apply backdrop-blur-sm bg-white/60 border border-slate-200/50 shadow-sm rounded-2xl !important;
+    backdrop-filter: blur(4px) !important;
+    background-color: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    border-radius: 1rem !important;
 }
 
 .dark .fi-section, .dark .fi-wi-stats-overview-stat-ctn {
@@ -32,7 +36,13 @@
 
 /* Custom Gradients & Accents */
 .fi-header-heading {
-    @apply font-extrabold tracking-tight text-brand-dark dark:text-white !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.025em !important;
+    color: var(--brand-dark) !important;
+}
+
+.dark .fi-header-heading {
+    color: #ffffff !important;
 }
 
 .fi-main-ctn {
@@ -50,16 +60,28 @@
 
 /* High-Density Tables */
 .fi-ta-content {
-    @apply text-sm !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
 }
 
 .fi-ta-row:hover {
-    @apply bg-brand-blue/5 transition-colors duration-200 !important;
+    background-color: rgba(0, 167, 249, 0.05) !important;
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke !important;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition-duration: 200ms !important;
 }
 
 /* Unicorn Progress Bars & Buttons */
 .fi-btn-color-primary {
-    @apply shadow-glow hover:shadow-glow-intense transition-all duration-300 transform hover:-translate-y-0.5 !important;
+    box-shadow: var(--glow-shadow) !important;
+    transition-property: all !important;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition-duration: 300ms !important;
+}
+
+.fi-btn-color-primary:hover {
+    box-shadow: 0 0 25px -5px rgba(0, 167, 249, 0.6) !important;
+    transform: translateY(-0.125rem) !important;
 }
 
 /* Branded Flash Notifications & Glassmorphism */

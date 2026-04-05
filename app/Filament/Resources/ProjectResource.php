@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectResource extends Resource
 {
@@ -299,7 +300,7 @@ class ProjectResource extends Resource
                                 ->send();
                         }
                     })
-                    ->visible(fn () => auth()->user()?->is_admin ?? false),
+                    ->visible(fn () => Auth::user()?->is_admin ?? false),
 
                 Tables\Actions\DeleteAction::make()
                     ->label('Archive Project')
