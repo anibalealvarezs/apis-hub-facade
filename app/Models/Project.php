@@ -9,6 +9,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Model representing a dedicated APIs Hub Project / Deployment instance.
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $subdomain
+ * @property string $remote_admin_api_key
+ * @property string $remote_app_api_key
+ * @property string $monitoring_token
+ * @property string $facebook_user_token
+ * @property string $google_refresh_token
+ * @property string $public_api_key
+ * @property string $db_password
  */
 class Project extends Model
 {
