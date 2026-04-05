@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model representing a dedicated APIs Hub Project / Deployment instance.
@@ -23,7 +24,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Project extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -58,7 +60,7 @@ class Project extends Model
      * Relationship: Each project instance belongs to a specific User account (Owner).
 
      */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -66,7 +68,7 @@ class Project extends Model
     /**
      * Relationship: Multiple users can have access to a single project instance.
      */
-    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
     }
@@ -102,7 +104,6 @@ class Project extends Model
         'remote_app_api_key' => 'encrypted',
         'public_api_key' => 'encrypted',
     ];
-
 
     /**
      * Get the server that hosts this project.
