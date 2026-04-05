@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         if (config('app.env') !== 'local' || str_contains(config('app.url'), 'https')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
+            \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
         }
 
         \Illuminate\Support\Facades\Blade::component('oauth-buttons', \App\View\Components\OAuthButtons::class);
