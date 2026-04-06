@@ -37,3 +37,13 @@ USER_WORKFLOW.md
 .env-dev
 
 .env-prod
+
+docs/signature_troubleshooting.md
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

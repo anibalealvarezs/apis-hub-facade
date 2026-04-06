@@ -9,11 +9,20 @@ use Illuminate\Support\Facades\Validator;
 class LandingController extends Controller
 {
     /**
-     * Show the landing page.
+     * Show the landing page with obfuscated portal links.
      */
     public function index()
     {
-        return view('welcome');
+        $gtmId = config('services.gtm.id');
+        
+        return view('welcome', [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode('https://docs.apis-hub.cloud'),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ]);
     }
 
     /**
