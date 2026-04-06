@@ -8,6 +8,7 @@ Route::get('/debug-saas', function () {
 
 Route::get('/', [\App\Http\Controllers\LandingController::class, 'index']);
 Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subscribe'])->name('landing.subscribe');
+Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'unsubscribe'])->name('landing.unsubscribe')->middleware('signed');
 
 // APIs Hub SaaS: OAuth Hub for Tenants
 Route::middleware(['web', 'auth'])->group(function () {
