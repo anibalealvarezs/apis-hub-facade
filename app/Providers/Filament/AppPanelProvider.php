@@ -26,6 +26,7 @@ class AppPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->default()
             ->id('app')
             ->path('app')
             ->login()
@@ -33,10 +34,10 @@ class AppPanelProvider extends PanelProvider
             ->passwordReset()
             ->emailVerification()
             ->profile()
-            ->brandLogo(asset('images/branding/apishub-trans-620.png'))
-            ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-600.png'))
+            ->brandLogo(asset('images/branding/apishub-trans-620.webp'))
+            ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-620.webp'))
             ->brandLogoHeight('3rem')
-            ->favicon(asset('images/branding/apishub-favicon.png'))
+            ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
                 'primary' => '#00a7f9',
             ])
