@@ -21,6 +21,14 @@
 }
 
 /* Silicon Valley Unicorn Utilities */
+[x-cloak] { display: none !important; }
+
+body {
+    @apply antialiased;
+    font-family: 'Outfit', sans-serif;
+    transition: background-color 0.5s ease;
+}
+
 .glass-panel {
     @apply backdrop-blur-md bg-white/70 border border-white/20 dark:bg-slate-900/70 dark:border-slate-800/50;
 }
@@ -46,4 +54,41 @@
 
 .shadow-glow-intense {
     box-shadow: 0 0 30px -5px var(--color-brand-blue);
+}
+
+/* Landing Page Hero Mesh */
+.hero-mesh {
+    @apply fixed inset-0 -z-10 bg-no-repeat;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.1) 0, transparent 50%), 
+        radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.1) 0, transparent 50%);
+}
+
+.dark .hero-mesh {
+    @apply bg-slate-900;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
+        radial-gradient(at 70% 30%, rgba(139, 92, 246, 0.05) 0, transparent 40%),
+        radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
+}
+
+/* Unicorn Typography */
+.unicorn-title {
+    @apply bg-clip-text text-transparent tracking-[-0.05em] leading-none;
+    background-image: linear-gradient(135deg, #FFF 20%, var(--color-brand-blue) 100%);
+}
+
+.dark .unicorn-title {
+    background-image: linear-gradient(135deg, #FFFFFF 30%, var(--color-brand-teal) 100%);
+}
+
+/* Custom Input Glows */
+.form-input-glow:focus {
+    @apply border-brand-blue;
+    box-shadow: 0 0 12px rgba(0, 167, 249, 0.3);
+}
+
+/* Dark/Light Toggle Button */
+.theme-toggle {
+    @apply fixed top-8 right-8 z-50;
 }

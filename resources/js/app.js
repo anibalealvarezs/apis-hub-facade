@@ -1,9 +1,24 @@
 import './bootstrap';
+import Alpine from 'alpinejs';
 
+window.Alpine = Alpine;
+
+// Theme Controller Component
+Alpine.data('themeControl', () => ({
+    darkMode: document.documentElement.classList.contains('dark'),
+    init() {
+        this.$watch('darkMode', val => {
+            document.documentElement.classList.toggle('dark', val);
+            localStorage.setItem('color-theme', val ? 'dark' : 'light');
+        });
+    }
+}));
+
+Alpine.start();
+
+// Portal Link Global Handler
 document.addEventListener('click', (e) => {
-    // Check if the clicked element (or its parent, if needed) is a portal link
     const portalLink = e.target.closest('.js-portal-link');
-    
     if (portalLink) {
         const payload = portalLink.dataset.portal;
         if (payload) {
