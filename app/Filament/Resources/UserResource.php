@@ -93,8 +93,17 @@ class UserResource extends Resource
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(function (User $record) {
-                        // Set invalidation timestamp
-                        $record->update(['logout_at' => now()]);
+                        $now = now();
+                        
+                        // Force direct database write
+                        \Illuminate\Support\Facades\DB::table('users')
+                            ->where('id', $record->getKey())
+                            ->update(['logout_at' => $now]);
+
+                        \Illuminate\Support\Facades\Log::info('FORCE LOGOUT TRIGGERED', [
+                            'user' => $record->email,
+                            'new_logout_at' => $now->toDateTimeString()
+                        ]);
 
                         // Clear native Laravel sessions (if in DB)
                         DB::table('sessions')
