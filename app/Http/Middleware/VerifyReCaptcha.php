@@ -34,20 +34,20 @@ class VerifyReCaptcha
         }
 
         // 2. Validate token from request
-        $token = $request->input('g-recaptcha-response');
+        $token = $request->input('recaptcha_token');
 
         if (!$token) {
             return redirect()->back()
-                ->withErrors(['g-recaptcha-response' => 'reCAPTCHA verification is required.'])
+                ->withErrors(['recaptcha_token' => 'reCAPTCHA verification is required.'])
                 ->withInput();
         }
 
         try {
-            // 3. Initialize SDK
-            $api = new RecaptchaApi(
-                projectId: $projectId,
-                apiKey: $apiKey
-            );
+            // 3. Initialize SDK via App Container to allow Mocking in tests
+            $api = app(RecaptchaApi::class, [
+                'projectId' => $projectId,
+                'apiKey' => $apiKey
+            ]);
 
             // 4. Determine expected action based on route
             $expectedAction = $request->routeIs('filament.app.auth.register') ? 'register' : 'login';
@@ -62,7 +62,7 @@ class VerifyReCaptcha
 
             if (!$isValid) {
                 return redirect()->back()
-                    ->withErrors(['g-recaptcha-response' => 'Security verification failed. Please try again.'])
+                    ->withErrors(['recaptcha_token' => 'Security verification failed. Please try again.'])
                     ->withInput();
             }
 
