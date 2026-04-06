@@ -93,7 +93,6 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
-                \App\Http\Middleware\CheckLogoutAt::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
@@ -114,6 +113,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\CheckLogoutAt::class,
             ]);
     }
 }

@@ -133,17 +133,12 @@ class AppPanelProvider extends PanelProvider
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                \App\Http\Middleware\CheckLogoutAt::class,
-                ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
-                SubstituteBindings::class,
-                DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 VerifyReCaptcha::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
