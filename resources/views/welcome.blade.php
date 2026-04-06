@@ -2,6 +2,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
         <title>APIs Hub | Elite Data & Caching Infrastructure</title>
         <meta name="description" content="The headless data engine for elite marketing agencies. Standardize multi-platform data into high-speed, analytics-ready pipelines with intelligent formulas and gap-filling.">
         <meta name="keywords" content="marketing data infrastructure, api caching, ecommerce etl, standardized marketing metrics, data gap filling, headless data engine">
@@ -81,6 +82,7 @@
                 @else
                     <form id="waitlist-form" action="{{ route('landing.subscribe') }}" method="POST" class="relative group">
                         @csrf
+                        <input type="hidden" name="recaptcha_token" id="recaptcha_token">
                         <div class="flex flex-col sm:flex-row gap-3 p-2 rounded-2xl glass-panel shadow-2xl bg-white/50 dark:bg-slate-900/50">
                             <input 
                                 id="email-input"
@@ -99,6 +101,25 @@
                                 Join Alpha
                             </button>
                         </div>
+                        
+                        <script>
+                            document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                const form = this;
+                                
+                                if (typeof grecaptcha !== 'undefined') {
+                                    grecaptcha.enterprise.ready(function() {
+                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'subscribe'}).then(function(token) {
+                                            document.getElementById('recaptcha_token').value = token;
+                                            form.submit();
+                                        });
+                                    });
+                                } else {
+                                    form.submit();
+                                }
+                            });
+                        </script>
+
                         @if(session('error'))
                             <p class="mt-3 text-red-500 text-sm font-medium">{{ session('error') }}</p>
                         @endif
