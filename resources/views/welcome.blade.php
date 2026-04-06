@@ -41,19 +41,19 @@
             
             <!-- Branding Header -->
             <div class="mb-10">
-                <!-- Light Mode Logo: Standard Colored -->
+                <!-- Light Mode Logo: Standard Colored (Shown when NOT .dark) -->
                 <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
                      alt="APIs Hub" width="620" height="152" 
-                     class="dark:hidden h-24 md:h-32 mx-auto drop-shadow-xl" 
+                     class="block dark:hidden h-24 md:h-32 mx-auto drop-shadow-xl" 
                      fetchpriority="high" decoding="async">
-                <!-- Dark Mode Logo: White/Waitlist Friendly -->
+                <!-- Dark Mode Logo: White/Waitlist Friendly (Shown when .dark) -->
                 <img src="{{ asset('images/branding/apishub-trans-light-600.webp') }}" 
                      alt="APIs Hub" width="600" height="131" 
                      class="hidden dark:block h-24 md:h-32 mx-auto drop-shadow-glow" 
                      fetchpriority="high" decoding="async">
             </div>
 
-            <!-- Hero Headline -->
+            <!-- ... Hero Headline ... -->
             <div class="max-w-3xl mx-auto mb-10">
                 <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wider text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/30 rounded-full animate-bounce">
                     Alpha Access Open
@@ -117,8 +117,10 @@
         </main>
 
         <!-- Dynamic Footer / Micro Branding -->
-        <div class="fixed bottom-0 left-0 p-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-300 dark:text-slate-800 pointer-events-none select-none">
-            Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
+        <div class="fixed bottom-8 w-full flex justify-center px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 pointer-events-none select-none">
+            <div class="opacity-80">
+                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
+            </div>
         </div>
         
         <!-- Background Mesh -->
