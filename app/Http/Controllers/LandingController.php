@@ -33,20 +33,26 @@ class LandingController extends Controller
     public function subscribe(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:leads,email',
-        ], [
-            'email.unique' => 'You are already on our waitlist!',
+            'email' => 'required|email',
         ]);
 
         if ($validator->fails()) {
             return back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        $lead = Lead::create([
-            'email' => $request->email,
-            'source' => 'landing_page_launch',
-            'status' => 'alpha_waitlist',
-        ]);
+        $lead = Lead::where('email', $request->email)->first();
+
+        if ($lead && $lead->status === 'alpha_waitlist') {
+            return back()->with('error', 'You are already on the APIs Hub Alpha waitlist.');
+        }
+
+        $lead = Lead::updateOrCreate(
+            ['email' => $request->email],
+            [
+                'source' => 'landing_page_launch',
+                'status' => 'alpha_waitlist',
+            ]
+        );
 
         // Send Welcome Email via Zoho (Synchronous for now, or via Queue if configured)
         Mail::to($lead->email)->send(new WelcomeAlphaLead($lead));
