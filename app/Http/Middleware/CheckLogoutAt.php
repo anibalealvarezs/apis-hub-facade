@@ -18,18 +18,20 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 🚀 Dynamic User Detection (Octane-aware)
+        // 🛰️ RADAR PULSANDO (Verificación de existencia)
+        \Illuminate\Support\Facades\Log::info('CENTINELA PULSANDO: ' . $request->getRequestUri());
+
+        // 🚀 Dynamic User Detection
         $user = Auth::guard('web')->user() ?? Auth::user();
         
-        if ($user instanceof \Illuminate\Database\Eloquent\Model) {
+        if ($user) {
             $user = $user->fresh();
             
             if ($user && $user->logout_at) {
                 $sessionCreatedAt = session()->get('session_start_time');
                 $logoutAtTs = $user->logout_at->getTimestamp();
 
-                \Illuminate\Support\Facades\Log::info('Centinela Check: ' . $user->email, [
-                    'uri' => $request->getRequestUri(),
+                \Illuminate\Support\Facades\Log::info('Centinela Radar: ' . $user->email, [
                     'should_logout' => (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTs))
                 ]);
 
@@ -38,13 +40,12 @@ class CheckLogoutAt
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
 
-                    // 🚨 Livewire/AJAX Redirect (The missing piece)
                     if ($request->header('X-Livewire') || $request->expectsJson()) {
                         return response('', 401)->header('X-Livewire-Redirect', route('filament.app.auth.login'));
                     }
 
                     return redirect()->route('filament.app.auth.login')
-                        ->with('error', 'Your session has been terminated by an administrator.');
+                        ->with('error', 'Your session has been terminated.');
                 }
             }
         }
