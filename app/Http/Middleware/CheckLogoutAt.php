@@ -11,44 +11,37 @@ class CheckLogoutAt
 {
     /**
      * Handle an incoming request.
+     *
+     * @param Request $request
+     * @param Closure(Request): (Response) $next
+     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
-        throw new \Exception('EL_CENTINELA_ESTA_VIVO');
-        \Illuminate\Support\Facades\Log::info('CENTINELA RADAR V3: ' . $request->getRequestUri());
-        // Force refresh user from DB to handle Octane caching
+        // 🚀 Dynamic User Detection (Octane-aware)
         $user = Auth::guard('web')->user() ?? Auth::user();
         
         if ($user instanceof \Illuminate\Database\Eloquent\Model) {
             $user = $user->fresh();
-        }
-
-        if ($user) {
-            \Illuminate\Support\Facades\Log::info('Centinela Check for ' . $user->email, [
-                'uri' => $request->getRequestUri(),
-                'logout_at' => $user->logout_at?->toDateTimeString(),
-                'session_start' => session()->get('session_start_time'),
-            ]);
-            // 🚨 Kick out inactive users immediately
-            if (isset($user->is_active) && !$user->is_active) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect()->route('filament.app.auth.login')
-                    ->with('error', 'Your account has been deactivated.');
-            }
-
-            // 🕒 Check session invalidation timestamp
-            if ($user->logout_at) {
+            
+            if ($user && $user->logout_at) {
                 $sessionCreatedAt = session()->get('session_start_time');
-                $logoutAtTimestamp = $user->logout_at->getTimestamp();
+                $logoutAtTs = $user->logout_at->getTimestamp();
 
-                // If session_start_time is missing (pre-system session) or older than logout_at -> LOGOUT!
-                if (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTimestamp)) {
+                \Illuminate\Support\Facades\Log::info('Centinela Check: ' . $user->email, [
+                    'uri' => $request->getRequestUri(),
+                    'should_logout' => (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTs))
+                ]);
+
+                if (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTs)) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
+
+                    // 🚨 Livewire/AJAX Redirect (The missing piece)
+                    if ($request->header('X-Livewire') || $request->expectsJson()) {
+                        return response('', 401)->header('X-Livewire-Redirect', route('filament.app.auth.login'));
+                    }
 
                     return redirect()->route('filament.app.auth.login')
                         ->with('error', 'Your session has been terminated by an administrator.');
