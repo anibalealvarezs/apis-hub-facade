@@ -14,21 +14,16 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
-        \Illuminate\Support\Facades\Log::info('Centinela CheckLogoutAt en: ' . $request->getRequestUri());
-
-        // Try to get user from ANY common guard (web is default)
+        // Force refresh user from DB to handle Octane caching
         $user = Auth::guard('web')->user() ?? Auth::user();
-        $user = $user?->fresh();
+        
+        if ($user instanceof \Illuminate\Database\Eloquent\Model) {
+            $user = $user->fresh();
+        }
 
         if ($user) {
-            \Illuminate\Support\Facades\Log::info('Centinela detectó usuario: ' . $user->email, [
-                'is_active' => $user->is_active,
-                'logout_at' => $user->logout_at?->toDateTimeString(),
-            ]);
-
             // 🚨 Kick out inactive users immediately
             if (isset($user->is_active) && !$user->is_active) {
-                \Illuminate\Support\Facades\Log::info('Force Logout: User is inactive');
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -42,15 +37,8 @@ class CheckLogoutAt
                 $sessionCreatedAt = session()->get('session_start_time');
                 $logoutAtTimestamp = $user->logout_at->getTimestamp();
 
-                \Illuminate\Support\Facades\Log::info('Checking Invalidation:', [
-                    'session_start' => $sessionCreatedAt,
-                    'logout_at_ts' => $logoutAtTimestamp,
-                    'should_logout' => (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTimestamp))
-                ]);
-
-                // If session_start_time is missing (it's an OLD session) or older than logout_at -> LOGOUT!
+                // If session_start_time is missing (pre-system session) or older than logout_at -> LOGOUT!
                 if (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTimestamp)) {
-                    \Illuminate\Support\Facades\Log::info('Force Logout: Condition Met');
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
