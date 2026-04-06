@@ -11,7 +11,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        \Illuminate\Support\Facades\Log::info('VITAL PULSE: Global Middleware Stack Loading');
         $middleware->web(append: [
             \App\Http\Middleware\CheckLogoutAt::class,
         ]);
