@@ -37,8 +37,8 @@ class AppServiceProvider extends ServiceProvider
             // Send Administrative Alert
             try {
                 \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
-                    ->send(new \App\Mail\AdminRegistrationAlert($event->user));
-            } catch (\Exception $e) {
+                    ->send(new \App\Mail\AdminRegistrationAlert($event->user->name, $event->user->email));
+            } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('Admin registration alert failed', ['error' => $e->getMessage()]);
             }
         });
