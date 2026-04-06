@@ -1,88 +1,21 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
-        <script>
-            // Synchronous theme initialization to prevent CLS and Flash of Unstyled Content
-            if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
-                document.documentElement.classList.remove('dark');
-            } else {
-                document.documentElement.classList.add('dark');
-            }
-            window.dataLayer = window.dataLayer || [];
-        </script>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
         <title>APIs Hub | The Silicon Valley Gateway</title>
+
+        <!-- Use Vite for Assets (CSS, Global JS, Theme Init) -->
+        @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Google Fonts: Outfit -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-
-        <!-- Tailwind 4 Direct Integration -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-        <style>
-            :root {
-                --brand-blue: #00A7F9;
-                --brand-teal: #00CAC4;
-            }
-            [x-cloak] { display: none !important; }
-
-            body {
-                font-family: 'Outfit', sans-serif;
-                transition: background-color 0.5s ease;
-            }
-
-            .hero-mesh {
-                position: fixed;
-                inset: 0;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.1) 0, transparent 50%), 
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.1) 0, transparent 50%);
-                z-index: -1;
-            }
-
-            .dark .hero-mesh {
-                background-color: #0f172a;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
-                    radial-gradient(at 70% 30%, rgba(139, 92, 246, 0.05) 0, transparent 40%),
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
-            }
-
-            /* Silicon Valley "Unicorn" Typography */
-            .unicorn-title {
-                background: linear-gradient(135deg, #FFF 20%, var(--brand-blue) 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                letter-spacing: -3px;
-                line-height: 1;
-            }
-
-            .dark .unicorn-title {
-                background: linear-gradient(135deg, #FFFFFF 30%, var(--brand-teal) 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-
-            /* Custom Input Glows */
-            .form-input-glow:focus {
-                border-color: var(--brand-blue);
-                box-shadow: 0 0 12px rgba(0, 167, 249, 0.3);
-            }
-
-            /* Dark/Light Toggle Button */
-            .theme-toggle {
-                position: fixed;
-                top: 2rem;
-                right: 2rem;
-                z-index: 50;
-            }
-        </style>
     </head>
-    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" x-data="{ darkMode: document.documentElement.classList.contains('dark') }" x-init="$watch('darkMode', val => { document.documentElement.classList.toggle('dark', val); localStorage.setItem('color-theme', val ? 'dark' : 'light'); })">
+    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" 
+          x-data="themeControl" 
+          data-gtm-id="{{ $gtmId }}">
         
         <!-- Navigation Placeholder / Global Theme UI -->
         <div class="theme-toggle" x-cloak>
@@ -183,17 +116,7 @@
         <!-- Background Mesh -->
         <div class="hero-mesh"></div>
 
-        <!-- Alpine.js & Marketing Scripts (Deferred for Performance) -->
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-        
-        @if($gtmId)
-        <!-- Google Tag Manager (Optimized Position) -->
-        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{{ $gtmId }}');</script>
-        <!-- End Google Tag Manager -->
-        @endif
+        <!-- External Marketing & Analytics (Vite Optimized) -->
+        @vite(['resources/js/gtm.js'])
     </body>
 </html>
