@@ -34,19 +34,10 @@ class AppServiceProvider extends ServiceProvider
                 ->info()
                 ->send();
 
-            // Temporary diagnostic/alert email for Admin
+            // Send Administrative Alert
             try {
-                \Illuminate\Support\Facades\Mail::raw(
-                    "🚨 New user registered on APIs Hub Platform!\n\n" .
-                    "Name: {$event->user->name}\n" .
-                    "Email: {$event->user->email}\n" .
-                    "Time: " . now()->toDateTimeString() . "\n\n" .
-                    "--\nAutomated Centinela System",
-                    function ($message) {
-                        $message->to('anibalealvarezs@gmail.com')
-                                ->subject('🚨 New User Registration: APIs Hub');
-                    }
-                );
+                \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
+                    ->send(new \App\Mail\AdminRegistrationAlert($event->user));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Admin registration alert failed', ['error' => $e->getMessage()]);
             }
