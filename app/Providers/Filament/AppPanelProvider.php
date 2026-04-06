@@ -140,11 +140,11 @@ class AppPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \App\Http\Middleware\CheckLogoutAt::class,
                 VerifyReCaptcha::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
-                \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
