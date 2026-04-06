@@ -7,7 +7,9 @@ Route::get('/debug-saas', function () {
 });
 
 Route::get('/', [\App\Http\Controllers\LandingController::class, 'index']);
-Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subscribe'])->name('landing.subscribe');
+Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subscribe'])
+    ->middleware(\App\Http\Middleware\VerifyReCaptcha::class)
+    ->name('landing.subscribe');
 Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'unsubscribe'])->name('landing.unsubscribe')->middleware('signed');
 
 // APIs Hub SaaS: OAuth Hub for Tenants

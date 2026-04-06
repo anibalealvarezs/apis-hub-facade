@@ -50,7 +50,11 @@ class VerifyReCaptcha
             ]);
 
             // 4. Determine expected action based on route
-            $expectedAction = $request->routeIs('filament.app.auth.register') ? 'register' : 'login';
+            $expectedAction = match (true) {
+                $request->routeIs('filament.app.auth.register') => 'register',
+                $request->routeIs('landing.subscribe') => 'subscribe',
+                default => 'login',
+            };
 
             // 5. Verify token with SDK (Enterprise Assessment)
             $isValid = $api->verifyToken(
