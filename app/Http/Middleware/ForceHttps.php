@@ -17,6 +17,7 @@ class ForceHttps
     {
         if (str_starts_with(config('app.url'), 'https://')) {
             $request->server->set('HTTPS', 'on');
+            $request->headers->set('x-forwarded-proto', 'https');
         }
 
         return $next($request);
