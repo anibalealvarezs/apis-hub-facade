@@ -16,14 +16,14 @@ class CheckLogoutAt
     {
         \Illuminate\Support\Facades\Log::info('Centinela CheckLogoutAt en: ' . $request->getRequestUri());
 
-        // Get fresh user from DB to avoid Octane model caching issues
-        $user = Auth::user()?->fresh();
+        // Try to get user from ANY common guard (web is default)
+        $user = Auth::guard('web')->user() ?? Auth::user();
+        $user = $user?->fresh();
 
         if ($user) {
-            \Illuminate\Support\Facades\Log::info('CheckLogoutAt for user: ' . $user->email, [
+            \Illuminate\Support\Facades\Log::info('Centinela detectó usuario: ' . $user->email, [
                 'is_active' => $user->is_active,
                 'logout_at' => $user->logout_at?->toDateTimeString(),
-                'session_start' => session()->get('session_start_time'),
             ]);
 
             // 🚨 Kick out inactive users immediately
