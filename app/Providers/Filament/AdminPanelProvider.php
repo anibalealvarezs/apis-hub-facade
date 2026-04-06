@@ -99,7 +99,6 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\CheckLogoutAt::class,
                 VerifyReCaptcha::class,
             ])
             ->plugin(
@@ -115,6 +114,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\CheckLogoutAt::class,
             ]);
     }
 }
