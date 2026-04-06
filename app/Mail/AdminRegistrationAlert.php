@@ -14,14 +14,16 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public Authenticatable $user;
+    public string $userName;
+    public string $userEmail;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Authenticatable $user)
+    public function __construct(string $userName, string $userEmail)
     {
-        $this->user = $user;
+        $this->userName = $userName;
+        $this->userEmail = $userEmail;
     }
 
     /**
@@ -45,8 +47,8 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
                 <h2 style='color: #00A7F9;'>🚨 APIs Hub Centinela Alert</h2>
                 <p>A new user has just registered on the platform.</p>
                 <div style='background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                    <p><strong>Name:</strong> {$this->user->name}</p>
-                    <p><strong>Email:</strong> {$this->user->email}</p>
+                    <p><strong>Name:</strong> {$this->userName}</p>
+                    <p><strong>Email:</strong> {$this->userEmail}</p>
                     <p><strong>Time:</strong> " . now()->toDateTimeString() . "</p>
                 </div>
                 <p style='color: #888; font-size: 12px;'>This is an automated administrative email. Do not reply.</p>
