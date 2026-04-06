@@ -14,6 +14,8 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
+        \Illuminate\Support\Facades\Log::info('Centinela CheckLogoutAt en: ' . $request->getRequestUri());
+
         // Get fresh user from DB to avoid Octane model caching issues
         $user = Auth::user()?->fresh();
 
