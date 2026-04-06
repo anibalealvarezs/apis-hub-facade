@@ -2,7 +2,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>APIs Hub | The Silicon Valley Gateway</title>
+        <title>APIs Hub | Elite Data & Caching Infrastructure</title>
+        <meta name="description" content="The headless data engine for elite marketing agencies. Standardize multi-platform data into high-speed, analytics-ready pipelines with intelligent formulas and gap-filling.">
+        <meta name="keywords" content="marketing data infrastructure, api caching, ecommerce etl, standardized marketing metrics, data gap filling, headless data engine">
+        <meta name="robots" content="index, follow">
+        <meta name="author" content="APIs Hub Network">
 
         <!-- Use Vite for Assets (CSS, Global JS, Theme Init) -->
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
@@ -54,25 +58,26 @@
                 <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wider text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/30 rounded-full animate-bounce">
                     Alpha Access Open
                 </span>
-                <h1 class="text-6xl font-extrabold sm:text-8xl unicorn-title mb-6">
-                    Connect Any Data.<br>Anywhere.
+                <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
+                    Unified Data.<br>Correct Formulas.
                 </h1>
                 <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
-                    The central command for cross-platform data extraction, multi-tenant analytics, and marketing automation infrastructure. One portal to rule them all.
+                    The headless data engine for elite analytics teams. Standardize your multi-platform source data into a high-speed infrastructure with automatic gap-filling and weighted-average mathematical validation.
                 </p>
             </div>
 
             <!-- Waitlist Form (Lead Intake) -->
             <div class="w-full max-w-md mx-auto mb-12">
                 @if(session('success'))
-                    <div class="p-4 mb-6 text-emerald-700 bg-emerald-100/80 backdrop-blur-md rounded-xl border border-emerald-200 animate-pulse">
+                    <div id="success-alert" class="p-4 mb-6 text-emerald-700 bg-emerald-100/80 backdrop-blur-md rounded-xl border border-emerald-200 animate-pulse">
                         {{ session('success') }}
                     </div>
                 @else
-                    <form action="{{ route('landing.subscribe') }}" method="POST" class="relative group">
+                    <form id="waitlist-form" action="{{ route('landing.subscribe') }}" method="POST" class="relative group">
                         @csrf
                         <div class="flex flex-col sm:flex-row gap-3 p-2 rounded-2xl glass-panel shadow-2xl bg-white/50 dark:bg-slate-900/50">
                             <input 
+                                id="email-input"
                                 type="email" 
                                 name="email" 
                                 required 
@@ -81,36 +86,39 @@
                                 value="{{ old('email') }}"
                             >
                             <button 
+                                id="submit-button"
                                 type="submit"
                                 class="px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
                             >
-                                Join Waitlist
+                                Join Alpha
                             </button>
                         </div>
                         @if(session('error'))
                             <p class="mt-3 text-red-500 text-sm font-medium">{{ session('error') }}</p>
                         @endif
                         <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
-                            Guaranteed early access + 50% discount for first 50 agencies. No credit card required.
+                            Guaranteed early access for agencies and data teams. No credit card required.
                         </p>
                     </form>
                 @endif
             </div>
 
-            <!-- Portals Link (Internal / Admin) -->
+            <!-- Portals Link (Internal / Admin / Documentation) -->
             <div class="flex gap-4 sm:gap-8 justify-center items-center opacity-70 hover:opacity-100 transition-opacity">
+                {{-- 
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-blue hover:underline decoration-2 underline-offset-4 cursor-pointer">Project Portal</span>
                 <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
                 <span data-portal="{{ $portals['admin'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4 cursor-pointer">Admin Console</span>
                 <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
                 <span data-portal="{{ $portals['docs'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-slate-500 hover:underline cursor-pointer">Documentation</span>
+                --}}
             </div>
 
         </main>
 
-        <!-- Dynamic Grid / Micro Interactions -->
+        <!-- Dynamic Footer / Micro Branding -->
         <div class="fixed bottom-0 left-0 p-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-300 dark:text-slate-800 pointer-events-none select-none">
-            Powered by Orchestrator Engine v1.0
+            Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
         </div>
         
         <!-- Background Mesh -->
