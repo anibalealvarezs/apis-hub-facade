@@ -34,14 +34,19 @@ class AppServiceProvider extends ServiceProvider
                 ->info()
                 ->send();
 
-            // Send Administrative Alert synchronously with deep tracing logs
-            \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Preparando el envío a: anibalealvarezs@gmail.com");
+            // Síncrono a prueba de balas: Sin serialización, sin closures fantasmas, sin depender de Octane dispatch
             try {
+                $name = $event->user->name ?? 'Nuevo Lead';
+                $email = $event->user->email ?? 'Sin Correo';
+                
+                \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Disparando alerta síncrona a admin.");
+                
                 \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
-                    ->send(new \App\Mail\AdminRegistrationAlert($event->user->name ?? 'Usuario Nuevo', $event->user->email));
-                \Illuminate\Support\Facades\Log::info("✅ [ADMIN-ALERT] Entregado al Driver SMTP sin errores de servidor.");
+                    ->send(new \App\Mail\AdminRegistrationAlert($name, $email));
+                    
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo fatal al enviar', ['error' => $e->getMessage()]);
+                // Silenciamos cualquier fallo de Mailgun/SES para salvar la pantalla de confirmación
+                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo Mailer', ['error' => $e->getMessage()]);
             }
         });
 
