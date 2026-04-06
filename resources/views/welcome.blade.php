@@ -72,6 +72,10 @@
                     <div id="success-alert" class="p-4 mb-6 text-emerald-700 bg-emerald-100/80 backdrop-blur-md rounded-xl border border-emerald-200 animate-pulse">
                         {{ session('success') }}
                     </div>
+                @elseif(isset($unsubscribe_message))
+                    <div id="unsubscribe-alert" class="p-4 mb-6 text-slate-700 bg-slate-100/80 backdrop-blur-md rounded-xl border border-slate-200">
+                        {{ $unsubscribe_message }}
+                    </div>
                 @else
                     <form id="waitlist-form" action="{{ route('landing.subscribe') }}" method="POST" class="relative group">
                         @csrf

@@ -108,7 +108,7 @@
         <div class="container">
             <div class="header-bar"></div>
             <div class="content">
-                <div class="logo-text">APIs Hub<span class="logo-accent">.</span></div>
+                <img src="{{ config('app.url') }}/images/branding/apishub-trans-light-600.webp" alt="APIs Hub" height="32" style="display: block; border: 0;">
                 
                 <div class="badge">Alpha Confirmation</div>
                 <h1>Welcome to the waitlist.</h1>
@@ -156,6 +156,8 @@
             <div class="footer">
                 &copy; {{ date('Y') }} APIs Hub Network. Managed by the Orchestrator Engine.<br>
                 This is an automated alpha confirmation. No reply needed.
+                <br><br>
+                If you'd like to stop receiving these updates, you can <a href="{{ URL::signedRoute('landing.unsubscribe', ['email' => $lead->email]) }}" style="color: #6B7280; text-decoration: underline;">unsubscribe here</a>.
             </div>
         </div>
     </div>

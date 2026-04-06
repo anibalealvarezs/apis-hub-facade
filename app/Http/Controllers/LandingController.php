@@ -21,7 +21,7 @@ class LandingController extends Controller
             'portals' => [
                 'app' => base64_encode('/app'),
                 'admin' => base64_encode('/admin'),
-                'docs' => base64_encode('https://docs.apis-hub.cloud'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
             ],
             'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
         ]);
@@ -49,8 +49,34 @@ class LandingController extends Controller
         ]);
 
         // Send Welcome Email via Zoho (Synchronous for now, or via Queue if configured)
-        Mail::to($lead->email)->send(new WelcomeAlphaLead());
+        Mail::to($lead->email)->send(new WelcomeAlphaLead($lead));
 
-        return back()->with('success', 'Welcome to the APIs Hub Alpha! Check your inbox for a confirmation.');
+        return back()->with('success', 'Success! You are now on the APIs Hub Alpha waitlist.');
+    }
+
+    /**
+     * Unsubscribe a lead from the mailing list.
+     */
+    public function unsubscribe(Request $request)
+    {
+        if (! $request->hasValidSignature()) {
+            abort(403, 'Invalid or expired unsubscribe link.');
+        }
+
+        $lead = Lead::where('email', $request->email)->first();
+
+        if ($lead) {
+            $lead->update(['status' => 'unsubscribed']);
+        }
+
+        return view('welcome', [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => config('services.gtm.id'),
+            'unsubscribe_message' => 'You have been successfully unsubscribed from the APIs Hub Alpha waitlist.'
+        ]);
     }
 }
