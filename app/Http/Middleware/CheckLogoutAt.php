@@ -16,17 +16,30 @@ class CheckLogoutAt
     {
         $user = Auth::user();
 
-        if ($user && $user->logout_at) {
-            $sessionCreatedAt = session()->get('session_start_time');
-
-            // If the session was created before the logout_at timestamp, log out!
-            if ($sessionCreatedAt && $sessionCreatedAt < $user->logout_at->getTimestamp()) {
+        if ($user) {
+            // 🚨 Kick out inactive users immediately
+            if (isset($user->is_active) && !$user->is_active) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
                 return redirect()->route('filament.app.auth.login')
-                    ->with('error', 'Your session has been terminated by an administrator.');
+                    ->with('error', 'Your account has been deactivated.');
+            }
+
+            // 🕒 Check session invalidation timestamp
+            if ($user->logout_at) {
+                $sessionCreatedAt = session()->get('session_start_time');
+
+                // If session_start_time is missing (it's an OLD session) or older than logout_at -> LOGOUT!
+                if (!$sessionCreatedAt || ($sessionCreatedAt < $user->logout_at->getTimestamp())) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return redirect()->route('filament.app.auth.login')
+                        ->with('error', 'Your session has been terminated by an administrator.');
+                }
             }
         }
 
