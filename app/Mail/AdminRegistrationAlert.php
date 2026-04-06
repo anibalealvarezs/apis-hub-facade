@@ -8,11 +8,10 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Auth\Authenticatable;
 
-class AdminRegistrationAlert extends Mailable implements ShouldQueue
+class AdminRegistrationAlert extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public string $userName;
     public string $userEmail;
