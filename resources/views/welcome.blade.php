@@ -44,12 +44,12 @@
                 <!-- Light Mode Logo: Standard Colored (Shown when NOT .dark) -->
                 <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
                      alt="APIs Hub" width="620" height="152" 
-                     class="block dark:hidden h-24 md:h-32 mx-auto drop-shadow-xl" 
+                     class="block dark:hidden h-24 md:h-32 mx-auto" 
                      fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly (Shown when .dark) -->
-                <img src="{{ asset('images/branding/apishub-trans-light-600.webp') }}" 
-                     alt="APIs Hub" width="600" height="131" 
-                     class="hidden dark:block h-24 md:h-32 mx-auto drop-shadow-glow" 
+                <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}" 
+                     alt="APIs Hub" width="620" height="152" 
+                     class="hidden dark:block h-24 md:h-32 mx-auto" 
                      fetchpriority="high" decoding="async">
             </div>
 

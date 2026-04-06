@@ -109,7 +109,7 @@
             <div class="header-bar"></div>
             <div class="content">
                 <div class="logo-text">
-                    <img src="{{ $message->embed(public_path('images/branding/apishub-trans-light-600.png')) }}" alt="APIs Hub" height="48" style="display: block; border: 0;">
+                    <img src="{{ $message->embed(public_path('images/branding/apishub-trans-light-620.png')) }}" alt="APIs Hub" height="48" style="display: block; border: 0;">
                 </div>
                 
                 <div class="badge">Alpha Confirmation</div>
