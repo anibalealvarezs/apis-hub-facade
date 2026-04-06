@@ -6,6 +6,7 @@ use Anibalealvarezs\GoogleApi\Services\Recaptcha\RecaptchaApi;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifyReCaptcha
@@ -19,7 +20,30 @@ class VerifyReCaptcha
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 0. Only process POST requests (form submissions)
+        // 🚨 SESSION SECURITY GUARD (Force Logout Check)
+        $user = Auth::guard('web')->user() ?? Auth::user();
+        if ($user) {
+            $user = $user->fresh();
+            if ($user && $user->logout_at) {
+                $sessionCreatedAt = session()->get('session_start_time');
+                $logoutAtTs = $user->logout_at->getTimestamp();
+                
+                \Illuminate\Support\Facades\Log::info('Centinela (via ReCaptcha) Radar: ' . $user->email, [
+                    'uri' => $request->getRequestUri(),
+                    'should_logout' => (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTs))
+                ]);
+
+                if (!$sessionCreatedAt || ($sessionCreatedAt < $logoutAtTs)) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect()->route('filament.app.auth.login')
+                        ->with('error', 'Your session has been expired.');
+                }
+            }
+        }
+
+        // 0. Only process POST requests (form submissions) for reCAPTCHA
         if (!$request->isMethod('POST')) {
             return $next($request);
         }
