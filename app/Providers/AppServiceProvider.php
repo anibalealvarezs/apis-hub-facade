@@ -34,13 +34,15 @@ class AppServiceProvider extends ServiceProvider
                 ->info()
                 ->send();
 
-            // Send Administrative Alert
-            try {
-                \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
-                    ->send(new \App\Mail\AdminRegistrationAlert($event->user->name, $event->user->email));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Admin registration alert failed', ['error' => $e->getMessage()]);
-            }
+            // Send Administrative Alert without blocking the user response (No Queue Worker needed!)
+            dispatch(function () use ($event) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
+                        ->send(new \App\Mail\AdminRegistrationAlert($event->user->name, $event->user->email));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Admin registration alert failed', ['error' => $e->getMessage()]);
+                }
+            })->afterResponse();
         });
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
