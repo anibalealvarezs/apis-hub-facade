@@ -24,14 +24,3 @@ Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
-
-Route::get('/debug-url', function (\Illuminate\Http\Request $request) {
-    return response()->json([
-        'url' => $request->url(),
-        'full_url' => $request->fullUrl(),
-        'scheme' => $request->getScheme(),
-        'host' => $request->getHost(),
-        'port' => $request->getPort(),
-        'headers' => $request->headers->all(),
-    ]);
-});
