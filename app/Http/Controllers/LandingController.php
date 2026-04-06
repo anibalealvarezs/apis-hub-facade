@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\WelcomeAlphaLead;
 use App\Models\Lead;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class LandingController extends Controller
@@ -40,12 +42,15 @@ class LandingController extends Controller
             return back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        Lead::create([
+        $lead = Lead::create([
             'email' => $request->email,
             'source' => 'landing_page_launch',
             'status' => 'alpha_waitlist',
         ]);
 
-        return back()->with('success', 'Welcome to the APIs Hub Alpha! We\'ll be in touch soon.');
+        // Send Welcome Email via Zoho (Synchronous for now, or via Queue if configured)
+        Mail::to($lead->email)->send(new WelcomeAlphaLead());
+
+        return back()->with('success', 'Welcome to the APIs Hub Alpha! Check your inbox for a confirmation.');
     }
 }
