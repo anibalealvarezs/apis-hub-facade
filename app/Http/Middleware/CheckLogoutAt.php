@@ -14,8 +14,6 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
-        dd('CENTINELA RECIBIÓ: ' . $request->getRequestUri());
-
         // Force refresh user from DB to handle Octane caching
         $user = Auth::guard('web')->user() ?? Auth::user();
         
