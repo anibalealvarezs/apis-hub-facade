@@ -14,6 +14,11 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // EMERGENCY BREAK: If you see this, the middleware IS RUNNING.
+        if (str_contains($request->getPathInfo(), 'app')) {
+             dd('CENTINELA ACTIVADO EN: ' . $request->getPathInfo());
+        }
+
         // Force refresh user from DB to handle Octane caching
         $user = Auth::guard('web')->user() ?? Auth::user();
         
