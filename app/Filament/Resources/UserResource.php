@@ -72,11 +72,23 @@ class UserResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('is_online')
+                    ->label('Online')
+                    ->boolean()
+                    ->state(function (\App\Models\User $record) {
+                        return \Illuminate\Support\Facades\DB::table('sessions')
+                            ->where('user_id', $record->id)
+                            ->where('last_activity', '>', time() - config('session.lifetime', 120) * 60)
+                            ->exists();
+                    })
+                    ->sortable(false),
+                Tables\Columns\IconColumn::make('email_verified_at')
+                    ->label('Verified')
+                    ->boolean()
+                    ->state(fn (\App\Models\User $record) => $record->email_verified_at !== null)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
