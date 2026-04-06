@@ -2,6 +2,12 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: true }" :class="{ 'dark': darkMode }">
     <head>
         @if($gtmId)
+        <!-- Performance Hints -->
+        <link rel="preconnect" href="https://www.googletagmanager.com">
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+        <link rel="preconnect" href="https://www.google-analytics.com">
+        <link rel="dns-prefetch" href="https://www.google-analytics.com">
+
         <!-- Google Tag Manager -->
         <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -18,6 +24,7 @@
         <!-- Google Fonts: Outfit -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 
         <!-- Tailwind 4 Direct Integration (if using @theme) or pre-built styles -->
@@ -120,9 +127,13 @@
             <!-- Branding Header -->
             <div class="mb-10 animate-fade-in">
                 <!-- Light Mode Logo: Standard Colored -->
-                <img x-show="!darkMode" src="{{ asset('images/branding/apishub-trans-620.png') }}" alt="APIs Hub" class="h-24 md:h-32 mx-auto drop-shadow-xl">
+                <img x-show="!darkMode" src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
+                     alt="APIs Hub" width="620" height="152" class="h-24 md:h-32 mx-auto drop-shadow-xl" 
+                     fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly -->
-                <img x-show="darkMode" src="{{ asset('images/branding/apishub-trans-light-600.png') }}" alt="APIs Hub" class="h-24 md:h-32 mx-auto drop-shadow-glow">
+                <img x-show="darkMode" src="{{ asset('images/branding/apishub-trans-light-600.webp') }}" 
+                     alt="APIs Hub" width="600" height="131" class="h-24 md:h-32 mx-auto drop-shadow-glow" 
+                     fetchpriority="high" decoding="async">
             </div>
 
             <!-- Hero Headline -->
