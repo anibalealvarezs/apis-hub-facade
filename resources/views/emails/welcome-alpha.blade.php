@@ -108,7 +108,9 @@
         <div class="container">
             <div class="header-bar"></div>
             <div class="content">
-                <img src="{{ config('app.url') }}/images/branding/apishub-trans-light-600.webp" alt="APIs Hub" height="32" style="display: block; border: 0;">
+                <div class="logo-text">
+                    <img src="{{ $message->embed(public_path('images/branding/apishub-trans-light-600.png')) }}" alt="APIs Hub" height="48" style="display: block; border: 0;">
+                </div>
                 
                 <div class="badge">Alpha Confirmation</div>
                 <h1>Welcome to the waitlist.</h1>
