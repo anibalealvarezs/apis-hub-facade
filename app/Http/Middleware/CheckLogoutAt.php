@@ -14,6 +14,8 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
+        throw new \Exception('EL_CENTINELA_ESTA_VIVO');
+        \Illuminate\Support\Facades\Log::info('CENTINELA RADAR V3: ' . $request->getRequestUri());
         // Force refresh user from DB to handle Octane caching
         $user = Auth::guard('web')->user() ?? Auth::user();
         
