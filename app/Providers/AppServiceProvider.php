@@ -35,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
                 ->send();
         });
 
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
+
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Verified::class, function (\Illuminate\Auth\Events\Verified $event) {
             \Filament\Notifications\Notification::make()
                 ->title('Email address verified')

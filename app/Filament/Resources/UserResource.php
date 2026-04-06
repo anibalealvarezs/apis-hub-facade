@@ -93,12 +93,22 @@ class UserResource extends Resource
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(function (User $record) {
+                        // Set invalidation timestamp
+                        $record->update(['logout_at' => now()]);
+
+                        // Clear native Laravel sessions (if in DB)
                         DB::table('sessions')
                             ->where('user_id', $record->getAuthIdentifier())
                             ->delete();
 
+                        // Clear Filament Breezy sessions
+                        DB::table('breezy_sessions')
+                            ->where('authenticatable_id', $record->getAuthIdentifier())
+                            ->where('authenticatable_type', User::class)
+                            ->delete();
+
                         Notification::make()
-                            ->title('User Logged Out')
+                            ->title('User sessions invalidated and cleared across all platforms.')
                             ->success()
                             ->send();
                     }),
