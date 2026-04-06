@@ -53,5 +53,9 @@ return [
         'api_key' => env('RECAPTCHA_ENTERPRISE_API_KEY'),
     ],
 
+    'gtm' => [
+        'id' => env('GTM_ID'),
+    ],
+
 ];
 

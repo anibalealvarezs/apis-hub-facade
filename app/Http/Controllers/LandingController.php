@@ -13,12 +13,15 @@ class LandingController extends Controller
      */
     public function index()
     {
+        $gtmId = config('services.gtm.id');
+        
         return view('welcome', [
             'portals' => [
                 'app' => base64_encode('/app'),
                 'admin' => base64_encode('/admin'),
                 'docs' => base64_encode('https://docs.apis-hub.cloud'),
-            ]
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
         ]);
     }
 
