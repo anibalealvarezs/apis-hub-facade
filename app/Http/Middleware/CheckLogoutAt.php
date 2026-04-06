@@ -14,7 +14,8 @@ class CheckLogoutAt
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::user();
+        // Get fresh user from DB to avoid Octane model caching issues
+        $user = Auth::user()?->fresh();
 
         if ($user) {
             \Illuminate\Support\Facades\Log::info('CheckLogoutAt for user: ' . $user->email, [
