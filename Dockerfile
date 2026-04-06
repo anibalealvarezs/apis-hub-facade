@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libssl-dev \
     libbrotli-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libwebp-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js and NPM
@@ -22,7 +25,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl opcache
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip intl opcache
 
 # Install Redis and Swoole extension
 RUN pecl install redis swoole && docker-php-ext-enable redis swoole
