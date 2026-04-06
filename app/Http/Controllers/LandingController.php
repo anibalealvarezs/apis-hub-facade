@@ -21,7 +21,7 @@ class LandingController extends Controller
             'portals' => [
                 'app' => base64_encode('/app'),
                 'admin' => base64_encode('/admin'),
-                'docs' => base64_encode('https://docs.apis-hub.cloud'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
             ],
             'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
         ]);
@@ -73,7 +73,7 @@ class LandingController extends Controller
             'portals' => [
                 'app' => base64_encode('/app'),
                 'admin' => base64_encode('/admin'),
-                'docs' => base64_encode('https://docs.apis-hub.cloud'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
             ],
             'gtmId' => config('services.gtm.id'),
             'unsubscribe_message' => 'You have been successfully unsubscribed from the APIs Hub Alpha waitlist.'

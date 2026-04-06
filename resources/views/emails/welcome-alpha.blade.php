@@ -108,9 +108,7 @@
         <div class="container">
             <div class="header-bar"></div>
             <div class="content">
-                <div class="logo-text">
-                    <img src="https://apis-hub.cloud/images/branding/apishub-trans-light-600.webp" alt="APIs Hub" height="32" style="display: block; border: 0;">
-                </div>
+                <img src="{{ config('app.url') }}/images/branding/apishub-trans-light-600.webp" alt="APIs Hub" height="32" style="display: block; border: 0;">
                 
                 <div class="badge">Alpha Confirmation</div>
                 <h1>Welcome to the waitlist.</h1>
