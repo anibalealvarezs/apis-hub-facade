@@ -41,15 +41,17 @@
             
             <!-- Branding Header -->
             <div class="mb-10">
-                <!-- Light Mode Logo: Standard Colored (Shown when NOT .dark) -->
-                <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
+                <!-- Light Mode Logo: Standard Colored -->
+                <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="152" 
-                     class="block dark:hidden h-24 md:h-32 mx-auto" 
+                     :class="darkMode ? 'hidden' : 'block'"
+                     class="h-24 md:h-32 mx-auto" 
                      fetchpriority="high" decoding="async">
-                <!-- Dark Mode Logo: White/Waitlist Friendly (Shown when .dark) -->
-                <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}" 
+                <!-- Dark Mode Logo: White/Waitlist Friendly -->
+                <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="152" 
-                     class="hidden dark:block h-24 md:h-32 mx-auto" 
+                     :class="darkMode ? 'block' : 'hidden'"
+                     class="h-24 md:h-32 mx-auto" 
                      fetchpriority="high" decoding="async">
             </div>
 
