@@ -21,7 +21,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 
         <!-- Tailwind 4 Direct Integration (if using @theme) or pre-built styles -->
-        @vite(['resources/css/app.css'])
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <!-- APIs Hub Branding CSS -->
         <link rel="stylesheet" href="{{ asset('css/branding.css') }}">
