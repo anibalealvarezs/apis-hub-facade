@@ -7,6 +7,7 @@ services:
         image: apis-hub-facade-app
         container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-master
         restart: always
+        command: php artisan octane:start --server=swoole --host=0.0.0.0 --port=8001
         shm_size: '256mb'
         volumes:
             - ".:/var/www/html"
