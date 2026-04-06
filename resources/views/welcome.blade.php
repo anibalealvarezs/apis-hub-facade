@@ -7,22 +7,8 @@
             } else {
                 document.documentElement.classList.add('dark');
             }
+            window.dataLayer = window.dataLayer || [];
         </script>
-        @if($gtmId)
-        <!-- Performance Hints -->
-        <link rel="preconnect" href="https://www.googletagmanager.com">
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-        <link rel="preconnect" href="https://www.google-analytics.com">
-        <link rel="dns-prefetch" href="https://www.google-analytics.com">
-
-        <!-- Google Tag Manager -->
-        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{{ $gtmId }}');</script>
-        <!-- End Google Tag Manager -->
-        @endif
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -96,17 +82,8 @@
             }
         </style>
     </head>
-    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white">
-        @if($gtmId)
-        <!-- Google Tag Manager (noscript) -->
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ $gtmId }}"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        <!-- End Google Tag Manager (noscript) -->
-        @endif
+    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" x-data="{ darkMode: document.documentElement.classList.contains('dark') }" x-init="$watch('darkMode', val => { document.documentElement.classList.toggle('dark', val); localStorage.setItem('color-theme', val ? 'dark' : 'light'); })">
         
-        <!-- Background Mesh -->
-        <div class="hero-mesh"></div>
-
         <!-- Navigation Placeholder / Global Theme UI -->
         <div class="theme-toggle" x-cloak>
             <button @click="darkMode = !darkMode" class="p-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md glow-hover">
@@ -203,5 +180,20 @@
             Powered by Orchestrator Engine v1.0
         </div>
         
+        <!-- Background Mesh -->
+        <div class="hero-mesh"></div>
+
+        <!-- Alpine.js & Marketing Scripts (Deferred for Performance) -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        
+        @if($gtmId)
+        <!-- Google Tag Manager (Optimized Position) -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','{{ $gtmId }}');</script>
+        <!-- End Google Tag Manager -->
+        @endif
     </body>
 </html>
