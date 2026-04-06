@@ -22,6 +22,11 @@ class CheckLogoutAt
         }
 
         if ($user) {
+            \Illuminate\Support\Facades\Log::info('Centinela Check for ' . $user->email, [
+                'uri' => $request->getRequestUri(),
+                'logout_at' => $user->logout_at?->toDateTimeString(),
+                'session_start' => session()->get('session_start_time'),
+            ]);
             // 🚨 Kick out inactive users immediately
             if (isset($user->is_active) && !$user->is_active) {
                 Auth::logout();
