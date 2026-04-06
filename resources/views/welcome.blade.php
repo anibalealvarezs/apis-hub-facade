@@ -1,6 +1,13 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: true }" :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
+        <script>
+            // Synchronous theme initialization to prevent CLS and Flash of Unstyled Content
+            if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        </script>
         @if($gtmId)
         <!-- Performance Hints -->
         <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -25,16 +32,10 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
-        <!-- Tailwind 4 Direct Integration (if using @theme) or pre-built styles -->
+        <!-- Tailwind 4 Direct Integration -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-        <!-- APIs Hub Branding CSS -->
-        <link rel="stylesheet" href="{{ asset('css/branding.css') }}">
-
-        <!-- Alpine.js to handle interactivity -->
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
         <style>
             :root {
@@ -125,14 +126,16 @@
         <main class="relative flex flex-col items-center justify-center min-h-screen px-6 py-12 text-center lg:px-8">
             
             <!-- Branding Header -->
-            <div class="mb-10 animate-fade-in">
+            <div class="mb-10">
                 <!-- Light Mode Logo: Standard Colored -->
-                <img x-show="!darkMode" src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
-                     alt="APIs Hub" width="620" height="152" class="h-24 md:h-32 mx-auto drop-shadow-xl" 
+                <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
+                     alt="APIs Hub" width="620" height="152" 
+                     class="dark:hidden h-24 md:h-32 mx-auto drop-shadow-xl" 
                      fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly -->
-                <img x-show="darkMode" src="{{ asset('images/branding/apishub-trans-light-600.webp') }}" 
-                     alt="APIs Hub" width="600" height="131" class="h-24 md:h-32 mx-auto drop-shadow-glow" 
+                <img src="{{ asset('images/branding/apishub-trans-light-600.webp') }}" 
+                     alt="APIs Hub" width="600" height="131" 
+                     class="hidden dark:block h-24 md:h-32 mx-auto drop-shadow-glow" 
                      fetchpriority="high" decoding="async">
             </div>
 
