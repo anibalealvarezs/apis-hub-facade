@@ -1,2 +1,14 @@
 User-agent: *
-Disallow:
+Allow: /
+Allow: /sitemap.xml
+Disallow: /admin/
+Disallow: /app/
+Disallow: /login
+
+# Prevent crawlers from indexing subdomains if linked accidentally
+Disallow: /*?
+Disallow: /api/
+Disallow: /caddy/
+Disallow: /debug-saas
+
+Sitemap: https://apis-hub.cloud/sitemap.xml

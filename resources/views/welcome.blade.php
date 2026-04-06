@@ -160,11 +160,11 @@
 
             <!-- Portals Link (Internal / Admin) -->
             <div class="flex gap-4 sm:gap-8 justify-center items-center opacity-70 hover:opacity-100 transition-opacity">
-                <a href="/app" class="text-sm font-semibold tracking-wide text-brand-blue hover:underline decoration-2 underline-offset-4">Project Portal</a>
+                <span data-portal="{{ $portals['app'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-blue hover:underline decoration-2 underline-offset-4 cursor-pointer">Project Portal</span>
                 <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
-                <a href="/admin" class="text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4">Admin Console</a>
+                <span data-portal="{{ $portals['admin'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4 cursor-pointer">Admin Console</span>
                 <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
-                <a href="https://docs.apis-hub.cloud" class="text-sm font-semibold tracking-wide text-slate-500 hover:underline">Documentation</a>
+                <span data-portal="{{ $portals['docs'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-slate-500 hover:underline cursor-pointer">Documentation</span>
             </div>
 
         </main>
