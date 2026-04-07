@@ -13,8 +13,24 @@ class LandingController extends Controller
     /**
      * Show the landing page with obfuscated portal links.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $host = $request->getHost();
+        $mainDomain = 'apis-hub.cloud';
+
+        // 1. Detectamos si hay un subdominio (que no sea 'www' ni el dominio principal)
+        if ($host !== $mainDomain && $host !== "www.{$mainDomain}") {
+            $subdomain = explode('.', $host)[0];
+            
+            // 2. Verificamos si es un proyecto válido en la DB
+            $projectExists = \App\Models\Project::where('subdomain', $subdomain)->exists();
+
+            // 3. Si el proyecto NO existe (fue borrado/archivado), lo mandamos a la home principal
+            if (!$projectExists) {
+                return redirect()->away("https://{$mainDomain}");
+            }
+        }
+
         $gtmId = config('services.gtm.id');
         
         return view('welcome', [
