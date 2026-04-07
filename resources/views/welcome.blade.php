@@ -143,14 +143,14 @@
 
         </main>
 
-        <!-- Dynamic Footer / Micro Branding: Tailwind Compliant -->
-        <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[11px] uppercase tracking-[0.4em] font-black text-slate-400 dark:text-slate-500 select-none pointer-events-none">
-            <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-4 opacity-70">
-                <a href="/privacy" class="pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
-                <span class="block w-1 h-1 bg-brand-blue/40 rounded-full"></span>
-                <a href="/tos" class="pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
-                <span class="block w-1 h-1 bg-brand-teal/40 rounded-full"></span>
-                <a href="/data-deletion" class="pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
+        <!-- Dynamic Footer / Micro Branding: Robust Spacing -->
+        <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
+            <div class="flex items-center justify-center opacity-70">
+                <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
+                <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
+                <a href="/tos" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
+                <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full"></span>
+                <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
             </div>
             <div class="opacity-80">
                 Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
