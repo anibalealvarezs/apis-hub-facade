@@ -92,3 +92,19 @@ body {
 .theme-toggle {
     @apply fixed top-8 right-8 z-50;
 }
+
+/* Typography Prose for Legal & Articles */
+.prose-brand {
+    --tw-prose-headings: var(--color-brand-blue);
+    --tw-prose-links: var(--color-brand-blue);
+    --tw-prose-bold: var(--color-brand-blue);
+    --tw-prose-invert-headings: var(--color-brand-blue);
+    --tw-prose-invert-links: var(--color-brand-blue);
+    --tw-prose-invert-bold: var(--color-brand-teal);
+}
+
+.prose h1 { @apply tracking-tighter font-black uppercase text-5xl md:text-6xl mb-12; }
+.prose h2 { @apply tracking-tight font-extrabold text-3xl mt-16; }
+.prose a { @apply no-underline hover:underline decoration-brand-blue hover:text-brand-blue transition-colors; }
+.prose p { @apply font-light leading-relaxed mb-6; }
+.prose li { @apply mb-3; }
