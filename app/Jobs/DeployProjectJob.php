@@ -46,7 +46,7 @@ class DeployProjectJob implements ShouldQueue
             // 4. If success, update project active status
             if ($result['status'] === 'success') {
                 $this->project->update([
-                    'is_active' => false, // No longer provisioning
+                    'is_active' => true, 
                     'health_status' => 'online',
                     'last_deployed_at' => now(),
                 ]);
