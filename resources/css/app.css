@@ -111,7 +111,7 @@ body {
  
  /* Full Fidelity Legal Containers */
  .legal-document h1 { 
-    @apply text-6xl md:text-8xl font-black mb-16 tracking-tighter uppercase text-slate-950;
+    @apply text-4xl md:text-6xl font-black mb-16 tracking-tighter uppercase text-slate-950;
  }
  .dark .legal-document h1 { 
     @apply text-white;
