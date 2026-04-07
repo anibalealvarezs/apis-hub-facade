@@ -81,7 +81,7 @@ class SyncSettings extends Page
         $tenant = Filament::getTenant();
         $this->form->fill([
             ...($tenant->sync_config ?? []),
-            'app_api_key' => $tenant->app_api_key,
+            'app_api_key' => $tenant->public_api_key,
             'facebook_user_token' => $tenant->facebook_user_token,
             'google_refresh_token' => $tenant->google_refresh_token,
         ]);
@@ -174,8 +174,38 @@ class SyncSettings extends Page
                             ->label('Secret API Key')
                             ->password()
                             ->revealable()
+                            ->disabled()
                             ->helperText('Keep this key secure. It provides full access to your cached data.')
-                            ->suffixIcon('heroicon-m-key'),
+                            ->hintAction(
+                                \Filament\Forms\Components\Actions\Action::make('rotateKey')
+                                    ->icon('heroicon-m-arrow-path')
+                                    ->color('warning')
+                                    ->requiresConfirmation()
+                                    ->modalHeading('Rotate API Key?')
+                                    ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
+                                    ->modalSubmitActionLabel('Yes, rotate and push')
+                                    ->action(function (\App\Services\DeployerService $deployer) {
+                                        $tenant = \Filament\Facades\Filament::getTenant();
+                                        $newKey = bin2hex(random_bytes(32));
+                                        
+                                        // 1. Save locally
+                                        $tenant->update(['public_api_key' => $newKey]);
+                                        
+                                        // 2. Push to remote server via SSH
+                                        $deployer->updateCredentials($tenant, [
+                                            'APP_API_KEY' => $newKey
+                                        ]);
+
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('API Key Rotated!')
+                                            ->success()
+                                            ->body('The new key has been generated and synchronized with your node.')
+                                            ->send();
+
+                                        // 3. Update the form state
+                                        $this->form->fill(['app_api_key' => $newKey]);
+                                    })
+                            ),
                     ])->columns(2),
             ])
             ->statePath('data');
@@ -188,7 +218,7 @@ class SyncSettings extends Page
         $data = $this->form->getState();
         
         $modelAttributes = [
-            'remote_app_api_key' => $data['remote_app_api_key'] ?? ($data['app_api_key'] ?? null),
+            'public_api_key' => $data['app_api_key'] ?? null,
             'facebook_user_token' => $data['facebook_user_token'] ?? null,
             'google_refresh_token' => $data['google_refresh_token'] ?? null,
         ];
