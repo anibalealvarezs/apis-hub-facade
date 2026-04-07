@@ -105,22 +105,34 @@ EOT;
     }
 
     /**
-     * Run commands over SSH on the remote server.
+     * Run commands over SSH on the remote server using the provided identity.
      */
     protected function runSshCommands(Server $server, array $commands)
     {
         $allCommands = implode(" && ", $commands);
         
-        // Using Laravel's process with SSH. 
-        // Note: The server must have the Facade's public key in authorized_keys.
-        $result = Process::run("ssh -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"");
+        // 1. Escribir la clave SSH privada en un archivo temporal seguro
+        $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
+        file_put_contents($tmpKeyPath, $server->ssh_private_key . "\n");
+        chmod($tmpKeyPath, 0600); // Requisito estricto de SSH para llaves privadas
+        
+        try {
+            // 2. Ejecutar con la identity explicitamente
+            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"";
+            $result = Process::run($sshCmd);
 
-        if ($result->failed()) {
-            Log::error("Deployment failed: " . $result->errorOutput());
-            return ['status' => 'error', 'output' => $result->errorOutput()];
+            if ($result->failed()) {
+                Log::error("Deployment failed: " . $result->errorOutput());
+                return ['status' => 'error', 'output' => $result->errorOutput()];
+            }
+
+            return ['status' => 'success', 'output' => $result->output()];
+        } finally {
+            // 3. Limpiar la llave temporal siempre
+            if (file_exists($tmpKeyPath)) {
+                unlink($tmpKeyPath);
+            }
         }
-
-        return ['status' => 'success', 'output' => $result->output()];
     }
 
     /**
