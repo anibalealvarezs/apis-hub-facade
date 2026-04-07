@@ -27,6 +27,22 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Blade::component('oauth-buttons', \App\View\Components\OAuthButtons::class);
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function (\Illuminate\Auth\Events\Registered $event) {
+            // Intentar encolar alerta al admin silenciosamente sin abortar flujo
+            try {
+                $name = $event->user->name ?? 'Nuevo Registrado';
+                $email = $event->user->email ?? 'Sin Correo';
+                
+                $admins = \App\Models\User::where('is_admin', true)->where('is_active', true)->get();
+
+                foreach ($admins as $admin) {
+                    \Illuminate\Support\Facades\Mail::to($admin->email)
+                        ->queue(new \App\Mail\AdminRegistrationAlert($name, $email));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo en la alerta aislada: ' . $e->getMessage());
+            }
+
+            // Notificación visual obligatoria que jamás debe caerse
             try {
                 \Filament\Notifications\Notification::make()
                     ->title('Check your email inbox')
