@@ -10,73 +10,70 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        .legal-body { font-family: 'Outfit', sans-serif; transition: background-color 0.5s ease, color 0.5s ease; }
+        .legal-main { padding-top: 160px; padding-bottom: 120px; padding-left: 2rem; padding-right: 2rem; min-height: 100vh; }
+        .legal-header { height: 96px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
+        .legal-footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 3rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; text-align: center; }
+        .footer-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .footer-link { margin: 0 1.5rem; text-decoration: none; font-size: 10px; letter-spacing: 0.3em; font-weight: bold; text-transform: uppercase; transition: color 0.3s ease; }
+        .footer-dot { width: 6px; height: 6px; border-radius: 50%; }
+        
+        /* Light/Dark Overrides for safety */
+        .dark .legal-body { background-color: #020617; color: #f1f5f9; }
+        .legal-body:not(.dark) { background-color: #ffffff; color: #0f172a; }
+        
+        .dark .legal-header { background-color: rgba(2, 6, 23, 0.8); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .legal-body:not(.dark) .legal-header { background-color: rgba(255, 255, 255, 0.8); border-bottom: 1px solid rgba(0,0,0,0.05); }
+
+        .legal-content h1 { font-size: 3.5rem; font-weight: 900; margin-bottom: 3rem; letter-spacing: -0.05em; line-height: 1; }
+        .legal-content h2 { font-size: 1.8rem; font-weight: 700; margin-top: 4rem; margin-bottom: 1.5rem; color: #00A7F9; }
+        .legal-content h3 { font-size: 1.25rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 0.75rem; }
+        .legal-content p { font-size: 1.125rem; line-height: 1.7; margin-bottom: 1.5rem; font-weight: 300; }
+        .legal-content ul, .legal-content ol { margin-bottom: 2rem; padding-left: 2rem; }
+        .legal-content li { margin-bottom: 0.75rem; font-size: 1.125rem; font-weight: 300; }
+        .legal-content a { color: #00A7F9; font-weight: 700; text-decoration: none; }
+        .legal-content a:hover { text-decoration: underline; }
+        .legal-content hr { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 4rem 0; }
+        .legal-body:not(.dark) .legal-content hr { border-top: 1px solid rgba(0,0,0,0.1); }
+    </style>
 </head>
-<body class="antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white transition-colors duration-500">
+<body class="legal-body antialiased" :class="{ 'dark': darkMode }">
     
-    <nav class="fixed top-0 w-full z-50 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-8 h-24 flex items-center justify-between">
-            <a href="/" class="hover:opacity-80 transition-all hover:scale-105 active:scale-95 flex items-center">
-                <!-- Reacts exactly like landing page -->
-                <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" 
-                     alt="APIs Hub" class="h-8 md:h-10" 
-                     :class="darkMode ? 'hidden' : 'block'">
-                <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}" 
-                     alt="APIs Hub" class="h-8 md:h-10" 
-                     :class="darkMode ? 'block' : 'hidden'">
-            </a>
-            
-            <div class="flex items-center gap-8">
-                <!-- Theme Toggle -->
-                <button @click="darkMode = !darkMode" class="p-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md transition-all hover:shadow-glow">
-                    <template x-if="darkMode">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </template>
-                    <template x-if="!darkMode">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                    </template>
-                </button>
-                <a href="/" class="text-sm font-bold tracking-wider text-slate-500 hover:text-brand-blue transition-colors uppercase underline-offset-8 hover:underline">
-                    Back to Home
-                </a>
-            </div>
+    <nav class="legal-header">
+        <a href="/" style="transition: all 0.3s ease; display: inline-block;">
+            <img src="{{ asset('images/branding/apishub-trans-620.webp') }}" alt="APIs Hub" style="height: 40px;" :style="darkMode ? 'display:none' : 'display:block'">
+            <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}" alt="APIs Hub" style="height: 40px;" :style="darkMode ? 'display:block' : 'display:none'">
+        </a>
+        
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <button @click="darkMode = !darkMode" style="background: rgba(128,128,128,0.1); border: 1px solid rgba(128,128,128,0.2); padding: 10px; border-radius: 50%; cursor: pointer;">
+                <span x-show="darkMode">☀️</span>
+                <span x-show="!darkMode">🌙</span>
+            </button>
+            <a href="/" style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: inherit; text-decoration: none;">Back to Home</a>
         </div>
     </nav>
 
-    <main class="relative pt-40 pb-32 px-8">
-        <div class="max-w-4xl mx-auto
-            [&>h1]:text-5xl [&>h1]:md:text-6xl [&>h1]:font-black [&>h1]:mb-12 [&>h1]:text-slate-900 [&>h1]:dark:text-white [&>h1]:tracking-tighter
-            [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-16 [&>h2]:mb-6 [&>h2]:text-brand-blue
-            [&>h3]:text-xl [&>h3]:font-bold [&>h3]:mt-10 [&>h3]:mb-3 [&>h3]:text-slate-800 [&>h3]:dark:text-slate-200
-            [&>p]:text-lg [&>p]:text-slate-600 [&>p]:dark:text-slate-400 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:font-light
-            [&>ul]:list-disc [&>ul]:ml-8 [&>ul]:mb-8 [&>ul]:text-slate-600 [&>ul]:dark:text-slate-400 [&>ul]:space-y-3 [&>ul]:text-lg
-            [&>ol]:list-decimal [&>ol]:ml-8 [&>ol]:mb-8 [&>ol]:text-slate-600 [&>ol]:dark:text-slate-400 [&>ol]:space-y-3 [&>ol]:text-lg
-            [&>a]:text-brand-blue [&>a]:font-bold [&>a]:hover:underline
-            [&>hr]:border-slate-200 [&>hr]:dark:border-slate-800 [&>hr]:my-16">
+    <main class="legal-main">
+        <div class="legal-content" style="max-width: 900px; margin: 0 auto;">
             @yield('content')
         </div>
     </main>
 
-    <!-- Correct Footer: Faithful to Landing -->
-    <footer class="border-t border-slate-100 dark:border-white/5 py-12 px-8 bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm">
-        <div class="max-w-7xl mx-auto flex flex-col items-center gap-6 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500">
-            <!-- Explicit spacing to avoid crowding -->
-            <div class="flex flex-wrap justify-center items-center gap-10">
-                <a href="/privacy" class="hover:text-brand-blue transition-colors py-2 px-1">Privacy</a>
-                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
-                <a href="/tos" class="hover:text-brand-blue transition-colors py-2 px-1">Terms</a>
-                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
-                <a href="/data-deletion" class="hover:text-brand-blue transition-colors py-2 px-1">Data Deletion</a>
-            </div>
-            <div class="opacity-80">
-                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="hover:text-brand-blue transition-colors">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
-            </div>
+    <footer class="legal-footer">
+        <!-- Footer Links: OLD SCHOOL FLEX - NO FAIL -->
+        <div class="footer-links">
+            <a href="/privacy" class="footer-link" style="color: inherit; opacity: 0.6;">Privacy</a>
+            <span class="footer-dot" style="background: #00A7F9;"></span>
+            <a href="/tos" class="footer-link" style="color: inherit; opacity: 0.6;">Terms</a>
+            <span class="footer-dot" style="background: #00CAC4;"></span>
+            <a href="/data-deletion" class="footer-link" style="color: inherit; opacity: 0.6;">Data Deletion</a>
+        </div>
+        <div style="font-size: 10px; letter-spacing: 0.2em; font-weight: bold; opacity: 0.5; color: inherit;">
+            ENGINEERED BY <a href="https://anibalalvarez.com" target="_blank" style="color: #00A7F9; text-decoration: none;">ANÍBAL ÁLVAREZ</a> FOR THE APIS HUB NETWORK. (V1.0)
         </div>
     </footer>
-
-    <div class="hero-mesh opacity-30 dark:opacity-20"></div>
 </body>
 </html>

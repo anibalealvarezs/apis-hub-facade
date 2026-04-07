@@ -143,17 +143,17 @@
 
         </main>
 
-        <!-- Dynamic Footer / Micro Branding -->
+        <!-- Dynamic Footer / Micro Branding: CERO FAIL VERSION -->
         <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
-            <div class="flex flex-wrap justify-center items-center gap-10 opacity-70 hover:opacity-100 transition-opacity">
-                <a href="/privacy" class="pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
-                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
-                <a href="/tos" class="pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
-                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
-                <a href="/data-deletion" class="pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
+            <div style="display: flex; align-items: center; justify-content: center; opacity: 0.7;">
+                <a href="/privacy" class="pointer-events-auto" style="margin: 0 1rem; color: inherit; text-decoration: none;">Privacy</a>
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: #00A7F9;"></span>
+                <a href="/tos" class="pointer-events-auto" style="margin: 0 1rem; color: inherit; text-decoration: none;">Terms</a>
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: #00CAC4;"></span>
+                <a href="/data-deletion" class="pointer-events-auto" style="margin: 0 1rem; color: inherit; text-decoration: none;">Data Deletion</a>
             </div>
             <div class="opacity-80">
-                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
+                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto" style="color: #00A7F9; text-decoration: none;">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
             </div>
         </div>
         
