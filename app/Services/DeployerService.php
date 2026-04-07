@@ -15,11 +15,11 @@ class DeployerService
     public function deploy(Project $project)
     {
         // 0. Ensure unique secure tokens for this instance
-        if (!$project->remote_admin_api_key) {
+        if (! $project->remote_admin_api_key) {
             $project->remote_admin_api_key = bin2hex(random_bytes(32));
         }
-        
-        if (!$project->monitoring_token) {
+
+        if (! $project->monitoring_token) {
             $project->monitoring_token = (string) \Illuminate\Support\Str::uuid();
         }
 
@@ -29,7 +29,7 @@ class DeployerService
 
         $server = $project->server;
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        
+
         Log::info("Starting deployment for {$project->name} on {$server->ip_address}");
 
         // 1. Prepare Directory & Clone
@@ -51,7 +51,7 @@ class DeployerService
         $caddyVhostPath = "{$caddyVhostDir}/{$project->subdomain}.caddy";
         $caddyHost = "{$project->subdomain}.apis-hub.cloud";
         $containerName = "apis-hub-{$project->subdomain}-master"; // Con sufijo -master definido en docker-compose
-        
+
         $caddyConfig = "{$caddyHost} {
     reverse_proxy {$containerName}:8080
 }";
@@ -113,12 +113,12 @@ EOT;
     protected function runSshCommands(Server $server, array $commands)
     {
         $allCommands = implode(" && ", $commands);
-        
+
         // 1. Escribir la clave SSH privada en un archivo temporal seguro
         $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
         file_put_contents($tmpKeyPath, $server->ssh_private_key . "\n");
         chmod($tmpKeyPath, 0600); // Requisito estricto de SSH para llaves privadas
-        
+
         try {
             // 2. Ejecutar con la identity explicitamente - Aumentamos timeout a 600s (10 min)
             $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"";
@@ -126,6 +126,7 @@ EOT;
 
             if ($result->failed()) {
                 Log::error("Deployment failed: " . $result->errorOutput());
+
                 return ['status' => 'error', 'output' => $result->errorOutput()];
             }
 
@@ -145,7 +146,7 @@ EOT;
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         $commands = ["cd {$path} && docker compose up -d"];
-        
+
         return $this->runSshCommands($project->server, $commands);
     }
 
@@ -156,7 +157,7 @@ EOT;
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         $commands = ["cd {$path} && docker compose stop"];
-        
+
         return $this->runSshCommands($project->server, $commands);
     }
 
