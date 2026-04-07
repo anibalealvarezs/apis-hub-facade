@@ -33,11 +33,8 @@ Thumbs.db
 IMPLEMENTATION_PLAN.md
 USER_WORKFLOW.md
 .antigravityrules
-
 .env-dev
-
 .env-prod
-
 docs/signature_troubleshooting.md
 
 # Playwright
@@ -47,7 +44,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
 docker-compose.yml.prod
-
 docker-compose.yml.dev
+facade_demo_key
+facade_demo_key.pub
