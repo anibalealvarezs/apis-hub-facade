@@ -179,4 +179,23 @@ EOT;
 
         return $this->runSshCommands($server, $commands);
     }
+
+    /**
+     * Update environment variables on the remote server and restart containers.
+     */
+    public function updateCredentials(Project $project, array $credentials): array
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $commands = ["cd {$path}"];
+
+        foreach ($credentials as $key => $value) {
+            // Usamos sed para buscar la línea de la variable y reemplazarla, o añadirla si no existe
+            $commands[] = "grep -q '^{$key}=' .env && sed -i 's/^{$key}=.*/{$key}={$value}/' .env || echo '{$key}={$value}' >> .env";
+        }
+
+        // Reiniciamos el contenedor master para que cargue el nuevo .env
+        $commands[] = "docker compose up -d master";
+
+        return $this->runSshCommands($project->server, $commands);
+    }
 }
