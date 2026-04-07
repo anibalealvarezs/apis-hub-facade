@@ -44,13 +44,13 @@ class ProjectInfoWidget extends Widget
         $project = $this->getProject();
 
         if ($project->health_status === 'online') {
-            return 'Online';
+            return 'Server Online';
         }
 
         if ($project->is_active) {
-            return 'Provisioning';
+            return 'Building Server';
         }
 
-        return 'Offline';
+        return 'Server Offline';
     }
 }
