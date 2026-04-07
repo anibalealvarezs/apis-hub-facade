@@ -167,7 +167,7 @@ class SyncSettings extends Page
                     ->schema([
                         TextInput::make('api_url')
                             ->label('API Endpoint')
-                            ->default('https://' . Filament::getTenant()->subdomain . '.' . config('app.network_domain') . '/api')
+                            ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud') . '/api')
                             ->disabled()
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
