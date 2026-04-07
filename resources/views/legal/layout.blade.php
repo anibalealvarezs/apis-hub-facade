@@ -51,7 +51,7 @@
     </main>
 
     <!-- Static Footer -->
-    <footer class="py-12 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm">
+    <footer class="py-12 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none legal-footer">
         <div class="flex items-center justify-center opacity-70">
             <a href="/privacy" class="mx-6 hover:text-brand-blue transition-colors">Privacy</a>
             <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>

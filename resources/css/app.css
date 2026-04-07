@@ -137,3 +137,12 @@ body {
     @apply border-white/5;
     background-color: rgba(2, 6, 23, 0.8); /* Exactly Slate-950 at 80% opacity */
  }
+ 
+ /* Stable Transparent Footer Navigation */
+ .legal-footer {
+    @apply bg-white/80 backdrop-blur-xl border-t border-slate-100;
+ }
+ .dark .legal-footer {
+    @apply border-white/5;
+    background-color: rgba(2, 6, 23, 0.8); /* Exactly Slate-950 at 80% opacity */
+ }
