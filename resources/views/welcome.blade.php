@@ -144,10 +144,12 @@
         </main>
 
         <!-- Dynamic Footer / Micro Branding -->
-        <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none">
-            <div class="flex space-x-12 opacity-60 hover:opacity-100 transition-opacity mb-4">
+        <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
+            <div class="flex flex-wrap justify-center items-center gap-10 opacity-70 hover:opacity-100 transition-opacity">
                 <a href="/privacy" class="pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
+                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
                 <a href="/tos" class="pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
+                <span class="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
                 <a href="/data-deletion" class="pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
             </div>
             <div class="opacity-80">
