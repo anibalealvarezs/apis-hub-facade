@@ -429,6 +429,7 @@ class ProjectResource extends Resource
     {
         return [
             \App\Filament\Resources\ProjectResource\RelationManagers\DeploymentLogsRelationManager::class,
+            \App\Filament\Resources\ProjectResource\RelationManagers\StatusLogsRelationManager::class,
         ];
     }
 

@@ -50,10 +50,10 @@ class DeployerService
         $caddyVhostDir = "/var/www/apis-hub/caddy_vhosts";
         $caddyVhostPath = "{$caddyVhostDir}/{$project->subdomain}.caddy";
         $caddyHost = "{$project->subdomain}.apis-hub.cloud";
-        $containerName = "apis-hub-{$project->subdomain}"; // Corresponds to DEPLOYMENT_NAME in .env
+        $containerName = "apis-hub-{$project->subdomain}-master"; // Con sufijo -master definido en docker-compose
         
         $caddyConfig = "{$caddyHost} {
-    reverse_proxy {$containerName}:80
+    reverse_proxy {$containerName}:8080
 }";
         $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
 
