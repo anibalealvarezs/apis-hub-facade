@@ -81,6 +81,8 @@ DEPLOYMENT_NAME=apis-hub-{$project->subdomain}
 
 # Database (Instance specific)
 DB_DRIVER=pdo_pgsql
+DB_HOST=db
+DB_PORT=5432
 DB_NAME={$dbName}
 DB_USER={$dbUser}
 DB_PASSWORD={$dbPass}

@@ -225,7 +225,7 @@ class SyncSettings extends Page
             ->statePath('data');
     }
 
-    public function save(RemoteEngineService $service): void
+    public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
     {
         $tenant = Filament::getTenant();
         $this->validate();
@@ -246,6 +246,8 @@ class SyncSettings extends Page
         // Push credentials to remote Hub node (Phase 2 & 3 Integration)
         // These master credentials are fixed in the Facade config and pushed to nodes.
         $pushData = [
+            'DB_HOST' => 'db',
+            'DB_PORT' => '5432',
             'FACEBOOK_APP_ID' => config('services.facebook.client_id'),
             'FACEBOOK_APP_SECRET' => config('services.facebook.client_secret'),
             'GOOGLE_CLIENT_ID' => config('services.google.client_id'),
@@ -256,7 +258,7 @@ class SyncSettings extends Page
             'MONITOR_FACADE_URL' => config('app.url') . '/api/heartbeat',
         ];
 
-        $response = $service->updateCredentials($tenant, $pushData);
+        $response = $deployer->updateCredentials($tenant, $pushData);
 
         if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
             Notification::make()
