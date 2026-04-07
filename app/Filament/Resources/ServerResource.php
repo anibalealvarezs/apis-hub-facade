@@ -51,9 +51,7 @@ class ServerResource extends Resource
                             ->maxLength(255)
                             ->default('root'),
                         Forms\Components\Textarea::make('ssh_private_key')
-                            ->required()
-                            ->password()
-                            ->revealable()
+                            ->required(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
                             ->dehydrated(fn ($state) => filled($state))
                             ->columnSpanFull(),
                     ])->columns(3),
