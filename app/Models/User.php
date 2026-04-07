@@ -109,18 +109,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         // Encola correo de verificación para el cliente
         $this->notify(new \App\Notifications\QueuedVerifyEmail());
 
-        // Encola notificación al administrador por la misma vía probada
-        try {
-            $name = $this->name ?? 'Nuevo Registrado';
-            $email = $this->email ?? 'Sin Correo';
-            
-            $admins = self::where('is_admin', true)->where('is_active', true)->get();
+        // Enrola notificación al administrador por la misma vía probada, liberada del try-catch de silenciamiento
+        $name = $this->name ?? 'Nuevo Registrado';
+        $email = $this->email ?? 'Sin Correo';
+        
+        $admins = \App\Models\User::where('is_admin', true)->where('is_active', true)->get();
 
-            foreach ($admins as $admin) {
-                \Illuminate\Support\Facades\Mail::to($admin->email)
-                    ->queue(new \App\Mail\AdminRegistrationAlert($name, $email));
-            }
-        } catch (\Throwable $e) { }
+        foreach ($admins as $admin) {
+            \Illuminate\Support\Facades\Mail::to($admin->email)
+                ->queue(new \App\Mail\AdminRegistrationAlert($name, $email));
+        }
     }
 
     /**
