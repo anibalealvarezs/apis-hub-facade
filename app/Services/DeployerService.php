@@ -55,7 +55,7 @@ class DeployerService
         $caddyConfig = "{$caddyHost} {
     reverse_proxy {$containerName}:8080
 }";
-        $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
+        $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
 
         return $this->runSshCommands($server, $commands);
     }
