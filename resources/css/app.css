@@ -111,13 +111,19 @@ body {
  
  /* Full Fidelity Legal Containers */
  .legal-document h1 { 
-    @apply text-6xl md:text-8xl font-black mb-16 tracking-tighter text-slate-950 dark:text-white uppercase;
+    @apply text-6xl md:text-8xl font-black mb-16 tracking-tighter uppercase text-slate-950;
+ }
+ .dark .legal-document h1 { 
+    @apply text-white;
  }
  .legal-document h2 { 
     @apply text-3xl font-extrabold mt-16 mb-8 text-brand-blue tracking-tight;
  }
  .legal-document p, .legal-document li { 
-    @apply text-xl leading-relaxed text-slate-800 dark:text-slate-400 font-light mb-8;
+    @apply text-xl leading-relaxed font-light mb-8 text-slate-800;
+ }
+ .dark .legal-document p, .dark .legal-document li { 
+    @apply text-slate-400;
  }
  .legal-document hr { 
     @apply border-slate-200 dark:border-white/5 my-16;
