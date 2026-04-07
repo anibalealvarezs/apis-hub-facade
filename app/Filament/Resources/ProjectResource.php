@@ -317,7 +317,7 @@ class ProjectResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ProjectResource\RelationManagers\DeploymentLogsRelationManager::class,
+            \App\Filament\Resources\ProjectResource\RelationManagers\DeploymentLogsRelationManager::class,
         ];
     }
 

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProjectDeploymentLog extends Model
 {
+    protected $table = 'project_deployment_logs';
+
     protected $fillable = [
         'project_id',
         'status',

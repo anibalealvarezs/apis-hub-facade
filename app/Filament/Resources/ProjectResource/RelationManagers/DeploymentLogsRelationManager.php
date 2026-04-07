@@ -36,10 +36,11 @@ class DeploymentLogsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn ($state): string => match ($state) {
                         'success' => 'success',
                         'failed' => 'danger',
                         'running' => 'warning',
+                        'pending' => 'gray',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('started_at')
