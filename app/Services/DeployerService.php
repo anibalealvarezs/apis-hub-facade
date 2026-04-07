@@ -86,7 +86,7 @@ DB_USER={$dbUser}
 DB_PASSWORD={$dbPass}
 
 # Security & API
-APP_API_KEY={$project->remote_app_api_key}
+APP_API_KEY={$project->public_api_key}
 ADMIN_API_KEY={$project->remote_admin_api_key}
 
 # Channel Credentials (Master Apps + User Tokens)

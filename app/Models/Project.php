@@ -97,6 +97,8 @@ class Project extends Model
         parent::boot();
         static::creating(function ($project) {
             $project->monitoring_token = \Illuminate\Support\Str::uuid();
+            $project->public_api_key = bin2hex(random_bytes(32));
+            $project->remote_admin_api_key = bin2hex(random_bytes(32));
         });
     }
 
