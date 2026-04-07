@@ -228,26 +228,19 @@ class ProjectResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('deploy')
-                    ->label('Full SSH Deploy')
+                    ->label('Force Async Deploy')
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalDescription('This will perform a full SSH-based deployment on the remote server. Continue?')
-                    ->action(function (Project $record, DeployerService $deployer) {
-                        $result = $deployer->deploy($record);
+                    ->modalDescription('This will dispatch a background SSH-based deployment job for the remote server. You can monitor the progress in the Edit view below. Continue?')
+                    ->action(function (Project $record) {
+                        \App\Jobs\DeployProjectJob::dispatch($record);
                         
-                        if (($result['status'] ?? '') === 'success') {
-                            Notification::make()
-                                ->title('Deployment Successful')
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Deployment Failed')
-                                ->body($result['output'] ?? 'Unknown error')
-                                ->danger()
-                                ->send();
-                        }
+                        Notification::make()
+                            ->title('Deployment Job Queued')
+                            ->body('You can check the logs inside the Project edit page to see the progress.')
+                            ->success()
+                            ->send();
                     }),
 
                 Tables\Actions\Action::make('rotateApiKey')
