@@ -28,20 +28,13 @@ class AppServiceProvider extends ServiceProvider
 
         // ─── Listener para el evento de REGISTRO DE FILAMENT ───
         // Filament dispara Filament\Events\Auth\Registered (NO Illuminate\Auth\Events\Registered)
+        // NOTA: Este listener se ejecuta ANTES de Filament::auth()->login(), por lo que
+        // NO se debe manipular la sesión aquí (ej. Notification::send()). Filament ya
+        // muestra su propia página de verificación de email tras el registro.
         \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, function (\Filament\Events\Auth\Registered $event) {
             $user = $event->getUser();
 
-            // 1. Notificación visual al usuario en pantalla
-            try {
-                \Filament\Notifications\Notification::make()
-                    ->title('Check your email inbox')
-                    ->body('We have sent a verification link to your email to complete your registration.')
-                    ->persistent()
-                    ->info()
-                    ->send();
-            } catch (\Throwable $e) {}
-
-            // 2. Correo al admin(s) via queue (fire-and-forget, no bloquea el response)
+            // Correo al admin(s) via queue (fire-and-forget, no bloquea el response)
             try {
                 $adminEmails = \App\Models\User::where('is_admin', true)
                     ->pluck('email')

@@ -121,14 +121,11 @@
     </style>
 </head>
 <body>
-    @php
-        /** @var \Illuminate\Mail\Message $message */
-    @endphp
     <div class="wrapper">
         <div class="container">
             <div class="header-bar"></div>
             <div class="header">
-                <img src="{{ $message->embed(public_path('images/branding/apishub-trans-620.png')) }}" alt="APIs Hub" height="48" style="display: block; border: 0;">
+                <img src="{{ config('app.url') }}/images/branding/apishub-trans-620.png" alt="APIs Hub" height="48" style="display: block; border: 0;">
             </div>
             <div class="content">
                 <div class="badge">🚨 Admin Alert</div>
