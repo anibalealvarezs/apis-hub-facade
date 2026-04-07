@@ -24,3 +24,8 @@ Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
+
+// Legal Documents
+Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos');
+Route::get('/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion');
