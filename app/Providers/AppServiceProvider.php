@@ -26,6 +26,17 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\Blade::component('oauth-buttons', \App\View\Components\OAuthButtons::class);
 
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function (\Illuminate\Auth\Events\Registered $event) {
+            try {
+                \Filament\Notifications\Notification::make()
+                    ->title('Check your email inbox')
+                    ->body('We have sent a verification link to your email to complete your registration.')
+                    ->persistent()
+                    ->info()
+                    ->send();
+            } catch (\Throwable $e) {}
+        });
+
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Verified::class, function (\Illuminate\Auth\Events\Verified $event) {
