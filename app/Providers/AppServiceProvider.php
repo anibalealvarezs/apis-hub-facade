@@ -54,11 +54,15 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
 
+        // ─── Notificación visual tras verificación de email ───
+        // Se dispara cuando el usuario hace click en el link de verificación.
+        // Usa session push para que Filament la muestre en la página de login.
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Verified::class, function (\Illuminate\Auth\Events\Verified $event) {
             \Filament\Notifications\Notification::make()
-                ->title('Email address verified')
-                ->body('Welcome to APIs Hub! Your email has been successfully verified.')
+                ->title('✅ Email verified successfully')
+                ->body('Your email has been confirmed. You can now log in to APIs Hub.')
                 ->success()
+                ->persistent()
                 ->send();
         });
     }
