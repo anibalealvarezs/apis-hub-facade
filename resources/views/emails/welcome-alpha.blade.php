@@ -104,6 +104,9 @@
     </style>
 </head>
 <body>
+    @php
+        /** @var \Illuminate\Mail\Message $message */
+    @endphp
     <div class="wrapper">
         <div class="container">
             <div class="header-bar"></div>
