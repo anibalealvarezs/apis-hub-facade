@@ -184,9 +184,11 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('server.name')
                     ->label('Target Server')
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
-                    ->label('Status'),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'danger')
+                    ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
                 Tables\Columns\TextColumn::make('last_deployed_at')
                     ->dateTime()
                     ->sortable()
@@ -197,7 +199,59 @@ class ProjectResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('toggleActive')
+                    ->label(fn (Project $record) => $record->is_active ? 'Suspend' : 'Activate')
+                    ->icon(fn (Project $record) => $record->is_active ? 'heroicon-o-pause-circle' : 'heroicon-o-play-circle')
+                    ->color(fn (Project $record) => $record->is_active ? 'danger' : 'success')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Project $record) => $record->is_active ? 'Suspend Infrastructure?' : 'Resume Infrastructure?')
+                    ->modalDescription(fn (Project $record) => $record->is_active 
+                        ? 'This will stop all Docker containers and synchronization jobs for this instance on the remote server.'
+                        : 'This will restart the containers on the server and resume sync jobs.')
+                    ->disabled(fn (Project $record) => $record->health_status === 'provisioning')
+                    ->action(function (Project $record, DeployerService $deployer) {
+                        $newStatus = !$record->is_active;
+                        
+                        // 1. SSH Command
+                        if ($newStatus) {
+                            $deployer->startContainers($record);
+                        } else {
+                            $deployer->stopContainers($record);
+                        }
+
+                        // 2. Update DB
+                        $record->update(['is_active' => $newStatus]);
+
+                        // 3. Log into History
+                        \App\Models\ProjectStatusLog::create([
+                            'project_id' => $record->id,
+                            'is_active' => $newStatus,
+                            'event_type' => 'manual_toggle',
+                            'created_by_id' => Auth::id(),
+                            'notes' => $newStatus ? 'Project resumed manually' : 'Project suspended manually',
+                        ]);
+
+                        Notification::make()
+                            ->title($newStatus ? 'Infrastructure Online' : 'Infrastructure Suspended')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\RestoreAction::make()
+                    ->modalHeading('Restore Project & Resume Infra')
+                    ->before(function (Project $record, DeployerService $deployer) {
+                        // 1. Resume containers
+                        $deployer->startContainers($record);
+                        
+                        // 2. Log into History
+                        \App\Models\ProjectStatusLog::create([
+                            'project_id' => $record->id,
+                            'is_active' => true,
+                            'event_type' => 'restore',
+                            'created_by_id' => Auth::id(),
+                            'notes' => 'Project restored from archive',
+                        ]);
+                    }),
                 Tables\Actions\Action::make('checkNodeStatus')
                     ->label('Check Engine')
                     ->icon('heroicon-o-shield-check')
@@ -270,10 +324,22 @@ class ProjectResource extends Resource
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Permanent Infrastructure & Project Removal')
-                    ->modalDescription('This will PERMANENTLY remove all server containers, volumes, and project files, then delete from database. This cannot be undone. Continue?')
-                    ->action(function (Project $record, DeployerService $deployer) {
-                        // 1. SSH into server and clean up
+                    ->modalHeading(fn (Project $record) => "Permanently Delete Project: {$record->subdomain}")
+                    ->modalDescription(fn (Project $record) => "This will PERMANENTLY destroy all data, containers and configurations for '{$record->name}'. This action is IRREVERSIBLE.")
+                    ->form([
+                        Forms\Components\TextInput::make('confirm_subdomain')
+                            ->label(fn (Project $record) => "Please type '{$record->subdomain}' to confirm.")
+                            ->required()
+                            ->rules([
+                                fn (Project $record) => function (string $attribute, $value, $fail) use ($record) {
+                                    if ($value !== $record->subdomain) {
+                                        $fail("The subdomain you typed does not match.");
+                                    }
+                                },
+                            ]),
+                    ])
+                    ->action(function (Project $record, DeployerService $deployer, array $data) {
+                        // 1. SSH into server and clean up (Containers, files and Caddy)
                         $result = $deployer->removeInstance($record);
                         
                         if ($result['status'] === 'success') {
@@ -297,12 +363,25 @@ class ProjectResource extends Resource
 
                 Tables\Actions\DeleteAction::make()
                     ->label('Archive Project')
-                    ->successNotificationTitle('Project archived (Soft deleted)'),
+                    ->modalHeading('Archive Project & Stop Infra')
+                    ->modalDescription('Archiving will hide the project from the tenant view and STOP its infrastructure on the server. Data will be kept.')
+                    ->before(function (Project $record, DeployerService $deployer) {
+                        // 1. Stop containers before archiving
+                        $deployer->stopContainers($record);
+                        
+                        // 2. Log into History
+                        \App\Models\ProjectStatusLog::create([
+                            'project_id' => $record->id,
+                            'is_active' => false,
+                            'event_type' => 'archive',
+                            'created_by_id' => Auth::id(),
+                            'notes' => 'Project archived (Soft deleted)',
+                        ]);
+                    })
+                    ->successNotificationTitle('Project archived and infrastructure stopped'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Deshabilitado el borrado masivo por seguridad (Instrucción #1)
             ]);
     }
 

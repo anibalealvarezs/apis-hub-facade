@@ -136,19 +136,44 @@ EOT;
     }
 
     /**
+     * Start the containers for a project (resume).
+     */
+    public function startContainers(Project $project)
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $commands = ["cd {$path} && docker-compose up -d"];
+        
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
+     * Stop the containers for a project (pause).
+     */
+    public function stopContainers(Project $project)
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $commands = ["cd {$path} && docker-compose stop"];
+        
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
      * Fully remove a project's infrastructure from the server.
      */
     public function removeInstance(Project $project)
     {
         $server = $project->server;
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $caddyVhostPath = "/etc/caddy/vhosts/{$project->subdomain}.caddy";
 
         Log::info("Starting infrastructure removal for project '{$project->name}' (subdomain: {$project->subdomain}) on server {$server->ip_address}");
 
         $commands = [
-            "if [ -d {$path} ]; then cd {$path} && docker-compose down -v; fi", // Stop and remove volumes if exists
-            "rm -rf {$path}",                // Finally, remove the project directory
-            "docker container prune -f",      // Clean dangling containers
+            "if [ -d {$path} ]; then cd {$path} && docker-compose down -v; fi",
+            "rm -rf {$path}",
+            "rm -f {$caddyVhostPath}",
+            "caddy reload",
+            "docker container prune -f",
         ];
 
         return $this->runSshCommands($server, $commands);

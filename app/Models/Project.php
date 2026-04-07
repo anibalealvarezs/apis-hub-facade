@@ -74,6 +74,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Historical status changes (activations/suspensions).
+     */
+    public function statusLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectStatusLog::class);
+    }
+
+    /**
      * Relationship: Multiple users can have access to a single project instance.
      */
     public function users(): BelongsToMany
