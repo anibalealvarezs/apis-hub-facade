@@ -108,3 +108,17 @@ body {
 .prose a { @apply no-underline hover:underline decoration-brand-blue hover:text-brand-blue transition-colors; }
 .prose p { @apply font-light leading-relaxed mb-6; }
 .prose li { @apply mb-3; }
+ 
+ /* Full Fidelity Legal Containers */
+ .legal-document h1 { 
+    @apply text-6xl md:text-8xl font-black mb-16 tracking-tighter text-slate-950 dark:text-white uppercase;
+ }
+ .legal-document h2 { 
+    @apply text-3xl font-extrabold mt-16 mb-8 text-brand-blue tracking-tight;
+ }
+ .legal-document p, .legal-document li { 
+    @apply text-xl leading-relaxed text-slate-800 dark:text-slate-400 font-light mb-8;
+ }
+ .legal-document hr { 
+    @apply border-slate-200 dark:border-white/5 my-16;
+ }
