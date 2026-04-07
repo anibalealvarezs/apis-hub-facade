@@ -196,7 +196,10 @@ EOT;
         }
 
         // Reiniciamos el contenedor master para que cargue el nuevo .env
-        $commands[] = "docker compose up -d master";
+        // Regeneramos el manifiesto con la configuración dinámica
+        $commands[] = "docker run --rm -v \$(pwd):/app -e \"ENV_FILE=.env\" --env-file .env -w /app php:8.3-cli php bin/build-deployment.php";
+        // Levantamos todos los contenedores necesarios (incluyendo db si faltaba)
+        $commands[] = "docker compose up -d --remove-orphans";
 
         return $this->runSshCommands($project->server, $commands);
     }
