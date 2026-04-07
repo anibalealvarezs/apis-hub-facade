@@ -191,9 +191,9 @@ EOT;
         $commands = ["cd {$path}"];
 
         foreach ($credentials as $key => $value) {
-            // Usamos sed para buscar la línea de la variable y reemplazarla, o añadirla si no existe
-            // Usamos '|' como delimitador para permitir URLs con barras
-            $commands[] = "grep -q '^{$key}=' .env && sed -i 's|^{$key}=.*|{$key}={$value}|' .env || echo '{$key}={$value}' >> .env";
+            // Método ultra-robusto: Filtramos la variable si existe y la añadimos de nuevo.
+            // Esto evita problemas de delimitadores (sed) con URLs y caracteres especiales.
+            $commands[] = "(grep -v '^{$key}=' .env > .env.tmp 2>/dev/null || true) && mv .env.tmp .env && echo '{$key}={$value}' >> .env";
         }
 
         // Reiniciamos el contenedor master para que cargue el nuevo .env
