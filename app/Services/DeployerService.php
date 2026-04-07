@@ -47,14 +47,15 @@ class DeployerService
         $commands[] = "cd {$path} && sh bin/full-deploy.sh";
 
         // 4. Register in Caddy (Reverse Proxy for the specific container)
-        $caddyVhostPath = "/etc/caddy/vhosts/{$project->subdomain}.caddy";
+        $caddyVhostDir = "/var/www/apis-hub/caddy_vhosts";
+        $caddyVhostPath = "{$caddyVhostDir}/{$project->subdomain}.caddy";
         $caddyHost = "{$project->subdomain}.apis-hub.cloud";
         $containerName = "apis-hub-{$project->subdomain}"; // Corresponds to DEPLOYMENT_NAME in .env
         
         $caddyConfig = "{$caddyHost} {
     reverse_proxy {$containerName}:80
 }";
-        $commands[] = "echo '{$caddyConfig}' > {$caddyVhostPath} && caddy reload";
+        $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
 
         return $this->runSshCommands($server, $commands);
     }
@@ -164,7 +165,7 @@ EOT;
     {
         $server = $project->server;
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $caddyVhostPath = "/etc/caddy/vhosts/{$project->subdomain}.caddy";
+        $caddyVhostPath = "/var/www/apis-hub/caddy_vhosts/{$project->subdomain}.caddy";
 
         Log::info("Starting infrastructure removal for project '{$project->name}' (subdomain: {$project->subdomain}) on server {$server->ip_address}");
 
@@ -172,7 +173,7 @@ EOT;
             "if [ -d {$path} ]; then cd {$path} && docker-compose down -v; fi",
             "rm -rf {$path}",
             "rm -f {$caddyVhostPath}",
-            "caddy reload",
+            "cd /root/n8n-docker-caddy && docker-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
             "docker container prune -f",
         ];
 
