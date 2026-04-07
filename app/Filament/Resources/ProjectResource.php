@@ -209,17 +209,25 @@ class ProjectResource extends Resource
                         ? 'This will stop all Docker containers and synchronization jobs for this instance on the remote server.'
                         : 'This will restart the containers on the server and resume sync jobs.')
                     ->disabled(fn (Project $record) => $record->health_status === 'provisioning')
-                    ->action(function (Project $record, DeployerService $deployer) {
+                    ->action(function (Project $record, DeployerService $deployer, Tables\Actions\Action $action) {
                         $newStatus = !$record->is_active;
                         
-                        // 1. SSH Command
-                        if ($newStatus) {
-                            $deployer->startContainers($record);
-                        } else {
-                            $deployer->stopContainers($record);
+                        // 1. SSH Command (Blocking)
+                        $result = $newStatus ? $deployer->startContainers($record) : $deployer->stopContainers($record);
+
+                        if ($result['status'] !== 'success') {
+                             Notification::make()
+                                ->title('Infrastructure Command Failed')
+                                ->body('Could not ' . ($newStatus ? 'start' : 'stop') . ' containers: ' . ($result['output'] ?? 'SSH Error'))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            
+                            $action->halt(); // Cancel DB update
+                            return;
                         }
 
-                        // 2. Update DB
+                        // 2. Update DB ONLY on success
                         $record->update(['is_active' => $newStatus]);
 
                         // 3. Log into History
@@ -239,9 +247,21 @@ class ProjectResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\RestoreAction::make()
                     ->modalHeading('Restore Project & Resume Infra')
-                    ->before(function (Project $record, DeployerService $deployer) {
+                    ->before(function (Project $record, DeployerService $deployer, Tables\Actions\RestoreAction $action) {
                         // 1. Resume containers
-                        $deployer->startContainers($record);
+                        $result = $deployer->startContainers($record);
+
+                        if ($result['status'] !== 'success') {
+                             Notification::make()
+                                ->title('Restoration Aborted')
+                                ->body('Failed to restart containers on server: ' . ($result['output'] ?? 'SSH Error'))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            
+                            $action->halt(); // Cancel Restoration
+                            return;
+                        }
                         
                         // 2. Log into History
                         \App\Models\ProjectStatusLog::create([
@@ -365,9 +385,21 @@ class ProjectResource extends Resource
                     ->label('Archive Project')
                     ->modalHeading('Archive Project & Stop Infra')
                     ->modalDescription('Archiving will hide the project from the tenant view and STOP its infrastructure on the server. Data will be kept.')
-                    ->before(function (Project $record, DeployerService $deployer) {
+                    ->before(function (Project $record, DeployerService $deployer, Tables\Actions\DeleteAction $action) {
                         // 1. Stop containers before archiving
-                        $deployer->stopContainers($record);
+                        $result = $deployer->stopContainers($record);
+
+                        if ($result['status'] !== 'success') {
+                             Notification::make()
+                                ->title('Archive Aborted')
+                                ->body('Failed to stop containers on server: ' . ($result['output'] ?? 'SSH Error'))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            
+                            $action->halt(); // Cancel Deletion
+                            return;
+                        }
                         
                         // 2. Log into History
                         \App\Models\ProjectStatusLog::create([
