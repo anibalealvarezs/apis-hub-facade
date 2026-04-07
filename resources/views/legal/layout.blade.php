@@ -48,12 +48,12 @@
 
     <!-- Main Section -->
     <main class="relative pt-40 pb-20 px-8">
-        <div class="max-w-4xl mx-auto
+        <div class="w-full max-w-4xl mx-auto
             [&>h1]:text-6xl [&>h1]:md:text-8xl [&>h1]:font-extrabold [&>h1]:mb-16 [&>h1]:unicorn-title [&>h1]:tracking-tight
             [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-20 [&>h2]:mb-8 [&>h2]:text-brand-blue
-            [&>p]:text-xl [&>p]:leading-relaxed [&>p]:text-slate-500 [&>p]:dark:text-slate-400 [&>p]:font-light [&>p]:mb-10
-            [&>ul]:list-disc [&>ul]:ml-8 [&>ul]:mb-10 [&>ul]:text-slate-500 [&>ul]:dark:text-slate-400 [&>ul]:font-light [&>ul]:space-y-4
-            [&>ol]:list-decimal [&>ol]:ml-8 [&>ol]:mb-10 [&>ol]:text-slate-500 [&>ol]:dark:text-slate-400 [&>ol]:font-light [&>ol]:space-y-4
+            [&>p]:text-xl [&>p]:leading-relaxed [&>p]:text-slate-800 [&>p]:dark:text-slate-400 [&>p]:font-light [&>p]:mb-10
+            [&>ul]:list-disc [&>ul]:ml-8 [&>ul]:mb-10 [&>ul]:text-slate-800 [&>ul]:dark:text-slate-400 [&>ul]:font-light [&>ul]:space-y-4
+            [&>ol]:list-decimal [&>ol]:ml-8 [&>ol]:mb-10 [&>ol]:text-slate-800 [&>ol]:dark:text-slate-400 [&>ol]:font-light [&>ol]:space-y-4
             [&>hr]:border-slate-200 [&>hr]:dark:border-white/5 [&>hr]:my-16">
             @yield('content')
         </div>
