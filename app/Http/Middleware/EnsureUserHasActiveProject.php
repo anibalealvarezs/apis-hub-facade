@@ -25,39 +25,46 @@ class EnsureUserHasActiveProject
 
         $user = Auth::user();
         
-        // Obtenemos el panel actual (asumiendo que es 'app')
-        $panelId = Filament::getCurrentPanel()?->getId();
+        // 2. Obtenemos el slug de la URL (si existe)
+        // En Filament, el parámetro del tenant suele llamarse 'tenant'
+        $slugFromUrl = $request->route('tenant');
 
-        if ($panelId !== 'app') {
-            return $next($request);
-        }
+        // 3. Verificamos si el slug actual es válido y activo para este usuario
+        // Si ya estamos en un subdominio válido, dejamos pasar el request
+        if ($slugFromUrl) {
+            $currentProjectExists = $user->projects()
+                ->where('subdomain', $slugFromUrl)
+                ->where('is_active', true)
+                ->exists();
 
-        // 2. Intentamos obtener el tenant (proyecto) actual de la URL (si existe)
-        try {
-            $tenant = Filament::getTenant();
-        } catch (\Throwable $e) {
-            $tenant = null;
-        }
-
-        // 3. Si no hay proyecto válido en la URL o el proyecto está en la papelera
-        if (!$tenant) {
-            // Buscamos el primer proyecto activo del usuario
-            $firstProject = $user->projects()->where('is_active', true)->first();
-
-            if ($firstProject) {
-                // Redirigimos al Dashboard del primer proyecto válido
-                return redirect()->route('filament.app.pages.dashboard', ['tenant' => $firstProject->subdomain]);
+            if ($currentProjectExists) {
+                return $next($request);
             }
+        }
 
-            // 4. Si no tiene proyectos activos, lo mandamos a crear uno (si no estamos ya allí)
-            $registrationRoute = 'filament.app.tenant.registration';
-            if ($request->routeIs($registrationRoute)) {
+        // 4. Si llegamos aquí es porque: No hay slug, o el slug es de un proyecto archivado/inexistente.
+        
+        // Buscamos el primer proyecto alternativo que esté activo
+        $alternativeProject = $user->projects()
+            ->where('is_active', true)
+            ->first();
+
+        // 5. Si encontramos uno, lo mandamos allí
+        if ($alternativeProject) {
+             // Evitamos bucles si ya estamos intentando redirigir al mismo lugar
+            if ($slugFromUrl === $alternativeProject->subdomain) {
                 return $next($request);
             }
 
-            return redirect()->route($registrationRoute);
+            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alternativeProject->subdomain]);
         }
 
-        return $next($request);
+        // 6. Si no tiene proyectos activos, lo mandamos a crear uno
+        $registrationRoute = 'filament.app.tenant.registration';
+        if ($request->routeIs($registrationRoute)) {
+            return $next($request);
+        }
+
+        return redirect()->route($registrationRoute);
     }
 }
