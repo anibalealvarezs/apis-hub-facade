@@ -30,6 +30,8 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
+        \Illuminate\Support\Facades\Log::info("💌 [MAILER-AUDIT] El Worker acaba de levantar el Admin Alert para procesarlo con éxito.");
+        
         return new Envelope(
             subject: '🚨 New User Registration: APIs Hub',
         );

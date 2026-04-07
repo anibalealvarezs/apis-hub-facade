@@ -27,26 +27,33 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Blade::component('oauth-buttons', \App\View\Components\OAuthButtons::class);
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function (\Illuminate\Auth\Events\Registered $event) {
-            \Filament\Notifications\Notification::make()
-                ->title('Check your email inbox')
-                ->body('We have sent a verification link to your email to complete your registration.')
-                ->persistent()
-                ->info()
-                ->send();
+            try {
+                \Filament\Notifications\Notification::make()
+                    ->title('Check your email inbox')
+                    ->body('We have sent a verification link to your email to complete your registration.')
+                    ->persistent()
+                    ->info()
+                    ->send();
+            } catch (\Throwable $e) {}
 
-            // Despachamos el correo hacia la Cola (Queue Worker) nativa
+            // Búsqueda dinámica de administradores para envío encolado
             try {
                 $name = $event->user->name ?? 'Nuevo Lead';
                 $email = $event->user->email ?? 'Sin Correo';
                 
-                \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Empujando alerta administrativa a la cola (Jobs table).");
+                \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Localizando administradores activos...");
                 
-                \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
-                    ->send(new \App\Mail\AdminRegistrationAlert($name, $email));
+                $admins = \App\Models\User::where('is_admin', true)
+                                            ->where('is_active', true)
+                                            ->get();
+
+                foreach ($admins as $admin) {
+                    \Illuminate\Support\Facades\Mail::to($admin->email)
+                        ->queue(new \App\Mail\AdminRegistrationAlert($name, $email));
+                }
                     
             } catch (\Throwable $e) {
-                // Silenciado. Las fallas de la cola se verán en jobs_failed
-                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo en encolar correo', ['error' => $e->getMessage()]);
+                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo en encolar', ['error' => $e->getMessage()]);
             }
         });
 
