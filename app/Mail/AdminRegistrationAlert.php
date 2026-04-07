@@ -15,6 +15,7 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
 
     public string $userName;
     public string $userEmail;
+    public string $registeredAt;
 
     /**
      * Create a new message instance.
@@ -23,6 +24,7 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
     {
         $this->userName = $userName;
         $this->userEmail = $userEmail;
+        $this->registeredAt = now()->toDateTimeString();
     }
 
     /**
@@ -30,8 +32,6 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        \Illuminate\Support\Facades\Log::info("💌 [MAILER-AUDIT] El Worker acaba de levantar el Admin Alert para procesarlo con éxito.");
-        
         return new Envelope(
             subject: '🚨 New User Registration: APIs Hub',
         );
@@ -43,18 +43,7 @@ class AdminRegistrationAlert extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            htmlString: "
-            <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
-                <h2 style='color: #00A7F9;'>🚨 APIs Hub Centinela Alert</h2>
-                <p>A new user has just registered on the platform.</p>
-                <div style='background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                    <p><strong>Name:</strong> {$this->userName}</p>
-                    <p><strong>Email:</strong> {$this->userEmail}</p>
-                    <p><strong>Time:</strong> " . now()->toDateTimeString() . "</p>
-                </div>
-                <p style='color: #888; font-size: 12px;'>This is an automated administrative email. Do not reply.</p>
-            </div>
-            "
+            view: 'emails.admin-registration-alert',
         );
     }
 
