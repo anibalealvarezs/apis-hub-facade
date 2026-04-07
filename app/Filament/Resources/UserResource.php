@@ -77,8 +77,8 @@ class UserResource extends Resource
                 Tables\Columns\IconColumn::make('is_online')
                     ->label('Online')
                     ->boolean()
-                    ->state(function (\App\Models\User $record) {
-                        return \Illuminate\Support\Facades\DB::table('sessions')
+                    ->state(function (User $record) {
+                        return DB::table('sessions')
                             ->where('user_id', $record->id)
                             ->where('last_activity', '>', time() - config('session.lifetime', 120) * 60)
                             ->exists();
@@ -87,7 +87,7 @@ class UserResource extends Resource
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->label('Verified')
                     ->boolean()
-                    ->state(fn (\App\Models\User $record) => $record->email_verified_at !== null)
+                    ->state(fn (User $record) => $record->email_verified_at !== null)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -106,15 +106,15 @@ class UserResource extends Resource
                     ->requiresConfirmation()
                     ->action(function (User $record) {
                         $now = now();
-                        
+
                         // Force direct database write
-                        \Illuminate\Support\Facades\DB::table('users')
+                        DB::table('users')
                             ->where('id', $record->getKey())
                             ->update(['logout_at' => $now]);
 
                         \Illuminate\Support\Facades\Log::info('FORCE LOGOUT TRIGGERED', [
                             'user' => $record->email,
-                            'new_logout_at' => $now->toDateTimeString()
+                            'new_logout_at' => $now->toDateTimeString(),
                         ]);
 
                         // Clear native Laravel sessions (if in DB)
@@ -142,7 +142,7 @@ class UserResource extends Resource
                     ->action(function (User $record) {
                         session()->put('impersonator_id', Auth::id());
                         Auth::login($record);
-                        
+
                         return redirect('/app');
                     }),
 

@@ -7,18 +7,20 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
-use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory;
+    use Notifiable;
+    use TwoFactorAuthenticatable;
 
     /**
      * Filament Multi-tenancy: Return the projects owned by this user.
@@ -64,14 +66,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     {
         return $this->belongsToMany(Project::class);
     }
-    
+
     /**
      * Relationship: Legacy owner link (Optional but kept for safety).
      */
-     public function ownedProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
-     {
-         return $this->hasMany(Project::class, 'owner_id');
-     }
+    public function ownedProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -104,7 +106,21 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function sendEmailVerificationNotification()
     {
-        $this->notify(new \App\Notifications\QueuedVerifyEmail);
+        // Encola correo de verificación para el cliente
+        $this->notify(new \App\Notifications\QueuedVerifyEmail());
+
+        // Encola notificación al administrador por la misma vía probada
+        try {
+            $name = $this->name ?? 'Nuevo Registrado';
+            $email = $this->email ?? 'Sin Correo';
+            
+            $admins = self::where('is_admin', true)->where('is_active', true)->get();
+
+            foreach ($admins as $admin) {
+                \Illuminate\Support\Facades\Mail::to($admin->email)
+                    ->queue(new \App\Mail\AdminRegistrationAlert($name, $email));
+            }
+        } catch (\Throwable $e) { }
     }
 
     /**
