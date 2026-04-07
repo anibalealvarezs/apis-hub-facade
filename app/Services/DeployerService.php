@@ -142,7 +142,7 @@ EOT;
     public function startContainers(Project $project)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $commands = ["cd {$path} && docker-compose up -d"];
+        $commands = ["cd {$path} && docker compose up -d"];
         
         return $this->runSshCommands($project->server, $commands);
     }
@@ -153,7 +153,7 @@ EOT;
     public function stopContainers(Project $project)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $commands = ["cd {$path} && docker-compose stop"];
+        $commands = ["cd {$path} && docker compose stop"];
         
         return $this->runSshCommands($project->server, $commands);
     }
@@ -170,10 +170,10 @@ EOT;
         Log::info("Starting infrastructure removal for project '{$project->name}' (subdomain: {$project->subdomain}) on server {$server->ip_address}");
 
         $commands = [
-            "if [ -d {$path} ]; then cd {$path} && docker-compose down -v; fi",
+            "if [ -d {$path} ]; then cd {$path} && docker compose down -v; fi",
             "rm -rf {$path}",
             "rm -f {$caddyVhostPath}",
-            "cd /root/n8n-docker-caddy && docker-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
+            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
             "docker container prune -f",
         ];
 
