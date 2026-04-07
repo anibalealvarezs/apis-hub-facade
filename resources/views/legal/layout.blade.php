@@ -12,7 +12,7 @@
       x-data="themeControl">
     
     <!-- Unified Header Navigation -->
-    <header class="fixed top-0 left-0 w-full z-50 h-24 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 transition-all duration-500">
+    <header class="fixed top-0 left-0 w-full z-50 h-24 px-8 flex items-center justify-between legal-header transition-all duration-500">
         <!-- Logo Left -->
         <a href="/" class="hover:opacity-80 transition-all block">
             <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
