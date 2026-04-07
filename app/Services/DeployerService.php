@@ -192,12 +192,13 @@ EOT;
 
         foreach ($credentials as $key => $value) {
             // Usamos sed para buscar la línea de la variable y reemplazarla, o añadirla si no existe
-            $commands[] = "grep -q '^{$key}=' .env && sed -i 's/^{$key}=.*/{$key}={$value}/' .env || echo '{$key}={$value}' >> .env";
+            // Usamos '|' como delimitador para permitir URLs con barras
+            $commands[] = "grep -q '^{$key}=' .env && sed -i 's|^{$key}=.*|{$key}={$value}|' .env || echo '{$key}={$value}' >> .env";
         }
 
         // Reiniciamos el contenedor master para que cargue el nuevo .env
         // Regeneramos el manifiesto con la configuración dinámica
-        $commands[] = "docker run --rm -v \$(pwd):/app -e \"ENV_FILE=.env\" --env-file .env -w /app php:8.3-cli php bin/build-deployment.php";
+        $commands[] = "docker run --rm -v {$path}:/app -e \"ENV_FILE=.env\" --env-file .env -w /app php:8.3-cli php bin/build-deployment.php";
         // Levantamos todos los contenedores necesarios (incluyendo db si faltaba)
         $commands[] = "docker compose up -d --remove-orphans";
 
