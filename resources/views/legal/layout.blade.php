@@ -46,7 +46,7 @@
     <!-- Main Content Flow -->
     <main class="relative pt-48 pb-32 px-8 flex flex-col items-center">
         <div class="w-full max-w-4xl 
-            [&>h1]:text-6xl [&>h1]:md:text-8xl [&>h1]:font-extrabold [&>h1]:mb-16 [&>h1]:tracking-tight [&>h1]:text-slate-900 [&>h1]:dark:unicorn-title
+            [&>h1]:text-6xl [&>h1]:md:text-8xl [&>h1]:font-extrabold [&>h1]:mb-16 [&>h1]:tracking-tight [&>h1]:text-slate-950 [&>h1]:dark:text-white
             [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-20 [&>h2]:mb-8 [&>h2]:text-brand-blue
             [&>p]:text-xl [&>p]:leading-relaxed [&>p]:text-slate-800 [&>p]:dark:text-slate-400 [&>p]:font-light [&>p]:mb-10
             [&>ul]:list-disc [&>ul]:ml-8 [&>ul]:mb-10 [&>ul]:text-slate-800 [&>ul]:dark:text-slate-400 [&>ul]:font-light [&>ul]:space-y-4
