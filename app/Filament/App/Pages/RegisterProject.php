@@ -86,13 +86,12 @@ class RegisterProject extends RegisterTenant
         $project->users()->attach(Auth::user());
 
         if ($server) {
-            // Trigger actual remote deployment
-            $deployer = app(\App\Services\DeployerService::class);
-            $deployer->deploy($project);
+            // Trigger remote deployment via asynchronous Job
+            \App\Jobs\DeployProjectJob::dispatch($project);
             
             \Filament\Notifications\Notification::make()
-                ->title('Project Created & Deployment Started')
-                ->body('The infrastructure is being provisioned. Please configure your data synchronization settings.')
+                ->title('Project Created & Deployment Queued')
+                ->body('The infrastructure is being provisioned in the background. Please configure your data synchronization settings.')
                 ->success()
                 ->persistent()
                 ->send();

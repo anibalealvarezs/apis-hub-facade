@@ -66,6 +66,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: The deployment logs for this project.
+     */
+    public function deploymentLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectDeploymentLog::class);
+    }
+
+    /**
      * Relationship: Multiple users can have access to a single project instance.
      */
     public function users(): BelongsToMany
