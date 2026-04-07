@@ -26,8 +26,12 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\Blade::component('oauth-buttons', \App\View\Components\OAuthButtons::class);
 
-        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function (\Illuminate\Auth\Events\Registered $event) {
-            // Notificación visual obligatoria que jamás debe caerse
+        // ─── Listener para el evento de REGISTRO DE FILAMENT ───
+        // Filament dispara Filament\Events\Auth\Registered (NO Illuminate\Auth\Events\Registered)
+        \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, function (\Filament\Events\Auth\Registered $event) {
+            $user = $event->getUser();
+
+            // 1. Notificación visual al usuario en pantalla
             try {
                 \Filament\Notifications\Notification::make()
                     ->title('Check your email inbox')
@@ -36,6 +40,23 @@ class AppServiceProvider extends ServiceProvider
                     ->info()
                     ->send();
             } catch (\Throwable $e) {}
+
+            // 2. Correo al admin(s) via queue (fire-and-forget, no bloquea el response)
+            try {
+                $adminEmails = \App\Models\User::where('is_admin', true)
+                    ->pluck('email')
+                    ->all();
+
+                if (!empty($adminEmails)) {
+                    \Illuminate\Support\Facades\Mail::to($adminEmails)
+                        ->queue(new \App\Mail\AdminRegistrationAlert($user->name, $user->email));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to queue admin registration alert', [
+                    'user' => $user->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         });
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
