@@ -11,7 +11,8 @@ use Filament\Notifications\Notification;
 class DataSync extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
-    protected static ?string $navigationLabel = 'Data Sync Status';
+    protected static ?string $navigationLabel = 'Explorers Status';
+    protected static ?string $title = 'Explorers Monitoring';
     protected static string $view = 'filament.app.pages.data-sync';
     protected static ?string $slug = 'data-sync';
 
@@ -42,8 +43,11 @@ class DataSync extends Page
             } else {
                 $this->syncData = [];
                 Notification::make()
-                    ->title('Unable to fetch live sync data')
-                    ->body($response['message'] ?? 'Check connection to the remote node.')
+                    ->title('Explorers status unavailable')
+                    ->body(function() use ($response) {
+                        if (empty($response)) return 'The remote server returned an empty response.';
+                        return $response['message'] ?? $response['error'] ?? 'Node responded with success: false. Data might not be ready yet.';
+                    })
                     ->warning()
                     ->send();
             }
@@ -64,14 +68,16 @@ class DataSync extends Page
                 ->action(fn() => $this->refreshData()),
 
             Action::make('triggerSync')
-                ->label('Run All Jobs')
+                ->label('Run All Explorers')
                 ->icon('heroicon-o-play')
                 ->color('success')
                 ->requiresConfirmation()
+                ->modalHeading('Start All Explorers?')
+                ->modalDescription('This will launch all resting explorers to fetch the latest data from your social platforms.')
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
                     $service->triggerSync($tenant);
-                    Notification::make()->title('Global Sync Triggered')->success()->send();
+                    Notification::make()->title('Explorers are now working')->success()->send();
                     $this->refreshData();
                 }),
         ];
