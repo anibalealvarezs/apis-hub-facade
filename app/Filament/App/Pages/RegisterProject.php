@@ -77,7 +77,7 @@ class RegisterProject extends RegisterTenant
             'server_id' => $server?->id,
             'user_id' => Auth::id(), 
             'git_repo' => 'https://github.com/anibalealvarezs/apis-hub.git', // Default repo
-            'git_branch' => 'master',
+            'git_branch' => 'main',
             'monitoring_token' => (string) \Illuminate\Support\Str::uuid(),
             'remote_admin_api_key' => bin2hex(random_bytes(32)),
             'is_active' => true,
