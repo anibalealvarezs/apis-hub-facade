@@ -117,9 +117,9 @@ EOT;
         chmod($tmpKeyPath, 0600); // Requisito estricto de SSH para llaves privadas
         
         try {
-            // 2. Ejecutar con la identity explicitamente
+            // 2. Ejecutar con la identity explicitamente - Aumentamos timeout a 600s (10 min)
             $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"";
-            $result = Process::run($sshCmd);
+            $result = Process::timeout(600)->run($sshCmd);
 
             if ($result->failed()) {
                 Log::error("Deployment failed: " . $result->errorOutput());
