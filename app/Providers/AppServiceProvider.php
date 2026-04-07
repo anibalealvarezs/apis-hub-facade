@@ -34,19 +34,19 @@ class AppServiceProvider extends ServiceProvider
                 ->info()
                 ->send();
 
-            // Síncrono a prueba de balas: Sin serialización, sin closures fantasmas, sin depender de Octane dispatch
+            // Despachamos el correo hacia la Cola (Queue Worker) nativa
             try {
                 $name = $event->user->name ?? 'Nuevo Lead';
                 $email = $event->user->email ?? 'Sin Correo';
                 
-                \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Disparando alerta síncrona a admin.");
+                \Illuminate\Support\Facades\Log::info("🚀 [ADMIN-ALERT] Empujando alerta administrativa a la cola (Jobs table).");
                 
                 \Illuminate\Support\Facades\Mail::to('anibalealvarezs@gmail.com')
                     ->send(new \App\Mail\AdminRegistrationAlert($name, $email));
                     
             } catch (\Throwable $e) {
-                // Silenciamos cualquier fallo de Mailgun/SES para salvar la pantalla de confirmación
-                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo Mailer', ['error' => $e->getMessage()]);
+                // Silenciado. Las fallas de la cola se verán en jobs_failed
+                \Illuminate\Support\Facades\Log::error('❌ [ADMIN-ALERT] Fallo en encolar correo', ['error' => $e->getMessage()]);
             }
         });
 

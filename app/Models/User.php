@@ -98,4 +98,20 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'is_active' => 'boolean',
         ];
     }
+
+    /**
+     * Force Laravel's native Email Verification into the Job Queue.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\QueuedVerifyEmail);
+    }
+
+    /**
+     * Force Laravel's native Password Reset into the Job Queue.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
 }
