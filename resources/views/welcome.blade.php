@@ -145,7 +145,7 @@
 
         <!-- Dynamic Footer / Micro Branding -->
         <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none">
-            <div class="flex gap-8 opacity-60 hover:opacity-100 transition-opacity">
+            <div class="flex space-x-12 opacity-60 hover:opacity-100 transition-opacity mb-4">
                 <a href="/privacy" class="pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
                 <a href="/tos" class="pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
                 <a href="/data-deletion" class="pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
