@@ -43,7 +43,7 @@ class SyncSettings extends Page
                 }),
 
             Action::make('checkStatus')
-                ->label('Check Node Status')
+                ->label('Verify Server Health')
                 ->icon('heroicon-o-shield-check')
                 ->color('info')
                 ->action(function (RemoteEngineService $service) {
@@ -53,14 +53,14 @@ class SyncSettings extends Page
                     $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
 
                     Notification::make()
-                        ->title($isOnline ? 'Node is Online' : 'Node Offline')
-                        ->body($isOnline ? 'Instance is responding correctly and all services are up.' : 'Could not contact the remote engine.')
+                        ->title($isOnline ? 'Server is Online' : 'Server Unreachable')
+                        ->body($isOnline ? 'Your dedicated server is responding correctly and all services are up.' : 'Could not reach your dedicated server. Please try again in a few minutes.')
                         ->status($isOnline ? 'success' : 'danger')
                         ->send();
                 }),
 
             Action::make('stopJobs')
-                ->label('Stop All Jobs')
+                ->label('Pause All Explorers')
                 ->icon('heroicon-o-stop-circle')
                 ->color('danger')
                 ->requiresConfirmation()
@@ -69,7 +69,7 @@ class SyncSettings extends Page
                     $response = $service->stopJobs($tenant);
                     
                     Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Jobs Stopped' : 'Command Failed')
+                        ->title(($response['status'] ?? '') === 'success' ? 'Explorers are resting' : 'Action Failed')
                         ->body($response['message'] ?? '')
                         ->send();
                 }),
@@ -111,20 +111,23 @@ class SyncSettings extends Page
                                     ->label('FB User Access Token (Manual Override)')
                                     ->password()
                                     ->revealable()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
+                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
+                                    ->hintColor('warning')
+                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically exchange this for a long-lived platform token and update the connection status.'),
                                 Select::make('fb_history_range')
                                     ->options([
                                         '6 months' => '6 Months',
                                         '1 year' => '1 Year',
                                         '2 years' => '2 Years',
-                                        '5 years' => '5 Years',
                                     ])
                                     ->default('2 years'),
                             ])->columns(2),
                     ]),
 
                 Section::make('Google Search Console (GSC)')
-                    ->description('Authorize the APIs Hub Facade to fetch your GSC performance data.')
+                    ->description('Authorize APIs Hub to fetch your GSC performance data.')
                     ->schema([
                         Placeholder::make('google_oauth')
                             ->label('')
@@ -140,7 +143,11 @@ class SyncSettings extends Page
                                     ->label('Google Refresh Token (Manual Override)')
                                     ->password()
                                     ->revealable()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
+                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
+                                    ->hintColor('warning')
+                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically validate this refresh token and update the connection status.'),
                                 Select::make('gsc_history_range')
                                     ->options([
                                         '1 month' => '1 Month',
@@ -152,14 +159,21 @@ class SyncSettings extends Page
                             ])->columns(2),
                     ]),
 
-                Section::make('Advanced Entity Filters')
+                Section::make('Advanced Filters')
+                    ->description(new \Illuminate\Support\HtmlString('Use patterns to include/exclude specific resources. Need help? Use <a href="https://regex101.com/?flavor=php" target="_blank" rel="nofollow noopener noreferrer" style="color: #00A7F9; text-decoration: underline;">Regex101 (PHP flavor)</a> to build your rules.'))
                     ->schema([
                         TextInput::make('campaign_filter')
-                            ->helperText('Regex or comma separated list of campaigns to sync.')
-                            ->placeholder('.*'),
+                            ->label('Campaign filter')
+                            ->placeholder('/^CAMP_/i')
+                            ->live(onBlur: true)
+                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Campaigns that match this pattern will be synced.'))
+                            ->afterStateUpdated(fn () => $this->validate()),
                         TextInput::make('page_filter')
-                            ->helperText('Filter specific pages by ID or Regex.')
-                            ->placeholder('.*'),
+                            ->label('Page filter')
+                            ->placeholder('/[0-9]{15}/')
+                            ->live(onBlur: true)
+                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Pages that match this pattern will be synced.'))
+                            ->afterStateUpdated(fn () => $this->validate()),
                     ])->collapsed(),
 
                 Section::make('API Access (External Integration)')
@@ -253,8 +267,38 @@ class SyncSettings extends Page
             Notification::make()
                 ->title('Settings Saved Locally')
                 ->warning()
-                ->body('Could not push credentials to remote node. Please ensure the instance is online.')
+                ->body('Could not push credentials to your server. Please ensure the server is online.')
                 ->send();
         }
+    }
+    protected function humanizeRegex(?string $regex, string $default): string
+    {
+        if (!$regex) {
+            return $default;
+        }
+
+        // Basic humanizations for common patterns
+        if ($regex === '.*' || $regex === '/.*/') {
+            return "Sync all resources (No filtering).";
+        }
+
+        $clean = trim($regex, '/');
+        $isCaseInsensitive = str_ends_with($regex, 'i');
+        
+        if (str_starts_with($clean, '^')) {
+            $value = rtrim(substr($clean, 1), '$');
+            return "Sync only resources starting with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
+        }
+
+        if (str_ends_with($clean, '$')) {
+            $value = ltrim(substr($clean, 0, -1), '^');
+            return "Sync only resources ending with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
+        }
+
+        if (!str_starts_with($regex, '/')) {
+            return "Simple match: Sync resources containing '" . $regex . "'.";
+        }
+
+        return "Active pattern: Matching against '" . $clean . "'.";
     }
 }
