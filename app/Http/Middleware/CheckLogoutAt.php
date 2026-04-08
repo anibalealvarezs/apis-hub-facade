@@ -19,6 +19,10 @@ class CheckLogoutAt
     public function handle(Request $request, Closure $next): Response
     {
         // 🛰️ RADAR PULSANDO (Verificación de existencia)
+        if ($request->is('*/logout')) {
+            return $next($request);
+        }
+
         \Illuminate\Support\Facades\Log::info('CENTINELA PULSANDO: ' . $request->getRequestUri());
 
         // 🚀 Dynamic User Detection
