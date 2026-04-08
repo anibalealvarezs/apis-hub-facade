@@ -100,8 +100,12 @@ class OAuthController extends Controller
             return redirect()->to('/app/' . ($tenant->subdomain ?? '') . '/sync-settings');
 
         } catch (\Exception $e) {
-            Log::error("OAuth Callback Failed for {$provider}: " . $e->getMessage());
-            return redirect()->to('/login')->with('error', 'Connection failed.');
+            Log::error("OAuth Callback Failed for {$provider}: " . $e->getMessage(), [
+                'exception' => $e,
+                'state_received' => $request->input('state'),
+                'session_state' => session()->get('state')
+            ]);
+            return redirect()->route('filament.app.pages.sync-settings')->with('error', 'Authentication failed: ' . $e->getMessage());
         }
     }
 
