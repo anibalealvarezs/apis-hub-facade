@@ -233,7 +233,7 @@ class SyncSettings extends Page
                                     ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
                                     ->modalSubmitActionLabel('Yes, rotate and push')
                                     ->action(function (\App\Services\DeployerService $deployer) {
-                                        $tenant = \Filament\Facades\Filament::getTenant();
+                                        $tenant = Filament::getTenant();
                                         $newKey = bin2hex(random_bytes(32));
                                         
                                         // 1. Save locally

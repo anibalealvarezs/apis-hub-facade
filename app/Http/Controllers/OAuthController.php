@@ -24,7 +24,7 @@ class OAuthController extends Controller
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
 
-        $driver->with(['state' => 'tenant_' . Filament::getTenant()?->id]);
+        $driver->with(['state' => 'tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)]);
 
         $scopes = match ($provider) {
             'facebook' => config('services.facebook.scopes', []),
