@@ -42,7 +42,7 @@ class OAuthController extends Controller
     /**
      * Obtain the user information from the Provider.
      */
-    public function callback($tenantId, string $provider, Request $request)
+    public function callback(Request $request, string $provider, $tenantId = null)
     {
         try {
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
