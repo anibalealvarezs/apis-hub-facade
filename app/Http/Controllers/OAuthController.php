@@ -28,8 +28,8 @@ class OAuthController extends Controller
         $driver->with(['state' => 'tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)]);
 
         $scopes = match ($provider) {
-            'facebook' => config('services.facebook.scopes', []),
-            'google' => config('services.google.scopes', []),
+            'facebook' => config('services.facebook')['scopes'] ?? [],
+            'google' => config('services.google')['scopes'] ?? [],
             default => [],
         };
 
