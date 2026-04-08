@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ef44b1a5b96a6b9d3b707cdce63d05b",
+    "content-hash": "650f6401c427e3fb27b0e04b40424432",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -142,6 +142,70 @@
                 "issues": "https://github.com/anibalealvarezs/apis-hub-api/issues"
             },
             "time": "2026-04-05T01:56:03+00:00"
+        },
+        {
+            "name": "anibalealvarezs/facebook-graph-api",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:anibalealvarezs/facebook-graph-api.git",
+                "reference": "d5ba757902b4b7d3bcf2fae630de4af52889d59c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/facebook-graph-api/anibalealvarezs-facebook-graph-api-d5ba757902b4b7d3bcf2fae630de4af52889d59c-zip-27c94c.zip",
+                "reference": "d5ba757902b4b7d3bcf2fae630de4af52889d59c",
+                "shasum": "62b85a8ea9397fab9e89e86b8481d014919e6d57"
+            },
+            "require": {
+                "anibalealvarezs/api-client-skeleton": "dev-main",
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^7.0",
+                "monolog/monolog": "^2.0 || ^3.0",
+                "nesbot/carbon": "^2.61 || ^3.0",
+                "php": ">=8.1",
+                "symfony/yaml": "^5.4 || ^6.0 || ^7.0"
+            },
+            "require-dev": {
+                "fakerphp/faker": "^1.20",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Anibalealvarezs\\FacebookGraphApi\\": "src"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aníbal Álvarez",
+                    "email": "anibalealvarezs@gmail.com"
+                }
+            ],
+            "description": "Comprehensive Facebook Graph API client for data extraction, supporting Ads, Pages, and Instagram metrics.",
+            "homepage": "https://github.com/anibalealvarezs/facebook-graph-api",
+            "keywords": [
+                "facebook-ads",
+                "facebook-api",
+                "graph-api",
+                "instagram-api",
+                "metrics",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/anibalealvarezs/facebook-graph-api/issues"
+            },
+            "time": "2026-04-07T23:45:33+00:00"
         },
         {
             "name": "anibalealvarezs/google-api",
@@ -4403,16 +4467,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "3.11.3",
+            "version": "3.11.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CarbonPHP/carbon.git",
-                "reference": "6a7e652845bb018c668220c2a545aded8594fbbf"
+                "reference": "e890471a3494740f7d9326d72ce6a8c559ffee60"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/6a7e652845bb018c668220c2a545aded8594fbbf",
-                "reference": "6a7e652845bb018c668220c2a545aded8594fbbf",
+                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/e890471a3494740f7d9326d72ce6a8c559ffee60",
+                "reference": "e890471a3494740f7d9326d72ce6a8c559ffee60",
                 "shasum": ""
             },
             "require": {
@@ -4504,7 +4568,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-03-11T17:23:39+00:00"
+            "time": "2026-04-07T09:57:54+00:00"
         },
         {
             "name": "nette/schema",
@@ -13778,6 +13842,7 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "anibalealvarezs/apis-hub-api": 20,
+        "anibalealvarezs/facebook-graph-api": 20,
         "anibalealvarezs/google-api": 20
     },
     "prefer-stable": true,

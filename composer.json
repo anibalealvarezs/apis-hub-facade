@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "anibalealvarezs/apis-hub-api": "dev-main",
+        "anibalealvarezs/facebook-graph-api": "dev-main",
         "anibalealvarezs/google-api": "dev-main",
         "filament/filament": "^3.2",
         "google/recaptcha": "^1.3",
