@@ -64,7 +64,7 @@ class OAuthController extends Controller
     {
         try {
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
-            $socialiteUser = Socialite::driver($provider)->user();
+            $socialiteUser = Socialite::driver($provider)->stateless()->user();
             $tenant = Filament::getTenant();
 
             if (!$tenant && $tenantId) {
