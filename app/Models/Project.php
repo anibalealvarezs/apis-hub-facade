@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -17,8 +18,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $remote_admin_api_key
  * @property string $remote_app_api_key
  * @property string $monitoring_token
- * @property string $facebook_user_token
- * @property string $google_refresh_token
  * @property string $public_api_key
  * @property string $db_password
  */
@@ -51,8 +50,6 @@ class Project extends Model
         'health_metrics',
         'last_heartbeat_at',
         'error_count',
-        'facebook_user_token',
-        'google_refresh_token',
         'public_api_key',
     ];
 
@@ -68,7 +65,7 @@ class Project extends Model
     /**
      * Relationship: The deployment logs for this project.
      */
-    public function deploymentLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function deploymentLogs(): HasMany
     {
         return $this->hasMany(ProjectDeploymentLog::class);
     }
@@ -76,9 +73,17 @@ class Project extends Model
     /**
      * Relationship: Historical status changes (activations/suspensions).
      */
-    public function statusLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function statusLogs(): HasMany
     {
         return $this->hasMany(ProjectStatusLog::class);
+    }
+
+    /**
+     * Relationship: Dynamic provider-based credentials.
+     */
+    public function credentials(): HasMany
+    {
+        return $this->hasMany(ProjectCredential::class);
     }
 
     /**
@@ -115,8 +120,6 @@ class Project extends Model
         'sync_config' => 'array',
         'error_count' => 'integer',
         'db_password' => 'encrypted',
-        'facebook_user_token' => 'encrypted',
-        'google_refresh_token' => 'encrypted',
         'app_api_key' => 'encrypted',
         'remote_admin_api_key' => 'encrypted',
         'remote_app_api_key' => 'encrypted',
@@ -129,5 +132,54 @@ class Project extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class);
+    }
+
+    /**
+     * Transparent proxy for provider credentials to ensure backward compatibility.
+     * Intercepts legacy column calls and redirects them to the project_credentials table.
+     */
+    public function getAttribute($key)
+    {
+        $proxies = [
+            'facebook_user_token' => ['facebook', 'token'],
+            'facebook_user_id' => ['facebook', 'external_user_id'],
+            'google_refresh_token' => ['google', 'refresh_token'],
+            'google_user_id' => ['google', 'external_user_id'],
+        ];
+
+        if (array_key_exists($key, $proxies)) {
+            [$provider, $attribute] = $proxies[$key];
+
+            return $this->credentials()->where('provider', $provider)->first()?->{$attribute};
+        }
+
+        return parent::getAttribute($key);
+    }
+
+    /**
+     * Transparent proxy for setting provider credentials.
+     */
+    public function setAttribute($key, $value)
+    {
+        $proxies = [
+            'facebook_user_token' => ['facebook', 'token'],
+            'facebook_user_id' => ['facebook', 'external_user_id'],
+            'google_refresh_token' => ['google', 'refresh_token'],
+            'google_user_id' => ['google', 'external_user_id'],
+        ];
+
+        if (array_key_exists($key, $proxies)) {
+            [$provider, $attribute] = $proxies[$key];
+            // We postpone actual database update to when the model is saved.
+            // For now, we'll ensure the relation exists.
+            $this->credentials()->updateOrCreate(
+                ['provider' => $provider],
+                [$attribute => $value]
+            );
+
+            return $this;
+        }
+
+        return parent::setAttribute($key, $value);
     }
 }
