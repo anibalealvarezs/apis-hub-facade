@@ -12,6 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
+use Anibalealvarezs\ApisHubApi\ApisHubApi;
 
 /** @package App\Http\Controllers */
 class OAuthController extends Controller
@@ -80,7 +81,7 @@ class OAuthController extends Controller
             }
 
             if (!$tenant) {
-                return redirect()->route('filament.app.pages.sync-settings')->with('error', 'Tenant not identified.');
+                return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified.');
             }
 
             $token = $socialiteUser->token;
@@ -90,38 +91,60 @@ class OAuthController extends Controller
                 try {
                     $fbAuth = new FacebookGraphAuth();
                     $exchangeResponse = $fbAuth->getLongLivedUserAccessToken(
-                        config('services.facebook.client_id'),
-                        config('services.facebook.client_secret'),
+                        config('services.facebook')['client_id'] ?? config('services.facebook')['app_id'],
+                        config('services.facebook')['client_secret'] ?? config('services.facebook')['app_secret'],
                         $token
                     );
                     
                     if (!empty($exchangeResponse['access_token'])) {
                         $token = $exchangeResponse['access_token'];
                     }
-                } catch (\Exception $e) {
-                    Log::warning("Facebook Long-Lived Exchange Failed: " . $e->getMessage() . ". Using short-lived token instead.");
-                }
+                    
+                    // Save FB User ID (reconciling with project)
+                    $tenant->update(['facebook_user_id' => $socialiteUser->id]);
+                    $tenant->fresh();
 
-                $tenant->update([
-                    'facebook_user_token' => $token,
-                    'facebook_user_id' => $socialiteUser->id,
-                ]);
-            } elseif ($provider === 'google') {
-                $tenant->update([
-                    'google_refresh_token' => $socialiteUser->refreshToken,
-                    'google_user_id' => $socialiteUser->id,
-                ]);
+                } catch (\Exception $e) {
+                    Log::warning("Facebook Token Exchange failed for project {$tenant->id}: " . $e->getMessage());
+                }
             }
 
-            return redirect()->to('/app/' . ($tenant->subdomain ?? '') . '/sync-settings');
+            // Clean previous credentials and import new one via SDK
+            $tenant->credentials()->where('provider', $provider)->delete();
+            $tenant->credentials()->create([
+                'provider' => $provider,
+                'token' => $token,
+                'metadata' => [
+                    'id' => $socialiteUser->id,
+                    'name' => $socialiteUser->name,
+                    'email' => $socialiteUser->email,
+                    'avatar' => $socialiteUser->avatar,
+                ],
+            ]);
+
+            // Atomic Push to Remote Engine via SDK
+            $sdk = new ApisHubApi($tenant->engine_url, $tenant->engine_token);
+            $sdk->importCredentials($provider, $token, [
+                'user_id' => $socialiteUser->id,
+                'email' => $socialiteUser->email,
+            ]);
+
+            return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+                ->with('status', ucfirst($provider) . ' account connected and synchronized successfully.');
 
         } catch (\Exception $e) {
             Log::error("OAuth Callback Failed for {$provider}: " . $e->getMessage(), [
                 'exception' => $e,
                 'state_received' => $request->input('state'),
-                'session_state' => session()->get('state')
             ]);
-            return redirect()->route('filament.app.pages.sync-settings')->with('error', 'Authentication failed: ' . $e->getMessage());
+            
+            // Si tenemos tenant, volvemos a su panel. Si no, al login general.
+            if (isset($tenant) && $tenant) {
+                return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+                    ->with('error', 'Authentication failed: ' . $e->getMessage());
+            }
+
+            return redirect()->route('filament.app.auth.login')->with('error', 'Authentication failed.');
         }
     }
 
