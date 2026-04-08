@@ -23,6 +23,7 @@ class SyncSettings extends Page
     protected static ?string $slug = 'sync-settings';
 
     public ?array $data = [];
+    public bool $isSyncable = false;
 
     protected function getHeaderActions(): array
     {
@@ -76,14 +77,33 @@ class SyncSettings extends Page
         ];
     }
 
-    public function mount(): void
+    public function mount(RemoteEngineService $service): void
     {
         $tenant = Filament::getTenant();
+        $this->isSyncable = $tenant->is_active && $tenant->health_status !== 'provisioning';
+
+        // RECONCILIATION: Pull latest tokens from Node if reachable
+        if ($this->isSyncable) {
+            $validation = $service->validateTokens($tenant, 'facebook');
+            $fbData = $validation['results']['facebook'] ?? [];
+            
+            if (($fbData['status'] ?? '') === 'valid' && !empty($fbData['access_token'])) {
+                if ($tenant->facebook_user_token !== $fbData['access_token']) {
+                    // Update Facade silently with Node's truth
+                    $tenant->facebook_user_token = $fbData['access_token'];
+                    $tenant->facebook_user_id = $fbData['user_id'] ?? $tenant->facebook_user_id;
+                    $tenant->save();
+                }
+            }
+        }
+
         $this->form->fill([
             ...($tenant->sync_config ?? []),
             'app_api_key' => $tenant->public_api_key,
             'facebook_user_token' => $tenant->facebook_user_token,
+            'facebook_user_id' => $tenant->facebook_user_id,
             'google_refresh_token' => $tenant->google_refresh_token,
+            'google_user_id' => $tenant->google_user_id,
         ]);
     }
 
@@ -116,6 +136,13 @@ class SyncSettings extends Page
                                     ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
                                     ->hintColor('warning')
                                     ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically exchange this for a long-lived platform token and update the connection status.'),
+                                TextInput::make('facebook_user_id')
+                                    ->label('FB User ID (Manual Override)')
+                                    ->columnSpanFull()
+                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
+                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
+                                    ->hintColor('success')
+                                    ->helperText('The numerical ID of the Meta account owner. This is typically captured automatically during the connection flow.'),
                                 Select::make('fb_history_range')
                                     ->options([
                                         '6 months' => '6 Months',
@@ -147,7 +174,14 @@ class SyncSettings extends Page
                                     ->hint(fn ($state) => $state ? 'Existing token detected' : null)
                                     ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
                                     ->hintColor('warning')
-                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically validate this refresh token and update the connection status.'),
+                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Ensure the refresh token is valid and has long-term offline access.'),
+                                TextInput::make('google_user_id')
+                                    ->label('Google User ID (Manual Override)')
+                                    ->columnSpanFull()
+                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
+                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
+                                    ->hintColor('success')
+                                    ->helperText('The numerical ID of the Google account owner.'),
                                 Select::make('gsc_history_range')
                                     ->options([
                                         '1 month' => '1 Month',
@@ -234,7 +268,9 @@ class SyncSettings extends Page
         $modelAttributes = [
             'public_api_key' => $data['app_api_key'] ?? null,
             'facebook_user_token' => $data['facebook_user_token'] ?? null,
+            'facebook_user_id' => $data['facebook_user_id'] ?? null,
             'google_refresh_token' => $data['google_refresh_token'] ?? null,
+            'google_user_id' => $data['google_user_id'] ?? null,
         ];
 
         $syncConfig = collect($data)->except(array_keys($modelAttributes))->except(['api_url', 'app_api_key'])->toArray();
@@ -243,8 +279,14 @@ class SyncSettings extends Page
             'sync_config' => $syncConfig,
         ]));
 
-        // Push credentials to remote Hub node (Phase 2 & 3 Integration)
-        // These master credentials are fixed in the Facade config and pushed to nodes.
+        // 1. Push Social Tokens (Hot-reload)
+        $deployer->injectSocialTokens($tenant, [
+            'facebook_user_token' => $modelAttributes['facebook_user_token'],
+            'facebook_user_id' => $modelAttributes['facebook_user_id'],
+            'google_refresh_token' => $modelAttributes['google_refresh_token'],
+        ]);
+
+        // 2. Push fixed Infrastructure credentials (Requires restart)
         $pushData = [
             'DB_HOST' => 'db',
             'DB_PORT' => '5432',
@@ -252,10 +294,9 @@ class SyncSettings extends Page
             'FACEBOOK_APP_SECRET' => config('services.facebook.client_secret'),
             'GOOGLE_CLIENT_ID' => config('services.google.client_id'),
             'GOOGLE_CLIENT_SECRET' => config('services.google.client_secret'),
-            'FACEBOOK_USER_TOKEN' => $modelAttributes['facebook_user_token'],
-            'GOOGLE_REFRESH_TOKEN' => $modelAttributes['google_refresh_token'],
             'MONITOR_TOKEN' => $tenant->monitoring_token,
             'MONITOR_FACADE_URL' => config('app.url') . '/api/heartbeat',
+            'APP_API_KEY' => $tenant->public_api_key,
         ];
 
         $response = $deployer->updateCredentials($tenant, $pushData);

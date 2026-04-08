@@ -148,4 +148,12 @@ class RemoteEngineService
     {
         return $this->execute($project, fn(ApisHubApi $client) => $client->getMonitoringData());
     }
+
+    /**
+     * Validate and fetch platform tokens from the remote node.
+     */
+    public function validateTokens(Project $project, string $type = 'all')
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+    }
 }
