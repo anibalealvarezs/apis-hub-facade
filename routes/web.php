@@ -14,10 +14,14 @@ Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'uns
 
 // APIs Hub SaaS: OAuth Hub for Tenants
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('connect/social/{provider}', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.social-login');
+    Route::get('social/{provider}/redirect', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.social-login');
+    Route::get('social/{provider}/callback', [App\Http\Controllers\OAuthController::class, 'callback'])->name('app.social-callback');
     Route::get('connect/{tenant}/{provider}', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.connect');
-    Route::get('connect/{tenant}/{provider}/callback', [App\Http\Controllers\OAuthController::class, 'callback'])->name('app.connect.callback');
 });
+
+// FB Deauthorize Callback (Public POST)
+Route::post('social/{provider}/deauthorize', [App\Http\Controllers\OAuthController::class, 'handleDeauthorize'])->name('social.deauthorize');
+Route::post('social/{provider}/delete-data', [App\Http\Controllers\OAuthController::class, 'handleDataDeletion'])->name('social.delete-data');
 
 Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check']);
 
