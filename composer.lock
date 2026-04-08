@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "650f6401c427e3fb27b0e04b40424432",
+    "content-hash": "c93ef35233750bba579db65f6b099fcc",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -13852,5 +13852,8 @@
         "php": "^8.2"
     },
     "platform-dev": [],
+    "platform-overrides": {
+        "php": "8.3.30"
+    },
     "plugin-api-version": "2.3.0"
 }
