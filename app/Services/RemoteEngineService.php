@@ -41,7 +41,7 @@ class RemoteEngineService
     /**
      * Execute a task via the SDK with centralized error handling.
      */
-    protected function execute(Project $project, callable $callback)
+    public function execute(Project $project, callable $callback)
     {
         try {
             $client = $this->getClient($project);

@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Http;
 
 class DeployerService
 {
+    protected RemoteEngineService $remoteEngineService;
+
+    public function __construct(RemoteEngineService $remoteEngineService)
+    {
+        $this->remoteEngineService = $remoteEngineService;
+    }
+
     /**
      * Deploy a new APIs Hub instance for a project on a specific server.
      */
@@ -186,33 +193,14 @@ EOT;
     /**
      * Inject social tokens directly into the remote node via API (Hot-reload).
      */
-    public function injectSocialTokens(Project $project, array $tokens): array
+    public function injectSocialTokens(Project $project, array $tokens, string $provider = 'facebook'): array
     {
-        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
-        $nodeUrl = "https://{$project->subdomain}.{$domain}";
-        $secretToken = config('services.remote_hub.config_secret_token') ?: 'apis-hub-secret';
-
         try {
-            if (!empty($tokens['facebook_user_token'])) {
-                $response = Http::withHeaders([
-                    'X-Config-Token' => $secretToken,
-                    'Accept' => 'application/json',
-                ])->post("{$nodeUrl}/api/auth/facebook/import", [
-                    'access_token' => $tokens['facebook_user_token'],
-                    'user_id' => $tokens['facebook_user_id'] ?? null,
-                ]);
-
-                if ($response->failed()) {
-                    Log::error("Failed to push Facebook token to {$nodeUrl}: " . $response->body());
-                    return ['status' => 'error', 'message' => 'Remote node rejected the token'];
-                }
-            }
-
-            // Google and others can be added here tomorrow
-            
-            return ['status' => 'success', 'message' => 'Tokens synchronized via API'];
+            return $this->remoteEngineService->execute($project, function ($client) use ($provider, $tokens) {
+                return $client->importCredentials($provider, $tokens);
+            });
         } catch (\Exception $e) {
-            Log::error("Social token sync exception: " . $e->getMessage());
+            Log::error("Error injecting tokens for {$provider}: " . $e->getMessage());
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
