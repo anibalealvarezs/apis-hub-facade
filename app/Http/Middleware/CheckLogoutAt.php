@@ -24,7 +24,7 @@ class CheckLogoutAt
         // 🚀 Dynamic User Detection
         $user = Auth::guard('web')->user() ?? Auth::user();
         
-        if ($user) {
+        if ($user instanceof \Illuminate\Database\Eloquent\Model) {
             $user = $user->fresh();
             
             if ($user && $user->logout_at) {

@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         // NO se debe manipular la sesión aquí (ej. Notification::send()). Filament ya
         // muestra su propia página de verificación de email tras el registro.
         \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, function (\Filament\Events\Auth\Registered $event) {
+            /** @var \App\Models\User $user */
             $user = $event->getUser();
 
             // Correo al admin(s) via queue (fire-and-forget, no bloquea el response)
