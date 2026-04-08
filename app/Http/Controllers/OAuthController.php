@@ -63,8 +63,10 @@ class OAuthController extends Controller
     public function callback(Request $request, string $provider, $tenantId = null)
     {
         try {
+            /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+            $driver = Socialite::driver($provider);
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
-            $socialiteUser = Socialite::driver($provider)->stateless()->user();
+            $socialiteUser = $driver->stateless()->user();
             $tenant = Filament::getTenant();
 
             if (!$tenant && $tenantId) {
