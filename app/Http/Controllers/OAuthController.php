@@ -124,8 +124,9 @@ class OAuthController extends Controller
                 ],
             ]);
 
-            // Atomic Push to Remote Engine via SDK
-            $sdk = new ApisHubApi($tenant->engine_url, $tenant->engine_token);
+            // Atomic Push to Remote Engine via SDK (Constructing URL from subdomain)
+            $nodeUrl = "https://{$tenant->subdomain}.apis-hub.cloud";
+            $sdk = new ApisHubApi($nodeUrl, $tenant->remote_admin_api_key);
             $sdk->importCredentials($provider, $token, [
                 'user_id' => $socialiteUser->id,
                 'email' => $socialiteUser->email,
