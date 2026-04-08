@@ -17,9 +17,25 @@ use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 class OAuthController extends Controller
 {
     /**
-     * Redirect the user to the Provider authentication page.
+     * Redirect the user to the Provider authentication page (Standard).
      */
-    public function redirect(Request $request, string $provider, $tenantId = null)
+    public function redirect(Request $request, string $provider)
+    {
+        return $this->performRedirect($request, $provider);
+    }
+
+    /**
+     * Redirect the user to the Provider authentication page (With Explicit Tenant).
+     */
+    public function connect(Request $request, $tenant, string $provider)
+    {
+        return $this->performRedirect($request, $provider, $tenant);
+    }
+
+    /**
+     * Internal redirection logic.
+     */
+    protected function performRedirect(Request $request, string $provider, $tenantId = null)
     {
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
@@ -33,7 +49,7 @@ class OAuthController extends Controller
             default => [],
         };
 
-        if (is_array($scopes) && count($scopes) > 0) {
+        if (!empty($scopes)) {
             $driver->scopes($scopes);
         }
 

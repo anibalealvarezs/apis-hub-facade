@@ -16,7 +16,7 @@ Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'uns
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('social/{provider}/redirect', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.social-login');
     Route::get('social/{provider}/callback', [App\Http\Controllers\OAuthController::class, 'callback'])->name('app.social-callback');
-    Route::get('connect/{tenant}/{provider}', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.connect');
+    Route::get('connect/{tenant}/{provider}', [App\Http\Controllers\OAuthController::class, 'connect'])->name('app.connect');
 });
 
 // FB Deauthorize Callback (Public POST)
