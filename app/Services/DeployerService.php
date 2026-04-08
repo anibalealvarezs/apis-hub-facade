@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Server;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Http;
 
 class DeployerService
 {
@@ -69,6 +70,7 @@ class DeployerService
         $fbAppSecret = config('services.facebook.client_secret');
         $googleClientId = config('services.google.client_id');
         $googleClientSecret = config('services.google.client_secret');
+        $facadeUrl = config('app.url') . '/api/heartbeat';
 
         $dbName = $project->db_name ?: "apis_hub_{$project->subdomain}";
         $dbUser = $project->db_user ?: "postgres";
@@ -91,17 +93,15 @@ DB_PASSWORD={$dbPass}
 APP_API_KEY={$project->public_api_key}
 ADMIN_API_KEY={$project->remote_admin_api_key}
 
-# Channel Credentials (Master Apps + User Tokens)
+# Channel Master Credentials (Apps)
 FACEBOOK_APP_ID={$fbAppId}
 FACEBOOK_APP_SECRET={$fbAppSecret}
-FACEBOOK_USER_TOKEN={$project->facebook_user_token}
 
 GOOGLE_CLIENT_ID={$googleClientId}
 GOOGLE_CLIENT_SECRET={$googleClientSecret}
-GOOGLE_REFRESH_TOKEN={$project->google_refresh_token}
 
 # Monitoring Link (Report back to Facade)
-MONITOR_FACADE_URL=https://facade.anibalalvarez.com
+MONITOR_FACADE_URL={$facadeUrl}
 MONITOR_TOKEN={$project->monitoring_token}
 MONITOR_ENABLED=true
 EOT;
@@ -184,7 +184,42 @@ EOT;
     }
 
     /**
-     * Update environment variables on the remote server and restart containers.
+     * Inject social tokens directly into the remote node via API (Hot-reload).
+     */
+    public function injectSocialTokens(Project $project, array $tokens): array
+    {
+        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+        $nodeUrl = "https://{$project->subdomain}.{$domain}";
+        $secretToken = config('services.remote_hub.config_secret_token') ?: 'apis-hub-secret';
+
+        try {
+            if (!empty($tokens['facebook_user_token'])) {
+                $response = Http::withHeaders([
+                    'X-Config-Token' => $secretToken,
+                    'Accept' => 'application/json',
+                ])->post("{$nodeUrl}/api/auth/facebook/import", [
+                    'access_token' => $tokens['facebook_user_token'],
+                    'user_id' => $tokens['facebook_user_id'] ?? null,
+                ]);
+
+                if ($response->failed()) {
+                    Log::error("Failed to push Facebook token to {$nodeUrl}: " . $response->body());
+                    return ['status' => 'error', 'message' => 'Remote node rejected the token'];
+                }
+            }
+
+            // Google and others can be added here tomorrow
+            
+            return ['status' => 'success', 'message' => 'Tokens synchronized via API'];
+        } catch (\Exception $e) {
+            Log::error("Social token sync exception: " . $e->getMessage());
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Update fixed environment variables on the remote server and restart containers.
+     * Only for Infrastructure keys (Client IDs, Secrets, API Keys).
      */
     public function updateCredentials(Project $project, array $credentials): array
     {
