@@ -19,7 +19,7 @@ class OAuthController extends Controller
     /**
      * Redirect the user to the Provider authentication page.
      */
-    public function redirect($tenant, string $provider)
+    public function redirect($tenantId, string $provider)
     {
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
@@ -42,12 +42,16 @@ class OAuthController extends Controller
     /**
      * Obtain the user information from the Provider.
      */
-    public function callback($tenant, string $provider, Request $request)
+    public function callback($tenantId, string $provider, Request $request)
     {
         try {
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
             $socialiteUser = Socialite::driver($provider)->user();
             $tenant = Filament::getTenant();
+
+            if (!$tenant && $tenantId) {
+                $tenant = Project::find($tenantId);
+            }
 
             if (!$tenant) {
                 // Fallback: detect tenant from state if needed
