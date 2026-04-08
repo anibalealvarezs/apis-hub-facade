@@ -75,13 +75,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/apis-hub-api.git",
-                "reference": "7baa5b1f858d54ed83820805d7271ee3fd896bea"
+                "reference": "8a5857921b8d07015a8935ac24611f353f5683f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-7baa5b1f858d54ed83820805d7271ee3fd896bea-zip-52c91f.zip",
-                "reference": "7baa5b1f858d54ed83820805d7271ee3fd896bea",
-                "shasum": "a6295702e21d069f57d17d7367217931ea444e3e"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-8a5857921b8d07015a8935ac24611f353f5683f0-zip-4d369f.zip",
+                "reference": "8a5857921b8d07015a8935ac24611f353f5683f0",
+                "shasum": "7e8d91886b79e5848d6474167c749590ca46e212"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "dev-main",
@@ -141,7 +141,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/apis-hub-api/issues"
             },
-            "time": "2026-04-05T01:56:03+00:00"
+            "time": "2026-04-08T01:39:50+00:00"
         },
         {
             "name": "anibalealvarezs/facebook-graph-api",
@@ -213,13 +213,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/google-api.git",
-                "reference": "5440222cede11e9f00962c1a09fa47685c75702f"
+                "reference": "0164fbddef9d532f361d06c196051cb7d7926b37"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/google-api/anibalealvarezs-google-api-5440222cede11e9f00962c1a09fa47685c75702f-zip-4f432b.zip",
-                "reference": "5440222cede11e9f00962c1a09fa47685c75702f",
-                "shasum": "1a00ec00a43a81c4674cf68eff8455a0b72436f9"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/google-api/anibalealvarezs-google-api-0164fbddef9d532f361d06c196051cb7d7926b37-zip-b95574.zip",
+                "reference": "0164fbddef9d532f361d06c196051cb7d7926b37",
+                "shasum": "e92b234cc7eed9af98546ac11d9b2f05a118b094"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "@dev",
@@ -232,6 +232,7 @@
             },
             "require-dev": {
                 "fakerphp/faker": "^1.20",
+                "friendsofphp/php-cs-fixer": "dev-master",
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^9"
             },
@@ -273,7 +274,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/google-api/issues"
             },
-            "time": "2026-04-04T21:52:00+00:00"
+            "time": "2026-04-06T14:33:12+00:00"
         },
         {
             "name": "anibalealvarezs/oauth-v1",
@@ -400,16 +401,16 @@
         },
         {
             "name": "bacon/bacon-qr-code",
-            "version": "v3.0.4",
+            "version": "v3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bacon/BaconQrCode.git",
-                "reference": "3feed0e212b8412cc5d2612706744789b0615824"
+                "reference": "4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/3feed0e212b8412cc5d2612706744789b0615824",
-                "reference": "3feed0e212b8412cc5d2612706744789b0615824",
+                "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2",
+                "reference": "4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2",
                 "shasum": ""
             },
             "require": {
@@ -449,9 +450,9 @@
             "homepage": "https://github.com/Bacon/BaconQrCode",
             "support": {
                 "issues": "https://github.com/Bacon/BaconQrCode/issues",
-                "source": "https://github.com/Bacon/BaconQrCode/tree/v3.0.4"
+                "source": "https://github.com/Bacon/BaconQrCode/tree/v3.1.1"
             },
-            "time": "2026-03-16T01:01:30+00:00"
+            "time": "2026-04-05T21:06:35+00:00"
         },
         {
             "name": "blade-ui-kit/blade-heroicons",
@@ -524,16 +525,16 @@
         },
         {
             "name": "blade-ui-kit/blade-icons",
-            "version": "1.9.0",
+            "version": "1.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/driesvints/blade-icons.git",
-                "reference": "caa92fde675d7a651c38bf73ca582ddada56f318"
+                "reference": "377eede719f9690b03bbbfd516afef887e27634a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/driesvints/blade-icons/zipball/caa92fde675d7a651c38bf73ca582ddada56f318",
-                "reference": "caa92fde675d7a651c38bf73ca582ddada56f318",
+                "url": "https://api.github.com/repos/driesvints/blade-icons/zipball/377eede719f9690b03bbbfd516afef887e27634a",
+                "reference": "377eede719f9690b03bbbfd516afef887e27634a",
                 "shasum": ""
             },
             "require": {
@@ -601,7 +602,7 @@
                     "type": "paypal"
                 }
             ],
-            "time": "2026-02-23T10:42:23+00:00"
+            "time": "2026-04-07T17:56:48+00:00"
         },
         {
             "name": "brick/math",
@@ -1416,7 +1417,7 @@
         },
         {
             "name": "filament/actions",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/actions.git",
@@ -1469,16 +1470,16 @@
         },
         {
             "name": "filament/filament",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/panels.git",
-                "reference": "6098e568b4257dc438ff68aced0a260f06ba6d52"
+                "reference": "a7db5758d7693f589412ec4a768f13077960f1e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/filamentphp/panels/zipball/6098e568b4257dc438ff68aced0a260f06ba6d52",
-                "reference": "6098e568b4257dc438ff68aced0a260f06ba6d52",
+                "url": "https://api.github.com/repos/filamentphp/panels/zipball/a7db5758d7693f589412ec4a768f13077960f1e8",
+                "reference": "a7db5758d7693f589412ec4a768f13077960f1e8",
                 "shasum": ""
             },
             "require": {
@@ -1530,20 +1531,20 @@
                 "issues": "https://github.com/filamentphp/filament/issues",
                 "source": "https://github.com/filamentphp/filament"
             },
-            "time": "2026-02-07T21:52:21+00:00"
+            "time": "2026-04-04T07:47:06+00:00"
         },
         {
             "name": "filament/forms",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/forms.git",
-                "reference": "c64bf142f808d292b0c6c21fdd3c75cbef9e9d30"
+                "reference": "427473802e2e34c1b8be7c1a32b02a951f7fe152"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/filamentphp/forms/zipball/c64bf142f808d292b0c6c21fdd3c75cbef9e9d30",
-                "reference": "c64bf142f808d292b0c6c21fdd3c75cbef9e9d30",
+                "url": "https://api.github.com/repos/filamentphp/forms/zipball/427473802e2e34c1b8be7c1a32b02a951f7fe152",
+                "reference": "427473802e2e34c1b8be7c1a32b02a951f7fe152",
                 "shasum": ""
             },
             "require": {
@@ -1586,11 +1587,11 @@
                 "issues": "https://github.com/filamentphp/filament/issues",
                 "source": "https://github.com/filamentphp/filament"
             },
-            "time": "2026-02-19T23:07:33+00:00"
+            "time": "2026-04-04T07:47:01+00:00"
         },
         {
             "name": "filament/infolists",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/infolists.git",
@@ -1641,7 +1642,7 @@
         },
         {
             "name": "filament/notifications",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/notifications.git",
@@ -1693,7 +1694,7 @@
         },
         {
             "name": "filament/support",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/support.git",
@@ -1752,7 +1753,7 @@
         },
         {
             "name": "filament/tables",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/tables.git",
@@ -1804,7 +1805,7 @@
         },
         {
             "name": "filament/widgets",
-            "version": "v3.3.49",
+            "version": "v3.3.50",
             "source": {
                 "type": "git",
                 "url": "https://github.com/filamentphp/widgets.git",
@@ -3234,16 +3235,16 @@
         },
         {
             "name": "laravel/serializable-closure",
-            "version": "v2.0.10",
+            "version": "v2.0.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/serializable-closure.git",
-                "reference": "870fc81d2f879903dfc5b60bf8a0f94a1609e669"
+                "reference": "d1af40ac4a6ccc12bd062a7184f63c9995a63bdd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/870fc81d2f879903dfc5b60bf8a0f94a1609e669",
-                "reference": "870fc81d2f879903dfc5b60bf8a0f94a1609e669",
+                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/d1af40ac4a6ccc12bd062a7184f63c9995a63bdd",
+                "reference": "d1af40ac4a6ccc12bd062a7184f63c9995a63bdd",
                 "shasum": ""
             },
             "require": {
@@ -3291,7 +3292,7 @@
                 "issues": "https://github.com/laravel/serializable-closure/issues",
                 "source": "https://github.com/laravel/serializable-closure"
             },
-            "time": "2026-02-20T19:59:49+00:00"
+            "time": "2026-04-07T13:32:18+00:00"
         },
         {
             "name": "laravel/socialite",
@@ -4159,16 +4160,16 @@
         },
         {
             "name": "livewire/livewire",
-            "version": "v3.7.13",
+            "version": "v3.7.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/livewire.git",
-                "reference": "152b5a1a3f9ee93b6887a3bad6ab8e6db035efa5"
+                "reference": "d68e65beb7717eaabef74a1cf63cd1670260ff5f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/livewire/zipball/152b5a1a3f9ee93b6887a3bad6ab8e6db035efa5",
-                "reference": "152b5a1a3f9ee93b6887a3bad6ab8e6db035efa5",
+                "url": "https://api.github.com/repos/livewire/livewire/zipball/d68e65beb7717eaabef74a1cf63cd1670260ff5f",
+                "reference": "d68e65beb7717eaabef74a1cf63cd1670260ff5f",
                 "shasum": ""
             },
             "require": {
@@ -4223,7 +4224,7 @@
             "description": "A front-end framework for Laravel.",
             "support": {
                 "issues": "https://github.com/livewire/livewire/issues",
-                "source": "https://github.com/livewire/livewire/tree/v3.7.13"
+                "source": "https://github.com/livewire/livewire/tree/v3.7.15"
             },
             "funding": [
                 {
@@ -4231,7 +4232,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-03-30T22:04:01+00:00"
+            "time": "2026-04-03T13:08:41+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -10526,16 +10527,16 @@
         },
         {
             "name": "nunomaduro/collision",
-            "version": "v8.9.2",
+            "version": "v8.9.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nunomaduro/collision.git",
-                "reference": "6eb16883e74fd725ac64dbe81544c961ab448ba5"
+                "reference": "b0d8ab95b29c3189aeeb902d81215231df4c1b64"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/6eb16883e74fd725ac64dbe81544c961ab448ba5",
-                "reference": "6eb16883e74fd725ac64dbe81544c961ab448ba5",
+                "url": "https://api.github.com/repos/nunomaduro/collision/zipball/b0d8ab95b29c3189aeeb902d81215231df4c1b64",
+                "reference": "b0d8ab95b29c3189aeeb902d81215231df4c1b64",
                 "shasum": ""
             },
             "require": {
@@ -10618,7 +10619,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-03-31T21:51:27+00:00"
+            "time": "2026-04-06T19:25:53+00:00"
         },
         {
             "name": "pestphp/pest",
