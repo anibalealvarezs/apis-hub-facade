@@ -20,7 +20,7 @@ class VerifyReCaptcha
     public function handle(Request $request, Closure $next): Response
     {
         // 0. Only process POST requests (form submissions)
-        if (!$request->isMethod('POST')) {
+        if (!$request->isMethod('POST') || $request->is('*/logout')) {
             return $next($request);
         }
 
