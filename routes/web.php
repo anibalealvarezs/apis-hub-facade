@@ -23,14 +23,6 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::post('social/{provider}/deauthorize', [App\Http\Controllers\OAuthController::class, 'handleDeauthorize'])->name('social.deauthorize');
 Route::post('social/{provider}/delete-data', [App\Http\Controllers\OAuthController::class, 'handleDataDeletion'])->name('social.delete-data');
 
-Route::get('/emergency-logout', function () {
-    \Illuminate\Support\Facades\Auth::logout();
-    session()->flush();
-    session()->invalidate();
-    session()->regenerateToken();
-    return redirect()->route('filament.app.auth.login');
-})->name('emergency-logout');
-
 Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check']);
 
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
