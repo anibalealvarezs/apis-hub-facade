@@ -145,7 +145,7 @@ class AppPanelProvider extends PanelProvider
             ->authMiddleware([
                 \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 Authenticate::class,
-                // \App\Http\Middleware\CheckLogoutAt::class,
+                \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
