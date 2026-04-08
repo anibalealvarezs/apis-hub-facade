@@ -39,12 +39,31 @@ return [
         'client_id' => env('FACEBOOK_APP_ID'),
         'client_secret' => env('FACEBOOK_APP_SECRET'),
         'redirect' => env('FACEBOOK_REDIRECT_URI'),
+        'scopes' => [
+            'public_profile',
+            'email',
+            'ads_read',
+            'business_management',
+            'pages_show_list',
+            'pages_read_engagement',
+            'pages_read_user_content',
+            'read_insights',
+            'instagram_basic',
+            'instagram_manage_insights',
+        ],
     ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'scopes' => [
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/webmasters', // Google Search Console
+            'https://www.googleapis.com/auth/analytics.readonly', // Google Analytics
+            'https://www.googleapis.com/auth/adwords', // Google Ads
+        ],
     ],
 
     'recaptcha' => [

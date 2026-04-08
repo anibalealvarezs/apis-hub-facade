@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 
+/** @package App\Http\Controllers */
 class OAuthController extends Controller
 {
     /**
@@ -20,11 +21,18 @@ class OAuthController extends Controller
      */
     public function redirect(string $provider)
     {
-        $driver = Socialite::driver($provider)
-            ->with(['state' => 'tenant_' . Filament::getTenant()?->id]);
+        /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+        $driver = Socialite::driver($provider);
 
-        $scopes = config("services.{$provider}.scopes");
-        if ($scopes) {
+        $driver->with(['state' => 'tenant_' . Filament::getTenant()?->id]);
+
+        $scopes = match ($provider) {
+            'facebook' => config('services.facebook.scopes', []),
+            'google' => config('services.google.scopes', []),
+            default => [],
+        };
+
+        if (is_array($scopes) && count($scopes) > 0) {
             $driver->scopes($scopes);
         }
 
@@ -37,6 +45,7 @@ class OAuthController extends Controller
     public function callback(string $provider, Request $request)
     {
         try {
+            /** @var \Laravel\Socialite\Two\User $socialiteUser */
             $socialiteUser = Socialite::driver($provider)->user();
             $tenant = Filament::getTenant();
 
@@ -107,12 +116,14 @@ class OAuthController extends Controller
 
             if ($fbUserId) {
                 // Find all projects linked to this Facebook User ID
+                /** @var ProjectCredential|null $credential */
                 $credentials = ProjectCredential::where('provider', 'facebook')
                     ->where('external_user_id', $fbUserId)
                     ->with('project')
                     ->get();
 
                 foreach ($credentials as $credential) {
+                    /** @var ProjectCredential $credential */
                     $project = $credential->project;
                     
                     // ATOMICITY: Try to wipe remote via API FIRST
