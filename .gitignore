@@ -48,3 +48,4 @@ docker-compose.yml.prod
 docker-compose.yml.dev
 facade_demo_key
 facade_demo_key.pub
+**/.php-cs-fixer.dist.php

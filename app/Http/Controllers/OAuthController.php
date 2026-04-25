@@ -22,7 +22,7 @@ class OAuthController extends Controller
      */
     public function redirect(Request $request, string $provider)
     {
-        return $this->performRedirect($request, $provider);
+        return $this->performRedirect($request, $provider, null, $request->query('type'));
     }
 
     /**
@@ -30,28 +30,40 @@ class OAuthController extends Controller
      */
     public function connect(Request $request, $tenant, string $provider)
     {
-        return $this->performRedirect($request, $provider, $tenant);
+        return $this->performRedirect($request, $provider, $tenant, $request->query('type'));
     }
 
     /**
      * Internal redirection logic.
      */
-    protected function performRedirect(Request $request, string $provider, $tenantId = null)
+    protected function performRedirect(Request $request, string $provider, $tenantId = null, ?string $type = null)
     {
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
 
         $tenantId = $tenantId ?: Filament::getTenant()?->id;
-        $driver->with(['state' => 'tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)]);
+        $stateParts = ['tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)];
+        
+        if ($type) {
+            $stateParts[] = 'type_' . $type;
+        }
 
-        $scopes = match ($provider) {
-            'facebook' => config('services.facebook')['scopes'] ?? [],
-            'google' => config('services.google')['scopes'] ?? [],
-            default => [],
-        };
+        $driver->with(['state' => implode(':', $stateParts)]);
+
+        $config = config("services.{$provider}")['scopes'] ?? [];
+        $scopes = $config['default'] ?? [];
+
+        if ($type && isset($config[$type])) {
+            $scopes = array_merge($scopes, $config[$type]);
+        }
 
         if (!empty($scopes)) {
             $driver->scopes($scopes);
+        }
+
+        // For Google/GSC: ensure we get the refresh token
+        if ($provider === 'google') {
+            $driver->with(['access_type' => 'offline', 'prompt' => 'consent']);
         }
 
         return $driver->redirect();
@@ -67,6 +79,18 @@ class OAuthController extends Controller
             $driver = Socialite::driver($provider);
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
             $socialiteUser = $driver->stateless()->user();
+            
+            $state = $request->input('state', '');
+            $stateData = [];
+            foreach (explode(':', $state) as $part) {
+                if (str_contains($part, '_')) {
+                    list($key, $val) = explode('_', $part, 2);
+                    $stateData[$key] = $val;
+                }
+            }
+
+            $tenantId = $stateData['tenant'] ?? $tenantId;
+            $type = $stateData['type'] ?? null;
             $tenant = Filament::getTenant();
 
             if (!$tenant && $tenantId) {
@@ -74,21 +98,17 @@ class OAuthController extends Controller
             }
 
             if (!$tenant) {
-                // Fallback: detect tenant from state if needed
-                $state = $request->input('state');
-                if (str_starts_with($state, 'tenant_')) {
-                    $tenantId = str_replace('tenant_', '', $state);
-                    $tenant = Project::find($tenantId);
-                }
-            }
-
-            if (!$tenant) {
                 return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified.');
             }
 
             $token = $socialiteUser->token;
+            $refreshToken = $socialiteUser->refreshToken;
 
-            // --- Facebook Long-Lived Token Exchange & ID Storage ---
+            // Calculate scopes based on type
+            $config = config("services.{$provider}")['scopes'] ?? [];
+            $requestedScopes = array_merge($config['default'] ?? [], $type ? ($config[$type] ?? []) : []);
+
+            // --- Facebook Long-Lived Token Exchange ---
             if ($provider === 'facebook') {
                 try {
                     $fbAuth = new FacebookGraphAuth();
@@ -102,34 +122,41 @@ class OAuthController extends Controller
                         $token = $exchangeResponse['access_token'];
                     }
                     
-                    // Save FB User ID (reconciling with project)
                     $tenant->update(['facebook_user_id' => $socialiteUser->id]);
-                    $tenant->fresh();
-
                 } catch (\Exception $e) {
-                    Log::warning("Facebook Token Exchange failed for project {$tenant->id}: " . $e->getMessage());
+                    Log::warning("Facebook Token Exchange failed: " . $e->getMessage());
                 }
             }
 
-            // Clean previous credentials and import new one via SDK
-            $tenant->credentials()->where('provider', $provider)->delete();
-            $tenant->credentials()->create([
-                'provider' => $provider,
-                'token' => $token,
-                'metadata' => [
-                    'id' => $socialiteUser->id,
-                    'name' => $socialiteUser->name,
-                    'email' => $socialiteUser->email,
-                    'avatar' => $socialiteUser->avatar,
-                ],
-            ]);
+            // Sync with Database (Merge scopes if already exists)
+            $credential = $tenant->credentials()->where('provider', $provider)->first();
+            $existingScopes = $credential?->scopes ?? [];
+            $newScopes = array_values(array_unique(array_merge($existingScopes, $requestedScopes)));
 
-            // Atomic Push to Remote Engine via SDK (Constructing URL from subdomain)
+            $credential = $tenant->credentials()->updateOrCreate(
+                ['provider' => $provider],
+                [
+                    'token' => $token,
+                    'refresh_token' => $refreshToken,
+                    'external_user_id' => $socialiteUser->id,
+                    'scopes' => $newScopes,
+                    'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
+                    'meta' => [
+                        'name' => $socialiteUser->name,
+                        'email' => $socialiteUser->email,
+                        'avatar' => $socialiteUser->avatar,
+                    ],
+                ]
+            );
+
+            // Atomic Push to Remote Engine via SDK
             $nodeUrl = "https://{$tenant->subdomain}.apis-hub.cloud";
             $sdk = new ApisHubApi($nodeUrl, $tenant->remote_admin_api_key);
             $sdk->importCredentials($provider, $token, [
                 'user_id' => $socialiteUser->id,
                 'email' => $socialiteUser->email,
+                'refresh_token' => $refreshToken,
+                'scopes' => $newScopes,
             ]);
 
             return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
