@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\App\Resources;
+namespace App\Filament\Account\Resources;
 
-use App\Filament\App\Resources\BillingProfileResource\Pages;
-use App\Filament\App\Resources\BillingProfileResource\RelationManagers;
+use App\Filament\Account\Resources\BillingProfileResource\Pages;
+use App\Filament\Account\Resources\BillingProfileResource\RelationManagers;
 use App\Models\BillingProfile;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -20,8 +20,6 @@ class BillingProfileResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
     
     protected static ?string $navigationGroup = 'Billing & Payments';
-
-    protected static bool $isScopedToTenant = false;
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {

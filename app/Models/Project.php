@@ -103,6 +103,24 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Billing profiles authorized to pay for this project.
+     */
+    public function authorizedBillingProfiles(): BelongsToMany
+    {
+        return $this->belongsToMany(BillingProfile::class, 'billing_profile_project')
+            ->withPivot(['is_primary', 'status', 'assigned_by_user_id'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Relationship: Invoices generated specifically for this project.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
      * Boot logic for automatically generating monitoring tokens.
      */
     protected static function boot()

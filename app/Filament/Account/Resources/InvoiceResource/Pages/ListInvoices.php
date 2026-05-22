@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\App\Resources\InvoiceResource\Pages;
+namespace App\Filament\Account\Resources\InvoiceResource\Pages;
 
-use App\Filament\App\Resources\InvoiceResource;
+use App\Filament\Account\Resources\InvoiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -13,7 +13,7 @@ class ListInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // No create action for invoices
         ];
     }
 }

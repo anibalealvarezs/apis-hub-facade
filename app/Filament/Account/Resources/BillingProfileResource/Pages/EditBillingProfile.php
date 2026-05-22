@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\App\Resources\BillingProfileResource\Pages;
+namespace App\Filament\Account\Resources\BillingProfileResource\Pages;
 
-use App\Filament\App\Resources\BillingProfileResource;
+use App\Filament\Account\Resources\BillingProfileResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 

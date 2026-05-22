@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Filament\App\Resources;
+namespace App\Filament\Account\Resources;
 
-use App\Filament\App\Resources\InvoiceResource\Pages;
-use App\Filament\App\Resources\InvoiceResource\RelationManagers;
+use App\Filament\Account\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,7 +10,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InvoiceResource extends Resource
 {
@@ -20,8 +18,6 @@ class InvoiceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationGroup = 'Billing & Payments';
-
-    protected static bool $isScopedToTenant = false;
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -80,12 +76,9 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // No bulk delete for invoices
             ]);
     }
 
@@ -100,9 +93,7 @@ class InvoiceResource extends Resource
     {
         return [
             'index' => Pages\ListInvoices::route('/'),
-            'create' => Pages\CreateInvoice::route('/create'),
             'view' => Pages\ViewInvoice::route('/{record}'),
-            'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }
 }

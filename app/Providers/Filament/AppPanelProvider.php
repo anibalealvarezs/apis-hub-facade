@@ -147,20 +147,12 @@ class AppPanelProvider extends PanelProvider
                 Authenticate::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
-            ->plugin(
-                \Jeffgreco13\FilamentBreezy\BreezyCore::make()
-                    ->myProfile(
-                        shouldRegisterUserMenu: true,
-                        shouldRegisterNavigation: false,
-                        hasAvatars: false,
-                    )
-                    ->myProfileComponents([
-                        \App\Livewire\ArchivedProjectsTable::class,
-                    ])
-                    ->enableTwoFactorAuthentication(
-                        force: false,
-                    )
-            )
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('My Account')
+                    ->url('/account')
+                    ->icon('heroicon-o-user'),
+            ])
             ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
     }
 }

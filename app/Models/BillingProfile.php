@@ -43,6 +43,26 @@ class BillingProfile extends Model
     }
 
     /**
+     * Get the users this profile is shared with.
+     */
+    public function sharedWithUsers()
+    {
+        return $this->belongsToMany(User::class, 'billing_profile_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the projects this profile is authorized to pay for.
+     */
+    public function authorizedProjects()
+    {
+        return $this->belongsToMany(Project::class, 'billing_profile_project')
+            ->withPivot(['is_primary', 'status', 'assigned_by_user_id'])
+            ->withTimestamps();
+    }
+
+    /**
      * Get the invoices associated with this billing profile.
      */
     public function unifiedInvoices()

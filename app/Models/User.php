@@ -91,6 +91,24 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     }
 
     /**
+     * Relationship: Billing profiles shared with this user by other users.
+     */
+    public function sharedBillingProfiles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(BillingProfile::class, 'billing_profile_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * Helper: Get all billing profiles the user has access to (owned + shared).
+     */
+    public function getAvailableBillingProfiles()
+    {
+        return $this->billingProfiles->merge($this->sharedBillingProfiles);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
