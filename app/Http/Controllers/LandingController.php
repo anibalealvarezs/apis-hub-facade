@@ -16,7 +16,7 @@ class LandingController extends Controller
     public function index(Request $request)
     {
         $host = $request->getHost();
-        $mainDomain = config('app.network_domain', 'apis-hub.cloud');
+        $mainDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? config('app.network_domain', 'apis-hub.cloud');
 
         // 1. Detectamos si hay un subdominio (que no sea 'www' ni el dominio principal)
         if ($host !== $mainDomain && $host !== "www.{$mainDomain}") {
