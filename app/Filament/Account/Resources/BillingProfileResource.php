@@ -98,7 +98,7 @@ class BillingProfileResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\SharedWithUsersRelationManager::class,
         ];
     }
 

@@ -48,7 +48,7 @@ class AccountPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Account/Widgets'), for: 'App\\Filament\\Account\\Widgets')
             ->widgets([
-                //
+                \App\Filament\Account\Widgets\BillingRequestsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
