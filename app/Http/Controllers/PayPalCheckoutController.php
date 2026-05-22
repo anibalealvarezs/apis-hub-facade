@@ -80,6 +80,8 @@ class PayPalCheckoutController extends Controller
     {
         $subscriptionId = $request->query('subscription_id');
 
+        \Illuminate\Support\Facades\Log::info('PayPal Return triggered', ['subscription_id' => $subscriptionId, 'query' => $request->query()]);
+
         if (!$subscriptionId) {
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('error', 'Subscription ID missing.');
@@ -90,15 +92,20 @@ class PayPalCheckoutController extends Controller
             $provider->getAccessToken();
 
             $response = $provider->showSubscriptionDetails($subscriptionId);
+            
+            \Illuminate\Support\Facades\Log::info('PayPal showSubscriptionDetails response', ['response' => $response]);
 
             if (isset($response['status']) && in_array($response['status'], ['ACTIVE', 'APPROVAL_PENDING'])) {
                 
-                $customId = json_decode($response['custom_id'], true);
+                $customId = json_decode($response['custom_id'] ?? '{}', true);
                 
-                $plan = SubscriptionPlan::find($customId['plan_id']);
-                $profile = BillingProfile::find($customId['billing_profile_id']);
+                \Illuminate\Support\Facades\Log::info('PayPal parsed custom_id', ['custom_id' => $customId]);
+                
+                $plan = SubscriptionPlan::find($customId['plan_id'] ?? null);
+                $profile = BillingProfile::find($customId['billing_profile_id'] ?? null);
 
                 if (!$plan || !$profile) {
+                    \Illuminate\Support\Facades\Log::error('PayPal local record mapping failed', ['plan' => $plan, 'profile' => $profile]);
                     return redirect()->route('filament.account.pages.account-subscription')
                         ->with('error', 'Invalid local record mapping.');
                 }
@@ -113,21 +120,28 @@ class PayPalCheckoutController extends Controller
                         'paypal_status' => $response['status'],
                     ]
                 );
+                
+                \Illuminate\Support\Facades\Log::info('Local subscription updated/created', ['subscription_id' => $subscription->id]);
 
                 // Update the user's tier immediately
                 $request->user()->update([
                     'tier' => $plan->tier
                 ]);
+                
+                \Illuminate\Support\Facades\Log::info('User tier updated', ['new_tier' => $plan->tier]);
 
                 // Assuming success
                 return redirect()->route('filament.account.pages.account-subscription')
                     ->with('success', 'Subscription created successfully!');
             }
 
+            \Illuminate\Support\Facades\Log::warning('Subscription status invalid', ['status' => $response['status'] ?? 'unknown']);
+
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('error', 'Subscription is not active.');
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('PayPal return exception', ['error' => $e->getMessage()]);
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('error', 'Error verifying subscription: ' . $e->getMessage());
         }
