@@ -64,6 +64,7 @@ class AccountPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->plugin(

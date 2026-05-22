@@ -35,11 +35,21 @@ class EnsureUserHasActiveProject
 
         $user = Auth::user();
         
-        // 2. Obtenemos el slug de la URL (si existe)
+        // 2. Si el usuario está en el Account Panel, verificar si tiene proyectos
+        // Si no tiene, forzar la creación. Si tiene, dejarlo pasar.
+        if ($request->routeIs('filament.account.*') || $request->is('account*')) {
+            $hasProjects = $user->projects()->where('is_active', true)->exists();
+            if (!$hasProjects) {
+                return redirect()->route('filament.app.tenant.registration');
+            }
+            return $next($request);
+        }
+
+        // 3. Obtenemos el slug de la URL (si existe) para el App Panel
         // En Filament, el parámetro del tenant suele llamarse 'tenant'
         $slugFromUrl = $request->route('tenant');
 
-        // 3. Verificamos si el slug actual es válido y activo para este usuario
+        // 4. Verificamos si el slug actual es válido y activo para este usuario
         // Si ya estamos en un subdominio válido, dejamos pasar el request
         if ($slugFromUrl) {
             $currentProjectExists = $user->projects()
