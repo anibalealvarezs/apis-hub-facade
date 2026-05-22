@@ -157,6 +157,7 @@ class AppPanelProvider extends PanelProvider
                     ->enableTwoFactorAuthentication(
                         force: false,
                     )
-            );
+            )
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
     }
 }

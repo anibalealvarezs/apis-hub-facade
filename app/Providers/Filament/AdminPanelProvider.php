@@ -112,6 +112,7 @@ class AdminPanelProvider extends PanelProvider
                         force: false,
                     )
             )
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make())
             ->authMiddleware([
                 Authenticate::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
