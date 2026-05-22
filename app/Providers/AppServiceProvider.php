@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
 
         \Livewire\Livewire::component('personal_info', \App\Livewire\CustomPersonalInfo::class);
 
+        \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\BillingProfile::class);
+        \Laravel\Cashier\Cashier::useSubscriptionModel(\App\Models\Subscription::class);
+        \Laravel\Cashier\Cashier::useSubscriptionItemModel(\App\Models\SubscriptionItem::class);
+
         if (str_starts_with(config('app.url'), 'https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
             \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
