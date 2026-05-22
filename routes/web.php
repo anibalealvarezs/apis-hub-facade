@@ -23,6 +23,23 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::middleware(['web'])->group(function () {
     Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
     Route::get('/app/transfers/{token}/accept', [\App\Http\Controllers\TransferController::class, 'accept'])->name('transfers.accept');
+    
+    // Pending Email Verification
+    Route::get('/profile/verify-email/{id}/{hash}', function (\Illuminate\Http\Request $request, $id, $hash) {
+        $user = \App\Models\User::findOrFail($id);
+
+        if (!hash_equals((string) $hash, sha1($user->pending_email))) {
+            abort(403, 'Invalid signature.');
+        }
+
+        $user->update([
+            'email' => $user->pending_email,
+            'pending_email' => null,
+            'email_verified_at' => now(),
+        ]);
+
+        return redirect()->route('filament.app.pages.dashboard')->with('status', 'Email updated successfully!');
+    })->middleware(['signed'])->name('profile.verify-pending-email');
 });
 
 // FB Deauthorize Callback (Public POST)
