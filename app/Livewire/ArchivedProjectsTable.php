@@ -24,6 +24,11 @@ class ArchivedProjectsTable extends Component implements HasForms, HasTable
 
     public static $sort = 10;
 
+    public static function getSort(): int
+    {
+        return self::$sort;
+    }
+
     public function table(Table $table): Table
     {
         return $table
