@@ -63,6 +63,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Alias for user() to explicitly denote the single true owner of the project.
+     */
+    public function trueOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Relationship: The deployment logs for this project.
      */
     public function deploymentLogs(): HasMany
