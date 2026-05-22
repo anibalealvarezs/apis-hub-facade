@@ -26,13 +26,9 @@ class ProjectBillingSettings extends Page implements HasTable
 
     public function mount()
     {
-        // Only owners and admins can see this
-        $userRole = \Illuminate\Support\Facades\DB::table('project_user')
-            ->where('project_id', filament()->getTenant()->id)
-            ->where('user_id', auth()->id())
-            ->value('role');
-
-        abort_unless(in_array($userRole, ['owner', 'admin']), 403, 'Only project owners and admins can manage billing.');
+        // For now, only the true owner of the project can manage billing.
+        // Once project roles are implemented, this can be expanded to 'admins'.
+        abort_unless(filament()->getTenant()->user_id === auth()->id(), 403, 'Only the project owner can manage billing.');
     }
 
     public function table(Table $table): Table
