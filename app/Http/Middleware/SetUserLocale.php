@@ -16,18 +16,32 @@ class SetUserLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $sessionLocale = session()->get('locale');
+
         if (auth()->check()) {
             $user = auth()->user();
             
-            // If the user has a locale saved, enforce it.
-            if (!empty($user->locale)) {
+            if ($sessionLocale && $sessionLocale !== $user->locale) {
+                // User changed language via Filament Language Switch UI
+                $user->update(['locale' => $sessionLocale]);
+            } elseif (!$sessionLocale && $user->locale) {
+                // First login on new device, no session locale yet, restore DB preference
+                session()->put('locale', $user->locale);
+                App::setLocale($user->locale);
+            } elseif ($user->locale) {
+                // Keep app locale in sync just in case
                 App::setLocale($user->locale);
             }
         } else {
-            // For guests, attempt to detect from browser
-            $preferred = $request->getPreferredLanguage(['en', 'es']);
-            if ($preferred) {
-                App::setLocale($preferred);
+            // For guests, attempt to detect from browser if session is empty
+            if (!$sessionLocale) {
+                $preferred = $request->getPreferredLanguage(['en', 'es']);
+                if ($preferred) {
+                    session()->put('locale', $preferred);
+                    App::setLocale($preferred);
+                }
+            } else {
+                App::setLocale($sessionLocale);
             }
         }
 
