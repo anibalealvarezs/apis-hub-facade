@@ -61,6 +61,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         'password',
         'logout_at',
         'is_active',
+        'locale',
         'tier',
     ];
 
