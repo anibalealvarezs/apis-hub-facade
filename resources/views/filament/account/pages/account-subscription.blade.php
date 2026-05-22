@@ -22,7 +22,7 @@
                     @endif
                 </div>
 
-                @if(auth()->user()->tier === $plan->tier)
+                @if(auth()->user()->tier?->value === $plan->tier || auth()->user()->tier === $plan->tier)
                     <button disabled class="w-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 font-bold py-2 px-4 rounded-lg border border-green-300 dark:border-green-700">
                         Current Plan
                     </button>
