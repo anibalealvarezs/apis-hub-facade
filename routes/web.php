@@ -19,6 +19,11 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('connect/{tenant}/{provider}', [App\Http\Controllers\OAuthController::class, 'connect'])->name('app.connect');
 });
 
+// Invitations (Project Collaboration)
+Route::middleware(['web'])->group(function () {
+    Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitation.accept');
+});
+
 // FB Deauthorize Callback (Public POST)
 Route::post('social/{provider}/deauthorize', [App\Http\Controllers\OAuthController::class, 'handleDeauthorize'])->name('social.deauthorize');
 Route::post('social/{provider}/delete-data', [App\Http\Controllers\OAuthController::class, 'handleDataDeletion'])->name('social.delete-data');

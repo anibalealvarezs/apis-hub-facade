@@ -55,6 +55,10 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
 
+        // Invitations
+        \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, \App\Listeners\ProcessProjectInvitation::class);
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\ProcessProjectInvitation::class);
+
         // ─── Notificación visual tras verificación de email ───
         // Se dispara cuando el usuario hace click en el link de verificación.
         // Usa session push para que Filament la muestre en la página de login.
