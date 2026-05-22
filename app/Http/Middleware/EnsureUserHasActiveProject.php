@@ -18,8 +18,13 @@ class EnsureUserHasActiveProject
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 0. Si es logout o validación de correo, lo dejamos pasar sin preguntas
-        if ($request->is('*/logout') || $request->is('*/email-verification*')) {
+        // 0. Si es logout, validación de correo, o CREACIÓN de proyecto, lo dejamos pasar sin preguntas
+        if (
+            $request->is('*/logout') || 
+            $request->is('*/email-verification*') || 
+            $request->routeIs('filament.app.tenant.registration') ||
+            $request->routeIs('filament.app.tenant.profile')
+        ) {
             return $next($request);
         }
 
@@ -65,11 +70,6 @@ class EnsureUserHasActiveProject
         }
 
         // 6. Si no tiene proyectos activos, lo mandamos a crear uno
-        $registrationRoute = 'filament.app.tenant.registration';
-        if ($request->routeIs($registrationRoute)) {
-            return $next($request);
-        }
-
-        return redirect()->route($registrationRoute);
+        return redirect()->route('filament.app.tenant.registration');
     }
 }
