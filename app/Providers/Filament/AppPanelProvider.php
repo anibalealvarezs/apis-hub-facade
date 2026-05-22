@@ -153,6 +153,14 @@ class AppPanelProvider extends PanelProvider
                     ->url('/account')
                     ->icon('heroicon-o-user'),
             ])
+            ->plugin(
+                \Jeffgreco13\FilamentBreezy\BreezyCore::make()
+                    ->myProfile(
+                        shouldRegisterUserMenu: false, // Disable in app panel so it doesn't conflict with Account panel
+                        shouldRegisterNavigation: false,
+                        hasAvatars: false,
+                    )
+            )
             ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
     }
 }
