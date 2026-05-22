@@ -21,6 +21,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     // PayPal Checkout Routes
     Route::post('paypal/checkout', [App\Http\Controllers\PayPalCheckoutController::class, 'checkout'])->name('paypal.checkout');
     Route::get('paypal/return', [App\Http\Controllers\PayPalCheckoutController::class, 'return'])->name('paypal.return');
+    
+    // Stripe Checkout Routes
+    Route::post('stripe/checkout', [App\Http\Controllers\StripeCheckoutController::class, 'checkout'])->name('stripe.checkout');
+    Route::get('stripe/return', [App\Http\Controllers\StripeCheckoutController::class, 'return'])->name('stripe.return');
 });
 
 // Webhooks

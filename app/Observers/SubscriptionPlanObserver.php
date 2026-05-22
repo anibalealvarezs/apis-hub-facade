@@ -41,6 +41,11 @@ class SubscriptionPlanObserver
             return;
         }
 
+        // DESACTIVADO: Hemos decidido manejar los planes manualmente en el dashboard de PayPal
+        // para poder usar configuraciones avanzadas (como Metered Billing / Tiered Pricing) 
+        // y evitar que la app sobrescriba los IDs manuales.
+        return;
+
         try {
             $provider = new PayPalClient;
             $provider->getAccessToken();

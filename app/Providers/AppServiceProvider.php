@@ -74,6 +74,9 @@ class AppServiceProvider extends ServiceProvider
         // Invitations
         \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, \App\Listeners\ProcessProjectInvitation::class);
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\ProcessProjectInvitation::class);
+        
+        // Stripe Webhooks
+        \Illuminate\Support\Facades\Event::listen(\Laravel\Cashier\Events\WebhookReceived::class, \App\Listeners\StripeWebhookListener::class);
 
         // ─── Notificación visual tras verificación de email ───
         // Se dispara cuando el usuario hace click en el link de verificación.
