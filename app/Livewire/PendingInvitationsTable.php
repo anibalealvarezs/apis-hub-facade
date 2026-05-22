@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Table;
@@ -14,8 +16,9 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ProjectInvitationMail;
 use Filament\Notifications\Notification;
 
-class PendingInvitationsTable extends Component implements HasTable
+class PendingInvitationsTable extends Component implements HasForms, HasTable
 {
+    use InteractsWithForms;
     use InteractsWithTable;
 
     public function table(Table $table): Table
