@@ -13,6 +13,22 @@ use Illuminate\Support\Facades\Auth;
 
 class RegisterProject extends RegisterTenant
 {
+    public function mount(): void
+    {
+        parent::mount();
+
+        if (!Auth::user()->canCreateMoreProjects()) {
+            \Filament\Notifications\Notification::make()
+                ->title('Project Limit Reached')
+                ->body('You have reached the maximum number of projects for your current tier. Please upgrade your subscription to create more projects.')
+                ->danger()
+                ->persistent()
+                ->send();
+
+            redirect()->route('filament.account.pages.account-subscription');
+        }
+    }
+
     public static function getLabel(): string
     {
         return 'Create Your APIs Hub Project';

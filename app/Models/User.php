@@ -161,7 +161,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         return match ($this->tier) {
             UserTier::FREE => $currentProjects < 1,
             UserTier::PRO => $currentProjects < 5,
+            UserTier::ULTRA => $currentProjects < 15,
             UserTier::ENTERPRISE => true,
+            default => $currentProjects < 1, // Fallback to free tier limits
         };
     }
 }

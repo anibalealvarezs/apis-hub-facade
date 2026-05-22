@@ -31,6 +31,7 @@ class SubscriptionPlanResource extends Resource
                         ->options([
                             'free' => 'Free',
                             'pro' => 'Pro',
+                            'ultra' => 'Ultra',
                             'enterprise' => 'Enterprise',
                         ])
                         ->required(),
