@@ -17,6 +17,13 @@ class ArchivedProjectsTable extends Component implements HasForms, HasTable
     use InteractsWithForms;
     use InteractsWithTable;
 
+    public static function canView(): bool
+    {
+        return true;
+    }
+
+    public static $sort = 10;
+
     public function table(Table $table): Table
     {
         return $table
