@@ -65,10 +65,13 @@ class ManageCollaborators extends Page implements HasTable
                 TextColumn::make('project_roles')
                     ->label('Rol en este Proyecto')
                     ->getStateUsing(function (User $record) use ($project) {
-                        // Filtramos para mostrar solo los roles que el usuario tiene EN ESTE proyecto (project_id)
-                        return $record->roles()
+                        // Usamos DB directa para evitar que el HasRoles de Spatie intente
+                        // sobre-filtrar basándose en un team_id estático nulo.
+                        return \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('model_has_roles.model_id', $record->id)
                             ->where('model_has_roles.project_id', $project->id)
-                            ->pluck('name')
+                            ->pluck('roles.name')
                             ->map(fn ($name) => Str::headline($name))
                             ->join(', ') ?: 'Sin rol específico';
                     }),
