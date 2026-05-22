@@ -8,5 +8,14 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateSubscriptionPlan extends CreateRecord
 {
+    use \Filament\Resources\Pages\CreateRecord\Concerns\Translatable;
+
     protected static string $resource = SubscriptionPlanResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\LocaleSwitcher::make(),
+        ];
+    }
 }

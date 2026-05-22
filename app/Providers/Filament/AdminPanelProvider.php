@@ -113,6 +113,10 @@ class AdminPanelProvider extends PanelProvider
                     )
             )
             ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make())
+            ->plugin(
+                \Filament\SpatieLaravelTranslatablePlugin::make()
+                    ->defaultLocales(['en', 'es'])
+            )
             ->authMiddleware([
                 Authenticate::class,
                 \App\Http\Middleware\CheckLogoutAt::class,

@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubscriptionPlanResource extends Resource
 {
+    use \Filament\Resources\Concerns\Translatable;
+
     protected static ?string $model = SubscriptionPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
