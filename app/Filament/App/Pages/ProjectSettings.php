@@ -111,9 +111,9 @@ class ProjectSettings extends Page
                         ->body('Se ha enviado un correo a ' . $toUser->name . ' para que acepte la transferencia del proyecto.')
                         ->success()
                         ->send();
-                }),
+                });
 
-            Action::make('delete')
+        $actions[] = Action::make('delete')
                 ->label('Eliminar Proyecto')
                 ->color('danger')
                 ->icon('heroicon-o-trash')
@@ -155,8 +155,7 @@ class ProjectSettings extends Page
                     } else {
                         redirect()->route('filament.app.tenant.registration');
                     }
-                }),
-        ];
+                });
 
         return $actions;
     }
