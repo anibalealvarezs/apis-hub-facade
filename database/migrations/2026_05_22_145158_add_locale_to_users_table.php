@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('locale')->default('en')->after('email');
-            $table->string('tier')->default('free')->after('locale');
         });
     }
 
@@ -23,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['locale', 'tier']);
+            $table->dropColumn(['locale']);
         });
     }
 };
