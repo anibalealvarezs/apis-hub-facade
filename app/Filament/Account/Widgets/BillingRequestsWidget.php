@@ -17,31 +17,23 @@ class BillingRequestsWidget extends BaseWidget
     public function table(Table $table): Table
     {
         // Find all pending assignments for billing profiles owned by this user
-        $query = DB::table('billing_profile_project')
-            ->join('billing_profiles', 'billing_profile_project.billing_profile_id', '=', 'billing_profiles.id')
-            ->join('projects', 'billing_profile_project.project_id', '=', 'projects.id')
-            ->join('users', 'billing_profile_project.assigned_by_user_id', '=', 'users.id')
-            ->where('billing_profiles.user_id', auth()->id())
-            ->where('billing_profile_project.status', 'pending')
-            ->select(
-                'billing_profile_project.id as pivot_id',
-                'billing_profiles.name as profile_name',
-                'projects.name as project_name',
-                'users.name as requested_by',
-                'users.email as requested_by_email',
-                'billing_profile_project.created_at'
-            );
+        $query = \App\Models\BillingProfileProject::query()
+            ->with(['billingProfile', 'project', 'assignedBy'])
+            ->whereHas('billingProfile', function ($q) {
+                $q->where('user_id', auth()->id());
+            })
+            ->where('status', 'pending');
 
         return $table
             ->query($query)
             ->columns([
-                Tables\Columns\TextColumn::make('profile_name')
+                Tables\Columns\TextColumn::make('billingProfile.name')
                     ->label('Billing Profile'),
-                Tables\Columns\TextColumn::make('project_name')
+                Tables\Columns\TextColumn::make('project.name')
                     ->label('Project'),
-                Tables\Columns\TextColumn::make('requested_by')
+                Tables\Columns\TextColumn::make('assignedBy.name')
                     ->label('Requested By')
-                    ->description(fn ($record) => $record->requested_by_email),
+                    ->description(fn ($record) => $record->assignedBy?->email),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->label('Requested At'),
@@ -51,18 +43,14 @@ class BillingRequestsWidget extends BaseWidget
                     ->color('success')
                     ->icon('heroicon-o-check')
                     ->action(function ($record) {
-                        DB::table('billing_profile_project')
-                            ->where('id', $record->pivot_id)
-                            ->update(['status' => 'approved']);
+                        $record->update(['status' => 'approved']);
                     }),
                 Tables\Actions\Action::make('reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        DB::table('billing_profile_project')
-                            ->where('id', $record->pivot_id)
-                            ->update(['status' => 'rejected']);
+                        $record->update(['status' => 'rejected']);
                     }),
             ])
             ->emptyStateHeading('No pending requests')
