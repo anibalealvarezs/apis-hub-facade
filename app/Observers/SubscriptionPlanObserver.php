@@ -86,7 +86,7 @@ class SubscriptionPlanObserver
                     ]
                 ],
                 "payment_preferences" => [
-                    "auto_bill_outstanding" => true,
+                    "auto_bill_outstanding" => false,
                     "setup_fee" => [
                         "value" => "0",
                         "currency_code" => strtoupper($plan->currency)
