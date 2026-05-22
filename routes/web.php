@@ -17,7 +17,14 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('social/{provider}/redirect', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.social-login');
     Route::get('social/{provider}/callback', [App\Http\Controllers\OAuthController::class, 'callback'])->name('app.social-callback');
     Route::get('connect/{tenant}/{provider}', [App\Http\Controllers\OAuthController::class, 'connect'])->name('app.connect');
+    
+    // PayPal Checkout Routes
+    Route::post('paypal/checkout', [App\Http\Controllers\PayPalCheckoutController::class, 'checkout'])->name('paypal.checkout');
+    Route::get('paypal/return', [App\Http\Controllers\PayPalCheckoutController::class, 'return'])->name('paypal.return');
 });
+
+// Webhooks
+Route::post('/webhooks/paypal', [App\Http\Controllers\PayPalWebhookController::class, 'handle'])->name('webhooks.paypal');
 
 // Invitations (Project Collaboration)
 Route::middleware(['web'])->group(function () {
