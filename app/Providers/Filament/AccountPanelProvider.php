@@ -24,6 +24,7 @@ class AccountPanelProvider extends PanelProvider
         return $panel
             ->id('account')
             ->path('account')
+            ->emailVerification()
             ->brandLogo(asset('images/branding/apishub-trans-620.webp'))
             ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-620.webp'))
             ->brandLogoHeight('3rem')

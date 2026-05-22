@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         \Laravel\Cashier\Cashier::useSubscriptionItemModel(\App\Models\SubscriptionItem::class);
 
         \App\Models\SubscriptionPlan::observe(\App\Observers\SubscriptionPlanObserver::class);
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
 
         if (str_starts_with(config('app.url'), 'https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');

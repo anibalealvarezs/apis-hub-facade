@@ -143,8 +143,8 @@ class AppPanelProvider extends PanelProvider
                 VerifyReCaptcha::class,
             ])
             ->authMiddleware([
-                \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 Authenticate::class,
+                \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->userMenuItems([
