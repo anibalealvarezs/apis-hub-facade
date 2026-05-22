@@ -43,11 +43,15 @@ class ProcessProjectInvitation
             $user->projects()->attach($invitation->project_id);
         }
 
-        // 2. Asignar rol usando Spatie
-        setPermissionsTeamId($invitation->project_id);
-        
-        if (!$user->hasRole($invitation->role)) {
-            $user->assignRole($invitation->role);
+        // 2. Asignar rol (inserción directa para evitar problemas de caché)
+        $roleObj = \Spatie\Permission\Models\Role::where('name', $invitation->role)->first();
+        if ($roleObj) {
+            \Illuminate\Support\Facades\DB::table('model_has_roles')->insertOrIgnore([
+                'role_id' => $roleObj->id,
+                'model_type' => get_class($user),
+                'model_id' => $user->id,
+                'project_id' => $invitation->project_id,
+            ]);
         }
 
         // 3. Autovalidar correo si es un nuevo registro

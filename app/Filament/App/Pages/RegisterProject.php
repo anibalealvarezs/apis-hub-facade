@@ -86,10 +86,16 @@ class RegisterProject extends RegisterTenant
         $user = Auth::user();
         $project->users()->attach($user);
 
-        // Asignar el rol de administrador de proyecto al creador
-        setPermissionsTeamId($project->id);
-        if (!$user->hasRole('project_owner')) {
-            $user->assignRole('project_owner');
+        // Asignar el rol de administrador de proyecto al creador de forma forzada y directa
+        // Esto evita problemas de caché de Spatie durante la sesión activa
+        $role = \Spatie\Permission\Models\Role::where('name', 'project_owner')->first();
+        if ($role) {
+            \Illuminate\Support\Facades\DB::table('model_has_roles')->insertOrIgnore([
+                'role_id' => $role->id,
+                'model_type' => get_class($user),
+                'model_id' => $user->id,
+                'project_id' => $project->id,
+            ]);
         }
 
         if ($server) {
