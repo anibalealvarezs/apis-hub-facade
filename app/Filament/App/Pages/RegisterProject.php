@@ -83,7 +83,14 @@ class RegisterProject extends RegisterTenant
             'is_active' => true,
         ]);
 
-        $project->users()->attach(Auth::user());
+        $user = Auth::user();
+        $project->users()->attach($user);
+
+        // Asignar el rol de administrador de proyecto al creador
+        setPermissionsTeamId($project->id);
+        if (!$user->hasRole('project_owner')) {
+            $user->assignRole('project_owner');
+        }
 
         if ($server) {
             // Trigger remote deployment via asynchronous Job

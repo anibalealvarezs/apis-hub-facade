@@ -62,9 +62,16 @@ class ManageCollaborators extends Page implements HasTable
             ->columns([
                 TextColumn::make('name')->label('Nombre'),
                 TextColumn::make('email')->label('Email'),
-                TextColumn::make('roles.name')
-                    ->label('Rol')
-                    ->formatStateUsing(fn ($state) => Str::headline($state)),
+                TextColumn::make('project_roles')
+                    ->label('Rol en este Proyecto')
+                    ->getStateUsing(function (User $record) use ($project) {
+                        // Filtramos para mostrar solo los roles que el usuario tiene EN ESTE proyecto (project_id)
+                        return $record->roles()
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->pluck('name')
+                            ->map(fn ($name) => Str::headline($name))
+                            ->join(', ') ?: 'Sin rol específico';
+                    }),
             ])
             ->actions([
                 Action::make('remove')
