@@ -49,3 +49,5 @@ docker-compose.yml.dev
 facade_demo_key
 facade_demo_key.pub
 **/.php-cs-fixer.dist.php
+
+.copilot/composer-path-repositories.backup.json

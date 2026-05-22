@@ -14,6 +14,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use App\Enums\UserTier;
+use Spatie\Permission\Traits\HasRoles;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 
 class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
 {
@@ -21,6 +24,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     use HasFactory;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use HasRoles;
+    use HasPanelShield;
 
     /**
      * Filament Multi-tenancy: Return the projects owned by this user.
@@ -44,7 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return $this->is_admin && $this->is_active;
+            return $this->hasRole('super_admin') && $this->is_active;
         }
 
         return $this->is_active;
@@ -55,8 +60,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         'email',
         'password',
         'logout_at',
-        'is_admin',
         'is_active',
+        'tier',
     ];
 
     /**
@@ -64,7 +69,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function projects(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(Project::class);
+        return $this->belongsToMany(Project::class)->using(ProjectUser::class);
     }
 
     /**
@@ -96,8 +101,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'email_verified_at' => 'datetime',
             'logout_at' => 'datetime',
             'password' => 'hashed',
-            'is_admin' => 'boolean',
             'is_active' => 'boolean',
+            'tier' => UserTier::class,
         ];
     }
 
@@ -115,5 +120,20 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
+
+    /**
+     * Check if the user has reached their project creation limit based on their Tier.
+     * (Future implementation will use Cashier).
+     */
+    public function canCreateMoreProjects(): bool
+    {
+        $currentProjects = $this->projects()->count();
+
+        return match ($this->tier) {
+            UserTier::FREE => $currentProjects < 1,
+            UserTier::PRO => $currentProjects < 5,
+            UserTier::ENTERPRISE => true,
+        };
     }
 }
