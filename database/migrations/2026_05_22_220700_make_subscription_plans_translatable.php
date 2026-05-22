@@ -12,27 +12,38 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First we read existing data
-        $plans = DB::table('subscription_plans')->get();
-
-        // Alter the table columns to JSON
+        // First rename the existing columns to preserve data safely
         Schema::table('subscription_plans', function (Blueprint $table) {
-            $table->json('name')->change();
-            $table->json('description')->nullable()->change();
+            $table->renameColumn('name', 'old_name');
+            $table->renameColumn('description', 'old_description');
         });
 
-        // Seed back the existing data using JSON structure
+        // Add the new JSON columns
+        Schema::table('subscription_plans', function (Blueprint $table) {
+            $table->json('name')->nullable();
+            $table->json('description')->nullable();
+        });
+
+        // Migrate the data to the new JSON columns
+        $plans = DB::table('subscription_plans')->get();
         foreach ($plans as $plan) {
-            $nameJson = json_encode(['en' => $plan->name]);
-            $descJson = $plan->description ? json_encode(['en' => $plan->description]) : null;
+            $nameJson = json_encode(['en' => $plan->old_name]);
+            $descJson = $plan->old_description ? json_encode(['en' => $plan->old_description]) : null;
 
             DB::table('subscription_plans')
                 ->where('id', $plan->id)
                 ->update([
-                    'name' => DB::raw("'$nameJson'"),
-                    'description' => $descJson ? DB::raw("'$descJson'") : null,
+                    'name' => $nameJson,
+                    'description' => $descJson,
                 ]);
         }
+
+        // Make 'name' non-nullable after filling data, and drop old columns
+        Schema::table('subscription_plans', function (Blueprint $table) {
+            $table->json('name')->nullable(false)->change();
+            $table->dropColumn('old_name');
+            $table->dropColumn('old_description');
+        });
     }
 
     /**
@@ -40,11 +51,34 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Note: Reversing JSON to string can be lossy and DB specific.
-        // We'll just cast back to string. Data might remain as stringified JSON.
+        // To reverse, we do the same dance in reverse
         Schema::table('subscription_plans', function (Blueprint $table) {
-            $table->string('name')->change();
-            $table->text('description')->nullable()->change();
+            $table->renameColumn('name', 'old_json_name');
+            $table->renameColumn('description', 'old_json_description');
+        });
+
+        Schema::table('subscription_plans', function (Blueprint $table) {
+            $table->string('name')->nullable();
+            $table->text('description')->nullable();
+        });
+
+        $plans = DB::table('subscription_plans')->get();
+        foreach ($plans as $plan) {
+            $nameArr = json_decode($plan->old_json_name, true);
+            $descArr = $plan->old_json_description ? json_decode($plan->old_json_description, true) : null;
+
+            DB::table('subscription_plans')
+                ->where('id', $plan->id)
+                ->update([
+                    'name' => is_array($nameArr) ? ($nameArr['en'] ?? '') : '',
+                    'description' => is_array($descArr) ? ($descArr['en'] ?? null) : null,
+                ]);
+        }
+
+        Schema::table('subscription_plans', function (Blueprint $table) {
+            $table->string('name')->nullable(false)->change();
+            $table->dropColumn('old_json_name');
+            $table->dropColumn('old_json_description');
         });
     }
 };
