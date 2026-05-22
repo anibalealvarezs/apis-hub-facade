@@ -105,22 +105,19 @@ class PayPalCheckoutController extends Controller
 
                 // Create local subscription record
                 $subscription = Subscription::updateOrCreate(
-                    ['paypal_id' => $subscriptionId],
+                    ['paypal_subscription_id' => $subscriptionId],
                     [
                         'billing_profile_id' => $profile->id,
+                        'subscription_plan_id' => $plan->id,
                         'type' => 'default', // standard Cashier type
                         'paypal_status' => $response['status'],
-                        'paypal_plan_id' => $plan->paypal_plan_id,
                     ]
                 );
 
-                SubscriptionItem::updateOrCreate(
-                    ['subscription_id' => $subscription->id, 'paypal_product_id' => $response['plan_id']],
-                    [
-                        'paypal_plan_id' => $plan->paypal_plan_id,
-                        'quantity' => 1,
-                    ]
-                );
+                // Update the user's tier immediately
+                $request->user()->update([
+                    'tier' => $plan->tier
+                ]);
 
                 // Assuming success
                 return redirect()->route('filament.account.pages.account-subscription')
