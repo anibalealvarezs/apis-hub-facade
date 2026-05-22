@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\Project;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -55,6 +56,10 @@ class RegisterProject extends RegisterTenant
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
                             ->helperText('Caution: This identifier is permanent and cannot be changed after creation.'),
+                        Checkbox::make('deploy_immediately')
+                            ->label('Desplegar infraestructura inmediatamente')
+                            ->helperText('Si se marca, el sistema aprovisionará los contenedores en el servidor ahora. De lo contrario, se creará el proyecto solo lógicamente.')
+                            ->default(false),
                     ]),
             ]);
     }
@@ -98,7 +103,7 @@ class RegisterProject extends RegisterTenant
             ]);
         }
 
-        if ($server) {
+        if ($server && ($data['deploy_immediately'] ?? false)) {
             // Trigger remote deployment via asynchronous Job
             \App\Jobs\DeployProjectJob::dispatch($project);
             
@@ -107,6 +112,12 @@ class RegisterProject extends RegisterTenant
                 ->body('The infrastructure is being provisioned in the background. Please configure your data synchronization settings.')
                 ->success()
                 ->persistent()
+                ->send();
+        } else {
+            \Filament\Notifications\Notification::make()
+                ->title('Proyecto Creado')
+                ->body('El proyecto ha sido registrado, pero el despliegue de infraestructura fue omitido.')
+                ->success()
                 ->send();
         }
 

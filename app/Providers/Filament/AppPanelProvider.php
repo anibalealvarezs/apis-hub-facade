@@ -154,6 +154,9 @@ class AppPanelProvider extends PanelProvider
                         shouldRegisterNavigation: false,
                         hasAvatars: false,
                     )
+                    ->myProfileComponents([
+                        \App\Livewire\ArchivedProjectsTable::class,
+                    ])
                     ->enableTwoFactorAuthentication(
                         force: false,
                     )

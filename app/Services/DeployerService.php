@@ -169,6 +169,40 @@ EOT;
     }
 
     /**
+     * Temporarily disable Caddy routing for a project (Soft Delete).
+     */
+    public function suspendDomain(Project $project)
+    {
+        $server = $project->server;
+        $caddyVhostPath = "/var/www/apis-hub/caddy_vhosts/{$project->subdomain}.caddy";
+        $caddySuspendedPath = "/var/www/apis-hub/caddy_vhosts/{$project->subdomain}.suspended";
+
+        $commands = [
+            "if [ -f {$caddyVhostPath} ]; then mv {$caddyVhostPath} {$caddySuspendedPath}; fi",
+            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+        ];
+
+        return $this->runSshCommands($server, $commands);
+    }
+
+    /**
+     * Restore Caddy routing for a project (Restore Soft Delete).
+     */
+    public function restoreDomain(Project $project)
+    {
+        $server = $project->server;
+        $caddyVhostPath = "/var/www/apis-hub/caddy_vhosts/{$project->subdomain}.caddy";
+        $caddySuspendedPath = "/var/www/apis-hub/caddy_vhosts/{$project->subdomain}.suspended";
+
+        $commands = [
+            "if [ -f {$caddySuspendedPath} ]; then mv {$caddySuspendedPath} {$caddyVhostPath}; fi",
+            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+        ];
+
+        return $this->runSshCommands($server, $commands);
+    }
+
+    /**
      * Fully remove a project's infrastructure from the server.
      */
     public function removeInstance(Project $project)

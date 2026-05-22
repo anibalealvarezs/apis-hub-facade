@@ -21,7 +21,8 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Invitations (Project Collaboration)
 Route::middleware(['web'])->group(function () {
-    Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitation.accept');
+    Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
+    Route::get('/app/transfers/{token}/accept', [\App\Http\Controllers\TransferController::class, 'accept'])->name('transfers.accept');
 });
 
 // FB Deauthorize Callback (Public POST)
