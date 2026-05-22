@@ -80,8 +80,17 @@ class ManageCollaborators extends Page implements HasTable
                 Action::make('remove')
                     ->label('Expulsar')
                     ->color('danger')
-                    ->icon('heroicon-o-trash')
+                    ->icon('heroicon-o-user-minus')
                     ->requiresConfirmation()
+                    ->hidden(function (User $record) use ($project) {
+                        // Un project owner no puede ser expulsado de la colaboración
+                        return \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('model_has_roles.model_id', $record->id)
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->where('roles.name', 'project_owner')
+                            ->exists();
+                    })
                     ->action(function (User $record) use ($project) {
                         // Evitar que el owner se expulse a sí mismo si es el único
                         if ($record->id === auth()->id()) {
