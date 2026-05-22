@@ -18,8 +18,8 @@ class EnsureUserHasActiveProject
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 0. Si es logout, lo dejamos pasar sin preguntas
-        if ($request->is('*/logout')) {
+        // 0. Si es logout o validación de correo, lo dejamos pasar sin preguntas
+        if ($request->is('*/logout') || $request->is('*/email-verification*')) {
             return $next($request);
         }
 
