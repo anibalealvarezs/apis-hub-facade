@@ -32,6 +32,7 @@ class SubscriptionPlanResource extends Resource
                             'free' => 'Free',
                             'pro' => 'Pro',
                             'ultra' => 'Ultra',
+                            'founder' => 'Founder',
                             'enterprise' => 'Enterprise',
                         ])
                         ->required(),

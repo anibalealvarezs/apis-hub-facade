@@ -51,6 +51,8 @@ class Project extends Model
         'last_heartbeat_at',
         'error_count',
         'public_api_key',
+        'billing_status',
+        'past_due_at',
     ];
 
     /**
@@ -142,6 +144,7 @@ class Project extends Model
         'is_active' => 'boolean',
         'last_deployed_at' => 'datetime',
         'last_heartbeat_at' => 'datetime',
+        'past_due_at' => 'datetime',
         'health_metrics' => 'array',
         'sync_config' => 'array',
         'error_count' => 'integer',

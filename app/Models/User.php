@@ -156,14 +156,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function canCreateMoreProjects(): bool
     {
-        $currentProjects = $this->projects()->count();
+        $currentOwnedProjects = $this->ownedProjects()->count();
 
         return match ($this->tier) {
-            UserTier::FREE => $currentProjects < 1,
-            UserTier::PRO => $currentProjects < 5,
-            UserTier::ULTRA => $currentProjects < 15,
+            UserTier::FREE => $currentOwnedProjects < 1,
+            UserTier::PRO => $currentOwnedProjects < 5,
+            UserTier::ULTRA, UserTier::FOUNDER => $currentOwnedProjects < 15,
             UserTier::ENTERPRISE => true,
-            default => $currentProjects < 1, // Fallback to free tier limits
+            default => $currentOwnedProjects < 1, // Fallback to free tier limits
         };
     }
 }

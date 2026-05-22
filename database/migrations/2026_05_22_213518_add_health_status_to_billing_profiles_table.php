@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->string('billing_status')->default('active')->after('is_active');
-            $table->timestamp('past_due_at')->nullable()->after('billing_status');
+        Schema::table('billing_profiles', function (Blueprint $table) {
+            $table->string('health_status')->default('healthy')->after('is_default');
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropColumn(['billing_status', 'past_due_at']);
+        Schema::table('billing_profiles', function (Blueprint $table) {
+            $table->dropColumn('health_status');
         });
     }
 };

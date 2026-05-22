@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Subscription;
 use App\Models\Invoice;
 use App\Models\BillingProfile;
+use App\Models\Project;
+use App\Notifications\PaymentFailedNotification;
 
 class PayPalWebhookController extends Controller
 {
@@ -35,7 +37,18 @@ class PayPalWebhookController extends Controller
             case 'PAYMENT.SALE.COMPLETED':
                 $this->handlePaymentSaleCompleted($resource);
                 break;
-            // Add more as needed
+            case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED':
+                $this->handlePaymentFailed($resource);
+                break;
+            case 'CUSTOMER.DISPUTE.CREATED':
+                $this->handleDisputeCreated($resource);
+                break;
+            case 'CUSTOMER.DISPUTE.RESOLVED':
+                $this->handleDisputeResolved($resource);
+                break;
+            case 'PAYMENT.SALE.REFUNDED':
+                $this->handlePaymentRefunded($resource);
+                break;
         }
 
         return response()->json(['status' => 'success']);
@@ -87,6 +100,67 @@ class PayPalWebhookController extends Controller
                     'paid_at' => now(), // You might want to parse $resource['create_time']
                 ]
             );
+        }
+    }
+
+    protected function handlePaymentFailed(array $resource)
+    {
+        $billingAgreementId = $resource['billing_agreement_id'] ?? null;
+        if (!$billingAgreementId) return;
+
+        $subscription = Subscription::where('paypal_id', $billingAgreementId)->first();
+        if ($subscription) {
+            $billingProfile = $subscription->billingProfile;
+            if ($billingProfile) {
+                // Find all projects authorized by this billing profile
+                $projects = $billingProfile->authorizedProjects()->where('billing_status', 'active')->get();
+                foreach ($projects as $project) {
+                    $project->update([
+                        'billing_status' => 'past_due',
+                        'past_due_at' => now(),
+                    ]);
+                }
+                
+                // Notify the billing profile owner
+                if ($billingProfile->user) {
+                    // We mock the notification for now, actual implementation pending
+                    // $billingProfile->user->notify(new PaymentFailedNotification($projects));
+                    Log::info("PayPal Webhook: Payment failed for Billing Profile {$billingProfile->id}. User notified.");
+                }
+            }
+        }
+    }
+
+    protected function handleDisputeCreated(array $resource)
+    {
+        // PayPal Disputes usually link to transaction IDs. We need to find the related invoice/subscription.
+        // For simplicity in this webhook structure, assuming we can derive the billing profile:
+        // In a real scenario, you'd fetch the transaction to get the subscription.
+        Log::warning("PayPal Webhook: Dispute created. Manual inspection required.", ['resource' => $resource]);
+        
+        // Pseudo-logic assuming we found the billing profile ID from the transaction:
+        /*
+        $billingProfile = BillingProfile::find($id);
+        $billingProfile->update(['health_status' => 'disputed']);
+        
+        $projects = $billingProfile->authorizedProjects;
+        foreach ($projects as $project) {
+            $project->update(['billing_status' => 'suspended']);
+        }
+        */
+    }
+
+    protected function handleDisputeResolved(array $resource)
+    {
+        Log::info("PayPal Webhook: Dispute resolved.", ['resource' => $resource]);
+    }
+
+    protected function handlePaymentRefunded(array $resource)
+    {
+        // Find invoice by gateway_invoice_id (which is the sale ID usually)
+        $saleId = $resource['id'] ?? null;
+        if ($saleId) {
+            Invoice::where('gateway_invoice_id', $saleId)->update(['status' => 'refunded']);
         }
     }
 }

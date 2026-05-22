@@ -9,6 +9,7 @@ enum UserTier: string implements HasLabel
     case FREE = 'free';
     case PRO = 'pro';
     case ULTRA = 'ultra';
+    case FOUNDER = 'founder';
     case ENTERPRISE = 'enterprise';
 
     public function getLabel(): ?string
@@ -17,6 +18,7 @@ enum UserTier: string implements HasLabel
             self::FREE => 'Free',
             self::PRO => 'Pro',
             self::ULTRA => 'Ultra',
+            self::FOUNDER => 'Founder',
             self::ENTERPRISE => 'Enterprise',
         };
     }

@@ -6,6 +6,8 @@ use Laravel\Cashier\Subscription as CashierSubscription;
 
 class Subscription extends CashierSubscription
 {
+    protected $guarded = [];
+
     /**
      * Get the billing profile that owns the subscription.
      */

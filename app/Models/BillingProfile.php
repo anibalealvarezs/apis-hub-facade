@@ -27,6 +27,7 @@ class BillingProfile extends Model
         'trial_ends_at',
         'paypal_id',
         'paypal_email',
+        'health_status',
     ];
 
     protected $casts = [
