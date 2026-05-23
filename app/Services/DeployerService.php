@@ -61,6 +61,8 @@ class DeployerService
         $commands[] = "echo '{$envContent}' > {$path}/.env";
 
         // 3. Fire deployment (full-deploy.sh)
+        // Clean up any existing containers or orphans from failed previous deployments to avoid naming conflicts
+        $commands[] = "docker rm -f $(docker ps -aq --filter name=apis-hub-{$project->subdomain}-) 2>/dev/null || true";
         $commands[] = "cd {$path} && sh bin/full-deploy.sh";
 
         // 4. Register in Caddy (Reverse Proxy for the specific container)
