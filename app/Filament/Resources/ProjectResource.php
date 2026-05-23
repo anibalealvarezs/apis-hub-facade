@@ -52,6 +52,13 @@ class ProjectResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
+                            ->rule(function () {
+                                return function (string $attribute, $value, \Closure $fail) {
+                                    if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
+                                        $fail('No se permiten subdominios terminados en "-dev" en producción.');
+                                    }
+                                };
+                            })
                             ->live(onBlur: true)
                             ->disabled(fn (?Project $record) => $record !== null)
                             ->suffix(function () {
