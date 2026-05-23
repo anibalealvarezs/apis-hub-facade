@@ -79,7 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function ownedProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Project::class, 'owner_id');
+        return $this->hasMany(Project::class, 'user_id');
     }
 
     /**
