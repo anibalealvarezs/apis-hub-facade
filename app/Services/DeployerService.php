@@ -44,8 +44,18 @@ class DeployerService
         $commands = [
             "mkdir -p {$path}",
             "cd {$path} && if [ ! -d .git ]; then git clone {$project->git_repo} .; fi",
-            "cd {$path} && git checkout {$project->git_branch} && git pull origin {$project->git_branch}",
         ];
+
+        // 1.5 Version Pinning (Checkout specific Release if assigned)
+        if ($project->apis_hub_release_id && $project->apisHubRelease) {
+            $versionTag = escapeshellarg($project->apisHubRelease->version_tag);
+            Log::info("Deploying pinned release {$versionTag} for project {$project->name}");
+            $commands[] = "cd {$path} && git fetch --tags && git checkout {$versionTag}";
+        } else {
+            $branch = escapeshellarg($project->git_branch);
+            Log::info("Deploying branch {$branch} for project {$project->name}");
+            $commands[] = "cd {$path} && git checkout {$branch} && git pull origin {$branch}";
+        }
 
         // 2. Build .env from Facade Data
         $envContent = $this->generateEnvContent($project);

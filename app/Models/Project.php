@@ -53,6 +53,7 @@ class Project extends Model
         'public_api_key',
         'billing_status',
         'past_due_at',
+        'apis_hub_release_id',
     ];
 
     /**
@@ -120,6 +121,22 @@ class Project extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Relationship: Pending invitations for this project.
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class)->where('status', 'pending');
+    }
+
+    /**
+     * Get the APIs Hub Release associated with the project.
+     */
+    public function apisHubRelease(): BelongsTo
+    {
+        return $this->belongsTo(ApisHubRelease::class);
     }
 
     /**
