@@ -16,6 +16,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\MenuItem;
 
 class AccountPanelProvider extends PanelProvider
 {
@@ -81,6 +82,12 @@ class AccountPanelProvider extends PanelProvider
                     ->enableTwoFactorAuthentication(
                         force: false,
                     )
-            );
+            )
+            ->userMenuItems([
+                'app_dashboard' => MenuItem::make()
+                    ->label('App Dashboard')
+                    ->url(fn (): string => '/app')
+                    ->icon('heroicon-o-computer-desktop'),
+            ]);
     }
 }
