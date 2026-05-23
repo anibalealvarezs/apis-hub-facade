@@ -33,7 +33,7 @@ class RemoteEngineService
         return new ApisHubApi(
             baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
-            debugMode: config('app.debug', false)
+            debugMode: false // NEVER couple this to config('app.debug'), otherwise the SDK intercepts and mocks all requests
         );
     }
 
