@@ -50,7 +50,9 @@ class CheckBillingGracePeriods extends Command
             
             // Downgrade to Free tier. 
             // The service will handle suspending this project if the user exceeds the 1 project limit.
-            $lifecycleService->enforceDowngradeLimits($owner, \App\Enums\UserTier::FREE);
+            $suspendedProjects = $lifecycleService->enforceDowngradeLimits($owner, \App\Enums\UserTier::FREE);
+            
+            $owner->notify(new \App\Notifications\ProjectsSuspendedNotification(count($suspendedProjects)));
         }
 
         $this->info('Completed checking billing grace periods.');

@@ -124,9 +124,12 @@ class PayPalCheckoutController extends Controller
                 \Illuminate\Support\Facades\Log::info('Local subscription updated/created', ['subscription_id' => $subscription->id]);
 
                 // Update the user's tier immediately
-                $request->user()->update([
-                    'tier' => $plan->tier
-                ]);
+                if ($request->user()->tier?->value !== $plan->tier->value) {
+                    $request->user()->update([
+                        'tier' => $plan->tier
+                    ]);
+                    $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                }
                 
                 \Illuminate\Support\Facades\Log::info('User tier updated', ['new_tier' => $plan->tier]);
 

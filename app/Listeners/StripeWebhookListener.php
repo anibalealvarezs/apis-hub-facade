@@ -75,6 +75,9 @@ class StripeWebhookListener
                 // Suspend projects due to downgrade
                 try {
                     app(\App\Services\BillingLifecycleService::class)->handleDowngradeSideEffects($user);
+                    
+                    // Notify User
+                    $user->notify(new \App\Notifications\BillingPaymentFailedNotification());
                 } catch (\Exception $e) {
                     Log::error('Stripe Webhook Downgrade Exception', ['message' => $e->getMessage()]);
                 }

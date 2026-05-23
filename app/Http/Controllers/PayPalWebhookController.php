@@ -123,8 +123,7 @@ class PayPalWebhookController extends Controller
                 
                 // Notify the billing profile owner
                 if ($billingProfile->user) {
-                    // We mock the notification for now, actual implementation pending
-                    // $billingProfile->user->notify(new PaymentFailedNotification($projects));
+                    $billingProfile->user->notify(new \App\Notifications\BillingPaymentFailedNotification());
                     Log::info("PayPal Webhook: Payment failed for Billing Profile {$billingProfile->id}. User notified.");
                 }
             }

@@ -57,9 +57,12 @@ class StripeCheckoutController extends Controller
         $plan = SubscriptionPlan::find($planId);
 
         if ($plan) {
-            $request->user()->update([
-                'tier' => $plan->tier
-            ]);
+            if ($request->user()->tier?->value !== $plan->tier->value) {
+                $request->user()->update([
+                    'tier' => $plan->tier
+                ]);
+                $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+            }
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('success', "You have successfully subscribed to the {$plan->name} plan via Stripe!");
         }
