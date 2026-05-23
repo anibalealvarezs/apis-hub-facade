@@ -14,12 +14,16 @@ class StripeCheckoutController extends Controller
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
             'billing_profile_id' => 'required|exists:billing_profiles,id',
+            'billing_cycle' => 'required|in:monthly,annual',
+            'coupon_code' => 'nullable|string',
         ]);
 
         $plan = SubscriptionPlan::findOrFail($request->plan_id);
         
-        if (empty($plan->stripe_price_id)) {
-            return back()->with('error', 'This plan is not configured for Stripe yet.');
+        $priceId = $request->billing_cycle === 'annual' ? $plan->stripe_annual_price_id : $plan->stripe_price_id;
+
+        if (empty($priceId)) {
+            return back()->with('error', "This plan is not configured for Stripe {$request->billing_cycle} billing yet.");
         }
 
         $profile = BillingProfile::where('id', $request->billing_profile_id)
@@ -32,9 +36,49 @@ class StripeCheckoutController extends Controller
             })->firstOrFail();
 
         try {
-            // Initiate Stripe Checkout using Cashier
-            return $profile->newSubscription('default', $plan->stripe_price_id)
-                ->checkout([
+            $coupon = null;
+            if ($request->filled('coupon_code')) {
+                $coupon = \App\Models\Coupon::where('code', strtoupper($request->coupon_code))->where('is_active', true)->first();
+                if (!$coupon) {
+                    return back()->with('error', 'Invalid or expired promo code.');
+                }
+            }
+
+            // Check if user already has an active Stripe subscription on this profile
+            if ($profile->subscribed('default')) {
+                // Prorate and swap immediately
+                $subscription = $profile->subscription('default');
+                
+                if ($coupon && $coupon->stripe_promotion_code_id) {
+                    // Cannot easily apply promo code on swap in Cashier directly, it requires passing it to the Stripe API.
+                    // For simplicity in this implementation, we apply it via the Stripe API directly or tell them it's for new subs only.
+                    return back()->with('error', 'Promo codes can only be applied to new subscriptions.');
+                }
+                
+                $subscription->swapAndInvoice($priceId);
+                
+                // Update tier locally
+                if ($request->user()->tier?->value !== $plan->tier->value) {
+                    $request->user()->update(['tier' => $plan->tier]);
+                    $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                }
+                
+                return redirect()->route('filament.account.pages.account-subscription')
+                    ->with('success', "Your subscription was successfully upgraded to the {$plan->name} ({$request->billing_cycle}) plan via Stripe prorated swap!");
+            }
+
+            // Initiate Stripe Checkout using Cashier for new subscription
+            $checkout = $profile->newSubscription('default', $priceId);
+            
+            if ($coupon) {
+                if ($coupon->trial_days) {
+                    $checkout->trialDays($coupon->trial_days);
+                } elseif ($coupon->stripe_promotion_code_id) {
+                    $checkout->withPromotionCode($coupon->stripe_promotion_code_id);
+                }
+            }
+            
+            return $checkout->checkout([
                     'success_url' => route('stripe.return', ['plan_id' => $plan->id]) . '&session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('filament.account.pages.account-subscription'),
                 ]);

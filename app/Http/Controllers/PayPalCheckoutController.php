@@ -19,6 +19,7 @@ class PayPalCheckoutController extends Controller
         $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
             'billing_profile_id' => 'required|exists:billing_profiles,id',
+            'billing_cycle' => 'required|in:monthly,annual',
         ]);
 
         $plan = SubscriptionPlan::findOrFail($request->plan_id);
@@ -28,17 +29,42 @@ class PayPalCheckoutController extends Controller
         if (!$request->user()->getAvailableBillingProfiles()->contains($profile->id)) {
             abort(403, 'Unauthorized access to this billing profile.');
         }
+        
+        $paypalPlanId = $request->billing_cycle === 'annual' ? $plan->paypal_annual_plan_id : $plan->paypal_plan_id;
 
-        if (!$plan->paypal_plan_id) {
-            return back()->with('error', 'This plan is not configured for PayPal yet.');
+        if (!$paypalPlanId) {
+            return back()->with('error', "This plan is not configured for PayPal {$request->billing_cycle} billing yet.");
         }
 
         try {
             $provider = new PayPalClient;
             $provider->getAccessToken();
+            
+            // Check if user already has an active PayPal subscription on this profile
+            $activeSub = Subscription::where('billing_profile_id', $profile->id)
+                ->where('paypal_status', 'ACTIVE')
+                ->first();
+                
+            if ($activeSub && $activeSub->paypal_subscription_id) {
+                // Prorate and swap immediately
+                $response = $provider->reviseSubscription($activeSub->paypal_subscription_id, [
+                    'plan_id' => $paypalPlanId
+                ]);
+                
+                if (isset($response['id']) || isset($response['links'])) {
+                    // Update tier locally
+                    if ($request->user()->tier?->value !== $plan->tier->value) {
+                        $request->user()->update(['tier' => $plan->tier]);
+                        $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                    }
+                    
+                    return redirect()->route('filament.account.pages.account-subscription')
+                        ->with('success', "Your subscription was successfully upgraded to the {$plan->name} ({$request->billing_cycle}) plan via PayPal prorated swap!");
+                }
+            }
 
             $data = [
-                "plan_id" => $plan->paypal_plan_id,
+                "plan_id" => $paypalPlanId,
                 "custom_id" => json_encode([
                     'user_id' => $request->user()->id,
                     'billing_profile_id' => $profile->id,
