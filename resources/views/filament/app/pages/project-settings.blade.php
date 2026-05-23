@@ -53,5 +53,37 @@
             </div>
         </x-filament::section>
         @endif
+
+        @if($logs && $logs->count() > 0)
+        <x-filament::section>
+            <x-slot name="heading">
+                Logs de Despliegue
+            </x-slot>
+            <x-slot name="description">
+                Registro de actividades de infraestructura y sincronización en vivo.
+            </x-slot>
+
+            <div wire:poll.5s>
+                <div class="bg-gray-950 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto max-h-96 overflow-y-auto">
+                    @foreach($logs as $log)
+                        <div class="mb-4 pb-4 border-b border-gray-800 last:border-0 last:pb-0 last:mb-0">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500">{{ $log->created_at->format('Y-m-d H:i:s') }}</span>
+                                <span @class([
+                                    'px-2 py-0.5 rounded text-xs font-medium',
+                                    'bg-green-500/10 text-green-400' => $log->status === 'completed',
+                                    'bg-red-500/10 text-red-400' => $log->status === 'failed',
+                                    'bg-blue-500/10 text-blue-400' => $log->status === 'running' || $log->status === 'pending',
+                                ])>
+                                    {{ strtoupper($log->status) }}
+                                </span>
+                            </div>
+                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? 'Iniciando proceso de despliegue...' }}</pre>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </x-filament::section>
+        @endif
     </div>
 </x-filament-panels::page>

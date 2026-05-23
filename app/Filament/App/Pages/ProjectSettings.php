@@ -159,4 +159,13 @@ class ProjectSettings extends Page
 
         return $actions;
     }
+
+    protected function getViewData(): array
+    {
+        $project = Filament::getTenant();
+        
+        return [
+            'logs' => $project->deploymentLogs()->latest()->take(5)->get(),
+        ];
+    }
 }
