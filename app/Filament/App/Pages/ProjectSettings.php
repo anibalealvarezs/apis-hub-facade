@@ -45,6 +45,28 @@ class ProjectSettings extends Page
 
         $actions = [];
 
+        $actions[] = Action::make('edit_settings')
+            ->label('Editar Preferencias')
+            ->color('gray')
+            ->icon('heroicon-o-pencil-square')
+            ->fillForm(fn () => [
+                'timezone' => $project->timezone ?? 'UTC',
+            ])
+            ->form([
+                Select::make('timezone')
+                    ->label('Zona Horaria')
+                    ->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))
+                    ->searchable()
+                    ->required()
+                    ->helperText('La zona horaria utilizada por tu servidor virtual de APIs Hub para programar tareas y registrar eventos.'),
+            ])
+            ->action(function (array $data) use ($project) {
+                $project->update([
+                    'timezone' => $data['timezone'],
+                ]);
+                Notification::make()->title('Preferencias actualizadas')->success()->send();
+            });
+
         if (is_null($project->last_deployed_at)) {
             $actions[] = Action::make('deploy_initial')
                 ->label('Desplegar Infraestructura Inicial')

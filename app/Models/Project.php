@@ -33,6 +33,7 @@ class Project extends Model
      */
     protected $fillable = [
         'name',
+        'timezone',
         'subdomain',
         'server_id',
         'user_id',
