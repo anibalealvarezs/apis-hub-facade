@@ -50,7 +50,7 @@ class OAuthController extends Controller
 
         $driver->with(['state' => implode(':', $stateParts)]);
 
-        $config = config("services.{$provider}")['scopes'] ?? [];
+        $config = config("services.{$provider}")['channel_scopes'] ?? [];
         $scopes = $config['default'] ?? [];
 
         if ($type && isset($config[$type])) {
