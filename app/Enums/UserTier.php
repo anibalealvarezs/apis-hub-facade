@@ -11,6 +11,7 @@ enum UserTier: string implements HasLabel
     case ULTRA = 'ultra';
     case FOUNDER = 'founder';
     case ENTERPRISE = 'enterprise';
+    case SUSPENDED = 'suspended';
 
     public function getLabel(): ?string
     {
@@ -20,6 +21,7 @@ enum UserTier: string implements HasLabel
             self::ULTRA => 'Ultra',
             self::FOUNDER => 'Founder',
             self::ENTERPRISE => 'Enterprise',
+            self::SUSPENDED => 'Suspended',
         };
     }
 }

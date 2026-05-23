@@ -38,6 +38,10 @@ class AccountSubscription extends Page
                         return 'You are already on the Free tier.';
                     }
                     
+                    if ($user->tier === \App\Enums\UserTier::ENTERPRISE) {
+                        return 'Are you sure you want to cancel your Enterprise subscription? Your account will remain active until the end of your billing cycle. At that time, your account will be SUSPENDED and ALL your projects will stop functioning.';
+                    }
+                    
                     return 'Are you sure you want to cancel your paid subscription? Your current tier will remain active until the end of your billing cycle. At that time, you will be downgraded to the Free plan and any projects exceeding the Free limits will be suspended.';
                 })
                 ->modalSubmitActionLabel('Yes, Cancel Subscription')
@@ -78,7 +82,7 @@ class AccountSubscription extends Page
                         
                     return redirect()->route('filament.account.pages.account-subscription');
                 })
-                ->visible(fn () => auth()->user()->tier !== \App\Enums\UserTier::FREE && auth()->user()->tier !== \App\Enums\UserTier::ENTERPRISE)
+                ->visible(fn () => auth()->user()->tier !== \App\Enums\UserTier::FREE)
         ];
     }
 }

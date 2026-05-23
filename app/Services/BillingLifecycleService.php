@@ -24,10 +24,7 @@ class BillingLifecycleService
         // Note: For Enterprise, we suspend until base limits (Ultra limits) are met.
         // There is no downgrade below Enterprise for Enterprise users.
         $enforcementTier = $targetTier;
-        if ($user->tier === UserTier::ENTERPRISE && $targetTier !== UserTier::ENTERPRISE) {
-            // Should not happen manually, but if called, fallback to base limits
-            $enforcementTier = UserTier::ULTRA; 
-        } elseif ($user->tier === UserTier::ENTERPRISE) {
+        if ($user->tier === UserTier::ENTERPRISE && $targetTier !== UserTier::SUSPENDED) {
             $enforcementTier = UserTier::ULTRA; // Enterprise base quota equals Ultra
         }
 
@@ -111,6 +108,7 @@ class BillingLifecycleService
             UserTier::PRO => 5,
             UserTier::ULTRA, UserTier::FOUNDER => 15,
             UserTier::ENTERPRISE => 15, // Base limits
+            UserTier::SUSPENDED => 0,
             default => 1,
         };
     }
@@ -122,6 +120,7 @@ class BillingLifecycleService
             UserTier::PRO => 100,
             UserTier::ULTRA, UserTier::FOUNDER => 500,
             UserTier::ENTERPRISE => 500, // Base limits
+            UserTier::SUSPENDED => 0,
             default => 5,
         };
     }

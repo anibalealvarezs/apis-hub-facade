@@ -45,7 +45,8 @@ class ProcessExpiredSubscriptions extends Command
                 $this->info("Enforcing downgrade for User {$user->id} due to expired subscription {$sub->id}.");
                 
                 // Downgrade and suspend
-                $suspendedCount = $lifecycleService->enforceDowngradeLimits($user, \App\Enums\UserTier::FREE);
+                $targetTier = $user->tier === \App\Enums\UserTier::ENTERPRISE ? \App\Enums\UserTier::SUSPENDED : \App\Enums\UserTier::FREE;
+                $suspendedCount = $lifecycleService->enforceDowngradeLimits($user, $targetTier);
                 
                 // Notify User
                 $user->notify(new \App\Notifications\ProjectsSuspendedNotification($suspendedCount));
