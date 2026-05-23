@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\SubscriptionPlan;
 use App\Models\BillingProfile;
+use App\Models\BillingLog;
 use Illuminate\Support\Facades\Log;
 
 class StripeCheckoutController extends Controller
@@ -60,6 +61,19 @@ class StripeCheckoutController extends Controller
                 // Update tier locally
                 if ($request->user()->tier?->value !== $plan->tier->value) {
                     $request->user()->update(['tier' => $plan->tier]);
+                    
+                    BillingLog::create([
+                        'user_id' => $request->user()->id,
+                        'billing_profile_id' => $profile->id,
+                        'event_type' => 'subscription_created',
+                        'gateway' => 'stripe',
+                        'description' => "Tier manually upgraded to {$plan->tier} via UI swap.",
+                        'metadata' => [
+                            'price_id' => $priceId,
+                            'plan_id' => $plan->id
+                        ]
+                    ]);
+                    
                     $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
                 }
                 

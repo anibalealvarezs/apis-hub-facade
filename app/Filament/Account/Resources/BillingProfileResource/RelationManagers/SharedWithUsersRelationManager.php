@@ -9,6 +9,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\BillingInvitation;
+use App\Mail\BillingInvitationMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Filament\Notifications\Notification;
 
 class SharedWithUsersRelationManager extends RelationManager
 {
@@ -49,15 +54,63 @@ class SharedWithUsersRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
-                    ->label('Share with User')
-                    ->preloadRecordSelect()
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
-                        $action->getRecordSelect()
-                            ->label('Select User')
-                            ->searchable(),
-                        Forms\Components\Hidden::make('role')->default('member'),
-                    ]),
+                Tables\Actions\Action::make('invite')
+                    ->label('Invite User')
+                    ->icon('heroicon-o-envelope')
+                    ->form([
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->label('User Email'),
+                        Forms\Components\Select::make('role')
+                            ->options([
+                                'member' => 'Member (Can use to pay)',
+                            ])
+                            ->default('member')
+                            ->required(),
+                    ])
+                    ->action(function (array $data, $livewire) {
+                        $profile = $livewire->ownerRecord;
+                        
+                        // Check if already shared
+                        $alreadyShared = $profile->sharedWithUsers()->where('users.email', $data['email'])->exists();
+                        if ($alreadyShared) {
+                            Notification::make()
+                                ->title('User is already sharing this profile.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        // Check if already invited
+                        $alreadyInvited = BillingInvitation::where('billing_profile_id', $profile->id)
+                            ->where('email', $data['email'])
+                            ->where('status', 'pending')
+                            ->exists();
+                            
+                        if ($alreadyInvited) {
+                            Notification::make()
+                                ->title('User already has a pending invitation.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        $invitation = BillingInvitation::create([
+                            'billing_profile_id' => $profile->id,
+                            'email' => $data['email'],
+                            'role' => $data['role'],
+                            'token' => Str::random(32),
+                            'expires_at' => now()->addDays(7),
+                        ]);
+
+                        Mail::to($data['email'])->send(new BillingInvitationMail($invitation));
+
+                        Notification::make()
+                            ->title('Invitation Sent')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->actions([
                 Tables\Actions\DetachAction::make()

@@ -3,8 +3,9 @@
 namespace App\Listeners;
 
 use Laravel\Cashier\Events\WebhookReceived;
-use App\Models\BillingProfile;
 use App\Models\SubscriptionPlan;
+use App\Models\BillingProfile;
+use App\Models\BillingLog;
 use Illuminate\Support\Facades\Log;
 
 class StripeWebhookListener
@@ -18,6 +19,16 @@ class StripeWebhookListener
         $type = $payload['type'] ?? '';
 
         Log::info('Stripe Webhook Received', ['type' => $type]);
+        
+        BillingLog::create([
+            'event_type' => 'webhook_received',
+            'gateway' => 'stripe',
+            'description' => "Received Stripe webhook: {$type}",
+            'metadata' => [
+                'type' => $type,
+                'id' => $payload['id'] ?? null
+            ]
+        ]);
 
         if (in_array($type, [
             'customer.subscription.updated',
@@ -63,6 +74,19 @@ class StripeWebhookListener
             if ($plan) {
                 if ($user->tier?->value !== $plan->tier) {
                     $user->update(['tier' => $plan->tier]);
+                    
+                    BillingLog::create([
+                        'user_id' => $user->id,
+                        'billing_profile_id' => $profile->id,
+                        'event_type' => 'subscription_created',
+                        'gateway' => 'stripe',
+                        'description' => "Tier upgraded/restored to {$plan->tier} via webhook.",
+                        'metadata' => [
+                            'price_id' => $stripePriceId,
+                            'plan_id' => $plan->id
+                        ]
+                    ]);
+                    
                     Log::info('Stripe Webhook: Tier upgraded/restored', ['user_id' => $user->id, 'tier' => $plan->tier]);
                 }
             }
@@ -70,6 +94,18 @@ class StripeWebhookListener
             // Subscription is invalid, canceled, or past due
             if ($user->tier?->value !== 'free') {
                 $user->update(['tier' => 'free']);
+                
+                BillingLog::create([
+                    'user_id' => $user->id,
+                    'billing_profile_id' => $profile->id,
+                    'event_type' => 'payment_failed',
+                    'gateway' => 'stripe',
+                    'description' => "Tier downgraded to free via webhook (subscription invalid/canceled).",
+                    'metadata' => [
+                        'stripe_customer_id' => $stripeCustomerId
+                    ]
+                ]);
+                
                 Log::info('Stripe Webhook: Tier downgraded to free', ['user_id' => $user->id]);
                 
                 // Suspend projects due to downgrade

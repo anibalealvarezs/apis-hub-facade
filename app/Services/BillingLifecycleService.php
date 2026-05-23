@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Project;
 use App\Enums\UserTier;
+use App\Models\BillingLog;
 use Illuminate\Support\Facades\Log;
 
 class BillingLifecycleService
@@ -42,6 +43,19 @@ class BillingLifecycleService
             foreach ($projectsToSuspend as $project) {
                 $project->update(['billing_status' => 'suspended']);
                 $suspendedProjects[] = $project->id;
+                
+                BillingLog::create([
+                    'user_id' => $user->id,
+                    'project_id' => $project->id,
+                    'event_type' => 'project_suspended',
+                    'gateway' => 'system',
+                    'description' => "Suspended project {$project->id} for user {$user->id} due to project quota limits.",
+                    'metadata' => [
+                        'target_tier' => $targetTier->value,
+                        'reason' => 'quota_exceeded'
+                    ]
+                ]);
+                
                 Log::info("BillingLifecycleService: Suspended project {$project->id} for user {$user->id} due to project quota limits.");
             }
             

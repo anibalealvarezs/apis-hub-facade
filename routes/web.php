@@ -33,6 +33,7 @@ Route::post('/webhooks/paypal', [App\Http\Controllers\PayPalWebhookController::c
 // Invitations (Project Collaboration)
 Route::middleware(['web'])->group(function () {
     Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
+    Route::get('/app/billing-invitations/{token}/accept', [\App\Http\Controllers\BillingInvitationController::class, 'accept'])->name('billing-invitations.accept');
     Route::get('/app/transfers/{token}/accept', [\App\Http\Controllers\TransferController::class, 'accept'])->name('transfers.accept');
     
     // Pending Email Verification

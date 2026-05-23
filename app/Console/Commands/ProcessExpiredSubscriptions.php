@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Subscription;
+use App\Models\BillingLog;
 use App\Services\BillingLifecycleService;
 use Carbon\Carbon;
 
@@ -47,6 +48,18 @@ class ProcessExpiredSubscriptions extends Command
                 // Downgrade and suspend
                 $targetTier = $user->tier === \App\Enums\UserTier::ENTERPRISE ? \App\Enums\UserTier::SUSPENDED : \App\Enums\UserTier::FREE;
                 $suspendedCount = $lifecycleService->enforceDowngradeLimits($user, $targetTier);
+                
+                BillingLog::create([
+                    'user_id' => $user->id,
+                    'event_type' => 'downgrade_scheduled',
+                    'gateway' => 'system',
+                    'description' => "Downgraded user {$user->id} to {$targetTier->value} due to expired subscription {$sub->id}.",
+                    'metadata' => [
+                        'subscription_id' => $sub->id,
+                        'target_tier' => $targetTier->value,
+                        'suspended_projects_count' => $suspendedCount
+                    ]
+                ]);
                 
                 // Notify User
                 $user->notify(new \App\Notifications\ProjectsSuspendedNotification($suspendedCount));
