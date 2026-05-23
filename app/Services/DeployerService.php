@@ -94,6 +94,13 @@ class DeployerService
         $dbUser = $project->db_user ?: "postgres";
         $dbPass = $project->db_password ?: "secret-pass";
 
+        // Generate deterministic, unique host ports based on project ID to prevent Docker conflicts
+        $basePort = 11000 + ($project->id * 10);
+        $externalPort = $basePort;
+        $mcpPort = $basePort + 1;
+        $dbHostPort = $basePort + 2;
+        $redisHostPort = $basePort + 3;
+
         return <<<EOT
 APP_ENV=production
 PROJECT_NAME={$project->name}
@@ -114,6 +121,13 @@ DB_PASSWORD={$dbPass}
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
+
+# Host Ports Mapping (Dynamically generated to prevent collisions)
+STARTING_HOST_PORT={$externalPort}
+EXTERNAL_PORT={$externalPort}
+MCP_PORT={$mcpPort}
+DB_HOST_PORT={$dbHostPort}
+REDIS_HOST_PORT={$redisHostPort}
 
 # Security & API
 APP_API_KEY={$project->public_api_key}
