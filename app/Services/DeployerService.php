@@ -106,6 +106,7 @@ class DeployerService
 APP_ENV=production
 PROJECT_NAME={$project->name}
 DEPLOYMENT_NAME=apis-hub-{$project->subdomain}
+SHARED_GATEWAY_NETWORK=apis-hub_default
 USE_SWOOLE=true
 USE_SSL=false
 APP_TIMEZONE={$project->timezone}
