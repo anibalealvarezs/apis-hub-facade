@@ -111,103 +111,19 @@ class SyncSettings extends Page
     {
         return $form
             ->schema([
-                Section::make('Facebook Marketing & Organic')
-                    ->description('Automatically link your Facebook accounts to start syncing pages and ads.')
+                Section::make('Global Processing Settings')
+                    ->description('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.')
                     ->schema([
-                        Placeholder::make('facebook_oauth')
-                            ->label('')
-                            ->content(fn () => new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="facebook" />'))),
-
-                        Section::make('Advanced FB Configuration (Manual)')
-                            ->collapsed()
-                            ->schema([
-                                Toggle::make('fb_organic_enabled')
-                                    ->label('Enable FB Organic (Pages & Posts)')
-                                    ->default(true),
-                                Toggle::make('fb_marketing_enabled')
-                                    ->label('Enable FB Marketing (Ads & Campaigns)')
-                                    ->default(true),
-                                TextInput::make('facebook_user_token')
-                                    ->label('FB User Access Token (Manual Override)')
-                                    ->password()
-                                    ->revealable()
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
-                                    ->hintColor('warning')
-                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically exchange this for a long-lived platform token and update the connection status.'),
-                                TextInput::make('facebook_user_id')
-                                    ->label('FB User ID (Manual Override)')
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
-                                    ->hintColor('success')
-                                    ->helperText('The numerical ID of the Meta account owner. This is typically captured automatically during the connection flow.'),
-                                Select::make('fb_history_range')
-                                    ->options([
-                                        '6 months' => '6 Months',
-                                        '1 year' => '1 Year',
-                                        '2 years' => '2 Years',
-                                    ])
-                                    ->default('2 years'),
-                            ])->columns(2),
-                    ]),
-
-                Section::make('Google Search Console (GSC)')
-                    ->description('Authorize APIs Hub to fetch your GSC performance data.')
-                    ->schema([
-                        Placeholder::make('google_oauth')
-                            ->label('')
-                            ->content(fn () => new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="google" />'))),
-
-                        Section::make('Advanced GSC Configuration (Manual)')
-                            ->collapsed()
-                            ->schema([
-                                Toggle::make('gsc_enabled')
-                                    ->label('Enable GSC Synchronization')
-                                    ->default(true),
-                                TextInput::make('google_refresh_token')
-                                    ->label('Google Refresh Token (Manual Override)')
-                                    ->password()
-                                    ->revealable()
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
-                                    ->hintColor('warning')
-                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Ensure the refresh token is valid and has long-term offline access.'),
-                                TextInput::make('google_user_id')
-                                    ->label('Google User ID (Manual Override)')
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
-                                    ->hintColor('success')
-                                    ->helperText('The numerical ID of the Google account owner.'),
-                                Select::make('gsc_history_range')
-                                    ->options([
-                                        '1 month' => '1 Month',
-                                        '3 months' => '3 Months',
-                                        '6 months' => '6 Months',
-                                        '16 months' => '16 Months (Max)',
-                                    ])
-                                    ->default('16 months'),
-                            ])->columns(2),
-                    ]),
-
-                Section::make('Advanced Filters')
-                    ->description(new \Illuminate\Support\HtmlString('Use patterns to include/exclude specific resources. Need help? Use <a href="https://regex101.com/?flavor=php" target="_blank" rel="nofollow noopener noreferrer" style="color: #00A7F9; text-decoration: underline;">Regex101 (PHP flavor)</a> to build your rules.'))
-                    ->schema([
-                        TextInput::make('campaign_filter')
-                            ->label('Campaign filter')
-                            ->placeholder('/^CAMP_/i')
-                            ->live(onBlur: true)
-                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Campaigns that match this pattern will be synced.'))
-                            ->afterStateUpdated(fn () => $this->validate()),
-                        TextInput::make('page_filter')
-                            ->label('Page filter')
-                            ->placeholder('/[0-9]{15}/')
-                            ->live(onBlur: true)
-                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Pages that match this pattern will be synced.'))
-                            ->afterStateUpdated(fn () => $this->validate()),
+                        Select::make('jobs_timeout_hours')
+                            ->label('Jobs Timeout (Hours)')
+                            ->options([
+                                '1' => '1 Hour (Recommended)',
+                                '2' => '2 Hours',
+                                '6' => '6 Hours',
+                                '12' => '12 Hours',
+                            ])
+                            ->default('1')
+                            ->helperText('If a job takes longer than this duration, it will be automatically aborted to free up resources.'),
                     ])->collapsed(),
 
                 Section::make('API Access (External Integration)')
@@ -314,34 +230,5 @@ class SyncSettings extends Page
                 ->send();
         }
     }
-    protected function humanizeRegex(?string $regex, string $default): string
-    {
-        if (!$regex) {
-            return $default;
-        }
 
-        // Basic humanizations for common patterns
-        if ($regex === '.*' || $regex === '/.*/') {
-            return "Sync all resources (No filtering).";
-        }
-
-        $clean = trim($regex, '/');
-        $isCaseInsensitive = str_ends_with($regex, 'i');
-        
-        if (str_starts_with($clean, '^')) {
-            $value = rtrim(substr($clean, 1), '$');
-            return "Sync only resources starting with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
-        }
-
-        if (str_ends_with($clean, '$')) {
-            $value = ltrim(substr($clean, 0, -1), '^');
-            return "Sync only resources ending with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
-        }
-
-        if (!str_starts_with($regex, '/')) {
-            return "Simple match: Sync resources containing '" . $regex . "'.";
-        }
-
-        return "Active pattern: Matching against '" . $clean . "'.";
-    }
 }

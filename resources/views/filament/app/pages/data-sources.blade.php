@@ -1,0 +1,100 @@
+<x-filament-panels::page>
+    <div class="flex flex-col md:flex-row gap-6 items-start" 
+         x-data="{ 
+            activeTab: @entangle('activeChannel'),
+            maxAssets: {{ $this->getMaxAssets() }},
+            get selectedCount() {
+                let count = 0;
+                let data = $wire.get('data') || {};
+                
+                // Deep scan the data object for assets arrays
+                for(let channel in data) {
+                   if (typeof data[channel] === 'object' && data[channel] !== null) {
+                       for(let key in data[channel]) {
+                           if (Array.isArray(data[channel][key])) {
+                               data[channel][key].forEach(item => {
+                                   if (item.enabled && !item.lost_access) count++;
+                               });
+                           }
+                       }
+                   }
+                }
+                return count;
+            }
+         }">
+        <!-- Sidebar Tabs -->
+        <div class="w-full md:w-64 flex-shrink-0 flex flex-col gap-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-2">
+            @foreach($this->getChannels() as $channel)
+                <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
+                        class="px-4 py-3 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                        :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
+                    <span>{{ $channel['label'] }}</span>
+                    @if(isset($this->data[$channel['key'].'_enabled']) && $this->data[$channel['key'].'_enabled'])
+                        <span class="flex h-2 w-2 rounded-full bg-success-500"></span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6">
+            
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                        {{ collect($this->getChannels())->firstWhere('key', $activeChannel)['label'] ?? 'Configuration' }}
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Last synced: {{ $this->getLastSyncTime($activeChannel) }}
+                    </p>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    {{ $this->getAction('updateCredentials') }}
+                    {{ $this->getAction('discoverAssets') }}
+                </div>
+            </div>
+
+            @if(!$this->isConnected($activeChannel))
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                        <x-heroicon-o-link class="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Not Connected</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+                        You need to authorize access to this provider before you can configure its data sources.
+                    </p>
+                    
+                    @if(str_contains($activeChannel, 'facebook'))
+                        {!! \Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="facebook" />') !!}
+                    @elseif(str_contains($activeChannel, 'google'))
+                        {!! \Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="google" />') !!}
+                    @endif
+                </div>
+            @else
+                
+                <!-- Sticky Counter -->
+                <div class="sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md pb-4 mb-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center transition-colors"
+                     :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
+                    <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
+                    <div class="flex items-center gap-2 font-bold text-lg">
+                        <span x-text="selectedCount"></span> 
+                        <span class="text-gray-400 font-normal">/</span> 
+                        <span x-text="maxAssets"></span>
+                    </div>
+                </div>
+
+                <form wire:submit="save">
+                    {{ $this->form }}
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-white/10 flex justify-end">
+                        <x-filament::button type="submit" color="primary">
+                            Save Configuration
+                        </x-filament::button>
+                    </div>
+                </form>
+            @endif
+
+        </div>
+    </div>
+</x-filament-panels::page>

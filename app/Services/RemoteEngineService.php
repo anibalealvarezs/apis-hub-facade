@@ -156,4 +156,15 @@ class RemoteEngineService
     {
         return $this->execute($project, fn(ApisHubApi $client) => $client->validateTokens(['type' => $type]));
     }
+
+    /**
+     * Fetch live assets from the remote node.
+     */
+    public function fetchAssets(Project $project, string $channel, bool $refresh = false)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->fetchAssets([
+            'channel' => $channel,
+            'refresh' => $refresh
+        ]));
+    }
 }

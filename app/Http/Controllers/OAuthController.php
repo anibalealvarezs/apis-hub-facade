@@ -72,7 +72,7 @@ class OAuthController extends Controller
     /**
      * Obtain the user information from the Provider.
      */
-    public function callback(Request $request, string $provider, $tenantId = null)
+    public function callback(Request $request, string $provider, DeployerService $deployer, $tenantId = null)
     {
         try {
             /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
@@ -159,7 +159,25 @@ class OAuthController extends Controller
                 'scopes' => $newScopes,
             ]);
 
-            return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+            // Reactivate workers if they were paused for a safe update
+            if (in_array($tenant->health_status, ['stopping_workers', 'ready_for_auth'])) {
+                Log::info("Reactivating workers for project {$tenant->id} post OAuth update.");
+                
+                $deploymentName = 'apis-hub';
+                $refreshCmd = "php bin/console app:refresh-instances";
+                $startCmd = "docker compose -p {$deploymentName} up -d --build --remove-orphans worker";
+                
+                try {
+                    $deployer->executeCommand($tenant, clone $tenant->server, $refreshCmd);
+                    $deployer->executeCommand($tenant, clone $tenant->server, $startCmd);
+                    $tenant->update(['health_status' => 'healthy']);
+                    Log::info("Workers reactivated successfully for project {$tenant->id}.");
+                } catch (\Exception $e) {
+                    Log::error("Failed to reactivate workers for project {$tenant->id}: " . $e->getMessage());
+                }
+            }
+
+            return redirect()->route('filament.app.pages.data-sources', ['tenant' => $tenant->subdomain])
                 ->with('status', ucfirst($provider) . ' account connected and synchronized successfully.');
 
         } catch (\Exception $e) {
@@ -170,7 +188,7 @@ class OAuthController extends Controller
             
             // Si tenemos tenant, volvemos a su panel. Si no, al login general.
             if (isset($tenant) && $tenant) {
-                return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+                return redirect()->route('filament.app.pages.data-sources', ['tenant' => $tenant->subdomain])
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
