@@ -54,7 +54,20 @@ class ProjectResource extends Resource
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->disabled(fn (?Project $record) => $record !== null)
+                            ->suffix(function () {
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                if (config('app.env') !== 'production' && !str_ends_with($state, '-dev')) {
+                                    return $state . '-dev';
+                                }
+                                return $state;
+                            })
                             ->afterStateUpdated(function ($state, Forms\Set $set, $get) {
+                                if (config('app.env') !== 'production' && !str_ends_with($state, '-dev')) {
+                                    $state .= '-dev';
+                                }
                                 if (empty($get('db_name'))) {
                                     $set('db_name', 'apis_hub_' . str_replace('-', '_', $state));
                                 }
@@ -65,7 +78,14 @@ class ProjectResource extends Resource
                                     $set('db_password', \Illuminate\Support\Str::random(16));
                                 }
                             })
-                            ->helperText('Assign a subdomain (e.g. "client1") for the instance. Checked against DB. Full URL will be: subdomain.' . config('app.network_domain')),
+                            ->helperText(function () {
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                $msg = 'Assign a subdomain (e.g. "client1") for the instance. Checked against DB. Full URL will be: subdomain.' . $domain;
+                                if (config('app.env') !== 'production') {
+                                    $msg .= ' (Non-production Environment: "-dev" will be automatically appended to prevent SSL routing issues).';
+                                }
+                                return $msg;
+                            }),
                         Forms\Components\Toggle::make('is_active')
                             ->required()
                             ->default(true),

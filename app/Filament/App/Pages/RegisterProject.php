@@ -66,12 +66,21 @@ class RegisterProject extends RegisterTenant
                         TextInput::make('subdomain')
                             ->label('Subdomain / Unique Identifier')
                             ->prefix('https://')
-                            ->suffix('.apis-hub.cloud')
+                            ->suffix(function () {
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
+                            })
                             ->placeholder('acme')
                             ->required()
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
-                            ->helperText('Caution: This identifier is permanent and cannot be changed after creation.'),
+                            ->helperText(function () {
+                                $msg = 'Caution: This identifier is permanent and cannot be changed after creation.';
+                                if (config('app.env') !== 'production') {
+                                    $msg .= ' (Non-production Environment: "-dev" will be automatically appended to your subdomain to prevent SSL routing issues).';
+                                }
+                                return $msg;
+                            }),
                         Checkbox::make('deploy_immediately')
                             ->label('Desplegar infraestructura inmediatamente')
                             ->helperText('Si se marca, el sistema aprovisionará los contenedores en el servidor ahora. De lo contrario, se creará el proyecto solo lógicamente.')
@@ -92,9 +101,14 @@ class RegisterProject extends RegisterTenant
                 ->send();
         }
 
+        $subdomain = $data['subdomain'];
+        if (config('app.env') !== 'production' && !str_ends_with($subdomain, '-dev')) {
+            $subdomain .= '-dev';
+        }
+
         $project = Project::create([
             'name' => $data['name'],
-            'subdomain' => $data['subdomain'],
+            'subdomain' => $subdomain,
             'server_id' => $server?->id,
             'user_id' => Auth::id(), 
             'git_repo' => 'https://github.com/anibalealvarezs/apis-hub.git', // Default repo

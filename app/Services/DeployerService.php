@@ -68,7 +68,8 @@ class DeployerService
         // 4. Register in Caddy (Reverse Proxy for the specific container)
         $caddyVhostDir = "/var/www/apis-hub/caddy_vhosts";
         $caddyVhostPath = "{$caddyVhostDir}/{$project->subdomain}.caddy";
-        $caddyHost = "{$project->subdomain}.apis-hub.cloud";
+        $baseDomain = config('app.network_domain');
+        $caddyHost = "{$project->subdomain}.{$baseDomain}";
         $containerName = "apis-hub-{$project->subdomain}-master"; // Con sufijo -master definido en docker-compose
 
         $caddyConfig = "{$caddyHost} {
@@ -256,7 +257,6 @@ EOT;
             "rm -rf {$path}",
             "rm -f {$caddyVhostPath}",
             "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
-            "docker container prune -f",
         ];
 
         return $this->runSshCommands($server, $commands);
