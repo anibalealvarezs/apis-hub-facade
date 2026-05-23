@@ -64,7 +64,17 @@ class ProjectSettings extends Page
                 $project->update([
                     'timezone' => $data['timezone'],
                 ]);
-                Notification::make()->title('Preferencias actualizadas')->success()->send();
+
+                // Dispatch deployment to apply the timezone to the remote container
+                \App\Jobs\DeployProjectJob::dispatch($project);
+
+                Notification::make()
+                    ->title('Preferencias actualizadas y Despliegue iniciado')
+                    ->body('Los cambios se aplicarán al servidor en un par de minutos.')
+                    ->success()
+                    ->send();
+
+                return redirect(request()->header('Referer'));
             });
 
         if (is_null($project->last_deployed_at)) {
@@ -81,6 +91,25 @@ class ProjectSettings extends Page
                     Notification::make()
                         ->title('Despliegue Iniciado')
                         ->body('La infraestructura se está aprovisionando en segundo plano. Esto puede tomar un par de minutos.')
+                        ->success()
+                        ->send();
+
+                    return redirect(request()->header('Referer'));
+                });
+        } else {
+            $actions[] = Action::make('redeploy')
+                ->label('Aplicar Cambios (Redesplegar)')
+                ->color('success')
+                ->icon('heroicon-o-cloud-arrow-up')
+                ->requiresConfirmation()
+                ->modalHeading('Redesplegar Infraestructura')
+                ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
+                ->action(function () use ($project) {
+                    \App\Jobs\DeployProjectJob::dispatch($project);
+                    
+                    Notification::make()
+                        ->title('Redespliegue Iniciado')
+                        ->body('La infraestructura se está actualizando en segundo plano.')
                         ->success()
                         ->send();
 
