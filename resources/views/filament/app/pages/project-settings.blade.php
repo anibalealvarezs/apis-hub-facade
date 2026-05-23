@@ -14,11 +14,11 @@
         @php
             $latestLog = $logs->first();
             $statusColors = [
-                'pending' => 'bg-blue-500',
-                'running' => 'bg-blue-500 animate-pulse',
-                'completed' => 'bg-green-500',
-                'success' => 'bg-green-500',
-                'failed' => 'bg-red-500',
+                'pending' => '#3b82f6', // blue-500
+                'running' => '#3b82f6', // blue-500
+                'completed' => '#22c55e', // green-500
+                'success' => '#22c55e', // green-500
+                'failed' => '#ef4444', // red-500
             ];
             $statusText = [
                 'pending' => 'En cola...',
@@ -52,9 +52,9 @@
             <div class="flex items-center gap-3">
                 <div class="relative flex h-3 w-3">
                     @if($latestLog->status === 'running')
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: #60a5fa;"></span>
                     @endif
-                    <span class="relative inline-flex rounded-full h-3 w-3 {{ $statusColors[$latestLog->status] ?? 'bg-gray-500' }}"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 {{ $latestLog->status === 'running' ? 'animate-pulse' : '' }}" style="background-color: {{ $statusColors[$latestLog->status] ?? '#6b7280' }};"></span>
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold text-white">Estado de la Infraestructura</h3>
