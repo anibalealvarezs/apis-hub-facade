@@ -6,7 +6,6 @@ use App\Models\Project;
 use App\Models\Server;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Http;
 
 class DeployerService
 {
@@ -97,6 +96,10 @@ class DeployerService
 APP_ENV=production
 PROJECT_NAME={$project->name}
 DEPLOYMENT_NAME=apis-hub-{$project->subdomain}
+USE_SWOOLE=true
+USE_SSL=false
+APP_TIMEZONE={$project->timezone}
+CLI_MEMORY_LIMIT=4G
 
 # Database (Instance specific)
 DB_DRIVER=pdo_pgsql
@@ -106,6 +109,11 @@ DB_NAME={$dbName}
 DB_USER={$dbUser}
 DB_PASSWORD={$dbPass}
 
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD={$project->remote_admin_api_key}
+
 # Security & API
 APP_API_KEY={$project->public_api_key}
 ADMIN_API_KEY={$project->remote_admin_api_key}
@@ -113,9 +121,14 @@ ADMIN_API_KEY={$project->remote_admin_api_key}
 # Channel Master Credentials (Apps)
 FACEBOOK_APP_ID={$fbAppId}
 FACEBOOK_APP_SECRET={$fbAppSecret}
+FACEBOOK_TOKEN_PATH=./storage/tokens/facebook_tokens.json
 
 GOOGLE_CLIENT_ID={$googleClientId}
 GOOGLE_CLIENT_SECRET={$googleClientSecret}
+GOOGLE_TOKEN_PATH=./storage/tokens/google_tokens.json
+
+# Aggregation Telemetry
+AGGREGATION_TELEMETRY_PATH=storage/logs/aggregation-telemetry.jsonl
 
 # Monitoring Link (Report back to Facade)
 MONITOR_FACADE_URL={$facadeUrl}
@@ -189,7 +202,7 @@ EOT;
 
         $commands = [
             "if [ -f {$caddyVhostPath} ]; then mv {$caddyVhostPath} {$caddySuspendedPath}; fi",
-            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
         ];
 
         return $this->runSshCommands($server, $commands);
@@ -206,7 +219,7 @@ EOT;
 
         $commands = [
             "if [ -f {$caddySuspendedPath} ]; then mv {$caddySuspendedPath} {$caddyVhostPath}; fi",
-            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+            "cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
         ];
 
         return $this->runSshCommands($server, $commands);
@@ -245,6 +258,7 @@ EOT;
             });
         } catch (\Exception $e) {
             Log::error("Error injecting tokens for {$provider}: " . $e->getMessage());
+
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
