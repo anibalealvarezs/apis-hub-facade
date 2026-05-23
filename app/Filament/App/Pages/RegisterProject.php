@@ -74,6 +74,13 @@ class RegisterProject extends RegisterTenant
                             ->required()
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
+                            ->rule(function () {
+                                return function (string $attribute, $value, \Closure $fail) {
+                                    if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
+                                        $fail('No se permiten subdominios terminados en "-dev" en el entorno de producción para evitar colisiones con entornos de desarrollo.');
+                                    }
+                                };
+                            })
                             ->helperText(function () {
                                 $msg = 'Caution: This identifier is permanent and cannot be changed after creation.';
                                 if (config('app.env') !== 'production') {
