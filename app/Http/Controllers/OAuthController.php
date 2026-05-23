@@ -58,7 +58,7 @@ class OAuthController extends Controller
         }
 
         if (!empty($scopes)) {
-            $driver->scopes($scopes);
+            $driver->scopes(\Illuminate\Support\Arr::flatten($scopes));
         }
 
         // For Google/GSC: ensure we get the refresh token
