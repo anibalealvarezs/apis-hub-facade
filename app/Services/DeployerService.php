@@ -114,7 +114,6 @@ DB_PASSWORD={$dbPass}
 # Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
-REDIS_PASSWORD={$project->remote_admin_api_key}
 
 # Security & API
 APP_API_KEY={$project->public_api_key}
