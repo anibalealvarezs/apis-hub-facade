@@ -83,6 +83,8 @@ class ProjectSettings extends Page
                         ->body('La infraestructura se está aprovisionando en segundo plano. Esto puede tomar un par de minutos.')
                         ->success()
                         ->send();
+
+                    return redirect(request()->header('Referer'));
                 });
         }
 
