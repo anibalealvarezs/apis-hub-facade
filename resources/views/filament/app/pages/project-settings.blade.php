@@ -10,6 +10,66 @@
             </div>
         @endif
 
+        @if($logs && $logs->count() > 0)
+        @php
+            $latestLog = $logs->first();
+            $statusColors = [
+                'pending' => 'bg-blue-500',
+                'running' => 'bg-blue-500 animate-pulse',
+                'completed' => 'bg-green-500',
+                'success' => 'bg-green-500',
+                'failed' => 'bg-red-500',
+            ];
+            $statusText = [
+                'pending' => 'En cola...',
+                'running' => 'Desplegando infraestructura...',
+                'completed' => 'Activo y En Línea',
+                'success' => 'Activo y En Línea',
+                'failed' => 'Error de Despliegue',
+            ];
+            
+            // Extract a safe euphemism from output
+            $safeErrorMessage = 'Ocurrió un problema de conectividad o configuración durante el aprovisionamiento.';
+            if ($latestLog->status === 'failed' && $latestLog->output) {
+                // Look for common errors without exposing paths or IPs
+                if (str_contains($latestLog->output, 'Connection refused')) {
+                    $safeErrorMessage = 'El servidor de destino rechazó la conexión (Error de Red/SSH).';
+                } elseif (str_contains($latestLog->output, 'Conflict. The container name')) {
+                    $safeErrorMessage = 'Conflicto de recursos en el servidor destino (ERR_CONTAINER_CONFLICT).';
+                } elseif (str_contains($latestLog->output, 'No space left on device')) {
+                    $safeErrorMessage = 'El servidor ha alcanzado su límite de almacenamiento (ERR_DISK_FULL).';
+                } elseif (str_contains($latestLog->output, 'git clone')) {
+                    $safeErrorMessage = 'No se pudo obtener la última versión del código base (ERR_VCS_FETCH).';
+                } else {
+                    // Generic fallback with a short hash of the error for support tickets
+                    $errorHash = substr(md5($latestLog->output), 0, 8);
+                    $safeErrorMessage = "La plataforma encontró una excepción no manejada (Ref: ERR_{$errorHash}). Contacte a soporte.";
+                }
+            }
+        @endphp
+        
+        <div wire:poll.5s class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="relative flex h-3 w-3">
+                    @if($latestLog->status === 'running')
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    @endif
+                    <span class="relative inline-flex rounded-full h-3 w-3 {{ $statusColors[$latestLog->status] ?? 'bg-gray-500' }}"></span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-white">Estado de la Infraestructura</h3>
+                    <p class="text-xs text-gray-400">{{ $statusText[$latestLog->status] ?? 'Desconocido' }}</p>
+                </div>
+            </div>
+            
+            @if($latestLog->status === 'failed')
+                <div class="bg-red-500/10 text-red-400 px-3 py-2 rounded-lg text-xs max-w-lg">
+                    <strong>Aviso:</strong> {{ $safeErrorMessage }}
+                </div>
+            @endif
+        </div>
+        @endif
+
         <x-filament::section>
             <x-slot name="heading">
                 Detalles del Proyecto
@@ -33,6 +93,10 @@
                     <p class="font-medium">{{ filament()->getTenant()->trueOwner->name }}</p>
                 </div>
                 <div>
+                    <p class="text-sm text-gray-500">Zona Horaria</p>
+                    <p class="font-medium">{{ filament()->getTenant()->timezone ?? 'UTC' }}</p>
+                </div>
+                <div>
                     <p class="text-sm text-gray-500">Fecha de Creación</p>
                     <p class="font-medium">{{ filament()->getTenant()->created_at->format('d M, Y') }}</p>
                 </div>
@@ -54,6 +118,7 @@
         </x-filament::section>
         @endif
 
+        @if(config('app.debug'))
         @if($logs && $logs->count() > 0)
         <x-filament::section>
             <x-slot name="heading">
@@ -84,6 +149,7 @@
                 </div>
             </div>
         </x-filament::section>
+        @endif
         @endif
     </div>
 </x-filament-panels::page>
