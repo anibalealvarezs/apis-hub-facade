@@ -23,7 +23,7 @@
             }
          }">
         <!-- Sidebar Tabs -->
-        <div class="w-full md:w-64 flex-shrink-0 flex flex-col gap-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-2">
+        <div class="w-full flex-shrink-0 flex flex-col gap-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-2" style="max-width: 16rem;">
             @foreach($this->getChannels() as $channel)
                 <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
                         class="px-4 py-3 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Content Area -->
-        <div class="flex-1 w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6">
+        <div class="w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
             
             <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
                 <div>
@@ -66,9 +66,9 @@
                     </p>
                     
                     @if(str_contains($activeChannel, 'facebook'))
-                        {!! \Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="facebook" />') !!}
+                        <x-oauth-buttons provider="facebook" />
                     @elseif(str_contains($activeChannel, 'google'))
-                        {!! \Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="google" />') !!}
+                        <x-oauth-buttons provider="google" />
                     @endif
                 </div>
             @else
