@@ -509,6 +509,14 @@ class DataSources extends Page
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
                 }
+                
+                // Persist UI configuration values (like cache_history_range and the channel toggle)
+                foreach ($channelConfig as $k => $v) {
+                    if (!is_array($v)) {
+                        $dbState[$channel][$k] = $v;
+                    }
+                }
+                
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             } catch (\Exception $e) {
                 \Filament\Notifications\Notification::make()
