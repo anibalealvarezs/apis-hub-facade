@@ -185,7 +185,7 @@ class OAuthController extends Controller
                 }
             }
 
-            return redirect()->route('filament.app.pages.data-sources', ['tenant' => $tenant->subdomain])
+            return redirect(\App\Filament\App\Pages\DataSources::getUrl(['tenant' => $tenant->subdomain]))
                 ->with('status', ucfirst($provider) . ' account connected and synchronized successfully.');
 
         } catch (\Exception $e) {
@@ -194,9 +194,8 @@ class OAuthController extends Controller
                 'state_received' => $request->input('state'),
             ]);
             
-            // Si tenemos tenant, volvemos a su panel. Si no, al login general.
             if (isset($tenant) && $tenant) {
-                return redirect()->route('filament.app.pages.data-sources', ['tenant' => $tenant->subdomain])
+                return redirect(\App\Filament\App\Pages\DataSources::getUrl(['tenant' => $tenant->subdomain]))
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
