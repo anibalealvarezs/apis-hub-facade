@@ -17,11 +17,13 @@ class PrepareSafeTokenUpdateJob implements ShouldQueue
 
     public Project $project;
     public string $provider;
+    public ?int $initiatorId;
 
-    public function __construct(Project $project, string $provider)
+    public function __construct(Project $project, string $provider, ?int $initiatorId = null)
     {
         $this->project = $project;
         $this->provider = $provider;
+        $this->initiatorId = $initiatorId;
     }
 
     public function handle(\App\Services\DeployerService $deployerService)
@@ -57,7 +59,7 @@ class PrepareSafeTokenUpdateJob implements ShouldQueue
         }
 
         // Dispatch the polling job to wait until workers are actually stopped
-        \App\Jobs\PollWorkersStatusJob::dispatch($this->project, $this->provider)
+        \App\Jobs\PollWorkersStatusJob::dispatch($this->project, $this->provider, $this->initiatorId)
             ->delay(now()->addSeconds(10));
     }
 }

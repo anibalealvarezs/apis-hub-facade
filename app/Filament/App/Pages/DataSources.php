@@ -108,7 +108,7 @@ class DataSources extends Page
                     $tenant = Filament::getTenant();
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
                     
-                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider);
+                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id());
                     
                     Notification::make()
                         ->title('Safe Update Initiated')

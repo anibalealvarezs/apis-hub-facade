@@ -20,13 +20,15 @@ class PollWorkersStatusJob implements ShouldQueue
 
     public Project $project;
     public string $provider;
+    public ?int $initiatorId;
     public int $tries = 120; // Allow 120 tries (e.g. 2 hours if delayed 1 min each)
     public int $maxExceptions = 3;
 
-    public function __construct(Project $project, string $provider)
+    public function __construct(Project $project, string $provider, ?int $initiatorId = null)
     {
         $this->project = $project;
         $this->provider = $provider;
+        $this->initiatorId = $initiatorId;
     }
 
     public function handle(DeployerService $deployerService)
@@ -53,8 +55,13 @@ class PollWorkersStatusJob implements ShouldQueue
                 Log::info("Workers for project {$this->project->id} have stopped gracefully.");
                 $this->project->update(['health_status' => 'ready_for_auth']);
 
-                // Notify all project users
-                $users = $this->project->users()->get()->push($this->project->trueOwner)->filter();
+                // Notify the specific user who triggered the update, or fallback to all project users
+                if ($this->initiatorId) {
+                    $users = User::where('id', $this->initiatorId)->get();
+                } else {
+                    $users = $this->project->users()->get()->push($this->project->trueOwner)->filter();
+                }
+                
                 $providerName = ucfirst($this->provider);
 
                 foreach ($users as $user) {
