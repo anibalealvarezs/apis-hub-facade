@@ -163,8 +163,8 @@ class RemoteEngineService
     public function fetchAssets(Project $project, string $channel, bool $refresh = false)
     {
         return $this->execute($project, fn(ApisHubApi $client) => $client->fetchAssets([
-            'channel' => $channel,
-            'refresh' => $refresh
+            'type' => $channel,
+            'refresh' => $refresh ? 1 : 0
         ]));
     }
 }
