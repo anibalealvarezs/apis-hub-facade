@@ -419,6 +419,8 @@ class DataSources extends Page
                 ->body("You have selected {$totalEnabled} assets, but your current tier limits you to {$max}. Please deselect some assets or upgrade your plan.")
                 ->send();
             return;
+        }
+        
         // We will update the tenant DB at the end of the method with the fully merged dbState
         
         // Push the configuration to the remote engine via APIs Hub SDK
