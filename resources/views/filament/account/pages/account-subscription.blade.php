@@ -61,51 +61,60 @@
                         Founder Locked
                     </button>
                 @elseif($plan->price > 0)
-                    <form action="{{ route('paypal.checkout') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                        <input type="hidden" name="billing_cycle" :value="billingCycle">
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Select Billing Profile</label>
-                            <select name="billing_profile_id" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" required>
-                                @foreach(auth()->user()->getAvailableBillingProfiles() as $profile)
-                                    <option value="{{ $profile->id }}">{{ $profile->name }} ({{ ucfirst($profile->type) }})</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    @if(app(\App\Settings\PaymentSettings::class)->enable_paypal)
+                        <form action="{{ route('paypal.checkout') }}" method="POST" class="mb-4">
+                            @csrf
+                            <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                            <input type="hidden" name="billing_cycle" :value="billingCycle">
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1">Select Billing Profile (PayPal)</label>
+                                <select name="billing_profile_id" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" required>
+                                    @foreach(auth()->user()->getAvailableBillingProfiles() as $profile)
+                                        <option value="{{ $profile->id }}">{{ $profile->name }} ({{ ucfirst($profile->type) }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <button type="submit" class="w-full mb-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2">
-                            <x-heroicon-o-credit-card class="w-5 h-5"/>
-                            Subscribe via PayPal
-                        </button>
-                    </form>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2">
+                                <x-heroicon-o-credit-card class="w-5 h-5"/>
+                                Subscribe via PayPal
+                            </button>
+                        </form>
+                    @endif
                     
-                    <form action="{{ route('stripe.checkout') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                        <input type="hidden" name="billing_cycle" :value="billingCycle">
-                        
-                        <!-- Billing profile is duplicated here for simplicity in UI, we can use JS or just let them select again -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Billing Profile (Stripe)</label>
-                            <select name="billing_profile_id" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" required>
-                                @foreach(auth()->user()->getAvailableBillingProfiles() as $profile)
-                                    <option value="{{ $profile->id }}">{{ $profile->name }} ({{ ucfirst($profile->type) }})</option>
-                                @endforeach
-                            </select>
+                    @if(app(\App\Settings\PaymentSettings::class)->enable_stripe)
+                        <form action="{{ route('stripe.checkout') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                            <input type="hidden" name="billing_cycle" :value="billingCycle">
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1">Billing Profile (Stripe)</label>
+                                <select name="billing_profile_id" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" required>
+                                    @foreach(auth()->user()->getAvailableBillingProfiles() as $profile)
+                                        <option value="{{ $profile->id }}">{{ $profile->name }} ({{ ucfirst($profile->type) }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1">Promo Code (Optional)</label>
+                                <input type="text" name="coupon_code" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" placeholder="e.g. EARLYBIRD">
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2">
+                                <x-heroicon-o-credit-card class="w-5 h-5"/>
+                                Subscribe via Stripe
+                            </button>
+                        </form>
+                    @endif
+
+                    @if(!app(\App\Settings\PaymentSettings::class)->enable_paypal && !app(\App\Settings\PaymentSettings::class)->enable_stripe)
+                        <div class="p-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm text-center border border-yellow-200 dark:border-yellow-800">
+                            <strong>Atención:</strong> Las suscripciones se encuentran temporalmente deshabilitadas.
                         </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Promo Code (Optional)</label>
-                            <input type="text" name="coupon_code" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900" placeholder="e.g. EARLYBIRD">
-                        </div>
-                        
-                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg flex justify-center items-center gap-2">
-                            <x-heroicon-o-credit-card class="w-5 h-5"/>
-                            Subscribe via Stripe
-                        </button>
-                    </form>
+                    @endif
                 @else
                     <button disabled class="w-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-bold py-2 px-4 rounded-lg">
                         Free Default
