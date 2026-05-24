@@ -185,7 +185,7 @@ class OAuthController extends Controller
                 }
             }
 
-            return redirect(\App\Filament\App\Pages\DataSources::getUrl(['tenant' => $tenant->subdomain]))
+            return redirect(url('/app/' . $tenant->subdomain . '/data-sources'))
                 ->with('status', ucfirst($provider) . ' account connected and synchronized successfully.');
 
         } catch (\Exception $e) {
@@ -195,7 +195,7 @@ class OAuthController extends Controller
             ]);
             
             if (isset($tenant) && $tenant) {
-                return redirect(\App\Filament\App\Pages\DataSources::getUrl(['tenant' => $tenant->subdomain]))
+                return redirect(url('/app/' . $tenant->subdomain . '/data-sources'))
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
