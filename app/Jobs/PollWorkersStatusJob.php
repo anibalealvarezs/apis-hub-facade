@@ -33,7 +33,11 @@ class PollWorkersStatusJob implements ShouldQueue
     {
         Log::info("Polling worker status for project {$this->project->id}...");
 
-        $cmd = "php bin/console dbal:run-sql 'SELECT count(id) FROM jobs WHERE status = 2'";
+        $path = "/var/www/apis-hub/tenants/{$this->project->subdomain}";
+        $deploymentName = "apis-hub-{$this->project->subdomain}";
+        
+        // Execute inside the master container using docker compose exec
+        $cmd = "cd {$path} && docker compose -p {$deploymentName} exec -T master php bin/console dbal:run-sql 'SELECT count(id) FROM jobs WHERE status = 2'";
 
         try {
             $response = $deployerService->executeCommand($this->project, clone $this->project->server, $cmd);
@@ -59,7 +63,10 @@ class PollWorkersStatusJob implements ShouldQueue
                         ->actions([
                             Action::make('authorize')
                                 ->label('Update Now')
-                                ->url(route('oauth.redirect', ['provider' => $this->provider]))
+                                ->url(route('filament.app.auth.redirect', [
+                                    'provider' => $this->provider,
+                                    'type' => str_contains($this->provider, 'facebook') ? 'facebook_marketing' : 'google_search_console' // Best effort fallback
+                                ]))
                                 ->button()
                         ])
                         ->sendToDatabase($user);

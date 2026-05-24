@@ -120,6 +120,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->darkMode()
             ->databaseNotifications()
+            ->databaseNotificationsPolling('5s')
             ->tenant(Project::class, slugAttribute: 'subdomain')
             ->tenantRegistration(\App\Filament\App\Pages\RegisterProject::class)
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')

@@ -24,28 +24,40 @@ class PrepareSafeTokenUpdateJob implements ShouldQueue
         $this->provider = $provider;
     }
 
-    public function handle(DeployerService $deployerService)
+    public function handle(\App\Services\DeployerService $deployerService)
     {
-        Log::info("Initiating Safe Token Update for project {$this->project->id} ({$this->provider})");
+        \Illuminate\Support\Facades\Log::info("Preparing safe token update for project {$this->project->id} ({$this->provider})");
 
         // Set status in project to lock the UI if necessary
         $this->project->update(['health_status' => 'stopping_workers']);
 
-        $deploymentName = 'apis-hub'; // Defaults
-
-        // Run nohup docker compose stop worker in background
-        // The SSH connection will return immediately, but the server will wait for the graceful shutdown
-        $cmd = "nohup docker compose -p {$deploymentName} stop -t 7200 worker > /dev/null 2>&1 < /dev/null &";
+        $path = "/var/www/apis-hub/tenants/{$this->project->subdomain}";
+        $deploymentName = "apis-hub-{$this->project->subdomain}";
+        
+        // Command to stop worker gracefully. 
+        $cmd = "cd {$path} && nohup docker compose -p {$deploymentName} stop -t 7200 worker > /dev/null 2>&1 < /dev/null &";
 
         try {
-            $deployerService->executeCommand($this->project, clone $this->project->server, $cmd);
-            Log::info("Sent background graceful stop command to project {$this->project->id}");
-
-            // Dispatch the polling job to wait until workers are actually stopped
-            PollWorkersStatusJob::dispatch($this->project, $this->provider)->delay(now()->addMinutes(1));
+            $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
+            file_put_contents($tmpKeyPath, $this->project->server->ssh_private_key . "\n");
+            chmod($tmpKeyPath, 0600);
+            
+            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$this->project->server->ssh_user}@{$this->project->server->ip_address} \"{$cmd}\"";
+            
+            // Use start() so we DO NOT block the PHP worker, completely avoiding SSH hangs
+            \Illuminate\Support\Facades\Process::start($sshCmd);
+            
+            // Give it a tiny sleep to ensure SSH initiated before we delete the key
+            sleep(2);
+            if (file_exists($tmpKeyPath)) {
+                unlink($tmpKeyPath);
+            }
         } catch (\Exception $e) {
-            Log::error("Failed to execute stop command for project {$this->project->id}: " . $e->getMessage());
-            $this->project->update(['health_status' => 'healthy']); // Revert status
+            \Illuminate\Support\Facades\Log::error("Failed to start graceful shutdown: " . $e->getMessage());
         }
+
+        // Dispatch the polling job to wait until workers are actually stopped
+        \App\Jobs\PollWorkersStatusJob::dispatch($this->project, $this->provider)
+            ->delay(now()->addSeconds(10));
     }
 }
