@@ -77,9 +77,6 @@ class OAuthController extends Controller
         try {
             /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
             $driver = Socialite::driver($provider);
-            /** @var \Laravel\Socialite\Two\User $socialiteUser */
-            $socialiteUser = $driver->stateless()->user();
-            
             $state = $request->input('state', '');
             $stateData = [];
             foreach (explode(':', $state) as $part) {
@@ -100,6 +97,9 @@ class OAuthController extends Controller
             if (!$tenant) {
                 return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified.');
             }
+
+            /** @var \Laravel\Socialite\Two\User $socialiteUser */
+            $socialiteUser = $driver->stateless()->user();
 
             $token = $socialiteUser->token;
             $refreshToken = $socialiteUser->refreshToken;
