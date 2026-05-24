@@ -219,6 +219,7 @@ class DataSources extends Page
         }
 
         \Illuminate\Support\Arr::set($currentData, $this->activeChannel . '.' . $assetListKey, array_values($mergedAssets));
+        $tenant->update(['sync_config' => $currentData]); // Persist full dataset immediately to preserve unmapped keys
         $this->form->fill($currentData);
     }
 
@@ -390,11 +391,12 @@ class DataSources extends Page
     public function save(): void
     {
         $tenant = Filament::getTenant();
-        $state = $this->form->getState();
+        $uiState = $this->form->getState();
+        $dbState = $tenant->sync_config ?? [];
         
         // Validate limits before saving
         $totalEnabled = 0;
-        foreach ($state as $channel => $channelConfig) {
+        foreach ($uiState as $channel => $channelConfig) {
             if (is_array($channelConfig)) {
                 foreach ($channelConfig as $key => $value) {
                     if (is_array($value)) {
@@ -417,9 +419,7 @@ class DataSources extends Page
                 ->body("You have selected {$totalEnabled} assets, but your current tier limits you to {$max}. Please deselect some assets or upgrade your plan.")
                 ->send();
             return;
-        }
-
-        $tenant->update(['sync_config' => $state]);
+        // We will update the tenant DB at the end of the method with the fully merged dbState
         
         // Push the configuration to the remote engine via APIs Hub SDK
         $service = app(\App\Services\RemoteEngineService::class);
@@ -434,7 +434,7 @@ class DataSources extends Page
             'facebook_organic'      => 'pages',
         ];
 
-        foreach ($state as $channel => $channelConfig) {
+        foreach ($uiState as $channel => $channelConfig) {
             if (!is_array($channelConfig)) {
                 continue;
             }
@@ -459,11 +459,24 @@ class DataSources extends Page
                 $payload['max_workers'] = 2;
             }
 
-            // Re-map the assets list to the nested structure the backend drivers expect
-            // array_values is critical here to strip Filament's UUID keys and force a JSON array
-            $assetsList = array_values($channelConfig[$localAssetKey] ?? []);
+            // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
+            $assetsListUi = array_values($channelConfig[$localAssetKey] ?? []);
+            $assetsListDb = array_values($dbState[$channel][$localAssetKey] ?? []);
+            
+            foreach ($assetsListUi as $index => $uiAsset) {
+                if (isset($assetsListDb[$index])) {
+                    // Update any boolean toggles (like enabled, page_metrics, etc) from UI into the pristine DB asset
+                    foreach ($uiAsset as $key => $val) {
+                        if (is_bool($val)) {
+                            $assetsListDb[$index][$key] = $val;
+                        }
+                    }
+                }
+            }
+            
+            // Re-map the pristine assets list to the nested structure the backend drivers expect
             $payload['assets'] = [
-                $remoteAssetKey => $assetsList
+                $remoteAssetKey => $assetsListDb
             ];
             
             // Clean up the top-level list
@@ -471,6 +484,8 @@ class DataSources extends Page
 
             try {
                 $service->updateCredentials($tenant, $payload);
+                // If successful, we update the DB state with the merged assets so it remains the source of truth
+                $dbState[$channel][$localAssetKey] = $assetsListDb;
             } catch (\Exception $e) {
                 \Filament\Notifications\Notification::make()
                     ->title("Failed to sync {$channel} to remote engine")
@@ -480,6 +495,8 @@ class DataSources extends Page
                 return;
             }
         }
+        
+        $tenant->update(['sync_config' => $dbState]);
 
         \Filament\Notifications\Notification::make()
             ->title('Configuration Saved')
