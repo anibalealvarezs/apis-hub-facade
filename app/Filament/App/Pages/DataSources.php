@@ -87,8 +87,6 @@ class DataSources extends Page
                     $response = $service->fetchAssets($tenant, $this->activeChannel, true);
                     
                     if (isset($response['success']) && $response['success'] && isset($response['assets'])) {
-                        $providerConfig = $this->getProviderConfig($this->activeChannel);
-                        
                         // Hardcode correct resource keys for extraction since services.php is generic
                         $resourceKeyMap = [
                             'google_search_console' => 'sites',
@@ -96,7 +94,7 @@ class DataSources extends Page
                             'facebook_organic' => 'pages',
                             'shopify' => 'stores'
                         ];
-                        $resourceKey = $resourceKeyMap[$this->activeChannel] ?? $providerConfig['resource_key'] ?? $this->activeChannel;
+                        $resourceKey = $resourceKeyMap[$this->activeChannel] ?? $this->activeChannel;
                         
                         $liveAssets = $response['assets'][$resourceKey] ?? [];
 
