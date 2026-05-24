@@ -328,16 +328,13 @@ class DataSources extends Page
 
             if ($key === 'enabled') {
                 $headerComponents[] = Toggle::make($key)
-                    ->label('Sync')
+                    ->label(fn (callable $get) => $get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset')
+                    ->helperText(fn (callable $get) => $get('lost_access') ? '⚠️ Lost Access: This asset is no longer accessible via the API.' : null)
                     ->inline(false)
                     ->default(true);
             } elseif ($key === 'lost_access') {
-                $headerComponents[] = Toggle::make($key)
-                    ->label('Lost Access')
-                    ->disabled()
-                    ->inline(false)
-                    ->hidden(fn (callable $get) => !$get('lost_access'))
-                    ->helperText('This asset is no longer accessible via the API.');
+                // Hidden entirely, we use the helperText on the enabled toggle instead.
+                $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
             } elseif ($type === 'boolean') {
                 $itemComponents[] = Toggle::make($key)
                     ->label(Str::headline($key))
@@ -386,7 +383,6 @@ class DataSources extends Page
             ->addable(false)
             ->deletable(false)
             ->reorderable(false)
-            ->itemLabel(fn (array $state): ?string => $state['title'] ?? $state['name'] ?? $state['url'] ?? 'Unknown Asset')
             ->columnSpanFull();
     }
 
