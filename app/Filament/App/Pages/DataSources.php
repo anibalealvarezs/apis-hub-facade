@@ -128,6 +128,14 @@ class DataSources extends Page
         $fields = $release->config_schemas[$this->activeChannel]['fields'] ?? [];
         $assetListKey = null;
 
+        // DEBUG: Tell the user what we received
+        \Filament\Notifications\Notification::make()
+            ->title('Debug: Live Assets Received')
+            ->body(json_encode($liveAssets))
+            ->warning()
+            ->send();
+
+
         // Find which field is the array of assets (e.g., 'ad_accounts', 'pages')
         foreach ($fields as $key => $def) {
             if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
