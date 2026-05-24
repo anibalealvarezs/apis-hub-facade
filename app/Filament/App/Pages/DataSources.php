@@ -465,6 +465,18 @@ class DataSources extends Page
             $assetsListUi = array_values($channelConfig[$localAssetKey] ?? []);
             $assetsListDb = array_values($dbState[$channel][$localAssetKey] ?? []);
             
+            if (empty($assetsListDb)) {
+                throw new \Exception("DEBUG - dbState is empty for {$channel}. uiState count: " . count($assetsListUi) . ". Is sync_config populated in DB? Run Sync from Google first!");
+            }
+            
+            \Illuminate\Support\Facades\Log::channel('single')->info("DataSources Save - Channel: {$channel}", [
+                'localAssetKey' => $localAssetKey,
+                'dbState_channel_exists' => isset($dbState[$channel]),
+                'dbState_assets_exists' => isset($dbState[$channel][$localAssetKey]),
+                'assetsListDb_count' => count($assetsListDb),
+                'uiState_assets_count' => count($assetsListUi),
+            ]);
+            
             foreach ($assetsListUi as $index => $uiAsset) {
                 if (isset($assetsListDb[$index])) {
                     // Update any boolean toggles (like enabled, page_metrics, etc) from UI into the pristine DB asset
