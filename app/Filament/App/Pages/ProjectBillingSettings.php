@@ -37,14 +37,17 @@ class ProjectBillingSettings extends Page implements HasTable
 
         return $table
             ->query(
-                filament()->getTenant()->authorizedBillingProfiles()
+                BillingProfile::query()
+                    ->select('billing_profiles.*', 'billing_profile_project.status as pivot_status', 'billing_profile_project.is_primary as pivot_is_primary')
+                    ->join('billing_profile_project', 'billing_profiles.id', '=', 'billing_profile_project.billing_profile_id')
+                    ->where('billing_profile_project.project_id', $tenantId)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Profile Name'),
                 Tables\Columns\TextColumn::make('type')
                     ->badge(),
-                Tables\Columns\TextColumn::make('pivot.status')
+                Tables\Columns\TextColumn::make('pivot_status')
                     ->label('Assignment Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -53,7 +56,7 @@ class ProjectBillingSettings extends Page implements HasTable
                         'rejected' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\IconColumn::make('pivot.is_primary')
+                Tables\Columns\IconColumn::make('pivot_is_primary')
                     ->label('Primary')
                     ->boolean(),
             ])
@@ -107,7 +110,7 @@ class ProjectBillingSettings extends Page implements HasTable
                 Tables\Actions\Action::make('make_primary')
                     ->label('Set Primary')
                     ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->pivot->status === 'approved' && !$record->pivot->is_primary)
+                    ->visible(fn ($record) => $record->pivot_status === 'approved' && !$record->pivot_is_primary)
                     ->action(function ($record) use ($tenantId) {
                         // Unset others
                         DB::table('billing_profile_project')
