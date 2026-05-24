@@ -96,6 +96,8 @@ class OAuthController extends Controller
 
             if (!$tenant) {
                 dd('FATAL ERROR: Tenant not identified.', [
+                    'full_url' => $request->fullUrl(),
+                    'query_params' => $request->query(),
                     'state_received' => $request->input('state'),
                     'parsed_state_data' => $stateData,
                     'resolved_tenant_id' => $tenantId,
@@ -205,7 +207,8 @@ class OAuthController extends Controller
 
             dd('FATAL ERROR: Exception thrown and Tenant was null in catch block.', [
                 'exception_message' => $e->getMessage(),
-                'state_received' => $request->input('state'),
+                'full_url' => $request->fullUrl(),
+                'query_params' => $request->query(),
             ]);
         }
     }
