@@ -425,23 +425,41 @@ class DataSources extends Page
         
         // Push the configuration to the remote engine via APIs Hub SDK
         $service = app(\App\Services\RemoteEngineService::class);
-        $localAssetKeyMap = [
-            'google_search_console' => 'sites',
-            'facebook_marketing'    => 'ad_accounts',
-            'facebook_organic'      => 'facebook_pages',
-        ];
         $remoteAssetKeyMap = [
             'google_search_console' => 'gsc',
             'facebook_marketing'    => 'ad_accounts',
             'facebook_organic'      => 'pages',
         ];
+        
+        $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
 
         foreach ($uiState as $channel => $channelConfig) {
             if (!is_array($channelConfig)) {
                 continue;
             }
+            
+            $fields = $release->config_schemas[$channel]['fields'] ?? [];
+            $assetListKey = null;
 
-            $localAssetKey = $localAssetKeyMap[$channel] ?? 'assets';
+            // Dynamically find which field is the array of assets (e.g., 'ad_accounts', 'assets.sites')
+            foreach ($fields as $key => $def) {
+                if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
+                    $assetListKey = $key;
+                    break;
+                } elseif (($def['type'] ?? '') === 'object' && isset($def['schema'])) {
+                    foreach ($def['schema'] as $subKey => $subDef) {
+                        if (($subDef['type'] ?? '') === 'array' && isset($subDef['item_schema'])) {
+                            $assetListKey = $key . '.' . $subKey;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            
+            if (!$assetListKey) {
+                continue; // No assets array found for this channel
+            }
+
             $remoteAssetKey = $remoteAssetKeyMap[$channel] ?? 'assets';
 
             $payload = $channelConfig;
@@ -462,20 +480,9 @@ class DataSources extends Page
             }
 
             // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
-            $assetsListUi = array_values($channelConfig[$localAssetKey] ?? []);
-            $assetsListDb = array_values($dbState[$channel][$localAssetKey] ?? []);
+            $assetsListUi = array_values(\Illuminate\Support\Arr::get($channelConfig, $assetListKey, []));
+            $assetsListDb = array_values(\Illuminate\Support\Arr::get($dbState[$channel] ?? [], $assetListKey, []));
             
-            if (empty($assetsListDb)) {
-                throw new \Exception("DEBUG - dbState is empty for {$channel}. uiState count: " . count($assetsListUi) . ". Is sync_config populated in DB? Run Sync from Google first!");
-            }
-            
-            \Illuminate\Support\Facades\Log::channel('single')->info("DataSources Save - Channel: {$channel}", [
-                'localAssetKey' => $localAssetKey,
-                'dbState_channel_exists' => isset($dbState[$channel]),
-                'dbState_assets_exists' => isset($dbState[$channel][$localAssetKey]),
-                'assetsListDb_count' => count($assetsListDb),
-                'uiState_assets_count' => count($assetsListUi),
-            ]);
             
             foreach ($assetsListUi as $index => $uiAsset) {
                 if (isset($assetsListDb[$index])) {
@@ -494,12 +501,15 @@ class DataSources extends Page
             ];
             
             // Clean up the top-level list
-            unset($payload[$localAssetKey]);
+            \Illuminate\Support\Arr::forget($payload, $assetListKey);
 
             try {
                 $service->updateCredentials($tenant, $payload);
                 // If successful, we update the DB state with the merged assets so it remains the source of truth
-                $dbState[$channel][$localAssetKey] = $assetsListDb;
+                if (!isset($dbState[$channel])) {
+                    $dbState[$channel] = [];
+                }
+                \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             } catch (\Exception $e) {
                 \Filament\Notifications\Notification::make()
                     ->title("Failed to sync {$channel} to remote engine")
