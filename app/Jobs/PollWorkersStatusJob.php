@@ -66,6 +66,7 @@ class PollWorkersStatusJob implements ShouldQueue
                             Action::make('authorize')
                                 ->label('Update Now')
                                 ->url(route('filament.app.auth.redirect', [
+                                    'tenant' => $this->project->subdomain,
                                     'provider' => $this->provider,
                                     'type' => str_contains($this->provider, 'facebook') ? 'facebook_marketing' : 'google_search_console' // Best effort fallback
                                 ]))
