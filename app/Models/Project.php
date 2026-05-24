@@ -49,6 +49,7 @@ class Project extends Model
         'is_active',
         'health_status',
         'health_metrics',
+        'sync_config',
         'last_heartbeat_at',
         'error_count',
         'public_api_key',
