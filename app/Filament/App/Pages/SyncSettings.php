@@ -182,11 +182,11 @@ class SyncSettings extends Page
         $data = $this->form->getState();
         
         $modelAttributes = [
-            'public_api_key' => $data['app_api_key'] ?? null,
-            'facebook_user_token' => $data['facebook_user_token'] ?? null,
-            'facebook_user_id' => $data['facebook_user_id'] ?? null,
-            'google_refresh_token' => $data['google_refresh_token'] ?? null,
-            'google_user_id' => $data['google_user_id'] ?? null,
+            'public_api_key' => $data['app_api_key'] ?? $tenant->public_api_key,
+            'facebook_user_token' => $data['facebook_user_token'] ?? $tenant->facebook_user_token,
+            'facebook_user_id' => $data['facebook_user_id'] ?? $tenant->facebook_user_id,
+            'google_refresh_token' => $data['google_refresh_token'] ?? $tenant->google_refresh_token,
+            'google_user_id' => $data['google_user_id'] ?? $tenant->google_user_id,
         ];
 
         $syncConfig = collect($data)->except(array_keys($modelAttributes))->except(['api_url', 'app_api_key'])->toArray();
