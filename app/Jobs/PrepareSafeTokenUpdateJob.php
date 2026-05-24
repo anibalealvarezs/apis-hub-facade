@@ -35,7 +35,7 @@ class PrepareSafeTokenUpdateJob implements ShouldQueue
 
         // Run nohup docker compose stop worker in background
         // The SSH connection will return immediately, but the server will wait for the graceful shutdown
-        $cmd = "nohup docker compose -p {$deploymentName} stop -t 7200 worker > /dev/null 2>&1 &";
+        $cmd = "nohup docker compose -p {$deploymentName} stop -t 7200 worker > /dev/null 2>&1 < /dev/null &";
 
         try {
             $deployerService->executeCommand($this->project, clone $this->project->server, $cmd);

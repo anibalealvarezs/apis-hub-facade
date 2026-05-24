@@ -151,8 +151,17 @@ class DataSources extends Page
         $mergedAssets = [];
         $liveMap = [];
         
+        // Extract the actual list of assets from the associative array (e.g. ['sites' => [...]] or ['ad_accounts' => [...]])
+        $actualLiveAssets = [];
+        foreach ($liveAssets as $key => $value) {
+            if (is_array($value)) {
+                $actualLiveAssets = $value;
+                break;
+            }
+        }
+
         // Build map of live assets by their ID or URL
-        foreach ($liveAssets as $live) {
+        foreach ($actualLiveAssets as $live) {
             $identifier = $live['id'] ?? $live['url'] ?? null;
             if ($identifier) {
                 $liveMap[$identifier] = $live;

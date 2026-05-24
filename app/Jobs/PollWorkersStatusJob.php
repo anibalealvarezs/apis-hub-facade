@@ -36,11 +36,11 @@ class PollWorkersStatusJob implements ShouldQueue
         $cmd = "php bin/console dbal:run-sql 'SELECT count(id) FROM jobs WHERE status = 2'";
 
         try {
-            $output = $deployerService->executeCommand($this->project, clone $this->project->server, $cmd);
+            $response = $deployerService->executeCommand($this->project, clone $this->project->server, $cmd);
             
-            // Extract the count from the output. Assuming output contains the number directly.
-            // A simple regex to find the integer count
-            preg_match('/\b\d+\b/', implode(" ", $output), $matches);
+            // Extract the count from the output.
+            $outputString = $response['output'] ?? '';
+            preg_match('/\b\d+\b/', $outputString, $matches);
             $activeJobs = isset($matches[0]) ? (int)$matches[0] : 0;
 
             if ($activeJobs === 0) {

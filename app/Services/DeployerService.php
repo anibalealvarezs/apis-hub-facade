@@ -155,9 +155,17 @@ EOT;
     }
 
     /**
+     * Execute a single command over SSH on the remote server using the provided identity.
+     */
+    public function executeCommand(Project $project, Server $server, string $command)
+    {
+        return $this->runSshCommands($server, [$command]);
+    }
+
+    /**
      * Run commands over SSH on the remote server using the provided identity.
      */
-    protected function runSshCommands(Server $server, array $commands)
+    public function runSshCommands(Server $server, array $commands)
     {
         $allCommands = implode(" && ", $commands);
 
