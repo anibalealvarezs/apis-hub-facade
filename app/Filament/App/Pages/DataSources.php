@@ -47,6 +47,9 @@ class DataSources extends Page
     {
         $tenant = Filament::getTenant();
         $this->form->fill($tenant->sync_config ?? []);
+        
+        // Debug state population
+        throw new \Exception("DEBUG MOUNT - sync_config: " . json_encode($tenant->sync_config) . " | form_state: " . json_encode($this->form->getState()));
     }
 
     public function getChannels(): array
