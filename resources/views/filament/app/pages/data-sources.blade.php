@@ -66,9 +66,11 @@
                     </p>
                     
                     @if(str_contains($activeChannel, 'facebook'))
-                        <x-oauth-buttons provider="facebook" />
+                        @php $type = str_replace('facebook_', '', $activeChannel); @endphp
+                        <x-oauth-buttons provider="facebook" :type="$type" />
                     @elseif(str_contains($activeChannel, 'google'))
-                        <x-oauth-buttons provider="google" />
+                        @php $type = str_replace('google_', '', $activeChannel); @endphp
+                        <x-oauth-buttons provider="google" :type="$type" />
                     @endif
                 </div>
             @else
