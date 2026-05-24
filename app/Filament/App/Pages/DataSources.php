@@ -504,11 +504,40 @@ class DataSources extends Page
             \Illuminate\Support\Arr::forget($payload, $assetListKey);
 
             try {
-                $service->updateCredentials($tenant, $payload);
+                $response = $service->updateCredentials($tenant, $payload);
+                
                 // If successful, we update the DB state with the merged assets so it remains the source of truth
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
                 }
+                
+                // Sync status back from Remote Node
+                // Remote node may have disabled assets due to permission checks
+                $remoteListKey = last(explode('.', $assetListKey));
+                if (isset($response['config'][$channel][$remoteListKey])) {
+                    $remoteAssets = $response['config'][$channel][$remoteListKey];
+                    // Create a map by URL or ID from remote
+                    $remoteMap = [];
+                    foreach ($remoteAssets as $ra) {
+                        $id = $ra['url'] ?? $ra['id'] ?? null;
+                        if ($id) {
+                            $remoteMap[$id] = $ra;
+                        }
+                    }
+                    
+                    // Update local db state with remote status
+                    foreach ($assetsListDb as &$dbAsset) {
+                        $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
+                        if ($id && isset($remoteMap[$id])) {
+                            $dbAsset['enabled'] = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                            if (isset($remoteMap[$id]['lost_access'])) {
+                                $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                            }
+                        }
+                    }
+                    unset($dbAsset);
+                }
+
                 
                 // Persist UI configuration values (like cache_history_range and the channel toggle)
                 foreach ($channelConfig as $k => $v) {
