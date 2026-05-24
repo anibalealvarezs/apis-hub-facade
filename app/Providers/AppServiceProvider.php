@@ -12,7 +12,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class, function ($app) {
+            $registry = new \App\Domain\ChannelProfiles\ChannelProfileRegistry();
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\GoogleSearchConsoleProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookMarketingProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookOrganicProfile());
+            return $registry;
+        });
     }
 
     /**

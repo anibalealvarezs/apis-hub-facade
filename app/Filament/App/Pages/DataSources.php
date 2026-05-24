@@ -222,6 +222,11 @@ class DataSources extends Page
             $type = $definition['type'] ?? 'string';
             $fieldKey = $prefix . $key;
             
+            // Skip system fields
+            if (isset($definition['user_configurable']) && $definition['user_configurable'] === false) {
+                continue;
+            }
+
             // Channel-level toggle
             if ($key === 'enabled') {
                 $components[] = Toggle::make($fieldKey)
@@ -235,17 +240,15 @@ class DataSources extends Page
                 $advancedComponents[] = Toggle::make($fieldKey)
                     ->label(Str::headline($key))
                     ->default($definition['default'] ?? false);
-            } elseif ($type === 'string' && str_contains($key, 'range')) {
+            } elseif ($type === 'string' && isset($definition['options'])) {
                 $advancedComponents[] = Select::make($fieldKey)
                     ->label(Str::headline($key))
-                    ->options([
-                        '1 month' => '1 Month',
-                        '3 months' => '3 Months',
-                        '6 months' => '6 Months',
-                        '1 year' => '1 Year',
-                        '2 years' => '2 Years',
-                    ])
-                    ->default($definition['default'] ?? '2 years');
+                    ->options($definition['options'])
+                    ->default($definition['default'] ?? null);
+            } elseif ($type === 'string') {
+                $advancedComponents[] = TextInput::make($fieldKey)
+                    ->label(Str::headline($key))
+                    ->default($definition['default'] ?? null);
             } elseif ($type === 'integer') {
                 $advancedComponents[] = TextInput::make($fieldKey)
                     ->numeric()
