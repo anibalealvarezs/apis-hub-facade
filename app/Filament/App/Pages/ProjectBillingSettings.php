@@ -37,9 +37,7 @@ class ProjectBillingSettings extends Page implements HasTable
 
         return $table
             ->query(
-                BillingProfile::query()->whereHas('authorizedProjects', function ($query) use ($tenantId) {
-                    $query->where('project_id', $tenantId);
-                })
+                filament()->getTenant()->authorizedBillingProfiles()
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
