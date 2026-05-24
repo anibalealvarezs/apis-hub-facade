@@ -266,11 +266,11 @@ EOT;
     /**
      * Inject social tokens directly into the remote node via API (Hot-reload).
      */
-    public function injectSocialTokens(Project $project, array $tokens, string $provider = 'facebook'): array
+    public function injectSocialTokens(Project $project, string $token, string $provider = 'facebook', array $payload = []): array
     {
         try {
-            return $this->remoteEngineService->execute($project, function ($client) use ($provider, $tokens) {
-                return $client->importCredentials($provider, $tokens);
+            return $this->remoteEngineService->execute($project, function ($client) use ($provider, $token, $payload) {
+                return $client->importCredentials($provider, $token, $payload);
             });
         } catch (\Exception $e) {
             Log::error("Error injecting tokens for {$provider}: " . $e->getMessage());

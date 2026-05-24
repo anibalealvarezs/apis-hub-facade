@@ -224,8 +224,7 @@ class OAuthController extends Controller
                     
                     // ATOMICITY: Try to wipe remote via API FIRST
                     // If this fails, we catch and bail to keep consistency
-                    $response = $deployer->injectSocialTokens($project, [
-                        'facebook_user_token' => null,
+                    $response = $deployer->injectSocialTokens($project, "", "facebook", [
                         'facebook_user_id' => null,
                     ]);
 

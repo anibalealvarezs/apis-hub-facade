@@ -195,12 +195,7 @@ class SyncSettings extends Page
             'sync_config' => $syncConfig,
         ]));
 
-        // 1. Push Social Tokens (Hot-reload)
-        $deployer->injectSocialTokens($tenant, [
-            'facebook_user_token' => $modelAttributes['facebook_user_token'],
-            'facebook_user_id' => $modelAttributes['facebook_user_id'],
-            'google_refresh_token' => $modelAttributes['google_refresh_token'],
-        ]);
+
 
         // 2. Push fixed Infrastructure credentials (Requires restart)
         $pushData = [
