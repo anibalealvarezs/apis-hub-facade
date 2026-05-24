@@ -48,7 +48,7 @@ class OAuthController extends Controller
             $stateParts[] = 'type_' . $type;
         }
 
-        $driver->with(['state' => implode(':', $stateParts)]);
+        $driver->stateless()->with(['state' => implode(':', $stateParts)]);
 
         $config = config("services.{$provider}")['channel_scopes'] ?? [];
         $scopes = $config['default'] ?? [];
@@ -105,7 +105,7 @@ class OAuthController extends Controller
             $refreshToken = $socialiteUser->refreshToken;
 
             // Calculate scopes based on type
-            $config = config("services.{$provider}")['scopes'] ?? [];
+            $config = config("services.{$provider}")['channel_scopes'] ?? [];
             $requestedScopes = array_merge($config['default'] ?? [], $type ? ($config[$type] ?? []) : []);
 
             // --- Facebook Long-Lived Token Exchange ---
