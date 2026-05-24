@@ -48,7 +48,7 @@ class OAuthController extends Controller
             $stateParts[] = 'type_' . $type;
         }
 
-        $driver->stateless()->with(['state' => implode(':', $stateParts)]);
+        $customParameters = ['state' => implode(':', $stateParts)];
 
         $config = config("services.{$provider}")['channel_scopes'] ?? [];
         $scopes = $config['default'] ?? [];
@@ -61,10 +61,13 @@ class OAuthController extends Controller
             $driver->scopes(\Illuminate\Support\Arr::flatten($scopes));
         }
 
-        // For Google/GSC: ensure we get the refresh token
+        // For Google/GSC: ensure we get the refresh token and merge with custom state
         if ($provider === 'google') {
-            $driver->with(['access_type' => 'offline', 'prompt' => 'consent']);
+            $customParameters['access_type'] = 'offline';
+            $customParameters['prompt'] = 'consent';
         }
+
+        $driver->stateless()->with($customParameters);
 
         return $driver->redirect();
     }
@@ -95,13 +98,7 @@ class OAuthController extends Controller
             }
 
             if (!$tenant) {
-                dd('FATAL ERROR: Tenant not identified.', [
-                    'full_url' => $request->fullUrl(),
-                    'query_params' => $request->query(),
-                    'state_received' => $request->input('state'),
-                    'parsed_state_data' => $stateData,
-                    'resolved_tenant_id' => $tenantId,
-                ]);
+                return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified from state parameter.');
             }
 
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
@@ -205,11 +202,7 @@ class OAuthController extends Controller
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
-            dd('FATAL ERROR: Exception thrown and Tenant was null in catch block.', [
-                'exception_message' => $e->getMessage(),
-                'full_url' => $request->fullUrl(),
-                'query_params' => $request->query(),
-            ]);
+            return redirect()->route('filament.app.auth.login')->with('error', 'Authentication failed: ' . $e->getMessage());
         }
     }
 
