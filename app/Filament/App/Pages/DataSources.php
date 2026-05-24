@@ -87,7 +87,34 @@ class DataSources extends Page
                     $response = $service->fetchAssets($tenant, $this->activeChannel, true);
                     
                     if (isset($response['success']) && $response['success'] && isset($response['assets'])) {
-                        $this->mergeDiscoveredAssets($response['assets']);
+                        $providerConfig = $this->getProviderConfig($this->activeChannel);
+                        
+                        // Hardcode correct resource keys for extraction since services.php is generic
+                        $resourceKeyMap = [
+                            'google_search_console' => 'sites',
+                            'facebook_marketing' => 'ad_accounts',
+                            'facebook_organic' => 'pages',
+                            'shopify' => 'stores'
+                        ];
+                        $resourceKey = $resourceKeyMap[$this->activeChannel] ?? $providerConfig['resource_key'] ?? $this->activeChannel;
+                        
+                        $liveAssets = $response['assets'][$resourceKey] ?? [];
+
+                        // If still empty but the root assets has items, fallback to the first array found
+                        if (empty($liveAssets) && !empty($response['assets'])) {
+                            foreach ($response['assets'] as $key => $value) {
+                                if (is_array($value)) {
+                                    $liveAssets = $value;
+                                    $resourceKey = $key; // Update the key so we wrap it correctly below
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Wrap it back in an associative array so mergeDiscoveredAssets can extract it properly
+                        $payload = [$resourceKey => $liveAssets];
+
+                        $this->mergeDiscoveredAssets($payload);
                         Notification::make()->title('Assets Refreshed')->success()->send();
                     } else {
                         Notification::make()->title('Refresh Failed')
