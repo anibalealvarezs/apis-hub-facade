@@ -133,29 +133,37 @@ class OAuthController extends Controller
             $existingScopes = $credential?->scopes ?? [];
             $newScopes = array_values(array_unique(array_merge($existingScopes, $requestedScopes)));
 
+            $updatePayload = [
+                'token' => $token,
+                'external_user_id' => $socialiteUser->id,
+                'scopes' => $newScopes,
+                'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
+                'meta' => [
+                    'name' => $socialiteUser->name,
+                    'email' => $socialiteUser->email,
+                    'avatar' => $socialiteUser->avatar,
+                ],
+            ];
+
+            if (!empty($refreshToken)) {
+                $updatePayload['refresh_token'] = $refreshToken;
+            }
+
             $credential = $tenant->credentials()->updateOrCreate(
                 ['provider' => $provider],
-                [
-                    'token' => $token,
-                    'refresh_token' => $refreshToken,
-                    'external_user_id' => $socialiteUser->id,
-                    'scopes' => $newScopes,
-                    'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
-                    'meta' => [
-                        'name' => $socialiteUser->name,
-                        'email' => $socialiteUser->email,
-                        'avatar' => $socialiteUser->avatar,
-                    ],
-                ]
+                $updatePayload
             );
 
             // Atomic Push to Remote Engine via SDK
             $nodeUrl = "https://{$tenant->subdomain}.apis-hub.cloud";
             $sdk = new ApisHubApi($nodeUrl, $tenant->remote_admin_api_key);
+            
+            $finalRefreshToken = $refreshToken ?? $credential->refresh_token;
+
             $sdk->importCredentials($provider, $token, [
                 'user_id' => $socialiteUser->id,
                 'email' => $socialiteUser->email,
-                'refresh_token' => $refreshToken,
+                'refresh_token' => $finalRefreshToken,
                 'scopes' => $newScopes,
             ]);
 
