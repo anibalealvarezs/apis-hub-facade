@@ -321,8 +321,9 @@ class DataSources extends Page
         foreach ($itemSchema as $key => $definition) {
             $type = $definition['type'] ?? 'string';
             
-            // Skip data objects
-            if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link'])) {
+            // Preserve data objects and identifying strings in the form state invisibly
+            if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time'])) {
+                $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
                 continue;
             }
 
@@ -444,8 +445,23 @@ class DataSources extends Page
             $payload = $channelConfig;
             $payload['type'] = $channel;
             
+            // Map the correct 'enabled' state from the toggle name
+            $payload['enabled'] = filter_var($channelConfig[$channel . '_enabled'] ?? $channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            unset($payload[$channel . '_enabled']);
+
+            // Enforce Global Defaults for Jobs
+            $payload['granular_sync'] = true;
+            if ($channel === 'google_search_console') {
+                $payload['max_workers'] = 4;
+            } elseif ($channel === 'facebook_organic') {
+                $payload['max_workers'] = 1;
+            } elseif ($channel === 'facebook_marketing') {
+                $payload['max_workers'] = 2;
+            }
+
             // Re-map the assets list to the nested structure the backend drivers expect
-            $assetsList = $channelConfig[$localAssetKey] ?? [];
+            // array_values is critical here to strip Filament's UUID keys and force a JSON array
+            $assetsList = array_values($channelConfig[$localAssetKey] ?? []);
             $payload['assets'] = [
                 $remoteAssetKey => $assetsList
             ];
