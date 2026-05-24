@@ -54,7 +54,7 @@ class PollWorkersStatusJob implements ShouldQueue
                 $this->project->update(['health_status' => 'ready_for_auth']);
 
                 // Notify all project users
-                $users = $this->project->users()->get()->push($this->project->trueOwner);
+                $users = $this->project->users()->get()->push($this->project->trueOwner)->filter();
                 $providerName = ucfirst($this->provider);
 
                 foreach ($users as $user) {
