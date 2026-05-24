@@ -153,14 +153,6 @@ class DataSources extends Page
         $fields = $release->config_schemas[$this->activeChannel]['fields'] ?? [];
         $assetListKey = null;
 
-        // DEBUG: Tell the user what we received
-        \Filament\Notifications\Notification::make()
-            ->title('Debug: Live Assets Received')
-            ->body(json_encode($liveAssets))
-            ->warning()
-            ->send();
-
-
         // Find which field is the array of assets (e.g., 'ad_accounts', 'pages')
         foreach ($fields as $key => $def) {
             if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
@@ -337,27 +329,60 @@ class DataSources extends Page
             if ($key === 'enabled') {
                 $headerComponents[] = Toggle::make($key)
                     ->label('Sync')
+                    ->inline(false)
                     ->default(true);
             } elseif ($key === 'lost_access') {
                 $headerComponents[] = Toggle::make($key)
                     ->label('Lost Access')
                     ->disabled()
+                    ->inline(false)
+                    ->hidden(fn (callable $get) => !$get('lost_access'))
                     ->helperText('This asset is no longer accessible via the API.');
             } elseif ($type === 'boolean') {
                 $itemComponents[] = Toggle::make($key)
                     ->label(Str::headline($key))
+                    ->inline(false)
                     ->default($definition['default'] ?? false);
             }
         }
 
         return Repeater::make($fieldKey)
             ->label(Str::headline($label))
-            ->schema([
-                Grid::make(3)->schema($headerComponents),
-                Grid::make(3)->schema($itemComponents)->visible(fn ($state) => !empty($itemComponents))
+            ->hintActions([
+                \Filament\Forms\Components\Actions\Action::make('selectAll')
+                    ->label('Select All')
+                    ->button()
+                    ->color('success')
+                    ->action(function (\Filament\Forms\Components\Repeater $component) {
+                        $state = $component->getState();
+                        $newState = collect($state)->map(function ($item) {
+                            if (empty($item['lost_access'])) {
+                                $item['enabled'] = true;
+                            }
+                            return $item;
+                        })->toArray();
+                        $component->state($newState);
+                    }),
+                \Filament\Forms\Components\Actions\Action::make('deselectAll')
+                    ->label('Deselect All')
+                    ->button()
+                    ->color('danger')
+                    ->action(function (\Filament\Forms\Components\Repeater $component) {
+                        $state = $component->getState();
+                        $newState = collect($state)->map(function ($item) {
+                            $item['enabled'] = false;
+                            return $item;
+                        })->toArray();
+                        $component->state($newState);
+                    })
             ])
-            ->collapsible()
-            ->collapsed(true)
+            ->schema([
+                Grid::make(1)->schema($headerComponents),
+                Grid::make(1)->schema($itemComponents)
+                    ->visible(fn (callable $get) => $get('enabled') && !empty($itemComponents))
+            ])
+            ->grid(3)
+            ->collapsible(false)
             ->addable(false)
             ->deletable(false)
             ->reorderable(false)
