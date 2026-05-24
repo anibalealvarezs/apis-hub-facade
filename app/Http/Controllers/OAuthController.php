@@ -95,7 +95,11 @@ class OAuthController extends Controller
             }
 
             if (!$tenant) {
-                return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified.');
+                dd('FATAL ERROR: Tenant not identified.', [
+                    'state_received' => $request->input('state'),
+                    'parsed_state_data' => $stateData,
+                    'resolved_tenant_id' => $tenantId,
+                ]);
             }
 
             /** @var \Laravel\Socialite\Two\User $socialiteUser */
@@ -199,7 +203,10 @@ class OAuthController extends Controller
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
-            return redirect()->route('filament.app.auth.login')->with('error', 'Authentication failed.');
+            dd('FATAL ERROR: Exception thrown and Tenant was null in catch block.', [
+                'exception_message' => $e->getMessage(),
+                'state_received' => $request->input('state'),
+            ]);
         }
     }
 
