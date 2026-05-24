@@ -419,6 +419,55 @@ class DataSources extends Page
         }
 
         $tenant->update(['sync_config' => $state]);
-        Notification::make()->title('Configuration Saved')->success()->send();
+        
+        // Push the configuration to the remote engine via APIs Hub SDK
+        $service = app(\App\Services\RemoteEngineService::class);
+        $localAssetKeyMap = [
+            'google_search_console' => 'sites',
+            'facebook_marketing'    => 'ad_accounts',
+            'facebook_organic'      => 'facebook_pages',
+        ];
+        $remoteAssetKeyMap = [
+            'google_search_console' => 'gsc',
+            'facebook_marketing'    => 'ad_accounts',
+            'facebook_organic'      => 'pages',
+        ];
+
+        foreach ($state as $channel => $channelConfig) {
+            if (!is_array($channelConfig)) {
+                continue;
+            }
+
+            $localAssetKey = $localAssetKeyMap[$channel] ?? 'assets';
+            $remoteAssetKey = $remoteAssetKeyMap[$channel] ?? 'assets';
+
+            $payload = $channelConfig;
+            $payload['type'] = $channel;
+            
+            // Re-map the assets list to the nested structure the backend drivers expect
+            $assetsList = $channelConfig[$localAssetKey] ?? [];
+            $payload['assets'] = [
+                $remoteAssetKey => $assetsList
+            ];
+            
+            // Clean up the top-level list
+            unset($payload[$localAssetKey]);
+
+            try {
+                $service->updateCredentials($tenant, $payload);
+            } catch (\Exception $e) {
+                \Filament\Notifications\Notification::make()
+                    ->title("Failed to sync {$channel} to remote engine")
+                    ->body($e->getMessage())
+                    ->danger()
+                    ->send();
+                return;
+            }
+        }
+
+        \Filament\Notifications\Notification::make()
+            ->title('Configuration Saved')
+            ->success()
+            ->send();
     }
 }
