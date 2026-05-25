@@ -222,6 +222,26 @@ class Project extends Model
     }
 
     /**
+     * Determine if a proxy attribute exists.
+     */
+    public function __isset($key)
+    {
+        $proxies = [
+            'facebook_user_token' => ['facebookProfile', 'access_token'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token'],
+            'google_user_id' => ['googleProfile', 'provider_account_id'],
+        ];
+
+        if (array_key_exists($key, $proxies)) {
+            [$relation, $attribute] = $proxies[$key];
+            return $this->{$relation} !== null && $this->{$relation}->{$attribute} !== null;
+        }
+
+        return parent::__isset($key);
+    }
+
+    /**
      * Transparent proxy for setting provider credentials.
      * With the new ChannelProfile architecture, credentials should ideally be managed via the Profile entity.
      * This maintains basic backwards compatibility.

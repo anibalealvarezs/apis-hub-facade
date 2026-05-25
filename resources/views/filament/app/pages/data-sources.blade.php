@@ -92,6 +92,17 @@
                     @elseif(str_contains($activeChannel, 'google'))
                         <x-oauth-buttons provider="google" :type="$activeChannel" />
                     @endif
+                    
+                    @if(app()->environment('local') || true)
+                    <div class="mt-4 p-4 bg-gray-100 text-left text-xs overflow-auto">
+                        <strong>Debug Info:</strong><br>
+                        Channel: {{ $activeChannel }}<br>
+                        Project ID: {{ \Filament\Facades\Filament::getTenant()->id }}<br>
+                        google_profile_id: {{ \Filament\Facades\Filament::getTenant()->google_profile_id ?? 'NULL' }}<br>
+                        google_user_id: {{ \Filament\Facades\Filament::getTenant()->google_user_id ?? 'NULL' }}<br>
+                        Has googleProfile? {{ \Filament\Facades\Filament::getTenant()->googleProfile ? 'YES' : 'NO' }}
+                    </div>
+                    @endif
                 </div>
             @else
                 
