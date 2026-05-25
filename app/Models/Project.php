@@ -56,6 +56,8 @@ class Project extends Model
         'billing_status',
         'past_due_at',
         'apis_hub_release_id',
+        'google_profile_id',
+        'facebook_profile_id',
     ];
 
     /**
