@@ -94,7 +94,7 @@
             <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                        {{ collect($this->getChannels())->firstWhere('key', $activeChannel)['label'] ?? 'Configuration' }}
+                        {{ $this->getChannelLabel($activeChannel) }}
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Last synced: {{ $this->getLastSyncTime($activeChannel) }}
