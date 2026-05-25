@@ -236,9 +236,18 @@ class DataSources extends Page
             $mergedAssets[$identifier] = $live;
         }
 
+        // Get the entire DB state so we don't accidentally wipe out other channels not currently on the screen
+        $fullDbState = $tenant->sync_config ?? [];
+        
         \Illuminate\Support\Arr::set($currentData, $this->activeChannel . '.' . $assetListKey, array_values($mergedAssets));
-        $tenant->update(['sync_config' => $currentData]); // Persist full dataset immediately to preserve unmapped keys
-        $this->form->fill($currentData);
+        
+        // Merge the active channel's data back into the full DB state
+        $fullDbState[$this->activeChannel] = \Illuminate\Support\Arr::get($currentData, $this->activeChannel, []);
+        
+        $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
+        
+        // Fill the form with the updated active channel data
+        $this->form->fill($fullDbState);
     }
 
     public function form(Form $form): Form
