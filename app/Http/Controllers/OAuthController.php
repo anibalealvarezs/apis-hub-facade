@@ -148,6 +148,12 @@ class OAuthController extends Controller
                 $updatePayload['refresh_token'] = $refreshToken;
             } elseif ($profile && $profile->refresh_token) {
                 $updatePayload['refresh_token'] = $profile->refresh_token;
+            } else {
+                // Try to recover from legacy ProjectCredential
+                $legacyCred = $tenant->credentials()->where('provider', $provider)->first();
+                if ($legacyCred && $legacyCred->refresh_token) {
+                    $updatePayload['refresh_token'] = $legacyCred->refresh_token;
+                }
             }
 
             if ($profile) {

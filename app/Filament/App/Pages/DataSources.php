@@ -62,10 +62,10 @@ class DataSources extends Page
     {
         $tenant = Filament::getTenant();
         if (str_contains($channel, 'facebook')) {
-            return !empty($tenant->facebook_user_token);
+            return !empty($tenant->facebook_user_id);
         }
         if (str_contains($channel, 'google')) {
-            return !empty($tenant->google_refresh_token);
+            return !empty($tenant->google_user_id);
         }
         return false;
     }
