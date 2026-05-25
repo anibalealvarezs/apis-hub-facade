@@ -215,6 +215,16 @@ class DataSources extends Page
         foreach ($localAssets as $local) {
             $identifier = $local['id'] ?? $local['url'] ?? null;
             if ($identifier) {
+                if ($this->activeChannel === 'facebook_organic') {
+                    $local['page_metrics'] = $local['page_metrics'] ?? true;
+                    $local['posts'] = $local['posts'] ?? true;
+                    $local['post_metrics'] = $local['post_metrics'] ?? true;
+                    $local['ig_accounts'] = $local['ig_accounts'] ?? true;
+                    $local['ig_account_metrics'] = $local['ig_account_metrics'] ?? true;
+                    $local['ig_account_media'] = $local['ig_account_media'] ?? true;
+                    $local['ig_account_media_metrics'] = $local['ig_account_media_metrics'] ?? true;
+                }
+                
                 if (isset($liveMap[$identifier])) {
                     // Still alive, merge new data over it but keep user settings
                     $merged = array_merge($local, $liveMap[$identifier]);
@@ -233,6 +243,17 @@ class DataSources extends Page
         foreach ($liveMap as $identifier => $live) {
             $live['lost_access'] = false;
             $live['enabled'] = false; // Default to false so user has to explicitly enable
+            
+            if ($this->activeChannel === 'facebook_organic') {
+                $live['page_metrics'] = true;
+                $live['posts'] = true;
+                $live['post_metrics'] = true;
+                $live['ig_accounts'] = true;
+                $live['ig_account_metrics'] = true;
+                $live['ig_account_media'] = true;
+                $live['ig_account_media_metrics'] = true;
+            }
+            
             $mergedAssets[$identifier] = $live;
         }
 
@@ -514,7 +535,7 @@ class DataSources extends Page
                             ->default(true)
                             ->live()
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                if (!$state) {
                                     $set('post_metrics', false);
                                 }
                             }),
@@ -523,7 +544,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('posts') ?? true, FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => ! $get('posts'))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
@@ -538,7 +559,7 @@ class DataSources extends Page
                             ->default(true)
                             ->live()
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                if (!$state) {
                                     $set('ig_account_metrics', false);
                                     $set('ig_account_media', false);
                                     $set('ig_account_media_metrics', false);
@@ -549,7 +570,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => ! $get('ig_accounts'))
                             ->dehydrated(),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
@@ -558,21 +579,18 @@ class DataSources extends Page
                             ->live()
                             ->extraAttributes(['class' => 'ml-8'])
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                if (!$state) {
                                     $set('ig_account_media_metrics', false);
                                 }
                             })
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => ! $get('ig_accounts'))
                             ->dehydrated(),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-16'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => 
-                                !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN) || 
-                                !filter_var($get('ig_account_media') ?? true, FILTER_VALIDATE_BOOLEAN)
-                            )
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => ! $get('ig_accounts') || ! $get('ig_account_media'))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
