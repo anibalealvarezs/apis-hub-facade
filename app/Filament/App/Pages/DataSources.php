@@ -322,7 +322,7 @@ class DataSources extends Page
                             'AD' => 'Level 4: Ads',
                         ])
                         ->default('AD')
-                        ->reactive()
+                        ->live()
                         ->helperText('Select the deepest level of entities you want to sync from Facebook.'),
                     
                     \Filament\Forms\Components\Select::make($this->activeChannel . '.metrics_level')
@@ -344,6 +344,17 @@ class DataSources extends Page
                         ->default('AD')
                         ->helperText('Metrics cannot be synced at a deeper depth than the entity sync depth.'),
                 ])->columns(2));
+        } elseif ($this->activeChannel === 'facebook_organic') {
+            // Insert hidden extraction granularity for Facebook Organic to ensure everything is cached globally
+            array_unshift($schema, \Filament\Forms\Components\Group::make([
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.page_metrics')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.posts')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.post_metrics')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_accounts')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_metrics')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_media')->default(true),
+                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_media_metrics')->default(true),
+            ]));
         }
 
         return $schema;
