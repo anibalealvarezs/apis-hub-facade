@@ -39,9 +39,9 @@ class AppPanelProvider extends PanelProvider
                 <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
                 </div>
-                <div class="w-full flex items-center justify-center relative" x-show="!$store.sidebar.isOpen">
+                <div class="w-full flex items-center justify-center relative" style="position: relative;" x-show="!$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" class="h-8 w-auto" />
-                    <button @click.prevent="$store.sidebar.open()" class="absolute top-1/2 -translate-y-1/2 ltr:left-full rtl:right-full ltr:ml-2 rtl:mr-2 flex items-center justify-center w-6 h-6 text-gray-400 hover:text-primary-500 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm rounded-full transition-colors z-[60]">
+                    <button @click.prevent="$store.sidebar.open()" style="position: absolute; top: 50%; transform: translateY(-50%); inset-inline-start: calc(100% + 12px);" class="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-primary-500 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm rounded-full transition-colors z-[60]">
                         <svg class="w-3 h-3 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                         </svg>
@@ -57,9 +57,9 @@ class AppPanelProvider extends PanelProvider
                 <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
                 </div>
-                <div class="w-full flex items-center justify-center relative" x-show="!$store.sidebar.isOpen">
+                <div class="w-full flex items-center justify-center relative" style="position: relative;" x-show="!$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" class="h-8 w-auto" />
-                    <button @click.prevent="$store.sidebar.open()" class="absolute top-1/2 -translate-y-1/2 ltr:left-full rtl:right-full ltr:ml-2 rtl:mr-2 flex items-center justify-center w-6 h-6 text-gray-500 hover:text-primary-500 bg-gray-900 hover:bg-gray-800 border border-gray-700 shadow-sm rounded-full transition-colors z-[60]">
+                    <button @click.prevent="$store.sidebar.open()" style="position: absolute; top: 50%; transform: translateY(-50%); inset-inline-start: calc(100% + 12px);" class="flex items-center justify-center w-6 h-6 text-gray-500 hover:text-primary-500 bg-gray-900 hover:bg-gray-800 border border-gray-700 shadow-sm rounded-full transition-colors z-[60]">
                         <svg class="w-3 h-3 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                         </svg>
