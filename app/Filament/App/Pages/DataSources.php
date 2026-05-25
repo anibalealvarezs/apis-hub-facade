@@ -271,7 +271,46 @@ class DataSources extends Page
         }
 
         $fields = $release->config_schemas[$this->activeChannel]['fields'];
-        return $this->buildComponentsFromSchema($fields, $this->activeChannel . '.');
+        $schema = $this->buildComponentsFromSchema($fields, $this->activeChannel . '.');
+        
+        if ($this->activeChannel === 'facebook_marketing') {
+            // Insert custom extraction granularity UI at the top
+            array_unshift($schema, \Filament\Forms\Components\Section::make('Extraction Granularity')
+                ->schema([
+                    \Filament\Forms\Components\Select::make($this->activeChannel . '.entity_sync_depth')
+                        ->label('ENTITY SYNC DEPTH (INFRASTRUCTURE)')
+                        ->options([
+                            'ACCOUNT' => 'Level 1: Account',
+                            'CAMPAIGN' => 'Level 2: Campaigns',
+                            'ADSET' => 'Level 3: Adsets',
+                            'AD' => 'Level 4: Ads',
+                        ])
+                        ->default('AD')
+                        ->reactive()
+                        ->helperText('Select the deepest level of entities you want to sync from Facebook.'),
+                    
+                    \Filament\Forms\Components\Select::make($this->activeChannel . '.metrics_level')
+                        ->label('METRICS LEVEL (REPORTING)')
+                        ->options(function (\Filament\Forms\Get $get) {
+                            $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
+                            $allOptions = [
+                                'ACCOUNT' => 'Level 1: Account Metrics',
+                                'CAMPAIGN' => 'Level 2: Campaign Metrics',
+                                'ADSET' => 'Level 3: Adset Metrics',
+                                'AD' => 'Level 4: Ad Metrics',
+                            ];
+                            
+                            $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
+                            $maxLevel = $levels[$entityDepth] ?? 4;
+                            
+                            return array_filter($allOptions, fn($k) => $levels[$k] <= $maxLevel, ARRAY_FILTER_USE_KEY);
+                        })
+                        ->default('AD')
+                        ->helperText('Metrics cannot be synced at a deeper depth than the entity sync depth.'),
+                ])->columns(2));
+        }
+
+        return $schema;
     }
 
     protected function buildComponentsFromSchema(array $schema, string $prefix = ''): array
@@ -505,6 +544,39 @@ class DataSources extends Page
                 $payload['max_workers'] = 1;
             } elseif ($channel === 'facebook_marketing') {
                 $payload['max_workers'] = 2;
+                
+                // Map Custom UI to APIs Hub Payload schema
+                $entLevel = strtolower($channelConfig['entity_sync_depth'] ?? 'ad');
+                $metLevel = strtolower($channelConfig['metrics_level'] ?? 'ad');
+                
+                if ($entLevel === 'account') $entLevel = 'ad_account';
+                if ($metLevel === 'account') $metLevel = 'ad_account';
+
+                $payload['feature_toggles'] = [
+                    'campaigns' => true, // API always expects this
+                    'adsets' => in_array($entLevel, ['adset', 'ad', 'creative']),
+                    'ads' => in_array($entLevel, ['ad', 'creative']),
+                    'creatives' => ($entLevel === 'creative'),
+                    
+                    'ad_account_metrics' => ($metLevel === 'ad_account'),
+                    'campaign_metrics' => ($metLevel === 'campaign'),
+                    'adset_metrics' => ($metLevel === 'adset'),
+                    'ad_metrics' => ($metLevel === 'ad'),
+                    'creative_metrics' => ($metLevel === 'creative'),
+                ];
+                
+                $payload['metrics_strategy'] = 'default';
+                $payload['metrics_config'] = [];
+                
+                $payload['entity_filters'] = [
+                    'CAMPAIGN' => '',
+                    'ADSET' => '',
+                    'AD' => '',
+                    'CREATIVE' => '',
+                ];
+
+                unset($payload['entity_sync_depth']);
+                unset($payload['metrics_level']);
             }
 
             // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
