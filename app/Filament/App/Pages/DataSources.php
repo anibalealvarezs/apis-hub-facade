@@ -566,6 +566,7 @@ class DataSources extends Page
                     ->send();
                 return;
             }
+        }
         $tenant->update(['sync_config' => $dbState]);
 
         // Refresh UI state seamlessly via Livewire so the user sees the actual final state
