@@ -64,13 +64,91 @@ class DataSources extends Page
         $this->form->fill($config);
     }
 
-    public function getChannels(): array
+    public function getChannelAssetCount(string $channelKey): int
     {
-        return [
-            ['key' => 'google_search_console', 'label' => 'Google Search Console'],
-            ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
-            ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
+        $count = 0;
+        $channelData = $this->data[$channelKey] ?? [];
+        if (!is_array($channelData)) return 0;
+
+        array_walk_recursive($channelData, function ($item, $key) use (&$count, $channelData) {
+            // Because array_walk_recursive only hits leaf nodes, it's better to iterate structurally.
+        });
+        
+        // Better structural iteration
+        $scan = function($data) use (&$scan, &$count) {
+            if (!is_array($data)) return;
+            if (array_key_exists('enabled', $data) && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('lost_access', $data))) {
+                if (!empty($data['enabled']) && empty($data['lost_access'])) {
+                    $count++;
+                }
+                return;
+            }
+            foreach ($data as $val) {
+                $scan($val);
+            }
+        };
+        
+        $scan($channelData);
+        return $count;
+    }
+
+    public function getProviders(): array
+    {
+        $providers = [
+            'google' => [
+                'label' => 'Google',
+                'channels' => [
+                    ['key' => 'google_search_console', 'label' => 'Google Search Console'],
+                ]
+            ],
+            'facebook' => [
+                'label' => 'Facebook',
+                'channels' => [
+                    ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
+                    ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
+                ]
+            ],
         ];
+
+        // Sort channels inside providers
+        foreach ($providers as $pKey => &$provider) {
+            $providerCount = 0;
+            foreach ($provider['channels'] as &$channel) {
+                $channel['count'] = $this->getChannelAssetCount($channel['key']);
+                $providerCount += $channel['count'];
+            }
+            $provider['count'] = $providerCount;
+            
+            usort($provider['channels'], function($a, $b) {
+                if ($a['count'] !== $b['count']) {
+                    return $b['count'] <=> $a['count']; // Higher count first
+                }
+                return strcmp($a['label'], $b['label']); // Then alphabetical
+            });
+        }
+        unset($provider); // break reference
+
+        // Sort providers
+        uasort($providers, function($a, $b) {
+            if ($a['count'] !== $b['count']) {
+                return $b['count'] <=> $a['count'];
+            }
+            return strcmp($a['label'], $b['label']);
+        });
+
+        return $providers;
+    }
+
+    public function getChannelLabel(string $key): string
+    {
+        foreach ($this->getProviders() as $provider) {
+            foreach ($provider['channels'] as $channel) {
+                if ($channel['key'] === $key) {
+                    return $channel['label'];
+                }
+            }
+        }
+        return 'Configuration';
     }
 
     public function isConnected($channel): bool
@@ -367,7 +445,7 @@ class DataSources extends Page
             // Channel-level toggle
             if ($key === 'enabled') {
                 $components[] = Toggle::make($fieldKey)
-                    ->label('Enable ' . collect($this->getChannels())->firstWhere('key', $this->activeChannel)['label'])
+                    ->label('Enable ' . $this->getChannelLabel($this->activeChannel))
                     ->default($definition['default'] ?? true)
                     ->columnSpanFull();
                 continue;
@@ -437,18 +515,26 @@ class DataSources extends Page
             if ($key === 'enabled') {
                 $headerComponents[] = Toggle::make($key)
                     ->label(fn (callable $get) => $get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset')
-                    ->helperText(fn (callable $get) => $get('lost_access') ? '⚠️ Lost Access: This asset is no longer accessible via the API.' : null)
+                    ->helperText(fn (callable $get) => $get('lost_access') ? '⚠️ Lost Access' : 'ID: ' . ($get('id') ?? $get('url') ?? 'N/A'))
                     ->inline(false)
-                    ->default(true);
+                    ->default(true)
+                    ->columnSpan(4);
             } elseif ($key === 'lost_access') {
-                // Hidden entirely, we use the helperText on the enabled toggle instead.
                 $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
             } elseif ($type === 'boolean') {
                 $itemComponents[] = Toggle::make($key)
                     ->label(Str::headline($key))
-                    ->inline(false)
+                    ->inline(true)
                     ->default($definition['default'] ?? false);
             }
+        }
+
+        $rowSchema = $headerComponents;
+        if (!empty($itemComponents)) {
+            $rowSchema[] = \Filament\Forms\Components\Group::make()->schema($itemComponents)
+                ->extraAttributes(['class' => 'flex flex-row flex-wrap gap-4 items-center'])
+                ->columnSpan(8)
+                ->visible(fn (callable $get) => $get('enabled'));
         }
 
         return Repeater::make($fieldKey)
@@ -482,16 +568,15 @@ class DataSources extends Page
                     })
             ])
             ->schema([
-                Grid::make(1)->schema($headerComponents),
-                Grid::make(1)->schema($itemComponents)
-                    ->visible(fn (callable $get) => $get('enabled') && !empty($itemComponents))
+                Grid::make(12)->schema($rowSchema)
             ])
-            ->grid(3)
+            ->grid(1)
             ->collapsible(false)
             ->addable(false)
             ->deletable(false)
             ->reorderable(false)
-            ->columnSpanFull();
+            ->columnSpanFull()
+            ->extraAttributes(['class' => 'compact-repeater']);
     }
 
     protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): Repeater
@@ -506,116 +591,52 @@ class DataSources extends Page
         // Force exclude_from_caching to false per requirements
         $headerComponents[] = \Filament\Forms\Components\Hidden::make('exclude_from_caching')->default(false);
 
-        // Header View: Logo, Title, ID, Link, and Main Toggle
-        $headerComponents[] = Grid::make(12)->schema([
-            \Filament\Forms\Components\Placeholder::make('asset_info')
-                ->label('')
-                ->content(fn (callable $get) => new \Illuminate\Support\HtmlString('
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                        </div>
-                        <div>
-                            <div class="font-bold text-lg leading-tight">'.($get('title') ?? $get('name') ?? 'Unknown Asset').'</div>
-                            <div class="text-xs text-gray-500 mt-1 flex items-center gap-3">
-                                <span><span class="text-gray-400">ID:</span> '.$get('id').'</span>
-                                <a href="'.$get('link').'" target="_blank" class="text-primary-500 hover:underline">'.$get('link').'</a>
-                            </div>
-                        </div>
-                    </div>
-                '))
-                ->columnSpan(11),
-            
-            Toggle::make('enabled')
-                ->label('')
-                ->inline(false)
-                ->default(true)
-                ->live()
-                ->columnSpan(1)
-                ->extraAttributes(['style' => 'margin-top: auto; margin-bottom: auto; display: flex; justify-content: flex-end;']),
-        ]);
+        // Header View: Name, ID, Link in the Toggle Label
+        $headerComponents[] = Toggle::make('enabled')
+            ->label(fn (callable $get) => $get('title') ?? $get('name') ?? 'Unknown Asset')
+            ->helperText(fn (callable $get) => 'ID: ' . $get('id') . ' | ' . $get('link'))
+            ->inline(false)
+            ->default(true)
+            ->live()
+            ->columnSpan(3);
 
-        $itemComponents = [
-            Grid::make(2)->schema([
-                // LEFT COLUMN: Facebook Extraction
-                Section::make('FACEBOOK EXTRACTION')
-                    ->schema([
-                        Toggle::make('page_metrics')
-                            ->label('Page Metrics')
-                            ->inline(false)
-                            ->default(true),
-                        Toggle::make('posts')
-                            ->label('Posts Content')
-                            ->inline(false)
-                            ->default(true)
-                            ->live()
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool) $state) {
-                                    $set('post_metrics', false);
-                                }
-                            }),
-                        Toggle::make('post_metrics')
-                            ->label('Post Insights')
-                            ->inline(false)
-                            ->default(true)
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))
-                            ->dehydrated(),
-                    ])
-                    ->columnSpan(1)
-                    ->compact(),
+        $headerComponents[] = \Filament\Forms\Components\Group::make()->schema([
+            // Facebook Extraction
+            Toggle::make('page_metrics')->label('Page Metrics')->inline(true)->default(true),
+            Toggle::make('posts')->label('Posts Content')->inline(true)->default(true)->live()
+                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                    if (!(bool) $state) {
+                        $set('post_metrics', false);
+                    }
+                }),
+            Toggle::make('post_metrics')->label('Post Insights')->inline(true)->default(true)
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))->dehydrated(),
 
-                // RIGHT COLUMN: Instagram Extraction
-                Section::make(fn (\Filament\Forms\Get $get) => $get('ig_account_name') ? mb_strtoupper($get('ig_account_name')) : 'INSTAGRAM EXTRACTION')
-                    ->schema([
-                        Toggle::make('ig_accounts')
-                            ->label('Sync Instagram')
-                            ->inline(false)
-                            ->default(true)
-                            ->live()
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool) $state) {
-                                    $set('ig_account_metrics', false);
-                                    $set('ig_account_media', false);
-                                    $set('ig_account_media_metrics', false);
-                                }
-                            }),
-                        Toggle::make('ig_account_metrics')
-                            ->label('Account Metrics')
-                            ->inline(false)
-                            ->default(true)
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts'))
-                            ->dehydrated(),
-                        Toggle::make('ig_account_media')
-                            ->label('Media Content')
-                            ->inline(false)
-                            ->default(true)
-                            ->live()
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool) $state) {
-                                    $set('ig_account_media_metrics', false);
-                                }
-                            })
-                            ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts'))
-                            ->dehydrated(),
-                        Toggle::make('ig_account_media_metrics')
-                            ->label('Media Insights')
-                            ->inline(false)
-                            ->default(true)
-                            ->extraAttributes(['class' => 'ml-16'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => 
-                                (bool) $get('ig_accounts') && 
-                                (bool) $get('ig_account_media')
-                            )
-                            ->dehydrated(),
-                    ])
-                    ->columnSpan(1)
-                    ->compact()
-                    ->visible(fn (\Filament\Forms\Get $get) => !empty($get('ig_account'))),
-            ])
-        ];
+            // Instagram Extraction
+            Toggle::make('ig_accounts')->label('Sync Instagram')->inline(true)->default(true)->live()
+                ->visible(fn (\Filament\Forms\Get $get) => !empty($get('ig_account')))
+                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                    if (!(bool) $state) {
+                        $set('ig_account_metrics', false);
+                        $set('ig_account_media', false);
+                        $set('ig_account_media_metrics', false);
+                    }
+                }),
+            Toggle::make('ig_account_metrics')->label('Account Metrics')->inline(true)->default(true)
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
+            Toggle::make('ig_account_media')->label('Media Content')->inline(true)->default(true)->live()
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))
+                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                    if (!(bool) $state) {
+                        $set('ig_account_media_metrics', false);
+                    }
+                })->dehydrated(),
+            Toggle::make('ig_account_media_metrics')->label('Media Insights')->inline(true)->default(true)
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && (bool) $get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
+        ])
+        ->extraAttributes(['class' => 'flex flex-row flex-wrap gap-x-4 gap-y-2 items-center'])
+        ->columnSpan(9)
+        ->visible(fn (callable $get) => $get('enabled'));
 
         return Repeater::make($fieldKey)
             ->label(Str::headline($label))
@@ -648,16 +669,15 @@ class DataSources extends Page
                     })
             ])
             ->schema([
-                Grid::make(1)->schema($headerComponents),
-                Grid::make(1)->schema($itemComponents)
-                    ->visible(fn (callable $get) => $get('enabled'))
+                Grid::make(12)->schema($headerComponents)
             ])
-            ->grid(1) // Full width for each asset block
+            ->grid(1)
             ->collapsible(false)
             ->addable(false)
             ->deletable(false)
             ->reorderable(false)
-            ->columnSpanFull();
+            ->columnSpanFull()
+            ->extraAttributes(['class' => 'compact-repeater']);
     }
 
 

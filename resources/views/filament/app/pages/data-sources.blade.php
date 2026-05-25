@@ -4,41 +4,87 @@
             activeTab: @entangle('activeChannel'),
             maxAssets: {{ $this->getMaxAssets() }},
             get selectedCount() {
+                return this.getProviderCount(null); // all providers
+            },
+            getChannelCount(channelKey) {
                 let count = 0;
                 let data = $wire.get('data') || {};
+                let channelData = data[channelKey] || {};
                 
                 function scan(obj) {
                     if (typeof obj === 'object' && obj !== null) {
-                        // Identify an asset object by its standard properties
                         if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
-                            if (obj.enabled && !obj.lost_access) {
-                                count++;
-                            }
-                            return; // No need to scan inside the asset
+                            if (obj.enabled && !obj.lost_access) count++;
+                            return;
                         }
-                        
-                        // Otherwise traverse deeper
-                        for (let key in obj) {
-                            scan(obj[key]);
-                        }
+                        for (let key in obj) scan(obj[key]);
                     }
                 }
                 
-                scan(data);
+                scan(channelData);
+                return count;
+            },
+            getProviderCount(providerKey) {
+                let count = 0;
+                let providers = {{ json_encode($this->getProviders()) }};
+                
+                if (providerKey && providers[providerKey]) {
+                    providers[providerKey].channels.forEach(ch => {
+                        count += this.getChannelCount(ch.key);
+                    });
+                } else if (!providerKey) {
+                    for (let pk in providers) {
+                        providers[pk].channels.forEach(ch => {
+                            count += this.getChannelCount(ch.key);
+                        });
+                    }
+                }
                 return count;
             }
          }">
-        <!-- Sidebar Tabs -->
-        <div class="w-full flex-shrink-0 flex flex-col gap-2 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-2" style="max-width: 16rem;">
-            @foreach($this->getChannels() as $channel)
-                <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
-                        class="px-4 py-3 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
-                        :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
-                    <span>{{ $channel['label'] }}</span>
-                    @if(isset($this->data[$channel['key'].'_enabled']) && $this->data[$channel['key'].'_enabled'])
-                        <span class="flex h-2 w-2 rounded-full bg-success-500"></span>
-                    @endif
-                </button>
+        <!-- Sidebar Navigation -->
+        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4" style="max-width: 16rem;">
+            @foreach($this->getProviders() as $pKey => $provider)
+                <div class="flex flex-col gap-2">
+                    <!-- Provider Header -->
+                    <div class="flex items-center justify-between text-gray-900 dark:text-white font-bold pb-1 border-b border-gray-100 dark:border-white/5">
+                        <div class="flex items-center gap-2">
+                            @if($pKey === 'google')
+                                <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-500" />
+                            @elseif($pKey === 'facebook')
+                                <x-heroicon-o-users class="w-5 h-5 text-gray-500" />
+                            @else
+                                <x-heroicon-o-server-stack class="w-5 h-5 text-gray-500" />
+                            @endif
+                            <span class="tracking-wide">{{ $provider['label'] }}</span>
+                        </div>
+                        <div class="text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
+                             x-text="getProviderCount('{{ $pKey }}')">
+                        </div>
+                    </div>
+                    
+                    <!-- Nested Channels -->
+                    <div class="flex flex-col gap-1 ml-2 border-l-2 border-gray-100 dark:border-white/5 pl-2 mt-1">
+                        @foreach($provider['channels'] as $channel)
+                            <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
+                                    class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                                    :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
+                                <span class="truncate pr-2">{{ $channel['label'] }}</span>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md"
+                                          :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : ''"
+                                          x-text="getChannelCount('{{ $channel['key'] }}')">
+                                    </span>
+                                    @if(isset($this->data[$channel['key'].'_enabled']) && $this->data[$channel['key'].'_enabled'])
+                                        <span class="flex h-2 w-2 rounded-full bg-success-500"></span>
+                                    @else
+                                        <span class="flex h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
+                                    @endif
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
             @endforeach
         </div>
 
