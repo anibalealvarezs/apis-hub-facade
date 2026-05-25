@@ -523,7 +523,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('posts'), FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('posts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
@@ -549,7 +549,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
@@ -562,7 +562,7 @@ class DataSources extends Page
                                     $set('ig_account_media_metrics', false);
                                 }
                             })
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN))
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
@@ -570,8 +570,8 @@ class DataSources extends Page
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-16'])
                             ->disabled(fn (\Filament\Forms\Get $get): bool => 
-                                !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN) || 
-                                !filter_var($get('ig_account_media'), FILTER_VALIDATE_BOOLEAN)
+                                !filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN) || 
+                                !filter_var($get('ig_account_media') ?? true, FILTER_VALIDATE_BOOLEAN)
                             )
                             ->dehydrated(),
                     ])
