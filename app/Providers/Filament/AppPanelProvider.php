@@ -34,14 +34,22 @@ class AppPanelProvider extends PanelProvider
             ->passwordReset()
             ->emailVerification()
             ->profile()
-            ->sidebarFullyCollapsibleOnDesktop()
+            ->sidebarCollapsibleOnDesktop()
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
-                <img src="' . asset('images/branding/apishub-trans-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
-                <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" x-show="!$store.sidebar.isOpen" class="h-8 w-auto mx-auto" />
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
+                    <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" x-show="!$store.sidebar.isOpen" @click="$store.sidebar.open()" class="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+                </div>
+                <style>
+                    aside.fi-sidebar .fi-sidebar-header > div:first-child { display: flex !important; width: 100%; }
+                    aside.fi-sidebar .fi-sidebar-header > button.mx-auto { display: none !important; }
+                </style>
             '))
             ->darkModeBrandLogo(fn () => new \Illuminate\Support\HtmlString('
-                <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
-                <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" x-show="!$store.sidebar.isOpen" class="h-8 w-auto mx-auto" />
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
+                    <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" x-show="!$store.sidebar.isOpen" @click="$store.sidebar.open()" class="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+                </div>
             '))
             ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
