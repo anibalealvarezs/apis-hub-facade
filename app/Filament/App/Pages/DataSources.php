@@ -391,14 +391,16 @@ class DataSources extends Page
         }
 
         $fields = $release->config_schemas[$this->activeChannel]['fields'];
-        $schema = $this->buildComponentsFromSchema($fields, $this->activeChannel . '.');
+        $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel . '.');
+        
+        $secondarySections = [];
         
         if ($this->activeChannel === 'facebook_marketing') {
-            // Insert custom extraction granularity UI at the top
-            array_unshift($schema, \Filament\Forms\Components\Section::make('Extraction Granularity')
+            // Insert custom extraction granularity UI in the secondary column
+            $secondarySections[] = \Filament\Forms\Components\Section::make('Extraction Granularity')
                 ->schema([
                     \Filament\Forms\Components\Select::make($this->activeChannel . '.entity_sync_depth')
-                        ->label('ENTITY SYNC DEPTH (INFRASTRUCTURE)')
+                        ->label('Entity Depth')
                         ->options([
                             'ACCOUNT' => 'Level 1: Account',
                             'CAMPAIGN' => 'Level 2: Campaigns',
@@ -407,17 +409,17 @@ class DataSources extends Page
                         ])
                         ->default('AD')
                         ->live()
-                        ->helperText('Select the deepest level of entities you want to sync from Facebook.'),
+                        ->helperText('Deepest level of entities to sync.'),
                     
                     \Filament\Forms\Components\Select::make($this->activeChannel . '.metrics_level')
-                        ->label('METRICS LEVEL (REPORTING)')
+                        ->label('Metrics Level')
                         ->options(function (\Filament\Forms\Get $get) {
                             $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
                             $allOptions = [
-                                'ACCOUNT' => 'Level 1: Account Metrics',
-                                'CAMPAIGN' => 'Level 2: Campaign Metrics',
-                                'ADSET' => 'Level 3: Adset Metrics',
-                                'AD' => 'Level 4: Ad Metrics',
+                                'ACCOUNT' => 'L1 Metrics',
+                                'CAMPAIGN' => 'L2 Metrics',
+                                'ADSET' => 'L3 Metrics',
+                                'AD' => 'L4 Metrics',
                             ];
                             
                             $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
@@ -426,17 +428,42 @@ class DataSources extends Page
                             return array_filter($allOptions, fn($k) => $levels[$k] <= $maxLevel, ARRAY_FILTER_USE_KEY);
                         })
                         ->default('AD')
-                        ->helperText('Metrics cannot be synced at a deeper depth than the entity sync depth.'),
-                ])->columns(2));
+                        ->helperText('Cannot exceed entity sync depth.'),
+                ])->columns(1);
         }
 
-        return $schema;
+        if (!empty($parts['advanced'])) {
+            $secondarySections[] = Section::make('Advanced Configuration')
+                ->schema(array_values($parts['advanced']))
+                ->columns(1);
+        }
+
+        $mainContent = array_merge($parts['main'], $parts['repeaters']);
+
+        if (empty($secondarySections)) {
+            return $mainContent; // Take full width if no secondary sections
+        }
+
+        return [
+            Grid::make(4)
+                ->schema([
+                    \Filament\Forms\Components\Group::make()
+                        ->schema($mainContent)
+                        ->columnSpan(3),
+                    
+                    \Filament\Forms\Components\Group::make()
+                        ->schema($secondarySections)
+                        ->columnSpan(1)
+                        ->extraAttributes(['class' => 'sticky top-4 self-start'])
+                ])
+                ->crossAxisAlignment('start') // Align to top so sticky works
+        ];
     }
 
     protected function buildComponentsFromSchema(array $schema, string $prefix = ''): array
     {
-        $components = [];
-        $advancedComponents = [];
+        $main = [];
+        $advanced = [];
         $repeaters = [];
 
         foreach ($schema as $key => $definition) {
@@ -450,7 +477,7 @@ class DataSources extends Page
 
             // Channel-level toggle
             if ($key === 'enabled') {
-                $components[] = Toggle::make($fieldKey)
+                $main[] = Toggle::make($fieldKey)
                     ->label('Enable ' . $this->getChannelLabel($this->activeChannel))
                     ->default($definition['default'] ?? true)
                     ->columnSpanFull();
@@ -458,20 +485,20 @@ class DataSources extends Page
             }
 
             if ($type === 'boolean') {
-                $advancedComponents[] = Toggle::make($fieldKey)
+                $advanced[] = Toggle::make($fieldKey)
                     ->label(Str::headline($key))
                     ->default($definition['default'] ?? false);
             } elseif ($type === 'string' && isset($definition['options'])) {
-                $advancedComponents[] = Select::make($fieldKey)
+                $advanced[] = Select::make($fieldKey)
                     ->label(Str::headline($key))
                     ->options($definition['options'])
                     ->default($definition['default'] ?? null);
             } elseif ($type === 'string') {
-                $advancedComponents[] = TextInput::make($fieldKey)
+                $advanced[] = TextInput::make($fieldKey)
                     ->label(Str::headline($key))
                     ->default($definition['default'] ?? null);
             } elseif ($type === 'integer') {
-                $advancedComponents[] = TextInput::make($fieldKey)
+                $advanced[] = TextInput::make($fieldKey)
                     ->numeric()
                     ->label(Str::headline($key))
                     ->default($definition['default'] ?? null);
@@ -480,24 +507,18 @@ class DataSources extends Page
                 $repeaters[] = $this->buildAssetRepeater($fieldKey, $key, $definition['item_schema']);
             } elseif ($type === 'object' && isset($definition['schema'])) {
                 // Nested object (like Google Search Console's assets->sites)
-                $repeaters = array_merge($repeaters, $this->buildComponentsFromSchema($definition['schema'], $fieldKey . '.'));
+                $sub = $this->buildComponentsFromSchema($definition['schema'], $fieldKey . '.');
+                $main = array_merge($main, $sub['main']);
+                $advanced = array_merge($advanced, $sub['advanced']);
+                $repeaters = array_merge($repeaters, $sub['repeaters']);
             }
         }
 
-        $result = $components;
-
-        if (!empty($repeaters)) {
-            $result = array_merge($result, $repeaters);
-        }
-
-        if (!empty($advancedComponents)) {
-            $result[] = Section::make('Advanced Configuration')
-                ->collapsed()
-                ->schema(array_values($advancedComponents))
-                ->columns(2);
-        }
-
-        return $result;
+        return [
+            'main' => $main,
+            'advanced' => $advanced,
+            'repeaters' => $repeaters,
+        ];
     }
 
     protected function buildAssetRepeater(string $fieldKey, string $label, array $itemSchema): Repeater
