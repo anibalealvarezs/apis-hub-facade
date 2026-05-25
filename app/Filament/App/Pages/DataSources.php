@@ -27,7 +27,7 @@ class DataSources extends Page
     protected static string $view = 'filament.app.pages.data-sources';
     protected static ?string $slug = 'data-sources';
 
-    public $activeChannel = 'google_search_console';
+    public ?string $activeChannel = null;
     public ?array $data = [];
 
     public function getMaxContentWidth(): MaxWidth | string | null
@@ -62,6 +62,13 @@ class DataSources extends Page
         }
         
         $this->form->fill($config);
+
+        // Dynamically set default active channel to the first one available
+        $providers = $this->getProviders();
+        $firstProvider = reset($providers);
+        if ($firstProvider && !empty($firstProvider['channels'])) {
+            $this->activeChannel = $firstProvider['channels'][0]['key'];
+        }
     }
 
     public function getChannelAssetCount(string $channelKey): int
@@ -591,14 +598,14 @@ class DataSources extends Page
         // Force exclude_from_caching to false per requirements
         $headerComponents[] = \Filament\Forms\Components\Hidden::make('exclude_from_caching')->default(false);
 
-        // Header View: Name, ID, Link in the Toggle Label
+        // Header View: Name, ID as Link
         $headerComponents[] = Toggle::make('enabled')
             ->label(fn (callable $get) => $get('title') ?? $get('name') ?? 'Unknown Asset')
-            ->helperText(fn (callable $get) => 'ID: ' . $get('id') . ' | ' . $get('link'))
+            ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString('ID: <a href="' . $get('link') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . $get('id') . '</a>'))
             ->inline(false)
             ->default(true)
             ->live()
-            ->columnSpan(3);
+            ->columnSpan(4);
 
         $headerComponents[] = \Filament\Forms\Components\Grid::make(2)->schema([
             // Facebook Extraction Column
@@ -611,6 +618,7 @@ class DataSources extends Page
                         }
                     }),
                 Toggle::make('post_metrics')->label('Post Insights')->inline(true)->default(true)
+                    ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))->dehydrated(),
             ])->extraAttributes(['class' => 'flex flex-col gap-2']),
 
@@ -626,8 +634,10 @@ class DataSources extends Page
                         }
                     }),
                 Toggle::make('ig_account_metrics')->label('Account Metrics')->inline(true)->default(true)
+                    ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
                 Toggle::make('ig_account_media')->label('Media Content')->inline(true)->default(true)->live()
+                    ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))
                     ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
                         if (!(bool) $state) {
@@ -635,10 +645,11 @@ class DataSources extends Page
                         }
                     })->dehydrated(),
                 Toggle::make('ig_account_media_metrics')->label('Media Insights')->inline(true)->default(true)
+                    ->extraAttributes(['class' => 'ml-12'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && (bool) $get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
             ])->extraAttributes(['class' => 'flex flex-col gap-2']),
         ])
-        ->columnSpan(9)
+        ->columnSpan(8)
         ->visible(fn (callable $get) => $get('enabled'));
 
         return Repeater::make($fieldKey)
