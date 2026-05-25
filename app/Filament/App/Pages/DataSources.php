@@ -61,14 +61,14 @@ class DataSources extends Page
             }
         }
         
-        $this->form->fill($config);
-
-        // Dynamically set default active channel to the first one available
+        // Dynamically set default active channel to the first one available BEFORE filling the form
         $providers = $this->getProviders();
         $firstProvider = reset($providers);
         if ($firstProvider && !empty($firstProvider['channels'])) {
             $this->activeChannel = $firstProvider['channels'][0]['key'];
         }
+
+        $this->form->fill($config);
     }
 
     public function getChannelAssetCount(string $channelKey): int
