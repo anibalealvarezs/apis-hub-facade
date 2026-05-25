@@ -95,6 +95,9 @@ class DeployerService
         $dbUser = $project->db_user ?: "postgres";
         $dbPass = $project->db_password ?: "secret-pass";
 
+        $tokenAuthorityUrl = config('app.url') . '/api/v1/tokens/refresh';
+        $tokenAuthorityEnabled = 'true';
+
         // Generate deterministic, unique host ports based on project ID to prevent Docker conflicts
         $basePort = 11000 + ($project->id * 10);
         $externalPort = $basePort;
@@ -143,6 +146,11 @@ FACEBOOK_TOKEN_PATH=./storage/tokens/facebook_tokens.json
 GOOGLE_CLIENT_ID={$googleClientId}
 GOOGLE_CLIENT_SECRET={$googleClientSecret}
 GOOGLE_TOKEN_PATH=./storage/tokens/google_tokens.json
+
+# Token Authority (Facade Integration)
+TOKEN_AUTHORITY_ENABLED={$tokenAuthorityEnabled}
+TOKEN_AUTHORITY_URL={$tokenAuthorityUrl}
+TOKEN_AUTHORITY_BEARER={$project->remote_admin_api_key}
 
 # Aggregation Telemetry
 AGGREGATION_TELEMETRY_PATH=storage/logs/aggregation-telemetry.jsonl

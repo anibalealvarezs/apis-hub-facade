@@ -432,6 +432,7 @@ class DataSources extends Page
         ];
         
         $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
+        $rejectedAssets = [];
 
         foreach ($uiState as $channel => $channelConfig) {
             if (!is_array($channelConfig)) {
@@ -526,10 +527,20 @@ class DataSources extends Page
                     }
                     
                     // Update local db state with remote status
-                    foreach ($assetsListDb as &$dbAsset) {
+                    foreach ($assetsListDb as $index => &$dbAsset) {
                         $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
                         if ($id && isset($remoteMap[$id])) {
-                            $dbAsset['enabled'] = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                            $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                            $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                            
+                            $dbAsset['enabled'] = $remoteEnabled;
+                            
+                            // If the user turned it on, but the remote engine turned it off, track it
+                            if ($intendedEnabled && !$remoteEnabled) {
+                                $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
+                                $rejectedAssets[] = $assetName;
+                            }
+                            
                             if (isset($remoteMap[$id]['lost_access'])) {
                                 $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
                             }
@@ -555,13 +566,28 @@ class DataSources extends Page
                     ->send();
                 return;
             }
-        }
-        
         $tenant->update(['sync_config' => $dbState]);
 
-        \Filament\Notifications\Notification::make()
-            ->title('Configuration Saved')
-            ->success()
-            ->send();
+        // Refresh UI state seamlessly via Livewire so the user sees the actual final state
+        $this->form->fill($dbState);
+
+        if (count($rejectedAssets) > 0) {
+            $rejectedList = implode(', ', array_slice($rejectedAssets, 0, 5));
+            if (count($rejectedAssets) > 5) {
+                $rejectedList .= ' and ' . (count($rejectedAssets) - 5) . ' more';
+            }
+            
+            \Filament\Notifications\Notification::make()
+                ->title('Configuration Saved Partially')
+                ->body("Some assets were automatically disabled by the remote server due to insufficient permissions or invalid state: <strong>{$rejectedList}</strong>.")
+                ->warning()
+                ->persistent()
+                ->send();
+        } else {
+            \Filament\Notifications\Notification::make()
+                ->title('Configuration Saved')
+                ->success()
+                ->send();
+        }
     }
 }

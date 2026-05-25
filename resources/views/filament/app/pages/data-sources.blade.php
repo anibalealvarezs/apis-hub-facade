@@ -7,18 +7,24 @@
                 let count = 0;
                 let data = $wire.get('data') || {};
                 
-                // Deep scan the data object for assets arrays
-                for(let channel in data) {
-                   if (typeof data[channel] === 'object' && data[channel] !== null) {
-                       for(let key in data[channel]) {
-                           if (Array.isArray(data[channel][key])) {
-                               data[channel][key].forEach(item => {
-                                   if (item.enabled && !item.lost_access) count++;
-                               });
-                           }
-                       }
-                   }
+                function scan(obj) {
+                    if (typeof obj === 'object' && obj !== null) {
+                        // Identify an asset object by its standard properties
+                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
+                            if (obj.enabled && !obj.lost_access) {
+                                count++;
+                            }
+                            return; // No need to scan inside the asset
+                        }
+                        
+                        // Otherwise traverse deeper
+                        for (let key in obj) {
+                            scan(obj[key]);
+                        }
+                    }
                 }
+                
+                scan(data);
                 return count;
             }
          }">
