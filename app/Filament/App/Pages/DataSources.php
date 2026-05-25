@@ -535,7 +535,7 @@ class DataSources extends Page
                             ->default(true)
                             ->live()
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (empty($state)) {
+                                if (!filter_var($state ?? true, FILTER_VALIDATE_BOOLEAN)) {
                                     $set('post_metrics', false);
                                 }
                             }),
@@ -544,7 +544,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('posts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => filter_var($get('posts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
@@ -559,7 +559,7 @@ class DataSources extends Page
                             ->default(true)
                             ->live()
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (empty($state)) {
+                                if (!filter_var($state ?? true, FILTER_VALIDATE_BOOLEAN)) {
                                     $set('ig_account_metrics', false);
                                     $set('ig_account_media', false);
                                     $set('ig_account_media_metrics', false);
@@ -570,7 +570,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
@@ -579,18 +579,21 @@ class DataSources extends Page
                             ->live()
                             ->extraAttributes(['class' => 'ml-8'])
                             ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (empty($state)) {
+                                if (!filter_var($state ?? true, FILTER_VALIDATE_BOOLEAN)) {
                                     $set('ig_account_media_metrics', false);
                                 }
                             })
-                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN))
                             ->dehydrated(),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-16'])
-                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')) && !empty($get('ig_account_media')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => 
+                                filter_var($get('ig_accounts') ?? true, FILTER_VALIDATE_BOOLEAN) && 
+                                filter_var($get('ig_account_media') ?? true, FILTER_VALIDATE_BOOLEAN)
+                            )
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
