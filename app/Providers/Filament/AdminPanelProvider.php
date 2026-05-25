@@ -35,10 +35,10 @@ class AdminPanelProvider extends PanelProvider
                 <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
                 </div>
-                <div class="w-full flex flex-col items-center justify-center gap-1" x-show="!$store.sidebar.isOpen">
-                    <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" class="h-6 w-auto" />
-                    <button @click.prevent="$store.sidebar.open()" class="text-gray-400 hover:text-primary-500 hover:bg-gray-100 rounded-md p-1 transition-colors">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                <div class="w-full flex items-center justify-center relative" x-show="!$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" class="h-8 w-auto" />
+                    <button @click.prevent="$store.sidebar.open()" class="absolute -right-5 p-1 text-gray-400 hover:text-primary-500 bg-white hover:bg-gray-50 border border-gray-200 shadow-sm rounded-full transition-colors z-50">
+                        <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                         </svg>
                     </button>
@@ -52,10 +52,10 @@ class AdminPanelProvider extends PanelProvider
                 <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
                     <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
                 </div>
-                <div class="w-full flex flex-col items-center justify-center gap-1" x-show="!$store.sidebar.isOpen">
-                    <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" class="h-6 w-auto" />
-                    <button @click.prevent="$store.sidebar.open()" class="text-gray-500 hover:text-primary-500 hover:bg-gray-800 rounded-md p-1 transition-colors">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                <div class="w-full flex items-center justify-center relative" x-show="!$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" class="h-8 w-auto" />
+                    <button @click.prevent="$store.sidebar.open()" class="absolute -right-5 p-1 text-gray-500 hover:text-primary-500 bg-gray-900 hover:bg-gray-800 border border-gray-700 shadow-sm rounded-full transition-colors z-50">
+                        <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                         </svg>
                     </button>
