@@ -61,6 +61,7 @@ Route::post('social/{provider}/delete-data', [App\Http\Controllers\OAuthControll
 Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check']);
 
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
+Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 

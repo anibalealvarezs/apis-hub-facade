@@ -183,22 +183,37 @@ class Project extends Model
     }
 
     /**
+     * Relationship: The Google Channel Profile associated with this project.
+     */
+    public function googleProfile(): BelongsTo
+    {
+        return $this->belongsTo(ChannelProfile::class, 'google_profile_id');
+    }
+
+    /**
+     * Relationship: The Facebook Channel Profile associated with this project.
+     */
+    public function facebookProfile(): BelongsTo
+    {
+        return $this->belongsTo(ChannelProfile::class, 'facebook_profile_id');
+    }
+
+    /**
      * Transparent proxy for provider credentials to ensure backward compatibility.
-     * Intercepts legacy column calls and redirects them to the project_credentials table.
      */
     public function getAttribute($key)
     {
         $proxies = [
-            'facebook_user_token' => ['facebook', 'token'],
-            'facebook_user_id' => ['facebook', 'external_user_id'],
-            'google_refresh_token' => ['google', 'refresh_token'],
-            'google_user_id' => ['google', 'external_user_id'],
+            'facebook_user_token' => ['facebookProfile', 'access_token'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token'],
+            'google_user_id' => ['googleProfile', 'provider_account_id'],
         ];
 
         if (array_key_exists($key, $proxies)) {
-            [$provider, $attribute] = $proxies[$key];
+            [$relation, $attribute] = $proxies[$key];
 
-            return $this->credentials()->where('provider', $provider)->first()?->{$attribute};
+            return $this->{$relation}?->{$attribute};
         }
 
         return parent::getAttribute($key);
@@ -206,24 +221,36 @@ class Project extends Model
 
     /**
      * Transparent proxy for setting provider credentials.
+     * With the new ChannelProfile architecture, credentials should ideally be managed via the Profile entity.
+     * This maintains basic backwards compatibility.
      */
     public function setAttribute($key, $value)
     {
         $proxies = [
-            'facebook_user_token' => ['facebook', 'token'],
-            'facebook_user_id' => ['facebook', 'external_user_id'],
-            'google_refresh_token' => ['google', 'refresh_token'],
-            'google_user_id' => ['google', 'external_user_id'],
+            'facebook_user_token' => ['facebookProfile', 'access_token', 'facebook'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id', 'facebook'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token', 'google'],
+            'google_user_id' => ['googleProfile', 'provider_account_id', 'google'],
         ];
 
         if (array_key_exists($key, $proxies)) {
-            [$provider, $attribute] = $proxies[$key];
-            // We postpone actual database update to when the model is saved.
-            // For now, we'll ensure the relation exists.
-            $this->credentials()->updateOrCreate(
-                ['provider' => $provider],
-                [$attribute => $value]
-            );
+            [$relation, $attribute, $provider] = $proxies[$key];
+            
+            // If the profile already exists, just update the attribute
+            if ($this->{$relation}) {
+                $this->{$relation}->update([$attribute => $value]);
+            } else {
+                // For backwards compatibility, create a new ChannelProfile owned by the project's trueOwner
+                // This is a fallback. The UI should assign existing profiles.
+                $profile = ChannelProfile::create([
+                    'user_id' => $this->user_id,
+                    'provider' => $provider,
+                    $attribute => $value,
+                ]);
+                $foreignKey = "{$provider}_profile_id";
+                $this->attributes[$foreignKey] = $profile->id;
+                $this->setRelation($relation, $profile);
+            }
 
             return $this;
         }

@@ -109,6 +109,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     }
 
     /**
+     * Relationship: A user can have multiple channel profiles connected (e.g. Google, Meta).
+     */
+    public function channelProfiles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ChannelProfile::class);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

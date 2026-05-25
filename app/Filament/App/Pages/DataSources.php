@@ -76,6 +76,24 @@ class DataSources extends Page
         return 'Never';
     }
 
+    public function isProfileShared($channel): bool
+    {
+        $tenant = Filament::getTenant();
+        $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
+        $profileIdColumn = "{$provider}_profile_id";
+
+        if (!$tenant->{$profileIdColumn}) {
+            return false;
+        }
+
+        // Check if there are other projects using this exact same profile ID
+        $sharedCount = \App\Models\Project::where($profileIdColumn, $tenant->{$profileIdColumn})
+            ->where('id', '!=', $tenant->id)
+            ->count();
+
+        return $sharedCount > 0;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

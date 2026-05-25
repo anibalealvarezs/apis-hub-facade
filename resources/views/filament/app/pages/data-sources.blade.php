@@ -61,6 +61,22 @@
                 </div>
             </div>
 
+            @if($this->isConnected($activeChannel) && $this->isProfileShared($activeChannel))
+                <div class="mb-6 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
+                    <div class="flex items-start gap-3">
+                        <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-warning-600 dark:text-warning-500 shrink-0 mt-0.5" />
+                        <div>
+                            <h3 class="text-sm font-bold text-warning-800 dark:text-warning-400">Shared API Rate Limits</h3>
+                            <p class="text-sm text-warning-700 dark:text-warning-500 mt-1">
+                                This social profile is connected to multiple projects. To protect your connection stability, 
+                                the API rate limits for this profile will be shared across all connected projects. Avoid 
+                                syncing excessive assets simultaneously.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if(!$this->isConnected($activeChannel))
                 <div class="flex flex-col items-center justify-center py-12 text-center">
                     <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">

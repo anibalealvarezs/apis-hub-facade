@@ -212,6 +212,9 @@ class SyncSettings extends Page
             'MONITOR_TOKEN' => $tenant->monitoring_token,
             'MONITOR_FACADE_URL' => config('app.url') . '/api/heartbeat',
             'APP_API_KEY' => $tenant->public_api_key,
+            'TOKEN_AUTHORITY_ENABLED' => 'true',
+            'TOKEN_AUTHORITY_URL' => config('app.url') . '/api/token-authority/refresh',
+            'TOKEN_AUTHORITY_BEARER' => $tenant->public_api_key,
         ];
 
         $response = $deployer->updateCredentials($tenant, $pushData);
