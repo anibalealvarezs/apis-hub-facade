@@ -619,7 +619,7 @@ class DataSources extends Page
                         $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
                         
                         return [
-                            'x-show' => "assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())",
+                            'x-effect' => "\$el.closest('li').style.display = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())) ? '' : 'none'",
                         ];
                     })
                 ])
@@ -755,7 +755,7 @@ class DataSources extends Page
                         $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
                         
                         return [
-                            'x-show' => "assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())",
+                            'x-effect' => "\$el.closest('li').style.display = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())) ? '' : 'none'",
                         ];
                     })
                 ])
