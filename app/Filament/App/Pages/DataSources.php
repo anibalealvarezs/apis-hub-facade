@@ -520,7 +520,7 @@ class DataSources extends Page
         ];
     }
 
-    protected function buildAssetRepeater(string $fieldKey, string $label, array $itemSchema): Repeater
+    protected function buildAssetRepeater(string $fieldKey, string $label, array $itemSchema): \Filament\Forms\Components\Component
     {
         if ($this->activeChannel === 'facebook_organic') {
             return $this->buildFacebookOrganicRepeater($fieldKey, $label);
@@ -633,7 +633,7 @@ class DataSources extends Page
         ])->extraAttributes(['x-data' => "{ assetFilter: '' }", 'class' => 'w-full']);
     }
 
-    protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): Repeater
+    protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
     {
         $headerComponents = [];
         
