@@ -509,12 +509,12 @@ class DataSources extends Page
                             ->inline(false)->default(false),
                         Toggle::make('posts')
                             ->label('Posts Content')
-                            ->inline(false)->default(false)->reactive(),
+                            ->inline(false)->default(false)->live(),
                         Toggle::make('post_metrics')
                             ->label('Post Insights')
                             ->inline(false)->default(false)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !$get('posts')),
+                            ->disabled(fn (callable $get) => !((bool) $get('posts'))),
                     ])
                     ->columnSpan(1)
                     ->compact(),
@@ -524,26 +524,25 @@ class DataSources extends Page
                     ->schema([
                         Toggle::make('ig_accounts')
                             ->label('Sync Instagram')
-                            ->inline(false)->default(false)->reactive(),
+                            ->inline(false)->default(false)->live(),
                         Toggle::make('ig_account_metrics')
                             ->label('Account Metrics')
                             ->inline(false)->default(false)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !$get('ig_accounts')),
+                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts'))),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
-                            ->inline(false)->default(false)->reactive()
+                            ->inline(false)->default(false)->live()
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !$get('ig_accounts')),
+                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts'))),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
                             ->inline(false)->default(false)
                             ->extraAttributes(['class' => 'ml-16'])
-                            ->disabled(fn (callable $get) => !$get('ig_accounts') || !$get('ig_account_media')),
+                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts')) || !((bool) $get('ig_account_media'))),
                     ])
                     ->columnSpan(1)
-                    ->compact()
-                    ->visible(fn (callable $get) => !empty($get('ig_account'))),
+                    ->compact(),
             ])
         ];
 
