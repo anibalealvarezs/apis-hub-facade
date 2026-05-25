@@ -344,17 +344,6 @@ class DataSources extends Page
                         ->default('AD')
                         ->helperText('Metrics cannot be synced at a deeper depth than the entity sync depth.'),
                 ])->columns(2));
-        } elseif ($this->activeChannel === 'facebook_organic') {
-            // Insert hidden extraction granularity for Facebook Organic to ensure everything is cached globally
-            array_unshift($schema, \Filament\Forms\Components\Group::make([
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.page_metrics')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.posts')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.post_metrics')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_accounts')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_metrics')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_media')->default(true),
-                \Filament\Forms\Components\Hidden::make($this->activeChannel . '.PAGE.ig_account_media_metrics')->default(true),
-            ]));
         }
 
         return $schema;
@@ -760,6 +749,17 @@ class DataSources extends Page
                 $payload['max_workers'] = 4;
             } elseif ($channel === 'facebook_organic') {
                 $payload['max_workers'] = 1;
+                
+                // Force global extraction granularity instructions for the worker cache
+                $payload['PAGE'] = [
+                    'page_metrics' => true,
+                    'posts' => true,
+                    'post_metrics' => true,
+                    'ig_accounts' => true,
+                    'ig_account_metrics' => true,
+                    'ig_account_media' => true,
+                    'ig_account_media_metrics' => true,
+                ];
             } elseif ($channel === 'facebook_marketing') {
                 $payload['max_workers'] = 2;
                 
