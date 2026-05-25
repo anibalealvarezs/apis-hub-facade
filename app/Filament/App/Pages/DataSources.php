@@ -751,7 +751,7 @@ class DataSources extends Page
                 $payload['max_workers'] = 1;
                 
                 // Force global extraction granularity instructions for the worker cache
-                $payload['PAGE'] = [
+                $payload['feature_toggles'] = [
                     'page_metrics' => true,
                     'posts' => true,
                     'post_metrics' => true,
