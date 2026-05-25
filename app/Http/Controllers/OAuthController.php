@@ -131,37 +131,46 @@ class OAuthController extends Controller
                 }
             }
 
-            // Sync with Database (Merge scopes if already exists)
-            $credential = $tenant->credentials()->where('provider', $provider)->first();
-            $existingScopes = $credential?->scopes ?? [];
-            $newScopes = array_values(array_unique(array_merge($existingScopes, $requestedScopes)));
+            // Sync with ChannelProfile Architecture
+            $profile = \App\Models\ChannelProfile::where('user_id', $tenant->user_id)
+                ->where('provider', $provider)
+                ->where('provider_account_id', $socialiteUser->id)
+                ->first();
 
             $updatePayload = [
-                'token' => $token,
-                'external_user_id' => $socialiteUser->id,
-                'scopes' => $newScopes,
+                'name' => $socialiteUser->name,
+                'email' => $socialiteUser->email,
+                'access_token' => $token,
                 'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
-                'meta' => [
-                    'name' => $socialiteUser->name,
-                    'email' => $socialiteUser->email,
-                    'avatar' => $socialiteUser->avatar,
-                ],
             ];
 
             if (!empty($refreshToken)) {
                 $updatePayload['refresh_token'] = $refreshToken;
+            } elseif ($profile && $profile->refresh_token) {
+                $updatePayload['refresh_token'] = $profile->refresh_token;
             }
 
-            $credential = $tenant->credentials()->updateOrCreate(
-                ['provider' => $provider],
-                $updatePayload
-            );
+            if ($profile) {
+                $profile->update($updatePayload);
+            } else {
+                $profile = \App\Models\ChannelProfile::create(array_merge([
+                    'user_id' => $tenant->user_id,
+                    'provider' => $provider,
+                    'provider_account_id' => $socialiteUser->id,
+                ], $updatePayload));
+            }
+
+            // Link profile to tenant
+            $profileIdColumn = "{$provider}_profile_id";
+            $tenant->update([$profileIdColumn => $profile->id]);
 
             // Atomic Push to Remote Engine via SDK
             $nodeUrl = "https://{$tenant->subdomain}.apis-hub.cloud";
             $sdk = new ApisHubApi($nodeUrl, $tenant->remote_admin_api_key);
             
-            $finalRefreshToken = $refreshToken ?? $credential->refresh_token;
+            $finalRefreshToken = $profile->refresh_token;
+            // Since ChannelProfile does not store scopes, we just pass the requested ones downstream
+            $newScopes = $requestedScopes;
 
             $sdk->importCredentials($provider, $token, [
                 'user_id' => $socialiteUser->id,
