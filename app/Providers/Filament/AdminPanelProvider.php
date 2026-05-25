@@ -46,7 +46,9 @@ class AdminPanelProvider extends PanelProvider
                 <style>
                     aside.fi-sidebar > div.overflow-x-clip { overflow: visible !important; }
                     aside.fi-sidebar .fi-sidebar-header { position: relative !important; }
-                    aside.fi-sidebar .fi-sidebar-header > div:first-child { display: flex !important; width: 100%; justify-content: center; }
+                    aside.fi-sidebar .fi-sidebar-header > div:first-child { display: flex !important; width: 100%; justify-content: center; position: static !important; }
+                    aside.fi-sidebar .fi-sidebar-header > div:first-child > a { position: static !important; }
+                    aside.fi-sidebar .fi-sidebar-header .fi-logo { position: static !important; }
                     aside.fi-sidebar .fi-sidebar-header > button.mx-auto { display: none !important; }
                 </style>
             '))
