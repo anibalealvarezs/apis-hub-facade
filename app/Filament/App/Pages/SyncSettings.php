@@ -195,7 +195,11 @@ class SyncSettings extends Page
             'sync_config' => $syncConfig,
         ]));
 
-
+        // 1.5 Push global application logic configurations to the APIs Hub (Node)
+        $service->updateCredentials($tenant, [
+            'type' => 'global',
+            'jobs_timeout_hours' => $data['jobs_timeout_hours'] ?? 1,
+        ]);
 
         // 2. Push fixed Infrastructure credentials (Requires restart)
         $pushData = [
