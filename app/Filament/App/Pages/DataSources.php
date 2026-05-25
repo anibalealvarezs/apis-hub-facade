@@ -30,11 +30,6 @@ class DataSources extends Page
     public ?string $activeChannel = null;
     public ?array $data = [];
 
-    public function getMaxContentWidth(): MaxWidth | string | null
-    {
-        return MaxWidth::Full;
-    }
-
     public function getMaxAssets(): int
     {
         // Placeholder for actual tier logic
