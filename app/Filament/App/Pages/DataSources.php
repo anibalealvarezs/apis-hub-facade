@@ -471,7 +471,7 @@ class DataSources extends Page
         $headerComponents[] = \Filament\Forms\Components\Hidden::make('exclude_from_caching')->default(false);
 
         // Header View: Logo, Title, ID, Link, and Main Toggle
-        $headerComponents[] = Grid::make(2)->schema([
+        $headerComponents[] = Grid::make(12)->schema([
             \Filament\Forms\Components\Placeholder::make('asset_info')
                 ->label('')
                 ->content(fn (callable $get) => new \Illuminate\Support\HtmlString('
@@ -488,14 +488,16 @@ class DataSources extends Page
                         </div>
                     </div>
                 '))
-                ->columnSpan(1),
+                ->columnSpan(11),
             
             Toggle::make('enabled')
                 ->label('')
                 ->inline(false)
                 ->default(true)
-                ->extraAttributes(['class' => 'flex justify-end items-center h-full']),
-        ])->columns(['default' => 1, 'md' => 2]);
+                ->reactive()
+                ->columnSpan(1)
+                ->extraAttributes(['style' => 'margin-top: auto; margin-bottom: auto; display: flex; justify-content: flex-end;']),
+        ]);
 
         $itemComponents = [
             Grid::make(2)->schema([
