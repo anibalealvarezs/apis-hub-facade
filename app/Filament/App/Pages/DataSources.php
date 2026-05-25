@@ -506,43 +506,78 @@ class DataSources extends Page
                     ->schema([
                         Toggle::make('page_metrics')
                             ->label('Page Metrics')
-                            ->inline(false)->default(false),
+                            ->inline(false)
+                            ->default(true),
                         Toggle::make('posts')
                             ->label('Posts Content')
-                            ->inline(false)->default(false)->live(),
+                            ->inline(false)
+                            ->default(true)
+                            ->live()
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                    $set('post_metrics', false);
+                                }
+                            }),
                         Toggle::make('post_metrics')
                             ->label('Post Insights')
-                            ->inline(false)->default(false)
+                            ->inline(false)
+                            ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !((bool) $get('posts'))),
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('posts'), FILTER_VALIDATE_BOOLEAN))
+                            ->dehydrated(),
                     ])
                     ->columnSpan(1)
                     ->compact(),
 
                 // RIGHT COLUMN: Instagram Extraction
-                Section::make(fn (callable $get) => $get('ig_account_name') ? mb_strtoupper($get('ig_account_name')) : 'INSTAGRAM EXTRACTION')
+                Section::make(fn (\Filament\Forms\Get $get) => $get('ig_account_name') ? mb_strtoupper($get('ig_account_name')) : 'INSTAGRAM EXTRACTION')
                     ->schema([
                         Toggle::make('ig_accounts')
                             ->label('Sync Instagram')
-                            ->inline(false)->default(false)->live(),
+                            ->inline(false)
+                            ->default(true)
+                            ->live()
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                    $set('ig_account_metrics', false);
+                                    $set('ig_account_media', false);
+                                    $set('ig_account_media_metrics', false);
+                                }
+                            }),
                         Toggle::make('ig_account_metrics')
                             ->label('Account Metrics')
-                            ->inline(false)->default(false)
+                            ->inline(false)
+                            ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts'))),
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN))
+                            ->dehydrated(),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
-                            ->inline(false)->default(false)->live()
+                            ->inline(false)
+                            ->default(true)
+                            ->live()
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts'))),
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!filter_var($state, FILTER_VALIDATE_BOOLEAN)) {
+                                    $set('ig_account_media_metrics', false);
+                                }
+                            })
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN))
+                            ->dehydrated(),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
-                            ->inline(false)->default(false)
+                            ->inline(false)
+                            ->default(true)
                             ->extraAttributes(['class' => 'ml-16'])
-                            ->disabled(fn (callable $get) => !((bool) $get('ig_accounts')) || !((bool) $get('ig_account_media'))),
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => 
+                                !filter_var($get('ig_accounts'), FILTER_VALIDATE_BOOLEAN) || 
+                                !filter_var($get('ig_account_media'), FILTER_VALIDATE_BOOLEAN)
+                            )
+                            ->dehydrated(),
                     ])
                     ->columnSpan(1)
-                    ->compact(),
+                    ->compact()
+                    ->visible(fn (\Filament\Forms\Get $get) => !empty($get('ig_account'))),
             ])
         ];
 
