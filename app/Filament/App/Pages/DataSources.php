@@ -382,6 +382,10 @@ class DataSources extends Page
 
     protected function buildAssetRepeater(string $fieldKey, string $label, array $itemSchema): Repeater
     {
+        if ($this->activeChannel === 'facebook_organic') {
+            return $this->buildFacebookOrganicRepeater($fieldKey, $label);
+        }
+
         $itemComponents = [];
         $headerComponents = [];
 
@@ -453,6 +457,137 @@ class DataSources extends Page
             ->reorderable(false)
             ->columnSpanFull();
     }
+
+    protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): Repeater
+    {
+        $headerComponents = [];
+        
+        // Hidden fields required for payload integrity
+        foreach (['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'data', 'ig_data', 'lost_access'] as $hk) {
+            $headerComponents[] = \Filament\Forms\Components\Hidden::make($hk);
+        }
+        
+        // Force exclude_from_caching to false per requirements
+        $headerComponents[] = \Filament\Forms\Components\Hidden::make('exclude_from_caching')->default(false);
+
+        // Header View: Logo, Title, ID, Link, and Main Toggle
+        $headerComponents[] = Grid::make(2)->schema([
+            \Filament\Forms\Components\Placeholder::make('asset_info')
+                ->label('')
+                ->content(fn (callable $get) => new \Illuminate\Support\HtmlString('
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                        </div>
+                        <div>
+                            <div class="font-bold text-lg leading-tight">'.($get('title') ?? $get('name') ?? 'Unknown Asset').'</div>
+                            <div class="text-xs text-gray-500 mt-1 flex items-center gap-3">
+                                <span><span class="text-gray-400">ID:</span> '.$get('id').'</span>
+                                <a href="'.$get('link').'" target="_blank" class="text-primary-500 hover:underline">'.$get('link').'</a>
+                            </div>
+                        </div>
+                    </div>
+                '))
+                ->columnSpan(1),
+            
+            Toggle::make('enabled')
+                ->label('')
+                ->inline(false)
+                ->default(true)
+                ->extraAttributes(['class' => 'flex justify-end items-center h-full']),
+        ])->columns(['default' => 1, 'md' => 2]);
+
+        $itemComponents = [
+            Grid::make(2)->schema([
+                // LEFT COLUMN: Facebook Extraction
+                Section::make('FACEBOOK EXTRACTION')
+                    ->schema([
+                        Toggle::make('page_metrics')
+                            ->label('Page Metrics')
+                            ->inline(false)->default(false),
+                        Toggle::make('posts')
+                            ->label('Posts Content')
+                            ->inline(false)->default(false)->reactive(),
+                        Toggle::make('post_metrics')
+                            ->label('Post Insights')
+                            ->inline(false)->default(false)
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->disabled(fn (callable $get) => !$get('posts')),
+                    ])
+                    ->columnSpan(1)
+                    ->compact(),
+
+                // RIGHT COLUMN: Instagram Extraction
+                Section::make(fn (callable $get) => $get('ig_account_name') ? mb_strtoupper($get('ig_account_name')) : 'INSTAGRAM EXTRACTION')
+                    ->schema([
+                        Toggle::make('ig_accounts')
+                            ->label('Sync Instagram')
+                            ->inline(false)->default(false)->reactive(),
+                        Toggle::make('ig_account_metrics')
+                            ->label('Account Metrics')
+                            ->inline(false)->default(false)
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->disabled(fn (callable $get) => !$get('ig_accounts')),
+                        Toggle::make('ig_account_media')
+                            ->label('Media Content')
+                            ->inline(false)->default(false)->reactive()
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->disabled(fn (callable $get) => !$get('ig_accounts')),
+                        Toggle::make('ig_account_media_metrics')
+                            ->label('Media Insights')
+                            ->inline(false)->default(false)
+                            ->extraAttributes(['class' => 'ml-16'])
+                            ->disabled(fn (callable $get) => !$get('ig_accounts') || !$get('ig_account_media')),
+                    ])
+                    ->columnSpan(1)
+                    ->compact()
+                    ->visible(fn (callable $get) => !empty($get('ig_account'))),
+            ])
+        ];
+
+        return Repeater::make($fieldKey)
+            ->label(Str::headline($label))
+            ->hintActions([
+                \Filament\Forms\Components\Actions\Action::make('selectAll')
+                    ->label('Select All')
+                    ->button()
+                    ->color('success')
+                    ->action(function (\Filament\Forms\Components\Repeater $component) {
+                        $state = $component->getState();
+                        $newState = collect($state)->map(function ($item) {
+                            if (empty($item['lost_access'])) {
+                                $item['enabled'] = true;
+                            }
+                            return $item;
+                        })->toArray();
+                        $component->state($newState);
+                    }),
+                \Filament\Forms\Components\Actions\Action::make('deselectAll')
+                    ->label('Deselect All')
+                    ->button()
+                    ->color('danger')
+                    ->action(function (\Filament\Forms\Components\Repeater $component) {
+                        $state = $component->getState();
+                        $newState = collect($state)->map(function ($item) {
+                            $item['enabled'] = false;
+                            return $item;
+                        })->toArray();
+                        $component->state($newState);
+                    })
+            ])
+            ->schema([
+                Grid::make(1)->schema($headerComponents),
+                Grid::make(1)->schema($itemComponents)
+                    ->visible(fn (callable $get) => $get('enabled'))
+            ])
+            ->grid(1) // Full width for each asset block
+            ->collapsible(false)
+            ->addable(false)
+            ->deletable(false)
+            ->reorderable(false)
+            ->columnSpanFull();
+    }
+
 
     public function save(): void
     {
