@@ -600,41 +600,44 @@ class DataSources extends Page
             ->live()
             ->columnSpan(3);
 
-        $headerComponents[] = \Filament\Forms\Components\Group::make()->schema([
-            // Facebook Extraction
-            Toggle::make('page_metrics')->label('Page Metrics')->inline(true)->default(true),
-            Toggle::make('posts')->label('Posts Content')->inline(true)->default(true)->live()
-                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                    if (!(bool) $state) {
-                        $set('post_metrics', false);
-                    }
-                }),
-            Toggle::make('post_metrics')->label('Post Insights')->inline(true)->default(true)
-                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))->dehydrated(),
+        $headerComponents[] = \Filament\Forms\Components\Grid::make(2)->schema([
+            // Facebook Extraction Column
+            \Filament\Forms\Components\Group::make()->schema([
+                Toggle::make('page_metrics')->label('Page Metrics')->inline(true)->default(true),
+                Toggle::make('posts')->label('Posts Content')->inline(true)->default(true)->live()
+                    ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                        if (!(bool) $state) {
+                            $set('post_metrics', false);
+                        }
+                    }),
+                Toggle::make('post_metrics')->label('Post Insights')->inline(true)->default(true)
+                    ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))->dehydrated(),
+            ])->extraAttributes(['class' => 'flex flex-col gap-2']),
 
-            // Instagram Extraction
-            Toggle::make('ig_accounts')->label('Sync Instagram')->inline(true)->default(true)->live()
-                ->visible(fn (\Filament\Forms\Get $get) => !empty($get('ig_account')))
-                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                    if (!(bool) $state) {
-                        $set('ig_account_metrics', false);
-                        $set('ig_account_media', false);
-                        $set('ig_account_media_metrics', false);
-                    }
-                }),
-            Toggle::make('ig_account_metrics')->label('Account Metrics')->inline(true)->default(true)
-                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
-            Toggle::make('ig_account_media')->label('Media Content')->inline(true)->default(true)->live()
-                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))
-                ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                    if (!(bool) $state) {
-                        $set('ig_account_media_metrics', false);
-                    }
-                })->dehydrated(),
-            Toggle::make('ig_account_media_metrics')->label('Media Insights')->inline(true)->default(true)
-                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && (bool) $get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
+            // Instagram Extraction Column
+            \Filament\Forms\Components\Group::make()->schema([
+                Toggle::make('ig_accounts')->label('Sync Instagram')->inline(true)->default(true)->live()
+                    ->visible(fn (\Filament\Forms\Get $get) => !empty($get('ig_account')))
+                    ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                        if (!(bool) $state) {
+                            $set('ig_account_metrics', false);
+                            $set('ig_account_media', false);
+                            $set('ig_account_media_metrics', false);
+                        }
+                    }),
+                Toggle::make('ig_account_metrics')->label('Account Metrics')->inline(true)->default(true)
+                    ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
+                Toggle::make('ig_account_media')->label('Media Content')->inline(true)->default(true)->live()
+                    ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && !empty($get('ig_account')))
+                    ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                        if (!(bool) $state) {
+                            $set('ig_account_media_metrics', false);
+                        }
+                    })->dehydrated(),
+                Toggle::make('ig_account_media_metrics')->label('Media Insights')->inline(true)->default(true)
+                    ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && (bool) $get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
+            ])->extraAttributes(['class' => 'flex flex-col gap-2']),
         ])
-        ->extraAttributes(['class' => 'flex flex-row flex-wrap gap-x-4 gap-y-2 items-center'])
         ->columnSpan(9)
         ->visible(fn (callable $get) => $get('enabled'));
 
