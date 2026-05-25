@@ -32,19 +32,33 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
-                <div class="w-full flex items-center justify-center">
-                    <img src="' . asset('images/branding/apishub-trans-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
-                    <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" x-show="!$store.sidebar.isOpen" @click="$store.sidebar.open()" class="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+                <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
+                </div>
+                <div class="w-full flex flex-col items-center justify-center gap-1" x-show="!$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-favicon-trans.webp') . '" class="h-6 w-auto" />
+                    <button @click.prevent="$store.sidebar.open()" class="text-gray-400 hover:text-primary-500 hover:bg-gray-100 rounded-md p-1 transition-colors">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </button>
                 </div>
                 <style>
-                    aside.fi-sidebar .fi-sidebar-header > div:first-child { display: flex !important; width: 100%; }
+                    aside.fi-sidebar .fi-sidebar-header > div:first-child { display: flex !important; width: 100%; justify-content: center; }
                     aside.fi-sidebar .fi-sidebar-header > button.mx-auto { display: none !important; }
                 </style>
             '))
             ->darkModeBrandLogo(fn () => new \Illuminate\Support\HtmlString('
-                <div class="w-full flex items-center justify-center">
-                    <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" x-show="$store.sidebar.isOpen" class="h-10 w-auto" />
-                    <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" x-show="!$store.sidebar.isOpen" @click="$store.sidebar.open()" class="h-8 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+                <div class="w-full flex items-center justify-center" x-show="$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
+                </div>
+                <div class="w-full flex flex-col items-center justify-center gap-1" x-show="!$store.sidebar.isOpen">
+                    <img src="' . asset('images/branding/apishub-favicon-light.webp') . '" class="h-6 w-auto" />
+                    <button @click.prevent="$store.sidebar.open()" class="text-gray-500 hover:text-primary-500 hover:bg-gray-800 rounded-md p-1 transition-colors">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </button>
                 </div>
             '))
             ->favicon(asset('images/branding/apishub-favicon.webp'))
