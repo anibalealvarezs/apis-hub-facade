@@ -513,14 +513,13 @@ class DataSources extends Page
                     }
                 }
             }
-            
+            // Clean up the top-level list to avoid duplicate or conflicting structures
+            \Illuminate\Support\Arr::forget($payload, $assetListKey);
+
             // Re-map the pristine assets list to the nested structure the backend drivers expect
             $payload['assets'] = [
                 $remoteAssetKey => $assetsListDb
             ];
-            
-            // Clean up the top-level list
-            \Illuminate\Support\Arr::forget($payload, $assetListKey);
 
             try {
                 $response = $service->updateCredentials($tenant, $payload);
