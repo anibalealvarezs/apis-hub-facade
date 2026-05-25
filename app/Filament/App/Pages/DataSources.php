@@ -456,7 +456,6 @@ class DataSources extends Page
                         ->columnSpan(1)
                         ->extraAttributes(['class' => 'sticky top-4 self-start'])
                 ])
-                ->crossAxisAlignment('start') // Align to top so sticky works
         ];
     }
 
