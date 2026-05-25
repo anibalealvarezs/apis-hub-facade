@@ -544,7 +544,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => empty($get('posts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('posts')))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
@@ -570,7 +570,7 @@ class DataSources extends Page
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-8'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => empty($get('ig_accounts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')))
                             ->dehydrated(),
                         Toggle::make('ig_account_media')
                             ->label('Media Content')
@@ -583,14 +583,14 @@ class DataSources extends Page
                                     $set('ig_account_media_metrics', false);
                                 }
                             })
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => empty($get('ig_accounts')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')))
                             ->dehydrated(),
                         Toggle::make('ig_account_media_metrics')
                             ->label('Media Insights')
                             ->inline(false)
                             ->default(true)
                             ->extraAttributes(['class' => 'ml-16'])
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => empty($get('ig_accounts')) || empty($get('ig_account_media')))
+                            ->visible(fn (\Filament\Forms\Get $get): bool => !empty($get('ig_accounts')) && !empty($get('ig_account_media')))
                             ->dehydrated(),
                     ])
                     ->columnSpan(1)
