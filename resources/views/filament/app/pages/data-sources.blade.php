@@ -149,20 +149,6 @@
             }
          }">
          
-        <!-- Top Widget: Tier Usage -->
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 flex justify-between items-center transition-colors"
-             :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-            <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Current Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
-            </div>
-            <div class="flex items-center gap-2 font-bold text-lg">
-                <span x-text="selectedCount"></span> 
-                <span class="text-gray-400 font-normal">/</span> 
-                <span x-text="maxAssets"></span>
-            </div>
-        </div>
-
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
         <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto" style="max-width: 16rem;">
@@ -216,7 +202,7 @@
         <!-- Content Area -->
         <div class="w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
             
-            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                         {{ $this->getChannelLabel($activeChannel) }}
@@ -226,9 +212,22 @@
                     </p>
                 </div>
                 
-                <div class="flex items-center gap-3">
-                    {{ $this->getAction('updateCredentials') }}
-                    {{ $this->getAction('discoverAssets') }}
+                <div class="flex flex-col items-end gap-3">
+                    <div class="flex items-center gap-3">
+                        {{ $this->getAction('updateCredentials') }}
+                        {{ $this->getAction('discoverAssets') }}
+                    </div>
+                    <!-- Tier Usage Widget -->
+                    <div class="flex items-center gap-3 text-sm transition-colors"
+                         :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-400'">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-500">Tier Usage</span>
+                            <div class="font-bold text-base">
+                                <span x-text="selectedCount"></span> / <span x-text="maxAssets"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -252,10 +252,9 @@ class DataSources extends Page
         return $sharedCount > 0;
     }
 
-    protected function getHeaderActions(): array
+    public function discoverAssetsAction(): Action
     {
-        return [
-            Action::make('discoverAssets')
+        return Action::make('discoverAssets')
                 ->label('Refresh / Discover')
                 ->icon('heroicon-o-arrow-path')
                 ->action(function (RemoteEngineService $service) {
@@ -296,9 +295,12 @@ class DataSources extends Page
                             ->body(is_array($response) ? ($response['error'] ?? 'Unknown error') : 'Invalid response')
                             ->send();
                     }
-                }),
+                });
+    }
 
-            Action::make('updateCredentials')
+    public function updateCredentialsAction(): Action
+    {
+        return Action::make('updateCredentials')
                 ->label('Update Permissions')
                 ->icon('heroicon-o-key')
                 ->visible(fn () => $this->isConnected($this->activeChannel))
@@ -316,8 +318,7 @@ class DataSources extends Page
                         ->body('We are safely pausing your workers. You will be notified when it is safe to proceed.')
                         ->warning()
                         ->send();
-                })
-        ];
+                });
     }
 
     protected function mergeDiscoveredAssets(array $liveAssets): void
