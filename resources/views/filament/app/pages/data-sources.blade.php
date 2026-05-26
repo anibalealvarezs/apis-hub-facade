@@ -262,13 +262,13 @@
                 </div>
 
                 @if($activeChannel === 'facebook_organic')
-                    <div class="mt-6 mb-8 p-5 rounded-r-xl border-l-4 border-info-500 bg-info-50 dark:bg-info-500/10 shadow-sm">
+                    <div class="mt-6 mb-12 p-5 rounded-r-xl border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-500/10 shadow-sm">
                         <div class="flex items-start gap-4">
-                            <x-heroicon-s-information-circle class="w-6 h-6 text-info-600 dark:text-info-400 shrink-0 mt-0.5" />
+                            <x-heroicon-s-exclamation-triangle class="w-6 h-6 text-warning-600 dark:text-warning-400 shrink-0 mt-0.5" />
                             <div>
-                                <h3 class="text-base font-bold text-info-800 dark:text-info-300 tracking-tight">Historic Metrics Limitation</h3>
-                                <p class="text-sm text-info-700 dark:text-info-100 mt-1 leading-relaxed">
-                                    Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold text-info-900 dark:text-white">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
+                                <h3 class="text-base font-bold text-warning-800 dark:text-warning-300 tracking-tight">Historic Metrics Limitation</h3>
+                                <p class="text-sm text-warning-700 dark:text-warning-100 mt-1 leading-relaxed">
+                                    Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold text-warning-900 dark:text-white">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
                                 </p>
                             </div>
                         </div>
