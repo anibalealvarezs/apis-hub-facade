@@ -1,1 +1,1 @@
-<div id="tier-usage-header-target" class="flex items-center h-full"></div>
+<div id="tier-usage-header-target" class="flex items-center h-full" wire:ignore></div>
