@@ -501,6 +501,16 @@ class DataSources extends Page
                 ])->columns(1);
         }
 
+        if ($this->activeChannel === 'google_search_console') {
+            $secondarySections[] = \Filament\Forms\Components\Section::make('Data Enrichment')
+                ->schema([
+                    \Filament\Forms\Components\Toggle::make($this->activeChannel . '.calculate_synthetics')
+                        ->label('Calculate Synthetics')
+                        ->default(true)
+                        ->helperText('Enable calculation of synthetic dimensions (e.g., Branded vs. Non-Branded classification).'),
+                ])->columns(1);
+        }
+
         if (!empty($parts['advanced'])) {
             $secondarySections[] = Section::make('Advanced Configuration')
                 ->schema(array_values($parts['advanced']))
