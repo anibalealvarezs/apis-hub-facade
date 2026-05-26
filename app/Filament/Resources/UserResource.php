@@ -51,7 +51,15 @@ class UserResource extends Resource
                             ->helperText('Active users can log in to the portal.')
                             ->default(true)
                             ->required(),
-                    ])->columns(2),
+                        Forms\Components\Select::make('tier')
+                            ->options(\App\Enums\UserTier::class)
+                            ->required()
+                            ->default(\App\Enums\UserTier::FREE)
+                            ->disabled(fn ($record) => $record && $record->tier === \App\Enums\UserTier::ENTERPRISE)
+                            ->helperText(fn ($record) => $record && $record->tier === \App\Enums\UserTier::ENTERPRISE 
+                                ? 'Enterprise users cannot be downgraded via this panel to protect tracking integrity.' 
+                                : 'Select the user\'s subscription tier.'),
+                    ])->columns(3),
             ]);
     }
 
@@ -64,6 +72,17 @@ class UserResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tier')
+                    ->badge()
+                    ->color(fn (\App\Enums\UserTier $state): string => match ($state) {
+                        \App\Enums\UserTier::FREE => 'gray',
+                        \App\Enums\UserTier::PRO => 'info',
+                        \App\Enums\UserTier::ULTRA => 'success',
+                        \App\Enums\UserTier::FOUNDER => 'warning',
+                        \App\Enums\UserTier::ENTERPRISE => 'success',
+                        \App\Enums\UserTier::SUSPENDED => 'danger',
+                    })
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_admin')
                     ->label('Admin')

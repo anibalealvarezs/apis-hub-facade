@@ -37,6 +37,7 @@ class Project extends Model
         'subdomain',
         'server_id',
         'user_id',
+        'billing_profile_id',
         'db_name',
         'db_user',
         'db_password',
@@ -110,13 +111,21 @@ class Project extends Model
     }
 
     /**
-     * Relationship: Billing profiles authorized to pay for this project.
+     * Relationship: Billing profile paying for this project.
      */
-    public function authorizedBillingProfiles(): BelongsToMany
+    public function billingProfile(): BelongsTo
     {
-        return $this->belongsToMany(BillingProfile::class, 'billing_profile_project')
-            ->withPivot(['is_primary', 'status', 'assigned_by_user_id'])
-            ->withTimestamps();
+        return $this->belongsTo(BillingProfile::class);
+    }
+
+    /**
+     * Check if a user has administrative control over this project.
+     * (Technical owner OR the owner of the assigned billing profile).
+     */
+    public function hasAdminAccess(User $user): bool
+    {
+        return $this->user_id === $user->id 
+            || $this->billingProfile?->user_id === $user->id;
     }
 
     /**

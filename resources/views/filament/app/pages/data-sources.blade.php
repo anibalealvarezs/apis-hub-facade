@@ -236,6 +236,12 @@
                 </div>
             </div>
 
+            @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
+                <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
+                  <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
+                </div>
+            @endif
+
             @if($this->isConnected($activeChannel) && $this->isProfileShared($activeChannel))
                 <div class="mb-6 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
                     <div class="flex items-start gap-3">
@@ -278,6 +284,7 @@
                     {{ $this->form }}
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
                         <x-filament::button type="submit" color="primary" size="lg"
+                            :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
                             wire:confirm="Saving this configuration will update your tracked assets and may impact your monthly billing quota. Are you sure you want to proceed?">
                             Save Configuration
                         </x-filament::button>

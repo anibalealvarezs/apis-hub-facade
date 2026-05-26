@@ -38,7 +38,7 @@ class EnsureUserHasActiveProject
         // 2. Si el usuario está en el Account Panel, verificar si tiene proyectos
         // Si no tiene, forzar la creación. Si tiene, dejarlo pasar.
         if ($request->routeIs('filament.account.*') || $request->is('account*')) {
-            $hasProjects = $user->projects()->where('is_active', true)->exists();
+            $hasProjects = $user->projects()->exists();
             if (!$hasProjects) {
                 return redirect()->route('filament.app.tenant.registration');
             }
@@ -49,12 +49,11 @@ class EnsureUserHasActiveProject
         // En Filament, el parámetro del tenant suele llamarse 'tenant'
         $slugFromUrl = $request->route('tenant');
 
-        // 4. Verificamos si el slug actual es válido y activo para este usuario
+        // 4. Verificamos si el slug actual es válido para este usuario
         // Si ya estamos en un subdominio válido, dejamos pasar el request
         if ($slugFromUrl) {
             $currentProjectExists = $user->projects()
                 ->where('subdomain', $slugFromUrl)
-                ->where('is_active', true)
                 ->exists();
 
             if ($currentProjectExists) {
@@ -64,10 +63,8 @@ class EnsureUserHasActiveProject
 
         // 4. Si llegamos aquí es porque: No hay slug, o el slug es de un proyecto archivado/inexistente.
         
-        // Buscamos el primer proyecto alternativo que esté activo
-        $alternativeProject = $user->projects()
-            ->where('is_active', true)
-            ->first();
+        // Buscamos el primer proyecto alternativo
+        $alternativeProject = $user->projects()->first();
 
         // 5. Si encontramos uno, lo mandamos allí
         if ($alternativeProject) {
@@ -79,7 +76,7 @@ class EnsureUserHasActiveProject
             return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alternativeProject->subdomain]);
         }
 
-        // 6. Si no tiene proyectos activos, lo mandamos a crear uno
+        // 6. Si no tiene proyectos, lo mandamos a crear uno
         return redirect()->route('filament.app.tenant.registration');
     }
 }

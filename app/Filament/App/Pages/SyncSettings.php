@@ -32,6 +32,7 @@ class SyncSettings extends Page
                 ->label('Run Sync Now')
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
@@ -64,6 +65,7 @@ class SyncSettings extends Page
                 ->label('Pause All Explorers')
                 ->icon('heroicon-o-stop-circle')
                 ->color('danger')
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
@@ -109,6 +111,9 @@ class SyncSettings extends Page
 
     public function form(Form $form): Form
     {
+        $tenant = Filament::getTenant();
+        $isSuspended = !$tenant->is_active || $tenant->billing_status === 'suspended';
+
         return $form
             ->schema([
                 Section::make('Global Processing Settings')
@@ -144,6 +149,7 @@ class SyncSettings extends Page
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
+                                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                                     ->requiresConfirmation()
                                     ->modalHeading('Rotate API Key?')
                                     ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
@@ -169,15 +175,21 @@ class SyncSettings extends Page
                                         // 3. Update the form state
                                         $this->form->fill(['app_api_key' => $newKey]);
                                     })
-                            ),
+                             ),
                     ])->columns(2),
             ])
-            ->statePath('data');
+            ->statePath('data')
+            ->disabled($isSuspended);
     }
 
     public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
     {
         $tenant = Filament::getTenant();
+        if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
+            Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
+            return;
+        }
+
         $this->validate();
         $data = $this->form->getState();
         

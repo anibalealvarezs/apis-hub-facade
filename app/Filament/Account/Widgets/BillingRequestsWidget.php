@@ -17,24 +17,24 @@ class BillingRequestsWidget extends BaseWidget
     public function table(Table $table): Table
     {
         // Find all pending assignments for billing profiles owned by this user
-        $query = \App\Models\BillingProfileProject::query()
-            ->with(['billingProfile', 'project', 'assignedBy'])
+        $query = Project::query()
+            ->with(['billingProfile', 'user'])
             ->whereHas('billingProfile', function ($q) {
                 $q->where('user_id', auth()->id());
             })
-            ->where('status', 'pending');
+            ->where('billing_status', 'pending_approval');
 
         return $table
             ->query($query)
             ->columns([
                 Tables\Columns\TextColumn::make('billingProfile.name')
                     ->label('Billing Profile'),
-                Tables\Columns\TextColumn::make('project.name')
+                Tables\Columns\TextColumn::make('name')
                     ->label('Project'),
-                Tables\Columns\TextColumn::make('assignedBy.name')
+                Tables\Columns\TextColumn::make('user.name')
                     ->label('Requested By')
-                    ->description(fn ($record) => $record->assignedBy?->email),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->description(fn (Project $record) => $record->user?->email),
+                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->label('Requested At'),
             ])
@@ -42,18 +42,27 @@ class BillingRequestsWidget extends BaseWidget
                 Tables\Actions\Action::make('approve')
                     ->color('success')
                     ->icon('heroicon-o-check')
-                    ->action(function ($record) {
-                        $record->update(['status' => 'approved']);
+                    ->action(function (Project $record) {
+                        $record->update([
+                            'billing_status' => 'active',
+                            'is_active' => true,
+                        ]);
                     }),
                 Tables\Actions\Action::make('reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update(['status' => 'rejected']);
+                    ->action(function (Project $record) {
+                        // Reset the project billing profile to recipient's default FREE profile
+                        $defaultProfile = $record->user->billingProfiles()->where('is_default', true)->first();
+                        $record->update([
+                            'billing_profile_id' => $defaultProfile?->id,
+                            'billing_status' => 'suspended',
+                            'is_active' => false,
+                        ]);
                     }),
             ])
             ->emptyStateHeading('No pending requests')
-            ->emptyStateDescription('When a user assigns your shared profile to a project, it will appear here for your approval.');
+            ->emptyStateDescription('When a collaborator assigns your shared profile to a project, it will appear here for your approval.');
     }
 }

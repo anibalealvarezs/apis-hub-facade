@@ -8,13 +8,18 @@ use App\Enums\UserTier;
 class UserObserver
 {
     /**
-     * Handle the User "creating" event.
+     * Handle the User "created" event.
      */
-    public function creating(User $user): void
+    public function created(User $user): void
     {
-        // Automatically assign FREE tier if not explicitly set
-        if (empty($user->tier)) {
-            $user->tier = UserTier::FREE;
-        }
+        // Automatically provision a default billing profile for the user
+        $user->billingProfiles()->create([
+            'name' => $user->name . ' Default Profile',
+            'type' => 'personal',
+            'tier' => UserTier::FREE,
+            'country_code' => 'ES',
+            'is_default' => true,
+            'health_status' => 'healthy',
+        ]);
     }
 }

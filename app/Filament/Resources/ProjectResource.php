@@ -216,6 +216,17 @@ class ProjectResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
+                Tables\Columns\TextColumn::make('billing_status')
+                    ->label('Billing')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'past_due' => 'warning',
+                        'suspended' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('last_deployed_at')
                     ->dateTime()
                     ->sortable()

@@ -1,5 +1,11 @@
 <x-filament-panels::page>
     <div wire:poll.10s="refreshData">
+        @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
+            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
+              <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
+            </div>
+        @endif
+
         @if($isLoading)
             <div class="flex items-center justify-center p-12">
                 <x-filament::loading-indicator class="h-12 w-12 text-primary-500" />
@@ -141,6 +147,7 @@
                                                     color="success" 
                                                     icon="heroicon-m-play"
                                                     outlined
+                                                    :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
                                                 >
                                                     Resume Sync
                                                 </x-filament::button>
@@ -150,6 +157,7 @@
                                                     color="warning" 
                                                     icon="heroicon-m-pause"
                                                     outlined
+                                                    :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
                                                 >
                                                     Pause Sync
                                                 </x-filament::button>

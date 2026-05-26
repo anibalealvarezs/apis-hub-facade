@@ -63,7 +63,6 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         'is_active',
         'locale',
         'pending_email',
-        'tier',
     ];
 
     /**
@@ -138,7 +137,6 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'logout_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
-            'tier' => UserTier::class,
         ];
     }
 
@@ -156,22 +154,5 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new \App\Notifications\QueuedResetPassword($token));
-    }
-
-    /**
-     * Check if the user has reached their project creation limit based on their Tier.
-     * (Future implementation will use Cashier).
-     */
-    public function canCreateMoreProjects(): bool
-    {
-        $currentOwnedProjects = $this->ownedProjects()->count();
-
-        return match ($this->tier) {
-            UserTier::FREE => $currentOwnedProjects < 1,
-            UserTier::PRO => $currentOwnedProjects < 5,
-            UserTier::ULTRA, UserTier::FOUNDER => $currentOwnedProjects < 15,
-            UserTier::ENTERPRISE => true,
-            default => $currentOwnedProjects < 1, // Fallback to free tier limits
-        };
     }
 }

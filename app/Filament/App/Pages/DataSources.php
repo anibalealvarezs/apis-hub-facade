@@ -58,7 +58,7 @@ class DataSources extends Page
     public function getCycleBounds(): array
     {
         $tenant = Filament::getTenant();
-        $billingProfile = $tenant->authorizedBillingProfiles()->first();
+        $billingProfile = $tenant->billingProfile;
         
         return [
             'starts_at' => $billingProfile?->current_cycle_starts_at?->format('M j, Y') ?? 'N/A',
@@ -75,26 +75,30 @@ class DataSources extends Page
     public function getGlobalLedgerCount(): int
     {
         $tenant = Filament::getTenant();
-        $ownerId = $tenant->owner_id ?? $tenant->user_id;
-        $owner = \App\Models\User::find($ownerId);
-        
-        return app(\App\Services\AssetQuotaService::class)->getGlobalLedgerCount($owner ?? auth()->user());
+        $quotaService = app(\App\Services\AssetQuotaService::class);
+        $limits = $quotaService->calculateLimits($tenant, auth()->user());
+
+        return $limits['usage'];
     }
 
     public function getOwnerLimit(): int
     {
         $tenant = Filament::getTenant();
-        $ownerId = $tenant->owner_id ?? $tenant->user_id;
-        $owner = \App\Models\User::find($ownerId);
-        
-        return $owner->tier_limit ?? 100;
+        $quotaService = app(\App\Services\AssetQuotaService::class);
+        $limits = $quotaService->calculateLimits($tenant, auth()->user());
+
+        return $limits['limit'];
     }
 
     public function isOwner(): bool
     {
         $tenant = Filament::getTenant();
-        $ownerId = $tenant->owner_id ?? $tenant->user_id;
-        return auth()->id() === $ownerId;
+        $billingProfile = $tenant->billingProfile;
+        if (!$billingProfile) {
+            $ownerId = $tenant->owner_id ?? $tenant->user_id;
+            return auth()->id() === $ownerId;
+        }
+        return auth()->id() === $billingProfile->user_id;
     }
 
     public function mount()
@@ -266,6 +270,7 @@ class DataSources extends Page
         return Action::make('discoverAssets')
                 ->label('Refresh / Discover')
                 ->icon('heroicon-o-arrow-path')
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
                     $response = $service->fetchAssets($tenant, $this->activeChannel, true);
@@ -313,6 +318,7 @@ class DataSources extends Page
                 ->label('Update Permissions')
                 ->icon('heroicon-o-key')
                 ->visible(fn () => $this->isConnected($this->activeChannel))
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->requiresConfirmation()
                 ->modalHeading('Update Credentials Safely')
                 ->modalDescription('To update these credentials, we must first safely stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to re-authorize.')
@@ -441,9 +447,13 @@ class DataSources extends Page
 
     public function form(Form $form): Form
     {
+        $tenant = Filament::getTenant();
+        $isSuspended = !$tenant->is_active || $tenant->billing_status === 'suspended';
+
         return $form
             ->schema($this->getDynamicSchema())
-            ->statePath('data');
+            ->statePath('data')
+            ->disabled($isSuspended);
     }
 
     protected function getDynamicSchema(): array
@@ -898,6 +908,11 @@ class DataSources extends Page
     public function save(): void
     {
         $tenant = Filament::getTenant();
+        if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
+            Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
+            return;
+        }
+
         $uiState = $this->form->getState();
         $dbState = $tenant->sync_config ?? [];
         

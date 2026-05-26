@@ -26,19 +26,30 @@ class ProjectTransferService
             return ['status' => false, 'message' => 'Cannot transfer project to yourself.'];
         }
 
+        $senderProfile = $project->billingProfile;
+        $senderTier = $senderProfile?->tier ?? UserTier::FREE;
+
+        $recipientProfile = $recipient->billingProfiles()->where('is_default', true)->first();
+        if (!$recipientProfile) {
+            return ['status' => false, 'message' => 'Recipient has no valid billing profile.'];
+        }
+        $recipientTier = $recipientProfile->tier;
+
         // Ecosystem Rule: Enterprise projects only to Enterprise users
-        if ($sender->tier === UserTier::ENTERPRISE && $recipient->tier !== UserTier::ENTERPRISE) {
+        if ($senderTier === UserTier::ENTERPRISE && $recipientTier !== UserTier::ENTERPRISE) {
             return ['status' => false, 'message' => 'Enterprise projects can only be transferred to Enterprise accounts.'];
         }
 
         // Ecosystem Rule: Individual projects only to Individual users
-        if ($sender->tier !== UserTier::ENTERPRISE && $recipient->tier === UserTier::ENTERPRISE) {
+        if ($senderTier !== UserTier::ENTERPRISE && $recipientTier === UserTier::ENTERPRISE) {
             return ['status' => false, 'message' => 'Individual tier projects cannot be transferred to Enterprise accounts.'];
         }
 
         // Quota check
-        if (!$recipient->canCreateMoreProjects()) {
-            return ['status' => false, 'message' => 'Recipient has no available project quota in their current tier.'];
+        $activeProjectsCount = $recipientProfile->projects()->where('billing_status', 'active')->count();
+        $maxProjects = $this->getMaxProjectsForTier($recipientTier);
+        if ($activeProjectsCount >= $maxProjects) {
+            return ['status' => false, 'message' => 'Recipient\'s default billing profile has no available project quota.'];
         }
 
         return ['status' => true, 'message' => 'Transfer can be initiated.'];
@@ -56,42 +67,62 @@ class ProjectTransferService
         }
 
         // Billing Assignment Logic
-        // If the sender wants to revoke their billing profile (which is the default expectation)
         if (!$keepSenderBilling) {
-            if (!$newBillingProfile || $newBillingProfile->user_id !== $recipient->id) {
+            if (!$newBillingProfile) {
                 throw new Exception("Recipient must provide a valid billing profile to assume ownership.");
             }
 
-            // Remove old billing profiles from this project
-            $project->authorizedBillingProfiles()->detach();
+            // Assign the new billing profile directly to the project
+            $project->billing_profile_id = $newBillingProfile->id;
 
-            // Attach the new billing profile
-            $project->authorizedBillingProfiles()->attach($newBillingProfile->id, [
-                'is_primary' => true,
-                'status' => 'active',
-                'assigned_by_user_id' => $recipient->id,
-            ]);
+            // If the billing profile belongs to someone other than the recipient
+            if ($newBillingProfile->user_id !== $recipient->id) {
+                // Check if the profile is shared with the recipient
+                $isShared = $newBillingProfile->sharedWithUsers()->where('users.id', $recipient->id)->exists();
+                if (!$isShared) {
+                    throw new Exception("The selected billing profile is not shared with the recipient.");
+                }
+
+                // If shared, it requires approval from the billing profile owner (the "padre")
+                $project->billing_status = 'pending_approval';
+                $project->is_active = false; // Inactive until approved
+            } else {
+                // Owner's own profile - automatically active
+                $project->billing_status = 'active';
+                $project->is_active = true;
+            }
         } else {
             // Keep sender's billing, meaning sender shares their billing profile with the recipient for this project
-            // In a more robust system, we would create a record in `billing_profile_user` allowing the recipient to use it
-            $currentPrimary = $project->authorizedBillingProfiles()->wherePivot('is_primary', true)->first();
-            if ($currentPrimary) {
+            $currentProfile = $project->billingProfile;
+            if ($currentProfile) {
                 // Ensure recipient has shared access
-                $currentPrimary->sharedWithUsers()->syncWithoutDetaching([
+                $currentProfile->sharedWithUsers()->syncWithoutDetaching([
                     $recipient->id => ['role' => 'shared_payer']
                 ]);
             }
         }
 
-        // Change Ownership
+        // Change Ownership (Technical ownership changes, administrative billing profile pays)
         $project->user_id = $recipient->id;
         $project->save();
 
         // Ensure the recipient is also a member in the ProjectUser pivot
         $project->users()->syncWithoutDetaching([$recipient->id]);
 
-        Log::info("Project {$project->id} successfully transferred from to User {$recipient->id}.");
+        Log::info("Project {$project->id} successfully transferred to User {$recipient->id} under Billing Profile {$project->billing_profile_id} (Status: {$project->billing_status}).");
 
         return true;
+    }
+
+    protected function getMaxProjectsForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 1,
+            UserTier::PRO => 5,
+            UserTier::ULTRA, UserTier::FOUNDER => 15,
+            UserTier::ENTERPRISE => 15,
+            UserTier::SUSPENDED => 0,
+            default => 1,
+        };
     }
 }

@@ -5,17 +5,20 @@ namespace App\Services;
 use App\Models\AssetBillingLock;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\BillingProfile;
+use App\Enums\UserTier;
 use Illuminate\Support\Carbon;
 
 class AssetQuotaService
 {
     /**
-     * Get the total locked assets across ALL projects for a specific user (Account Owner).
-     * This considers unique assets globally for that user.
+     * Get the total locked assets across ALL projects for a specific billing profile.
      */
-    public function getGlobalLedgerCount(User $owner): int
+    public function getGlobalLedgerCount(BillingProfile $profile): int
     {
-        return AssetBillingLock::where('user_id', $owner->id)
+        $projectIds = $profile->projects()->pluck('id');
+
+        return AssetBillingLock::whereIn('project_id', $projectIds)
             ->distinct('asset_identifier')
             ->count('asset_identifier');
     }
@@ -35,9 +38,11 @@ class AssetQuotaService
      */
     public function lockAsset(Project $project, string $channel, string $assetIdentifier): void
     {
+        $ownerId = $project->owner_id ?? $project->user_id;
+
         AssetBillingLock::updateOrCreate(
             [
-                'user_id' => $project->owner_id ?? $project->user_id, // Assuming Project belongs to a User (owner)
+                'user_id' => $ownerId,
                 'project_id' => $project->id,
                 'channel' => $channel,
                 'asset_identifier' => $assetIdentifier,
@@ -60,29 +65,32 @@ class AssetQuotaService
     }
 
     /**
-     * Calculate the synthetic limits for UI display, masking global usage from guests.
+     * Calculate the synthetic limits for UI display, masking global usage from guests and technical owners who don't own the billing profile.
      */
     public function calculateLimits(Project $project, User $currentUser, int $stagedAssets = 0): array
     {
-        // We assume $project->owner_id or $project->user_id points to the subscription owner
-        $ownerId = $project->owner_id ?? $project->user_id;
-        $owner = User::find($ownerId);
-        
-        // Fetch the owner's tier limit (placeholder for actual subscription logic)
-        $ownerLimit = $owner->tier_limit ?? 100; 
+        $billingProfile = $project->billingProfile;
+        if (!$billingProfile) {
+            $ownerId = $project->owner_id ?? $project->user_id;
+            $owner = User::find($ownerId);
+            $billingProfile = $owner?->billingProfiles()->where('is_default', true)->first();
+        }
 
-        $globalLedgerCount = $this->getGlobalLedgerCount($owner);
+        $isProfileOwner = $billingProfile ? ($currentUser->id === $billingProfile->user_id) : false;
+
+        $profileTier = $billingProfile?->tier ?? UserTier::FREE;
+        $profileLimit = $this->getMaxAssetsForTier($profileTier);
+
+        $globalLedgerCount = $billingProfile ? $this->getGlobalLedgerCount($billingProfile) : 0;
         $projectLedgerCount = $this->getProjectLedgerCount($project);
 
-        $isOwner = $currentUser->id === $ownerId;
-
-        if ($isOwner) {
-            // Absolute truth for the owner
+        if ($isProfileOwner) {
+            // Absolute truth for the owner of the billing profile
             $usage = $globalLedgerCount + $stagedAssets;
-            $limit = $ownerLimit;
+            $limit = $profileLimit;
         } else {
-            // Synthetic total for guests
-            $availableGlobalQuota = max(0, $ownerLimit - $globalLedgerCount);
+            // Synthetic total for technical owners and collaborators (hiding other projects' usage)
+            $availableGlobalQuota = max(0, $profileLimit - $globalLedgerCount);
             $limit = $projectLedgerCount + $availableGlobalQuota;
             $usage = $projectLedgerCount + $stagedAssets;
         }
@@ -90,13 +98,12 @@ class AssetQuotaService
         return [
             'usage' => $usage,
             'limit' => $limit,
-            'is_owner' => $isOwner,
+            'is_owner' => $isProfileOwner,
         ];
     }
 
     /**
      * Scan current project config and apply state transitions.
-     * Called when the user clicks 'Save Configuration'.
      */
     public function processGracePeriodLocks(Project $project): void
     {
@@ -117,7 +124,6 @@ class AssetQuotaService
                             if ($identifier) {
                                 $activeAssets[$channelKey][] = $identifier;
                                 
-                                // Create 'staged' lock if it doesn't exist
                                 $lock = AssetBillingLock::where('project_id', $project->id)
                                     ->where('channel', $channelKey)
                                     ->where('asset_identifier', $identifier)
@@ -140,24 +146,20 @@ class AssetQuotaService
             }
         }
         
-        // Process disabled assets
         $existingLocks = AssetBillingLock::where('project_id', $project->id)->get();
         foreach ($existingLocks as $lock) {
             $isActive = in_array($lock->asset_identifier, $activeAssets[$lock->channel] ?? []);
             
             if (!$isActive) {
                 if ($lock->status === 'staged') {
-                    // Grace Period refund! The user disabled it before it locked.
                     $lock->delete();
                 } elseif ($lock->status === 'locked') {
-                    // It was already locked, move to pending_release
                     $lock->update([
                         'status' => 'pending_release',
                         'disabled_at' => now(),
                     ]);
                 }
             } else {
-                // If the user re-enables an asset that was pending_release, restore it to locked.
                 if ($lock->status === 'pending_release') {
                     $lock->update([
                         'status' => 'locked',
@@ -166,5 +168,17 @@ class AssetQuotaService
                 }
             }
         }
+    }
+
+    public function getMaxAssetsForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 5,
+            UserTier::PRO => 100,
+            UserTier::ULTRA, UserTier::FOUNDER => 500,
+            UserTier::ENTERPRISE => 500,
+            UserTier::SUSPENDED => 0,
+            default => 5,
+        };
     }
 }

@@ -43,12 +43,14 @@ class ProjectSettings extends Page
             return []; // Ocultar acciones si no es el verdadero propietario
         }
 
+        $isSuspended = !$project->is_active || $project->billing_status === 'suspended';
         $actions = [];
 
         $actions[] = Action::make('edit_settings')
             ->label('Editar Preferencias')
             ->color('gray')
             ->icon('heroicon-o-pencil-square')
+            ->disabled($isSuspended)
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
             ])
@@ -82,6 +84,7 @@ class ProjectSettings extends Page
                 ->label('Desplegar Infraestructura Inicial')
                 ->color('success')
                 ->icon('heroicon-o-rocket-launch')
+                ->disabled($isSuspended)
                 ->requiresConfirmation()
                 ->modalHeading('Desplegar Infraestructura')
                 ->modalDescription('Esto aprovisionará el contenedor y la base de datos en el servidor remoto. ¿Estás seguro de continuar?')
@@ -101,6 +104,7 @@ class ProjectSettings extends Page
                 ->label('Aplicar Cambios (Redesplegar)')
                 ->color('success')
                 ->icon('heroicon-o-cloud-arrow-up')
+                ->disabled($isSuspended)
                 ->requiresConfirmation()
                 ->modalHeading('Redesplegar Infraestructura')
                 ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
@@ -121,6 +125,7 @@ class ProjectSettings extends Page
                 ->label('Transferir Propiedad')
                 ->color('warning')
                 ->icon('heroicon-o-arrows-right-left')
+                ->disabled($isSuspended)
                 ->requiresConfirmation()
                 ->modalHeading('Transferir Proyecto')
                 ->modalDescription('Selecciona a un colaborador activo de este proyecto para transferirle la propiedad absoluta.')
@@ -170,6 +175,7 @@ class ProjectSettings extends Page
                 ->label('Eliminar Proyecto')
                 ->color('danger')
                 ->icon('heroicon-o-trash')
+                ->disabled($isSuspended)
                 ->requiresConfirmation()
                 ->modalHeading('Eliminar Proyecto')
                 ->modalDescription('Al eliminar este proyecto se bloqueará el acceso al dominio y a los datos de manera inmediata. Tienes 30 días para recuperarlo, luego se destruirá toda su infraestructura permanentemente.')

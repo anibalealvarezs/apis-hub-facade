@@ -14,6 +14,8 @@ class BillingProfile extends Model
         'user_id',
         'is_default',
         'type',
+        'tier',
+        'status',
         'name',
         'tax_id',
         'address_line_1',
@@ -37,7 +39,25 @@ class BillingProfile extends Model
         'trial_ends_at' => 'datetime',
         'current_cycle_starts_at' => 'datetime',
         'current_cycle_ends_at' => 'datetime',
+        'tier' => \App\Enums\UserTier::class,
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updating(function (BillingProfile $profile) {
+            if ($profile->isDirty('tier') && $profile->getOriginal('tier') === \App\Enums\UserTier::ENTERPRISE) {
+                throw new \InvalidArgumentException('Enterprise users cannot be downgraded to protect system-level tracking.');
+            }
+        });
+
+        static::updated(function (BillingProfile $profile) {
+            if ($profile->wasChanged('tier')) {
+                app(\App\Services\BillingLifecycleService::class)->enforceDowngradeLimits($profile, $profile->tier);
+            }
+        });
+    }
 
     /**
      * Get the user that owns the billing profile.
@@ -58,13 +78,11 @@ class BillingProfile extends Model
     }
 
     /**
-     * Get the projects this profile is authorized to pay for.
+     * Get the projects this profile is paying for.
      */
-    public function authorizedProjects()
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->belongsToMany(Project::class, 'billing_profile_project')
-            ->withPivot(['is_primary', 'status', 'assigned_by_user_id'])
-            ->withTimestamps();
+        return $this->hasMany(Project::class);
     }
 
     /**

@@ -110,7 +110,7 @@ class StripeWebhookListener
                 
                 // Suspend projects due to downgrade
                 try {
-                    app(\App\Services\BillingLifecycleService::class)->handleDowngradeSideEffects($user);
+                    app(\App\Services\BillingLifecycleService::class)->enforceDowngradeLimits($user, \App\Enums\UserTier::FREE);
                     
                     // Notify User
                     $user->notify(new \App\Notifications\BillingPaymentFailedNotification());

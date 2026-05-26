@@ -81,6 +81,7 @@ class ManageCollaborators extends Page implements HasTable
                     ->label('Expulsar')
                     ->color('danger')
                     ->icon('heroicon-o-user-minus')
+                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                     ->requiresConfirmation()
                     ->hidden(function (User $record) use ($project) {
                         // Un project owner no puede ser expulsado de la colaboración
@@ -106,6 +107,7 @@ class ManageCollaborators extends Page implements HasTable
                 Action::make('invite')
                     ->label('Invitar Colaborador')
                     ->icon('heroicon-o-envelope')
+                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                     ->form([
                         TextInput::make('email')
                             ->email()

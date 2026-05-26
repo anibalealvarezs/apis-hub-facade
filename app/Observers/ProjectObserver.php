@@ -3,7 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Project;
-use App\Models\User;
+use App\Models\BillingProfile;
 use App\Enums\UserTier;
 use App\Models\Subscription;
 use Srmklive\PayPal\Services\PayPal as PayPalClient;
@@ -16,7 +16,7 @@ class ProjectObserver
      */
     public function created(Project $project): void
     {
-        $this->syncSubscriptionQuantity($project->trueOwner);
+        $this->syncSubscriptionQuantity($project->billingProfile);
     }
 
     /**
@@ -24,7 +24,7 @@ class ProjectObserver
      */
     public function deleted(Project $project): void
     {
-        $this->syncSubscriptionQuantity($project->trueOwner);
+        $this->syncSubscriptionQuantity($project->billingProfile);
     }
 
     /**
@@ -32,30 +32,28 @@ class ProjectObserver
      */
     public function restored(Project $project): void
     {
-        $this->syncSubscriptionQuantity($project->trueOwner);
+        $this->syncSubscriptionQuantity($project->billingProfile);
     }
 
     /**
-     * Synchronize the quantity of projects to active subscriptions for Enterprise users.
+     * Synchronize the quantity of projects to active subscriptions for Enterprise billing profiles.
      */
-    protected function syncSubscriptionQuantity(?User $user): void
+    protected function syncSubscriptionQuantity(?BillingProfile $profile): void
     {
-        if (!$user) return;
+        if (!$profile) return;
 
         // Only Enterprise tier has tiered/graduated pricing based on quantity
-        if ($user->tier !== UserTier::ENTERPRISE) {
+        if ($profile->tier !== UserTier::ENTERPRISE) {
             return;
         }
 
-        // Count all owned projects regardless of status
-        $count = $user->ownedProjects()->count();
+        // Count all projects assigned to this billing profile
+        $count = $profile->projects()->count();
         
         // Payment providers usually require a minimum quantity of 1
         $quantity = max(1, $count);
-
-        $billingProfileIds = $user->billingProfiles()->pluck('billing_profiles.id');
         
-        $activeSubscriptions = Subscription::whereIn('billing_profile_id', $billingProfileIds)
+        $activeSubscriptions = Subscription::where('billing_profile_id', $profile->id)
             ->where(function ($q) {
                 $q->where('stripe_status', 'active')
                   ->orWhere('paypal_status', 'ACTIVE');
@@ -67,7 +65,7 @@ class ProjectObserver
                 if ($subscription->stripe_status === 'active') {
                     // Update Stripe via Cashier
                     $subscription->updateQuantity($quantity);
-                    Log::info("ProjectObserver: Synced Stripe quantity for user {$user->id} to {$quantity}.");
+                    Log::info("ProjectObserver: Synced Stripe quantity for billing profile {$profile->id} to {$quantity}.");
                 } 
                 
                 if ($subscription->paypal_status === 'ACTIVE' && $subscription->paypal_subscription_id) {
@@ -83,7 +81,7 @@ class ProjectObserver
                     $response = $provider->reviseSubscription($subscription->paypal_subscription_id, $payload);
                     
                     if (isset($response['id']) || isset($response['status']) || isset($response['links'])) {
-                         Log::info("ProjectObserver: Synced PayPal quantity for user {$user->id} to {$quantity}.");
+                         Log::info("ProjectObserver: Synced PayPal quantity for billing profile {$profile->id} to {$quantity}.");
                     } else {
                          Log::warning("ProjectObserver: Failed to sync PayPal quantity.", ['response' => $response]);
                     }
