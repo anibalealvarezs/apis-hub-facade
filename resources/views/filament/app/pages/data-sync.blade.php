@@ -7,7 +7,7 @@
         @elseif(empty($syncData))
             <div class="p-12 text-center text-gray-500 dark:text-gray-400">
                 <x-heroicon-o-exclamation-triangle class="h-12 w-12 mx-auto mb-4" />
-                <p class="text-lg">Waiting for data from instance node...</p>
+                <p class="text-lg">Establishing connection to Sync Engine...</p>
             </div>
         @else
             {{-- 🟢 Header Statistics: Database Totals --}}
@@ -129,29 +129,29 @@
                                         </div>
                                     @endif
 
-                                    {{-- 🛰️ Infrastructure Controls (Phase 5) --}}
+                                    {{-- 🛰️ Data Flow Control (Phase 5) --}}
 
                                     @if(isset($job['instance_name']) && preg_match('/-[0-9]{4}-[0-9]{2}$/', $job['instance_name']))
                                         <div class="mt-6 pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between gap-x-2">
-                                            <span class="text-[10px] uppercase font-bold text-gray-400">Scale Control</span>
+                                            <span class="text-[10px] uppercase font-bold text-gray-400">Pipeline Control</span>
                                             <div class="flex gap-x-2">
                                                 <x-filament::button 
-                                                    wire:click="toggleContainer('{{ $job['instance_name'] }}', 'start')" 
+                                                    wire:click="togglePipeline('{{ $job['instance_name'] }}', 'start')" 
                                                     size="xs" 
                                                     color="success" 
                                                     icon="heroicon-m-play"
                                                     outlined
                                                 >
-                                                    Start
+                                                    Resume Sync
                                                 </x-filament::button>
                                                 <x-filament::button 
-                                                    wire:click="toggleContainer('{{ $job['instance_name'] }}', 'stop')" 
+                                                    wire:click="togglePipeline('{{ $job['instance_name'] }}', 'stop')" 
                                                     size="xs" 
-                                                    color="danger" 
-                                                    icon="heroicon-m-stop"
+                                                    color="warning" 
+                                                    icon="heroicon-m-pause"
                                                     outlined
                                                 >
-                                                    Stop
+                                                    Pause Sync
                                                 </x-filament::button>
                                             </div>
                                         </div>

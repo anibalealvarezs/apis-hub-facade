@@ -30,12 +30,71 @@ class DataSources extends Page
     public ?string $activeChannel = null;
     public ?array $data = [];
 
-    public function getMaxAssets(): int
+    public function getLockedAssets(): array
     {
-        // Placeholder for actual tier logic
         $tenant = Filament::getTenant();
-        // Return 100 for now, should be based on $tenant->subscription->plan->tier
-        return 100; 
+        return \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->where('status', '!=', 'staged')
+            ->pluck('asset_identifier')
+            ->toArray();
+    }
+
+    public function getAssetLockStates(): array
+    {
+        $tenant = Filament::getTenant();
+        return \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->get()
+            ->keyBy('asset_identifier')
+            ->map(function ($lock) {
+                return [
+                    'status' => $lock->status,
+                    'staged_at' => $lock->staged_at ? $lock->staged_at->toIso8601String() : null,
+                    'disabled_at' => $lock->disabled_at ? $lock->disabled_at->toIso8601String() : null,
+                ];
+            })
+            ->toArray();
+    }
+
+    public function getCycleBounds(): array
+    {
+        $tenant = Filament::getTenant();
+        $billingProfile = $tenant->authorizedBillingProfiles()->first();
+        
+        return [
+            'starts_at' => $billingProfile?->current_cycle_starts_at?->format('M j, Y') ?? 'N/A',
+            'ends_at' => $billingProfile?->current_cycle_ends_at?->format('M j, Y') ?? 'N/A',
+        ];
+    }
+
+    public function getProjectDeploymentTime(): ?string
+    {
+        $tenant = Filament::getTenant();
+        return $tenant->last_deployed_at ? $tenant->last_deployed_at->toIso8601String() : null;
+    }
+
+    public function getGlobalLedgerCount(): int
+    {
+        $tenant = Filament::getTenant();
+        $ownerId = $tenant->owner_id ?? $tenant->user_id;
+        $owner = \App\Models\User::find($ownerId);
+        
+        return app(\App\Services\AssetQuotaService::class)->getGlobalLedgerCount($owner ?? auth()->user());
+    }
+
+    public function getOwnerLimit(): int
+    {
+        $tenant = Filament::getTenant();
+        $ownerId = $tenant->owner_id ?? $tenant->user_id;
+        $owner = \App\Models\User::find($ownerId);
+        
+        return $owner->tier_limit ?? 100;
+    }
+
+    public function isOwner(): bool
+    {
+        $tenant = Filament::getTenant();
+        $ownerId = $tenant->owner_id ?? $tenant->user_id;
+        return auth()->id() === $ownerId;
     }
 
     public function mount()
@@ -540,8 +599,17 @@ class DataSources extends Page
 
             if ($key === 'enabled') {
                 $headerComponents[] = Toggle::make($key)
-                    ->label(fn (callable $get) => $get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset')
-                    ->helperText(fn (callable $get) => $get('lost_access') ? '⚠️ Lost Access' : 'ID: ' . ($get('id') ?? $get('url') ?? 'N/A'))
+                    ->label(fn (callable $get) => new \Illuminate\Support\HtmlString('
+                        <div class="flex items-center gap-2">
+                            <span>' . e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset') . '</span>
+                            <template x-if="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')">
+                                <span x-html="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')"></span>
+                            </template>
+                        </div>
+                    '))
+                    ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString(
+                        $get('lost_access') ? '⚠️ Lost Access' : 'ID: <a href="' . ($get('link') ?? $get('url') ?? '#') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>'
+                    ))
                     ->inline(false)
                     ->default(true)
                     ->columnSpan(4);
@@ -647,7 +715,14 @@ class DataSources extends Page
 
         // Header View: Name, ID as Link
         $headerComponents[] = Toggle::make('enabled')
-            ->label(fn (callable $get) => $get('title') ?? $get('name') ?? 'Unknown Asset')
+            ->label(fn (callable $get) => new \Illuminate\Support\HtmlString('
+                <div class="flex items-center gap-2">
+                    <span>' . e($get('title') ?? $get('name') ?? 'Unknown Asset') . '</span>
+                    <template x-if="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')">
+                        <span x-html="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')"></span>
+                    </template>
+                </div>
+            '))
             ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString('ID: <a href="' . $get('link') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . $get('id') . '</a>'))
             ->inline(false)
             ->default(true)
@@ -793,12 +868,15 @@ class DataSources extends Page
             }
         }
 
-        $max = $this->getMaxAssets();
-        if ($totalEnabled > $max) {
+        $quotaService = app(\App\Services\AssetQuotaService::class);
+        $user = auth()->user();
+        $limits = $quotaService->calculateLimits($tenant, $user, $totalEnabled);
+
+        if ($limits['usage'] > $limits['limit']) {
             Notification::make()
                 ->title('Asset Limit Exceeded')
                 ->danger()
-                ->body("You have selected {$totalEnabled} assets, but your current tier limits you to {$max}. Please deselect some assets or upgrade your plan.")
+                ->body("You have selected assets that exceed your available quota ({$limits['limit']}). Please deselect some assets or upgrade your plan.")
                 ->send();
             return;
         }
@@ -993,6 +1071,9 @@ class DataSources extends Page
             }
         }
         $tenant->update(['sync_config' => $dbState]);
+
+        // Process locks for the new configuration
+        app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);
 
         // Refresh UI state seamlessly via Livewire so the user sees the actual final state
         $this->form->fill($dbState);

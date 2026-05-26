@@ -2,10 +2,116 @@
     <div class="flex flex-col md:flex-row gap-6 items-start" 
          x-data="{ 
             activeTab: @entangle('activeChannel'),
-            maxAssets: {{ $this->getMaxAssets() }},
-            get selectedCount() {
-                return this.getProviderCount(null); // all providers
+            isOwner: {{ $this->isOwner() ? 'true' : 'false' }},
+            ownerLimit: {{ $this->getOwnerLimit() }},
+            globalLedgerCount: {{ $this->getGlobalLedgerCount() }},
+            lockedAssets: {{ json_encode($this->getLockedAssets()) }},
+            lockStates: @js($this->getAssetLockStates()),
+            cycleBounds: @js($this->getCycleBounds()),
+            projectDeploymentTime: @js($this->getProjectDeploymentTime()),
+            currentTime: new Date().getTime(),
+            
+            init() {
+                setInterval(() => {
+                    this.currentTime = new Date().getTime();
+                }, 60000); // Update every minute
             },
+            
+            getAssetBadge(id) {
+                if (!id || !this.lockStates[id]) return '';
+                
+                let lock = this.lockStates[id];
+                
+                if (lock.status === 'locked') {
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">Quota Locked</span>`;
+                }
+                
+                if (lock.status === 'pending_release') {
+                    let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400" title="Disabled at ${dDate}">Locked until cycle end (${this.cycleBounds.ends_at})</span>`;
+                }
+                
+                if (lock.status === 'staged') {
+                    if (!this.projectDeploymentTime) {
+                        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400">Grace Period paused (Waiting for deployment)</span>`;
+                    }
+                    
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let deployedAt = new Date(this.projectDeploymentTime).getTime();
+                    let startTime = Math.max(stagedAt, deployedAt);
+                    let endsAt = startTime + (2 * 60 * 60 * 1000); // +2 hours
+                    
+                    let remainingMs = endsAt - this.currentTime;
+                    
+                    if (remainingMs <= 0) {
+                        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">Quota Locked (Refresh needed)</span>`;
+                    }
+                    
+                    let remainingMins = Math.floor(remainingMs / 60000);
+                    let h = Math.floor(remainingMins / 60);
+                    let m = remainingMins % 60;
+                    let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    
+                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400">Grace Period (Ends in ${timeStr})</span>`;
+                }
+                
+                return '';
+            },
+            
+            get formAssets() {
+                let formAssets = new Set();
+                let data = $wire.get('data') || {};
+                
+                function scan(obj) {
+                    if (typeof obj === 'object' && obj !== null) {
+                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
+                            if (obj.enabled && !obj.lost_access) {
+                                let id = obj.id || obj.url;
+                                if (id) formAssets.add(id);
+                            }
+                            return;
+                        }
+                        for (let key in obj) scan(obj[key]);
+                    }
+                }
+                
+                for (let key in data) scan(data[key]);
+                return formAssets;
+            },
+            
+            get currentProjectUsage() {
+                let locked = new Set(this.lockedAssets);
+                let form = this.formAssets;
+                let union = new Set([...locked, ...form]);
+                return union.size;
+            },
+            
+            get usageData() {
+                let lockedSize = new Set(this.lockedAssets).size;
+                let newlyStaged = this.currentProjectUsage - lockedSize;
+                
+                if (this.isOwner) {
+                    return {
+                        usage: this.globalLedgerCount + newlyStaged,
+                        limit: this.ownerLimit
+                    };
+                } else {
+                    let availableGlobalQuota = Math.max(0, this.ownerLimit - this.globalLedgerCount);
+                    return {
+                        usage: this.currentProjectUsage,
+                        limit: lockedSize + availableGlobalQuota
+                    };
+                }
+            },
+            
+            get selectedCount() {
+                return this.usageData.usage;
+            },
+            
+            get maxAssets() {
+                return this.usageData.limit;
+            },
+
             getChannelCount(channelKey) {
                 let count = 0;
                 let data = $wire.get('data') || {};
@@ -144,7 +250,10 @@
                 <!-- Sticky Counter -->
                 <div class="sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md pb-4 mb-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center transition-colors"
                      :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-                    <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Current Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                    </div>
                     <div class="flex items-center gap-2 font-bold text-lg">
                         <span x-text="selectedCount"></span> 
                         <span class="text-gray-400 font-normal">/</span> 
@@ -154,9 +263,9 @@
 
                 <form wire:submit="save">
                     {{ $this->form }}
-                    
-                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-white/10 flex justify-end">
-                        <x-filament::button type="submit" color="primary">
+                    <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
+                        <x-filament::button type="submit" color="primary" size="lg"
+                            wire:confirm="Saving this configuration will update your tracked assets and may impact your monthly billing quota. Are you sure you want to proceed?">
                             Save Configuration
                         </x-filament::button>
                     </div>

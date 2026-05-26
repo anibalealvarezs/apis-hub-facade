@@ -22,10 +22,10 @@
             ];
             $statusText = [
                 'pending' => 'En cola...',
-                'running' => 'Desplegando infraestructura...',
+                'running' => 'Aprovisionando motor de sincronización...',
                 'completed' => 'Activo y En Línea',
                 'success' => 'Activo y En Línea',
-                'failed' => 'Error de Despliegue',
+                'failed' => 'Error de Aprovisionamiento',
             ];
             
             // Extract a safe euphemism from output
@@ -35,7 +35,7 @@
                 if (str_contains($latestLog->output, 'Connection refused')) {
                     $safeErrorMessage = 'El servidor de destino rechazó la conexión (Error de Red/SSH).';
                 } elseif (str_contains($latestLog->output, 'Conflict. The container name')) {
-                    $safeErrorMessage = 'Conflicto de recursos en el servidor destino (ERR_CONTAINER_CONFLICT).';
+                    $safeErrorMessage = 'Conflicto de recursos en el servidor destino (ERR_SYNC_ENGINE_CONFLICT).';
                 } elseif (str_contains($latestLog->output, 'No space left on device')) {
                     $safeErrorMessage = 'El servidor ha alcanzado su límite de almacenamiento (ERR_DISK_FULL).';
                 } elseif (str_contains($latestLog->output, 'git clone')) {
@@ -122,10 +122,10 @@
         @if($logs && $logs->count() > 0)
         <x-filament::section>
             <x-slot name="heading">
-                Logs de Despliegue
+                Logs de Actividad
             </x-slot>
             <x-slot name="description">
-                Registro de actividades de infraestructura y sincronización en vivo.
+                Registro de actividades del motor de sincronización en vivo.
             </x-slot>
 
             <div wire:poll.5s>
@@ -143,7 +143,7 @@
                                     {{ strtoupper($log->status) }}
                                 </span>
                             </div>
-                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? 'Iniciando proceso de despliegue...' }}</pre>
+                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? 'Iniciando aprovisionamiento del motor de sincronización...' }}</pre>
                         </div>
                     @endforeach
                 </div>

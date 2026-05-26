@@ -142,10 +142,10 @@
                     </li>
                     <li style="margin-bottom: 12px; border-left: 3px solid #00A7F9; padding-left: 15px;">
                         <strong style="color: #F9FAFB;">Headless API Access</strong><br>
-                        <span style="font-size: 14px;">Deploy your data into third-party apps or custom frontends via Managed API.</span>
+                        <span style="font-size: 14px;">Sync your data continuously into third-party apps or custom frontends via Managed API.</span>
                     </li>
                     <li style="margin-bottom: 12px; border-left: 3px solid #F9FAFB; padding-left: 15px;">
-                        <strong style="color: #F9FAFB;">MCP Server Support</strong><br>
+                        <strong style="color: #F9FAFB;">Managed Context Protocol (MCP) Support</strong><br>
                         <span style="font-size: 14px;">Native Model Context Protocol integration to provide high-context data directly to AI agents.</span>
                     </li>
                     <li style="margin-bottom: 12px; border-left: 3px solid #00CAC4; padding-left: 15px;">

@@ -84,9 +84,9 @@ class DataSync extends Page
     }
 
     /**
-     * Perform an infrastructure action on a specific container.
+     * Perform an infrastructure action on a specific pipeline.
      */
-    public function toggleContainer(string $name, string $action): void
+    public function togglePipeline(string $name, string $action): void
     {
         try {
             $service = app(RemoteEngineService::class);
@@ -95,14 +95,15 @@ class DataSync extends Page
             $response = $service->containerAction($tenant, $name, $action);
             
             if ($response && ($response['success'] ?? false)) {
+                $statusText = $action === 'start' ? 'resumed' : 'paused';
                 Notification::make()
-                    ->title("Container $action successful")
-                    ->body("$name has been $action" . "ed.")
+                    ->title("Pipeline $statusText successfully")
+                    ->body("The data pipeline has been $statusText.")
                     ->success()
                     ->send();
             } else {
                  Notification::make()
-                    ->title("Failed to $action container")
+                    ->title("Failed to modify pipeline status")
                     ->body($response['error'] ?? 'Unknown error.')
                     ->danger()
                     ->send();

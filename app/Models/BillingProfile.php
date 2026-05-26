@@ -28,11 +28,15 @@ class BillingProfile extends Model
         'paypal_id',
         'paypal_email',
         'health_status',
+        'current_cycle_starts_at',
+        'current_cycle_ends_at',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
         'trial_ends_at' => 'datetime',
+        'current_cycle_starts_at' => 'datetime',
+        'current_cycle_ends_at' => 'datetime',
     ];
 
     /**
