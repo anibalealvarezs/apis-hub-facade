@@ -171,7 +171,7 @@
                 @endphp
                 <div class="flex flex-col gap-2" x-data="{ expanded: {{ $hasActiveChannel ? 'true' : 'false' }} }">
                     <!-- Provider Header -->
-                    <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold pb-1 border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500">
+                    <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500" style="padding-bottom: 0.5rem;">
                         <div class="flex items-center gap-2">
                             @if($pKey === 'google')
                                 <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-500" />
