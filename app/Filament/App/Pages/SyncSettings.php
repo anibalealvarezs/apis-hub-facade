@@ -35,11 +35,11 @@ class SyncSettings extends Page
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
-                    $response = $service->triggerSync($tenant);
+                    $response = $service->startSync($tenant);
                     
                     Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Sync Started' : 'Sync Failed')
-                        ->body($response['message'] ?? '')
+                        ->title(($response['status'] ?? '') === 'success' ? 'Synchronization Sequence Started' : 'Sync Deployment Failed')
+                        ->body($response['message'] ?? 'Applying configuration, restarting workers, and scheduling initial jobs.')
                         ->send();
                 }),
 

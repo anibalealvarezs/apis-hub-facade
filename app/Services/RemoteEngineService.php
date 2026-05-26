@@ -109,6 +109,14 @@ class RemoteEngineService
     }
 
     /**
+     * Trigger a lightweight synchronization start without full downtime.
+     */
+    public function startSync(Project $project)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->startSync());
+    }
+
+    /**
      * Update secure environment credentials on the remote node.
      */
     public function updateCredentials(Project $project, array $credentials)

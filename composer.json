@@ -32,16 +32,16 @@
   },
   "require-dev": {
     "pestphp/pest": "^3.8",
-    "pestphp/pest-plugin-laravel": "^3.2",
-    "doctrine/instantiator": "^1.5",
+    "laravel/pail": "^1.2.2",
     "nunomaduro/collision": "^8.6",
     "phpunit/phpunit": "^11.5.50",
-    "laravel/pail": "^1.2.2",
     "fakerphp/faker": "^1.23",
     "laravel/pint": "^1.24",
+    "pestphp/pest-plugin-laravel": "^3.2",
+    "doctrine/instantiator": "^1.5",
+    "friendsofphp/php-cs-fixer": "^3.94",
     "mockery/mockery": "^1.6",
-    "laravel/sail": "^1.41",
-    "friendsofphp/php-cs-fixer": "^3.94"
+    "laravel/sail": "^1.41"
   },
   "autoload": {
     "psr-4": {
