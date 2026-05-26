@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="flex flex-col md:flex-row gap-6 items-start" 
+    <div class="flex flex-col gap-6" 
          x-data="{ 
             activeTab: @entangle('activeChannel'),
             isOwner: {{ $this->isOwner() ? 'true' : 'false' }},
@@ -148,12 +148,28 @@
                 return count;
             }
          }">
+         
+        <!-- Top Widget: Tier Usage -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 flex justify-between items-center transition-colors"
+             :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Current Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+            </div>
+            <div class="flex items-center gap-2 font-bold text-lg">
+                <span x-text="selectedCount"></span> 
+                <span class="text-gray-400 font-normal">/</span> 
+                <span x-text="maxAssets"></span>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4" style="max-width: 16rem;">
+        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto" style="max-width: 16rem;">
             @foreach($this->getProviders() as $pKey => $provider)
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2" x-data="{ expanded: true }">
                     <!-- Provider Header -->
-                    <div class="flex items-center justify-between text-gray-900 dark:text-white font-bold pb-1 border-b border-gray-100 dark:border-white/5">
+                    <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold pb-1 border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500">
                         <div class="flex items-center gap-2">
                             @if($pKey === 'google')
                                 <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-500" />
@@ -164,13 +180,16 @@
                             @endif
                             <span class="tracking-wide">{{ $provider['label'] }}</span>
                         </div>
-                        <div class="text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
-                             x-text="getProviderCount('{{ $pKey }}')">
+                        <div class="flex items-center gap-2">
+                            <div class="text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
+                                 x-text="getProviderCount('{{ $pKey }}')">
+                            </div>
+                            <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform text-gray-400" x-bind:class="expanded ? '' : '-rotate-90'" />
                         </div>
                     </div>
                     
                     <!-- Nested Channels -->
-                    <div class="flex flex-col gap-1 ml-2 border-l-2 border-gray-100 dark:border-white/5 pl-2 mt-1">
+                    <div x-show="expanded" x-collapse class="flex flex-col gap-1 ml-2 border-l-2 border-gray-100 dark:border-white/5 pl-2 mt-1">
                         @foreach($provider['channels'] as $channel)
                             <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
                                     class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
@@ -247,19 +266,7 @@
                 </div>
             @else
                 
-                <!-- Sticky Counter -->
-                <div class="sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md pb-4 mb-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center transition-colors"
-                     :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-semibold tracking-wide uppercase">Tier Usage</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Current Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
-                    </div>
-                    <div class="flex items-center gap-2 font-bold text-lg">
-                        <span x-text="selectedCount"></span> 
-                        <span class="text-gray-400 font-normal">/</span> 
-                        <span x-text="maxAssets"></span>
-                    </div>
-                </div>
+                <!-- Removed internal Tier Usage -->
 
                 @if($activeChannel === 'facebook_organic')
                     <div class="mt-6 p-5 rounded-r-xl border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-500/10 shadow-sm" style="margin-bottom: 2.5rem;">
@@ -288,4 +295,5 @@
 
         </div>
     </div>
+</div>
 </x-filament-panels::page>
