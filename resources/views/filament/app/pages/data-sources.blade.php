@@ -166,7 +166,10 @@
         <!-- Sidebar Navigation -->
         <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto" style="max-width: 16rem;">
             @foreach($this->getProviders() as $pKey => $provider)
-                <div class="flex flex-col gap-2" x-data="{ expanded: true }">
+                @php
+                    $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
+                @endphp
+                <div class="flex flex-col gap-2" x-data="{ expanded: {{ $hasActiveChannel ? 'true' : 'false' }} }">
                     <!-- Provider Header -->
                     <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold pb-1 border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500">
                         <div class="flex items-center gap-2">
