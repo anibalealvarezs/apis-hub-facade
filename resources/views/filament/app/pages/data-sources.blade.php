@@ -1,8 +1,4 @@
 <x-filament-panels::page>
-    <x-slot name="headerActions">
-        <div id="tier-usage-header-target" class="flex items-center"></div>
-    </x-slot>
-
     <div class="flex flex-col gap-6" 
          x-data="{ 
             activeTab: @entangle('activeChannel'),

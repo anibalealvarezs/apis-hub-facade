@@ -252,6 +252,15 @@ class DataSources extends Page
         return $sharedCount > 0;
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('tierUsageTarget')
+                ->label('')
+                ->view('filament.app.actions.tier-usage-target')
+        ];
+    }
+
     public function discoverAssetsAction(): Action
     {
         return Action::make('discoverAssets')
