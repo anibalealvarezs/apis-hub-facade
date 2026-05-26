@@ -218,7 +218,7 @@
         <!-- Content Area -->
         <div class="w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
             
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10" style="margin-bottom: 2.5rem;">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10" style="margin-bottom: 1.5rem;">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                         {{ $this->getChannelLabel($activeChannel) }}
@@ -272,19 +272,7 @@
                 
                 <!-- Removed internal Tier Usage -->
 
-                @if($activeChannel === 'facebook_organic')
-                    <div class="mt-6 p-5 rounded-r-xl border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-500/10 shadow-sm" style="margin-bottom: 2.5rem;">
-                        <div class="flex items-start gap-4">
-                            <x-heroicon-s-exclamation-triangle class="w-6 h-6 text-warning-600 dark:text-warning-400 shrink-0 mt-0.5" />
-                            <div>
-                                <h3 class="text-base font-bold text-warning-800 dark:text-warning-300 tracking-tight">Historic Metrics Limitation</h3>
-                                <p class="text-sm text-warning-700 dark:text-warning-100 mt-1 leading-relaxed">
-                                    Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold text-warning-900 dark:text-white">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+
 
                 <form wire:submit="save">
                     {{ $this->form }}
