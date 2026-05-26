@@ -4,6 +4,7 @@ namespace App\Filament\Account\Pages;
 
 use Filament\Pages\Page;
 use App\Models\SubscriptionPlan;
+use App\Models\BillingProfile;
 use Illuminate\Support\Facades\Auth;
 
 class AccountSubscription extends Page
@@ -14,13 +15,37 @@ class AccountSubscription extends Page
 
     protected static ?string $navigationGroup = 'Billing & Payments';
 
-    protected static ?string $title = 'My Subscription';
+    protected static ?string $title = 'Manage Subscriptions';
 
     public $plans;
+    public $selectedProfileId;
 
     public function mount()
     {
         $this->plans = SubscriptionPlan::where('is_active', true)->orderBy('price', 'asc')->get();
+        
+        // Select the default billing profile or the first available one
+        $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
+        if ($defaultProfile) {
+            $this->selectedProfileId = $defaultProfile->id;
+        } else {
+            $this->selectedProfileId = auth()->user()->getAvailableBillingProfiles()->first()?->id;
+        }
+    }
+
+    public function getSelectedProfileProperty(): ?BillingProfile
+    {
+        if (!$this->selectedProfileId) {
+            return null;
+        }
+
+        // Security check: ensure user has access to this billing profile
+        $profile = BillingProfile::find($this->selectedProfileId);
+        if ($profile && auth()->user()->getAvailableBillingProfiles()->contains($profile->id)) {
+            return $profile;
+        }
+
+        return null;
     }
 
     protected function getHeaderActions(): array
@@ -33,28 +58,35 @@ class AccountSubscription extends Page
                 ->requiresConfirmation()
                 ->modalHeading('Confirm Downgrade')
                 ->modalDescription(function () {
-                    $user = auth()->user();
-                    if ($user->tier === \App\Enums\UserTier::FREE) {
-                        return 'You are already on the Free tier.';
+                    $profile = $this->getSelectedProfileProperty();
+                    if (!$profile) {
+                        return 'Please select a billing profile first.';
+                    }
+
+                    if ($profile->tier === \App\Enums\UserTier::FREE) {
+                        return "The selected profile ({$profile->name}) is already on the Free tier.";
                     }
                     
-                    if ($user->tier === \App\Enums\UserTier::ENTERPRISE) {
-                        return 'Are you sure you want to cancel your Enterprise subscription? Your account will remain active until the end of your billing cycle. At that time, your account will be SUSPENDED and ALL your projects will stop functioning.';
+                    if ($profile->tier === \App\Enums\UserTier::ENTERPRISE) {
+                        return "Are you sure you want to cancel the Enterprise subscription for {$profile->name}? At the end of the billing cycle, the profile will be SUSPENDED and all associated projects will stop functioning.";
                     }
                     
-                    return 'Are you sure you want to cancel your paid subscription? Your current tier will remain active until the end of your billing cycle. At that time, you will be downgraded to the Free plan and any projects exceeding the Free limits will be suspended.';
+                    return "Are you sure you want to cancel the subscription for {$profile->name}? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.";
                 })
                 ->modalSubmitActionLabel('Yes, Cancel Subscription')
                 ->action(function () {
-                    $user = auth()->user();
+                    $profile = $this->getSelectedProfileProperty();
+                    if (!$profile) {
+                        return;
+                    }
                     
                     // 1. Cancel Stripe subscriptions (at end of period)
-                    $user->subscriptions()->where('stripe_status', 'active')->each(function ($sub) {
+                    $profile->subscriptions()->where('stripe_status', 'active')->each(function ($sub) {
                         $sub->cancel();
                     });
                     
                     // 2. Cancel PayPal subscriptions
-                    $paypalSubs = $user->subscriptions()->where('paypal_status', 'ACTIVE')->get();
+                    $paypalSubs = $profile->subscriptions()->where('paypal_status', 'ACTIVE')->get();
                     if ($paypalSubs->isNotEmpty()) {
                         $provider = new \Srmklive\PayPal\Services\PayPal;
                         $provider->getAccessToken();
@@ -62,7 +94,6 @@ class AccountSubscription extends Page
                             if ($sub->paypal_subscription_id) {
                                 try {
                                     $provider->cancelSubscription($sub->paypal_subscription_id, 'User requested cancellation');
-                                    // Local record update will be handled by webhook, but we mark it as pending cancellation
                                     $sub->update(['paypal_status' => 'CANCEL_PENDING']);
                                 } catch (\Exception $e) {
                                     \Illuminate\Support\Facades\Log::error('Downgrade: Failed to cancel PayPal Sub', ['msg' => $e->getMessage()]);
@@ -70,19 +101,19 @@ class AccountSubscription extends Page
                             }
                         }
                     }
-
-                    // We NO LONGER enforce local downgrade and suspensions here.
-                    // This is the Netflix model: they keep the tier until ends_at.
                     
                     \Filament\Notifications\Notification::make()
                         ->title('Subscription Cancelled')
-                        ->body('Your subscription will not renew. Your current plan remains active until the end of the billing cycle.')
+                        ->body("The subscription for {$profile->name} will not renew and will remain active until the end of the cycle.")
                         ->success()
                         ->send();
                         
                     return redirect()->route('filament.account.pages.account-subscription');
                 })
-                ->visible(fn () => auth()->user()->tier !== \App\Enums\UserTier::FREE)
+                ->visible(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier !== \App\Enums\UserTier::FREE;
+                })
         ];
     }
 }
