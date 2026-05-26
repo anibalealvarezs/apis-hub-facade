@@ -72,8 +72,8 @@ class StripeWebhookListener
             $plan = SubscriptionPlan::where('stripe_price_id', $stripePriceId)->first();
             
             if ($plan) {
-                if ($user->tier?->value !== $plan->tier) {
-                    $user->update(['tier' => $plan->tier]);
+                if ($profile->tier?->value !== $plan->tier) {
+                    $profile->update(['tier' => $plan->tier]);
                     
                     BillingLog::create([
                         'user_id' => $user->id,
@@ -87,13 +87,13 @@ class StripeWebhookListener
                         ]
                     ]);
                     
-                    Log::info('Stripe Webhook: Tier upgraded/restored', ['user_id' => $user->id, 'tier' => $plan->tier]);
+                    Log::info('Stripe Webhook: Billing Profile tier upgraded/restored', ['billing_profile_id' => $profile->id, 'tier' => $plan->tier]);
                 }
             }
         } else {
             // Subscription is invalid, canceled, or past due
-            if ($user->tier?->value !== 'free') {
-                $user->update(['tier' => 'free']);
+            if ($profile->tier?->value !== 'free') {
+                $profile->update(['tier' => 'free']);
                 
                 BillingLog::create([
                     'user_id' => $user->id,
@@ -106,11 +106,11 @@ class StripeWebhookListener
                     ]
                 ]);
                 
-                Log::info('Stripe Webhook: Tier downgraded to free', ['user_id' => $user->id]);
+                Log::info('Stripe Webhook: Billing Profile tier downgraded to free', ['billing_profile_id' => $profile->id]);
                 
                 // Suspend projects due to downgrade
                 try {
-                    app(\App\Services\BillingLifecycleService::class)->enforceDowngradeLimits($user, \App\Enums\UserTier::FREE);
+                    app(\App\Services\BillingLifecycleService::class)->enforceDowngradeLimits($profile, \App\Enums\UserTier::FREE);
                     
                     // Notify User
                     $user->notify(new \App\Notifications\BillingPaymentFailedNotification());

@@ -57,7 +57,7 @@ class StripeCheckoutController extends Controller
                 $subscription->swapAndInvoice($priceId);
                 
                 // Update tier locally
-                if ($profile->tier?->value !== $plan->tier->value) {
+                if ($profile->tier?->value !== $plan->tier) {
                     $profile->update(['tier' => $plan->tier]);
                     
                     BillingLog::create([
@@ -115,7 +115,7 @@ class StripeCheckoutController extends Controller
         $profile = BillingProfile::find($profileId);
 
         if ($plan && $profile) {
-            if ($profile->tier?->value !== $plan->tier->value) {
+            if ($profile->tier?->value !== $plan->tier) {
                 $profile->update([
                     'tier' => $plan->tier
                 ]);

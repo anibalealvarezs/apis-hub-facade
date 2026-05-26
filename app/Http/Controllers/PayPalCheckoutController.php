@@ -53,7 +53,7 @@ class PayPalCheckoutController extends Controller
                 
                 if (isset($response['id']) || isset($response['links'])) {
                     // Update tier locally
-                    if ($profile->tier?->value !== $plan->tier->value) {
+                    if ($profile->tier?->value !== $plan->tier) {
                         $profile->update(['tier' => $plan->tier]);
                         $profile->user->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
                     }
@@ -150,7 +150,7 @@ class PayPalCheckoutController extends Controller
                 \Illuminate\Support\Facades\Log::info('Local subscription updated/created', ['subscription_id' => $subscription->id]);
 
                 // Update the billing profile's tier immediately
-                if ($profile->tier?->value !== $plan->tier->value) {
+                if ($profile->tier?->value !== $plan->tier) {
                     $profile->update([
                         'tier' => $plan->tier
                     ]);
