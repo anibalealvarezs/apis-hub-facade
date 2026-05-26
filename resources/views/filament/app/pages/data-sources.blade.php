@@ -218,7 +218,7 @@
         <!-- Content Area -->
         <div class="w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
             
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-10 pb-6 border-b border-gray-200 dark:border-white/10">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10" style="margin-bottom: 2.5rem;">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                         {{ $this->getChannelLabel($activeChannel) }}
