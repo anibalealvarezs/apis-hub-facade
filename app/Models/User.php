@@ -141,6 +141,28 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     }
 
     /**
+     * Check if the user's default billing profile can create more projects.
+     */
+    public function canCreateMoreProjects(): bool
+    {
+        $defaultProfile = $this->billingProfiles()->where('is_default', true)->first() 
+            ?? $this->billingProfiles()->first();
+
+        if (!$defaultProfile) {
+            return false;
+        }
+
+        // Count projects currently assigned to this profile
+        $projectCount = $defaultProfile->projects()->count();
+
+        // Get max projects allowed for the profile's tier
+        $maxProjects = app(\App\Services\BillingLifecycleService::class)
+            ->getMaxProjectsForTier($defaultProfile->tier);
+
+        return $projectCount < $maxProjects;
+    }
+
+    /**
      * Force Laravel's native Email Verification into the Job Queue.
      */
     public function sendEmailVerificationNotification()
