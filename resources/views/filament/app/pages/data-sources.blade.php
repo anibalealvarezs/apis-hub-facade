@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    <x-slot name="headerActions">
+        <div id="tier-usage-header-target" class="flex items-center"></div>
+    </x-slot>
+
     <div class="flex flex-col gap-6" 
          x-data="{ 
             activeTab: @entangle('activeChannel'),
@@ -149,6 +153,19 @@
             }
          }">
          
+        <template x-teleport="#tier-usage-header-target">
+            <div class="flex items-center gap-3 text-sm transition-colors"
+                 :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">Tier Usage</span>
+                    <div class="font-bold text-base">
+                        <span x-text="selectedCount"></span> / <span x-text="maxAssets"></span>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
         <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto" style="max-width: 16rem;">
@@ -216,17 +233,6 @@
                     <div class="flex items-center gap-3">
                         {{ $this->getAction('updateCredentials') }}
                         {{ $this->getAction('discoverAssets') }}
-                    </div>
-                    <!-- Tier Usage Widget -->
-                    <div class="flex items-center gap-3 text-sm transition-colors"
-                         :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-400'">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-500">Tier Usage</span>
-                            <div class="font-bold text-base">
-                                <span x-text="selectedCount"></span> / <span x-text="maxAssets"></span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
