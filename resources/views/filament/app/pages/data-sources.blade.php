@@ -23,17 +23,17 @@
                 let lock = this.lockStates[id];
                 
                 if (lock.status === 'locked') {
-                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">Quota Locked</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>Quota Locked</span>`;
                 }
                 
                 if (lock.status === 'pending_release') {
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400" title="Disabled at ${dDate}">Locked until cycle end (${this.cycleBounds.ends_at})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>Locked until cycle end (${this.cycleBounds.ends_at})</span>`;
                 }
                 
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
-                        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400">Grace Period paused (Waiting for deployment)</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>Grace Period paused (Waiting for deployment)</span>`;
                     }
                     
                     let stagedAt = new Date(lock.staged_at).getTime();
@@ -44,7 +44,7 @@
                     let remainingMs = endsAt - this.currentTime;
                     
                     if (remainingMs <= 0) {
-                        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">Quota Locked (Refresh needed)</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>Quota Locked (Refresh needed)</span>`;
                     }
                     
                     let remainingMins = Math.floor(remainingMs / 60000);
@@ -52,7 +52,7 @@
                     let m = remainingMins % 60;
                     let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
                     
-                    return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400">Grace Period (Ends in ${timeStr})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>Grace Period (Ends in ${timeStr})</span>`;
                 }
                 
                 return '';
