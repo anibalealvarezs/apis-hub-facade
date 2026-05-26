@@ -51,16 +51,14 @@ class StripeCheckoutController extends Controller
                 $subscription = $profile->subscription('default');
                 
                 if ($coupon && $coupon->stripe_promotion_code_id) {
-                    // Cannot easily apply promo code on swap in Cashier directly, it requires passing it to the Stripe API.
-                    // For simplicity in this implementation, we apply it via the Stripe API directly or tell them it's for new subs only.
                     return back()->with('error', 'Promo codes can only be applied to new subscriptions.');
                 }
                 
                 $subscription->swapAndInvoice($priceId);
                 
                 // Update tier locally
-                if ($request->user()->tier?->value !== $plan->tier->value) {
-                    $request->user()->update(['tier' => $plan->tier]);
+                if ($profile->tier?->value !== $plan->tier->value) {
+                    $profile->update(['tier' => $plan->tier]);
                     
                     BillingLog::create([
                         'user_id' => $request->user()->id,
@@ -74,7 +72,7 @@ class StripeCheckoutController extends Controller
                         ]
                     ]);
                     
-                    $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                    $profile->user->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
                 }
                 
                 return redirect()->route('filament.account.pages.account-subscription')
@@ -93,7 +91,7 @@ class StripeCheckoutController extends Controller
             }
             
             return $checkout->checkout([
-                    'success_url' => route('stripe.return', ['plan_id' => $plan->id]) . '&session_id={CHECKOUT_SESSION_ID}',
+                    'success_url' => route('stripe.return', ['plan_id' => $plan->id, 'billing_profile_id' => $profile->id]) . '&session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('filament.account.pages.account-subscription'),
                 ]);
         } catch (\Exception $e) {
@@ -106,20 +104,22 @@ class StripeCheckoutController extends Controller
     {
         $sessionId = $request->get('session_id');
         $planId = $request->get('plan_id');
+        $profileId = $request->get('billing_profile_id');
 
-        if (!$sessionId || !$planId) {
+        if (!$sessionId || !$planId || !$profileId) {
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('error', 'Invalid Stripe session.');
         }
 
         $plan = SubscriptionPlan::find($planId);
+        $profile = BillingProfile::find($profileId);
 
-        if ($plan) {
-            if ($request->user()->tier?->value !== $plan->tier->value) {
-                $request->user()->update([
+        if ($plan && $profile) {
+            if ($profile->tier?->value !== $plan->tier->value) {
+                $profile->update([
                     'tier' => $plan->tier
                 ]);
-                $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                $profile->user->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
             }
             return redirect()->route('filament.account.pages.account-subscription')
                 ->with('success', "You have successfully subscribed to the {$plan->name} plan via Stripe!");

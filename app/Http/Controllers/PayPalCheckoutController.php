@@ -53,9 +53,9 @@ class PayPalCheckoutController extends Controller
                 
                 if (isset($response['id']) || isset($response['links'])) {
                     // Update tier locally
-                    if ($request->user()->tier?->value !== $plan->tier->value) {
-                        $request->user()->update(['tier' => $plan->tier]);
-                        $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                    if ($profile->tier?->value !== $plan->tier->value) {
+                        $profile->update(['tier' => $plan->tier]);
+                        $profile->user->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
                     }
                     
                     return redirect()->route('filament.account.pages.account-subscription')
@@ -149,17 +149,16 @@ class PayPalCheckoutController extends Controller
                 
                 \Illuminate\Support\Facades\Log::info('Local subscription updated/created', ['subscription_id' => $subscription->id]);
 
-                // Update the user's tier immediately
-                if ($request->user()->tier?->value !== $plan->tier->value) {
-                    $request->user()->update([
+                // Update the billing profile's tier immediately
+                if ($profile->tier?->value !== $plan->tier->value) {
+                    $profile->update([
                         'tier' => $plan->tier
                     ]);
-                    $request->user()->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
+                    $profile->user->notify(new \App\Notifications\TierUpgradedNotification($plan->name));
                 }
                 
-                \Illuminate\Support\Facades\Log::info('User tier updated', ['new_tier' => $plan->tier]);
+                \Illuminate\Support\Facades\Log::info('Billing Profile tier updated', ['new_tier' => $plan->tier]);
 
-                // Assuming success
                 return redirect()->route('filament.account.pages.account-subscription')
                     ->with('success', 'Subscription created successfully!');
             }
