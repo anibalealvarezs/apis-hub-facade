@@ -262,7 +262,7 @@
                 </div>
 
                 @if($activeChannel === 'facebook_organic')
-                    <div class="mt-6 mb-12 p-5 rounded-r-xl border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-500/10 shadow-sm">
+                    <div class="mt-6 p-5 rounded-r-xl border-l-4 border-warning-500 bg-warning-50 dark:bg-warning-500/10 shadow-sm" style="margin-bottom: 2.5rem;">
                         <div class="flex items-start gap-4">
                             <x-heroicon-s-exclamation-triangle class="w-6 h-6 text-warning-600 dark:text-warning-400 shrink-0 mt-0.5" />
                             <div>
