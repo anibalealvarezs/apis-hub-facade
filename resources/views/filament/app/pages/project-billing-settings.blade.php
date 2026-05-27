@@ -1,8 +1,7 @@
 <x-filament-panels::page>
-    <div class="mb-4">
-        <p class="text-gray-600 dark:text-gray-400">
-            Manage the billing profiles assigned to pay for this project's subscriptions and usage.
-            If no primary profile is assigned, the project may be suspended upon the next billing cycle.
+    <div class="mb-2">
+        <p class="text-gray-600 dark:text-gray-400 text-sm">
+            Este proyecto está enlazado a un único perfil de facturación que financia el coste de su infraestructura y sus cuotas de sincronización.
         </p>
     </div>
 
