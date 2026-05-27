@@ -158,6 +158,14 @@ class RemoteEngineService
     }
 
     /**
+     * Fetch sync telemetry payload.
+     */
+    public function getSyncTelemetry(Project $project)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->getSyncTelemetry());
+    }
+
+    /**
      * Validate and fetch platform tokens from the remote node.
      */
     public function validateTokens(Project $project, string $type = 'all')

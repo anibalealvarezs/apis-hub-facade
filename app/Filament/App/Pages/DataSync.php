@@ -35,14 +35,14 @@ class DataSync extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            $response = $service->getMonitoringData($tenant);
+            $response = $service->getSyncTelemetry($tenant);
             
             \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
 
             if (is_array($response) && isset($response['completion_percentage'])) {
                 $this->syncData = $response;
             } else {
-                $this->syncData = ['raw_debug' => $response];
+                $this->syncData = [];
                 // Temporarily disabled while the Explorer's Status page is being reworked.
                 /*
                 Notification::make()
@@ -57,7 +57,7 @@ class DataSync extends Page
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("DataSync refreshData Exception: " . $e->getMessage());
-            $this->syncData = ['raw_debug' => 'Exception Caught: ' . $e->getMessage()];
+            $this->syncData = [];
         }
 
         $this->isLoading = false;
