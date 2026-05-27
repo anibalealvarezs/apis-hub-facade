@@ -23,6 +23,13 @@ class ProjectBillingSettings extends Page
         abort_unless(filament()->getTenant()->user_id === auth()->id(), 403, 'Only the project owner can manage billing.');
     }
 
+    protected function getActions(): array
+    {
+        return [
+            $this->assignProfileAction(),
+        ];
+    }
+
     public function assignProfileAction(): Action
     {
         return Action::make('assign_profile')

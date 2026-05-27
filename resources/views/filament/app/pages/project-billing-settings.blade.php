@@ -108,7 +108,7 @@
 
                     <!-- Action Trigger Button -->
                     <div class="flex items-center justify-center shrink-0">
-                        {{ $this->assignProfileAction }}
+                        {{ $this->getAction('assign_profile') }}
                     </div>
                 </div>
             </div>
@@ -125,7 +125,7 @@
                     Este proyecto no tiene asignado ningún perfil de facturación activo. Por favor, asigna uno para evitar interrupciones de servicio.
                 </p>
                 <div class="mt-6 flex justify-center">
-                    {{ $this->assignProfileAction }}
+                    {{ $this->getAction('assign_profile') }}
                 </div>
             </div>
         @endif
