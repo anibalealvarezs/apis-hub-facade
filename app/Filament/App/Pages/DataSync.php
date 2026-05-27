@@ -49,19 +49,26 @@ class DataSync extends Page
                     $extractNames = function($data) use (&$extractNames, &$accountMap) {
                         if (!is_array($data)) return;
                         
-                        // Check if current level is a list of assets
-                        if (isset($data[0]) && is_array($data[0]) && isset($data[0]['id'])) {
-                            foreach ($data as $item) {
-                                if (isset($item['id']) && isset($item['name'])) {
-                                    $accountMap[(string)$item['id']] = $item['name'];
+                        // Check if current node represents an asset
+                        if (isset($data['id']) && isset($data['name']) && is_string($data['name'])) {
+                            $accountMap[(string)$data['id']] = [
+                                'name' => $data['name'],
+                                'ig_username' => null,
+                            ];
+                            
+                            // Check for IG account inside FB page
+                            if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
+                                $ig = $data['instagram_business_account'];
+                                if (isset($ig['username'])) {
+                                    $accountMap[(string)$data['id']]['ig_username'] = $ig['username'];
                                 }
                             }
-                        } else {
-                            // Go deeper
-                            foreach ($data as $key => $val) {
-                                if (is_array($val)) {
-                                    $extractNames($val);
-                                }
+                        }
+                        
+                        // Keep digging deeper
+                        foreach ($data as $key => $val) {
+                            if (is_array($val)) {
+                                $extractNames($val);
                             }
                         }
                     };
@@ -80,7 +87,10 @@ class DataSync extends Page
                                     if (is_array($asset)) {
                                         $asset['id'] = $actualId;
                                         if (empty($asset['name']) && isset($accountMap[$actualId])) {
-                                            $asset['name'] = $accountMap[$actualId];
+                                            $asset['name'] = $accountMap[$actualId]['name'];
+                                            if (!empty($accountMap[$actualId]['ig_username'])) {
+                                                $asset['ig_username'] = $accountMap[$actualId]['ig_username'];
+                                            }
                                         }
                                     }
                                     

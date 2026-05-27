@@ -192,13 +192,31 @@
                                                                         <x-heroicon-o-document-text class="w-5 h-5 text-gray-400" />
                                                                     @endif
                                                                     <div class="flex flex-col">
-                                                                        <span class="font-medium text-gray-900 dark:text-white truncate max-w-xs block" title="{{ $assetStats['name'] ?? $assetId }}">
-                                                                            {{ Str::limit($assetStats['name'] ?? str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
-                                                                        </span>
-                                                                        @if(!empty($assetStats['name']))
-                                                                            <span class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs block" title="{{ $assetId }}">
-                                                                                {{ Str::limit(str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                        @if(($channelData['channel'] ?? '') === 'facebook_organic')
+                                                                            <a href="https://facebook.com/{{ $assetId }}" target="_blank" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 truncate max-w-xs block transition-colors" title="{{ $assetStats['name'] ?? $assetId }}">
+                                                                                {{ Str::limit($assetStats['name'] ?? str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                                <x-heroicon-m-arrow-top-right-on-square class="inline w-3 h-3 ml-1 mb-0.5 opacity-70"/>
+                                                                            </a>
+                                                                            @if(!empty($assetStats['name']))
+                                                                                <span class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs block mt-0.5" title="{{ $assetId }}">
+                                                                                    ID: {{ Str::limit(str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                                </span>
+                                                                            @endif
+                                                                            @if(!empty($assetStats['ig_username']))
+                                                                                <a href="https://instagram.com/{{ $assetStats['ig_username'] }}" target="_blank" class="text-xs font-medium text-pink-600 hover:text-pink-500 dark:text-pink-400 dark:hover:text-pink-300 truncate max-w-xs block mt-1 transition-colors" title="Instagram: {{ $assetStats['ig_username'] }}">
+                                                                                    @ {{ $assetStats['ig_username'] }}
+                                                                                    <x-heroicon-m-arrow-top-right-on-square class="inline w-3 h-3 ml-1 mb-0.5 opacity-70"/>
+                                                                                </a>
+                                                                            @endif
+                                                                        @else
+                                                                            <span class="font-medium text-gray-900 dark:text-white truncate max-w-xs block" title="{{ $assetStats['name'] ?? $assetId }}">
+                                                                                {{ Str::limit($assetStats['name'] ?? str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
                                                                             </span>
+                                                                            @if(!empty($assetStats['name']))
+                                                                                <span class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs block mt-0.5" title="{{ $assetId }}">
+                                                                                    ID: {{ Str::limit(str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                                </span>
+                                                                            @endif
                                                                         @endif
                                                                     </div>
                                                                 @endif
