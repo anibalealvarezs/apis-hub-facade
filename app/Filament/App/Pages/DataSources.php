@@ -848,7 +848,11 @@ class DataSources extends Page
                         </div>
                     '))
                     ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString(
-                        $get('lost_access') ? '⚠️ Lost Access' : 'ID: <a href="' . ($get('link') ?? $get('url') ?? '#') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>'
+                        $get('lost_access') ? '⚠️ Lost Access' : (
+                            $this->activeChannel === 'facebook_marketing' ? 'ID: ' . ($get('id') ?? 'N/A') :
+                            ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://' . preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))) . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>' :
+                            'ID: <a href="' . ($get('link') ?? $get('url') ?? '#') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>')
+                        )
                     ))
                     ->inline(false)
                     ->default(true)
@@ -963,7 +967,10 @@ class DataSources extends Page
                     </template>
                 </div>
             '))
-            ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString('ID: <a href="' . $get('link') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . $get('id') . '</a>'))
+            ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString(
+                'ID: <a href="' . $get('link') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . $get('id') . '</a>' .
+                (!empty($get('ig_account_name')) ? '<br><span class="text-xs text-gray-500 mt-0.5 inline-block">IG: <a href="https://instagram.com/' . $get('ig_account_name') . '" target="_blank" class="text-pink-500 hover:underline">@' . $get('ig_account_name') . '</a></span>' : '')
+            ))
             ->inline(false)
             ->default(true)
             ->live()
