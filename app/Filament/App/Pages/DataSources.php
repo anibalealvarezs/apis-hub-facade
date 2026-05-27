@@ -1059,6 +1059,25 @@ class DataSources extends Page
                 unset($payload['metrics_level']);
             }
 
+            // ENFORCE FREE TIER CONSTRAINT RULES:
+            $isFree = $tenant->billingProfile?->tier === \App\Enums\UserTier::FREE;
+            if ($isFree) {
+                // 1. Capping workers to a maximum of 1
+                $payload['max_workers'] = 1;
+
+                // 2. Disabling synthetic GSC calculations
+                $payload['calculate_synthetics'] = false;
+                if (isset($payload['google_search_console'])) {
+                    $payload['google_search_console']['calculate_synthetics'] = false;
+                }
+                
+                // 3. Capping historical sync range to 6 months
+                $payload['cache_history_range'] = '6_months';
+                $channelConfig['cache_history_range'] = '6_months';
+                $payload[$channel . '.cache_history_range'] = '6_months';
+                $channelConfig[$channel . '.cache_history_range'] = '6_months';
+            }
+
             // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
             $assetsListUi = array_values(\Illuminate\Support\Arr::get($channelConfig, $assetListKey, []));
             $assetsListDb = array_values(\Illuminate\Support\Arr::get($dbState[$channel] ?? [], $assetListKey, []));

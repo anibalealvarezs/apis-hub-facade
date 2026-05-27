@@ -19,7 +19,7 @@ beforeEach(function () {
     ]);
 });
 
-it('does not queue DeployProjectJob if deploy_immediately is false during registration', function () {
+it('does not queue DeployProjectJob during registration', function () {
     Queue::fake();
     actingAs($this->user);
 
@@ -27,7 +27,6 @@ it('does not queue DeployProjectJob if deploy_immediately is false during regist
         ->fillForm([
             'name' => 'Test Project',
             'subdomain' => 'test-deploy-false',
-            'deploy_immediately' => false,
         ])
         ->call('register')
         ->assertHasNoFormErrors();
@@ -36,26 +35,9 @@ it('does not queue DeployProjectJob if deploy_immediately is false during regist
     Queue::assertNotPushed(DeployProjectJob::class);
 
     // Verify Project was created logically
-    $project = Project::where('subdomain', 'test-deploy-false')->first();
+    $project = Project::where('subdomain', 'test-deploy-false-dev')->first();
     expect($project)->not->toBeNull();
     expect($project->last_deployed_at)->toBeNull();
-});
-
-it('queues DeployProjectJob if deploy_immediately is true during registration', function () {
-    Queue::fake();
-    actingAs($this->user);
-
-    Livewire::test(RegisterProject::class)
-        ->fillForm([
-            'name' => 'Test Project True',
-            'subdomain' => 'test-deploy-true',
-            'deploy_immediately' => true,
-        ])
-        ->call('register')
-        ->assertHasNoFormErrors();
-
-    // Verify Job WAS dispatched
-    Queue::assertPushed(DeployProjectJob::class);
 });
 
 it('shows the manual deploy action if the project has never been deployed', function () {
@@ -73,7 +55,29 @@ it('shows the manual deploy action if the project has never been deployed', func
         ->assertActionVisible('deploy_initial');
 });
 
-it('queues DeployProjectJob when the manual deploy action is used', function () {
+it('prevents manual deployment if there are no configured assets', function () {
+    Queue::fake();
+    
+    $project = Project::factory()->create([
+        'user_id' => $this->user->id,
+        'subdomain' => 'no-assets-project',
+        'is_active' => true,
+        'last_deployed_at' => null,
+        'sync_config' => [], // No configured assets
+    ]);
+    $project->users()->attach($this->user->id);
+
+    actingAs($this->user);
+
+    Livewire::test(ProjectSettings::class, ['tenant' => $project->subdomain])
+        ->callAction('deploy_initial')
+        ->assertHasNoActionErrors();
+
+    // Verify Job was NOT pushed due to lack of assets
+    Queue::assertNotPushed(DeployProjectJob::class);
+});
+
+it('queues DeployProjectJob when the manual deploy action is used and has configured assets', function () {
     Queue::fake();
     
     $project = Project::factory()->create([
@@ -81,6 +85,14 @@ it('queues DeployProjectJob when the manual deploy action is used', function () 
         'subdomain' => 'manual-deploy-project',
         'is_active' => true,
         'last_deployed_at' => null,
+        'sync_config' => [
+            'google_search_console' => [
+                'enabled' => true,
+                'sites' => [
+                    ['id' => 'site1', 'enabled' => true]
+                ]
+            ]
+        ],
     ]);
     $project->users()->attach($this->user->id);
 

@@ -38,6 +38,12 @@ class ProcessProjectInvitation
             return;
         }
 
+        // Validar límite de 1 proyecto para plan gratuito
+        if ($user->hasOnlyFreeProfiles() && $user->getTotalAccessibleProjectsCount() >= 1) {
+            session()->flash('warning', 'Para colaborar en este proyecto en tu plan gratuito, primero debes eliminar tu proyecto de pruebas propio para desmontar su infraestructura y liberar recursos.');
+            return;
+        }
+
         // 1. Vincular al proyecto (si no está ya)
         if (!$user->projects()->where('project_id', $invitation->project_id)->exists()) {
             $user->projects()->attach($invitation->project_id);

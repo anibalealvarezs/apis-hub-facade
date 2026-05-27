@@ -71,6 +71,15 @@ class AccountSubscription extends Page
                         return "Are you sure you want to cancel the Enterprise subscription for {$profile->name}? At the end of the billing cycle, the profile will be SUSPENDED and all associated projects will stop functioning.";
                     }
                     
+                    $hasOtherFree = \App\Models\BillingProfile::where('user_id', auth()->id())
+                        ->where('id', '!=', $profile->id)
+                        ->where('tier', \App\Enums\UserTier::FREE)
+                        ->exists();
+
+                    if ($hasOtherFree) {
+                        return "Ya tienes otro perfil de facturación gratuito. Si cancelas la suscripción de este perfil ({$profile->name}), al final del ciclo de facturación el perfil será SUSPENDIDO y todos sus proyectos asociados dejarán de funcionar, ya que solo se permite un único perfil de facturación gratuito por cuenta. Para evitar esto, te recomendamos mantener tu suscripción o eliminar tu perfil gratuito existente antes de que finalice el ciclo.";
+                    }
+                    
                     return "Are you sure you want to cancel the subscription for {$profile->name}? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.";
                 })
                 ->modalSubmitActionLabel('Yes, Cancel Subscription')

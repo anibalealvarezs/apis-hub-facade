@@ -107,7 +107,8 @@ class ManageCollaborators extends Page implements HasTable
                 Action::make('invite')
                     ->label('Invitar Colaborador')
                     ->icon('heroicon-o-envelope')
-                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
+                    ->extraAttributes(fn () => Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE ? ['title' => 'Upgrade a PRO para invitar colaboradores.'] : [])
                     ->form([
                         TextInput::make('email')
                             ->email()
@@ -116,7 +117,7 @@ class ManageCollaborators extends Page implements HasTable
                         Select::make('role')
                             ->label('Rol en el Proyecto')
                             ->options(
-                                Role::where('name', '!=', 'super_admin')->pluck('name', 'name')
+                                Role::whereNotIn('name', ['super_admin', 'project_owner'])->pluck('name', 'name')
                             )
                             ->required()
                     ])

@@ -1,13 +1,17 @@
 <x-filament-panels::page>
+    @php
+        $tenant = filament()->getTenant();
+    @endphp
+    @if($tenant)
     <div class="space-y-6">
-        @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
+        @if(!$tenant->is_active || $tenant->billing_status === 'suspended')
             <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
               <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
             </div>
         @endif
 
         @php
-            $isOwner = auth()->id() === filament()->getTenant()->user_id;
+            $isOwner = auth()->id() === $tenant->user_id;
         @endphp
 
         @if(!$isOwner)
@@ -75,7 +79,7 @@
             @endif
         </div>
         @endif
-
+ 
         <x-filament::section>
             <x-slot name="heading">
                 Detalles del Proyecto
@@ -84,31 +88,31 @@
             <x-slot name="description">
                 Información general de infraestructura de tu proyecto.
             </x-slot>
-
+ 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm text-gray-500">Nombre</p>
-                    <p class="font-medium">{{ filament()->getTenant()->name }}</p>
+                    <p class="font-medium">{{ $tenant->name }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Subdominio</p>
-                    <p class="font-medium">{{ filament()->getTenant()->subdomain }}.apis-hub.cloud</p>
+                    <p class="font-medium">{{ $tenant->subdomain }}.apis-hub.cloud</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Propietario Principal</p>
-                    <p class="font-medium">{{ filament()->getTenant()->trueOwner->name }}</p>
+                    <p class="font-medium">{{ $tenant->trueOwner->name }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Zona Horaria</p>
-                    <p class="font-medium">{{ filament()->getTenant()->timezone ?? 'UTC' }}</p>
+                    <p class="font-medium">{{ $tenant->timezone ?? 'UTC' }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Perfil de Facturación</p>
                     <p class="font-medium">
-                        {{ filament()->getTenant()->billingProfile?->display_name ?? 'Sin Perfil' }} 
-                        @if(filament()->getTenant()->billingProfile)
+                        {{ $tenant->billingProfile?->display_name ?? 'Sin Perfil' }} 
+                        @if($tenant->billingProfile)
                             <span class="text-xs text-gray-400 bg-gray-800 dark:bg-gray-700 px-2 py-0.5 rounded-full ml-1 font-semibold">
-                                {{ filament()->getTenant()->billingProfile->tier->value ?? filament()->getTenant()->billingProfile->tier }}
+                                {{ $tenant->billingProfile->tier->value ?? $tenant->billingProfile->tier }}
                             </span>
                         @endif
                     </p>
@@ -116,9 +120,9 @@
                 <div>
                     <p class="text-sm text-gray-500">Próxima Renovación de Ciclo</p>
                     <p class="font-medium">
-                        @if(filament()->getTenant()->billingProfile)
+                        @if($tenant->billingProfile)
                             @php
-                                $profile = filament()->getTenant()->billingProfile;
+                                $profile = $tenant->billingProfile;
                                 $starts = $profile->current_cycle_starts_at ?? $profile->created_at ?? now()->startOfMonth();
                                 $ends = $profile->current_cycle_ends_at ?? $starts->copy()->addMonth();
                             @endphp
@@ -130,11 +134,11 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Fecha de Creación</p>
-                    <p class="font-medium">{{ filament()->getTenant()->created_at->format('d M, Y') }}</p>
+                    <p class="font-medium">{{ $tenant->created_at->format('d M, Y') }}</p>
                 </div>
             </div>
         </x-filament::section>
-
+ 
         @if($isOwner)
         <x-filament::section>
             <x-slot name="heading">
@@ -143,13 +147,13 @@
             <x-slot name="description">
                 Acciones irreversibles o críticas para la vida del proyecto.
             </x-slot>
-
+ 
             <div class="flex flex-col gap-4">
                 <p class="text-sm text-gray-500">Para transferir este proyecto a otro miembro del equipo o para eliminarlo (iniciando el periodo de gracia de 30 días), utiliza los botones superiores de acción.</p>
             </div>
         </x-filament::section>
         @endif
-
+ 
         @if(config('app.debug'))
         @if($logs && $logs->count() > 0)
         <x-filament::section>
@@ -159,7 +163,7 @@
             <x-slot name="description">
                 Registro de actividades del motor de sincronización en vivo.
             </x-slot>
-
+ 
             <div wire:poll.5s>
                 <div class="bg-gray-950 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto max-h-96 overflow-y-auto">
                     @foreach($logs as $log)
@@ -184,4 +188,5 @@
         @endif
         @endif
     </div>
+    @endif
 </x-filament-panels::page>

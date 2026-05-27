@@ -35,6 +35,12 @@ class InvitationController extends Controller
             }
 
             // El correo coincide, lo vinculamos
+            if ($user->hasOnlyFreeProfiles() && $user->getTotalAccessibleProjectsCount() >= 1) {
+                return redirect('/app')->withErrors([
+                    'invitation' => 'Si solo se cuenta con un perfil propio free tier, solo se puede acceder a un único proyecto. Para poder acceder a un proyecto como colaborador, debe eliminar el proyecto de su perfil free tier.'
+                ]);
+            }
+
             $this->processInvitation($user, $invitation);
 
             // Redirigimos al panel del proyecto

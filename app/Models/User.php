@@ -49,10 +49,10 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return $this->hasRole('super_admin') && $this->is_active;
+            return (bool) ($this->hasRole('super_admin') && $this->is_active);
         }
 
-        return $this->is_active;
+        return (bool) ($this->is_active ?? true);
     }
 
     protected $fillable = [
@@ -160,6 +160,26 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             ->getMaxProjectsForTier($defaultProfile->tier);
 
         return $projectCount < $maxProjects;
+    }
+
+    /**
+     * Check if the user only has FREE billing profiles (no paid profiles).
+     */
+    public function hasOnlyFreeProfiles(): bool
+    {
+        $profiles = $this->billingProfiles;
+        if ($profiles->isEmpty()) {
+            return true;
+        }
+        return $profiles->every(fn ($profile) => $profile->tier === \App\Enums\UserTier::FREE);
+    }
+
+    /**
+     * Count the total number of projects the user has active access to (owned or collaborated).
+     */
+    public function getTotalAccessibleProjectsCount(): int
+    {
+        return $this->projects()->count();
     }
 
     /**

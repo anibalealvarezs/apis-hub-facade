@@ -299,4 +299,32 @@ class Project extends Model
 
         return parent::setAttribute($key, $value);
     }
+
+    /**
+     * Check if the project has at least one channel asset enabled.
+     */
+    public function hasConfiguredAssets(): bool
+    {
+        $syncConfig = $this->sync_config ?? [];
+        if (!is_array($syncConfig) || empty($syncConfig)) {
+            return false;
+        }
+
+        foreach ($syncConfig as $channelKey => $channelConfig) {
+            if (!is_array($channelConfig)) continue;
+            if (empty($channelConfig['enabled'])) continue;
+
+            foreach ($channelConfig as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $asset) {
+                        if (!empty($asset['enabled'])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 }

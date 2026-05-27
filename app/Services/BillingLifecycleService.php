@@ -23,6 +23,17 @@ class BillingLifecycleService
     {
         $suspendedProjects = [];
 
+        // If target tier is FREE, but the user already has another FREE profile, force suspension instead
+        if ($targetTier === UserTier::FREE) {
+            $hasOtherFree = BillingProfile::where('user_id', $profile->user_id)
+                ->where('id', '!=', $profile->id)
+                ->where('tier', UserTier::FREE)
+                ->exists();
+            if ($hasOtherFree) {
+                $targetTier = UserTier::SUSPENDED;
+            }
+        }
+
         $enforcementTier = $targetTier;
         if ($profile->tier === UserTier::ENTERPRISE) {
             if ($targetTier === UserTier::SUSPENDED) {

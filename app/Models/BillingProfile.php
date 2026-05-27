@@ -55,9 +55,31 @@ class BillingProfile extends Model
     {
         parent::boot();
 
+        static::creating(function (BillingProfile $profile) {
+            if ($profile->tier === \App\Enums\UserTier::FREE) {
+                $hasFree = static::where('user_id', $profile->user_id)
+                    ->where('tier', \App\Enums\UserTier::FREE)
+                    ->exists();
+                if ($hasFree) {
+                    throw new \InvalidArgumentException('Ya tienes un perfil de facturación de plan gratuito ("free"). Por favor, sube de nivel tu perfil actual.');
+                }
+            }
+        });
+
         static::updating(function (BillingProfile $profile) {
             if ($profile->isDirty('tier') && $profile->getOriginal('tier') === \App\Enums\UserTier::ENTERPRISE) {
                 throw new \InvalidArgumentException('Enterprise users cannot be downgraded to protect system-level tracking.');
+            }
+
+            if ($profile->isDirty('tier') && $profile->tier === \App\Enums\UserTier::FREE) {
+                $hasOtherFree = static::where('user_id', $profile->user_id)
+                    ->where('id', '!=', $profile->id)
+                    ->where('tier', \App\Enums\UserTier::FREE)
+                    ->exists();
+                if ($hasOtherFree) {
+                    $profile->tier = \App\Enums\UserTier::SUSPENDED;
+                    $profile->status = 'suspended';
+                }
             }
         });
 

@@ -54,9 +54,33 @@ class EnsureUserHasActiveProject
         if ($slugFromUrl) {
             $currentProjectExists = $user->projects()
                 ->where('subdomain', $slugFromUrl)
-                ->exists();
+                ->first();
 
             if ($currentProjectExists) {
+                // Prevent full functionality if there is no billing profile
+                if (empty($currentProjectExists->billing_profile_id) && !$request->routeIs('filament.app.pages.project-billing-settings')) {
+                    if ($currentProjectExists->user_id === $user->id) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Billing Profile Required')
+                            ->body('This project is missing a billing profile. Please assign one to continue.')
+                            ->warning()
+                            ->send();
+                        return redirect()->route('filament.app.pages.project-billing-settings', ['tenant' => $currentProjectExists->subdomain]);
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Project Inactive')
+                            ->body('This project is missing a billing profile. The project owner must configure billing to restore access.')
+                            ->danger()
+                            ->send();
+                        
+                        $alt = $user->projects()->whereNotNull('billing_profile_id')->first();
+                        if ($alt) {
+                            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alt->subdomain]);
+                        }
+                        return redirect()->route('filament.account.pages.dashboard');
+                    }
+                }
+
                 return $next($request);
             }
         }

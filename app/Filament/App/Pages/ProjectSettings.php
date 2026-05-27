@@ -34,14 +34,28 @@ class ProjectSettings extends Page
         return true; 
     }
 
-    protected function getHeaderActions(): array
+    private function getProject(): ?\App\Models\Project
     {
         $project = Filament::getTenant();
-        $isOwner = auth()->id() === $project->user_id;
-
-        if (!$isOwner) {
-            return []; // Ocultar acciones si no es el verdadero propietario
+        if (!$project) {
+            $subdomain = request()->route('tenant') ?? request()->tenant;
+            if ($subdomain) {
+                $project = \App\Models\Project::where('subdomain', $subdomain)->first();
+            }
+            if (!$project) {
+                $project = \App\Models\Project::first();
+            }
         }
+        return $project;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $project = $this->getProject();
+        if (!$project) {
+            return [];
+        }
+        $isOwner = auth()->id() === $project->user_id;
 
         $isSuspended = !$project->is_active || $project->billing_status === 'suspended';
         $actions = [];
@@ -51,6 +65,7 @@ class ProjectSettings extends Page
             ->color('gray')
             ->icon('heroicon-o-pencil-square')
             ->disabled($isSuspended)
+            ->visible(fn () => $isOwner)
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
             ])
@@ -79,53 +94,74 @@ class ProjectSettings extends Page
                 return redirect(request()->header('Referer'));
             });
 
-        if (is_null($project->last_deployed_at)) {
-            $actions[] = Action::make('deploy_initial')
-                ->label('Desplegar Infraestructura Inicial')
-                ->color('success')
-                ->icon('heroicon-o-rocket-launch')
-                ->disabled($isSuspended)
-                ->requiresConfirmation()
-                ->modalHeading('Desplegar Infraestructura')
-                ->modalDescription('Esto aprovisionará el contenedor y la base de datos en el servidor remoto. ¿Estás seguro de continuar?')
-                ->action(function () use ($project) {
-                    \App\Jobs\DeployProjectJob::dispatch($project);
-                    
+        $actions[] = Action::make('deploy_initial')
+            ->label('Desplegar Infraestructura Inicial')
+            ->color('success')
+            ->icon('heroicon-o-rocket-launch')
+            ->disabled($isSuspended)
+            ->visible(fn () => $isOwner && is_null($project->last_deployed_at))
+            ->requiresConfirmation()
+            ->modalHeading('Desplegar Infraestructura')
+            ->modalDescription('Esto aprovisionará el contenedor y la base de datos en el servidor remoto. ¿Estás seguro de continuar?')
+            ->action(function () use ($project) {
+                if (!$project->hasConfiguredAssets()) {
                     Notification::make()
-                        ->title('Despliegue Iniciado')
-                        ->body('La infraestructura se está aprovisionando en segundo plano. Esto puede tomar un par de minutos.')
-                        ->success()
+                        ->title('No se puede desplegar')
+                        ->body('No puedes desplegar infraestructura sin configurar al menos un recurso para sincronizar en Data Sources.')
+                        ->danger()
+                        ->persistent()
                         ->send();
-
                     return redirect(request()->header('Referer'));
-                });
-        } else {
-            $actions[] = Action::make('redeploy')
-                ->label('Aplicar Cambios (Redesplegar)')
-                ->color('success')
-                ->icon('heroicon-o-cloud-arrow-up')
-                ->disabled($isSuspended)
-                ->requiresConfirmation()
-                ->modalHeading('Redesplegar Infraestructura')
-                ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
-                ->action(function () use ($project) {
-                    \App\Jobs\DeployProjectJob::dispatch($project);
-                    
+                }
+
+                \App\Jobs\DeployProjectJob::dispatch($project);
+                
+                Notification::make()
+                    ->title('Despliegue Iniciado')
+                    ->body('La infraestructura se está aprovisionando en segundo plano. Esto puede tomar un par de minutos.')
+                    ->success()
+                    ->send();
+
+                return redirect(request()->header('Referer'));
+            });
+
+        $actions[] = Action::make('redeploy')
+            ->label('Aplicar Cambios (Redesplegar)')
+            ->color('success')
+            ->icon('heroicon-o-cloud-arrow-up')
+            ->disabled($isSuspended)
+            ->visible(fn () => $isOwner && !is_null($project->last_deployed_at))
+            ->requiresConfirmation()
+            ->modalHeading('Redesplegar Infraestructura')
+            ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
+            ->action(function () use ($project) {
+                if (!$project->hasConfiguredAssets()) {
                     Notification::make()
-                        ->title('Redespliegue Iniciado')
-                        ->body('La infraestructura se está actualizando en segundo plano.')
-                        ->success()
+                        ->title('No se puede desplegar')
+                        ->body('No puedes desplegar infraestructura sin configurar al menos un recurso para sincronizar en Data Sources.')
+                        ->danger()
+                        ->persistent()
                         ->send();
-
                     return redirect(request()->header('Referer'));
-                });
-        }
+                }
+
+                \App\Jobs\DeployProjectJob::dispatch($project);
+                
+                Notification::make()
+                    ->title('Redespliegue Iniciado')
+                    ->body('La infraestructura se está actualizando en segundo plano.')
+                    ->success()
+                    ->send();
+
+                return redirect(request()->header('Referer'));
+            });
 
         $actions[] = Action::make('transfer')
                 ->label('Transferir Propiedad')
                 ->color('warning')
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
+                ->visible(fn () => $isOwner)
                 ->requiresConfirmation()
                 ->modalHeading('Transferir Proyecto')
                 ->modalDescription('Selecciona a un colaborador activo de este proyecto para transferirle la propiedad absoluta.')
@@ -176,6 +212,7 @@ class ProjectSettings extends Page
                 ->color('danger')
                 ->icon('heroicon-o-trash')
                 ->disabled($isSuspended)
+                ->visible(fn () => $isOwner)
                 ->requiresConfirmation()
                 ->modalHeading('Eliminar Proyecto')
                 ->modalDescription('Al eliminar este proyecto se bloqueará el acceso al dominio y a los datos de manera inmediata. Tienes 30 días para recuperarlo, luego se destruirá toda su infraestructura permanentemente.')
@@ -221,7 +258,12 @@ class ProjectSettings extends Page
 
     protected function getViewData(): array
     {
-        $project = Filament::getTenant();
+        $project = $this->getProject();
+        if (!$project) {
+            return [
+                'logs' => collect(),
+            ];
+        }
         
         return [
             'logs' => $project->deploymentLogs()->latest()->take(5)->get(),
