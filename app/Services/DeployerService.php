@@ -98,6 +98,8 @@ class DeployerService
         $tokenAuthorityUrl = config('app.url') . '/api/v1/tokens/refresh';
         $tokenAuthorityEnabled = 'true';
 
+        $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
+
         // Generate deterministic, unique host ports based on project ID to prevent Docker conflicts
         $basePort = 11000 + ($project->id * 10);
         $externalPort = $basePort;
@@ -108,6 +110,7 @@ class DeployerService
         return <<<EOT
 APP_ENV=production
 PROJECT_NAME={$project->name}
+BILLING_TIER={$billingTier}
 DEPLOYMENT_NAME=apis-hub-{$project->subdomain}
 SHARED_GATEWAY_NETWORK=apis-hub_default
 USE_SWOOLE=true
@@ -131,6 +134,7 @@ REDIS_PORT=6379
 STARTING_HOST_PORT={$externalPort}
 EXTERNAL_PORT={$externalPort}
 MCP_PORT={$mcpPort}
+DEPLOY_MCP_SERVER=false
 DB_HOST_PORT={$dbHostPort}
 REDIS_HOST_PORT={$redisHostPort}
 
