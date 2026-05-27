@@ -72,6 +72,23 @@ class ProjectBillingSettings extends Page implements HasTable
                     ->action(function (array $data) {
                         $profile = BillingProfile::find($data['billing_profile_id']);
                         $project = filament()->getTenant();
+
+                        // Check if the target profile has capacity to accept this project
+                        $maxProjects = app(\App\Services\BillingLifecycleService::class)
+                            ->getMaxProjectsForTier($profile->tier);
+                        $currentProjectsCount = $profile->projects()
+                            ->where('billing_status', 'active')
+                            ->count();
+
+                        if ($currentProjectsCount >= $maxProjects) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Profile Capacity Exceeded')
+                                ->body("The selected billing profile ({$profile->name}) has reached its maximum project limit of {$maxProjects} for the " . ucfirst($profile->tier->value ?? $profile->tier) . " tier. Please upgrade its tier first.")
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            return;
+                        }
                         
                         // Check if user is the owner of the profile
                         if ($profile->user_id === auth()->id()) {
@@ -101,7 +118,7 @@ class ProjectBillingSettings extends Page implements HasTable
                                 'billing_profile_id' => $profile->id,
                                 'billing_status' => 'pending_approval',
                                 'is_active' => false,
-                            ]);
+                              ]);
 
                             \Filament\Notifications\Notification::make()
                                 ->title('Assignment requested')

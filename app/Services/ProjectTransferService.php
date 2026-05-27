@@ -72,6 +72,13 @@ class ProjectTransferService
                 throw new Exception("Recipient must provide a valid billing profile to assume ownership.");
             }
 
+            // Quota check on the specific new billing profile chosen!
+            $activeProjectsCount = $newBillingProfile->projects()->where('billing_status', 'active')->count();
+            $maxProjects = $this->getMaxProjectsForTier($newBillingProfile->tier);
+            if ($activeProjectsCount >= $maxProjects) {
+                throw new Exception("The selected billing profile ({$newBillingProfile->name}) has no available project quota (limit: {$maxProjects}).");
+            }
+
             // Assign the new billing profile directly to the project
             $project->billing_profile_id = $newBillingProfile->id;
 

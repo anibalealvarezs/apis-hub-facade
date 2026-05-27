@@ -43,6 +43,25 @@ class BillingRequestsWidget extends BaseWidget
                     ->color('success')
                     ->icon('heroicon-o-check')
                     ->action(function (Project $record) {
+                        $profile = $record->billingProfile;
+                        if ($profile) {
+                            $maxProjects = app(\App\Services\BillingLifecycleService::class)
+                                ->getMaxProjectsForTier($profile->tier);
+                            $currentProjectsCount = $profile->projects()
+                                ->where('billing_status', 'active')
+                                ->count();
+
+                            if ($currentProjectsCount >= $maxProjects) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Capacity Limit Reached')
+                                    ->body("This billing profile ({$profile->name}) has reached its limit of {$maxProjects} projects. You cannot approve this request until you upgrade your plan or remove other projects.")
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+                                return;
+                            }
+                        }
+
                         $record->update([
                             'billing_status' => 'active',
                             'is_active' => true,
