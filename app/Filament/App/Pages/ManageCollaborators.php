@@ -108,7 +108,16 @@ class ManageCollaborators extends Page implements HasTable
                     ->label('Invitar Colaborador')
                     ->icon('heroicon-o-envelope')
                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
-                    ->extraAttributes(fn () => Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE ? ['title' => 'Upgrade a PRO para invitar colaboradores.'] : [])
+                    ->tooltip(function () {
+                        $tenant = Filament::getTenant();
+                        if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
+                            return 'El proyecto está suspendido o inactivo.';
+                        }
+                        if ($tenant->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+                            return 'Sube a un plan de pago para invitar colaboradores.';
+                        }
+                        return null;
+                    })
                     ->form([
                         TextInput::make('email')
                             ->email()
