@@ -185,6 +185,14 @@ class OAuthController extends Controller
                 'scopes' => $newScopes,
             ]);
 
+            // Reschedule any jobs that failed due to permanent auth errors
+            try {
+                $sdk->rescheduleAuthFailedJobs($provider);
+                Log::info("Rescheduled auth-failed jobs for provider {$provider} on project {$tenant->id}");
+            } catch (\Exception $e) {
+                Log::warning("Failed to reschedule auth-failed jobs for provider {$provider} on project {$tenant->id}: " . $e->getMessage());
+            }
+
             // Reactivate workers if they were paused for a safe update
             if (in_array($tenant->health_status, ['stopping_workers', 'ready_for_auth'])) {
                 Log::info("Reactivating workers for project {$tenant->id} post OAuth update.");
