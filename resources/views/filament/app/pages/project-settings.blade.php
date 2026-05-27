@@ -103,6 +103,32 @@
                     <p class="font-medium">{{ filament()->getTenant()->timezone ?? 'UTC' }}</p>
                 </div>
                 <div>
+                    <p class="text-sm text-gray-500">Perfil de Facturación</p>
+                    <p class="font-medium">
+                        {{ filament()->getTenant()->billingProfile?->display_name ?? 'Sin Perfil' }} 
+                        @if(filament()->getTenant()->billingProfile)
+                            <span class="text-xs text-gray-400 bg-gray-800 dark:bg-gray-700 px-2 py-0.5 rounded-full ml-1 font-semibold">
+                                {{ filament()->getTenant()->billingProfile->tier->value ?? filament()->getTenant()->billingProfile->tier }}
+                            </span>
+                        @endif
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Próxima Renovación de Ciclo</p>
+                    <p class="font-medium">
+                        @if(filament()->getTenant()->billingProfile)
+                            @php
+                                $profile = filament()->getTenant()->billingProfile;
+                                $starts = $profile->current_cycle_starts_at ?? $profile->created_at ?? now()->startOfMonth();
+                                $ends = $profile->current_cycle_ends_at ?? $starts->copy()->addMonth();
+                            @endphp
+                            {{ $ends->format('d M, Y') }}
+                        @else
+                            N/A
+                        @endif
+                    </p>
+                </div>
+                <div>
                     <p class="text-sm text-gray-500">Fecha de Creación</p>
                     <p class="font-medium">{{ filament()->getTenant()->created_at->format('d M, Y') }}</p>
                 </div>

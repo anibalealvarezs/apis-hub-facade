@@ -60,9 +60,19 @@ class DataSources extends Page
         $tenant = Filament::getTenant();
         $billingProfile = $tenant->billingProfile;
         
+        if (!$billingProfile) {
+            return [
+                'starts_at' => 'N/A',
+                'ends_at' => 'N/A',
+            ];
+        }
+
+        $starts = $billingProfile->current_cycle_starts_at ?? $billingProfile->created_at ?? now()->startOfMonth();
+        $ends = $billingProfile->current_cycle_ends_at ?? $starts->copy()->addMonth();
+        
         return [
-            'starts_at' => $billingProfile?->current_cycle_starts_at?->format('M j, Y') ?? 'N/A',
-            'ends_at' => $billingProfile?->current_cycle_ends_at?->format('M j, Y') ?? 'N/A',
+            'starts_at' => $starts->format('M j, Y'),
+            'ends_at' => $ends->format('M j, Y'),
         ];
     }
 
