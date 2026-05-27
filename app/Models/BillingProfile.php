@@ -88,6 +88,18 @@ class BillingProfile extends Model
                 app(\App\Services\BillingLifecycleService::class)->enforceTierLimits($profile, $profile->tier);
             }
         });
+
+        static::deleting(function (BillingProfile $profile) {
+            $projects = $profile->projects;
+            foreach ($projects as $project) {
+                $project->update([
+                    'billing_status' => 'suspended',
+                    'is_active' => false,
+                ]);
+                
+                \App\Jobs\SuspendProjectDomainJob::dispatch($project);
+            }
+        });
     }
 
     /**

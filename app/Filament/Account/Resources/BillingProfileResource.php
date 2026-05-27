@@ -106,10 +106,30 @@ class BillingProfileResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->modalHeading('Delete Billing Profile')
+                    ->modalDescription(function (BillingProfile $record) {
+                        $count = $record->projects()->count();
+                        if ($count > 0) {
+                            return "WARNING: This profile is actively paying for {$count} project(s). If you delete it now, all attached projects will be IMMEDIATELY SUSPENDED and their infrastructure will be stopped. We highly recommend assigning them a different billing profile first. Are you absolutely sure?";
+                        }
+                        return 'Are you sure you want to delete this billing profile? This action cannot be undone.';
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->modalHeading('Delete Selected Billing Profiles')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $totalProjects = 0;
+                            foreach ($records as $record) {
+                                $totalProjects += $record->projects()->count();
+                            }
+                            if ($totalProjects > 0) {
+                                return "WARNING: The selected profiles are actively paying for {$totalProjects} project(s) in total. If you delete them, ALL attached projects will be IMMEDIATELY SUSPENDED. We highly recommend assigning them a different billing profile first. Are you absolutely sure?";
+                            }
+                            return 'Are you sure you want to delete these billing profiles?';
+                        }),
                 ]),
             ]);
     }
