@@ -38,7 +38,7 @@ class DataSync extends Page
             // Calling the GBS Monitoring API we just discovered
             $response = $service->getMonitoringData($tenant);
             
-            if ($response && ($response['success'] ?? false)) {
+            if (is_array($response) && isset($response['completion_percentage'])) {
                 $this->syncData = $response;
             } else {
                 $this->syncData = [];
