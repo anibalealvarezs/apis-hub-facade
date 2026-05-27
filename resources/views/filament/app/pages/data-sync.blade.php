@@ -191,9 +191,16 @@
                                                                     @else
                                                                         <x-heroicon-o-document-text class="w-5 h-5 text-gray-400" />
                                                                     @endif
-                                                                    <span class="font-medium text-gray-900 dark:text-white truncate max-w-xs block" title="{{ $assetId }}">
-                                                                        {{ Str::limit(str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
-                                                                    </span>
+                                                                    <div class="flex flex-col">
+                                                                        <span class="font-medium text-gray-900 dark:text-white truncate max-w-xs block" title="{{ $assetStats['name'] ?? $assetId }}">
+                                                                            {{ Str::limit($assetStats['name'] ?? str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                        </span>
+                                                                        @if(!empty($assetStats['name']))
+                                                                            <span class="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs block" title="{{ $assetId }}">
+                                                                                {{ Str::limit(str_replace(['sc-domain:', 'https://', 'http://'], '', $assetId), 40) }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
                                                                 @endif
                                                             </div>
                                                             @if($aFail > 0)

@@ -40,6 +40,54 @@ class DataSync extends Page
             \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
 
             if (is_array($response) && isset($response['completion_percentage'])) {
+                // Enrich with names from ProjectCredential for channels like FB Organic/Marketing
+                try {
+                    $credentials = \App\Models\ProjectCredential::where('project_id', $tenant->id)->get();
+                    $accountMap = [];
+                    foreach ($credentials as $cred) {
+                        if (!empty($cred->meta['channeled_accounts'])) {
+                            foreach ($cred->meta['channeled_accounts'] as $acc) {
+                                if (isset($acc['id']) && isset($acc['name'])) {
+                                    $accountMap[(string)$acc['id']] = $acc['name'];
+                                }
+                            }
+                        }
+                        // Also check pages array just in case
+                        if (!empty($cred->meta['pages'])) {
+                            foreach ($cred->meta['pages'] as $page) {
+                                if (isset($page['id']) && isset($page['name'])) {
+                                    $accountMap[(string)$page['id']] = $page['name'];
+                                }
+                            }
+                        }
+                    }
+
+                    // Apply to response and normalize assets to associative array
+                    if (isset($response['channels'])) {
+                        foreach ($response['channels'] as &$chanData) {
+                            if (isset($chanData['assets'])) {
+                                $newAssets = [];
+                                foreach ($chanData['assets'] as $key => $asset) {
+                                    $actualId = (is_array($asset) && isset($asset['id'])) ? (string)$asset['id'] : (string)$key;
+                                    
+                                    // Set actual ID explicitly
+                                    if (is_array($asset)) {
+                                        $asset['id'] = $actualId;
+                                        if (empty($asset['name']) && isset($accountMap[$actualId])) {
+                                            $asset['name'] = $accountMap[$actualId];
+                                        }
+                                    }
+                                    
+                                    $newAssets[$actualId] = $asset;
+                                }
+                                $chanData['assets'] = $newAssets;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("DataSync Name Enrichment failed: " . $e->getMessage());
+                }
+
                 $this->syncData = $response;
             } else {
                 $this->syncData = [];
