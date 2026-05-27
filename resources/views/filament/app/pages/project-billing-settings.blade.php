@@ -104,11 +104,7 @@
                                 <span>Próxima Renovación: <strong class="font-semibold text-gray-950 dark:text-white">{{ $cycleEnds?->format('d M, Y') ?? 'N/A' }}</strong></span>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Action Trigger Button -->
-                    <div class="flex items-center justify-center shrink-0">
-                        {{ $this->getAction('assign_profile') }}
                     </div>
                 </div>
             </div>
@@ -122,11 +118,8 @@
                 </div>
                 <h3 class="text-base font-bold text-gray-950 dark:text-white">Sin Perfil de Facturación</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                    Este proyecto no tiene asignado ningún perfil de facturación activo. Por favor, asigna uno para evitar interrupciones de servicio.
+                    Este proyecto no tiene asignado ningún perfil de facturación activo. Por favor, asigna uno utilizando el botón en la cabecera para evitar interrupciones de servicio.
                 </p>
-                <div class="mt-6 flex justify-center">
-                    {{ $this->getAction('assign_profile') }}
-                </div>
             </div>
         @endif
     </div>
