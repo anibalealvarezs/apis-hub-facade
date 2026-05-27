@@ -85,7 +85,7 @@ class BillingProfile extends Model
 
         static::updated(function (BillingProfile $profile) {
             if ($profile->wasChanged('tier')) {
-                app(\App\Services\BillingLifecycleService::class)->enforceDowngradeLimits($profile, $profile->tier);
+                app(\App\Services\BillingLifecycleService::class)->enforceTierLimits($profile, $profile->tier);
             }
         });
     }

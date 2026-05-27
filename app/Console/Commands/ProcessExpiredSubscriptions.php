@@ -28,11 +28,11 @@ class ProcessExpiredSubscriptions extends Command
             ->get();
 
         foreach ($expiredSubscriptions as $sub) {
-            $user = $sub->billingProfile?->user;
-            if (!$user) continue;
+            $profile = $sub->billingProfile;
+            if (!$profile) continue;
 
-            // Check if user has ANY OTHER active subscriptions that haven't expired
-            $hasOtherActiveSub = $user->subscriptions()
+            // Check if profile has ANY OTHER active subscriptions that haven't expired
+            $hasOtherActiveSub = $profile->subscriptions()
                 ->where(function($q) {
                     $q->whereNull('ends_at')->orWhere('ends_at', '>', Carbon::now());
                 })
@@ -42,18 +42,19 @@ class ProcessExpiredSubscriptions extends Command
                 })
                 ->exists();
 
-            if (!$hasOtherActiveSub && $user->tier?->value !== 'free') {
-                $this->info("Enforcing downgrade for User {$user->id} due to expired subscription {$sub->id}.");
+            if (!$hasOtherActiveSub && $profile->tier?->value !== 'free' && $profile->tier?->value !== 'suspended') {
+                $this->info("Enforcing downgrade for Profile {$profile->id} due to expired subscription {$sub->id}.");
                 
                 // Downgrade and suspend
-                $targetTier = $user->tier === \App\Enums\UserTier::ENTERPRISE ? \App\Enums\UserTier::SUSPENDED : \App\Enums\UserTier::FREE;
-                $suspendedCount = $lifecycleService->enforceDowngradeLimits($user, $targetTier);
+                $targetTier = $profile->tier === \App\Enums\UserTier::ENTERPRISE ? \App\Enums\UserTier::SUSPENDED : \App\Enums\UserTier::FREE;
+                $results = $lifecycleService->enforceTierLimits($profile, $targetTier);
+                $suspendedCount = count($results['suspended'] ?? []);
                 
                 BillingLog::create([
-                    'user_id' => $user->id,
+                    'user_id' => $profile->user_id,
                     'event_type' => 'downgrade_scheduled',
                     'gateway' => 'system',
-                    'description' => "Downgraded user {$user->id} to {$targetTier->value} due to expired subscription {$sub->id}.",
+                    'description' => "Downgraded profile {$profile->id} to {$targetTier->value} due to expired subscription {$sub->id}.",
                     'metadata' => [
                         'subscription_id' => $sub->id,
                         'target_tier' => $targetTier->value,
@@ -61,8 +62,40 @@ class ProcessExpiredSubscriptions extends Command
                     ]
                 ]);
                 
-                // Notify User
-                $user->notify(new \App\Notifications\ProjectsSuspendedNotification($suspendedCount));
+                // Notify Owner
+                if ($profile->user) {
+                    $profile->user->notify(new \App\Notifications\ProjectsSuspendedNotification($suspendedCount));
+                }
+            }
+        }
+
+        // Also check BillingProfiles that have no active subscriptions but their current_cycle_ends_at has passed
+        // This covers manual comped tiers that have expired!
+        $expiredProfiles = \App\Models\BillingProfile::whereNotNull('current_cycle_ends_at')
+            ->where('current_cycle_ends_at', '<=', Carbon::now())
+            ->where('tier', '!=', 'free')
+            ->where('tier', '!=', 'suspended')
+            ->get();
+
+        foreach ($expiredProfiles as $profile) {
+            $hasActiveSub = $profile->subscriptions()
+                ->where(function($q) {
+                    $q->whereNull('ends_at')->orWhere('ends_at', '>', Carbon::now());
+                })
+                ->where(function($q) {
+                    $q->where('stripe_status', 'active')
+                      ->orWhere('paypal_status', 'ACTIVE');
+                })
+                ->exists();
+
+            if (!$hasActiveSub) {
+                $this->info("Enforcing downgrade for Profile {$profile->id} due to expired billing cycle (manual override).");
+                $targetTier = $profile->tier === \App\Enums\UserTier::ENTERPRISE ? \App\Enums\UserTier::SUSPENDED : \App\Enums\UserTier::FREE;
+                $results = $lifecycleService->enforceTierLimits($profile, $targetTier);
+                $suspendedCount = count($results['suspended'] ?? []);
+                
+                // Nullify the ends_at so we don't process it again
+                $profile->updateQuietly(['current_cycle_ends_at' => null]);
             }
         }
 

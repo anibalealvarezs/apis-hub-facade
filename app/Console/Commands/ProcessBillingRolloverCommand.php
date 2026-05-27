@@ -31,25 +31,24 @@ class ProcessBillingRolloverCommand extends Command
     {
         $this->info('Starting billing rollover processing...');
         
-        // In a real implementation, we would query users whose billing cycle
-        // renews exactly on this day. For this demonstration, we assume we 
-        // have a list of users to process.
-        
-        // Example: Users renewing today
-        $usersRenewingToday = User::whereDay('created_at', now()->day)->get();
+        // Find all billing profiles whose billing cycle renewed today
+        $profilesRenewingToday = \App\Models\BillingProfile::whereDay('current_cycle_starts_at', now()->day)->get();
 
-        foreach ($usersRenewingToday as $user) {
-            $this->info("Processing rollover for User ID: {$user->id}");
-            $this->processUserRollover($user);
+        foreach ($profilesRenewingToday as $profile) {
+            $this->info("Processing rollover for Profile ID: {$profile->id}");
+            $this->processProfileRollover($profile);
         }
 
         $this->info('Billing rollover processing completed.');
     }
 
-    protected function processUserRollover(User $user)
+    protected function processProfileRollover(\App\Models\BillingProfile $profile)
     {
-        // 1. Get all locks for this user across all their projects
-        $locks = AssetBillingLock::where('user_id', $user->id)->get();
+        // 1. Get all projects for this profile
+        $projectIds = $profile->projects()->pluck('id');
+        
+        // 2. Get all locks across all their projects
+        $locks = AssetBillingLock::whereIn('project_id', $projectIds)->get();
 
         // Group by project to minimize querying
         $locksByProject = $locks->groupBy('project_id');

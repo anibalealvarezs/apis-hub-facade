@@ -60,6 +60,60 @@ class ProjectSettings extends Page
         $isSuspended = !$project->is_active || $project->billing_status === 'suspended';
         $actions = [];
 
+        $actions[] = Action::make('unsuspend')
+            ->label('Reactivar Proyecto')
+            ->color('success')
+            ->icon('heroicon-o-play-circle')
+            ->visible(fn () => $isOwner && $project->billing_status === 'suspended')
+            ->requiresConfirmation()
+            ->modalHeading('Intentar Reactivar Proyecto')
+            ->modalDescription('El sistema verificará si tu plan de facturación actual tiene cupos disponibles para reactivar este proyecto.')
+            ->action(function () use ($project) {
+                if (!$project->billing_profile_id) {
+                    Notification::make()
+                        ->title('Sin Perfil de Facturación')
+                        ->body('Este proyecto no tiene un perfil de facturación asignado. Por favor, asigna uno en la configuración de facturación.')
+                        ->danger()
+                        ->persistent()
+                        ->send();
+                    return;
+                }
+
+                $billingService = app(\App\Services\BillingLifecycleService::class);
+                $profile = $project->billingProfile;
+                $maxProjects = $billingService->getMaxProjectsForTier($profile->tier);
+                
+                $activeCount = $profile->projects()->where('billing_status', 'active')->count();
+
+                if ($activeCount >= $maxProjects) {
+                    Notification::make()
+                        ->title('Límite de proyectos alcanzado')
+                        ->body("El perfil de facturación asignado solo permite {$maxProjects} proyectos activos. Debes mejorar el plan o suspender otro proyecto primero.")
+                        ->danger()
+                        ->persistent()
+                        ->send();
+                    return;
+                }
+
+                // Unsuspend
+                $project->update([
+                    'billing_status' => 'active',
+                    'is_active' => true,
+                ]);
+
+                // Dispatch jobs
+                \App\Jobs\RestoreProjectDomainJob::dispatch($project);
+                \App\Jobs\DeployProjectJob::dispatch($project);
+
+                Notification::make()
+                    ->title('Proyecto en Reactivación')
+                    ->body('El proyecto ha sido reactivado. La infraestructura se está levantando en segundo plano.')
+                    ->success()
+                    ->send();
+                
+                return redirect(request()->header('Referer'));
+            });
+
         $actions[] = Action::make('edit_settings')
             ->label('Editar Preferencias')
             ->color('gray')

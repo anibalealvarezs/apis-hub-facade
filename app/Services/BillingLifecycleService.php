@@ -12,16 +12,19 @@ use Illuminate\Support\Facades\Log;
 class BillingLifecycleService
 {
     /**
-     * Enforces the downgrade cascading suspension for a specific billing profile.
-     * Starts suspending newest projects until the profile's active projects match the allowed quota.
+     * Enforces the tier limits for a specific billing profile (both downgrades and upgrades).
+     * Suspends excess projects on downgrade, and unsuspends projects on upgrade if quota allows.
      *
      * @param BillingProfile $profile The billing profile
      * @param UserTier $targetTier The tier to enforce limits for
-     * @return array Information about suspended projects
+     * @return array Information about suspended/unsuspended projects
      */
-    public function enforceDowngradeLimits(BillingProfile $profile, UserTier $targetTier): array
+    public function enforceTierLimits(BillingProfile $profile, UserTier $targetTier): array
     {
-        $suspendedProjects = [];
+        $modifiedProjects = [
+            'suspended' => [],
+            'unsuspended' => [],
+        ];
 
         // If target tier is FREE, but the user already has another FREE profile, force suspension instead
         if ($targetTier === UserTier::FREE) {
@@ -54,6 +57,8 @@ class BillingLifecycleService
             if ($targetTier === UserTier::SUSPENDED) {
                 $profile->status = 'suspended';
                 $enforcementTier = UserTier::SUSPENDED;
+            } else {
+                $profile->status = 'active';
             }
             $profile->saveQuietly();
         }
@@ -63,7 +68,7 @@ class BillingLifecycleService
         // Active projects assigned directly to this billing profile
         $activeProjects = $profile->projects()->where('billing_status', 'active')->orderBy('created_at', 'desc')->get();
 
-        // 1. Enforce Project Limits
+        // 1. Enforce Project Limits (Downgrades / Over Quota)
         $excessProjectsCount = $activeProjects->count() - $maxProjects;
         
         if ($excessProjectsCount > 0) {
@@ -74,7 +79,7 @@ class BillingLifecycleService
                     'billing_status' => 'suspended',
                     'is_active' => false,
                 ]);
-                $suspendedProjects[] = $project->id;
+                $modifiedProjects['suspended'][] = $project->id;
                 
                 // Dispatch domain and container suspension background jobs
                 \App\Jobs\SuspendProjectDomainJob::dispatch($project);
@@ -94,9 +99,41 @@ class BillingLifecycleService
                 
                 Log::info("BillingLifecycleService: Suspended project {$project->id} for billing profile {$profile->id} due to project quota limits.");
             }
+        } elseif ($excessProjectsCount < 0 && $enforcementTier !== UserTier::SUSPENDED) {
+            // 2. Unsuspend Projects (Upgrades / Available Quota)
+            $availableQuota = abs($excessProjectsCount);
+            
+            // Get suspended projects, prioritizing the ones suspended most recently (or oldest, let's use created_at asc to restore oldest projects first)
+            $suspendedProjects = $profile->projects()->where('billing_status', 'suspended')->orderBy('created_at', 'asc')->take($availableQuota)->get();
+            
+            foreach ($suspendedProjects as $project) {
+                $project->update([
+                    'billing_status' => 'active',
+                    'is_active' => true,
+                ]);
+                $modifiedProjects['unsuspended'][] = $project->id;
+                
+                // Dispatch domain and container restoration background jobs
+                \App\Jobs\RestoreProjectDomainJob::dispatch($project);
+                \App\Jobs\DeployProjectJob::dispatch($project);
+                
+                BillingLog::create([
+                    'user_id' => $profile->user_id,
+                    'project_id' => $project->id,
+                    'event_type' => 'project_unsuspended',
+                    'gateway' => 'system',
+                    'description' => "Unsuspended project {$project->id} for billing profile {$profile->id} due to restored project quota.",
+                    'metadata' => [
+                        'target_tier' => $targetTier->value,
+                        'reason' => 'quota_available'
+                    ]
+                ]);
+                
+                Log::info("BillingLifecycleService: Unsuspended project {$project->id} for billing profile {$profile->id} due to restored project quota.");
+            }
         }
 
-        return $suspendedProjects;
+        return $modifiedProjects;
     }
 
     /**

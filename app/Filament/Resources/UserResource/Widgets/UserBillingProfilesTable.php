@@ -73,13 +73,27 @@ class UserBillingProfilesTable extends BaseWidget
                     ->label('Change Tier')
                     ->icon('heroicon-o-pencil')
                     ->color('warning')
-                    ->modalHeading('Manually Change Billing Tier')
-                    ->modalDescription('WARNING: Manually changing a tier bypasses Stripe/PayPal synchronization. Do this only for special cases.')
+                    ->modalHeading('Change Tier & Sync with Provider')
+                    ->modalDescription('Changing the tier here will attempt to automatically sync with Stripe/PayPal if an active subscription exists. If no subscription exists, it will only update the local database.')
                     ->form([
                         Select::make('tier')
                             ->options(\App\Enums\UserTier::class)
                             ->required()
-                            ->default(fn (BillingProfile $record) => $record->tier),
+                            ->default(fn (BillingProfile $record) => $record->tier)
+                            ->reactive(),
+                        Select::make('billing_cycle')
+                            ->label('Billing Cycle (If Syncing)')
+                            ->options(['monthly' => 'Monthly', 'annual' => 'Annual'])
+                            ->default('monthly')
+                            ->visible(fn (\Filament\Forms\Get $get) => $get('tier') !== \App\Enums\UserTier::FREE->value && $get('tier') !== \App\Enums\UserTier::SUSPENDED->value),
+                        \Filament\Forms\Components\DatePicker::make('next_billing_date')
+                            ->label('Next Billing Date / Grace Period End')
+                            ->helperText('If set, will push the next Stripe invoice to this date. (PayPal date sync is limited and may require manual merchant dashboard adjustment).')
+                            ->nullable(),
+                        \Filament\Forms\Components\Checkbox::make('cancel_subscription')
+                            ->label('Cancel Active Provider Subscription')
+                            ->default(true)
+                            ->helperText('If checked, the current Stripe/PayPal subscription will be permanently canceled (user loses auto-renew).'),
                         TextInput::make('confirmation')
                             ->label('Type "CONFIRM" to proceed')
                             ->required()
@@ -87,11 +101,85 @@ class UserBillingProfilesTable extends BaseWidget
                             ->helperText('You must explicitly type confirm to apply this change.'),
                     ])
                     ->action(function (BillingProfile $record, array $data) {
-                        $record->tier = $data['tier'];
+                        $newTier = \App\Enums\UserTier::tryFrom($data['tier']);
+                        $cycle = $data['billing_cycle'] ?? 'monthly';
+                        
+                        $sub = $record->subscriptions()->active()->first();
+                        $plan = \App\Models\SubscriptionPlan::where('tier', $newTier)->first();
+                        
+                        $syncSuccess = false;
+                        $wasCanceled = false;
+
+                        if (!empty($data['cancel_subscription']) && $sub) {
+                            if ($sub->stripe_id) {
+                                try {
+                                    $sub->cancel();
+                                    $wasCanceled = true;
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error('Stripe cancel failed', ['error' => $e->getMessage()]);
+                                }
+                            } elseif ($sub->paypal_subscription_id) {
+                                try {
+                                    $provider = new \Srmklive\PayPal\Services\PayPal;
+                                    $provider->getAccessToken();
+                                    $provider->cancelSubscription($sub->paypal_subscription_id, 'Manual Admin Override');
+                                    $sub->update(['paypal_status' => 'CANCELLED']);
+                                    $wasCanceled = true;
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error('PayPal cancel failed', ['error' => $e->getMessage()]);
+                                }
+                            }
+                        } elseif ($sub && $plan) {
+                            if ($sub->stripe_id) {
+                                try {
+                                    $stripePlanId = $cycle === 'annual' ? $plan->stripe_annual_price_id : $plan->stripe_price_id;
+                                    if ($stripePlanId) {
+                                        $sub->swap($stripePlanId);
+                                        $syncSuccess = true;
+                                    }
+                                    if (!empty($data['next_billing_date'])) {
+                                        $sub->trialUntil(\Carbon\Carbon::parse($data['next_billing_date']));
+                                    }
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error('Stripe admin sync failed', ['error' => $e->getMessage()]);
+                                    Notification::make()->danger()->title('Stripe sync failed: ' . $e->getMessage())->send();
+                                }
+                            } elseif ($sub->paypal_subscription_id) {
+                                try {
+                                    $paypalPlanId = $cycle === 'annual' ? $plan->paypal_annual_plan_id : $plan->paypal_plan_id;
+                                    if ($paypalPlanId) {
+                                        $provider = new \Srmklive\PayPal\Services\PayPal;
+                                        $provider->getAccessToken();
+                                        $provider->reviseSubscription($sub->paypal_subscription_id, [
+                                            'plan_id' => $paypalPlanId
+                                        ]);
+                                        $syncSuccess = true;
+                                        // Note: PayPal date sync is extremely limited via API, requires modifying subscription setup.
+                                    }
+                                } catch (\Exception $e) {
+                                    \Illuminate\Support\Facades\Log::error('PayPal admin sync failed', ['error' => $e->getMessage()]);
+                                    Notification::make()->danger()->title('PayPal sync failed: ' . $e->getMessage())->send();
+                                }
+                            }
+                        }
+
+                        // Local update
+                        $record->tier = $newTier;
+                        if (!empty($data['next_billing_date'])) {
+                            $record->current_cycle_ends_at = \Carbon\Carbon::parse($data['next_billing_date']);
+                        }
                         $record->save();
+                        
+                        $msg = 'Tier updated locally.';
+                        if ($wasCanceled) {
+                            $msg = 'Tier updated and previous provider subscription was permanently canceled.';
+                        } elseif ($syncSuccess) {
+                            $msg = 'Tier updated and synced with payment provider.';
+                        }
+
                         Notification::make()
                             ->success()
-                            ->title('Tier updated successfully')
+                            ->title($msg)
                             ->send();
                     }),
             ]);

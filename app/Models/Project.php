@@ -79,6 +79,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: The billing profile that pays for this project.
+     */
+    public function billingProfile(): BelongsTo
+    {
+        return $this->belongsTo(BillingProfile::class);
+    }
+
+    /**
      * Relationship: The deployment logs for this project.
      */
     public function deploymentLogs(): HasMany

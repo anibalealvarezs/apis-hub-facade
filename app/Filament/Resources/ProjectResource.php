@@ -286,7 +286,37 @@ class ProjectResource extends Resource
                 Tables\Actions\RestoreAction::make()
                     ->modalHeading('Restore Project & Resume Infra')
                     ->before(function (Project $record, DeployerService $deployer, Tables\Actions\RestoreAction $action) {
-                        // 1. Resume containers
+                        // 1. Quota Validation
+                        if (!$record->billing_profile_id) {
+                            Notification::make()
+                                ->title('Missing Billing Profile')
+                                ->body('This project has no billing profile assigned. Please assign one before restoring.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            $action->halt();
+                            return;
+                        }
+
+                        $billingService = app(\App\Services\BillingLifecycleService::class);
+                        $profile = $record->billingProfile;
+                        $maxProjects = $billingService->getMaxProjectsForTier($profile->tier);
+                        
+                        // We do not count the current project since it is currently soft-deleted
+                        $activeProjectsCount = $profile->projects()->where('billing_status', 'active')->count();
+
+                        if ($activeProjectsCount >= $maxProjects) {
+                            Notification::make()
+                                ->title('Quota Exceeded')
+                                ->body('The billing profile for this project has reached its maximum active projects limit (' . $maxProjects . '). Please upgrade the tier or suspend another project before restoring.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            $action->halt();
+                            return;
+                        }
+
+                        // 2. Resume containers
                         $result = $deployer->startContainers($record);
 
                         if ($result['status'] !== 'success') {
