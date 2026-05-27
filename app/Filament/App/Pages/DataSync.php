@@ -42,6 +42,8 @@ class DataSync extends Page
                 $this->syncData = $response;
             } else {
                 $this->syncData = [];
+                // Temporarily disabled while the Explorer's Status page is being reworked.
+                /*
                 Notification::make()
                     ->title('Explorers status unavailable')
                     ->body(function() use ($response) {
@@ -50,6 +52,7 @@ class DataSync extends Page
                     })
                     ->warning()
                     ->send();
+                */
             }
         } catch (\Exception $e) {
             $this->syncData = [];

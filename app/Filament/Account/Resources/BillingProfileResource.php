@@ -26,6 +26,16 @@ class BillingProfileResource extends Resource
         return parent::getEloquentQuery()->where('user_id', auth()->id());
     }
 
+    public static function canCreate(): bool
+    {
+        // Check if the user already owns a free tier billing profile
+        $hasFreeProfile = BillingProfile::where('user_id', auth()->id())
+            ->where('tier', 'free')
+            ->exists();
+            
+        return !$hasFreeProfile;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
