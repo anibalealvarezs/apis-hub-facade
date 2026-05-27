@@ -10,11 +10,11 @@ use Filament\Notifications\Notification;
 
 class DataSync extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
-    protected static ?string $navigationLabel = 'Explorers Status';
-    protected static ?string $title = 'Explorers Monitoring';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static ?string $navigationLabel = 'Telemetry';
+    protected static ?string $title = 'Data Telemetry';
     protected static string $view = 'filament.app.pages.data-sync';
-    protected static ?string $slug = 'data-sync';
+    protected static ?string $slug = 'telemetry';
 
     public array $syncData = [];
     public bool $isLoading = true;
@@ -65,7 +65,7 @@ class DataSync extends Page
     {
         return [
             Action::make('refresh')
-                ->label('Refresh Status')
+                ->label('Refresh Data')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->action(fn() => $this->refreshData()),
@@ -84,42 +84,6 @@ class DataSync extends Page
                     $this->refreshData();
                 }),
         ];
-    }
-
-    /**
-     * Perform an infrastructure action on a specific pipeline.
-     */
-    public function togglePipeline(string $name, string $action): void
-    {
-        try {
-            $service = app(RemoteEngineService::class);
-            $tenant = Filament::getTenant();
-            
-            $response = $service->containerAction($tenant, $name, $action);
-            
-            if ($response && ($response['success'] ?? false)) {
-                $statusText = $action === 'start' ? 'resumed' : 'paused';
-                Notification::make()
-                    ->title("Pipeline $statusText successfully")
-                    ->body("The data pipeline has been $statusText.")
-                    ->success()
-                    ->send();
-            } else {
-                 Notification::make()
-                    ->title("Failed to modify pipeline status")
-                    ->body($response['error'] ?? 'Unknown error.')
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Exception $e) {
-             Notification::make()
-                ->title("Error")
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-
-        $this->refreshData();
     }
 }
 
