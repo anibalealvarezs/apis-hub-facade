@@ -10,6 +10,12 @@
             <div class="flex items-center justify-center p-12">
                 <x-filament::loading-indicator class="h-12 w-12 text-primary-500" />
             </div>
+        @elseif(isset($syncData['raw_debug']))
+            <div class="p-12 text-center text-gray-500 dark:text-gray-400 overflow-auto">
+                <x-heroicon-o-bug-ant class="h-12 w-12 mx-auto mb-4 text-warning-500" />
+                <p class="text-lg text-danger-500 mb-4">Payload mismatch detected!</p>
+                <pre class="text-left text-xs bg-gray-900 text-green-400 p-4 rounded">{{ json_encode($syncData['raw_debug'], JSON_PRETTY_PRINT) }}</pre>
+            </div>
         @elseif(empty($syncData) || !isset($syncData['completion_percentage']))
             <div class="p-12 text-center text-gray-500 dark:text-gray-400">
                 <x-heroicon-o-exclamation-triangle class="h-12 w-12 mx-auto mb-4" />
