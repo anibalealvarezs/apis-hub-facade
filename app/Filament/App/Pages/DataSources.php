@@ -519,6 +519,60 @@ class DataSources extends Page
                         ->default('AD')
                         ->helperText('Cannot exceed entity sync depth.'),
                 ])->columns(1);
+                
+            $secondarySections[] = \Filament\Forms\Components\Section::make('Asset Name Filters')
+                ->description('Filter which assets should be synced based on their names. Leave blank to sync all.')
+                ->schema([
+                    \Filament\Forms\Components\Actions::make([
+                        \Filament\Forms\Components\Actions\Action::make('generateRegex')
+                            ->label('Regex Generator')
+                            ->icon('heroicon-m-beaker')
+                            ->color('primary')
+                            ->form([
+                                \Filament\Forms\Components\Repeater::make('strings')
+                                    ->label('Strings to Match')
+                                    ->helperText('Add multiple strings to generate a regex that matches any of them.')
+                                    ->simple(
+                                        \Filament\Forms\Components\TextInput::make('string')->required()
+                                    )
+                                    ->defaultItems(2),
+                                \Filament\Forms\Components\Select::make('target')
+                                    ->label('Target Filter')
+                                    ->options([
+                                        'CAMPAIGN' => 'Campaign Filter',
+                                        'ADSET' => 'Adset Filter',
+                                        'AD' => 'Ad Filter',
+                                    ])
+                                    ->required()
+                                    ->default('CAMPAIGN')
+                            ])
+                            ->action(function (array $data, \Filament\Forms\Set $set) {
+                                $strings = $data['strings'] ?? [];
+                                if (empty($strings)) return;
+                                
+                                $escaped = array_map(fn($s) => preg_quote($s, '/'), $strings);
+                                $regex = '/(' . implode('|', $escaped) . ')/i';
+                                
+                                $target = $data['target'];
+                                $set('facebook_marketing.' . $target . '.cache_include', $regex);
+                            })
+                    ])->alignRight(),
+                    
+                    \Filament\Forms\Components\TextInput::make($this->activeChannel . '.CAMPAIGN.cache_include')
+                        ->label('Campaign Filter')
+                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
+                        ->helperText('Only sync Campaigns matching this pattern.'),
+                        
+                    \Filament\Forms\Components\TextInput::make($this->activeChannel . '.ADSET.cache_include')
+                        ->label('Adset Filter')
+                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
+                        ->helperText('Only sync Adsets matching this pattern.'),
+                        
+                    \Filament\Forms\Components\TextInput::make($this->activeChannel . '.AD.cache_include')
+                        ->label('Ad Filter')
+                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
+                        ->helperText('Only sync Ads matching this pattern.'),
+                ])->columns(1);
         }
 
         if ($this->activeChannel === 'google_search_console') {
