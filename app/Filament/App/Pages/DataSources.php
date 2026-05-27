@@ -538,6 +538,61 @@ class DataSources extends Page
         }
 
         if ($this->activeChannel === 'facebook_organic') {
+            // First time modal
+            $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_first_time_modal')
+                ->hiddenLabel()
+                ->content(new \Illuminate\Support\HtmlString('
+                    <div
+                        x-data="{ showWarningModal: false }"
+                        x-init="
+                            setTimeout(() => {
+                                if (!localStorage.getItem(\'fb_organic_warnings_seen_v1\')) {
+                                    showWarningModal = true;
+                                }
+                            }, 500);
+                        "
+                    >
+                        <div x-show="showWarningModal" style="display: none;" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 transition-opacity" x-transition.opacity>
+                            <div @click.away="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-8 m-4 relative" x-transition.scale.origin.bottom>
+                                <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                                
+                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                                    <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                    </svg>
+                                    Important: Facebook Organic
+                                </h2>
+                                
+                                <div class="space-y-6">
+                                    <div class="rounded-lg border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-500/10 p-4">
+                                        <h3 class="text-lg font-bold text-amber-900 dark:text-amber-400">Historic Metrics Limitation</h3>
+                                        <p class="text-sm mt-1 text-amber-800 dark:text-amber-200">
+                                            Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold text-amber-900 dark:text-amber-400">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="rounded-lg border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-500/10 p-4">
+                                        <h3 class="text-lg font-bold text-blue-900 dark:text-blue-400">Rate Limits & Inactive Assets</h3>
+                                        <p class="text-sm mt-1 text-blue-800 dark:text-blue-200">
+                                            Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions. <strong class="font-semibold text-blue-900 dark:text-blue-400">We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-8 flex justify-end">
+                                    <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg shadow-sm transition-colors">
+                                        I understand
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                '));
+
             $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_warning')
                 ->hiddenLabel()
                 ->content(new \Illuminate\Support\HtmlString('
