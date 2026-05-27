@@ -40,27 +40,33 @@ class DataSync extends Page
             \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
 
             if (is_array($response) && isset($response['completion_percentage'])) {
-                // Enrich with names from ProjectCredential for channels like FB Organic/Marketing
+                // Enrich with names from Project sync_config for channels like FB Organic/Marketing
                 try {
-                    $credentials = \App\Models\ProjectCredential::where('project_id', $tenant->id)->get();
                     $accountMap = [];
-                    foreach ($credentials as $cred) {
-                        if (!empty($cred->meta['channeled_accounts'])) {
-                            foreach ($cred->meta['channeled_accounts'] as $acc) {
-                                if (isset($acc['id']) && isset($acc['name'])) {
-                                    $accountMap[(string)$acc['id']] = $acc['name'];
+                    $syncConfig = $tenant->sync_config ?? [];
+                    
+                    // Recursively search for any array that contains arrays with 'id' and 'name'
+                    $extractNames = function($data) use (&$extractNames, &$accountMap) {
+                        if (!is_array($data)) return;
+                        
+                        // Check if current level is a list of assets
+                        if (isset($data[0]) && is_array($data[0]) && isset($data[0]['id'])) {
+                            foreach ($data as $item) {
+                                if (isset($item['id']) && isset($item['name'])) {
+                                    $accountMap[(string)$item['id']] = $item['name'];
+                                }
+                            }
+                        } else {
+                            // Go deeper
+                            foreach ($data as $key => $val) {
+                                if (is_array($val)) {
+                                    $extractNames($val);
                                 }
                             }
                         }
-                        // Also check pages array just in case
-                        if (!empty($cred->meta['pages'])) {
-                            foreach ($cred->meta['pages'] as $page) {
-                                if (isset($page['id']) && isset($page['name'])) {
-                                    $accountMap[(string)$page['id']] = $page['name'];
-                                }
-                            }
-                        }
-                    }
+                    };
+                    
+                    $extractNames($syncConfig);
 
                     // Apply to response and normalize assets to associative array
                     if (isset($response['channels'])) {
