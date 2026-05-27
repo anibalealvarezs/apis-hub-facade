@@ -35,9 +35,10 @@ class DataSync extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            // Calling the GBS Monitoring API we just discovered
             $response = $service->getMonitoringData($tenant);
             
+            \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
+
             if (is_array($response) && isset($response['completion_percentage'])) {
                 $this->syncData = $response;
             } else {
