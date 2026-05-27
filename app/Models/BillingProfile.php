@@ -17,6 +17,7 @@ class BillingProfile extends Model
         'tier',
         'status',
         'name',
+        'reference_name',
         'tax_id',
         'address_line_1',
         'city',
@@ -33,6 +34,14 @@ class BillingProfile extends Model
         'current_cycle_starts_at',
         'current_cycle_ends_at',
     ];
+
+    /**
+     * Get displayable name for the billing profile (reference name falls back to company/person name).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->reference_name ?: $this->name;
+    }
 
     protected $casts = [
         'is_default' => 'boolean',

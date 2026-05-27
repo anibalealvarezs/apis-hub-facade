@@ -38,7 +38,7 @@ class ProjectBillingSettings extends Page implements HasTable
                     ->where('id', filament()->getTenant()->billing_profile_id)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('display_name')
                     ->label('Profile Name'),
                 Tables\Columns\TextColumn::make('type')
                     ->badge(),
@@ -65,7 +65,7 @@ class ProjectBillingSettings extends Page implements HasTable
                         Forms\Components\Select::make('billing_profile_id')
                             ->label('Available Profiles (Owned & Shared)')
                             ->options(function () {
-                                return auth()->user()->getAvailableBillingProfiles()->pluck('name', 'id');
+                                return auth()->user()->getAvailableBillingProfiles()->pluck('display_name', 'id');
                             })
                             ->required(),
                     ])

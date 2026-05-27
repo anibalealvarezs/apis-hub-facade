@@ -20,7 +20,7 @@
             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Select Active Profile</label>
             <select wire:model.live="selectedProfileId" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 text-sm font-semibold">
                 @foreach(auth()->user()->getAvailableBillingProfiles() as $p)
-                    <option value="{{ $p->id }}">{{ $p->name }} ({{ ucfirst($p->type) }})</option>
+                    <option value="{{ $p->id }}">{{ $p->display_name }} ({{ ucfirst($p->type) }})</option>
                 @endforeach
             </select>
         </div>
@@ -35,7 +35,7 @@
         <div class="mb-8 p-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <span class="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 text-white px-2.5 py-1 rounded-full">Active Profile</span>
-                <h3 class="text-2xl font-bold mt-2">{{ $profile->name }}</h3>
+                <h3 class="text-2xl font-bold mt-2">{{ $profile->display_name }}</h3>
                 <p class="text-xs text-white/80 mt-1">Billing Status: <span class="font-bold uppercase tracking-wider {{ $profile->status === 'active' ? 'text-green-300' : 'text-yellow-300' }}">{{ $profile->status ?? 'Active' }}</span></p>
             </div>
             <div class="flex items-center gap-3">

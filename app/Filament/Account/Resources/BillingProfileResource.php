@@ -48,6 +48,10 @@ class BillingProfileResource extends Resource
                         ->label(fn (Forms\Get $get) => $get('type') === 'company' ? 'Company Name' : 'Full Name')
                         ->required()
                         ->maxLength(255),
+                    Forms\Components\TextInput::make('reference_name')
+                        ->label('Referential Name (e.g. Personal Profile, Marketing Team Billing)')
+                        ->maxLength(255)
+                        ->helperText('A descriptive label to identify this profile in lists and selectors across the application.'),
                     Forms\Components\TextInput::make('tax_id')
                         ->label(fn (Forms\Get $get) => $get('type') === 'company' ? 'Tax ID / VAT / EIN' : 'Personal ID / RUT')
                         ->maxLength(255),
@@ -67,7 +71,12 @@ class BillingProfileResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('reference_name')
+                    ->label('Referential Name')
+                    ->searchable()
+                    ->placeholder('N/A (Uses Legal Name)'),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Legal Name/Company')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
