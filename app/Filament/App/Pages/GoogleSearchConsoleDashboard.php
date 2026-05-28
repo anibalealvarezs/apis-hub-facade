@@ -48,7 +48,8 @@ class GoogleSearchConsoleDashboard extends Page
             
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $this->accounts[$page['id']] = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
+                    $url = $page['url'] ?? $page['id'];
+                    $this->accounts[$url] = str_replace(['https://', 'http://'], '', rtrim($url, '/'));
                 }
                 
                 if (!empty($this->accounts) && !$this->selectedAccount) {
