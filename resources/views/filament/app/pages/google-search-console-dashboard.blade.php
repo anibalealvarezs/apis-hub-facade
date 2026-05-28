@@ -364,7 +364,4 @@
             </table>
         </div>
     </div>
-    @php
-        throw new \Exception("DEBUG DUMP (BLADE): Blade Template Rendered Successfully! The 30s hang is strictly happening in Livewire Serialization or Web Server network transit!");
-    @endphp
 </x-filament-panels::page>
