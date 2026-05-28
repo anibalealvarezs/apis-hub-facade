@@ -45,8 +45,6 @@ class GoogleSearchConsoleDashboard extends Page
             $tenant = Filament::getTenant();
             
             $response = $service->listChanneled($tenant, 'google_search_console', 'page');
-            
-            throw new \Exception("DEBUG DUMP (loadAccounts): listChanneled returned: " . json_encode($response));
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
@@ -87,8 +85,10 @@ class GoogleSearchConsoleDashboard extends Page
     public function loadReport(): void
     {
         if (!$this->selectedAccount || !$this->dateStart || !$this->dateEnd) {
-            return;
+            throw new \Exception("DEBUG DUMP: loadReport skipped! selectedAccount: " . var_export($this->selectedAccount, true));
         }
+        
+        throw new \Exception("DEBUG DUMP: loadReport passed guard clause! We are about to prepare payloads.");
 
         $this->isLoading = true;
 
