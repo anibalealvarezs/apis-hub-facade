@@ -180,7 +180,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="(row, index) in sortedTableData" :key="index">
+                        <template x-for="(row, index) in paginatedTableData" :key="index">
                             <tr>
                                 <td>
                                     <div class="gsc-url-text" :title="row.id" x-text="row.id"></div>
@@ -204,6 +204,29 @@
                         </template>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between px-6 py-4 border-t border-white/5 bg-black/20" x-show="tableDataRaw.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="text-sm text-gray-400 font-medium">Rows per page:</span>
+                    <select x-model="pageSize" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2">
+                        <option value="10" class="text-black">10</option>
+                        <option value="25" class="text-black">25</option>
+                        <option value="50" class="text-black">50</option>
+                        <option value="100" class="text-black">100</option>
+                        <option value="250" class="text-black">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="text-sm text-gray-400">
+                        Page <span x-text="currentPage" class="text-white font-bold"></span> of <span x-text="totalPages" class="text-white font-bold"></span>
+                        <span class="ml-2 px-2 py-1 bg-white/5 rounded text-xs">(<span x-text="tableDataRaw.length"></span> results)</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="prevPage()" :disabled="currentPage === 1" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Prev</button>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -232,12 +255,16 @@
                     sortCol: 'clicks',
                     sortDir: 'desc',
                     
+                    currentPage: 1,
+                    pageSize: 10,
+                    
                     initDashboard() {
                         this.initChart();
                         
                         this.$watch('account', () => this.fetchAll());
                         this.$watch('dateStart', () => this.fetchAll());
                         this.$watch('dateEnd', () => this.fetchAll());
+                        this.$watch('pageSize', () => { this.currentPage = 1; });
                         
                         if (this.account && this.dateStart && this.dateEnd) {
                             this.fetchAll();
@@ -246,6 +273,7 @@
                     
                     setTab(tab) {
                         this.activeTab = tab;
+                        this.currentPage = 1;
                         this.fetchTable();
                         this.$wire.setActiveTab(tab);
                     },
@@ -346,6 +374,7 @@
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
                                 this.tableDataRaw = data.table || [];
+                                this.currentPage = 1;
                             }
                         } catch (error) {
                             console.error('Error fetching table:', error);
@@ -537,6 +566,7 @@
                             this.sortCol = col;
                             this.sortDir = 'desc';
                         }
+                        this.currentPage = 1;
                     },
                     
                     get sortedTableData() {
@@ -553,6 +583,24 @@
                             if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
                             return valA > valB ? 1 : -1;
                         });
+                    },
+                    
+                    get totalPages() {
+                        return Math.ceil(this.tableDataRaw.length / this.pageSize) || 1;
+                    },
+                    
+                    get paginatedTableData() {
+                        const start = (this.currentPage - 1) * this.pageSize;
+                        const end = start + Number(this.pageSize);
+                        return this.sortedTableData.slice(start, end);
+                    },
+                    
+                    nextPage() {
+                        if (this.currentPage < this.totalPages) this.currentPage++;
+                    },
+                    
+                    prevPage() {
+                        if (this.currentPage > 1) this.currentPage--;
                     },
                     
                     get maxClicks() {
