@@ -173,7 +173,7 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['startDate'] = $this->dateStart;
             $tabPayload['endDate'] = $this->dateEnd;
 
-            ];
+            $payloads['table'] = $tabPayload;
 
             $startApi = microtime(true);
             
