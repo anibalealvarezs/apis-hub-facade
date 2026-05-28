@@ -1226,10 +1226,10 @@ class DataSources extends Page
                 $payload['metrics_config'] = [];
                 
                 $payload['entity_filters'] = [
-                    'CAMPAIGN' => '',
-                    'ADSET' => '',
-                    'AD' => '',
-                    'CREATIVE' => '',
+                    'CAMPAIGN' => $channelConfig['CAMPAIGN']['cache_include'] ?? '',
+                    'ADSET' => $channelConfig['ADSET']['cache_include'] ?? '',
+                    'AD' => $channelConfig['AD']['cache_include'] ?? '',
+                    'CREATIVE' => $channelConfig['CREATIVE']['cache_include'] ?? '',
                 ];
 
                 unset($payload['entity_sync_depth']);
