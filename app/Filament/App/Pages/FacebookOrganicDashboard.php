@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Filament\App\Pages;
+
+use Filament\Facades\Filament;
+use Filament\Pages\Page;
+
+class FacebookOrganicDashboard extends Page
+{
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationGroup = 'Meta';
+    protected static ?string $title = 'Facebook Organic';
+    protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
+    protected static ?string $slug = 'facebook-organic';
+
+    public static function canAccess(): bool
+    {
+        $tenant = Filament::getTenant();
+        $config = $tenant->sync_config ?? [];
+        return !empty($config['facebook_organic']['enabled']);
+    }
+}

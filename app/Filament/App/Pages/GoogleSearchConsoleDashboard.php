@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 class GoogleSearchConsoleDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
-    protected static ?string $navigationGroup = 'Search';
+    protected static ?string $navigationGroup = 'Google';
     protected static ?string $title = 'Google Search Console';
     protected static string $view = 'filament.app.pages.google-search-console-dashboard';
     protected static ?string $slug = 'google-search-console';
@@ -21,6 +21,13 @@ class GoogleSearchConsoleDashboard extends Page
 
     public array $accounts = [];
     public string $activeTab = 'queries';
+
+    public static function canAccess(): bool
+    {
+        $tenant = Filament::getTenant();
+        $config = $tenant->sync_config ?? [];
+        return !empty($config['google_search_console']['enabled']);
+    }
 
     public function mount(): void
     {
