@@ -599,7 +599,7 @@ class DataSources extends Page
                                     </div>
                                     <div>
                                         <h4 class="font-medium text-amber-600 dark:text-amber-500 flex items-center gap-1">⚠️ The Trade-offs</h4>
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets.</p>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets. Finally, API usage will be significantly more intense, which increases the chances of facing rate limit issues or token invalidations.</p>
                                     </div>
                                 </div>
                             </div>
