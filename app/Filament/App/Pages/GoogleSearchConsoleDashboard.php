@@ -167,8 +167,11 @@ class GoogleSearchConsoleDashboard extends Page
 
             $payloads['table'] = $tabPayload;
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            // Commenting out the actual request to inspect payload
+            // $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            dd($payloads);
 
+            /*
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
@@ -176,6 +179,7 @@ class GoogleSearchConsoleDashboard extends Page
             
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
+            */
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
