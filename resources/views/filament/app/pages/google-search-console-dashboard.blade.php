@@ -145,11 +145,11 @@
             </div>
         </div>
 
-        <div class="chart-container-gsc relative w-full">
+        <div class="chart-container-gsc relative w-full" wire:ignore>
             <div x-show="isChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
-            <div style="position: relative; width: 100%; height: 100%;">
+            <div style="position: relative; width: 100%; height: 100%; display: block;">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
@@ -433,8 +433,10 @@
                                 },
                                 scales: {
                                     x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8' } },
-                                    yLeft: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8' } },
-                                    yRight: { type: 'linear', position: 'right', grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#94a3b8' } }
+                                    yClicks: { type: 'linear', position: 'left', display: false, grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#4285f4' } },
+                                    yImpressions: { type: 'linear', position: 'right', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#7e57c2' } },
+                                    yCtr: { type: 'linear', position: 'left', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#0097a7' } },
+                                    yPosition: { type: 'linear', position: 'right', reverse: true, display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#f4511e' } }
                                 }
                             }
                         };
@@ -459,7 +461,7 @@
                                 pointRadius: 0,
                                 pointHoverRadius: 6,
                                 fill: true,
-                                yAxisID: 'yLeft',
+                                yAxisID: 'yClicks',
                                 tension: 0.4
                             });
                         }
@@ -474,7 +476,7 @@
                                 pointRadius: 0,
                                 pointHoverRadius: 6,
                                 fill: true,
-                                yAxisID: 'yLeft',
+                                yAxisID: 'yImpressions',
                                 tension: 0.4
                             });
                         }
@@ -488,7 +490,7 @@
                                 pointRadius: 0,
                                 pointHoverRadius: 6,
                                 fill: false,
-                                yAxisID: 'yRight',
+                                yAxisID: 'yCtr',
                                 tension: 0.4
                             });
                         }
@@ -503,10 +505,25 @@
                                 pointRadius: 0,
                                 pointHoverRadius: 6,
                                 fill: false,
-                                yAxisID: 'yRight',
+                                yAxisID: 'yPosition',
                                 tension: 0.4
                             });
                         }
+                        
+                        // Manage scale visibility and background grid dynamically
+                        let gridDrawn = false;
+                        ['clicks', 'impressions', 'ctr', 'position'].forEach(m => {
+                            let scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
+                            chart.options.scales[scaleId].display = this.activeMetrics[m];
+                            if (this.activeMetrics[m]) {
+                                if (!gridDrawn) {
+                                    chart.options.scales[scaleId].grid.drawOnChartArea = true;
+                                    gridDrawn = true;
+                                } else {
+                                    chart.options.scales[scaleId].grid.drawOnChartArea = false;
+                                }
+                            }
+                        });
                         
                         chart.data.labels = labels;
                         chart.data.datasets = datasets;
