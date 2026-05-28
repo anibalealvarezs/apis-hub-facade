@@ -41,7 +41,11 @@ class GoogleSearchConsoleController extends Controller
 
         foreach ($dimensionMap as $tab => $dimKey) {
             if (!empty($activeFilters[$tab])) {
-                $filters[$dimKey] = ['operator' => 'in', 'value' => $activeFilters[$tab]];
+                if (count($activeFilters[$tab]) === 1) {
+                    $filters[$dimKey] = $activeFilters[$tab][0];
+                } else {
+                    $filters[$dimKey] = ['operator' => 'in', 'value' => $activeFilters[$tab]];
+                }
             }
         }
     }
