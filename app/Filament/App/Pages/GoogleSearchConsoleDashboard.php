@@ -165,12 +165,8 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['startDate'] = $this->dateStart;
             $tabPayload['endDate'] = $this->dateEnd;
 
-            // Commenting out actual requests to dump payload
-            // $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
 
-            throw new \Error(json_encode($payloads, JSON_PRETTY_PRINT));
-
-            /*
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
@@ -178,7 +174,6 @@ class GoogleSearchConsoleDashboard extends Page
             
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
-            */
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
@@ -225,9 +220,8 @@ class GoogleSearchConsoleDashboard extends Page
             $basePayload['startDate'] = $this->dateStart;
             $basePayload['endDate'] = $this->dateEnd;
 
-            // Commenting out actual request
-            // $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
-            // $this->tableData = $tableRes['data'] ?? [];
+            $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
+            $this->tableData = $tableRes['data'] ?? [];
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
