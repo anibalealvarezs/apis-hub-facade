@@ -193,6 +193,57 @@ class RemoteEngineService
     }
 
     /**
+     * Perform concurrent aggregation queries via the remote node.
+     */
+    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads)
+    {
+        $baseDomain = config('app.network_domain');
+        $domain = "{$project->subdomain}.{$baseDomain}";
+
+        $protocol = 'https';
+        if ($project->subdomain === 'alpha') {
+            $domain = 'localhost:10000';
+            $protocol = 'http';
+        }
+
+        $apiKey = $project->remote_admin_api_key;
+        if (!$apiKey) {
+            throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
+        }
+
+        $url = "{$protocol}://{$domain}/{$channel}/{$entity}/aggregate";
+        
+        $responses = \Illuminate\Support\Facades\Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($url, $apiKey, $payloads) {
+            $requests = [];
+            foreach ($payloads as $key => $payload) {
+                $requests[] = $pool->as($key)
+                    ->timeout(30)
+                    ->withHeaders([
+                        'Authorization' => "Bearer {$apiKey}",
+                        'Accept' => 'application/json',
+                    ])
+                    ->post($url, $payload);
+            }
+            return $requests;
+        });
+
+        $results = [];
+        foreach ($responses as $key => $response) {
+            if ($response instanceof \Exception) {
+                $results[$key] = ['status' => 'error', 'message' => $response->getMessage()];
+                continue;
+            }
+            if ($response->ok()) {
+                $results[$key] = $response->json();
+            } else {
+                $results[$key] = ['status' => 'error', 'message' => "Request failed with status {$response->status()}"];
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * List channeled entities via the remote node.
      */
     public function listChanneled(Project $project, string $channel, string $entity, array $params = [])

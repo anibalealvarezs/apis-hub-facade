@@ -103,31 +103,63 @@ class GoogleSearchConsoleDashboard extends Page
 
             $basePayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
-                'filters' => ['page' => $this->selectedAccount, 'dimensions.searchAppearance' => 'standard'],
                 'startDate' => $this->dateStart,
                 'endDate' => $this->dateEnd,
+                'filters' => [],
             ];
 
+            $payloads = [];
+
             // 1. Summary
-            $summaryPayload = array_merge($basePayload, ['groupBy' => []]);
-            $summaryRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $summaryPayload);
-            $this->summaryData = $summaryRes['data'][0] ?? [];
+            $summaryPayload = array_merge($basePayload, [
+                'groupBy' => [],
+                'filters' => [
+                    'page' => $this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ]
+            ]);
+            $payloads['summary'] = $summaryPayload;
 
             // 2. Previous Summary
             $prevPayload = array_merge($summaryPayload, ['startDate' => $prevStart->format('Y-m-d'), 'endDate' => $prevEnd->format('Y-m-d')]);
-            $prevRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $prevPayload);
-            $this->previousSummaryData = $prevRes['data'][0] ?? [];
+            $payloads['previous'] = $prevPayload;
 
             // 3. Chart Data
-            $chartPayload = array_merge($basePayload, ['groupBy' => ['daily']]);
-            $chartRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $chartPayload);
-            $this->chartData = $chartRes['data'] ?? [];
+            $chartPayload = array_merge($summaryPayload, ['groupBy' => ['daily']]);
+            $payloads['chart'] = $chartPayload;
+
+            // 4. Tab Data
+            $tabPayload = $basePayload;
+            if ($this->activeTab === 'appearances') {
+                $tabPayload['filters'] = [
+                    'page' => $this->selectedAccount,
+                    'dimensions.searchAppearance' => ['operator' => 'not_equal', 'value' => 'standard']
+                ];
+                $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
+            } else {
+                $tabPayload['filters'] = [
+                    'page' => $this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ];
+                $groupByMap = [
+                    'queries' => ['query'],
+                    'pages' => ['dimensions.page'],
+                    'countries' => ['country'],
+                    'devices' => ['device'],
+                ];
+                $tabPayload['groupBy'] = $groupByMap[$this->activeTab] ?? ['query'];
+            }
+            $payloads['table'] = $tabPayload;
+
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+
+            $this->summaryData = $results['summary']['data'][0] ?? [];
+            $this->previousSummaryData = $results['previous']['data'][0] ?? [];
+            $this->chartData = $results['chart']['data'] ?? [];
+            $this->tableData = $results['table']['data'] ?? [];
             
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
-
-            // 4. Tab Data
-            $this->loadTabData();
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());

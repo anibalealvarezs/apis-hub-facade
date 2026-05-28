@@ -95,9 +95,9 @@
         <div class="gsc-header-controls">
             <!-- Account Selector -->
             <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
-                <option value="">Select Property...</option>
+                <option value="" class="bg-white dark:bg-gray-800">Select Property...</option>
                 @foreach($accounts as $id => $url)
-                    <option value="{{ $id }}">{{ $url }}</option>
+                    <option value="{{ $id }}" class="bg-white dark:bg-gray-800">{{ $url }}</option>
                 @endforeach
             </select>
 
@@ -190,7 +190,7 @@
     </div>
 
     <!-- Chart -->
-    <div class="chart-container-gsc relative" x-data="gscChart()" x-init="initChart()">
+    <div class="chart-container-gsc relative" x-data="gscChart(@js($chartData))" x-init="initChart()" @gsc-chart-updated.window="updateChart($event.detail.data)">
         <div wire:loading wire:target="loadReport, selectedAccount, dateStart, dateEnd" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
         </div>
@@ -199,7 +199,7 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('gscChart', () => {
+            Alpine.data('gscChart', (initialData = []) => {
                 let chartInstance = null; // Store outside Alpine reactive proxy
                 
                 return {
@@ -228,14 +228,15 @@
                         
                         chartInstance = new Chart(ctx, config);
 
-                        window.addEventListener('gsc-chart-updated', (e) => {
-                            this.updateChart(e.detail.data);
-                        });
-
                         window.addEventListener('toggle-metric', (e) => {
                             this.activeMetrics[e.detail] = !this.activeMetrics[e.detail];
                             this.refreshVisibility();
                         });
+
+                        // Run initial render if we have data
+                        if (initialData && initialData.length > 0) {
+                            this.updateChart(initialData);
+                        }
                     },
                     
                     updateChart(data) {
