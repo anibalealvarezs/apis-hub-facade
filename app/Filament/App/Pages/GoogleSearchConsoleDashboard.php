@@ -179,8 +179,10 @@ class GoogleSearchConsoleDashboard extends Page
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
+            throw new \Exception("DEBUG DUMP: PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
+
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
+            throw $e; // FORCE dump to screen!
         }
 
         $this->isLoading = false;
@@ -230,9 +232,10 @@ class GoogleSearchConsoleDashboard extends Page
             
             $this->tableData = $tableRes['data'] ?? [];
 
+            throw new \Exception("DEBUG DUMP (TAB): PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
+
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
-            $this->tableData = [];
+            throw $e; // FORCE dump to screen!
         }
     }
 }
