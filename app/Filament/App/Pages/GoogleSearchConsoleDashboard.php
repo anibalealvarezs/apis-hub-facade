@@ -167,16 +167,11 @@ class GoogleSearchConsoleDashboard extends Page
 
             $payloads['table'] = $tabPayload;
 
-            \Illuminate\Support\Facades\Log::error("DEBUG CHECKPOINT 0: Starting HTTP Requests");
             $startHttp = microtime(true);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             $httpDuration = microtime(true) - $startHttp;
 
-            \Illuminate\Support\Facades\Log::error("DEBUG CHECKPOINT 1: HTTP Requests Finished", [
-                'http_duration_seconds' => $httpDuration,
-                'memory_usage_mb' => memory_get_usage(true) / 1024 / 1024,
-                'table_results_count' => count($results['table']['data'] ?? []),
-            ]);
+            throw new \Exception("DEBUG DUMP: HTTP Requests Finished in {$httpDuration} seconds! Table row count: " . count($results['table']['data'] ?? []));
 
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
@@ -187,7 +182,7 @@ class GoogleSearchConsoleDashboard extends Page
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
+            throw $e; // FORCE dump to screen!
         }
 
         $this->isLoading = false;
@@ -231,12 +226,16 @@ class GoogleSearchConsoleDashboard extends Page
             $basePayload['startDate'] = $this->dateStart;
             $basePayload['endDate'] = $this->dateEnd;
 
+            $startHttp = microtime(true);
             $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
+            $httpDuration = microtime(true) - $startHttp;
+            
+            throw new \Exception("DEBUG DUMP (TAB): HTTP Request Finished in {$httpDuration} seconds! Table row count: " . count($tableRes['data'] ?? []));
+
             $this->tableData = $tableRes['data'] ?? [];
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
-            $this->tableData = [];
+            throw $e; // FORCE dump to screen!
         }
     }
 }
