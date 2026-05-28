@@ -59,7 +59,7 @@ class GoogleSearchConsoleDashboard extends Page
                 }
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error loading accounts: " . $e->getMessage());
+            throw $e; // FORCE dump to screen!
         }
     }
 
