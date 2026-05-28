@@ -46,6 +46,8 @@ class GoogleSearchConsoleDashboard extends Page
             
             $response = $service->listChanneled($tenant, 'google_search_console', 'page');
             
+            throw new \Exception("DEBUG DUMP (loadAccounts): listChanneled returned: " . json_encode($response));
+
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
                     $this->accounts[$page['id']] = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
@@ -166,8 +168,6 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['endDate'] = $this->dateEnd;
 
             $payloads['table'] = $tabPayload;
-
-            throw new \Exception("DEBUG DUMP: Reached aggregateChanneledPool call. If you see this, listChanneled() is FAST and we are about to start the heavy aggregations.");
 
             $startHttp = microtime(true);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
