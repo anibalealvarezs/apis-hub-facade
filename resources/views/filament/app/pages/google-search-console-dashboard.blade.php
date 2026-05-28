@@ -268,9 +268,20 @@
                         scales.yImpressions.display = this.activeMetrics.impressions;
                         scales.yPct.display = this.activeMetrics.ctr;
                         scales.yPos.display = this.activeMetrics.position;
-                        chartInstance.update();
-                    }
-                };
+        let chartInstance = null;
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('gsc-chart-updated', (event) => {
+                let data = [];
+                try {
+                    data = JSON.parse(event.dataJson || '[]');
+                } catch (e) {
+                    console.error("Failed to parse chart data JSON", e);
+                }
+                
+                if (!Array.isArray(data) || data.length === 0) return;
+                
+                // Logic to update chartInstance using Alpine component reference if possible 
+                // or direct Chart.js instance manipulation
             });
         });
     </script>
@@ -285,7 +296,13 @@
                 
                 init() {
                     window.addEventListener('gsc-table-updated', (event) => {
-                        this.updateData(event.detail.data || [], event.detail.tab || 'queries');
+                        let parsedData = [];
+                        try {
+                            parsedData = JSON.parse(event.detail.dataJson || '[]');
+                        } catch (e) {
+                            console.error("Failed to parse table data JSON", e);
+                        }
+                        this.updateData(parsedData, event.detail.tab || 'queries');
                     });
                 },
                 

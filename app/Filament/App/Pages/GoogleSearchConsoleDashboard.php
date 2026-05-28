@@ -185,12 +185,12 @@ class GoogleSearchConsoleDashboard extends Page
             
             $this->chartData = $results['chart']['data'] ?? [];
             
-            // Dispatch events to re-render chart and table via Alpine.js on the frontend
-            $this->dispatch('gsc-chart-updated', data: $this->chartData);
-            
-            // By dispatching the raw data to Alpine and clearing the PHP property, 
-            // we completely bypass Livewire 3's HTML Parsing bug on massive DOMs!
-            $this->dispatch('gsc-table-updated', data: $results['table']['data'] ?? [], tab: $this->activeTab);
+            // Dispatch events to re-render chart and table via Alpine.js on the frontend.
+            // CRITICAL: We MUST json_encode() the arrays to strings before dispatching!
+            // Livewire 3 deeply traverses arrays in event payloads to look for models/wireables.
+            // By passing a string, we bypass the 30-second CPU hang completely.
+            $this->dispatch('gsc-chart-updated', dataJson: json_encode($this->chartData));
+            $this->dispatch('gsc-table-updated', dataJson: json_encode($results['table']['data'] ?? []), tab: $this->activeTab);
             $this->tableData = [];
 
         } catch (\Exception $e) {
