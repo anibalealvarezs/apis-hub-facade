@@ -44,9 +44,14 @@ class GoogleSearchConsoleDashboard extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            $response = $service->listChanneled($tenant, 'google_search_console', 'page');
+            // Mock response to bypass the timeout
+            // $response = $service->listChanneled($tenant, 'google_search_console', 'page');
+            $response = [
+                'data' => [
+                    ['id' => 'https://example.com/', 'url' => 'https://example.com/']
+                ]
+            ];
             
-            dd('Accounts API response:', $response);
             
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
@@ -171,7 +176,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // Commenting out the actual request to inspect payload
             // $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
-            dd($payloads);
+            \Illuminate\Support\Facades\Log::info('GSC Payloads', $payloads);
 
             /*
             $this->summaryData = $results['summary']['data'][0] ?? [];
@@ -228,8 +233,10 @@ class GoogleSearchConsoleDashboard extends Page
             $basePayload['startDate'] = $this->dateStart;
             $basePayload['endDate'] = $this->dateEnd;
 
-            $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
-            $this->tableData = $tableRes['data'] ?? [];
+            // Commenting out actual request
+            // $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
+            \Illuminate\Support\Facades\Log::info('GSC Tab Payload', $basePayload);
+            $this->tableData = [];
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
