@@ -190,10 +190,8 @@ class GoogleSearchConsoleDashboard extends Page
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
-            throw new \Exception("DEBUG DUMP (HTML ISOLATION): Table data cleared before rendering. If you see this instantly, but removing this exception causes a 408, we found the bug.");
-
         } catch (\Exception $e) {
-            throw $e; // FORCE dump to screen!
+            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
         }
 
         $this->isLoading = false;
