@@ -32,7 +32,6 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function mount(): void
     {
-        throw new \Exception("DEBUG STRATEGY PROOF: If you see this on the screen, the dump mechanism works!");
         $this->dateEnd = Carbon::now()->subDays(3)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d'); // 28 days
 
@@ -167,6 +166,8 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['endDate'] = $this->dateEnd;
 
             $payloads['table'] = $tabPayload;
+
+            throw new \Exception("DEBUG DUMP: Reached aggregateChanneledPool call. If you see this, listChanneled() is FAST and we are about to start the heavy aggregations.");
 
             $startHttp = microtime(true);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
