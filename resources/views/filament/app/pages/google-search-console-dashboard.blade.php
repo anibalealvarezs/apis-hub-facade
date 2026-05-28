@@ -190,7 +190,7 @@
     </div>
 
     <!-- Chart -->
-    <div class="chart-container-gsc relative" x-data="gscChart(@js($chartData))" x-init="initChart()" @gsc-chart-updated.window="updateChart($event.detail.data)">
+    <div class="chart-container-gsc relative" x-data="gscChart(@js($chartData))" x-init="initChart()" @gsc-chart-updated.window="updateChart($event.detail.dataJson)">
         <div wire:loading wire:target="loadReport, selectedAccount, dateStart, dateEnd" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
         </div>
@@ -268,20 +268,9 @@
                         scales.yImpressions.display = this.activeMetrics.impressions;
                         scales.yPct.display = this.activeMetrics.ctr;
                         scales.yPos.display = this.activeMetrics.position;
-        let chartInstance = null;
-        document.addEventListener('livewire:initialized', () => {
-            Livewire.on('gsc-chart-updated', (event) => {
-                let data = [];
-                try {
-                    data = JSON.parse(event.dataJson || '[]');
-                } catch (e) {
-                    console.error("Failed to parse chart data JSON", e);
-                }
-                
-                if (!Array.isArray(data) || data.length === 0) return;
-                
-                // Logic to update chartInstance using Alpine component reference if possible 
-                // or direct Chart.js instance manipulation
+                        chartInstance.update();
+                    }
+                };
             });
         });
     </script>
