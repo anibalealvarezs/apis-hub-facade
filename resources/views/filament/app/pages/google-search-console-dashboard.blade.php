@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <div class="gsc-header-row">
+    <div class="gsc-header-row" wire:init="loadReport">
         <div>
             <h1 class="gsc-header-title">
                 <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]" />

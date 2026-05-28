@@ -41,15 +41,10 @@ class GoogleSearchConsoleDashboard extends Page
     public function loadAccounts(): void
     {
         try {
-            $service = app(\App\Services\RemoteEngineService::class);
-            $tenant = \Filament\Facades\Filament::getTenant();
+            $service = app(RemoteEngineService::class);
+            $tenant = Filament::getTenant();
             
-            $startMount = microtime(true);
-            
-            // Call 1: listChanneled
-            $startCall1 = microtime(true);
             $response = $service->listChanneled($tenant, 'google_search_console', 'page');
-            $durationCall1 = microtime(true) - $startCall1;
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
@@ -58,37 +53,13 @@ class GoogleSearchConsoleDashboard extends Page
                 
                 if (!empty($this->accounts) && !$this->selectedAccount) {
                     $this->selectedAccount = array_key_first($this->accounts);
-                    
-                    // Call 2: loadReport
-                    $startCall2 = microtime(true);
-                    
-                    $tabPayload = [];
-                    if ($this->activeTab === 'queries') $tabPayload['groupBy'] = ['query'];
-                    elseif ($this->activeTab === 'pages') $tabPayload['groupBy'] = ['page'];
-                    elseif ($this->activeTab === 'countries') $tabPayload['groupBy'] = ['country'];
-                    elseif ($this->activeTab === 'devices') $tabPayload['groupBy'] = ['device'];
-                    elseif ($this->activeTab === 'appearances') $tabPayload['groupBy'] = ['searchAppearance'];
-        
-                    $tabPayload['startDate'] = $this->dateStart;
-                    $tabPayload['endDate'] = $this->dateEnd;
-        
-                    $payloads = [
-                        'summary' => ['startDate' => $this->dateStart, 'endDate' => $this->dateEnd],
-                        'previous' => ['startDate' => \Carbon\Carbon::parse($this->dateStart)->subDays(28)->format('Y-m-d'), 'endDate' => \Carbon\Carbon::parse($this->dateEnd)->subDays(28)->format('Y-m-d')],
-                        'chart' => ['startDate' => $this->dateStart, 'endDate' => $this->dateEnd, 'groupBy' => ['date']],
-                        'table' => $tabPayload
-                    ];
-                    
-                    $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
-                    $durationCall2 = microtime(true) - $startCall2;
-                    
-                    $totalDuration = microtime(true) - $startMount;
-                    
-                    throw new \Exception("EXCEPCIÓN PURA (SIN RENDERIZADO): \n\n1. Obtener Cuentas (listChanneled): {$durationCall1}s \n2. Obtener Datos (aggregateChanneledPool): {$durationCall2}s \n\nTIEMPO TOTAL DE API: {$totalDuration}s.\n\nSi recargas la página y ves este error rápidamente, la API no se cuelga. Si recargas y tarda 30s hasta darte 408 SIN mostrar esta excepción, entonces Guzzle se quedó colgado en alguna de estas llamadas.");
+                    // Do NOT call loadReport() here!
+                    // Calling it during mount injects massive strings into HTML attributes causing 30s regex backtracking.
+                    // It will be triggered by wire:init in the view.
                 }
             }
         } catch (\Exception $e) {
-            throw $e;
+            \Illuminate\Support\Facades\Log::error("GSC Accounts Error: " . $e->getMessage());
         }
     }
 
