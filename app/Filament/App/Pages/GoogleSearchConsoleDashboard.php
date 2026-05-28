@@ -165,6 +165,8 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['startDate'] = $this->dateStart;
             $tabPayload['endDate'] = $this->dateEnd;
 
+            $payloads['table'] = $tabPayload;
+
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
 
             $this->summaryData = $results['summary']['data'][0] ?? [];
