@@ -581,7 +581,7 @@ class DataSources extends Page
                     \Filament\Forms\Components\Toggle::make($this->activeChannel . '.calculate_synthetics')
                         ->label('Calculate Synthetics')
                         ->default(true)
-                        ->helperText('Enable calculation of synthetic dimensions (e.g., Branded vs. Non-Branded classification).'),
+                        ->helperText('Enable Möbius Reconciliation to infer and calculate records that Google removes from reports due to privacy thresholds.'),
                 ])->columns(1);
         }
 
