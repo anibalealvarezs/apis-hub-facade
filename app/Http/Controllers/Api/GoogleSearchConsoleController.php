@@ -89,7 +89,8 @@ class GoogleSearchConsoleController extends Controller
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => ['daily'], // or 'date' if daily fails
                     'filters' => [
-                        'page' => (string)$validated['account']
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
                     ],
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
@@ -123,7 +124,8 @@ class GoogleSearchConsoleController extends Controller
             $tabPayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'filters' => [
-                    'page' => (string)$validated['account']
+                    'page' => (string)$validated['account'],
+                    'dimensions.searchAppearance' => 'standard'
                 ],
                 'startDate' => $validated['dateStart'],
                 'endDate' => $validated['dateEnd'],
