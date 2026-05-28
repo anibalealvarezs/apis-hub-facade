@@ -5,23 +5,38 @@
             --gsc-impressions: #7e57c2;
             --gsc-ctr: #0097a7;
             --gsc-pos: #f4511e;
+            
+            --gsc-text-main: #111827;
+            --gsc-text-dim: #6b7280;
+            --gsc-bg-card: rgba(0,0,0,0.03);
+            --gsc-border: rgba(0,0,0,0.05);
+            --gsc-bg-hover: rgba(0,0,0,0.05);
+            --gsc-bg-active: rgba(0,0,0,0.08);
+            --gsc-chart-grid: rgba(0, 0, 0, 0.05);
+            --gsc-chart-ticks: #6b7280;
+        }
+
+        .dark {
+            --gsc-text-main: #ffffff;
+            --gsc-text-dim: #94a3b8;
+            --gsc-bg-card: rgba(255,255,255,0.03);
+            --gsc-border: rgba(255,255,255,0.05);
+            --gsc-bg-hover: rgba(255,255,255,0.05);
+            --gsc-bg-active: rgba(255,255,255,0.08);
+            --gsc-chart-grid: rgba(255, 255, 255, 0.05);
+            --gsc-chart-ticks: #94a3b8;
         }
 
         .gsc-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
-        .gsc-header-title { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
-        .gsc-header-subtitle { color: var(--text-dim, #94a3b8); font-size: 0.9rem; }
+        .gsc-header-title { font-size: 1.8rem; font-weight: 800; color: var(--gsc-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
+        .gsc-header-subtitle { color: var(--gsc-text-dim); font-size: 0.9rem; }
         .gsc-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
         
-        .metrics-grid-gsc {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-        }
+        .metrics-grid-gsc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
 
         .card-stat-gsc {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: var(--gsc-bg-card);
+            border: 1px solid var(--gsc-border);
             border-bottom: 4px solid var(--color, transparent);
             border-radius: 12px;
             padding: 20px;
@@ -31,19 +46,21 @@
             position: relative;
             overflow: hidden;
         }
-        .card-stat-gsc:hover { transform: translateY(-3px); background: rgba(255,255,255,0.02); }
-        .card-stat-gsc.active { opacity: 1; border-bottom-color: var(--color); background: rgba(255,255,255,0.03); }
+        .card-stat-gsc:hover { transform: translateY(-3px); background: var(--gsc-bg-hover); }
+        .card-stat-gsc.active { opacity: 1; border-bottom-color: var(--color); background: var(--gsc-bg-active); }
 
-        .gsc-label { font-size: 0.72rem; font-weight: 700; color: var(--text-dim, #94a3b8); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
-        .card-metric-value { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1.2; }
+        .gsc-label { font-size: 0.72rem; font-weight: 700; color: var(--gsc-text-dim); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
+        .card-metric-value { font-size: 2.2rem; font-weight: 800; color: var(--gsc-text-main); line-height: 1.2; }
         .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; width: fit-content; }
-        .trend-up { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
-        .trend-down { background: rgba(239, 68, 68, 0.1); color: #f87171; }
-        .trend-neutral { background: rgba(255, 255, 255, 0.05); color: #94a3b8; }
+        .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+        .dark .trend-up { color: #4ade80; }
+        .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        .dark .trend-down { color: #f87171; }
+        .trend-neutral { background: var(--gsc-border); color: var(--gsc-text-dim); }
 
         .chart-container-gsc { 
-            background: rgba(255,255,255,0.02); 
-            border: 1px solid rgba(255,255,255,0.05); 
+            background: var(--gsc-bg-card); 
+            border: 1px solid var(--gsc-border); 
             border-radius: 16px; 
             padding: 30px; 
             margin-bottom: 30px; 
@@ -52,30 +69,30 @@
         }
 
         .gsc-table-container { 
-            background: rgba(255,255,255,0.02); 
-            border: 1px solid rgba(255,255,255,0.05); 
+            background: var(--gsc-bg-card); 
+            border: 1px solid var(--gsc-border); 
             border-radius: 16px; 
             overflow: hidden;
             margin-top: 40px;
         }
 
-        .tab-nav-gsc { display: flex; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); }
-        .tab-gsc { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text-dim, #94a3b8); border-right: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; }
-        .tab-gsc:hover { background: rgba(255,255,255,0.03); }
-        .tab-gsc.active { background: rgba(255,255,255,0.02); color: #4285f4; border-bottom: 2px solid #4285f4; }
+        .tab-nav-gsc { display: flex; border-bottom: 1px solid var(--gsc-border); background: var(--gsc-bg-active); }
+        .tab-gsc { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gsc-text-dim); border-right: 1px solid var(--gsc-border); transition: all 0.2s; }
+        .tab-gsc:hover { background: var(--gsc-bg-hover); }
+        .tab-gsc.active { background: var(--gsc-bg-card); color: var(--gsc-clicks); border-bottom: 2px solid var(--gsc-clicks); }
 
         .gsc-table { width: 100%; border-collapse: collapse; text-align: left; }
-        .gsc-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim, #94a3b8); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .gsc-table td { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.02); vertical-align: middle; }
+        .gsc-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--gsc-text-dim); font-weight: 700; border-bottom: 1px solid var(--gsc-border); }
+        .gsc-table td { padding: 15px 25px; border-bottom: 1px solid var(--gsc-border); vertical-align: middle; }
         
         .metric-cell { text-align: right; width: 12.5%; min-width: 110px; }
         .gsc-table th:first-child, .gsc-table td:first-child { width: 50%; min-width: 300px; }
         
-        .progress-bar-container { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .progress-bar-container { width: 100%; height: 4px; background: var(--gsc-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .progress-bar-fill { height: 100%; transition: width 0.6s ease; }
         
-        .metric-val-main { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-        .gsc-url-text { font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
+        .metric-val-main { color: var(--gsc-text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+        .gsc-url-text { font-weight: 600; color: var(--gsc-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -206,25 +223,25 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between px-6 py-4 border-t border-white/5 bg-black/20" x-show="tableDataRaw.length > 0">
+            <div class="flex flex-wrap items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-black/20" x-show="tableDataRaw.length > 0">
                 <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="text-sm text-gray-400 font-medium">Rows per page:</span>
-                    <select x-model="pageSize" class="bg-white/5 border border-white/10 text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2">
-                        <option value="10" class="text-black">10</option>
-                        <option value="25" class="text-black">25</option>
-                        <option value="50" class="text-black">50</option>
-                        <option value="100" class="text-black">100</option>
-                        <option value="250" class="text-black">250</option>
+                    <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Rows per page:</span>
+                    <select x-model="pageSize" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
                     </select>
                 </div>
                 <div class="flex items-center gap-6">
-                    <span class="text-sm text-gray-400">
-                        Page <span x-text="currentPage" class="text-white font-bold"></span> of <span x-text="totalPages" class="text-white font-bold"></span>
-                        <span class="ml-2 px-2 py-1 bg-white/5 rounded text-xs">(<span x-text="tableDataRaw.length"></span> results)</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                        Page <span x-text="currentPage" class="text-gray-900 dark:text-white font-bold"></span> of <span x-text="totalPages" class="text-gray-900 dark:text-white font-bold"></span>
+                        <span class="ml-2 px-2 py-1 bg-gray-200 dark:bg-white/5 rounded text-xs">(<span x-text="tableDataRaw.length"></span> results)</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Prev</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next</button>
+                        <button @click="prevPage()" :disabled="currentPage === 1" class="px-4 py-2 bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Prev</button>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-4 py-2 bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
                     </div>
                 </div>
             </div>
@@ -461,8 +478,8 @@
                                     }
                                 },
                                 scales: {
-                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8' } },
-                                    yClicks: { type: 'linear', position: 'left', display: false, grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#4285f4' } },
+                                    x: { grid: { color: 'var(--gsc-chart-grid)', drawBorder: false }, ticks: { color: 'var(--gsc-chart-ticks)' } },
+                                    yClicks: { type: 'linear', position: 'left', display: false, grid: { color: 'var(--gsc-chart-grid)', drawBorder: false }, ticks: { color: '#4285f4' } },
                                     yImpressions: { type: 'linear', position: 'right', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#7e57c2' } },
                                     yCtr: { type: 'linear', position: 'left', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#0097a7' } },
                                     yPosition: { type: 'linear', position: 'right', reverse: true, display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#f4511e' } }
@@ -547,6 +564,7 @@
                             if (this.activeMetrics[m]) {
                                 if (!gridDrawn) {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = true;
+                                    chart.options.scales[scaleId].grid.color = getComputedStyle(document.documentElement).getPropertyValue('--gsc-chart-grid').trim();
                                     gridDrawn = true;
                                 } else {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = false;
