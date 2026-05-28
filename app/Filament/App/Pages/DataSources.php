@@ -1186,6 +1186,9 @@ class DataSources extends Page
             $payload['granular_sync'] = true;
             if ($channel === 'google_search_console') {
                 $payload['max_workers'] = 4;
+                if (isset($channelConfig['calculate_synthetics'])) {
+                    $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
+                }
             } elseif ($channel === 'facebook_organic') {
                 $payload['max_workers'] = 1;
                 
