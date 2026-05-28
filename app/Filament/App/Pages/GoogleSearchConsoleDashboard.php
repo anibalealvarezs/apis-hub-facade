@@ -173,11 +173,17 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['startDate'] = $this->dateStart;
             $tabPayload['endDate'] = $this->dateEnd;
 
-            $payloads['table'] = $tabPayload;
+            ];
 
-            $startHttp = microtime(true);
+            $startApi = microtime(true);
+            
+            // Set a strict 3-second timeout so if it hangs, it throws an exception immediately instead of 408
+            config(['apis-hub-api.timeout' => 3]);
+            
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
-            $httpDuration = microtime(true) - $startHttp;
+            $apiDuration = microtime(true) - $startApi;
+            
+            throw new \Exception("DEBUG EXCEPTION: La API completó exitosamente en {$apiDuration} segundos. Si ves esto, la API NO se colgó esta vez.");
 
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
@@ -195,6 +201,9 @@ class GoogleSearchConsoleDashboard extends Page
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
+            $this->addError('api', "API Error: " . $e->getMessage());
+            // RE-THROW so you can physically see the exception on screen!
+            throw $e;
         }
 
         $this->isLoading = false;
