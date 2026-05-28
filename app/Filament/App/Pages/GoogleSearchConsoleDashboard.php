@@ -174,15 +174,15 @@ class GoogleSearchConsoleDashboard extends Page
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
-            $this->tableData = $results['table']['data'] ?? [];
+            
+            // Limit table data to 250 rows to prevent Livewire snapshot serialization from taking 30+ seconds
+            $this->tableData = array_slice($results['table']['data'] ?? [], 0, 250);
             
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
-            throw new \Exception("DEBUG DUMP: PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
-
         } catch (\Exception $e) {
-            throw $e; // FORCE dump to screen!
+            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
         }
 
         $this->isLoading = false;
@@ -230,12 +230,12 @@ class GoogleSearchConsoleDashboard extends Page
             $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
             $httpDuration = microtime(true) - $startHttp;
             
-            $this->tableData = $tableRes['data'] ?? [];
-
-            throw new \Exception("DEBUG DUMP (TAB): PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
+            // Limit table data to 250 rows to prevent Livewire snapshot serialization from taking 30+ seconds
+            $this->tableData = array_slice($tableRes['data'] ?? [], 0, 250);
 
         } catch (\Exception $e) {
-            throw $e; // FORCE dump to screen!
+            \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
+            $this->tableData = [];
         }
     }
 }
