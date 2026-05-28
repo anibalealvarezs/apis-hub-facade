@@ -102,7 +102,7 @@ class GoogleSearchConsoleDashboard extends Page
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
             $basePayload = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'startDate' => $this->dateStart,
                 'endDate' => $this->dateEnd,
                 'filters' => [],
@@ -179,7 +179,7 @@ class GoogleSearchConsoleDashboard extends Page
             $tenant = Filament::getTenant();
 
             $basePayload = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'startDate' => $this->dateStart,
                 'endDate' => $this->dateEnd,
             ];
