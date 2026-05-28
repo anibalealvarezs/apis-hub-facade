@@ -32,6 +32,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function mount(): void
     {
+        throw new \Exception("DEBUG STRATEGY PROOF: If you see this on the screen, the dump mechanism works!");
         $this->dateEnd = Carbon::now()->subDays(3)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d'); // 28 days
 

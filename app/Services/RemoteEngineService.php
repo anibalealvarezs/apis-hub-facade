@@ -197,51 +197,18 @@ class RemoteEngineService
      */
     public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads)
     {
-        $baseDomain = config('app.network_domain');
-        $domain = "{$project->subdomain}.{$baseDomain}";
-
-        $protocol = 'https';
-        if ($project->subdomain === 'alpha') {
-            $domain = 'localhost:10000';
-            $protocol = 'http';
-        }
-
-        $apiKey = $project->remote_admin_api_key;
-        if (!$apiKey) {
-            throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
-        }
-
-        $url = "{$protocol}://{$domain}/{$channel}/{$entity}/aggregate";
-        
         $results = [];
         $startTime = microtime(true);
-        \Illuminate\Support\Facades\Log::error("Starting aggregateChanneledPool with ".count($payloads)." payloads");
         
         foreach ($payloads as $key => $payload) {
-            try {
-                \Illuminate\Support\Facades\Log::error("Sending payload for '{$key}'...");
-                $startReq = microtime(true);
-                
-                $response = \Illuminate\Support\Facades\Http::timeout(45)
-                    ->withHeaders([
-                        'X-Admin-API-Key' => $apiKey,
-                        'Accept' => 'application/json',
-                        'Connection' => 'close',
-                    ])
-                    ->post($url, $payload);
-                    
-                $reqDuration = round(microtime(true) - $startReq, 3);
-                \Illuminate\Support\Facades\Log::error("Payload '{$key}' finished in {$reqDuration}s. Status: " . $response->status());
-                    
-                if ($response->ok()) {
-                    $results[$key] = $response->json();
-                } else {
-                    $results[$key] = ['status' => 'error', 'message' => "Request failed with status {$response->status()}"];
-                }
-            } catch (\Exception $e) {
-                $reqDuration = round(microtime(true) - $startReq, 3);
-                \Illuminate\Support\Facades\Log::error("Payload '{$key}' threw Exception after {$reqDuration}s: " . $e->getMessage());
-                $results[$key] = ['status' => 'error', 'message' => $e->getMessage()];
+            $startReq = microtime(true);
+            $response = $this->aggregateChanneled($project, $channel, $entity, $payload);
+            
+            // SDK returns the array directly, but handles errors by returning ['status' => 'error']
+            if (isset($response['status']) && $response['status'] === 'error') {
+                $results[$key] = $response;
+            } else {
+                $results[$key] = $response;
             }
         }
 
