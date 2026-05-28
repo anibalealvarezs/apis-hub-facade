@@ -256,7 +256,16 @@
                             
                             this.summary = data.summary || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
                             this.chartDataRaw = data.chart || [];
-                            this.tableDataRaw = data.table || [];
+                            
+                            this.tableDataRaw = (data.table || []).map(row => {
+                                // The API returns 'query', 'page', 'country', etc. based on the tab.
+                                // We map this dynamic key to 'id' for the table rendering.
+                                const idKey = Object.keys(row).find(k => !['clicks', 'impressions', 'ctr', 'position'].includes(k));
+                                return {
+                                    ...row,
+                                    id: row[idKey] || 'Unknown'
+                                };
+                            });
                             
                             this.updateChart();
                             
@@ -309,7 +318,7 @@
                     updateChart() {
                         if (!this.chartInstance || !this.chartDataRaw.length) return;
                         
-                        const labels = this.chartDataRaw.map(r => dayjs(r.date).format('MMM D'));
+                        const labels = this.chartDataRaw.map(r => dayjs(r.daily || r.date).format('MMM D'));
                         const datasets = [];
                         
                         if (this.activeMetrics.clicks) {
