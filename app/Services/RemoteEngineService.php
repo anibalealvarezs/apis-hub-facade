@@ -215,11 +215,11 @@ class RemoteEngineService
         
         $results = [];
         $startTime = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Starting aggregateChanneledPool with ".count($payloads)." payloads");
+        \Illuminate\Support\Facades\Log::error("Starting aggregateChanneledPool with ".count($payloads)." payloads");
         
         foreach ($payloads as $key => $payload) {
             try {
-                \Illuminate\Support\Facades\Log::info("Sending payload for '{$key}'...");
+                \Illuminate\Support\Facades\Log::error("Sending payload for '{$key}'...");
                 $startReq = microtime(true);
                 
                 $response = \Illuminate\Support\Facades\Http::timeout(45)
@@ -231,7 +231,7 @@ class RemoteEngineService
                     ->post($url, $payload);
                     
                 $reqDuration = round(microtime(true) - $startReq, 3);
-                \Illuminate\Support\Facades\Log::info("Payload '{$key}' finished in {$reqDuration}s. Status: " . $response->status());
+                \Illuminate\Support\Facades\Log::error("Payload '{$key}' finished in {$reqDuration}s. Status: " . $response->status());
                     
                 if ($response->ok()) {
                     $results[$key] = $response->json();
@@ -246,7 +246,7 @@ class RemoteEngineService
         }
 
         $totalDuration = round(microtime(true) - $startTime, 3);
-        \Illuminate\Support\Facades\Log::info("Finished aggregateChanneledPool in {$totalDuration}s");
+        \Illuminate\Support\Facades\Log::error("Finished aggregateChanneledPool in {$totalDuration}s");
 
         return $results;
     }
