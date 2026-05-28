@@ -46,6 +46,8 @@ class GoogleSearchConsoleDashboard extends Page
             
             $response = $service->listChanneled($tenant, 'google_search_console', 'page');
             
+            dd('Accounts API response:', $response);
+            
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
                     $this->accounts[$page['id']] = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
