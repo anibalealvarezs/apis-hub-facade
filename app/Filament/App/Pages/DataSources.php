@@ -1326,7 +1326,7 @@ class DataSources extends Page
                 
                 // Persist UI configuration values (like cache_history_range and the channel toggle)
                 foreach ($channelConfig as $k => $v) {
-                    if (!is_array($v)) {
+                    if (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
