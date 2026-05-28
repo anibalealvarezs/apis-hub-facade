@@ -48,8 +48,7 @@ class GoogleSearchConsoleDashboard extends Page
             
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $url = $page['url'] ?? $page['id'];
-                    $this->accounts[$url] = str_replace(['https://', 'http://'], '', rtrim($url, '/'));
+                    $this->accounts[$page['id']] = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
                 }
                 
                 if (!empty($this->accounts) && !$this->selectedAccount) {
@@ -103,7 +102,7 @@ class GoogleSearchConsoleDashboard extends Page
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
             $basePayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
                 'startDate' => $this->dateStart,
                 'endDate' => $this->dateEnd,
                 'filters' => [],
@@ -180,7 +179,7 @@ class GoogleSearchConsoleDashboard extends Page
             $tenant = Filament::getTenant();
 
             $basePayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
                 'startDate' => $this->dateStart,
                 'endDate' => $this->dateEnd,
             ];
