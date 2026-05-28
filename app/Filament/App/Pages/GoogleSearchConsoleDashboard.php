@@ -171,10 +171,6 @@ class GoogleSearchConsoleDashboard extends Page
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             $httpDuration = microtime(true) - $startHttp;
 
-            throw new \Exception("DEBUG DUMP: HTTP Requests Finished in {$httpDuration} seconds! Table row count: " . count($results['table']['data'] ?? []));
-
-            throw new \Exception("DEBUG DUMP: HTTP Requests Finished in {$httpDuration} seconds! Table row count: " . count($results['table']['data'] ?? []));
-
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
@@ -184,7 +180,7 @@ class GoogleSearchConsoleDashboard extends Page
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
         } catch (\Exception $e) {
-            throw $e; // FORCE dump to screen!
+            \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
         }
 
         $this->isLoading = false;
@@ -232,12 +228,11 @@ class GoogleSearchConsoleDashboard extends Page
             $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
             $httpDuration = microtime(true) - $startHttp;
             
-            throw new \Exception("DEBUG DUMP (TAB): HTTP Request Finished in {$httpDuration} seconds! Table row count: " . count($tableRes['data'] ?? []));
-
             $this->tableData = $tableRes['data'] ?? [];
 
         } catch (\Exception $e) {
-            throw $e; // FORCE dump to screen!
+            \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
+            $this->tableData = [];
         }
     }
 }
