@@ -101,46 +101,54 @@ class GoogleSearchConsoleDashboard extends Page
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $basePayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
-                'startDate' => $this->dateStart,
-                'endDate' => $this->dateEnd,
-                'filters' => [],
-            ];
-
-            $payloads = [];
-
             // 1. Summary
-            $summaryPayload = array_merge($basePayload, [
+            $payloads['summary'] = [
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'groupBy' => [],
                 'filters' => [
-                    'page' => $this->selectedAccount,
+                    'page' => (string)$this->selectedAccount,
                     'dimensions.searchAppearance' => 'standard'
-                ]
-            ]);
-            $payloads['summary'] = $summaryPayload;
+                ],
+                'startDate' => $this->dateStart,
+                'endDate' => $this->dateEnd,
+            ];
 
             // 2. Previous Summary
-            $prevPayload = array_merge($summaryPayload, ['startDate' => $prevStart->format('Y-m-d'), 'endDate' => $prevEnd->format('Y-m-d')]);
-            $payloads['previous'] = $prevPayload;
+            $payloads['previous'] = [
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'groupBy' => [],
+                'filters' => [
+                    'page' => (string)$this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ],
+                'startDate' => $prevStart->format('Y-m-d'),
+                'endDate' => $prevEnd->format('Y-m-d'),
+            ];
 
             // 3. Chart Data
-            $chartPayload = array_merge($summaryPayload, ['groupBy' => ['daily']]);
-            $payloads['chart'] = $chartPayload;
+            $payloads['chart'] = [
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'groupBy' => ['daily'],
+                'filters' => [
+                    'page' => (string)$this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ],
+                'startDate' => $this->dateStart,
+                'endDate' => $this->dateEnd,
+            ];
 
             // 4. Tab Data
-            $tabPayload = $basePayload;
+            $tabPayload = [
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+            ];
+
             if ($this->activeTab === 'appearances') {
+                $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
                 $tabPayload['filters'] = [
-                    'page' => $this->selectedAccount,
+                    'page' => (string)$this->selectedAccount,
                     'dimensions.searchAppearance' => ['operator' => 'not_equal', 'value' => 'standard']
                 ];
-                $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
             } else {
-                $tabPayload['filters'] = [
-                    'page' => $this->selectedAccount,
-                    'dimensions.searchAppearance' => 'standard'
-                ];
                 $groupByMap = [
                     'queries' => ['query'],
                     'pages' => ['dimensions.page'],
@@ -148,7 +156,15 @@ class GoogleSearchConsoleDashboard extends Page
                     'devices' => ['device'],
                 ];
                 $tabPayload['groupBy'] = $groupByMap[$this->activeTab] ?? ['query'];
+                $tabPayload['filters'] = [
+                    'page' => (string)$this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ];
             }
+
+            $tabPayload['startDate'] = $this->dateStart;
+            $tabPayload['endDate'] = $this->dateEnd;
+
             $payloads['table'] = $tabPayload;
 
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
@@ -180,22 +196,15 @@ class GoogleSearchConsoleDashboard extends Page
 
             $basePayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
-                'startDate' => $this->dateStart,
-                'endDate' => $this->dateEnd,
             ];
 
             if ($this->activeTab === 'appearances') {
+                $basePayload['groupBy'] = ['dimensions.searchAppearance'];
                 $basePayload['filters'] = [
-                    'page' => $this->selectedAccount,
+                    'page' => (string)$this->selectedAccount,
                     'dimensions.searchAppearance' => ['operator' => 'not_equal', 'value' => 'standard']
                 ];
-                $basePayload['groupBy'] = ['dimensions.searchAppearance'];
             } else {
-                $basePayload['filters'] = [
-                    'page' => $this->selectedAccount,
-                    'dimensions.searchAppearance' => 'standard'
-                ];
-                
                 $groupByMap = [
                     'queries' => ['query'],
                     'pages' => ['dimensions.page'],
@@ -204,7 +213,14 @@ class GoogleSearchConsoleDashboard extends Page
                 ];
                 
                 $basePayload['groupBy'] = $groupByMap[$this->activeTab] ?? ['query'];
+                $basePayload['filters'] = [
+                    'page' => (string)$this->selectedAccount,
+                    'dimensions.searchAppearance' => 'standard'
+                ];
             }
+
+            $basePayload['startDate'] = $this->dateStart;
+            $basePayload['endDate'] = $this->dateEnd;
 
             $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
             $this->tableData = $tableRes['data'] ?? [];
