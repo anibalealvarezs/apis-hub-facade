@@ -88,8 +88,6 @@ class GoogleSearchConsoleDashboard extends Page
         $this->chartData = [];
         $this->summaryData = [];
         $this->previousSummaryData = [];
-        
-        throw new \Exception("DEBUG DUMP (DEHYDRATE): Arrays successfully cleared! The Livewire snapshot is now 0 bytes and the 30s serialization hang has been completely eliminated.");
     }
 
     public function loadReport(): void
