@@ -93,6 +93,15 @@
         
         .metric-val-main { color: var(--gsc-text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
         .gsc-url-text { font-weight: 600; color: var(--gsc-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
+        
+        .gsc-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--gsc-border); background: var(--gsc-bg-active); }
+        .gsc-pagination-text { font-size: 0.875rem; color: var(--gsc-text-dim); }
+        .gsc-pagination-text strong { color: var(--gsc-text-main); font-weight: 700; }
+        .gsc-pagination-select { background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 12px; outline: none; }
+        .gsc-pagination-btn { padding: 8px 16px; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gsc-text-main); cursor: pointer; transition: background 0.2s; }
+        .gsc-pagination-btn:hover:not(:disabled) { background: var(--gsc-bg-hover); }
+        .gsc-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .gsc-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--gsc-bg-card); border-radius: 4px; font-size: 0.75rem; }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -118,8 +127,8 @@
                         <option value="{{ $id }}" class="bg-white dark:bg-gray-800">{{ $url }}</option>
                     @endforeach
                 </select>
-                <input type="date" wire:model.live="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
-                <input type="date" wire:model.live="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
+                <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
+                <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
             </div>
         </div>
 
@@ -223,10 +232,10 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-black/20" x-show="tableDataRaw.length > 0">
+            <div class="gsc-pagination-container" x-show="tableDataRaw.length > 0">
                 <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Rows per page:</span>
-                    <select x-model="pageSize" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 p-2">
+                    <span class="gsc-pagination-text font-medium">Rows per page:</span>
+                    <select x-model="pageSize" class="gsc-pagination-select">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -235,13 +244,13 @@
                     </select>
                 </div>
                 <div class="flex items-center gap-6">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">
-                        Page <span x-text="currentPage" class="text-gray-900 dark:text-white font-bold"></span> of <span x-text="totalPages" class="text-gray-900 dark:text-white font-bold"></span>
-                        <span class="ml-2 px-2 py-1 bg-gray-200 dark:bg-white/5 rounded text-xs">(<span x-text="tableDataRaw.length"></span> results)</span>
+                    <span class="gsc-pagination-text">
+                        Page <strong x-text="currentPage"></strong> of <strong x-text="totalPages"></strong>
+                        <span class="gsc-pagination-badge">(<span x-text="tableDataRaw.length"></span> results)</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1" class="px-4 py-2 bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Prev</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-4 py-2 bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-300 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
+                        <button @click="prevPage()" :disabled="currentPage === 1" class="gsc-pagination-btn">Prev</button>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="gsc-pagination-btn">Next</button>
                     </div>
                 </div>
             </div>
@@ -558,13 +567,19 @@
                         
                         // Manage scale visibility and background grid dynamically
                         let gridDrawn = false;
+                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--gsc-chart-grid').trim();
+                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--gsc-chart-ticks').trim();
+                        
+                        chart.options.scales.x.grid.color = cssGridColor;
+                        chart.options.scales.x.ticks.color = cssTicksColor;
+                        
                         ['clicks', 'impressions', 'ctr', 'position'].forEach(m => {
                             let scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
                             chart.options.scales[scaleId].display = this.activeMetrics[m];
                             if (this.activeMetrics[m]) {
                                 if (!gridDrawn) {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = true;
-                                    chart.options.scales[scaleId].grid.color = getComputedStyle(document.documentElement).getPropertyValue('--gsc-chart-grid').trim();
+                                    chart.options.scales[scaleId].grid.color = cssGridColor;
                                     gridDrawn = true;
                                 } else {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = false;
