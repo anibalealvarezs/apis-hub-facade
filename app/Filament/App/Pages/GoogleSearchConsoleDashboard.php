@@ -167,12 +167,12 @@ class GoogleSearchConsoleDashboard extends Page
 
             $payloads['table'] = $tabPayload;
 
+            \Illuminate\Support\Facades\Log::info("DEBUG CHECKPOINT 0: Starting HTTP Requests");
             $startHttp = microtime(true);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             $httpDuration = microtime(true) - $startHttp;
 
-            dd([
-                'message' => 'DEBUG CHECKPOINT 1: HTTP Requests Finished',
+            \Illuminate\Support\Facades\Log::info("DEBUG CHECKPOINT 1: HTTP Requests Finished", [
                 'http_duration_seconds' => $httpDuration,
                 'memory_usage_mb' => memory_get_usage(true) / 1024 / 1024,
                 'table_results_count' => count($results['table']['data'] ?? []),
