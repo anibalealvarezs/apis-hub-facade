@@ -75,7 +75,7 @@
         .progress-bar-fill { height: 100%; transition: width 0.6s ease; }
         
         .metric-val-main { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-        .gsc-url-text { font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; display: inline-block; vertical-align: middle; }
+        .gsc-url-text { font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,11 +145,13 @@
             </div>
         </div>
 
-        <div class="chart-container-gsc relative">
+        <div class="chart-container-gsc relative w-full">
             <div x-show="isChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
-            <canvas x-ref="canvas"></canvas>
+            <div style="position: relative; width: 100%; height: 100%;">
+                <canvas x-ref="canvas"></canvas>
+            </div>
         </div>
 
         <div class="gsc-table-container relative">
@@ -522,9 +524,16 @@
                     
                     get sortedTableData() {
                         return [...this.tableDataRaw].sort((a, b) => {
-                            let valA = a[this.sortCol];
-                            let valB = b[this.sortCol];
-                            if (this.sortDir === 'desc') return valB > valA ? 1 : -1;
+                            let valA = Number(a[this.sortCol]);
+                            let valB = Number(b[this.sortCol]);
+                            
+                            if (isNaN(valA) || isNaN(valB)) {
+                                valA = String(a[this.sortCol] || '').toLowerCase();
+                                valB = String(b[this.sortCol] || '').toLowerCase();
+                            }
+
+                            if (valA === valB) return 0;
+                            if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
                             return valA > valB ? 1 : -1;
                         });
                     },
