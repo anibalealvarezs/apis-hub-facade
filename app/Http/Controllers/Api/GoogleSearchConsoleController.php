@@ -38,7 +38,10 @@ class GoogleSearchConsoleController extends Controller
             elseif ($validated['activeTab'] === 'pages') $tabPayload['groupBy'] = ['page'];
             elseif ($validated['activeTab'] === 'countries') $tabPayload['groupBy'] = ['country'];
             elseif ($validated['activeTab'] === 'devices') $tabPayload['groupBy'] = ['device'];
-            elseif ($validated['activeTab'] === 'appearances') $tabPayload['groupBy'] = ['searchAppearance'];
+            elseif ($validated['activeTab'] === 'appearances') {
+                $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
+                $tabPayload['filters']['dimensions.searchAppearance'] = ['operator' => 'not_equal', 'value' => 'standard'];
+            }
 
             $start = Carbon::parse($validated['dateStart']);
             $end = Carbon::parse($validated['dateEnd']);

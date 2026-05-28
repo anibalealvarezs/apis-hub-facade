@@ -156,7 +156,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="row in sortedTableData" :key="row.id">
+                        <template x-for="(row, index) in sortedTableData" :key="index">
                             <tr>
                                 <td>
                                     <div class="gsc-url-text" :title="row.id" x-text="row.id"></div>
@@ -204,8 +204,6 @@
                     
                     sortCol: 'clicks',
                     sortDir: 'desc',
-                    
-                    chartInstance: null,
                     
                     initDashboard() {
                         this.initChart();
@@ -312,11 +310,12 @@
                             }
                         };
                         
-                        this.chartInstance = new Chart(ctx, config);
+                        this.$refs.canvas._chartInstance = new Chart(ctx, config);
                     },
                     
                     updateChart() {
-                        if (!this.chartInstance || !this.chartDataRaw.length) return;
+                        let chart = this.$refs.canvas._chartInstance;
+                        if (!chart || !this.chartDataRaw.length) return;
                         
                         const labels = this.chartDataRaw.map(r => dayjs(r.daily || r.date).format('MMM D'));
                         const datasets = [];
@@ -380,9 +379,9 @@
                             });
                         }
                         
-                        this.chartInstance.data.labels = labels;
-                        this.chartInstance.data.datasets = datasets;
-                        this.chartInstance.update();
+                        chart.data.labels = labels;
+                        chart.data.datasets = datasets;
+                        chart.update();
                     },
                     
                     sortBy(col) {
