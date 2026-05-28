@@ -180,6 +180,29 @@
             </div>
         </div>
 
+        <div x-show="hasAnyFilters" class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm" style="display: none;" x-transition>
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <x-heroicon-o-funnel class="w-4 h-4 text-primary-500" />
+                    Active Filters
+                </h3>
+                <button @click="clearFilters()" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">Clear All</button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="(values, tab) in activeFilters" :key="tab">
+                    <template x-for="val in values" :key="val">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                            <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab + ':'"></span>
+                            <span x-text="val" class="max-w-xs truncate" :title="val"></span>
+                            <button @click.stop="toggleFilter(tab, val)" class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
+                                <x-heroicon-m-x-mark class="w-3 h-3" />
+                            </button>
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </div>
+
         <div class="gsc-table-container relative">
             <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
@@ -190,6 +213,15 @@
                 <div class="tab-gsc" :class="activeTab === 'countries' ? 'active' : ''" @click="setTab('countries')">COUNTRIES</div>
                 <div class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''" @click="setTab('devices')">DEVICES</div>
                 <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''" @click="setTab('appearances')">SEARCH APPEARANCE</div>
+            </div>
+
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <input type="text" x-model.debounce.300ms="searchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="Filter rows...">
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -206,10 +238,15 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="(row, index) in paginatedTableData" :key="index">
-                            <tr>
+                        <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
+                            <tr @click="activeTab !== 'appearances' ? toggleFilter(activeTab, row.id) : null" class="transition duration-150" :class="(activeTab !== 'appearances' ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 ' : '') + (isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : '')">
                                 <td>
-                                    <div class="gsc-url-text" :title="row.id" x-text="row.id"></div>
+                                    <div class="flex items-center gap-2">
+                                        <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
+                                            <x-heroicon-s-check-circle class="w-4 h-4" />
+                                        </div>
+                                        <div class="gsc-url-text" :title="row.id" x-text="row.id"></div>
+                                    </div>
                                 </td>
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
@@ -278,21 +315,32 @@
                     
                     activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
                     
+                    activeFilters: { queries: [], pages: [], countries: [], devices: [] },
+                    searchQuery: '',
+                    
                     sortCol: 'clicks',
                     sortDir: 'desc',
                     
                     currentPage: 1,
                     pageSize: 10,
                     
+                    get hasAnyFilters() {
+                        return Object.values(this.activeFilters).some(arr => arr.length > 0);
+                    },
+
                     initDashboard() {
                         this.initChart();
                         
-                        this.$watch('account', () => this.fetchAll());
+                        this.$watch('account', () => {
+                            this.loadFilters();
+                            this.fetchAll();
+                        });
                         this.$watch('dateStart', () => this.fetchAll());
                         this.$watch('dateEnd', () => this.fetchAll());
                         this.$watch('pageSize', () => { this.currentPage = 1; });
                         
                         if (this.account && this.dateStart && this.dateEnd) {
+                            this.loadFilters();
                             this.fetchAll();
                         }
                     },
@@ -300,8 +348,57 @@
                     setTab(tab) {
                         this.activeTab = tab;
                         this.currentPage = 1;
+                        this.searchQuery = ''; // Clear search when switching tabs
                         this.fetchTable();
                         this.$wire.setActiveTab(tab);
+                    },
+
+                    loadFilters() {
+                        if (!this.account) return;
+                        const saved = sessionStorage.getItem(`gsc_filters_${this.tenantId}_${this.account}`);
+                        if (saved) {
+                            try {
+                                this.activeFilters = JSON.parse(saved);
+                            } catch(e) {
+                                this.clearFiltersLocal();
+                            }
+                        } else {
+                            this.clearFiltersLocal();
+                        }
+                    },
+
+                    saveFilters() {
+                        if (!this.account) return;
+                        sessionStorage.setItem(`gsc_filters_${this.tenantId}_${this.account}`, JSON.stringify(this.activeFilters));
+                    },
+
+                    clearFiltersLocal() {
+                        this.activeFilters = { queries: [], pages: [], countries: [], devices: [] };
+                    },
+
+                    clearFilters() {
+                        this.clearFiltersLocal();
+                        this.saveFilters();
+                        this.fetchSummary();
+                        this.fetchChart();
+                    },
+
+                    toggleFilter(tab, value) {
+                        if (tab === 'appearances') return; // Not supported
+                        if (!this.activeFilters[tab]) this.activeFilters[tab] = [];
+                        const idx = this.activeFilters[tab].indexOf(value);
+                        if (idx > -1) {
+                            this.activeFilters[tab].splice(idx, 1);
+                        } else {
+                            this.activeFilters[tab].push(value);
+                        }
+                        this.saveFilters();
+                        this.fetchSummary();
+                        this.fetchChart();
+                    },
+
+                    isFilterActive(tab, value) {
+                        return this.activeFilters[tab] && this.activeFilters[tab].includes(value);
                     },
 
                     forceRefresh() {
@@ -318,8 +415,9 @@
                         });
                     },
 
-                    getCacheKey(endpoint) {
-                        return `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}`;
+                    getCacheKey(endpoint, includeFilters = true) {
+                        const filterHash = includeFilters ? JSON.stringify(this.activeFilters) : 'no_filters';
+                        return `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}`;
                     },
 
                     async fetchAll() {
@@ -385,7 +483,7 @@
 
                     async fetchTable() {
                         if (!this.account || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('table');
+                        const cacheKey = this.getCacheKey('table', false); // Table does NOT use active filters
                         
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -395,7 +493,7 @@
 
                         this.isTableLoading = true;
                         try {
-                            const response = await fetch('/api/gsc/table', this.getFetchOptions());
+                            const response = await fetch('/api/gsc/table', this.getFetchOptions(false));
                             const data = await response.json();
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -409,20 +507,26 @@
                         }
                     },
 
-                    getFetchOptions() {
+                    getFetchOptions(includeFilters = true) {
+                        const payload = {
+                            tenant: this.tenantId,
+                            account: this.account,
+                            dateStart: this.dateStart,
+                            dateEnd: this.dateEnd,
+                            activeTab: this.activeTab
+                        };
+                        
+                        if (includeFilters) {
+                            payload.activeFilters = this.activeFilters;
+                        }
+
                         return {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({
-                                tenant: this.tenantId,
-                                account: this.account,
-                                dateStart: this.dateStart,
-                                dateEnd: this.dateEnd,
-                                activeTab: this.activeTab
-                            })
+                            body: JSON.stringify(payload)
                         };
                     },
 
@@ -603,7 +707,14 @@
                     },
                     
                     get sortedTableData() {
-                        return [...this.tableDataRaw].sort((a, b) => {
+                        let data = [...this.tableDataRaw];
+                        
+                        if (this.searchQuery && this.searchQuery.trim() !== '') {
+                            const query = this.searchQuery.toLowerCase().trim();
+                            data = data.filter(row => String(row.id || '').toLowerCase().includes(query));
+                        }
+
+                        return data.sort((a, b) => {
                             let valA = Number(a[this.sortCol]);
                             let valB = Number(b[this.sortCol]);
                             
@@ -619,7 +730,7 @@
                     },
                     
                     get totalPages() {
-                        return Math.ceil(this.tableDataRaw.length / this.pageSize) || 1;
+                        return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
                     },
                     
                     get paginatedTableData() {
@@ -637,13 +748,13 @@
                     },
                     
                     get maxClicks() {
-                        if (!this.tableDataRaw.length) return 1;
-                        return Math.max(...this.tableDataRaw.map(r => r.clicks));
+                        if (!this.sortedTableData.length) return 1;
+                        return Math.max(...this.sortedTableData.map(r => r.clicks));
                     },
                     
                     get maxImpressions() {
-                        if (!this.tableDataRaw.length) return 1;
-                        return Math.max(...this.tableDataRaw.map(r => r.impressions));
+                        if (!this.sortedTableData.length) return 1;
+                        return Math.max(...this.sortedTableData.map(r => r.impressions));
                     },
                     
                     formatNumber(num) {

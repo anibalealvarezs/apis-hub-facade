@@ -18,7 +18,32 @@ class GoogleSearchConsoleController extends Controller
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:queries,pages,countries,devices,appearances',
+            'activeFilters' => 'nullable|array',
+            'activeFilters.*' => 'nullable|array',
         ]);
+    }
+
+    private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
+    {
+        // Search Appearance is incompatible with other dimensions, must always be standard
+        $filters['dimensions.searchAppearance'] = 'standard';
+
+        if (empty($activeFilters)) {
+            return;
+        }
+
+        $dimensionMap = [
+            'queries' => 'query',
+            'pages' => 'dimensions.page',
+            'countries' => 'country',
+            'devices' => 'device',
+        ];
+
+        foreach ($dimensionMap as $tab => $dimKey) {
+            if (!empty($activeFilters[$tab])) {
+                $filters[$dimKey] = ['operator' => 'in', 'value' => $activeFilters[$tab]];
+            }
+        }
     }
 
     public function summary(Request $request)
@@ -35,24 +60,21 @@ class GoogleSearchConsoleController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
+            $baseFilters = ['page' => (string)$validated['account']];
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+
             $payloads = [
                 'summary' => [
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => [],
-                    'filters' => [
-                        'page' => (string)$validated['account'],
-                        'dimensions.searchAppearance' => 'standard'
-                    ],
+                    'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd']
                 ],
                 'previous' => [
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => [],
-                    'filters' => [
-                        'page' => (string)$validated['account'],
-                        'dimensions.searchAppearance' => 'standard'
-                    ],
+                    'filters' => $baseFilters,
                     'startDate' => $prevStart->format('Y-m-d'), 
                     'endDate' => $prevEnd->format('Y-m-d')
                 ],
@@ -84,14 +106,14 @@ class GoogleSearchConsoleController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
+            $baseFilters = ['page' => (string)$validated['account']];
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+
             $payloads = [
                 'chart' => [
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => ['daily'], // or 'date' if daily fails
-                    'filters' => [
-                        'page' => (string)$validated['account'],
-                        'dimensions.searchAppearance' => 'standard'
-                    ],
+                    'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
                     'limit' => 1000 // ensure all days are returned
