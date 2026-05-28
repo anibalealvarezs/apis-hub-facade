@@ -24,23 +24,60 @@ class GoogleSearchConsoleController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $tabPayload = [];
+            $tabPayload = [
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'filters' => [
+                    'page' => (string)$validated['account'],
+                    'dimensions.searchAppearance' => 'standard'
+                ],
+                'startDate' => $validated['dateStart'],
+                'endDate' => $validated['dateEnd']
+            ];
+
             if ($validated['activeTab'] === 'queries') $tabPayload['groupBy'] = ['query'];
             elseif ($validated['activeTab'] === 'pages') $tabPayload['groupBy'] = ['page'];
             elseif ($validated['activeTab'] === 'countries') $tabPayload['groupBy'] = ['country'];
             elseif ($validated['activeTab'] === 'devices') $tabPayload['groupBy'] = ['device'];
             elseif ($validated['activeTab'] === 'appearances') $tabPayload['groupBy'] = ['searchAppearance'];
 
-            $tabPayload['startDate'] = $validated['dateStart'];
-            $tabPayload['endDate'] = $validated['dateEnd'];
+            $start = Carbon::parse($validated['dateStart']);
+            $end = Carbon::parse($validated['dateEnd']);
+            $diff = $start->diffInDays($end) + 1;
+            
+            $prevEnd = $start->copy()->subDay();
+            $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
             $payloads = [
-                'summary' => ['startDate' => $validated['dateStart'], 'endDate' => $validated['dateEnd']],
-                'previous' => [
-                    'startDate' => Carbon::parse($validated['dateStart'])->subDays(28)->format('Y-m-d'), 
-                    'endDate' => Carbon::parse($validated['dateEnd'])->subDays(28)->format('Y-m-d')
+                'summary' => [
+                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'groupBy' => [],
+                    'filters' => [
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
+                    ],
+                    'startDate' => $validated['dateStart'],
+                    'endDate' => $validated['dateEnd']
                 ],
-                'chart' => ['startDate' => $validated['dateStart'], 'endDate' => $validated['dateEnd'], 'groupBy' => ['date']],
+                'previous' => [
+                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'groupBy' => [],
+                    'filters' => [
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
+                    ],
+                    'startDate' => $prevStart->format('Y-m-d'), 
+                    'endDate' => $prevEnd->format('Y-m-d')
+                ],
+                'chart' => [
+                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'groupBy' => ['daily'],
+                    'filters' => [
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
+                    ],
+                    'startDate' => $validated['dateStart'],
+                    'endDate' => $validated['dateEnd']
+                ],
                 'table' => $tabPayload
             ];
 

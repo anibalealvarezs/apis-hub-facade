@@ -86,6 +86,10 @@
                 <p class="gsc-header-subtitle">Performance on Google Search results</p>
             </div>
             <div class="gsc-header-controls">
+                <button type="button" @click="fetchReport()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isLoading }" :disabled="isLoading">
+                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isLoading }" />
+                    <span x-text="isLoading ? 'Updating...' : 'Update'"></span>
+                </button>
                 <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
                     <option value="" class="bg-white dark:bg-gray-800">Select Property...</option>
                     @foreach($accounts as $id => $url)
