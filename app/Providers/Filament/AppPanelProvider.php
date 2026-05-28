@@ -11,7 +11,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Navigation\NavigationGroup;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -137,10 +136,6 @@ class AppPanelProvider extends PanelProvider
             ->darkMode()
             ->databaseNotifications()
             ->databaseNotificationsPolling('5s')
-            ->navigationGroups([
-                NavigationGroup::make('Google')->parent('Data Explorer'),
-                NavigationGroup::make('Meta')->parent('Data Explorer'),
-            ])
             ->tenant(Project::class, slugAttribute: 'subdomain')
             ->tenantRegistration(\App\Filament\App\Pages\RegisterProject::class)
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')

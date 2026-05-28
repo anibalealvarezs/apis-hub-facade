@@ -8,6 +8,7 @@ use Filament\Pages\Page;
 class FacebookOrganicDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     protected static ?string $navigationGroup = 'Meta';
     protected static ?string $title = 'Facebook Organic';
     protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
