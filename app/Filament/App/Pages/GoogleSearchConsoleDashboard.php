@@ -44,14 +44,7 @@ class GoogleSearchConsoleDashboard extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            // Mock response to bypass the timeout
-            // $response = $service->listChanneled($tenant, 'google_search_console', 'page');
-            $response = [
-                'data' => [
-                    ['id' => 'https://example.com/', 'url' => 'https://example.com/']
-                ]
-            ];
-            
+            $response = $service->listChanneled($tenant, 'google_search_console', 'page');
             
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
@@ -110,7 +103,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 1. Summary
             $payloads['summary'] = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'groupBy' => [],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -122,7 +115,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 2. Previous Summary
             $payloads['previous'] = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'groupBy' => [],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -134,7 +127,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 3. Chart Data
             $payloads['chart'] = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'groupBy' => ['daily'],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -146,7 +139,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 4. Tab Data
             $tabPayload = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
             ];
 
             if ($this->activeTab === 'appearances') {
@@ -172,10 +165,20 @@ class GoogleSearchConsoleDashboard extends Page
             $tabPayload['startDate'] = $this->dateStart;
             $tabPayload['endDate'] = $this->dateEnd;
 
-            $payloads['table'] = $tabPayload;
+            // Commenting out actual requests to dump payload
+            // $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
 
-            // Force dump to screen and bypass the catch block!
             throw new \Error(json_encode($payloads, JSON_PRETTY_PRINT));
+
+            /*
+            $this->summaryData = $results['summary']['data'][0] ?? [];
+            $this->previousSummaryData = $results['previous']['data'][0] ?? [];
+            $this->chartData = $results['chart']['data'] ?? [];
+            $this->tableData = $results['table']['data'] ?? [];
+            
+            // Dispatch event to re-render chart via Alpine
+            $this->dispatch('gsc-chart-updated', data: $this->chartData);
+            */
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
@@ -195,7 +198,7 @@ class GoogleSearchConsoleDashboard extends Page
             $tenant = Filament::getTenant();
 
             $basePayload = [
-                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
+                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
             ];
 
             if ($this->activeTab === 'appearances') {
@@ -224,8 +227,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // Commenting out actual request
             // $tableRes = $service->aggregateChanneled($tenant, 'google_search_console', 'metric', $basePayload);
-            \Illuminate\Support\Facades\Log::info('GSC Tab Payload', $basePayload);
-            $this->tableData = [];
+            // $this->tableData = $tableRes['data'] ?? [];
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Tab Error: " . $e->getMessage());
