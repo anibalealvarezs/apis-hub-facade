@@ -84,10 +84,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function dehydrate()
     {
-        // ... (We cleared tableData here previously)
-        // But since we use JSON event dispatching, we already clear it in loadReport.
-        
-        throw new \Exception("DEBUG DEHYDRATE: Si siempre llegas aquí rápido, el bloqueo ocurre DESPUÉS de dehydrate, en el corazón de Livewire o en la red/Caddy.");
+        // Deliberately empty. All heavy data is cleared in loadReport to prevent Livewire from hanging during snapshot generation.
     }
     
     public function loadReport(): void
@@ -196,6 +193,8 @@ class GoogleSearchConsoleDashboard extends Page
             // Livewire 3 deeply traverses arrays in event payloads to look for models/wireables.
             // By passing a string, we bypass the 30-second CPU hang completely.
             $this->dispatch('gsc-chart-updated', dataJson: json_encode($this->chartData));
+            $this->chartData = []; // CRUCIAL: Clear chartData so Livewire doesn't recursively serialize it!
+            
             $this->dispatch('gsc-table-updated', dataJson: json_encode($results['table']['data'] ?? []), tab: $this->activeTab);
             $this->tableData = [];
 
