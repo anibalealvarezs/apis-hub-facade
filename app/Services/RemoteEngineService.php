@@ -217,9 +217,9 @@ class RemoteEngineService
             $requests = [];
             foreach ($payloads as $key => $payload) {
                 $requests[] = $pool->as($key)
-                    ->timeout(30)
+                    ->timeout(45)
                     ->withHeaders([
-                        'Authorization' => "Bearer {$apiKey}",
+                        'X-Admin-API-Key' => $apiKey,
                         'Accept' => 'application/json',
                     ])
                     ->post($url, $payload);

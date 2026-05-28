@@ -242,14 +242,20 @@
                     updateChart(data) {
                         if (!chartInstance || !data) return;
                         
-                        const sortedData = [...data].sort((a, b) => dayjs(a.daily).valueOf() - dayjs(b.daily).valueOf());
+                        const sortedData = [...data].sort((a, b) => new Date(a.daily).getTime() - new Date(b.daily).getTime());
                         
-                        chartInstance.data.labels = sortedData.map(d => dayjs(d.daily).format("MMM D"));
+                        chartInstance.data.labels = sortedData.map(d => {
+                            const date = new Date(d.daily);
+                            // Adjust for timezone offset to prevent off-by-one day issues
+                            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                            const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+                            return adjustedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        });
                         chartInstance.data.datasets = [
                             { label: "Clicks", data: sortedData.map(d => d.clicks), borderColor: '#4285f4', backgroundColor: 'rgba(66, 133, 244, 0.1)', fill: true, tension: 0.3, yAxisID: 'yClicks', hidden: !this.activeMetrics.clicks },
                             { label: "Impressions", data: sortedData.map(d => d.impressions), borderColor: '#7e57c2', backgroundColor: 'rgba(126, 87, 194, 0.1)', fill: true, tension: 0.3, yAxisID: 'yImpressions', hidden: !this.activeMetrics.impressions },
-                            { label: "CTR", data: sortedData.map(d => (parseFloat(d.ctr || 0) * 100).toFixed(2)), borderColor: '#0097a7', tension: 0.3, yAxisID: 'yPct', hidden: !this.activeMetrics.ctr },
-                            { label: "Position", data: sortedData.map(d => d.position), borderColor: '#f4511e', tension: 0.3, yAxisID: 'yPos', hidden: !this.activeMetrics.position },
+                            { label: "CTR", data: sortedData.map(d => (d.ctr * 100).toFixed(2)), borderColor: '#0097a7', backgroundColor: 'rgba(0, 151, 167, 0.1)', fill: true, tension: 0.3, yAxisID: 'yPct', hidden: !this.activeMetrics.ctr },
+                            { label: "Position", data: sortedData.map(d => parseFloat(d.position).toFixed(1)), borderColor: '#f4511e', backgroundColor: 'rgba(244, 81, 30, 0.1)', fill: true, tension: 0.3, yAxisID: 'yPos', hidden: !this.activeMetrics.position },
                         ];
                         
                         this.refreshVisibility();
