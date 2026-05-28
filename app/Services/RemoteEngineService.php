@@ -183,4 +183,20 @@ class RemoteEngineService
             'refresh' => $refresh ? 1 : 0
         ]));
     }
+
+    /**
+     * Perform an aggregation query on channeled entities via the remote node.
+     */
+    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload));
+    }
+
+    /**
+     * List channeled entities via the remote node.
+     */
+    public function listChanneled(Project $project, string $channel, string $entity, array $params = [])
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->listChanneled($channel, $entity, $params));
+    }
 }
