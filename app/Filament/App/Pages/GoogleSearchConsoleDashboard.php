@@ -183,11 +183,14 @@ class GoogleSearchConsoleDashboard extends Page
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
             
-            // Limit table data to 250 rows to prevent Livewire snapshot serialization from taking 30+ seconds
-            $this->tableData = array_slice($results['table']['data'] ?? [], 0, 250);
+            // DELIBERATE TEST: Clear the table data BEFORE Blade renders.
+            // If the 408 disappears, we know Livewire's HTML parser is crashing on large DOMs.
+            $this->tableData = [];
             
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
+
+            throw new \Exception("DEBUG DUMP (HTML ISOLATION): Table data cleared before rendering. If you see this instantly, but removing this exception causes a 408, we found the bug.");
 
         } catch (\Exception $e) {
             throw $e; // FORCE dump to screen!
