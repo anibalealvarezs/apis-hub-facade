@@ -213,30 +213,23 @@ class RemoteEngineService
 
         $url = "{$protocol}://{$domain}/{$channel}/{$entity}/aggregate";
         
-        $responses = \Illuminate\Support\Facades\Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($url, $apiKey, $payloads) {
-            $requests = [];
-            foreach ($payloads as $key => $payload) {
-                $requests[] = $pool->as($key)
-                    ->timeout(45)
+        $results = [];
+        foreach ($payloads as $key => $payload) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(45)
                     ->withHeaders([
                         'X-Admin-API-Key' => $apiKey,
                         'Accept' => 'application/json',
                     ])
                     ->post($url, $payload);
-            }
-            return $requests;
-        });
-
-        $results = [];
-        foreach ($responses as $key => $response) {
-            if ($response instanceof \Exception) {
-                $results[$key] = ['status' => 'error', 'message' => $response->getMessage()];
-                continue;
-            }
-            if ($response->ok()) {
-                $results[$key] = $response->json();
-            } else {
-                $results[$key] = ['status' => 'error', 'message' => "Request failed with status {$response->status()}"];
+                    
+                if ($response->ok()) {
+                    $results[$key] = $response->json();
+                } else {
+                    $results[$key] = ['status' => 'error', 'message' => "Request failed with status {$response->status()}"];
+                }
+            } catch (\Exception $e) {
+                $results[$key] = ['status' => 'error', 'message' => $e->getMessage()];
             }
         }
 
