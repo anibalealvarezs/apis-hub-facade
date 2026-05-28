@@ -96,14 +96,14 @@ class GoogleSearchConsoleDashboard extends Page
             
             $start = Carbon::parse($this->dateStart);
             $end = Carbon::parse($this->dateEnd);
-            $diff = $end->diffInDays($start) + 1;
+            $diff = $start->diffInDays($end) + 1;
             
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
             // 1. Summary
             $payloads['summary'] = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
                 'groupBy' => [],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -115,7 +115,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 2. Previous Summary
             $payloads['previous'] = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
                 'groupBy' => [],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -127,7 +127,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 3. Chart Data
             $payloads['chart'] = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
                 'groupBy' => ['daily'],
                 'filters' => [
                     'page' => (string)$this->selectedAccount,
@@ -139,7 +139,7 @@ class GoogleSearchConsoleDashboard extends Page
 
             // 4. Tab Data
             $tabPayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
             ];
 
             if ($this->activeTab === 'appearances') {
@@ -195,7 +195,7 @@ class GoogleSearchConsoleDashboard extends Page
             $tenant = Filament::getTenant();
 
             $basePayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => ['clicks', 'impressions', 'ctr', 'position'],
             ];
 
             if ($this->activeTab === 'appearances') {

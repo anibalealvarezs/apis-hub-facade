@@ -51,3 +51,11 @@ facade_demo_key.pub
 **/.php-cs-fixer.dist.php
 
 .copilot/composer-path-repositories.backup.json
+
+scratch_date.php
+
+scratch_intercept.php
+
+scratch_test_api.php
+
+scratch_test.php
