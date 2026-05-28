@@ -82,14 +82,14 @@ class GoogleSearchConsoleDashboard extends Page
         $this->loadReport();
     }
 
-    public function dehydrate(): void
+    public function dehydrate()
     {
-        $this->tableData = [];
-        $this->chartData = [];
-        $this->summaryData = [];
-        $this->previousSummaryData = [];
+        // ... (We cleared tableData here previously)
+        // But since we use JSON event dispatching, we already clear it in loadReport.
+        
+        throw new \Exception("DEBUG DEHYDRATE: Si siempre llegas aquí rápido, el bloqueo ocurre DESPUÉS de dehydrate, en el corazón de Livewire o en la red/Caddy.");
     }
-
+    
     public function loadReport(): void
     {
         if (!$this->selectedAccount || !$this->dateStart || !$this->dateEnd) {
@@ -183,7 +183,7 @@ class GoogleSearchConsoleDashboard extends Page
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             $apiDuration = microtime(true) - $startApi;
             
-            throw new \Exception("DEBUG EXCEPTION: La API completó exitosamente en {$apiDuration} segundos. Si ves esto, la API NO se colgó esta vez.");
+            // Exception removed from here
 
             $this->summaryData = $results['summary']['data'][0] ?? [];
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
