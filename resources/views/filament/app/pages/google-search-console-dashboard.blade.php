@@ -275,29 +275,84 @@
         });
     </script>
 
-    <!-- Breakdown Table -->
-    <div class="gsc-table-container relative">
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('gscTable', () => ({
+                tableData: [],
+                activeTab: 'queries',
+                maxClicks: 1,
+                maxImps: 1,
+                
+                init() {
+                    window.addEventListener('gsc-table-updated', (event) => {
+                        this.updateData(event.detail.data || [], event.detail.tab || 'queries');
+                    });
+                },
+                
+                updateData(data, tab) {
+                    this.activeTab = tab;
+                    this.tableData = data;
+                    
+                    this.maxClicks = Math.max(...this.tableData.map(r => parseInt(r.clicks) || 0));
+                    if (this.maxClicks <= 0) this.maxClicks = 1;
+                    
+                    this.maxImps = Math.max(...this.tableData.map(r => parseInt(r.impressions) || 0));
+                    if (this.maxImps <= 0) this.maxImps = 1;
+                },
+                
+                getDimVal(row) {
+                    let key = 'query';
+                    if (this.activeTab === 'pages') key = 'dimensions.page';
+                    else if (this.activeTab === 'countries') key = 'country';
+                    else if (this.activeTab === 'devices') key = 'device';
+                    else if (this.activeTab === 'appearances') key = 'dimensions.searchAppearance';
+                    
+                    let val = row;
+                    let parts = key.split('.');
+                    for (let p of parts) {
+                        val = val ? val[p] : undefined;
+                    }
+                    return val || 'Unknown';
+                },
+                
+                formatNumber(num) {
+                    return parseInt(num || 0).toLocaleString('en-US');
+                },
+                
+                formatPct(num) {
+                    return (parseFloat(num || 0) * 100).toFixed(2) + '%';
+                },
+                
+                formatPos(num) {
+                    return parseFloat(num || 0).toFixed(1);
+                }
+            }));
+        });
+    </script>
+
+    <!-- Breakdown Table (Alpine.js Powered to bypass Livewire 3 DOM parsing bug) -->
+    <div class="gsc-table-container relative" x-data="gscTable()">
         <div wire:loading wire:target="loadReport, loadTabData, selectedAccount, dateStart, dateEnd, setActiveTab" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
         </div>
-        <div class="tab-nav-gsc">
-            <div class="tab-gsc {{ $activeTab === 'queries' ? 'active' : '' }}" wire:click="setActiveTab('queries')">QUERIES</div>
-            <div class="tab-gsc {{ $activeTab === 'pages' ? 'active' : '' }}" wire:click="setActiveTab('pages')">PAGES</div>
-            <div class="tab-gsc {{ $activeTab === 'countries' ? 'active' : '' }}" wire:click="setActiveTab('countries')">COUNTRIES</div>
-            <div class="tab-gsc {{ $activeTab === 'devices' ? 'active' : '' }}" wire:click="setActiveTab('devices')">DEVICES</div>
-            <div class="tab-gsc {{ $activeTab === 'appearances' ? 'active' : '' }}" wire:click="setActiveTab('appearances')">SEARCH APPEARANCE</div>
+        <div class="tab-nav-gsc" wire:ignore>
+            <div class="tab-gsc" :class="activeTab === 'queries' ? 'active' : ''" wire:click="setActiveTab('queries')">QUERIES</div>
+            <div class="tab-gsc" :class="activeTab === 'pages' ? 'active' : ''" wire:click="setActiveTab('pages')">PAGES</div>
+            <div class="tab-gsc" :class="activeTab === 'countries' ? 'active' : ''" wire:click="setActiveTab('countries')">COUNTRIES</div>
+            <div class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''" wire:click="setActiveTab('devices')">DEVICES</div>
+            <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''" wire:click="setActiveTab('appearances')">SEARCH APPEARANCE</div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto" wire:ignore>
             <table class="gsc-table">
                 <thead>
                     <tr>
                         <th>
-                            @if($activeTab === 'queries') Search Query
-                            @elseif($activeTab === 'pages') Page URL
-                            @elseif($activeTab === 'countries') Country
-                            @elseif($activeTab === 'devices') Device
-                            @else Search Appearance @endif
+                            <span x-show="activeTab === 'queries'">Search Query</span>
+                            <span x-show="activeTab === 'pages'">Page URL</span>
+                            <span x-show="activeTab === 'countries'">Country</span>
+                            <span x-show="activeTab === 'devices'">Device</span>
+                            <span x-show="activeTab === 'appearances'">Search Appearance</span>
                         </th>
                         <th class="text-right">Clicks</th>
                         <th class="text-right">Impressions</th>
@@ -306,60 +361,40 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $maxClicks = collect($tableData)->max('clicks') ?: 1;
-                        $maxImps = collect($tableData)->max('impressions') ?: 1;
-                    @endphp
-                    
-                    @forelse($tableData as $row)
-                        @php
-                            $dimKey = 'query';
-                            if ($activeTab === 'pages') $dimKey = 'dimensions.page';
-                            elseif ($activeTab === 'countries') $dimKey = 'country';
-                            elseif ($activeTab === 'devices') $dimKey = 'device';
-                            elseif ($activeTab === 'appearances') $dimKey = 'dimensions.searchAppearance';
-                            
-                            $dimVal = \Illuminate\Support\Arr::get($row, $dimKey, 'Unknown');
-                            
-                            if (in_array($dimVal, [null, 'unknown', 'UNK', 'null'], true)) continue;
-                            
-                            $clicks = (int)($row['clicks'] ?? 0);
-                            $imps = (int)($row['impressions'] ?? 0);
-                            $ctr = (float)($row['ctr'] ?? 0);
-                            $pos = (float)($row['position'] ?? 0);
-                            
-                            $cPct = ($clicks / $maxClicks) * 100;
-                            $iPct = ($imps / $maxImps) * 100;
-                        @endphp
-                        <tr>
+                    <template x-for="(row, index) in tableData" :key="index">
+                        <tr x-show="!['Unknown', 'UNK', 'unknown', 'null'].includes(getDimVal(row)) && getDimVal(row) !== null">
                             <td>
-                                @if($activeTab === 'pages')
+                                <template x-if="activeTab === 'pages'">
                                     <div class="flex items-center gap-2">
-                                        <span class="gsc-url-text" title="{{ $dimVal }}">{{ $dimVal }}</span>
-                                        <a href="{{ $dimVal }}" target="_blank" class="text-[#4285f4] hover:text-white transition">
+                                        <span class="gsc-url-text" :title="getDimVal(row)" x-text="getDimVal(row)"></span>
+                                        <a :href="getDimVal(row)" target="_blank" class="text-[#4285f4] hover:text-white transition">
                                             <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4" />
                                         </a>
                                     </div>
-                                @else
-                                    <span class="gsc-url-text" title="{{ $dimVal }}">{{ $dimVal }}</span>
-                                @endif
+                                </template>
+                                <template x-if="activeTab !== 'pages'">
+                                    <span class="gsc-url-text" :title="getDimVal(row)" x-text="getDimVal(row)"></span>
+                                </template>
                             </td>
                             <td class="metric-cell">
-                                <div class="metric-val-main">{{ number_format($clicks) }}</div>
-                                <div class="progress-bar-container"><div class="progress-bar-fill bg-[#4285f4]" style="width: {{ $cPct }}%;"></div></div>
+                                <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill bg-[#4285f4]" :style="'width: ' + ((parseInt(row.clicks || 0) / maxClicks) * 100) + '%;'"></div>
+                                </div>
                             </td>
                             <td class="metric-cell">
-                                <div class="metric-val-main">{{ number_format($imps) }}</div>
-                                <div class="progress-bar-container"><div class="progress-bar-fill bg-[#7e57c2]" style="width: {{ $iPct }}%;"></div></div>
+                                <div class="metric-val-main" x-text="formatNumber(row.impressions)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill bg-[#7e57c2]" :style="'width: ' + ((parseInt(row.impressions || 0) / maxImps) * 100) + '%;'"></div>
+                                </div>
                             </td>
-                            <td class="metric-cell metric-val-main">{{ number_format($ctr * 100, 2) }}%</td>
-                            <td class="metric-cell metric-val-main">{{ number_format($pos, 1) }}</td>
+                            <td class="metric-cell metric-val-main" x-text="formatPct(row.ctr)"></td>
+                            <td class="metric-cell metric-val-main" x-text="formatPos(row.position)"></td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-8 text-gray-500">No data available for this dimension.</td>
-                        </tr>
-                    @endforelse
+                    </template>
+                    <tr x-show="tableData.length === 0">
+                        <td colspan="5" class="text-center py-8 text-gray-500">No data available for this dimension.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>

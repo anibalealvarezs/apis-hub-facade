@@ -183,12 +183,15 @@ class GoogleSearchConsoleDashboard extends Page
             $this->previousSummaryData = $results['previous']['data'][0] ?? [];
             $this->chartData = $results['chart']['data'] ?? [];
             
-            // DELIBERATE TEST: Clear the table data BEFORE Blade renders.
-            // If the 408 disappears, we know Livewire's HTML parser is crashing on large DOMs.
-            $this->tableData = [];
+            $this->chartData = $results['chart']['data'] ?? [];
             
-            // Dispatch event to re-render chart via Alpine
+            // Dispatch events to re-render chart and table via Alpine.js on the frontend
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
+            
+            // By dispatching the raw data to Alpine and clearing the PHP property, 
+            // we completely bypass Livewire 3's HTML Parsing bug on massive DOMs!
+            $this->dispatch('gsc-table-updated', data: $results['table']['data'] ?? [], tab: $this->activeTab);
+            $this->tableData = [];
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Dashboard Error: " . $e->getMessage());
