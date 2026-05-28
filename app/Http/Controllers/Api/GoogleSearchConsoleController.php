@@ -40,8 +40,8 @@ class GoogleSearchConsoleController extends Controller
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => [],
                     'filters' => [
-                        // The original code passed 'page' filter, we maintain it if it was required, but GSC aggregates property-wide if no page filter. 
-                        // Wait, if $validated['account'] is an ID, passing it to 'page' filter is wrong. We'll omit the page filter for property-wide stats.
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
                     ],
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd']
@@ -49,17 +49,27 @@ class GoogleSearchConsoleController extends Controller
                 'previous' => [
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => [],
-                    'filters' => [],
+                    'filters' => [
+                        'page' => (string)$validated['account'],
+                        'dimensions.searchAppearance' => 'standard'
+                    ],
                     'startDate' => $prevStart->format('Y-m-d'), 
                     'endDate' => $prevEnd->format('Y-m-d')
                 ],
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', (int)$validated['account'], $payloads);
+            \Illuminate\Support\Facades\Log::info("GSC Summary Payload: ", $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            \Illuminate\Support\Facades\Log::info("GSC Summary Results: ", $results);
+            
+            if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("GSC Summary APIs Hub Error: " . json_encode($results['summary']));
+            }
 
             return response()->json([
                 'summary' => $results['summary']['data'][0] ?? [],
                 'previous' => $results['previous']['data'][0] ?? [],
+                'debug_results' => config('app.debug') ? $results : null
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Summary Error: " . $e->getMessage());
@@ -78,17 +88,24 @@ class GoogleSearchConsoleController extends Controller
                 'chart' => [
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => ['daily'], // or 'date' if daily fails
-                    'filters' => [],
+                    'filters' => [
+                        'page' => (string)$validated['account']
+                    ],
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
                     'limit' => 1000 // ensure all days are returned
                 ]
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', (int)$validated['account'], $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+
+            if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("GSC Chart APIs Hub Error: " . json_encode($results['chart']));
+            }
 
             return response()->json([
                 'chart' => $results['chart']['data'] ?? [],
+                'debug_results' => config('app.debug') ? $results : null
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Chart Error: " . $e->getMessage());
@@ -105,7 +122,9 @@ class GoogleSearchConsoleController extends Controller
 
             $tabPayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
-                'filters' => [],
+                'filters' => [
+                    'page' => (string)$validated['account']
+                ],
                 'startDate' => $validated['dateStart'],
                 'endDate' => $validated['dateEnd'],
                 'limit' => 5000 // reasonable limit for frontend rendering
@@ -121,7 +140,11 @@ class GoogleSearchConsoleController extends Controller
             }
 
             $payloads = ['table' => $tabPayload];
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', (int)$validated['account'], $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+
+            if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("GSC Table APIs Hub Error: " . json_encode($results['table']));
+            }
 
             $tableData = $results['table']['data'] ?? [];
 
@@ -139,6 +162,7 @@ class GoogleSearchConsoleController extends Controller
 
             return response()->json([
                 'table' => $tableData,
+                'debug_results' => config('app.debug') ? $results : null
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Table Error: " . $e->getMessage());
