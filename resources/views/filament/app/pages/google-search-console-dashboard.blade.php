@@ -239,8 +239,15 @@
                         }
                     },
                     
-                    updateChart(data) {
-                        if (!chartInstance || !data) return;
+                    updateChart(dataInput) {
+                        let data = [];
+                        try {
+                            data = typeof dataInput === 'string' ? JSON.parse(dataInput || '[]') : dataInput;
+                        } catch (e) {
+                            console.error("Failed to parse chart data JSON", e);
+                        }
+                        
+                        if (!chartInstance || !data || data.length === 0) return;
                         
                         const sortedData = [...data].sort((a, b) => new Date(a.daily).getTime() - new Date(b.daily).getTime());
                         
