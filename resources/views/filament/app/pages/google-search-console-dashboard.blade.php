@@ -28,13 +28,18 @@
             cursor: pointer;
             transition: all 0.2s ease;
             opacity: 0.5;
+            position: relative;
+            overflow: hidden;
         }
         .card-stat-gsc:hover { transform: translateY(-3px); background: rgba(255,255,255,0.02); }
         .card-stat-gsc.active { opacity: 1; border-bottom-color: var(--color); background: rgba(255,255,255,0.03); }
 
         .gsc-label { font-size: 0.72rem; font-weight: 700; color: var(--text-dim, #94a3b8); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
         .card-metric-value { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1.2; }
-        .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+        .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; width: fit-content; }
+        .trend-up { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+        .trend-down { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .trend-neutral { background: rgba(255, 255, 255, 0.05); color: #94a3b8; }
 
         .chart-container-gsc { 
             background: rgba(255,255,255,0.02); 
@@ -86,9 +91,9 @@
                 <p class="gsc-header-subtitle">Performance on Google Search results</p>
             </div>
             <div class="gsc-header-controls">
-                <button type="button" @click="fetchReport()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isLoading }" :disabled="isLoading">
-                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isLoading }" />
-                    <span x-text="isLoading ? 'Updating...' : 'Update'"></span>
+                <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
+                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
+                    <span>Update</span>
                 </button>
                 <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
                     <option value="" class="bg-white dark:bg-gray-800">Select Property...</option>
@@ -102,36 +107,53 @@
         </div>
 
         <div class="metrics-grid-gsc relative">
-            <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <div x-show="isSummaryLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
+            
             <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')" style="--color: #4285f4;">
                 <div class="gsc-label">Total Clicks</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
+                    <span x-text="getVarianceIcon(variance.clicks)"></span>
+                    <span x-text="formatVariance(variance.clicks)"></span>
+                </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''" @click="toggleMetric('impressions')" style="--color: #7e57c2;">
                 <div class="gsc-label">Total Impressions</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
+                    <span x-text="getVarianceIcon(variance.impressions)"></span>
+                    <span x-text="formatVariance(variance.impressions)"></span>
+                </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')" style="--color: #0097a7;">
                 <div class="gsc-label">Average CTR</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
+                    <span x-text="getVarianceIcon(variance.ctr)"></span>
+                    <span x-text="formatVariance(variance.ctr)"></span>
+                </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')" style="--color: #f4511e;">
                 <div class="gsc-label">Average Position</div>
                 <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.position, true)">
+                    <span x-text="getVarianceIcon(variance.position, true)"></span>
+                    <span x-text="formatVariance(variance.position)"></span>
+                </div>
             </div>
         </div>
 
         <div class="chart-container-gsc relative">
-            <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <div x-show="isChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
             <canvas x-ref="canvas"></canvas>
         </div>
 
         <div class="gsc-table-container relative">
-            <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
             <div class="tab-nav-gsc">
@@ -194,9 +216,12 @@
                     dateEnd: @entangle('dateEnd'),
                     activeTab: @entangle('activeTab'),
                     
-                    isLoading: false,
+                    isSummaryLoading: false,
+                    isChartLoading: false,
+                    isTableLoading: false,
                     
                     summary: { clicks: 0, impressions: 0, ctr: 0, position: 0 },
+                    previous: { clicks: 0, impressions: 0, ctr: 0, position: 0 },
                     chartDataRaw: [],
                     tableDataRaw: [],
                     
@@ -208,70 +233,172 @@
                     initDashboard() {
                         this.initChart();
                         
-                        this.$watch('account', () => this.fetchReport());
-                        this.$watch('dateStart', () => this.fetchReport());
-                        this.$watch('dateEnd', () => this.fetchReport());
+                        this.$watch('account', () => this.fetchAll());
+                        this.$watch('dateStart', () => this.fetchAll());
+                        this.$watch('dateEnd', () => this.fetchAll());
                         
                         if (this.account && this.dateStart && this.dateEnd) {
-                            this.fetchReport();
+                            this.fetchAll();
                         }
                     },
                     
                     setTab(tab) {
                         this.activeTab = tab;
-                        this.fetchReport();
-                        // Also update Livewire state in background so it persists if needed
+                        this.fetchTable();
                         this.$wire.setActiveTab(tab);
                     },
-                    
-                    async fetchReport() {
-                        if (!this.account || !this.dateStart || !this.dateEnd) return;
-                        
-                        this.isLoading = true;
-                        
-                        try {
-                            const response = await fetch('/api/gsc/report', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    tenant: this.tenantId,
-                                    account: this.account,
-                                    dateStart: this.dateStart,
-                                    dateEnd: this.dateEnd,
-                                    activeTab: this.activeTab
-                                })
-                            });
-                            
-                            const data = await response.json();
-                            
-                            if (data.error) {
-                                console.error('API Error:', data.error);
-                                return;
+
+                    forceRefresh() {
+                        this.clearCache();
+                        this.fetchAll();
+                    },
+
+                    clearCache() {
+                        const prefix = `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}`;
+                        Object.keys(sessionStorage).forEach(key => {
+                            if (key.startsWith(prefix)) {
+                                sessionStorage.removeItem(key);
                             }
-                            
+                        });
+                    },
+
+                    getCacheKey(endpoint) {
+                        return `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}`;
+                    },
+
+                    async fetchAll() {
+                        if (!this.account || !this.dateStart || !this.dateEnd) return;
+                        this.fetchSummary();
+                        this.fetchChart();
+                        this.fetchTable();
+                    },
+                    
+                    async fetchSummary() {
+                        if (!this.account || !this.dateStart || !this.dateEnd) return;
+                        const cacheKey = this.getCacheKey('summary');
+                        
+                        if (sessionStorage.getItem(cacheKey)) {
+                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.summary = data.summary || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
-                            this.chartDataRaw = data.chart || [];
-                            
-                            this.tableDataRaw = (data.table || []).map(row => {
-                                // The API returns 'query', 'page', 'country', etc. based on the tab.
-                                // We map this dynamic key to 'id' for the table rendering.
-                                const idKey = Object.keys(row).find(k => !['clicks', 'impressions', 'ctr', 'position'].includes(k));
-                                return {
-                                    ...row,
-                                    id: row[idKey] || 'Unknown'
-                                };
-                            });
-                            
-                            this.updateChart();
-                            
-                        } catch (error) {
-                            console.error('Error fetching GSC report:', error);
-                        } finally {
-                            this.isLoading = false;
+                            this.previous = data.previous || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+                            return;
                         }
+
+                        this.isSummaryLoading = true;
+                        try {
+                            const response = await fetch('/api/gsc/summary', this.getFetchOptions());
+                            const data = await response.json();
+                            if (!data.error) {
+                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.summary = data.summary || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+                                this.previous = data.previous || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+                            }
+                        } catch (error) {
+                            console.error('Error fetching summary:', error);
+                        } finally {
+                            this.isSummaryLoading = false;
+                        }
+                    },
+
+                    async fetchChart() {
+                        if (!this.account || !this.dateStart || !this.dateEnd) return;
+                        const cacheKey = this.getCacheKey('chart');
+                        
+                        if (sessionStorage.getItem(cacheKey)) {
+                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                            this.chartDataRaw = data.chart || [];
+                            this.updateChart();
+                            return;
+                        }
+
+                        this.isChartLoading = true;
+                        try {
+                            const response = await fetch('/api/gsc/chart', this.getFetchOptions());
+                            const data = await response.json();
+                            if (!data.error) {
+                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.chartDataRaw = data.chart || [];
+                                this.updateChart();
+                            }
+                        } catch (error) {
+                            console.error('Error fetching chart:', error);
+                        } finally {
+                            this.isChartLoading = false;
+                        }
+                    },
+
+                    async fetchTable() {
+                        if (!this.account || !this.dateStart || !this.dateEnd) return;
+                        const cacheKey = this.getCacheKey('table');
+                        
+                        if (sessionStorage.getItem(cacheKey)) {
+                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                            this.tableDataRaw = data.table || [];
+                            return;
+                        }
+
+                        this.isTableLoading = true;
+                        try {
+                            const response = await fetch('/api/gsc/table', this.getFetchOptions());
+                            const data = await response.json();
+                            if (!data.error) {
+                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.tableDataRaw = data.table || [];
+                            }
+                        } catch (error) {
+                            console.error('Error fetching table:', error);
+                        } finally {
+                            this.isTableLoading = false;
+                        }
+                    },
+
+                    getFetchOptions() {
+                        return {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                tenant: this.tenantId,
+                                account: this.account,
+                                dateStart: this.dateStart,
+                                dateEnd: this.dateEnd,
+                                activeTab: this.activeTab
+                            })
+                        };
+                    },
+
+                    get variance() {
+                        const calc = (current, prev) => {
+                            if (!prev || Number(prev) === 0) return 0;
+                            return ((Number(current) - Number(prev)) / Number(prev)) * 100;
+                        };
+                        return {
+                            clicks: calc(this.summary.clicks, this.previous.clicks),
+                            impressions: calc(this.summary.impressions, this.previous.impressions),
+                            ctr: calc(this.summary.ctr, this.previous.ctr),
+                            position: calc(this.summary.position, this.previous.position)
+                        };
+                    },
+
+                    getVarianceClass(val, invert = false) {
+                        if (val === 0) return 'trend-neutral';
+                        const isPositive = val > 0;
+                        if (invert) return isPositive ? 'trend-down' : 'trend-up';
+                        return isPositive ? 'trend-up' : 'trend-down';
+                    },
+
+                    getVarianceIcon(val, invert = false) {
+                        if (val === 0) return '-';
+                        const isPositive = val > 0;
+                        if (invert) return isPositive ? '↓' : '↑';
+                        return isPositive ? '↑' : '↓';
+                    },
+
+                    formatVariance(val) {
+                        if (val === 0) return '0%';
+                        return Math.abs(val).toFixed(1) + '%';
                     },
                     
                     toggleMetric(metric) {
@@ -303,7 +430,7 @@
                                     }
                                 },
                                 scales: {
-                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8', maxTicksLimit: 10 } },
+                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8' } },
                                     yLeft: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#94a3b8' } },
                                     yRight: { type: 'linear', position: 'right', grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#94a3b8' } }
                                 }
