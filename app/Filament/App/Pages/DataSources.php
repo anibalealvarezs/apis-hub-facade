@@ -577,11 +577,33 @@ class DataSources extends Page
 
         if ($this->activeChannel === 'google_search_console') {
             $secondarySections[] = \Filament\Forms\Components\Section::make('Data Enrichment')
+                ->description('Advanced data recovery and attribution inference.')
                 ->schema([
                     \Filament\Forms\Components\Toggle::make($this->activeChannel . '.calculate_synthetics')
-                        ->label('Calculate Synthetics')
-                        ->default(true)
-                        ->helperText('Enable Möbius Reconciliation to infer and calculate records that Google removes from reports due to privacy thresholds.'),
+                        ->label('Enable Synthetic Calculations (Möbius Reconciliation)')
+                        ->default(true),
+                    \Filament\Forms\Components\Placeholder::make('synthetic_explanation')
+                        ->hiddenLabel()
+                        ->content(new \Illuminate\Support\HtmlString('
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-3 mt-2 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                                <p><strong>What is this?</strong> Synthetic calculations use an algorithmic method to infer attribution data that Google Search Console actively removes from your reports to protect user privacy.</p>
+                                
+                                <p><strong>The Problem:</strong> When you look at GSC data by a single dimension (like Page), Google gives you close to 100% of the actual events. However, when you break data down by multiple dimensions simultaneously (like Page + Query + Country + Device), Google hides almost 50% of the records because those specific combinations might identify users.</p>
+                                
+                                <p><strong>Our Solution:</strong> We query every possible subset of Google\'s data and run a reconciliation algorithm to deduce the missing pieces. This provides an almost complete picture of your traffic at the most granular level possible.</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                    <div>
+                                        <h4 class="font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">✨ The Benefits</h4>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Unlike Google, your totals will remain highly consistent no matter how deeply you filter or group the data. You get deep, granular attribution that is normally impossible to see.</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-amber-600 dark:text-amber-500 flex items-center gap-1">⚠️ The Trade-offs</h4>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ')),
                 ])->columns(1);
         }
 
