@@ -85,10 +85,8 @@ class GoogleSearchConsoleDashboard extends Page
     public function loadReport(): void
     {
         if (!$this->selectedAccount || !$this->dateStart || !$this->dateEnd) {
-            throw new \Exception("DEBUG DUMP: loadReport skipped! selectedAccount: " . var_export($this->selectedAccount, true));
+            return;
         }
-        
-        throw new \Exception("DEBUG DUMP: loadReport passed guard clause! We are about to prepare payloads.");
 
         $this->isLoading = true;
 
@@ -172,6 +170,8 @@ class GoogleSearchConsoleDashboard extends Page
             $startHttp = microtime(true);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             $httpDuration = microtime(true) - $startHttp;
+
+            throw new \Exception("DEBUG DUMP: HTTP Requests Finished in {$httpDuration} seconds! Table row count: " . count($results['table']['data'] ?? []));
 
             throw new \Exception("DEBUG DUMP: HTTP Requests Finished in {$httpDuration} seconds! Table row count: " . count($results['table']['data'] ?? []));
 
