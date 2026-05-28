@@ -181,8 +181,6 @@ class GoogleSearchConsoleDashboard extends Page
             // Dispatch event to re-render chart via Alpine
             $this->dispatch('gsc-chart-updated', data: $this->chartData);
 
-            throw new \Exception("DEBUG DUMP: PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
-
         } catch (\Exception $e) {
             throw $e; // FORCE dump to screen!
         }
@@ -234,8 +232,6 @@ class GoogleSearchConsoleDashboard extends Page
             
             // Limit table data to 250 rows to prevent Livewire snapshot serialization from taking 30+ seconds
             $this->tableData = array_slice($tableRes['data'] ?? [], 0, 250);
-
-            throw new \Exception("DEBUG DUMP (TAB): PHP Execution Completed in " . (microtime(true) - $startHttp) . " seconds. If you see this, Blade Rendering or Livewire Serialization is causing the 30s timeout!");
 
         } catch (\Exception $e) {
             throw $e; // FORCE dump to screen!
