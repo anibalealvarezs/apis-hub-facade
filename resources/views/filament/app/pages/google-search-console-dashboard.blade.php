@@ -76,14 +76,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
 
-    @if($isLoading)
-        <div class="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm rounded-xl">
-            <div class="flex flex-col items-center">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
-                <span class="mt-2 text-sm font-medium text-white">Syncing Performance Data...</span>
-            </div>
+    <!-- Global Loader (kept for full page sync if needed, but we'll use section loaders mostly) -->
+    <div wire:loading wire:target="loadAccounts" class="absolute inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+        <div class="flex flex-col items-center">
+            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            <span class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Loading Accounts...</span>
         </div>
-    @endif
+    </div>
 
     <div class="gsc-header-row">
         <div>
@@ -95,18 +94,18 @@
         </div>
         <div class="gsc-header-controls">
             <!-- Account Selector -->
-            <select wire:model.live="selectedAccount" class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+            <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
                 <option value="">Select Property...</option>
                 @foreach($accounts as $id => $url)
                     <option value="{{ $id }}">{{ $url }}</option>
                 @endforeach
             </select>
 
-            <!-- Date Range (Native Date Inputs for simplicity, or we can use two inputs) -->
+            <!-- Date Range -->
             <div class="flex items-center gap-2">
-                <input type="date" wire:model.live="dateStart" class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg p-2.5">
-                <span class="text-gray-400">to</span>
-                <input type="date" wire:model.live="dateEnd" class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg p-2.5">
+                <input type="date" wire:model.live="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
+                <span class="text-gray-500 dark:text-gray-400 font-medium">to</span>
+                <input type="date" wire:model.live="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg p-2.5 shadow-sm">
             </div>
             
             <x-filament::button wire:click="loadReport" icon="heroicon-o-arrow-path">
@@ -152,7 +151,10 @@
         $tPos = calcTrend($cPos, $pPos, true);
     @endphp
 
-    <div class="metrics-grid-gsc" x-data="{ activeMetrics: { clicks: true, impressions: true, ctr: false, position: false } }">
+    <div class="metrics-grid-gsc relative" x-data="{ activeMetrics: { clicks: true, impressions: true, ctr: false, position: false } }">
+        <div wire:loading wire:target="loadReport, selectedAccount, dateStart, dateEnd" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+        </div>
         <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="activeMetrics.clicks = !activeMetrics.clicks; window.dispatchEvent(new CustomEvent('toggle-metric', {detail: 'clicks'}))" style="--color: #4285f4;">
             <div class="gsc-label">Total Clicks</div>
             <div class="card-metric-value">{{ number_format($cClicks) }}</div>
@@ -188,79 +190,89 @@
     </div>
 
     <!-- Chart -->
-    <div class="chart-container-gsc" x-data="gscChart()" x-init="initChart()">
+    <div class="chart-container-gsc relative" x-data="gscChart()" x-init="initChart()">
+        <div wire:loading wire:target="loadReport, selectedAccount, dateStart, dateEnd" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+        </div>
         <canvas x-ref="canvas"></canvas>
     </div>
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('gscChart', () => ({
-                chart: null,
-                activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
+            Alpine.data('gscChart', () => {
+                let chartInstance = null; // Store outside Alpine reactive proxy
                 
-                initChart() {
-                    const ctx = this.$refs.canvas.getContext('2d');
+                return {
+                    activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
                     
-                    const config = {
-                        type: 'line',
-                        data: { labels: [], datasets: [] },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {mode: 'index', intersect: false},
-                            scales: {
-                                yClicks: { display: true, position: 'left', ticks: { color: '#4285f4' } },
-                                yImpressions: { display: false, position: 'left', grid: {display: false}, ticks: { color: '#7e57c2' } },
-                                yPct: { display: false, position: 'right', grid: {display: false}, ticks: { color: '#0097a7', callback: (v) => v + '%' } },
-                                yPos: { display: false, position: 'right', grid: {display: false}, reverse: true, ticks: { color: '#f4511e' } },
-                                x: { grid: {display: false}, ticks: { color: '#8B949E' } },
-                            },
-                            plugins: { legend: { display: false } }
-                        }
-                    };
+                    initChart() {
+                        const ctx = this.$refs.canvas.getContext('2d');
+                        
+                        const config = {
+                            type: 'line',
+                            data: { labels: [], datasets: [] },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {mode: 'index', intersect: false},
+                                scales: {
+                                    yClicks: { display: true, position: 'left', ticks: { color: '#4285f4' } },
+                                    yImpressions: { display: false, position: 'left', grid: {display: false}, ticks: { color: '#7e57c2' } },
+                                    yPct: { display: false, position: 'right', grid: {display: false}, ticks: { color: '#0097a7', callback: (v) => v + '%' } },
+                                    yPos: { display: false, position: 'right', grid: {display: false}, reverse: true, ticks: { color: '#f4511e' } },
+                                    x: { grid: {display: false}, ticks: { color: '#8B949E' } },
+                                },
+                                plugins: { legend: { display: false } }
+                            }
+                        };
+                        
+                        chartInstance = new Chart(ctx, config);
+
+                        window.addEventListener('gsc-chart-updated', (e) => {
+                            this.updateChart(e.detail.data);
+                        });
+
+                        window.addEventListener('toggle-metric', (e) => {
+                            this.activeMetrics[e.detail] = !this.activeMetrics[e.detail];
+                            this.refreshVisibility();
+                        });
+                    },
                     
-                    this.chart = new Chart(ctx, config);
-
-                    window.addEventListener('gsc-chart-updated', (e) => {
-                        this.updateChart(e.detail.data);
-                    });
-
-                    window.addEventListener('toggle-metric', (e) => {
-                        this.activeMetrics[e.detail] = !this.activeMetrics[e.detail];
+                    updateChart(data) {
+                        if (!chartInstance || !data) return;
+                        
+                        const sortedData = [...data].sort((a, b) => dayjs(a.daily).valueOf() - dayjs(b.daily).valueOf());
+                        
+                        chartInstance.data.labels = sortedData.map(d => dayjs(d.daily).format("MMM D"));
+                        chartInstance.data.datasets = [
+                            { label: "Clicks", data: sortedData.map(d => d.clicks), borderColor: '#4285f4', backgroundColor: 'rgba(66, 133, 244, 0.1)', fill: true, tension: 0.3, yAxisID: 'yClicks', hidden: !this.activeMetrics.clicks },
+                            { label: "Impressions", data: sortedData.map(d => d.impressions), borderColor: '#7e57c2', backgroundColor: 'rgba(126, 87, 194, 0.1)', fill: true, tension: 0.3, yAxisID: 'yImpressions', hidden: !this.activeMetrics.impressions },
+                            { label: "CTR", data: sortedData.map(d => (parseFloat(d.ctr || 0) * 100).toFixed(2)), borderColor: '#0097a7', tension: 0.3, yAxisID: 'yPct', hidden: !this.activeMetrics.ctr },
+                            { label: "Position", data: sortedData.map(d => d.position), borderColor: '#f4511e', tension: 0.3, yAxisID: 'yPos', hidden: !this.activeMetrics.position },
+                        ];
+                        
                         this.refreshVisibility();
-                    });
-                },
-                
-                updateChart(data) {
-                    if (!this.chart || !data) return;
-                    
-                    const sortedData = [...data].sort((a, b) => dayjs(a.daily).valueOf() - dayjs(b.daily).valueOf());
-                    
-                    this.chart.data.labels = sortedData.map(d => dayjs(d.daily).format("MMM D"));
-                    this.chart.data.datasets = [
-                        { label: "Clicks", data: sortedData.map(d => d.clicks), borderColor: '#4285f4', backgroundColor: 'rgba(66, 133, 244, 0.1)', fill: true, tension: 0.3, yAxisID: 'yClicks', hidden: !this.activeMetrics.clicks },
-                        { label: "Impressions", data: sortedData.map(d => d.impressions), borderColor: '#7e57c2', backgroundColor: 'rgba(126, 87, 194, 0.1)', fill: true, tension: 0.3, yAxisID: 'yImpressions', hidden: !this.activeMetrics.impressions },
-                        { label: "CTR", data: sortedData.map(d => (parseFloat(d.ctr || 0) * 100).toFixed(2)), borderColor: '#0097a7', tension: 0.3, yAxisID: 'yPct', hidden: !this.activeMetrics.ctr },
-                        { label: "Position", data: sortedData.map(d => d.position), borderColor: '#f4511e', tension: 0.3, yAxisID: 'yPos', hidden: !this.activeMetrics.position },
-                    ];
-                    
-                    this.refreshVisibility();
-                },
+                    },
 
-                refreshVisibility() {
-                    const scales = this.chart.options.scales;
-                    scales.yClicks.display = this.activeMetrics.clicks;
-                    scales.yImpressions.display = this.activeMetrics.impressions;
-                    scales.yPct.display = this.activeMetrics.ctr;
-                    scales.yPos.display = this.activeMetrics.position;
-                    this.chart.update();
-                }
-            }));
+                    refreshVisibility() {
+                        if (!chartInstance) return;
+                        const scales = chartInstance.options.scales;
+                        scales.yClicks.display = this.activeMetrics.clicks;
+                        scales.yImpressions.display = this.activeMetrics.impressions;
+                        scales.yPct.display = this.activeMetrics.ctr;
+                        scales.yPos.display = this.activeMetrics.position;
+                        chartInstance.update();
+                    }
+                };
+            });
         });
     </script>
 
     <!-- Breakdown Table -->
-    <div class="gsc-table-container">
+    <div class="gsc-table-container relative">
+        <div wire:loading wire:target="loadReport, loadTabData, selectedAccount, dateStart, dateEnd, setActiveTab" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+        </div>
         <div class="tab-nav-gsc">
             <div class="tab-gsc {{ $activeTab === 'queries' ? 'active' : '' }}" wire:click="setActiveTab('queries')">QUERIES</div>
             <div class="tab-gsc {{ $activeTab === 'pages' ? 'active' : '' }}" wire:click="setActiveTab('pages')">PAGES</div>
