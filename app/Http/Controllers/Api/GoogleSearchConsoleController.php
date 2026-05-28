@@ -21,7 +21,7 @@ class GoogleSearchConsoleController extends Controller
                 'activeTab' => 'required|string|in:queries,pages,countries,devices,appearances',
             ]);
 
-            $tenant = Project::where('id', $validated['tenant'])->orWhere('slug', $validated['tenant'])->firstOrFail();
+            $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
             $tabPayload = [];
