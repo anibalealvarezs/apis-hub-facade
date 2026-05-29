@@ -1,10 +1,10 @@
 @php
     $statusColors = [
-        'pending' => 'bg-blue-500',
-        'running' => 'bg-blue-500',
-        'completed' => 'bg-green-500',
-        'success' => 'bg-green-500',
-        'failed' => 'bg-red-500',
+        'pending' => 'bg-primary-500',
+        'running' => 'bg-primary-500',
+        'completed' => 'bg-success-500',
+        'success' => 'bg-success-500',
+        'failed' => 'bg-danger-500',
         'undeployed' => 'bg-gray-500',
     ];
     $statusText = [
@@ -23,7 +23,7 @@
 <div wire:poll.5s class="px-4 py-3 mx-4 mt-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center gap-3">
     <div class="relative flex h-3 w-3 shrink-0">
         @if($isProcessing)
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-blue-400"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-primary-400"></span>
         @endif
         <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }} {{ $statusColors[$status] ?? 'bg-gray-500' }}"></span>
     </div>
