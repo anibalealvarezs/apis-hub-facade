@@ -55,8 +55,7 @@ class LocalAssetDiscoveryService
             appSecret: config('services.facebook.client_secret') ?? config('services.facebook.app_secret'),
             redirectUrl: config('services.facebook.redirect'),
             pageId: null,
-            apiVersion: 'v20.0', // Standardize version if necessary
-            token: $profile->access_token
+            userAccessToken: $profile->access_token
         );
     }
 
