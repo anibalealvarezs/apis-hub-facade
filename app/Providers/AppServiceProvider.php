@@ -32,6 +32,22 @@ class AppServiceProvider extends ServiceProvider
                 ->visible(outsidePanels: true);
         });
 
+        // ─── Propietario de Proyecto Super Permisos ───
+        // Si el usuario es el dueño original del proyecto activo (tenant),
+        // se le otorgan todos los permisos dentro de ese contexto.
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            try {
+                if (class_exists(\Filament\Facades\Filament::class) && \Filament\Facades\Filament::hasTenant()) {
+                    $tenant = \Filament\Facades\Filament::getTenant();
+                    if ($tenant && $user->id === $tenant->user_id) {
+                        return true;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Si estamos fuera de un contexto Filament, ignorar silenciosamente
+            }
+        });
+
         \Livewire\Livewire::component('personal_info', \App\Livewire\CustomPersonalInfo::class);
 
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\BillingProfile::class);
