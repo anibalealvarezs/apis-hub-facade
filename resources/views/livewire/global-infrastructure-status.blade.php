@@ -1,12 +1,11 @@
 @php
-    $statusColors = [
-        'pending' => 'bg-primary-500',
-        'running' => 'bg-primary-500',
-        'completed' => 'bg-success-500',
-        'success' => 'bg-success-500',
-        'failed' => 'bg-danger-500',
-        'undeployed' => 'bg-gray-500',
-    ];
+    $statusColorName = match($status ?? 'undeployed') {
+        'pending', 'running' => 'primary',
+        'completed', 'success' => 'success',
+        'failed' => 'danger',
+        default => 'gray',
+    };
+    
     $statusText = [
         'pending' => 'Aprovisionando...',
         'running' => 'Aprovisionando...',
@@ -30,25 +29,36 @@
         'Unknown' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 ring-gray-500/10 dark:ring-gray-400/20',
     ];
     $tierColorClass = $tierColors[$tierLabel] ?? $tierColors['Unknown'];
+
+    $tierIcons = [
+        'Free' => 'heroicon-m-paper-airplane',
+        'Pro' => 'heroicon-m-rocket-launch',
+        'Ultra' => 'heroicon-m-bolt',
+        'Founder' => 'heroicon-m-building-office-2',
+        'Enterprise' => 'heroicon-m-building-office-2',
+        'Suspended' => 'heroicon-m-pause-circle',
+        'Unknown' => 'heroicon-m-question-mark-circle',
+    ];
+    $tierIcon = $tierIcons[$tierLabel] ?? $tierIcons['Unknown'];
 @endphp
 
 <div class="flex flex-col gap-2 mx-4 mt-2">
     <!-- Tier Badge -->
-    <div class="w-full flex justify-center">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} w-full justify-center shadow-sm ring-1 ring-inset">
-            Plan: {{ $tierLabel }}
+    <div x-show="$store.sidebar.isOpen" class="w-full flex justify-center">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} w-full justify-center shadow-sm ring-1 ring-inset" title="{{ $tierLabel }}">
+            <x-filament::icon :icon="$tierIcon" class="w-4 h-4" />
         </span>
     </div>
 
     <!-- Infrastructure Status -->
-    <div wire:poll.5s class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center gap-3">
-        <div class="relative flex h-3 w-3 shrink-0">
+    <div wire:poll.5s class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center justify-center gap-3" :class="{ 'px-0 bg-transparent border-transparent dark:bg-transparent dark:border-transparent py-1': !$store.sidebar.isOpen }">
+        <div class="relative flex h-3 w-3 shrink-0" title="{{ $statusText[$status] ?? 'Desconocido' }}">
             @if($isProcessing)
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-primary-400"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgba(var(--primary-400), 1);"></span>
             @endif
-            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }} {{ $statusColors[$status] ?? 'bg-gray-500' }}"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgba(var(--{{ $statusColorName }}-500), 1);"></span>
         </div>
-        <div class="flex flex-col overflow-hidden">
+        <div x-show="$store.sidebar.isOpen" class="flex flex-col overflow-hidden">
             <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">Estado del Servidor</span>
             <span class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $statusText[$status] ?? 'Desconocido' }}">
                 {{ $statusText[$status] ?? 'Desconocido' }}
