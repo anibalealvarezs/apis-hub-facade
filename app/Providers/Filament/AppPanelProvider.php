@@ -55,6 +55,7 @@ class AppPanelProvider extends PanelProvider
             ->colors([
                 'primary' => '#00a7f9',
             ])
+            ->spa()
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->font('Outfit')
             ->renderHook(
