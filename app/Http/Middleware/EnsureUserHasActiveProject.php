@@ -81,6 +81,11 @@ class EnsureUserHasActiveProject
                     }
                 }
 
+                // 4.1 Set Spatie Permissions Team ID globally for this request
+                if (function_exists('setPermissionsTeamId')) {
+                    setPermissionsTeamId($currentProjectExists->id);
+                }
+
                 return $next($request);
             }
         }
