@@ -74,7 +74,7 @@ class LocalAssetDiscoveryService
             clientSecret: config('services.google.client_secret'),
             refreshToken: $profile->refresh_token,
             userId: $profile->provider_account_id ?? '',
-            scopes: [],
+            scopes: config('services.google.channel_scopes.google_search_console') ?? [],
             token: $profile->access_token ?? ''
         );
     }
