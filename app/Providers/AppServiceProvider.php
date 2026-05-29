@@ -32,48 +32,7 @@ class AppServiceProvider extends ServiceProvider
                 ->visible(outsidePanels: true);
         });
 
-        // ─── Propietario de Proyecto Super Permisos ───
-        // Si el usuario es el dueño original del proyecto activo (tenant),
-        // se le otorgan todos los permisos dentro de ese contexto.
-        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
-            try {
-                $tenantId = null;
 
-                if (class_exists(\Filament\Facades\Filament::class)) {
-                    $panel = \Filament\Facades\Filament::getCurrentPanel();
-                    if ($panel && $panel->hasTenant()) {
-                        $tenantId = \Filament\Facades\Filament::getTenant()?->id;
-                    }
-                }
-
-                if (!$tenantId && function_exists('getPermissionsTeamId')) {
-                    $tenantId = getPermissionsTeamId();
-                }
-
-                if ($tenantId) {
-                    $tenant = \App\Models\Project::find($tenantId);
-                    
-                    if ($tenant) {
-                        if ($user->id == $tenant->user_id) {
-                            return true;
-                        }
-                        
-                        $isCollaboratorOwner = \Illuminate\Support\Facades\DB::table('model_has_roles')
-                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                            ->where('model_has_roles.model_id', $user->id)
-                            ->where('model_has_roles.project_id', $tenant->id)
-                            ->where('roles.name', 'project_owner')
-                            ->exists();
-
-                        if ($isCollaboratorOwner) {
-                            return true;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("Gate::before exception: " . $e->getMessage());
-            }
-        });
 
         \Livewire\Livewire::component('personal_info', \App\Livewire\CustomPersonalInfo::class);
 
