@@ -37,17 +37,32 @@ class AppServiceProvider extends ServiceProvider
         // se le otorgan todos los permisos dentro de ese contexto.
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
             try {
+                \Illuminate\Support\Facades\Log::info("Gate::before called for {$user->email}, ability: {$ability}");
                 if (class_exists(\Filament\Facades\Filament::class)) {
                     $panel = \Filament\Facades\Filament::getCurrentPanel();
-                    if ($panel && $panel->hasTenant()) {
-                        $tenant = \Filament\Facades\Filament::getTenant();
-                        if ($tenant && $user->id == $tenant->user_id) {
-                            return true;
+                    if ($panel) {
+                        \Illuminate\Support\Facades\Log::info("Panel is active: " . $panel->getId());
+                        if ($panel->hasTenant()) {
+                            $tenant = \Filament\Facades\Filament::getTenant();
+                            \Illuminate\Support\Facades\Log::info("Tenant resolved: " . ($tenant ? $tenant->id : 'null'));
+                            if ($tenant) {
+                                if ($user->id == $tenant->user_id) {
+                                    \Illuminate\Support\Facades\Log::info("User is original owner, returning true");
+                                    return true;
+                                }
+                                
+                                if (method_exists($user, 'hasRole') && $user->hasRole('project_owner')) {
+                                    \Illuminate\Support\Facades\Log::info("User has project_owner role, returning true");
+                                    return true;
+                                }
+                            }
                         }
+                    } else {
+                        \Illuminate\Support\Facades\Log::info("No panel active during gate check");
                     }
                 }
             } catch (\Throwable $e) {
-                // Si estamos fuera de un contexto Filament, ignorar silenciosamente
+                \Illuminate\Support\Facades\Log::error("Gate::before exception: " . $e->getMessage());
             }
         });
 
