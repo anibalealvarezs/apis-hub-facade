@@ -21,6 +21,7 @@ class GlobalInfrastructureStatus extends Component
 
         return view('livewire.global-infrastructure-status', [
             'latestLog' => $latestLog,
+            'tenant' => $tenant,
         ]);
     }
 }

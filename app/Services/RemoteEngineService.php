@@ -93,6 +93,14 @@ class RemoteEngineService
     }
 
     /**
+     * Trigger a nuclear historical resync.
+     */
+    public function triggerHistoricalResync(Project $project)
+    {
+        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerHistoricalResync());
+    }
+
+    /**
      * Stop all running sync jobs on the remote node.
      */
     public function stopJobs(Project $project)

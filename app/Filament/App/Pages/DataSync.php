@@ -130,7 +130,52 @@ class DataSync extends Page
 
     protected function getHeaderActions(): array
     {
+        $tenant = Filament::getTenant();
+        $cooldownDays = 15;
+        $canResync = true;
+        $resyncMessage = 'Esta acción borrará todas las colas y reiniciará la telemetría, forzando una resincronización total (histórica).';
+        
+        if ($tenant->last_historical_resync_at) {
+            $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
+            if ($daysSince < $cooldownDays) {
+                $canResync = false;
+                $resyncMessage = "Disponible en " . ($cooldownDays - $daysSince) . " días.";
+            }
+        }
+
         return [
+            Action::make('resyncAll')
+                ->label('Nuclear Resync')
+                ->icon('heroicon-o-fire')
+                ->color('danger')
+                ->visible(fn () => auth()->user()->can('delete_project'))
+                ->disabled(!$canResync)
+                ->tooltip($canResync ? 'Reset all jobs and force a historical resync' : $resyncMessage)
+                ->requiresConfirmation()
+                ->modalHeading('Resincronización Histórica (Nuclear)')
+                ->modalDescription($resyncMessage . ' Por favor, escribe "RESYNC" para confirmar esta acción destructiva.')
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('confirmation')
+                        ->label('Confirmación')
+                        ->required()
+                        ->rules(['in:RESYNC'])
+                        ->placeholder('Escribe RESYNC')
+                        ->validationMessages([
+                            'in' => 'Debes escribir RESYNC exactamente para continuar.',
+                        ])
+                ])
+                ->action(function (array $data, RemoteEngineService $service) use ($tenant) {
+                    if ($data['confirmation'] !== 'RESYNC') {
+                        return;
+                    }
+                    $response = $service->triggerHistoricalResync($tenant);
+                    if (($response['status'] ?? '') === 'error') {
+                        Notification::make()->title('Error: ' . ($response['error'] ?? 'Unknown'))->danger()->send();
+                    } else {
+                        $tenant->update(['last_historical_resync_at' => now()]);
+                        Notification::make()->title('Resincronización histórica iniciada')->success()->send();
+                    }
+                }),
             Action::make('refresh')
                 ->label('Refresh Data')
                 ->icon('heroicon-o-arrow-path')
