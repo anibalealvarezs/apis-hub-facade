@@ -215,7 +215,13 @@ class ProjectSettings extends Page
                 ->color('warning')
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
-                ->visible(fn () => $isOwner)
+                ->visible(function () use ($isOwner, $project) {
+                    if (!$isOwner) return false;
+                    $hasPending = \App\Models\ProjectTransfer::where('project_id', $project->id)
+                        ->where('status', 'pending')
+                        ->exists();
+                    return !$hasPending;
+                })
                 ->requiresConfirmation()
                 ->modalHeading('Transferir Proyecto')
                 ->modalDescription('Selecciona a un colaborador activo de este proyecto para transferirle la propiedad absoluta.')
@@ -227,7 +233,77 @@ class ProjectSettings extends Page
                                 ->where('users.id', '!=', auth()->id())
                                 ->pluck('name', 'users.id');
                         })
-                        ->required(),
+                        ->required()
+                        ->live(),
+                    \Filament\Forms\Components\Toggle::make('retain_access')
+                        ->label('Mantener acceso como colaborador')
+                        ->helperText('Al transferir la propiedad, serás añadido automáticamente como colaborador para no perder acceso al proyecto.')
+                        ->default(false),
+                    \Filament\Forms\Components\Radio::make('billing_action')
+                        ->label('Perfil de Facturación')
+                        ->required()
+                        ->options(function (\Filament\Forms\Get $get) use ($project) {
+                            $bp = $project->billingProfile;
+                            if (!$bp) {
+                                return ['keep_bp' => 'Sin perfil de facturación (El proyecto ya está inactivo)'];
+                            }
+                            
+                            $toUserId = $get('to_user_id');
+                            if (!$toUserId) {
+                                return [];
+                            }
+
+                            // If Sender owns the BP
+                            if ($bp->user_id === auth()->id()) {
+                                return [
+                                    'share_sender_bp' => 'Compartir mi perfil de facturación con el receptor',
+                                    'remove_bp' => 'Desvincular mi perfil de facturación (Recomendado)',
+                                ];
+                            }
+                            
+                            // If Receiver owns the BP
+                            if ($bp->user_id == $toUserId) {
+                                return [
+                                    'keep_bp' => 'Mantener el perfil actual (Ya le pertenece al receptor)',
+                                ];
+                            }
+
+                            // If Third Party owns the BP
+                            $hasAccess = \Illuminate\Support\Facades\DB::table('billing_profile_user')
+                                ->where('billing_profile_id', $bp->id)
+                                ->where('user_id', $toUserId)
+                                ->exists();
+
+                            if ($hasAccess) {
+                                return ['keep_bp' => 'Mantener el perfil actual (El receptor tiene acceso a la facturación de terceros)'];
+                            } else {
+                                return ['remove_bp' => 'Remover el perfil (El receptor no tiene acceso a la facturación actual)'];
+                            }
+                        })
+                        ->afterStateHydrated(function (\Filament\Forms\Components\Radio $component, \Filament\Forms\Get $get) use ($project) {
+                            $bp = $project->billingProfile;
+                            if (!$bp) {
+                                $component->state('keep_bp');
+                                $component->disabled();
+                                return;
+                            }
+                            $toUserId = $get('to_user_id');
+                            if (!$toUserId) return;
+                            
+                            if ($bp->user_id == $toUserId) {
+                                $component->state('keep_bp');
+                                $component->disabled();
+                            } elseif ($bp->user_id !== auth()->id()) {
+                                $hasAccess = \Illuminate\Support\Facades\DB::table('billing_profile_user')
+                                    ->where('billing_profile_id', $bp->id)
+                                    ->where('user_id', $toUserId)
+                                    ->exists();
+                                $component->state($hasAccess ? 'keep_bp' : 'remove_bp');
+                                $component->disabled();
+                            } else {
+                                $component->disabled(false);
+                            }
+                        }),
                 ])
                 ->action(function (array $data) use ($project) {
                     $toUser = User::find($data['to_user_id']);
@@ -237,8 +313,10 @@ class ProjectSettings extends Page
                         return;
                     }
 
-                    // Cancelar transferencias previas pendientes
-                    ProjectTransfer::where('project_id', $project->id)->delete();
+                    // Eliminar transferencias previas (o marcarlas como canceladas)
+                    ProjectTransfer::where('project_id', $project->id)
+                        ->where('status', 'pending')
+                        ->update(['status' => 'cancelled']);
 
                     // Crear nueva transferencia
                     $transfer = ProjectTransfer::create([
@@ -247,6 +325,8 @@ class ProjectSettings extends Page
                         'to_user_id' => $toUser->id,
                         'token' => Str::random(64),
                         'expires_at' => now()->addHours(48),
+                        'retain_access' => $data['retain_access'] ?? false,
+                        'billing_action' => $data['billing_action'] ?? 'keep_bp',
                     ]);
 
                     // Enviar correo
@@ -259,6 +339,35 @@ class ProjectSettings extends Page
                         ->body('Se ha enviado un correo a ' . $toUser->name . ' para que acepte la transferencia del proyecto.')
                         ->success()
                         ->send();
+                });
+
+        $actions[] = Action::make('cancel_transfer')
+                ->label('Cancelar Transferencia')
+                ->color('danger')
+                ->icon('heroicon-o-x-circle')
+                ->visible(function () use ($isOwner, $project) {
+                    if (!$isOwner) return false;
+                    return \App\Models\ProjectTransfer::where('project_id', $project->id)
+                        ->where('status', 'pending')
+                        ->exists();
+                })
+                ->requiresConfirmation()
+                ->modalHeading('Cancelar Transferencia')
+                ->modalDescription('¿Estás seguro de que deseas cancelar la transferencia pendiente? El enlace enviado al destinatario dejará de ser válido.')
+                ->action(function () use ($project) {
+                    $transfer = \App\Models\ProjectTransfer::where('project_id', $project->id)
+                        ->where('status', 'pending')
+                        ->first();
+                        
+                    if ($transfer) {
+                        $transfer->update(['status' => 'cancelled']);
+                        // TODO: Enviar correo al destinatario notificando la cancelación
+                        Notification::make()
+                            ->title('Transferencia Cancelada')
+                            ->body('La transferencia ha sido cancelada exitosamente.')
+                            ->success()
+                            ->send();
+                    }
                 });
 
         $actions[] = Action::make('delete')

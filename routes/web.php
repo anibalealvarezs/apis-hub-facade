@@ -34,7 +34,9 @@ Route::post('/webhooks/paypal', [App\Http\Controllers\PayPalWebhookController::c
 Route::middleware(['web'])->group(function () {
     Route::get('/app/invitations/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
     Route::get('/app/billing-invitations/{token}/accept', [\App\Http\Controllers\BillingInvitationController::class, 'accept'])->name('billing-invitations.accept');
-    Route::get('/app/transfers/{token}/accept', [\App\Http\Controllers\TransferController::class, 'accept'])->name('transfers.accept');
+    Route::get('/app/transfers/{token}/review', [\App\Http\Controllers\TransferController::class, 'review'])->name('transfers.review');
+    Route::post('/app/transfers/{token}/process', [\App\Http\Controllers\TransferController::class, 'process'])->name('transfers.process');
+    Route::post('/app/transfers/{token}/reject', [\App\Http\Controllers\TransferController::class, 'reject'])->name('transfers.reject');
     
     // Pending Email Verification
     Route::get('/profile/verify-email/{id}/{hash}', function (\Illuminate\Http\Request $request, $id, $hash) {

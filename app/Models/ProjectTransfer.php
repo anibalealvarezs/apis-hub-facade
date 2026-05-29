@@ -15,10 +15,14 @@ class ProjectTransfer extends Model
         'to_user_id',
         'token',
         'expires_at',
+        'retain_access',
+        'billing_action',
+        'status',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
+        'retain_access' => 'boolean',
     ];
 
     public function project()
