@@ -102,7 +102,7 @@ class LocalAssetDiscoveryService
 
         return [
             'success' => true,
-            'assets' => $assets
+            'assets' => ['ad_accounts' => $assets]
         ];
     }
 
@@ -128,7 +128,7 @@ class LocalAssetDiscoveryService
 
         return [
             'success' => true,
-            'assets' => $assets
+            'assets' => ['pages' => $assets]
         ];
     }
 
@@ -153,7 +153,7 @@ class LocalAssetDiscoveryService
 
         return [
             'success' => true,
-            'assets' => $assets
+            'assets' => ['sites' => $assets]
         ];
     }
 }
