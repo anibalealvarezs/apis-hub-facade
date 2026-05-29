@@ -37,7 +37,6 @@
                         <span class="text-sm">Uso exclusivo por el propietario</span>
                     </li>
                 </ul>
-            </div>
         </x-filament::section>
 
         <!-- PRO TIER -->
@@ -75,7 +74,6 @@
                         <span class="text-sm font-medium">Vistas públicas para clientes <span class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">(próximamente)</span></span>
                     </li>
                 </ul>
-            </div>
         </x-filament::section>
 
         <!-- ULTRA TIER -->
@@ -121,7 +119,6 @@
                         <span class="text-sm font-medium">Capacidad de integraciones internas</span>
                     </li>
                 </ul>
-            </div>
         </x-filament::section>
 
         <!-- ENTERPRISE TIER -->
@@ -163,7 +160,6 @@
                         <span class="text-sm font-medium">Soporte y Estabilidad SLA garantizada</span>
                     </li>
                 </ul>
-            </div>
         </x-filament::section>
 
     </x-filament::grid>
