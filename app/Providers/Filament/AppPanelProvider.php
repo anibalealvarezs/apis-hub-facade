@@ -62,6 +62,10 @@ class AppPanelProvider extends PanelProvider
                 fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}">')
             )
             ->renderHook(
+                \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
+                fn () => \Illuminate\Support\Facades\Blade::render('@livewire(\'global-infrastructure-status\')')
+            )
+            ->renderHook(
                 'panels::head.start',
                 fn () => \Illuminate\Support\Facades\Blade::render('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">')
             )
@@ -138,6 +142,9 @@ class AppPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('5s')
             ->tenant(Project::class, slugAttribute: 'subdomain')
             ->tenantRegistration(\App\Filament\App\Pages\RegisterProject::class)
+            ->tenantMiddleware([
+                \App\Http\Middleware\ApplyTenantScopes::class,
+            ])
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')

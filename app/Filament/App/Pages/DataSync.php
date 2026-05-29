@@ -150,6 +150,23 @@ class DataSync extends Page
                     Notification::make()->title('Explorers are now working')->success()->send();
                     $this->refreshData();
                 }),
+
+            Action::make('stopJobs')
+                ->label('Pause All Explorers')
+                ->icon('heroicon-o-stop-circle')
+                ->color('danger')
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
+                ->requiresConfirmation()
+                ->action(function (RemoteEngineService $service) {
+                    $tenant = Filament::getTenant();
+                    $response = $service->stopJobs($tenant);
+                    
+                    Notification::make()
+                        ->title(($response['status'] ?? '') === 'success' ? 'Explorers are resting' : 'Action Failed')
+                        ->body($response['message'] ?? '')
+                        ->send();
+                    $this->refreshData();
+                }),
         ];
     }
 }

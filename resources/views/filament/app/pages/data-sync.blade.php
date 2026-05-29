@@ -19,10 +19,43 @@
             @php
                 $globalCompletion = number_format((float)$syncData['completion_percentage'], 2);
                 $totalFailed = 0;
+                $totalProcessing = 0;
+                $totalScheduled = 0;
                 foreach($syncData['channels'] ?? [] as $ch) {
                     $totalFailed += $ch['failed'] ?? 0;
+                    $totalProcessing += $ch['processing'] ?? 0;
+                    $totalScheduled += $ch['scheduled'] ?? 0;
+                }
+                
+                if ($totalProcessing > 0) {
+                    $statusLabel = 'Workers Corriendo';
+                    $statusColor = 'bg-success-50 text-success-600 ring-success-600/10 dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/30';
+                    $statusDescription = "Se están procesando $totalProcessing trabajos activamente.";
+                } elseif ($totalScheduled > 0) {
+                    $statusLabel = 'Workers en Espera / Pausados';
+                    $statusColor = 'bg-warning-50 text-warning-600 ring-warning-600/10 dark:bg-warning-400/10 dark:text-warning-400 dark:ring-warning-400/30';
+                    $statusDescription = "No hay procesamiento activo, pero hay $totalScheduled trabajos en cola.";
+                } else {
+                    $statusLabel = 'Workers Inactivos';
+                    $statusColor = 'bg-danger-50 text-danger-600 ring-danger-600/10 dark:bg-danger-400/10 dark:text-danger-400 dark:ring-danger-400/30';
+                    $statusDescription = 'No hay trabajos programados ni en procesamiento. Los workers están inactivos.';
                 }
             @endphp
+            
+            {{-- 🟢 Layer 0: Worker Status --}}
+            <div class="mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
+                <div>
+                    <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">Remote Workers Status</h2>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <span class="inline-flex items-center w-max rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColor }}">
+                            {{ $statusLabel }}
+                        </span>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">
+                            {{ $statusDescription }}
+                        </span>
+                    </div>
+                </div>
+            </div>
             
             {{-- 🟢 Layer 1: Global Health Overview --}}
             <div class="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
