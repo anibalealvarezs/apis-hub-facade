@@ -442,7 +442,6 @@ class DataSources extends Page
         }
 
         // Process existing local assets
-        throw new \Exception('DEBUG MERGE: liveIds=' . json_encode(array_keys($liveMap)) . ' local=' . json_encode($localAssets));
         foreach ($localAssets as $local) {
             $identifier = $local['id'] ?? $local['url'] ?? null;
             if ($identifier) {

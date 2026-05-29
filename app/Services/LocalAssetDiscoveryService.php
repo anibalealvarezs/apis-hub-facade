@@ -87,15 +87,13 @@ class LocalAssetDiscoveryService
             limit: 100
         );
 
-        throw new \Exception('DEBUG FB_MARKETING: ' . json_encode($response));
-
         // Normalize
         $assets = [];
-        if (is_array($response)) {
-            foreach ($response as $account) {
+        if (isset($response['data']) && is_array($response['data'])) {
+            foreach ($response['data'] as $account) {
                 if (isset($account['id']) && isset($account['name'])) {
                     $assets[] = [
-                        'id' => $account['id'],
+                        'id' => str_replace('act_', '', $account['id']),
                         'name' => $account['name']
                     ];
                 }
@@ -117,8 +115,8 @@ class LocalAssetDiscoveryService
 
         // Normalize
         $assets = [];
-        if (is_array($response)) {
-            foreach ($response as $page) {
+        if (isset($response['data']) && is_array($response['data'])) {
+            foreach ($response['data'] as $page) {
                 if (isset($page['id']) && isset($page['name'])) {
                     $assets[] = [
                         'id' => $page['id'],
@@ -138,8 +136,6 @@ class LocalAssetDiscoveryService
     {
         $client = $this->getGoogleSearchConsoleClient($project);
         $response = $client->getSites();
-
-        throw new \Exception('DEBUG GSC: ' . json_encode($response));
 
         // Normalize
         $assets = [];
