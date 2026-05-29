@@ -37,35 +37,37 @@ class AppServiceProvider extends ServiceProvider
         // se le otorgan todos los permisos dentro de ese contexto.
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
             try {
-                \Illuminate\Support\Facades\Log::info("Gate::before called for {$user->email}, ability: {$ability}");
+                $tenantId = null;
+
                 if (class_exists(\Filament\Facades\Filament::class)) {
                     $panel = \Filament\Facades\Filament::getCurrentPanel();
-                    if ($panel) {
-                        \Illuminate\Support\Facades\Log::info("Panel is active: " . $panel->getId());
-                        if ($panel->hasTenant()) {
-                            $tenant = \Filament\Facades\Filament::getTenant();
-                            \Illuminate\Support\Facades\Log::info("Tenant resolved: " . ($tenant ? $tenant->id : 'null'));
-                            if ($tenant) {
-                                if ($user->id == $tenant->user_id) {
-                                    \Illuminate\Support\Facades\Log::info("User is original owner, returning true");
-                                    return true;
-                                }
-                                
-                                $isCollaboratorOwner = \Illuminate\Support\Facades\DB::table('model_has_roles')
-                                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                                    ->where('model_has_roles.model_id', $user->id)
-                                    ->where('model_has_roles.project_id', $tenant->id)
-                                    ->where('roles.name', 'project_owner')
-                                    ->exists();
+                    if ($panel && $panel->hasTenant()) {
+                        $tenantId = \Filament\Facades\Filament::getTenant()?->id;
+                    }
+                }
 
-                                if ($isCollaboratorOwner) {
-                                    \Illuminate\Support\Facades\Log::info("User has project_owner role via DB, returning true");
-                                    return true;
-                                }
-                            }
+                if (!$tenantId && function_exists('getPermissionsTeamId')) {
+                    $tenantId = getPermissionsTeamId();
+                }
+
+                if ($tenantId) {
+                    $tenant = \App\Models\Project::find($tenantId);
+                    
+                    if ($tenant) {
+                        if ($user->id == $tenant->user_id) {
+                            return true;
                         }
-                    } else {
-                        \Illuminate\Support\Facades\Log::info("No panel active during gate check");
+                        
+                        $isCollaboratorOwner = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('model_has_roles.model_id', $user->id)
+                            ->where('model_has_roles.project_id', $tenant->id)
+                            ->where('roles.name', 'project_owner')
+                            ->exists();
+
+                        if ($isCollaboratorOwner) {
+                            return true;
+                        }
                     }
                 }
             } catch (\Throwable $e) {
