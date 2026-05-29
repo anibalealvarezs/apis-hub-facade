@@ -137,6 +137,8 @@ class LocalAssetDiscoveryService
         $client = $this->getGoogleSearchConsoleClient($project);
         $response = $client->getSites();
 
+        throw new \Exception('DEBUG GSC: ' . json_encode($response));
+
         // Normalize
         $assets = [];
         if (isset($response['siteEntry']) && is_array($response['siteEntry'])) {
