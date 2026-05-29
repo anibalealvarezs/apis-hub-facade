@@ -87,6 +87,8 @@ class LocalAssetDiscoveryService
             limit: 100
         );
 
+        throw new \Exception('DEBUG FB_MARKETING: ' . json_encode($response));
+
         // Normalize
         $assets = [];
         if (is_array($response)) {
