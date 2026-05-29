@@ -89,8 +89,8 @@ class LocalAssetDiscoveryService
 
         // Normalize
         $assets = [];
-        if (isset($response['data']) && is_array($response['data'])) {
-            foreach ($response['data'] as $account) {
+        if (is_array($response)) {
+            foreach ($response as $account) {
                 if (isset($account['id']) && isset($account['name'])) {
                     $assets[] = [
                         'id' => $account['id'],
@@ -115,8 +115,8 @@ class LocalAssetDiscoveryService
 
         // Normalize
         $assets = [];
-        if (isset($response['data']) && is_array($response['data'])) {
-            foreach ($response['data'] as $page) {
+        if (is_array($response)) {
+            foreach ($response as $page) {
                 if (isset($page['id']) && isset($page['name'])) {
                     $assets[] = [
                         'id' => $page['id'],
