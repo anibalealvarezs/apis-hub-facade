@@ -441,6 +441,15 @@ class DataSources extends Page
             }
         }
 
+        $debugOutput = [
+            'channel' => $this->activeChannel,
+            'liveAssets' => $liveAssets,
+            'actualLiveAssets' => $actualLiveAssets,
+            'liveMapKeys' => array_keys($liveMap),
+            'localAssets' => $localAssets,
+        ];
+        throw new \Exception('MERGE_DEBUG_V2: ' . json_encode($debugOutput));
+
         // Process existing local assets
         foreach ($localAssets as $local) {
             $identifier = $local['id'] ?? $local['url'] ?? null;
