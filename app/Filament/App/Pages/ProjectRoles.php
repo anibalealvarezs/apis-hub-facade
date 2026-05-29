@@ -32,9 +32,12 @@ class ProjectRoles extends Page
     protected function getViewData(): array
     {
         // Obtenemos los roles del proyecto excluyendo roles del sistema global (como super_admin)
-        $roles = Role::whereIn('name', ['project_owner', 'project_editor', 'project_viewer', 'project_user'])
-            ->with('permissions')
-            ->get();
+        // Usamos cache forever dado que es un Knowledge Base estático que rara vez cambia.
+        $roles = \Illuminate\Support\Facades\Cache::rememberForever('knowledge_base:project_roles', function () {
+            return Role::whereIn('name', ['project_owner', 'project_editor', 'project_viewer', 'project_user'])
+                ->with('permissions')
+                ->get();
+        });
 
         return [
             'roles' => $roles,
