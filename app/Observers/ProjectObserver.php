@@ -20,6 +20,24 @@ class ProjectObserver
     }
 
     /**
+     * Handle the Project "updated" event.
+     */
+    public function updated(Project $project): void
+    {
+        // If the project was reassigned to a different billing profile or its billing status changed
+        if ($project->wasChanged(['billing_profile_id', 'billing_status'])) {
+            \Illuminate\Support\Facades\Cache::forget("project_{$project->id}_billing_page_data");
+        }
+        
+        if ($project->wasChanged('billing_profile_id')) {
+            // Need to sync the quantity of the old profile if it changed, 
+            // but the Project model doesn't load the old relation easily here.
+            // For now, we sync the new profile's quantity.
+            $this->syncSubscriptionQuantity($project->billingProfile);
+        }
+    }
+
+    /**
      * Handle the Project "deleted" event.
      */
     public function deleted(Project $project): void

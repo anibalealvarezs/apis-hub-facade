@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\SubscriptionPlan::observe(\App\Observers\SubscriptionPlanObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
         \App\Models\Project::observe(\App\Observers\ProjectObserver::class);
+        \App\Models\BillingProfile::observe(\App\Observers\BillingProfileObserver::class);
 
         if (str_starts_with(config('app.url'), 'https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
