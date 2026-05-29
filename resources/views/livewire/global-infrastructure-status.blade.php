@@ -44,9 +44,12 @@
 
 <div class="flex flex-col gap-2 mx-4 mt-2">
     <!-- Tier Badge -->
-    <div x-show="$store.sidebar.isOpen" class="w-full flex justify-center">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} w-full justify-center shadow-sm ring-1 ring-inset" title="{{ $tierLabel }}">
+    <div class="w-full flex justify-center mt-1">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} justify-center shadow-sm ring-1 ring-inset" 
+              :class="{ 'w-full': $store.sidebar.isOpen, 'w-auto px-1.5': !$store.sidebar.isOpen }"
+              title="{{ $tierLabel }}">
             <x-filament::icon :icon="$tierIcon" class="w-4 h-4" />
+            <span x-show="$store.sidebar.isOpen" x-transition>{{ $tierLabel }}</span>
         </span>
     </div>
 
