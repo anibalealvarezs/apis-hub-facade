@@ -216,11 +216,7 @@ class ProjectSettings extends Page
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
                 ->visible(function () use ($user, $project) {
-                    if (!$user->can('transfer_project')) return false;
-                    $hasPending = \App\Models\ProjectTransfer::where('project_id', $project->id)
-                        ->where('status', 'pending')
-                        ->exists();
-                    return !$hasPending;
+                    return true;
                 })
                 ->requiresConfirmation()
                 ->modalHeading('Transferir Proyecto')
@@ -396,7 +392,7 @@ class ProjectSettings extends Page
                 ->color('danger')
                 ->icon('heroicon-o-trash')
                 ->disabled($isSuspended)
-                ->visible(fn () => $user->can('delete_project'))
+                ->visible(fn () => true)
                 ->requiresConfirmation()
                 ->modalHeading('Eliminar Proyecto')
                 ->modalDescription('Al eliminar este proyecto se bloqueará el acceso al dominio y a los datos de manera inmediata. Tienes 30 días para recuperarlo, luego se destruirá toda su infraestructura permanentemente.')

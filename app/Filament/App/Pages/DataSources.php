@@ -1243,7 +1243,7 @@ class DataSources extends Page
             return;
         }
 
-        if (! auth()->user()->can('manage_channels')) {
+        if (!(auth()->id() == $tenant->user_id || auth()->user()->can('manage_channels'))) {
             Notification::make()->title('Permiso Denegado')->body('No tienes permiso para modificar las fuentes de datos.')->danger()->send();
             return;
         }

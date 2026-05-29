@@ -19,7 +19,8 @@ class ProjectBillingSettings extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('manage_billing');
+        $project = \Filament\Facades\Filament::getTenant();
+        return $project && (auth()->id() == $project->user_id || auth()->user()->can('manage_billing'));
     }
 
     public function mount()
