@@ -15,34 +15,65 @@ class ProjectRolesSeeder extends Seeder
     {
         // Define base permissions
         $permissions = [
-            'view_project',
-            'update_project_settings',
             'delete_project',
-            'manage_project_users',
+            'transfer_project',
+            'deploy_project',
+            'manage_channels',
+            'edit_preferences',
+            'manage_billing',
+            'manage_collaborators',
+            'view_data',
+            'view_settings',
+            'manage_public_views',
+            'view_public_views',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
+        // Project User
+        $userRole = Role::firstOrCreate(['name' => 'project_user', 'guard_name' => 'web']);
+        $userRole->syncPermissions([
+            'view_public_views',
+        ]);
+
         // Project Viewer
         $viewerRole = Role::firstOrCreate(['name' => 'project_viewer', 'guard_name' => 'web']);
-        $viewerRole->givePermissionTo('view_project');
+        $viewerRole->syncPermissions([
+            'view_data',
+            'view_settings',
+            'view_public_views',
+        ]);
 
         // Project Editor
         $editorRole = Role::firstOrCreate(['name' => 'project_editor', 'guard_name' => 'web']);
-        $editorRole->givePermissionTo([
-            'view_project',
-            'update_project_settings',
+        $editorRole->syncPermissions([
+            'deploy_project',
+            'manage_channels',
+            'edit_preferences',
+            'manage_billing',
+            'manage_collaborators',
+            'view_data',
+            'view_settings',
+            'manage_public_views',
+            'view_public_views',
         ]);
 
         // Project Owner
         $ownerRole = Role::firstOrCreate(['name' => 'project_owner', 'guard_name' => 'web']);
-        $ownerRole->givePermissionTo([
-            'view_project',
-            'update_project_settings',
+        $ownerRole->syncPermissions([
             'delete_project',
-            'manage_project_users',
+            'transfer_project',
+            'deploy_project',
+            'manage_channels',
+            'edit_preferences',
+            'manage_billing',
+            'manage_collaborators',
+            'view_data',
+            'view_settings',
+            'manage_public_views',
+            'view_public_views',
         ]);
     }
 }

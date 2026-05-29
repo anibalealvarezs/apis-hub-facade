@@ -400,7 +400,7 @@ class DataSources extends Page
         return Action::make('connect')
                 ->label('Connect Account')
                 ->icon('heroicon-o-link')
-                ->visible(fn () => !$this->isConnected($this->activeChannel))
+                ->visible(fn () => auth()->user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn () => $this->getChannelSelectionForm())
                 ->action(function (array $data) {
@@ -421,7 +421,7 @@ class DataSources extends Page
         return Action::make('updateCredentials')
                 ->label('Update Permissions')
                 ->icon('heroicon-o-key')
-                ->visible(fn () => $this->isConnected($this->activeChannel))
+                ->visible(fn () => auth()->user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn () => $this->getChannelSelectionForm())
                 ->requiresConfirmation()
@@ -1240,6 +1240,11 @@ class DataSources extends Page
         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
             Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
 
+            return;
+        }
+
+        if (! auth()->user()->can('manage_channels')) {
+            Notification::make()->title('Permiso Denegado')->body('No tienes permiso para modificar las fuentes de datos.')->danger()->send();
             return;
         }
 

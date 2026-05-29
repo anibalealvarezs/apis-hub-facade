@@ -17,10 +17,14 @@ class ProjectBillingSettings extends Page
     
     protected static ?string $title = 'Billing & Subscription';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('manage_billing');
+    }
+
     public function mount()
     {
-        // For now, only the true owner of the project can manage billing.
-        abort_unless(filament()->getTenant()->user_id === auth()->id(), 403, 'Only the project owner can manage billing.');
+        abort_unless(auth()->user()->can('manage_billing'), 403, 'You do not have permission to manage billing.');
     }
 
     protected function getHeaderActions(): array

@@ -55,7 +55,7 @@ class ProjectSettings extends Page
         if (!$project) {
             return [];
         }
-        $isOwner = auth()->id() === $project->user_id;
+        $user = auth()->user();
 
         $isSuspended = !$project->is_active || $project->billing_status === 'suspended';
         $actions = [];
@@ -64,7 +64,7 @@ class ProjectSettings extends Page
             ->label('Reactivar Proyecto')
             ->color('success')
             ->icon('heroicon-o-play-circle')
-            ->visible(fn () => $isOwner && $project->billing_status === 'suspended')
+            ->visible(fn () => $user->can('manage_billing') && $project->billing_status === 'suspended')
             ->requiresConfirmation()
             ->modalHeading('Intentar Reactivar Proyecto')
             ->modalDescription('El sistema verificará si tu plan de facturación actual tiene cupos disponibles para reactivar este proyecto.')
@@ -119,7 +119,7 @@ class ProjectSettings extends Page
             ->color('gray')
             ->icon('heroicon-o-pencil-square')
             ->disabled($isSuspended)
-            ->visible(fn () => $isOwner)
+            ->visible(fn () => $user->can('edit_preferences'))
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
             ])
@@ -153,7 +153,7 @@ class ProjectSettings extends Page
             ->color('success')
             ->icon('heroicon-o-rocket-launch')
             ->disabled($isSuspended)
-            ->visible(fn () => $isOwner && is_null($project->last_deployed_at))
+            ->visible(fn () => $user->can('deploy_project') && is_null($project->last_deployed_at))
             ->requiresConfirmation()
             ->modalHeading('Desplegar Infraestructura')
             ->modalDescription('Esto aprovisionará el contenedor y la base de datos en el servidor remoto. ¿Estás seguro de continuar?')
@@ -184,7 +184,7 @@ class ProjectSettings extends Page
             ->color('success')
             ->icon('heroicon-o-cloud-arrow-up')
             ->disabled($isSuspended)
-            ->visible(fn () => $isOwner && !is_null($project->last_deployed_at))
+            ->visible(fn () => $user->can('deploy_project') && !is_null($project->last_deployed_at))
             ->requiresConfirmation()
             ->modalHeading('Redesplegar Infraestructura')
             ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
@@ -215,8 +215,8 @@ class ProjectSettings extends Page
                 ->color('warning')
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
-                ->visible(function () use ($isOwner, $project) {
-                    if (!$isOwner) return false;
+                ->visible(function () use ($user, $project) {
+                    if (!$user->can('transfer_project')) return false;
                     $hasPending = \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
                         ->exists();
@@ -366,8 +366,8 @@ class ProjectSettings extends Page
                 ->label('Cancelar Transferencia')
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
-                ->visible(function () use ($isOwner, $project) {
-                    if (!$isOwner) return false;
+                ->visible(function () use ($user, $project) {
+                    if (!$user->can('transfer_project')) return false;
                     return \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
                         ->exists();
@@ -396,7 +396,7 @@ class ProjectSettings extends Page
                 ->color('danger')
                 ->icon('heroicon-o-trash')
                 ->disabled($isSuspended)
-                ->visible(fn () => $isOwner)
+                ->visible(fn () => $user->can('delete_project'))
                 ->requiresConfirmation()
                 ->modalHeading('Eliminar Proyecto')
                 ->modalDescription('Al eliminar este proyecto se bloqueará el acceso al dominio y a los datos de manera inmediata. Tienes 30 días para recuperarlo, luego se destruirá toda su infraestructura permanentemente.')

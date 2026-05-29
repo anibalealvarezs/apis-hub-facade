@@ -66,7 +66,7 @@ class SyncSettings extends Page
                 ->label('Pause All Explorers')
                 ->icon('heroicon-o-stop-circle')
                 ->color('danger')
-                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
@@ -150,7 +150,7 @@ class SyncSettings extends Page
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
-                                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
                                     ->requiresConfirmation()
                                     ->modalHeading('Rotate API Key?')
                                     ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
@@ -180,7 +180,7 @@ class SyncSettings extends Page
                     ])->columns(2),
             ])
             ->statePath('data')
-            ->disabled($isSuspended);
+            ->disabled($isSuspended || !auth()->user()->can('edit_preferences'));
     }
 
     public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
@@ -188,6 +188,11 @@ class SyncSettings extends Page
         $tenant = Filament::getTenant();
         if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
             Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
+            return;
+        }
+
+        if (! auth()->user()->can('edit_preferences')) {
+            Notification::make()->title('Permiso Denegado')->body('No tienes permiso para modificar las preferencias de sincronización.')->danger()->send();
             return;
         }
 

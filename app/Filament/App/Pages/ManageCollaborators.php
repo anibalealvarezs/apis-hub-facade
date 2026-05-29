@@ -84,6 +84,7 @@ class ManageCollaborators extends Page implements HasTable
                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                     ->requiresConfirmation()
                     ->hidden(function (User $record) use ($project) {
+                        if (!auth()->user()->can('manage_collaborators')) return true;
                         // Un project owner no puede ser expulsado de la colaboración
                         return \Illuminate\Support\Facades\DB::table('model_has_roles')
                             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
@@ -107,6 +108,7 @@ class ManageCollaborators extends Page implements HasTable
                 Action::make('invite')
                     ->label('Invitar Colaborador')
                     ->icon('heroicon-o-envelope')
+                    ->hidden(fn () => !auth()->user()->can('manage_collaborators'))
                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
                     ->tooltip(function () {
                         $tenant = Filament::getTenant();
@@ -126,7 +128,7 @@ class ManageCollaborators extends Page implements HasTable
                         Select::make('role')
                             ->label('Rol en el Proyecto')
                             ->options(
-                                Role::whereNotIn('name', ['super_admin', 'project_owner'])->pluck('name', 'name')
+                                Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])->pluck('name', 'name')
                             )
                             ->required()
                     ])
