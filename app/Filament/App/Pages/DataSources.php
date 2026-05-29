@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 class DataSources extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-server-stack';
+    protected static ?string $navigationGroup = 'Data & Integrations';
     protected static ?string $navigationLabel = 'Data Sources';
     protected static ?string $title = 'Data Sources Configuration';
     protected static string $view = 'filament.app.pages.data-sources';

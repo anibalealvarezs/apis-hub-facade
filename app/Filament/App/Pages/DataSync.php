@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 class DataSync extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static ?string $navigationGroup = 'Exploration & Telemetry';
     protected static ?string $navigationLabel = 'Telemetry';
     protected static ?string $title = 'Data Telemetry';
     protected static string $view = 'filament.app.pages.data-sync';

@@ -18,6 +18,7 @@ use Filament\Pages\Page;
 class SyncSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static ?string $navigationGroup = 'Data & Integrations';
     protected static ?string $navigationLabel = 'Synchronization Settings';
     protected static string $view = 'filament.app.pages.sync-settings';
     protected static ?string $slug = 'sync-settings';

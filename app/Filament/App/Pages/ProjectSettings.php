@@ -19,7 +19,7 @@ class ProjectSettings extends Page
     protected static ?string $title = 'Configuración del Proyecto';
     protected static ?string $slug = 'project-settings';
     protected static string $view = 'filament.app.pages.project-settings';
-    protected static ?string $navigationGroup = 'Gestión';
+    protected static ?string $navigationGroup = 'Administration';
     protected static ?int $navigationSort = 100;
 
     /**

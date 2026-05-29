@@ -13,7 +13,7 @@ class ProjectBillingSettings extends Page
 
     protected static string $view = 'filament.app.pages.project-billing-settings';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = 'Administration';
     
     protected static ?string $title = 'Billing & Subscription';
 

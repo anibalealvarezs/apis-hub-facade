@@ -28,7 +28,7 @@ class ManageCollaborators extends Page implements HasTable
 
     protected static string $view = 'filament.app.pages.manage-collaborators';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = 'Administration';
 
     public static function getNavigationLabel(): string
     {
