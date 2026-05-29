@@ -6,9 +6,9 @@
 
     $statusColorRGB = match($statusKey) {
         'provisioning' => '59, 130, 246', // Blue 500
-        'online', 'active' => '34, 197, 94', // Green 500
+        'online', 'active', 'healthy' => '34, 197, 94', // Green 500
         'offline', 'failed', 'error' => '239, 68, 68', // Red 500
-        'suspended' => '234, 179, 8', // Yellow 500
+        'suspended', 'stopping_workers', 'ready_for_auth', 'disputed' => '234, 179, 8', // Yellow 500
         default => '107, 114, 128', // Gray 500
     };
     
@@ -16,10 +16,14 @@
         'provisioning' => 'Aprovisionando...',
         'online' => 'Activo y En Línea',
         'active' => 'Activo y En Línea',
+        'healthy' => 'Activo y En Línea',
         'offline' => 'Fuera de Línea',
         'failed' => 'Error Crítico',
         'error' => 'Error Crítico',
         'suspended' => 'Suspendido',
+        'stopping_workers' => 'Deteniendo Sincronización...',
+        'ready_for_auth' => 'Renovación de Auth...',
+        'disputed' => 'Pago Disputado',
         'undeployed' => 'Sin Desplegar',
     ];
     
