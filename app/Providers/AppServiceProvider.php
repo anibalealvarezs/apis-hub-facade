@@ -75,27 +75,6 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             }
 
-            // Crear perfil de facturación por defecto (SOLO si NO viene de una invitación)
-            $token = session('invitation_token');
-            $hasValidInvitation = false;
-
-            if ($token) {
-                $invitation = \App\Models\ProjectInvitation::where('token', $token)->first();
-                if ($invitation && !$invitation->expires_at->isPast() && $invitation->email === $user->email) {
-                    $hasValidInvitation = true;
-                }
-            }
-
-            if (!$hasValidInvitation) {
-                \App\Models\BillingProfile::create([
-                    'user_id' => $user->id,
-                    'name' => 'Default Free Profile',
-                    'type' => 'personal',
-                    'tier' => \App\Enums\UserTier::FREE,
-                    'status' => 'active',
-                    'is_default' => true,
-                ]);
-            }
         });
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
