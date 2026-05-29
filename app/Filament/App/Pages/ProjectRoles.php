@@ -7,11 +7,11 @@ use Spatie\Permission\Models\Role;
 
 class ProjectRoles extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.app.pages.project-roles';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Knowledge Base';
 
     public static function getNavigationLabel(): string
     {
