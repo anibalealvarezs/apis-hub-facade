@@ -225,9 +225,24 @@ class ProjectSettings extends Page
                 ->requiresConfirmation()
                 ->modalHeading('Transferir Proyecto')
                 ->modalDescription('Selecciona a un colaborador activo de este proyecto para transferirle la propiedad absoluta.')
+                ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($project) {
+                    $hasCollaborators = $project->users()->where('users.id', '!=', auth()->id())->count() > 0;
+                    if (!$hasCollaborators) {
+                        $action->hidden();
+                    }
+                })
                 ->form([
+                    \Filament\Forms\Components\Placeholder::make('no_collaborators')
+                        ->label('')
+                        ->hidden(function () use ($project) {
+                            return $project->users()->where('users.id', '!=', auth()->id())->count() > 0;
+                        })
+                        ->content(new \Illuminate\Support\HtmlString('<div class="text-amber-600 font-medium bg-amber-50 p-4 rounded-lg border border-amber-200">Para poder transferir este proyecto, primero debes invitar a un colaborador desde la pestaña "Colaboradores" y este debe aceptar la invitación.</div>')),
                     Select::make('to_user_id')
                         ->label('Nuevo Propietario')
+                        ->hidden(function () use ($project) {
+                            return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
+                        })
                         ->options(function () use ($project) {
                             return $project->users()
                                 ->where('users.id', '!=', auth()->id())
@@ -236,10 +251,16 @@ class ProjectSettings extends Page
                         ->required()
                         ->live(),
                     \Filament\Forms\Components\Toggle::make('retain_access')
+                        ->hidden(function () use ($project) {
+                            return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
+                        })
                         ->label('Mantener acceso como colaborador')
                         ->helperText('Al transferir la propiedad, serás añadido automáticamente como colaborador para no perder acceso al proyecto.')
                         ->default(false),
                     \Filament\Forms\Components\Radio::make('billing_action')
+                        ->hidden(function () use ($project) {
+                            return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
+                        })
                         ->label('Perfil de Facturación')
                         ->required()
                         ->options(function (\Filament\Forms\Get $get) use ($project) {
