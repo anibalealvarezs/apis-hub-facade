@@ -22,7 +22,7 @@ class OAuthController extends Controller
      */
     public function redirect(Request $request, string $provider)
     {
-        return $this->performRedirect($request, $provider, null, $request->query('type'));
+        return $this->performRedirect($request, $provider, null, $request->query('types'));
     }
 
     /**
@@ -30,13 +30,13 @@ class OAuthController extends Controller
      */
     public function connect(Request $request, $tenant, string $provider)
     {
-        return $this->performRedirect($request, $provider, $tenant, $request->query('type'));
+        return $this->performRedirect($request, $provider, $tenant, $request->query('types'));
     }
 
     /**
      * Internal redirection logic.
      */
-    protected function performRedirect(Request $request, string $provider, $tenantId = null, ?string $type = null)
+    protected function performRedirect(Request $request, string $provider, $tenantId = null, ?string $types = null)
     {
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
@@ -44,8 +44,8 @@ class OAuthController extends Controller
         $tenantId = $tenantId ?: Filament::getTenant()?->id;
         $stateParts = ['tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)];
         
-        if ($type) {
-            $stateParts[] = 'type_' . $type;
+        if ($types) {
+            $stateParts[] = 'types_' . $types;
         }
 
         $customParameters = ['state' => implode(':', $stateParts)];
@@ -53,8 +53,12 @@ class OAuthController extends Controller
         $config = config("services.{$provider}")['channel_scopes'] ?? [];
         $scopes = $config['default'] ?? [];
 
-        if ($type && isset($config[$type])) {
-            $scopes = array_merge($scopes, $config[$type]);
+        if ($types) {
+            foreach (explode(',', $types) as $type) {
+                if (isset($config[$type])) {
+                    $scopes = array_merge($scopes, $config[$type]);
+                }
+            }
         }
 
         if (!empty($scopes)) {
@@ -90,7 +94,7 @@ class OAuthController extends Controller
             }
 
             $tenantId = $stateData['tenant'] ?? $tenantId;
-            $type = $stateData['type'] ?? null;
+            $types = $stateData['types'] ?? null;
             $tenant = Filament::getTenant();
 
             if (!$tenant && $tenantId) {
@@ -109,7 +113,14 @@ class OAuthController extends Controller
 
             // Calculate scopes based on type
             $config = config("services.{$provider}")['channel_scopes'] ?? [];
-            $requestedScopes = array_merge($config['default'] ?? [], $type ? ($config[$type] ?? []) : []);
+            $requestedScopes = $config['default'] ?? [];
+            if ($types) {
+                foreach (explode(',', $types) as $type) {
+                    if (isset($config[$type])) {
+                        $requestedScopes = array_merge($requestedScopes, $config[$type]);
+                    }
+                }
+            }
 
             // --- Facebook Long-Lived Token Exchange ---
             if ($provider === 'facebook') {
@@ -137,11 +148,14 @@ class OAuthController extends Controller
                 ->where('provider_account_id', $socialiteUser->id)
                 ->first();
 
+            $authorizedChannels = $types ? explode(',', $types) : [];
+
             $updatePayload = [
                 'name' => $socialiteUser->name,
                 'email' => $socialiteUser->email,
                 'access_token' => $token,
                 'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
+                'authorized_channels' => $authorizedChannels,
             ];
 
             if (!empty($refreshToken)) {

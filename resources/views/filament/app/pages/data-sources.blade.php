@@ -268,10 +268,8 @@
                         You need to authorize access to this provider before you can configure its data sources.
                     </p>
                     
-                    @if(str_contains($activeChannel, 'facebook'))
-                        <x-oauth-buttons provider="facebook" :type="$activeChannel" />
-                    @elseif(str_contains($activeChannel, 'google'))
-                        <x-oauth-buttons provider="google" :type="$activeChannel" />
+                    @if(str_contains($activeChannel, 'facebook') || str_contains($activeChannel, 'google'))
+                        {{ $this->getAction('connect') }}
                     @endif
                 </div>
             @else

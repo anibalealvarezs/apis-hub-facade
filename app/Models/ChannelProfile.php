@@ -15,10 +15,12 @@ class ChannelProfile extends Model
         'access_token',
         'refresh_token',
         'expires_at',
+        'authorized_channels',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
+        'authorized_channels' => 'array',
     ];
 
     /**

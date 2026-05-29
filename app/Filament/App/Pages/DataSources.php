@@ -248,10 +248,23 @@ class DataSources extends Page
     public function isConnected($channel): bool
     {
         $tenant = Filament::getTenant();
-        if (str_contains($channel, 'facebook')) {
+        $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
+        $profileIdColumn = "{$provider}_profile_id";
+
+        if (! $tenant->{$profileIdColumn}) {
+            return false;
+        }
+
+        $profile = \App\Models\ChannelProfile::find($tenant->{$profileIdColumn});
+        if ($profile && is_array($profile->authorized_channels)) {
+            return in_array($channel, $profile->authorized_channels);
+        }
+
+        // Fallback for legacy connections before the column was added
+        if ($provider === 'facebook') {
             return $tenant->facebook_user_id !== null;
         }
-        if (str_contains($channel, 'google')) {
+        if ($provider === 'google') {
             return $tenant->google_user_id !== null;
         }
 
@@ -351,6 +364,58 @@ class DataSources extends Page
                 });
     }
 
+    protected function getChannelSelectionForm(): array
+    {
+        $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
+        $config = config("services.{$provider}.channel_scopes") ?? [];
+        unset($config['default']);
+        
+        $options = [];
+        foreach (array_keys($config) as $channelKey) {
+            $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
+        }
+
+        $tenant = Filament::getTenant();
+        $defaultChannels = [$this->activeChannel];
+        if ($tenant && is_array($tenant->sync_config)) {
+            foreach (array_keys($options) as $ch) {
+                if (isset($tenant->sync_config[$ch]) && $ch !== $this->activeChannel) {
+                    $defaultChannels[] = $ch;
+                }
+            }
+        }
+
+        return [
+            \Filament\Forms\Components\CheckboxList::make('channels')
+                ->label('Select channels to authorize')
+                ->options($options)
+                ->default($defaultChannels)
+                ->required()
+                ->minItems(1)
+        ];
+    }
+
+    public function connectAction(): Action
+    {
+        return Action::make('connect')
+                ->label('Connect Account')
+                ->icon('heroicon-o-link')
+                ->visible(fn () => !$this->isConnected($this->activeChannel))
+                ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                ->form(fn () => $this->getChannelSelectionForm())
+                ->action(function (array $data) {
+                    $tenant = Filament::getTenant();
+                    $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
+                    $types = implode(',', $data['channels']);
+
+                    return redirect()->route('app.connect', [
+                        'tenant' => $tenant->id,
+                        'provider' => $provider,
+                        'types' => $types,
+                    ]);
+                });
+    }
+
     public function updateCredentialsAction(): Action
     {
         return Action::make('updateCredentials')
@@ -358,22 +423,24 @@ class DataSources extends Page
                 ->icon('heroicon-o-key')
                 ->visible(fn () => $this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                ->form(fn () => $this->getChannelSelectionForm())
                 ->requiresConfirmation()
                 ->modalHeading(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? 'Update Credentials' : 'Update Credentials Safely')
-                ->modalDescription(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? 'Your sync engine is currently offline, so it is safe to update credentials immediately.' : 'To update these credentials, we must first safely stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to re-authorize.')
-                ->action(function () {
+                ->modalDescription(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? 'Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.' : 'Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.')
+                ->action(function (array $data) {
                     $tenant = Filament::getTenant();
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
+                    $types = implode(',', $data['channels']);
 
                     if (! $tenant->last_deployed_at || $this->apiHubUnreachable) {
                         return redirect()->route('app.connect', [
                             'tenant' => $tenant->id,
                             'provider' => $provider,
-                            'type' => $this->activeChannel,
+                            'types' => $types,
                         ]);
                     }
 
-                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id());
+                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id(), $types);
 
                     Notification::make()
                         ->title('Safe Update Initiated')

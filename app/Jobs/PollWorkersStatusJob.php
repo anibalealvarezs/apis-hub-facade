@@ -21,14 +21,16 @@ class PollWorkersStatusJob implements ShouldQueue
     public Project $project;
     public string $provider;
     public ?int $initiatorId;
+    public ?string $types;
     public int $tries = 120; // Allow 120 tries (e.g. 2 hours if delayed 1 min each)
     public int $maxExceptions = 3;
 
-    public function __construct(Project $project, string $provider, ?int $initiatorId = null)
+    public function __construct(Project $project, string $provider, ?int $initiatorId = null, ?string $types = null)
     {
         $this->project = $project;
         $this->provider = $provider;
         $this->initiatorId = $initiatorId;
+        $this->types = $types;
     }
 
     public function handle(DeployerService $deployerService)
@@ -75,7 +77,7 @@ class PollWorkersStatusJob implements ShouldQueue
                                 ->url(route('app.connect', [
                                     'tenant' => $this->project->id,
                                     'provider' => $this->provider,
-                                    'type' => str_contains($this->provider, 'facebook') ? 'facebook_marketing' : 'google_search_console'
+                                    'types' => $this->types ?: (str_contains($this->provider, 'facebook') ? 'facebook_marketing' : 'google_search_console')
                                 ]))
                                 ->button()
                         ])
@@ -84,7 +86,7 @@ class PollWorkersStatusJob implements ShouldQueue
             } else {
                 Log::info("Project {$this->project->id} still has {$activeJobs} active jobs. Polling again in 1 minute.");
                 // Re-dispatch with 1 min delay
-                self::dispatch($this->project, $this->provider)->delay(now()->addMinute());
+                self::dispatch($this->project, $this->provider, $this->initiatorId, $this->types)->delay(now()->addMinute());
             }
 
         } catch (\Exception $e) {
