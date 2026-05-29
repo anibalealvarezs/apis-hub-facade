@@ -295,8 +295,9 @@
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('gscDashboard', () => {
+        (function () {
+            const registerGscDashboard = () => {
+                Alpine.data('gscDashboard', () => {
                 return {
                     tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                     account: @entangle('selectedAccount'),
@@ -773,6 +774,13 @@
                     }
                 }
             });
-        });
+            };
+
+            if (window.Alpine) {
+                registerGscDashboard();
+            } else {
+                document.addEventListener('alpine:init', registerGscDashboard);
+            }
+        })();
     </script>
 </x-filament-panels::page>

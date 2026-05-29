@@ -192,17 +192,25 @@
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('fbDashboard', () => {
-                return {
-                    account: @entangle('selectedAccount'),
-                    dateStart: @entangle('dateStart'),
-                    dateEnd: @entangle('dateEnd'),
-                    initDashboard() {
-                        // Init logic for when we implement the actual data binding
+        (function () {
+            const registerFbDashboard = () => {
+                Alpine.data('fbDashboard', () => {
+                    return {
+                        account: @entangle('selectedAccount'),
+                        dateStart: @entangle('dateStart'),
+                        dateEnd: @entangle('dateEnd'),
+                        initDashboard() {
+                            // Init logic for when we implement the actual data binding
+                        }
                     }
-                }
-            });
-        });
+                });
+            };
+
+            if (window.Alpine) {
+                registerFbDashboard();
+            } else {
+                document.addEventListener('alpine:init', registerFbDashboard);
+            }
+        })();
     </script>
 </x-filament-panels::page>
