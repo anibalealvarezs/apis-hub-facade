@@ -166,7 +166,7 @@ class BillingLifecycleService
             UserTier::FREE => 1,
             UserTier::PRO => 5,
             UserTier::ULTRA, UserTier::FOUNDER => 15,
-            UserTier::ENTERPRISE => 15, // Base limits
+            UserTier::ENTERPRISE => 10, // Base limits
             UserTier::SUSPENDED => 0,
             default => 1,
         };
