@@ -37,10 +37,13 @@ class AppServiceProvider extends ServiceProvider
         // se le otorgan todos los permisos dentro de ese contexto.
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
             try {
-                if (class_exists(\Filament\Facades\Filament::class) && \Filament\Facades\Filament::hasTenant()) {
-                    $tenant = \Filament\Facades\Filament::getTenant();
-                    if ($tenant && $user->id === $tenant->user_id) {
-                        return true;
+                if (class_exists(\Filament\Facades\Filament::class)) {
+                    $panel = \Filament\Facades\Filament::getCurrentPanel();
+                    if ($panel && $panel->hasTenant()) {
+                        $tenant = \Filament\Facades\Filament::getTenant();
+                        if ($tenant && $user->id == $tenant->user_id) {
+                            return true;
+                        }
                     }
                 }
             } catch (\Throwable $e) {
