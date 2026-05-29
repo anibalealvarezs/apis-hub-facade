@@ -1,5 +1,6 @@
 <x-filament-panels::page>
-    <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+    <div class="space-y-6">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
         Los permisos establecen qué tipo de tareas pueden hacer los usuarios según el rol asignado, pero los <strong>planes (Tiers)</strong> definen las capacidades estratégicas disponibles para el proyecto de manera transversal.
     </div>
 
@@ -175,5 +176,5 @@
             Las credenciales de acceso a la API (Internal Integration) están reservadas para usuarios del plan <strong>Ultra</strong> y <strong>Enterprise</strong>. Si te encuentras en un plan <em>Free</em> o <em>Pro</em> y necesitas usar la API, deberás actualizar tu Billing Profile o transferir el proyecto a un Billing Profile de nivel superior.
         </p>
     </x-filament::section>
-
+    </div>
 </x-filament-panels::page>
