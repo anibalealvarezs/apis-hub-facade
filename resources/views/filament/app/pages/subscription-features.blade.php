@@ -16,16 +16,17 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Plan de acceso básico. Funcionalidades limitadas diseñadas para pruebas y proyectos pequeños.
             </p>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span class="text-sm font-medium">Proyectos</span>
+            <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Proyectos</span>
                     <x-filament::badge color="gray">1 máximo</x-filament::badge>
                 </div>
-                <div class="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <span class="text-sm font-medium">Cuentas por Sincronizar</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Cuentas por Sincronizar</span>
                     <x-filament::badge color="gray">5 máximo</x-filament::badge>
                 </div>
-                <ul class="space-y-3 pt-2">
+            </div>
+            <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0" />
                         <span class="text-sm">Sincronización básica de datos</span>
@@ -49,16 +50,17 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Ideal para agencias y equipos pequeños. Capacidad ampliada para colaboración.
             </p>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-3 py-2 bg-primary-50 dark:bg-primary-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-primary-700 dark:text-primary-300">Proyectos</span>
+            <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-primary-700 dark:text-primary-400">Proyectos</span>
                     <x-filament::badge color="primary">5 máximo</x-filament::badge>
                 </div>
-                <div class="flex items-center justify-between px-3 py-2 bg-primary-50 dark:bg-primary-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-primary-700 dark:text-primary-300">Cuentas por Sincronizar</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-primary-700 dark:text-primary-400">Cuentas por Sincronizar</span>
                     <x-filament::badge color="primary">100 máximo</x-filament::badge>
                 </div>
-                <ul class="space-y-3 pt-2">
+            </div>
+            <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2 opacity-75">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-400 shrink-0" />
                         <span class="text-sm">Sincronización básica de datos</span>
@@ -86,16 +88,17 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Para operaciones automatizadas, masivas y acceso programático total.
             </p>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-3 py-2 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-purple-700 dark:text-purple-300">Proyectos</span>
+            <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-purple-700 dark:text-purple-400">Proyectos</span>
                     <x-filament::badge color="purple">15 máximo</x-filament::badge>
                 </div>
-                <div class="flex items-center justify-between px-3 py-2 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-purple-700 dark:text-purple-300">Cuentas por Sincronizar</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-purple-700 dark:text-purple-400">Cuentas por Sincronizar</span>
                     <x-filament::badge color="purple">500 máximo</x-filament::badge>
                 </div>
-                <ul class="space-y-3 pt-2">
+            </div>
+            <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2 opacity-75">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0" />
                         <span class="text-sm">Sincronización básica de datos</span>
@@ -131,16 +134,17 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Solución de grado corporativo e infraestructura y soporte dedicados.
             </p>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between px-3 py-2 bg-warning-50 dark:bg-warning-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-warning-700 dark:text-warning-300">Proyectos</span>
+            <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-warning-700 dark:text-warning-400">Proyectos</span>
                     <x-filament::badge color="warning">A medida (Base 10)</x-filament::badge>
                 </div>
-                <div class="flex items-center justify-between px-3 py-2 bg-warning-50 dark:bg-warning-900/10 rounded-lg">
-                    <span class="text-sm font-medium text-warning-700 dark:text-warning-300">Cuentas por Sincronizar</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
+                    <span class="text-sm font-medium text-warning-700 dark:text-warning-400">Cuentas por Sincronizar</span>
                     <x-filament::badge color="warning">A medida (Base 500)</x-filament::badge>
                 </div>
-                <ul class="space-y-3 pt-2">
+            </div>
+            <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2 opacity-75">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-warning-400 shrink-0" />
                         <span class="text-sm">Sincronización de datos + Colaboradores</span>
