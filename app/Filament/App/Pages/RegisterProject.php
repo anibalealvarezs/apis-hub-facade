@@ -58,7 +58,7 @@ class RegisterProject extends RegisterTenant
 
     protected function getRedirectUrl(): string
     {
-        return SyncSettings::getUrl([
+        return DataSources::getUrl([
             'tenant' => $this->tenant,
         ]);
     }
@@ -171,6 +171,9 @@ class RegisterProject extends RegisterTenant
             $subdomain .= '-dev';
         }
 
+        $defaultProfile = $user->billingProfiles()->where('is_default', true)->first() 
+            ?? $user->billingProfiles()->first();
+
         $project = Project::create([
             'name' => $data['name'],
             'subdomain' => $subdomain,
@@ -180,6 +183,8 @@ class RegisterProject extends RegisterTenant
             'git_branch' => 'main',
             'monitoring_token' => (string) \Illuminate\Support\Str::uuid(),
             'remote_admin_api_key' => bin2hex(random_bytes(32)),
+            'billing_profile_id' => $defaultProfile?->id,
+            'billing_status' => 'active',
             'is_active' => true,
         ]);
 

@@ -178,12 +178,17 @@ class OAuthController extends Controller
             // Since ChannelProfile does not store scopes, we just pass the requested ones downstream
             $newScopes = $requestedScopes;
 
-            $sdk->importCredentials($provider, $token, [
-                'user_id' => $socialiteUser->id,
-                'email' => $socialiteUser->email,
-                'refresh_token' => $finalRefreshToken,
-                'scopes' => $newScopes,
-            ]);
+            try {
+                $sdk->importCredentials($provider, $token, [
+                    'user_id' => $socialiteUser->id,
+                    'email' => $socialiteUser->email,
+                    'refresh_token' => $finalRefreshToken,
+                    'scopes' => $newScopes,
+                ]);
+                Log::info("Successfully pushed {$provider} tokens to remote node for project {$tenant->id}");
+            } catch (\Exception $e) {
+                Log::warning("Failed to push {$provider} tokens to remote node for project {$tenant->id} (may not be deployed yet): " . $e->getMessage());
+            }
 
             // Reschedule any jobs that failed due to permanent auth errors
             try {

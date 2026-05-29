@@ -50,6 +50,27 @@ class DeployProjectJob implements ShouldQueue
                     'health_status' => 'online',
                     'last_deployed_at' => now(),
                 ]);
+
+                // 5. Hydrate remote API Hub with existing social tokens if present
+                $providers = ['facebook', 'google'];
+                foreach ($providers as $provider) {
+                    $profileIdColumn = "{$provider}_profile_id";
+                    if ($this->project->{$profileIdColumn}) {
+                        $profile = \App\Models\ChannelProfile::find($this->project->{$profileIdColumn});
+                        if ($profile && $profile->access_token) {
+                            $config = config("services.{$provider}")['channel_scopes'] ?? [];
+                            $scopes = $config['default'] ?? [];
+                            
+                            $deployer->injectSocialTokens($this->project, $profile->access_token, $provider, [
+                                'user_id' => $profile->provider_account_id,
+                                'email' => $profile->email,
+                                'refresh_token' => $profile->refresh_token,
+                                'scopes' => $scopes,
+                            ]);
+                            Log::info("Hydrated {$provider} tokens into newly deployed project {$this->project->id}");
+                        }
+                    }
+                }
             } else {
                 Log::error("Deployment failed for project {$this->project->id}");
             }
