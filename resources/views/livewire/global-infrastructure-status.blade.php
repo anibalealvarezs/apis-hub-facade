@@ -1,22 +1,29 @@
 @php
-    $statusColorRGB = match($status ?? 'undeployed') {
-        'pending', 'running' => '59, 130, 246', // Blue 500
-        'completed', 'success' => '34, 197, 94', // Green 500
-        'failed' => '239, 68, 68', // Red 500
+    // Si hay un despliegue en curso, mostramos eso. Si no, mostramos el estado de salud real del proyecto.
+    $isProcessing = $latestLog && in_array($latestLog->status, ['running', 'pending']);
+    
+    $statusKey = $isProcessing ? 'provisioning' : ($tenant?->health_status ?? 'undeployed');
+
+    $statusColorRGB = match($statusKey) {
+        'provisioning' => '59, 130, 246', // Blue 500
+        'online', 'active' => '34, 197, 94', // Green 500
+        'offline', 'failed', 'error' => '239, 68, 68', // Red 500
+        'suspended' => '234, 179, 8', // Yellow 500
         default => '107, 114, 128', // Gray 500
     };
     
-    $statusText = [
-        'pending' => 'Aprovisionando...',
-        'running' => 'Aprovisionando...',
-        'completed' => 'Activo y En Línea',
-        'success' => 'Activo y En Línea',
+    $statusTextArray = [
+        'provisioning' => 'Aprovisionando...',
+        'online' => 'Activo y En Línea',
+        'active' => 'Activo y En Línea',
+        'offline' => 'Fuera de Línea',
         'failed' => 'Error Crítico',
+        'error' => 'Error Crítico',
+        'suspended' => 'Suspendido',
         'undeployed' => 'Sin Desplegar',
     ];
-
-    $status = $latestLog ? $latestLog->status : 'undeployed';
-    $isProcessing = in_array($status, ['running', 'pending']);
+    
+    $statusText = $statusTextArray[$statusKey] ?? 'Desconocido';
     
     $tierLabel = $tenant?->billingProfile?->tier?->getLabel() ?? 'Unknown';
     $tierColors = [
@@ -55,7 +62,7 @@
 
     <!-- Infrastructure Status -->
     <div wire:poll.5s class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center justify-center gap-3" :class="{ 'px-0 bg-transparent border-transparent dark:bg-transparent dark:border-transparent py-1': !$store.sidebar.isOpen }">
-        <div class="relative flex h-3 w-3 shrink-0" title="{{ $statusText[$status] ?? 'Desconocido' }}">
+        <div class="relative flex h-3 w-3 shrink-0" title="{{ $statusText }}">
             @if($isProcessing)
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgb({{ $statusColorRGB }});"></span>
             @endif
@@ -63,8 +70,8 @@
         </div>
         <div x-show="$store.sidebar.isOpen" class="flex flex-col overflow-hidden">
             <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">Estado del Servidor</span>
-            <span class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $statusText[$status] ?? 'Desconocido' }}">
-                {{ $statusText[$status] ?? 'Desconocido' }}
+            <span class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $statusText }}">
+                {{ $statusText }}
             </span>
         </div>
     </div>
