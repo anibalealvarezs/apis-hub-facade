@@ -1,9 +1,9 @@
 @php
-    $statusColorName = match($status ?? 'undeployed') {
-        'pending', 'running' => 'primary',
-        'completed', 'success' => 'success',
-        'failed' => 'danger',
-        default => 'gray',
+    $statusColorRGB = match($status ?? 'undeployed') {
+        'pending', 'running' => '59, 130, 246', // Blue 500
+        'completed', 'success' => '34, 197, 94', // Green 500
+        'failed' => '239, 68, 68', // Red 500
+        default => '107, 114, 128', // Gray 500
     };
     
     $statusText = [
@@ -57,9 +57,9 @@
     <div wire:poll.5s class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center justify-center gap-3" :class="{ 'px-0 bg-transparent border-transparent dark:bg-transparent dark:border-transparent py-1': !$store.sidebar.isOpen }">
         <div class="relative flex h-3 w-3 shrink-0" title="{{ $statusText[$status] ?? 'Desconocido' }}">
             @if($isProcessing)
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgba(var(--primary-400), 1);"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgb({{ $statusColorRGB }});"></span>
             @endif
-            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgba(var(--{{ $statusColorName }}-500), 1);"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
         <div x-show="$store.sidebar.isOpen" class="flex flex-col overflow-hidden">
             <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">Estado del Servidor</span>
