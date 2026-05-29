@@ -51,8 +51,15 @@ class AppServiceProvider extends ServiceProvider
                                     return true;
                                 }
                                 
-                                if (method_exists($user, 'hasRole') && $user->hasRole('project_owner')) {
-                                    \Illuminate\Support\Facades\Log::info("User has project_owner role, returning true");
+                                $isCollaboratorOwner = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                    ->where('model_has_roles.model_id', $user->id)
+                                    ->where('model_has_roles.project_id', $tenant->id)
+                                    ->where('roles.name', 'project_owner')
+                                    ->exists();
+
+                                if ($isCollaboratorOwner) {
+                                    \Illuminate\Support\Facades\Log::info("User has project_owner role via DB, returning true");
                                     return true;
                                 }
                             }
