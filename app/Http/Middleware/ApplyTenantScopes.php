@@ -20,6 +20,7 @@ class ApplyTenantScopes
 
         if ($tenant && function_exists('setPermissionsTeamId')) {
             setPermissionsTeamId($tenant->id);
+            app(\Spatie\Permission\PermissionRegistrar::class)->clearClassPermissions();
         }
 
         return $next($request);

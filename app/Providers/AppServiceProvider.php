@@ -99,5 +99,6 @@ class AppServiceProvider extends ServiceProvider
                 ->persistent()
                 ->send();
         });
+
     }
 }

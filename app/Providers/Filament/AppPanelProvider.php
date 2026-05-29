@@ -144,7 +144,7 @@ class AppPanelProvider extends PanelProvider
             ->tenantRegistration(\App\Filament\App\Pages\RegisterProject::class)
             ->tenantMiddleware([
                 \App\Http\Middleware\ApplyTenantScopes::class,
-            ])
+            ], isPersistent: true)
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
