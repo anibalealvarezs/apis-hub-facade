@@ -30,13 +30,29 @@ class SyncSettings extends Page
     public bool $isSyncable = false;
 
     /**
+     * TTL for the "sync sequence in progress" banner (seconds).
+     * start-sync.sh should complete well within this window.
+     */
+    const SYNC_SEQUENCE_TTL_SECONDS = 900; // 15 minutes
+
+    /**
      * Re-hydrate the tenant from DB so wire:poll picks up health_status / last_sync_started_at changes.
+     * Also auto-clears last_sync_started_at if it has exceeded the TTL, preventing the banner
+     * from being stuck forever when start-sync.sh fails silently on the remote node.
      */
     public function refreshTenantStatus(): void
     {
-        // Filament::getTenant() is cached per request — refresh from DB
+        /** @var \App\Models\Project $tenant */
         $tenant = Filament::getTenant()->fresh();
         $this->isSyncable = $tenant->is_active && $tenant->health_status !== 'provisioning';
+
+        // Auto-clear a stale sync-in-progress marker
+        if (
+            $tenant->last_sync_started_at
+            && $tenant->last_sync_started_at->diffInSeconds(now()) > self::SYNC_SEQUENCE_TTL_SECONDS
+        ) {
+            $tenant->update(['last_sync_started_at' => null]);
+        }
     }
 
     protected function getHeaderActions(): array
