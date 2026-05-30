@@ -9,7 +9,8 @@ export default defineConfig({
                 'resources/css/app.css', 
                 'resources/js/app.js', 
                 'resources/js/theme.js', 
-                'resources/js/gtm.js'
+                'resources/js/gtm.js',
+                'resources/js/filament-charts.js'
             ],
             refresh: true,
         }),

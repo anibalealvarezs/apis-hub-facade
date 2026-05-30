@@ -104,8 +104,7 @@
         .gsc-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--gsc-bg-card); border-radius: 4px; font-size: 0.75rem; }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
 
     <div x-data="gscDashboard()" x-init="initDashboard()">
         <div class="gsc-header-row">
@@ -330,19 +329,36 @@
                     },
 
                     initDashboard() {
-                        this.initChart();
-                        
-                        this.$watch('account', () => {
-                            this.loadFilters();
-                            this.fetchAll();
-                        });
-                        this.$watch('dateStart', () => this.fetchAll());
-                        this.$watch('dateEnd', () => this.fetchAll());
-                        this.$watch('pageSize', () => { this.currentPage = 1; });
-                        
-                        if (this.account && this.dateStart && this.dateEnd) {
-                            this.loadFilters();
-                            this.fetchAll();
+                        const boot = () => {
+                            this.initChart();
+                            
+                            this.$watch('account', () => {
+                                this.loadFilters();
+                                this.fetchAll();
+                            });
+                            this.$watch('dateStart', () => this.fetchAll());
+                            this.$watch('dateEnd', () => this.fetchAll());
+                            this.$watch('pageSize', () => { this.currentPage = 1; });
+                            
+                            if (this.account && this.dateStart && this.dateEnd) {
+                                this.loadFilters();
+                                this.fetchAll();
+                            }
+                        };
+
+                        if (window.Chart && window.dayjs) {
+                            boot();
+                        } else {
+                            Promise.all([
+                                window.importChartJs(),
+                                window.importDayJs()
+                            ]).then(([chartModule, dayjsModule]) => {
+                                window.Chart = chartModule.default;
+                                window.dayjs = dayjsModule.default;
+                                boot();
+                            }).catch(err => {
+                                console.error("Failed to load charting libraries", err);
+                            });
                         }
                     },
                     
