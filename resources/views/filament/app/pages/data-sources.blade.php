@@ -23,17 +23,17 @@
                 let lock = this.lockStates[id];
                 
                 if (lock.status === 'locked') {
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>Quota Locked</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked') . '</span>`;
                 }
                 
                 if (lock.status === 'pending_release') {
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>Locked until cycle end (${this.cycleBounds.ends_at})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>' . __('Locked until cycle end') . ' (${this.cycleBounds.ends_at})</span>`;
                 }
                 
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>Grace Period paused (Waiting for deployment)</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period paused (Waiting for deployment)') . '</span>`;
                     }
                     
                     let stagedAt = new Date(lock.staged_at).getTime();
@@ -44,7 +44,7 @@
                     let remainingMs = endsAt - this.currentTime;
                     
                     if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>Quota Locked (Refresh needed)</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked (Refresh needed)') . '</span>`;
                     }
                     
                     let remainingMins = Math.floor(remainingMs / 60000);
@@ -52,7 +52,7 @@
                     let m = remainingMins % 60;
                     let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
                     
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>Grace Period (Ends in ${timeStr})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period (Ends in') . ' ${timeStr})</span>`;
                 }
                 
                 return '';
@@ -152,9 +152,9 @@
         <template x-teleport="#tier-usage-header-target">
             <div class="flex items-center gap-3 text-sm transition-colors"
                  :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`Cycle: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`' . __('Cycle') . ': ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">Tier Usage</span>
+                    <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ __('Tier Usage') }}</span>
                     <div class="font-bold text-base">
                         <span x-text="selectedCount"></span> / <span x-text="maxAssets"></span>
                     </div>
@@ -224,7 +224,7 @@
                         {{ $this->getChannelLabel($activeChannel) }}
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Last synced: {{ $this->getLastSyncTime($activeChannel) }}
+                        {{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}
                     </p>
                 </div>
                 
@@ -238,7 +238,7 @@
 
             @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
                 <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
-                  <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
+                  <span class="font-bold">{{ __('Suspended Project') }}:</span> {{ __('This project is currently inactive due to billing issues. Read-only access is permitted to view configuration, but editing, deployment, synchronization, and ownership transfer options are blocked.') }}
                 </div>
             @endif
 
@@ -247,11 +247,9 @@
                     <div class="flex items-start gap-3">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-warning-600 dark:text-warning-500 shrink-0 mt-0.5" />
                         <div>
-                            <h3 class="text-sm font-bold text-warning-800 dark:text-warning-400">Shared API Rate Limits</h3>
+                            <h3 class="text-sm font-bold text-warning-800 dark:text-warning-400">{{ __('Shared API Rate Limits') }}</h3>
                             <p class="text-sm text-warning-700 dark:text-warning-500 mt-1">
-                                This social profile is connected to multiple projects. To protect your connection stability, 
-                                the API rate limits for this profile will be shared across all connected projects. Avoid 
-                                syncing excessive assets simultaneously.
+                                {{ __('{{ __('This social profile is connected to multiple projects. To protect your connection stability, the API rate limits for this profile will be shared across all connected projects. Avoid syncing excessive assets simultaneously.') }}') }}
                             </p>
                         </div>
                     </div>
@@ -263,9 +261,9 @@
                     <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                         <x-heroicon-o-link class="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Not Connected</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ __('Not Connected') }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
-                        You need to authorize access to this provider before you can configure its data sources.
+                        {{ __('You need to authorize access to this provider before you can configure its data sources.') }}
                     </p>
                     
                     @if(str_contains($activeChannel, 'facebook') || str_contains($activeChannel, 'google'))
@@ -274,7 +272,7 @@
                 </div>
             @else
                 
-                <!-- Removed internal Tier Usage -->
+                <!-- Removed internal {{ __('Tier Usage') }} -->
 
 
 
@@ -284,7 +282,7 @@
                         <x-filament::button type="submit" color="primary" size="lg"
                             :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
                             wire:confirm="Saving this configuration will update your tracked assets and may impact your monthly billing quota. Are you sure you want to proceed?">
-                            Save Configuration
+                            {{ __('Save Configuration') }}
                         </x-filament::button>
                     </div>
                 </form>

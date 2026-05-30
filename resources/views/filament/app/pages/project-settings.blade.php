@@ -16,7 +16,7 @@
 
         @if(!$isOwner)
             <div class="p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400" role="alert">
-              <span class="font-medium">Aviso:</span> Solo el propietario (creador original) del proyecto tiene acceso a opciones destructivas como transferencia de propiedad o eliminación.
+              <span class="font-medium">{{ __('Notice:') }}</span> {{ __('Only the project owner (original creator) has access to destructive options such as ownership transfer or deletion.') }}
             </div>
         @endif
 
@@ -24,34 +24,34 @@
  
         <x-filament::section>
             <x-slot name="heading">
-                Detalles del Proyecto
+                {{ __('Project Details') }}
             </x-slot>
             
             <x-slot name="description">
-                Información general de infraestructura de tu proyecto.
+                {{ __('General infrastructure information for your project.') }}
             </x-slot>
  
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <p class="text-sm text-gray-500">Nombre</p>
+                    <p class="text-sm text-gray-500">{{ __('Name') }}</p>
                     <p class="font-medium">{{ $tenant->name }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Subdominio</p>
+                    <p class="text-sm text-gray-500">{{ __('Subdomain') }}</p>
                     <p class="font-medium">{{ $tenant->subdomain }}.apis-hub.cloud</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Propietario Principal</p>
+                    <p class="text-sm text-gray-500">{{ __('Primary Owner') }}</p>
                     <p class="font-medium">{{ $tenant->trueOwner->name }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Zona Horaria</p>
+                    <p class="text-sm text-gray-500">{{ __('Timezone') }}</p>
                     <p class="font-medium">{{ $tenant->timezone ?? 'UTC' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Perfil de Facturación</p>
+                    <p class="text-sm text-gray-500">{{ __('Billing Profile') }}</p>
                     <p class="font-medium">
-                        {{ $tenant->billingProfile?->display_name ?? 'Sin Perfil' }} 
+                        {{ $tenant->billingProfile?->display_name ?? '{{ __('No Profile') }}' }} 
                         @if($tenant->billingProfile)
                             <span class="text-xs text-gray-400 bg-gray-800 dark:bg-gray-700 px-2 py-0.5 rounded-full ml-1 font-semibold">
                                 {{ $tenant->billingProfile->tier->value ?? $tenant->billingProfile->tier }}
@@ -60,7 +60,7 @@
                     </p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Próxima Renovación de Ciclo</p>
+                    <p class="text-sm text-gray-500">{{ __('Next Cycle Renewal') }}</p>
                     <p class="font-medium">
                         @if($tenant->billingProfile)
                             @php
@@ -75,7 +75,7 @@
                     </p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">Fecha de Creación</p>
+                    <p class="text-sm text-gray-500">{{ __('Creation Date') }}</p>
                     <p class="font-medium">{{ $tenant->created_at->format('d M, Y') }}</p>
                 </div>
             </div>
@@ -84,14 +84,14 @@
         @if($isOwner)
         <x-filament::section>
             <x-slot name="heading">
-                Opciones Peligrosas
+                {{ __('Danger Zone') }}
             </x-slot>
             <x-slot name="description">
-                Acciones irreversibles o críticas para la vida del proyecto.
+                {{ __('Irreversible or critical actions for the lifecycle of the project.') }}
             </x-slot>
  
             <div class="flex flex-col gap-4">
-                <p class="text-sm text-gray-500">Para transferir este proyecto a otro miembro del equipo o para eliminarlo (iniciando el periodo de gracia de 30 días), utiliza los botones superiores de acción.</p>
+                <p class="text-sm text-gray-500">{{ __('To transfer this project to another team member or delete it (starting the 30-day grace period), use the top action buttons.') }}</p>
             </div>
         </x-filament::section>
         @endif
@@ -100,10 +100,10 @@
         @if($logs && $logs->count() > 0)
         <x-filament::section>
             <x-slot name="heading">
-                Logs de Actividad
+                {{ __('Activity Logs') }}
             </x-slot>
             <x-slot name="description">
-                Registro de actividades del motor de sincronización en vivo.
+                {{ __('Live sync engine activity logs.') }}
             </x-slot>
  
             <div wire:poll.5s>
@@ -121,7 +121,7 @@
                                     {{ strtoupper($log->status) }}
                                 </span>
                             </div>
-                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? 'Iniciando aprovisionamiento del motor de sincronización...' }}</pre>
+                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? '{{ __('Starting sync engine provisioning...') }}' }}</pre>
                         </div>
                     @endforeach
                 </div>

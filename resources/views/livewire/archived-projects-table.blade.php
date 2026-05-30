@@ -1,4 +1,4 @@
-<x-filament-breezy::grid-section md=2 title="Proyectos Archivados" description="Proyectos eliminados que están en periodo de gracia (30 días) antes de su destrucción permanente.">
+<x-filament-breezy::grid-section md=2 title="{{ __('Archived Projects') }}" description="{{ __('Deleted projects that are in the grace period (30 days) before permanent destruction.') }}">
     <x-filament::card>
         {{ $this->table }}
     </x-filament::card>

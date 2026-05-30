@@ -13,21 +13,21 @@
     };
     
     $statusTextArray = [
-        'provisioning' => 'Aprovisionando...',
-        'online' => 'Activo y En Línea',
-        'active' => 'Activo y En Línea',
-        'healthy' => 'Activo y En Línea',
-        'offline' => 'Fuera de Línea',
-        'failed' => 'Error Crítico',
-        'error' => 'Error Crítico',
-        'suspended' => 'Suspendido',
-        'stopping_workers' => 'Deteniendo Sincronización...',
-        'ready_for_auth' => 'Renovación de Auth...',
-        'disputed' => 'Pago Disputado',
-        'undeployed' => 'Sin Desplegar',
+        'provisioning' => __('Provisioning...'),
+        'online' => __('Active and Online'),
+        'active' => __('Active and Online'),
+        'healthy' => __('Active and Online'),
+        'offline' => __('Offline'),
+        'failed' => __('Critical Error'),
+        'error' => __('Critical Error'),
+        'suspended' => __('Suspended'),
+        'stopping_workers' => __('Stopping Synchronization...'),
+        'ready_for_auth' => __('Auth Renewal...'),
+        'disputed' => __('Disputed Payment'),
+        'undeployed' => __('Undeployed'),
     ];
     
-    $statusText = $statusTextArray[$statusKey] ?? 'Desconocido';
+    $statusText = $statusTextArray[$statusKey] ?? __('Unknown');
     
     $tierLabel = $tenant?->billingProfile?->tier?->getLabel() ?? 'Unknown';
     $tierColors = [
@@ -73,7 +73,7 @@
             <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
         <div x-show="$store.sidebar.isOpen" class="flex flex-col overflow-hidden">
-            <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">Estado del Servidor</span>
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">{{ __('Server Status') }}</span>
             <span class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $statusText }}">
                 {{ $statusText }}
             </span>

@@ -2,10 +2,9 @@
     <div class="grid grid-cols-1 gap-6">
         <div class="fi-ta-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
             <div class="p-6">
-                <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">Project Roles & Capabilities</h2>
+                <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">{{ __('Project Roles & Capabilities') }}</h2>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    This table displays all available roles within a project and the specific permissions granted to each. 
-                    Roles are assigned per-project, meaning a user can be an Owner in one project and a Viewer in another.
+                    {{ __('This table displays all available roles within a project and the specific permissions granted to each. Roles are assigned per-project, meaning a user can be an Owner in one project and a Viewer in another.') }}
                 </p>
             </div>
 
@@ -16,13 +15,13 @@
                             <h3 class="text-lg font-semibold text-gray-950 dark:text-white">{{ \Illuminate\Support\Str::headline($role->name) }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 @if($role->name === 'project_owner')
-                                    The absolute owner of the project. Has full destructive and administrative rights.
+                                    {{ __('The absolute owner of the project. Has full destructive and administrative rights.') }}
                                 @elseif($role->name === 'project_editor')
-                                    Can manage infrastructure, billing, and collaborators, but cannot delete or transfer the project.
+                                    {{ __('Can manage infrastructure, billing, and collaborators, but cannot delete or transfer the project.') }}
                                 @elseif($role->name === 'project_viewer')
-                                    Can view data and dashboards, but cannot make any modifications to the infrastructure.
+                                    {{ __('Can view data and dashboards, but cannot make any modifications to the infrastructure.') }}
                                 @elseif($role->name === 'project_user')
-                                    Basic access. Restricted to viewing public data only.
+                                    {{ __('Basic access. Restricted to viewing public data only.') }}
                                 @endif
                             </p>
                         </div>
@@ -33,7 +32,7 @@
                                         {{ \Illuminate\Support\Str::headline($permission->name) }}
                                     </span>
                                 @empty
-                                    <span class="text-sm text-gray-500">No specific permissions.</span>
+                                    <span class="text-sm text-gray-500">{{ __('No specific permissions.') }}</span>
                                 @endforelse
                             </div>
                         </div>
