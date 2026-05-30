@@ -26,9 +26,9 @@ class DataSync extends Page
     }
 
     /**
-     * Fetch real-time synchronization data from the remote node.
+     * Fetch real-time synchronization data from the remote node or from cache.
      */
-    public function refreshData(): void
+    public function refreshData(bool $force = false): void
     {
         $this->isLoading = true;
         
@@ -36,7 +36,14 @@ class DataSync extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            $response = $service->getSyncTelemetry($tenant);
+            $cacheKey = "telemetry_data_{$tenant->id}";
+            if ($force) {
+                \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            }
+
+            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($service, $tenant) {
+                return $service->getSyncTelemetry($tenant);
+            });
             
             \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
 
@@ -148,7 +155,7 @@ class DataSync extends Page
                 ->label('Refresh Data')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->action(fn() => $this->refreshData()),
+                ->action(fn() => $this->refreshData(true)),
 
             Action::make('triggerSync')
                 ->label('Run All Explorers')
@@ -161,7 +168,7 @@ class DataSync extends Page
                     $tenant = Filament::getTenant();
                     $service->triggerSync($tenant);
                     Notification::make()->title('Explorers are now working')->success()->send();
-                    $this->refreshData();
+                    $this->refreshData(true);
                 }),
 
             Action::make('stopJobs')
@@ -178,7 +185,7 @@ class DataSync extends Page
                         ->title(($response['status'] ?? '') === 'success' ? 'Explorers are resting' : 'Action Failed')
                         ->body($response['message'] ?? '')
                         ->send();
-                    $this->refreshData();
+                    $this->refreshData(true);
                 }),
 
             Action::make('resyncAll')
