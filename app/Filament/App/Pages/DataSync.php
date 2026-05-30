@@ -164,19 +164,6 @@ class DataSync extends Page
                 ->color('gray')
                 ->action(fn() => $this->refreshData(true)),
 
-            Action::make('triggerSync')
-                ->label(__('Run All Explorers'))
-                ->icon('heroicon-o-play')
-                ->color('success')
-                ->requiresConfirmation()
-                ->modalHeading(__('Start All Explorers?'))
-                ->modalDescription(__('This will launch all resting explorers to fetch the latest data from your social platforms.'))
-                ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $service->triggerSync($tenant);
-                    Notification::make()->title(__('Explorers are now working'))->success()->send();
-                    $this->refreshData(true);
-                }),
 
             Action::make('stopJobs')
                 ->label(__('Pause All Explorers'))
