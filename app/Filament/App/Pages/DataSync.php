@@ -38,11 +38,11 @@ class DataSync extends Page
     public function refreshData(bool $force = false): void
     {
         $this->isLoading = true;
-        
+
         try {
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
-            
+
             $cacheKey = "telemetry_data_{$tenant->id}";
             if ($force) {
                 \Illuminate\Support\Facades\Cache::forget($cacheKey);
@@ -51,7 +51,7 @@ class DataSync extends Page
             $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($service, $tenant) {
                 return $service->getSyncTelemetry($tenant);
             });
-            
+
             \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
 
             if (is_array($response) && isset($response['completion_percentage'])) {
@@ -59,18 +59,18 @@ class DataSync extends Page
                 try {
                     $accountMap = [];
                     $syncConfig = $tenant->sync_config ?? [];
-                    
+
                     // Recursively search for any array that contains arrays with 'id' and 'name'
                     $extractNames = function($data) use (&$extractNames, &$accountMap) {
                         if (!is_array($data)) return;
-                        
+
                         // Check if current node represents an asset
                         if (isset($data['id']) && isset($data['name']) && is_string($data['name'])) {
                             $accountMap[(string)$data['id']] = [
                                 'name' => $data['name'],
                                 'ig_username' => null,
                             ];
-                            
+
                             // Check for IG account inside FB page
                             if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
                                 $ig = $data['instagram_business_account'];
@@ -79,7 +79,7 @@ class DataSync extends Page
                                 }
                             }
                         }
-                        
+
                         // Keep digging deeper
                         foreach ($data as $key => $val) {
                             if (is_array($val)) {
@@ -87,7 +87,7 @@ class DataSync extends Page
                             }
                         }
                     };
-                    
+
                     $extractNames($syncConfig);
 
                     // Apply to response and normalize assets to associative array
@@ -97,7 +97,7 @@ class DataSync extends Page
                                 $newAssets = [];
                                 foreach ($chanData['assets'] as $key => $asset) {
                                     $actualId = (is_array($asset) && isset($asset['id'])) ? (string)$asset['id'] : (string)$key;
-                                    
+
                                     // Set actual ID explicitly
                                     if (is_array($asset)) {
                                         $asset['id'] = $actualId;
@@ -108,7 +108,7 @@ class DataSync extends Page
                                             }
                                         }
                                     }
-                                    
+
                                     $newAssets[$actualId] = $asset;
                                 }
                                 $chanData['assets'] = $newAssets;
@@ -148,7 +148,7 @@ class DataSync extends Page
         $cooldownDays = 15;
         $canResync = true;
         $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
-        
+
         if ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
             if ($daysSince < $cooldownDays) {
@@ -209,7 +209,10 @@ class DataSync extends Page
                         Notification::make()->title(__('Error:') . ' ' . ($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
                         if ($data['channel'] === 'all') {
-                            $tenant->update(['last_historical_resync_at' => now()]);
+                            $tenant->update([
+                                'last_historical_resync_at' => now(),
+                                'last_deployed_at' => null,
+                            ]);
                         }
                         Notification::make()->title(__('Historical resync initiated for ') . ($data['channel'] === 'all' ? __('all channels') : $data['channel']))->success()->send();
                     }
@@ -217,4 +220,3 @@ class DataSync extends Page
         ];
     }
 }
-

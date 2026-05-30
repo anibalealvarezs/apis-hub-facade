@@ -41,7 +41,7 @@ class SyncSettings extends Page
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
                     $response = $service->startSync($tenant);
-                    
+
                     Notification::make()
                         ->title(($response['status'] ?? '') === 'success' ? __('Synchronization Sequence Started') : __('Sync Deployment Failed'))
                         ->body($response['message'] ?? __('Applying configuration, restarting workers, and scheduling initial jobs.'))
@@ -60,7 +60,7 @@ class SyncSettings extends Page
         if ($this->isSyncable) {
             $validation = $service->validateTokens($tenant, 'facebook');
             $fbData = $validation['results']['facebook'] ?? [];
-            
+
             if (($fbData['status'] ?? '') === 'valid' && !empty($fbData['access_token'])) {
                 if ($tenant->facebook_user_token !== $fbData['access_token']) {
                     // Update Facade silently with Node's truth
@@ -148,10 +148,10 @@ class SyncSettings extends Page
                                     ->action(function (\App\Services\DeployerService $deployer) {
                                         $tenant = Filament::getTenant();
                                         $newKey = bin2hex(random_bytes(32));
-                                        
+
                                         // 1. Save locally
                                         $tenant->update(['public_api_key' => $newKey]);
-                                        
+
                                         // 2. Push to remote server via SSH
                                         $deployer->updateCredentials($tenant, [
                                             'APP_API_KEY' => $newKey
@@ -188,7 +188,7 @@ class SyncSettings extends Page
 
         $this->validate();
         $data = $this->form->getState();
-        
+
         $modelAttributes = [
             'public_api_key' => $data['app_api_key'] ?? $tenant->public_api_key,
             'facebook_user_token' => $data['facebook_user_token'] ?? $tenant->facebook_user_token,
