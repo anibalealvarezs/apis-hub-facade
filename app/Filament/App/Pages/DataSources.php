@@ -155,34 +155,29 @@ class DataSources extends Page
         // Now fill the form, which will generate the schema based on the correctly selected activeChannel
         $this->form->fill($config);
 
-        // Check if a resync has occurred recently (e.g., within the last 5 minutes)
-        $resyncOccurredRecently = $tenant->last_historical_resync_at && $tenant->last_historical_resync_at->gt(now()->subMinutes(5));
+        $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->where('status', 'locked')
+            ->whereNull('disabled_at')
+            ->where(function ($query) use ($tenant) {
+                if ($tenant->last_deployed_at) {
+                    $query->where('locked_at', '>', $tenant->last_deployed_at);
+                }
+            })
+            ->count();
 
-        if (!$resyncOccurredRecently) {
-            $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-                ->where('status', 'locked')
-                ->whereNull('disabled_at')
-                ->where(function ($query) use ($tenant) {
-                    if ($tenant->last_deployed_at) {
-                        $query->where('locked_at', '>', $tenant->last_deployed_at);
-                    }
-                })
-                ->count();
-
-            if ($pendingAssets > 0) {
-                Notification::make()
-                    ->title(__('Action Recommended'))
-                    ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
-                    ->warning()
-                    ->persistent()
-                    ->actions([
-                        \Filament\Notifications\Actions\Action::make('deploy')
-                            ->label(__('Deploy Updates'))
-                            ->button()
-                            ->url(SyncSettings::getUrl()),
-                    ])
-                    ->send();
-            }
+        if ($pendingAssets > 0) {
+            Notification::make()
+                ->title(__('Action Recommended'))
+                ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
+                ->warning()
+                ->persistent()
+                ->actions([
+                    \Filament\Notifications\Actions\Action::make('deploy')
+                        ->label(__('Deploy Updates'))
+                        ->button()
+                        ->url(SyncSettings::getUrl()),
+                ])
+                ->send();
         }
     }
 
