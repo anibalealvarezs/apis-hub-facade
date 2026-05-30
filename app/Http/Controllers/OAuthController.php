@@ -216,7 +216,7 @@ class OAuthController extends Controller
             if (in_array($tenant->health_status, ['stopping_workers', 'ready_for_auth'])) {
                 Log::info("Reactivating workers for project {$tenant->id} post OAuth update.");
                 
-                $deploymentName = 'apis-hub';
+                $deploymentName = "apis-hub-{$tenant->subdomain}";
                 $refreshCmd = "php bin/console app:refresh-instances";
                 $startCmd = "docker compose -p {$deploymentName} up -d --build --remove-orphans worker";
                 
