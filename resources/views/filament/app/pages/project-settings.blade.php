@@ -51,7 +51,7 @@
                 <div>
                     <p class="text-sm text-gray-500">{{ __('Billing Profile') }}</p>
                     <p class="font-medium">
-                        {{ $tenant->billingProfile?->display_name ?? '{{ __('No Profile') }}' }} 
+                        {{ $tenant->billingProfile?->display_name ?? __('No Profile') }} 
                         @if($tenant->billingProfile)
                             <span class="text-xs text-gray-400 bg-gray-800 dark:bg-gray-700 px-2 py-0.5 rounded-full ml-1 font-semibold">
                                 {{ $tenant->billingProfile->tier->value ?? $tenant->billingProfile->tier }}
@@ -121,7 +121,7 @@
                                     {{ strtoupper($log->status) }}
                                 </span>
                             </div>
-                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? '{{ __('Starting sync engine provisioning...') }}' }}</pre>
+                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? __('Starting sync engine provisioning...') }}</pre>
                         </div>
                     @endforeach
                 </div>

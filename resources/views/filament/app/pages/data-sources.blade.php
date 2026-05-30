@@ -249,7 +249,7 @@
                         <div>
                             <h3 class="text-sm font-bold text-warning-800 dark:text-warning-400">{{ __('Shared API Rate Limits') }}</h3>
                             <p class="text-sm text-warning-700 dark:text-warning-500 mt-1">
-                                {{ __('{{ __('This social profile is connected to multiple projects. To protect your connection stability, the API rate limits for this profile will be shared across all connected projects. Avoid syncing excessive assets simultaneously.') }}') }}
+                                {{ __('This social profile is connected to multiple projects. To protect your connection stability, the API rate limits for this profile will be shared across all connected projects. Avoid syncing excessive assets simultaneously.') }}
                             </p>
                         </div>
                     </div>
