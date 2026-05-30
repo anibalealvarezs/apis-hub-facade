@@ -79,6 +79,25 @@ class SyncSettings extends Page
             'google_refresh_token' => $tenant->google_refresh_token,
             'google_user_id' => $tenant->google_user_id,
         ]);
+
+        $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->where('status', 'locked')
+            ->whereNull('disabled_at')
+            ->where(function ($query) use ($tenant) {
+                if ($tenant->last_deployed_at) {
+                    $query->where('locked_at', '>', $tenant->last_deployed_at);
+                }
+            })
+            ->count();
+
+        if ($pendingAssets > 0) {
+            Notification::make()
+                ->title(__('Action Recommended'))
+                ->body(__('You have :count newly confirmed asset(s). We recommend clicking "Deploy Infrastructure Updates" above to start tracking their full history.', ['count' => $pendingAssets]))
+                ->warning()
+                ->persistent()
+                ->send();
+        }
     }
 
     public function form(Form $form): Form
