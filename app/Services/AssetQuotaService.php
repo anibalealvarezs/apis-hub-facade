@@ -105,7 +105,7 @@ class AssetQuotaService
     /**
      * Scan current project config and apply state transitions.
      */
-    public function processGracePeriodLocks(Project $project, bool $isResync = false): void
+    public function processGracePeriodLocks(Project $project): void
     {
         $syncConfig = $project->sync_config ?? [];
         $ownerId = $project->owner_id ?? $project->user_id;
@@ -129,7 +129,7 @@ class AssetQuotaService
                                     ->where('asset_identifier', $identifier)
                                     ->first();
 
-                                if (!$lock && !$isResync) {
+                                if (!$lock) {
                                     AssetBillingLock::create([
                                         'user_id' => $ownerId,
                                         'project_id' => $project->id,
