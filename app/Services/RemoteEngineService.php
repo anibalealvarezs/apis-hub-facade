@@ -116,21 +116,30 @@ class RemoteEngineService
             $port = (int) ($server->ssh_port ?? 22);
             $user = escapeshellarg($server->ssh_user ?? 'root');
             $keyPath = escapeshellarg($keyFile);
-            $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
+            $channelArg = ($channel && $channel !== 'all') ? '--channel=' . $channel : '';
 
             // Resolve the project's deploy path via subdomain convention
             $deployPath = "/var/www/apis-hub/tenants/{$project->subdomain}";
             $cliCmd = "docker compose -f {$deployPath}/docker-compose.yml exec -T master php bin/cli.php app:nuclear-resync {$channelArg}";
 
-            $sshCmd = "ssh -i {$keyPath} -p {$port} -o StrictHostKeyChecking=no -o ConnectTimeout=10 {$user}@{$host} " . escapeshellarg($cliCmd) . " > /dev/null 2>&1 &";
+            $sshCmd = "ssh -i {$keyPath} -p {$port} -o StrictHostKeyChecking=no -o ConnectTimeout=10 {$user}@{$host} " . escapeshellarg($cliCmd);
 
-            exec($sshCmd);
+            $output = [];
+            $return_var = 0;
+            exec($sshCmd, $output, $return_var);
 
             @unlink($keyFile);
 
-            Log::info("Nuclear Resync SSH: dispatched for project {$project->name}, channel: {$channel}");
+            Log::info("Nuclear Resync SSH: dispatched for project {$project->name}, channel: {$channel}", [
+                'output' => $output,
+                'return_var' => $return_var,
+            ]);
 
-            return ['status' => 'success', 'message' => 'Nuclear resync dispatched via SSH.'];
+            if ($return_var !== 0) {
+                return ['status' => 'error', 'message' => 'Nuclear resync failed.', 'output' => implode("\n", $output)];
+            }
+
+            return ['status' => 'success', 'message' => 'Nuclear resync completed.', 'output' => implode("\n", $output)];
 
         } catch (\Throwable $e) {
             Log::error("Nuclear Resync SSH failed for {$project->name}: " . $e->getMessage());

@@ -26,7 +26,7 @@
                     $totalProcessing += $ch['processing'] ?? 0;
                     $totalScheduled += $ch['scheduled'] ?? 0;
                 }
-                
+
                 if ($totalProcessing > 0) {
                     $statusLabel = 'Workers Corriendo';
                     $statusColor = 'bg-success-50 text-success-600 ring-success-600/10 dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/30';
@@ -41,7 +41,7 @@
                     $statusDescription = 'No hay trabajos programados ni en procesamiento. Los workers están inactivos.';
                 }
             @endphp
-            
+
             {{-- 🟢 Layer 0: Worker Status --}}
             <div class="mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
                 <div>
@@ -56,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            
+
             {{-- 🟢 Layer 1: Global Health Overview --}}
             <div class="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -69,7 +69,7 @@
                             <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $globalCompletion }}%</span>
                         </div>
                     </div>
-                    
+
                     <div class="w-full md:w-auto flex flex-wrap gap-6">
                         <div class="flex flex-col">
                             <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Assets</span>
@@ -103,11 +103,11 @@
                         $hasAssets = !empty($channelData['assets']);
                     @endphp
                     <div x-data="{ expanded: false }" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
-                        
+
                         {{-- Channel Header Card --}}
                         <div class="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" @click="expanded = !expanded">
                             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                                
+
                                 <div class="flex items-center gap-4 lg:w-1/3">
                                     <div class="p-3 rounded-xl {{ $chFailed > 0 ? 'bg-danger-100 text-danger-600 dark:bg-danger-500/20 dark:text-danger-400' : 'bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400' }}">
                                         @if($chFailed > 0)
@@ -142,7 +142,7 @@
                                             <span class="text-[10px] uppercase opacity-70">Completed</span>
                                             <span class="font-bold text-sm">{{ $channelData['completed'] ?? 0 }}</span>
                                         </x-filament::badge>
-                                        
+
                                         @if(($channelData['processing'] ?? 0) > 0)
                                         <x-filament::badge color="warning" class="flex-col !px-2 !py-1">
                                             <span class="text-[10px] uppercase opacity-70">Processing</span>
@@ -162,7 +162,7 @@
                                         </x-filament::badge>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="ml-2 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': expanded }">
                                         <x-heroicon-m-chevron-down class="w-6 h-6" />
                                     </div>
@@ -193,11 +193,11 @@
                                                     uksort($assetsList, function($a, $b) use ($assetsList) {
                                                         if ($a === 'global') return -1;
                                                         if ($b === 'global') return 1;
-                                                        
+
                                                         $aFail = $assetsList[$a]['failed'] ?? 0;
                                                         $bFail = $assetsList[$b]['failed'] ?? 0;
                                                         if ($aFail !== $bFail) return $bFail <=> $aFail;
-                                                        
+
                                                         return strcmp($a, $b);
                                                     });
                                                 @endphp
@@ -209,7 +209,7 @@
                                                         $aComp = $assetStats['completed'] ?? 0;
                                                         $aFail = $assetStats['failed'] ?? 0;
                                                         $aPct = $aTotal > 0 ? min(100, round(($aComp / $aTotal) * 100)) : 100;
-                                                        
+
                                                         $rowClass = $aFail > 0 ? 'bg-danger-50/50 dark:bg-danger-500/5 hover:bg-danger-50 dark:hover:bg-danger-500/10' : 'hover:bg-gray-100/50 dark:hover:bg-white/5';
                                                     @endphp
                                                     <tr class="{{ $rowClass }} transition-colors">
