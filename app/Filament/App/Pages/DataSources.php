@@ -44,7 +44,6 @@ class DataSources extends Page
         $tenant = Filament::getTenant();
 
         return \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-            ->where('status', '!=', 'staged')
             ->pluck('asset_identifier')
             ->toArray();
     }
