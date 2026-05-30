@@ -5,6 +5,12 @@
         </div>
     @endif
 
+    @if(filament()->getTenant()->last_deployed_at)
+        <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30" role="alert">
+          <span class="font-bold">{{ __('Last deployment') }}:</span> {{ filament()->getTenant()->last_deployed_at->format('M j, Y H:i') }}
+        </div>
+    @endif
+
     <form wire:submit.prevent="save">
         {{ $this->form }}
 

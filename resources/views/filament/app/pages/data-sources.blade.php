@@ -1,6 +1,6 @@
 <x-filament-panels::page>
-    <div class="flex flex-col gap-6" 
-         x-data="{ 
+    <div class="flex flex-col gap-6"
+         x-data="{
             activeTab: @entangle('activeChannel'),
             isOwner: {{ $this->isOwner() ? 'true' : 'false' }},
             ownerLimit: {{ $this->getOwnerLimit() }},
@@ -10,58 +10,58 @@
             cycleBounds: @js($this->getCycleBounds()),
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
             currentTime: new Date().getTime(),
-            
+
             init() {
                 setInterval(() => {
                     this.currentTime = new Date().getTime();
                 }, 60000); // Update every minute
             },
-            
+
             getAssetBadge(id) {
                 if (!id || !this.lockStates[id]) return '';
-                
+
                 let lock = this.lockStates[id];
-                
+
                 if (lock.status === 'locked') {
                     return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked') . '</span>`;
                 }
-                
+
                 if (lock.status === 'pending_release') {
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
                     return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>' . __('Locked until cycle end') . ' (${this.cycleBounds.ends_at})</span>`;
                 }
-                
+
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
                         return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period paused (Waiting for deployment)') . '</span>`;
                     }
-                    
+
                     let stagedAt = new Date(lock.staged_at).getTime();
                     let deployedAt = new Date(this.projectDeploymentTime).getTime();
                     let startTime = Math.max(stagedAt, deployedAt);
                     let endsAt = startTime + (2 * 60 * 60 * 1000); // +2 hours
-                    
+
                     let remainingMs = endsAt - this.currentTime;
-                    
+
                     if (remainingMs <= 0) {
                         return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked (Refresh needed)') . '</span>`;
                     }
-                    
+
                     let remainingMins = Math.floor(remainingMs / 60000);
                     let h = Math.floor(remainingMins / 60);
                     let m = remainingMins % 60;
                     let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
-                    
+
                     return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period (Ends in') . ' ${timeStr})</span>`;
                 }
-                
+
                 return '';
             },
-            
+
             get formAssets() {
                 let formAssets = new Set();
                 let data = $wire.get('data') || {};
-                
+
                 function scan(obj) {
                     if (typeof obj === 'object' && obj !== null) {
                         if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
@@ -74,22 +74,22 @@
                         for (let key in obj) scan(obj[key]);
                     }
                 }
-                
+
                 for (let key in data) scan(data[key]);
                 return formAssets;
             },
-            
+
             get currentProjectUsage() {
                 let locked = new Set(this.lockedAssets);
                 let form = this.formAssets;
                 let union = new Set([...locked, ...form]);
                 return union.size;
             },
-            
+
             get usageData() {
                 let lockedSize = new Set(this.lockedAssets).size;
                 let newlyStaged = this.currentProjectUsage - lockedSize;
-                
+
                 if (this.isOwner) {
                     return {
                         usage: this.globalLedgerCount + newlyStaged,
@@ -103,11 +103,11 @@
                     };
                 }
             },
-            
+
             get selectedCount() {
                 return this.usageData.usage;
             },
-            
+
             get maxAssets() {
                 return this.usageData.limit;
             },
@@ -116,7 +116,7 @@
                 let count = 0;
                 let data = $wire.get('data') || {};
                 let channelData = data[channelKey] || {};
-                
+
                 function scan(obj) {
                     if (typeof obj === 'object' && obj !== null) {
                         if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
@@ -126,14 +126,14 @@
                         for (let key in obj) scan(obj[key]);
                     }
                 }
-                
+
                 scan(channelData);
                 return count;
             },
             getProviderCount(providerKey) {
                 let count = 0;
                 let providers = {{ json_encode($this->getProviders()) }};
-                
+
                 if (providerKey && providers[providerKey]) {
                     providers[providerKey].channels.forEach(ch => {
                         count += this.getChannelCount(ch.key);
@@ -148,7 +148,7 @@
                 return count;
             }
          }">
-         
+
         <template x-teleport="#tier-usage-header-target">
             <div class="flex items-center gap-3 text-sm transition-colors"
                  :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
@@ -189,7 +189,7 @@
                             <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform text-gray-400" x-bind:class="expanded ? '' : '-rotate-90'" />
                         </div>
                     </div>
-                    
+
                     <!-- Nested Channels -->
                     <div x-show="expanded" x-collapse class="flex flex-col gap-1 ml-2 border-l-2 border-gray-100 dark:border-white/5 pl-2 mt-1">
                         @foreach($provider['channels'] as $channel)
@@ -217,7 +217,7 @@
 
         <!-- Content Area -->
         <div class="w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
-            
+
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10" style="margin-bottom: 1.5rem;">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -225,9 +225,13 @@
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}
+                        @if(filament()->getTenant()->last_deployed_at)
+                            <span class="mx-2">|</span>
+                            {{ __('Last deployment') }}: {{ filament()->getTenant()->last_deployed_at->format('M j, Y H:i') }}
+                        @endif
                     </p>
                 </div>
-                
+
                 <div class="flex flex-col items-end gap-3">
                     <div class="flex items-center gap-3">
                         {{ $this->getAction('updateCredentials') }}
@@ -265,13 +269,13 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
                         {{ __('You need to authorize access to this provider before you can configure its data sources.') }}
                     </p>
-                    
+
                     @if(str_contains($activeChannel, 'facebook') || str_contains($activeChannel, 'google'))
                         {{ $this->getAction('connect') }}
                     @endif
                 </div>
             @else
-                
+
                 <!-- Removed internal {{ __('Tier Usage') }} -->
 
 

@@ -82,6 +82,14 @@
                                 <span class="text-sm text-gray-400 mb-1">({{ number_format($syncData['fully_synced_percentage'] ?? 0, 1) }}%)</span>
                             </div>
                         </div>
+                        @if(filament()->getTenant()->last_historical_resync_at)
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Resync</span>
+                            <div class="flex items-end gap-2">
+                                <span class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->format('M j, Y') }}</span>
+                            </div>
+                        </div>
+                        @endif
                         @if($totalFailed > 0)
                         <div class="flex flex-col px-4 py-2 bg-danger-50 dark:bg-danger-500/10 rounded-xl border border-danger-200 dark:border-danger-500/20">
                             <span class="text-sm font-medium text-danger-600 dark:text-danger-400 flex items-center gap-1">
