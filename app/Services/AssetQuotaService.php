@@ -105,7 +105,7 @@ class AssetQuotaService
     /**
      * Scan current project config and apply state transitions.
      */
-    public function processGracePeriodLocks(Project $project): void
+    public function processGracePeriodLocks(Project $project, bool $isResync = false): void
     {
         $syncConfig = $project->sync_config ?? [];
         $ownerId = $project->owner_id ?? $project->user_id;
@@ -123,13 +123,13 @@ class AssetQuotaService
                             $identifier = $asset['id'] ?? $asset['url'] ?? null;
                             if ($identifier) {
                                 $activeAssets[$channelKey][] = $identifier;
-                                
+
                                 $lock = AssetBillingLock::where('project_id', $project->id)
                                     ->where('channel', $channelKey)
                                     ->where('asset_identifier', $identifier)
                                     ->first();
-                                    
-                                if (!$lock) {
+
+                                if (!$lock && !$isResync) {
                                     AssetBillingLock::create([
                                         'user_id' => $ownerId,
                                         'project_id' => $project->id,
@@ -145,11 +145,11 @@ class AssetQuotaService
                 }
             }
         }
-        
+
         $existingLocks = AssetBillingLock::where('project_id', $project->id)->get();
         foreach ($existingLocks as $lock) {
             $isActive = in_array($lock->asset_identifier, $activeAssets[$lock->channel] ?? []);
-            
+
             if (!$isActive) {
                 if ($lock->status === 'staged') {
                     $lock->delete();
