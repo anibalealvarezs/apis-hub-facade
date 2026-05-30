@@ -19,8 +19,8 @@ class RegisterProject extends RegisterTenant
 
         if (Auth::user()->billingProfiles()->count() === 0) {
             \Filament\Notifications\Notification::make()
-                ->title('Billing Profile Required')
-                ->body('You must create a billing profile before you can register a new project.')
+                ->title(__('Billing Profile Required'))
+                ->body(__('You must create a billing profile before you can register a new project.'))
                 ->danger()
                 ->persistent()
                 ->send();
@@ -30,8 +30,8 @@ class RegisterProject extends RegisterTenant
 
         if (!Auth::user()->canCreateMoreProjects()) {
             \Filament\Notifications\Notification::make()
-                ->title('Project Limit Reached')
-                ->body('You have reached the maximum number of projects for your current tier. Please upgrade your subscription to create more projects.')
+                ->title(__('Project Limit Reached'))
+                ->body(__('You have reached the maximum number of projects for your current tier. Please upgrade your subscription to create more projects.'))
                 ->danger()
                 ->persistent()
                 ->send();
@@ -42,18 +42,18 @@ class RegisterProject extends RegisterTenant
 
     public static function getLabel(): string
     {
-        return 'Create Your APIs Hub Project';
+        return __('Create Your APIs Hub Project');
     }
 
     public function getTitle(): string
     {
-        return 'Setup Your New Project';
+        return __('Setup Your New Project');
     }
 
     protected function getSubmitFormAction(): \Filament\Actions\Action
     {
         return parent::getSubmitFormAction()
-            ->label('Create Project & Deploy');
+            ->label(__('Create Project & Deploy'));
     }
 
     protected function getRedirectUrl(): string
@@ -67,15 +67,15 @@ class RegisterProject extends RegisterTenant
     {
         return $form
             ->schema([
-                Section::make('Project Setup')
-                    ->description('Define your project identity. This will create a dedicated workspace on our high-performance cloud infrastructure.')
+                Section::make(__('Project Setup'))
+                    ->description(__('Define your project identity. This will create a dedicated workspace on our high-performance cloud infrastructure.'))
                     ->schema([
                         TextInput::make('name')
-                            ->label('Project / Business Name')
-                            ->placeholder('e.g. Acme Marketing')
+                            ->label(__('Project / Business Name'))
+                            ->placeholder(__('e.g. Acme Marketing'))
                             ->required(fn ($get) => empty($get('share_code'))),
                         TextInput::make('subdomain')
-                            ->label('Subdomain / Unique Identifier')
+                            ->label(__('Subdomain / Unique Identifier'))
                             ->prefix('https://')
                             ->suffix(function () {
                                 $domain = config('app.network_domain') ?: 'apis-hub.cloud';
@@ -88,21 +88,21 @@ class RegisterProject extends RegisterTenant
                             ->rule(function () {
                                 return function (string $attribute, $value, \Closure $fail) {
                                     if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
-                                        $fail('No se permiten subdominios terminados en "-dev" en el entorno de producción para evitar colisiones con entornos de desarrollo.');
+                                        $fail(__('No \'-dev\' subdomains are allowed in the production environment to prevent collisions with development environments.'));
                                     }
                                 };
                             })
                             ->helperText(function () {
-                                $msg = 'Caution: This identifier is permanent and cannot be changed after creation.';
+                                $msg = __('Caution: This identifier is permanent and cannot be changed after creation.');
                                 if (config('app.env') !== 'production') {
-                                    $msg .= ' (Non-production Environment: "-dev" will be automatically appended to your subdomain to prevent SSL routing issues).';
+                                    $msg .= ' ' . __('(Non-production Environment: "-dev" will be automatically appended to your subdomain to prevent SSL routing issues).');
                                 }
                                 return $msg;
                             }),
                         TextInput::make('share_code')
-                            ->label('Código de Invitación / Compartición (Opcional)')
+                            ->label(__('Invitation / Share Code (Optional)'))
                             ->placeholder('APISHUB-XXXX-XXXX')
-                            ->helperText('Si tienes un código para unirte a un proyecto existente, ingrésalo aquí en lugar de crear un proyecto nuevo.'),
+                            ->helperText(__('If you have a code to join an existing project, enter it here instead of creating a new project.')),
                     ]),
             ]);
     }
@@ -119,14 +119,14 @@ class RegisterProject extends RegisterTenant
 
             if (!$token) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'share_code' => 'El código de invitación no es válido, ha expirado o ya ha sido utilizado.',
+                    'share_code' => __('The invitation code is invalid, expired, or has already been used.'),
                 ]);
             }
 
             // Validar límites de plan gratuito (máximo 1 proyecto en total)
             if ($user->hasOnlyFreeProfiles() && $user->getTotalAccessibleProjectsCount() >= 1) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'share_code' => 'Si solo se cuenta con un perfil propio free tier, solo se puede acceder a un único proyecto. Para poder acceder a un proyecto como colaborador, debe eliminar el proyecto de su perfil free tier.',
+                    'share_code' => __('If you only have a free tier profile, you can only access one project. To join a project as a collaborator, you must delete the project from your free tier profile.'),
                 ]);
             }
 
@@ -144,8 +144,8 @@ class RegisterProject extends RegisterTenant
             $token->update(['used_at' => now()]);
 
             \Filament\Notifications\Notification::make()
-                ->title('Solicitud de Colaboración Enviada')
-                ->body('Se ha registrado tu solicitud para unirte al proyecto. El dueño del proyecto deberá aprobar tu acceso.')
+                ->title(__('Collaboration Request Sent'))
+                ->body(__('Your request to join the project has been registered. The project owner must approve your access.'))
                 ->success()
                 ->persistent()
                 ->send();
@@ -160,8 +160,8 @@ class RegisterProject extends RegisterTenant
         
         if (!$server) {
             \Filament\Notifications\Notification::make()
-                ->title('No Ready Server Found')
-                ->body('Could not assign a server to your project. Deployment will be queued.')
+                ->title(__('No Ready Server Found'))
+                ->body(__('Could not assign a server to your project. Deployment will be queued.'))
                 ->warning()
                 ->send();
         }
@@ -202,8 +202,8 @@ class RegisterProject extends RegisterTenant
         }
 
         \Filament\Notifications\Notification::make()
-            ->title('Proyecto Creado')
-            ->body('El proyecto ha sido registrado. Por favor, configura tus fuentes de datos (Data Sources) antes de iniciar el despliegue de infraestructura.')
+            ->title(__('Project Created'))
+            ->body(__('The project has been registered. Please configure your data sources before starting the infrastructure deployment.'))
             ->success()
             ->send();
 

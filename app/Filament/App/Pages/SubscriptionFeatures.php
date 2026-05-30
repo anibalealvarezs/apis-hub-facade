@@ -14,12 +14,12 @@ class SubscriptionFeatures extends Page
 
     public static function getNavigationLabel(): string
     {
-        return 'Features & Tiers';
+        return __('Features & Tiers');
     }
 
     public function getTitle(): string
     {
-        return 'Funcionalidades por Plan (Tiers)';
+        return __('Features by Plan (Tiers)');
     }
 
     public static function canAccess(): bool

@@ -15,7 +15,15 @@ class ProjectBillingSettings extends Page
 
     protected static ?string $navigationGroup = 'Administration';
     
-    protected static ?string $title = 'Billing & Subscription';
+    public function getTitle(): string
+    {
+        return __('Billing & Subscription');
+    }
+    
+    public static function getNavigationLabel(): string
+    {
+        return __('Billing & Subscription');
+    }
 
     public static function canAccess(): bool
     {
@@ -24,7 +32,7 @@ class ProjectBillingSettings extends Page
 
     public function mount()
     {
-        abort_unless(auth()->user()->can('manage_billing'), 403, 'You do not have permission to manage billing.');
+        abort_unless(auth()->user()->can('manage_billing'), 403, __('You do not have permission to manage billing.'));
     }
 
     protected function getHeaderActions(): array
@@ -37,12 +45,12 @@ class ProjectBillingSettings extends Page
     public function assignProfileAction(): Action
     {
         return Action::make('assign_profile')
-            ->label('Cambiar Perfil de Facturación')
+            ->label(__('Change Billing Profile'))
             ->icon('heroicon-o-pencil')
             ->color('warning')
             ->form([
                 Forms\Components\Select::make('billing_profile_id')
-                    ->label('Perfiles de Facturación Disponibles (Propios y Compartidos)')
+                    ->label(__('Available Billing Profiles (Owned & Shared)'))
                     ->options(function () {
                         return auth()->user()->getAvailableBillingProfiles()->pluck('display_name', 'id');
                     })
@@ -61,8 +69,8 @@ class ProjectBillingSettings extends Page
 
                 if ($currentProjectsCount >= $maxProjects) {
                     \Filament\Notifications\Notification::make()
-                        ->title('Capacidad del Perfil Superada')
-                        ->body("El perfil de facturación seleccionado ({$profile->display_name}) ha alcanzado su límite máximo de proyectos de {$maxProjects} para el plan " . ucfirst($profile->tier->value ?? $profile->tier) . ". Por favor, sube de plan ese perfil primero.")
+                        ->title(__('Profile Capacity Exceeded'))
+                        ->body(__('The selected billing profile (:profile) has reached its maximum project limit of :limit for the :tier plan. Please upgrade that profile first.', ['profile' => $profile->display_name, 'limit' => $maxProjects, 'tier' => ucfirst($profile->tier->value ?? $profile->tier)]))
                         ->danger()
                         ->persistent()
                         ->send();
@@ -78,7 +86,7 @@ class ProjectBillingSettings extends Page
                     ]);
 
                     \Filament\Notifications\Notification::make()
-                        ->title('Perfil de facturación asignado')
+                        ->title(__('Billing Profile Assigned'))
                         ->success()
                         ->send();
                 } else {
@@ -86,8 +94,8 @@ class ProjectBillingSettings extends Page
                     $isShared = $profile->sharedWithUsers()->where('users.id', auth()->id())->exists();
                     if (!$isShared) {
                         \Filament\Notifications\Notification::make()
-                            ->title('Error')
-                            ->body('El perfil de facturación seleccionado no está compartido contigo.')
+                            ->title(__('Error'))
+                            ->body(__('The selected billing profile is not shared with you.'))
                             ->danger()
                             ->send();
                         return;
@@ -100,8 +108,8 @@ class ProjectBillingSettings extends Page
                       ]);
 
                     \Filament\Notifications\Notification::make()
-                        ->title('Asignación Solicitada')
-                        ->body('El propietario del perfil de facturación debe aprobar esta solicitud antes de que pueda activarse.')
+                        ->title(__('Assignment Requested'))
+                        ->body(__('The billing profile owner must approve this request before it can be activated.'))
                         ->warning()
                         ->send();
                 }

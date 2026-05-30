@@ -22,8 +22,16 @@ class DataSources extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-server-stack';
     protected static ?string $navigationGroup = 'Data & Integrations';
-    protected static ?string $navigationLabel = 'Data Sources';
-    protected static ?string $title = 'Data Sources Configuration';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Data Sources');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Data Sources Configuration');
+    }
     protected static string $view = 'filament.app.pages.data-sources';
     protected static ?string $slug = 'data-sources';
 
@@ -242,7 +250,7 @@ class DataSources extends Page
             }
         }
 
-        return 'Configuration';
+        return __('Configuration');
     }
 
     public function isConnected($channel): bool
@@ -307,7 +315,7 @@ class DataSources extends Page
     public function discoverAssetsAction(): Action
     {
         return Action::make('discoverAssets')
-                ->label('Refresh / Discover')
+                ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->action(function (LocalAssetDiscoveryService $service) {
@@ -342,22 +350,22 @@ class DataSources extends Page
                         $payload = [$resourceKey => $liveAssets];
 
                         $this->mergeDiscoveredAssets($payload);
-                        Notification::make()->title('Assets Refreshed')->success()->send();
+                        Notification::make()->title(__('Assets Refreshed'))->success()->send();
                     } else {
                         // Check if it's a connection error (cURL)
                         $errMsg = $response['message'] ?? '';
                         if (str_contains($errMsg, 'cURL error') || str_contains($errMsg, 'Connection refused') || str_contains($errMsg, 'resolve host')) {
                             $this->apiHubUnreachable = true;
                             Notification::make()
-                                ->title('Connection Failed')
+                                ->title(__('Connection Failed'))
                                 ->danger()
-                                ->body('Your sync engine is currently inactive. The platform might be down. Please try again later.')
+                                ->body(__('Your sync engine is currently inactive. The platform might be down. Please try again later.'))
                                 ->send();
                         } else {
                             Notification::make()
-                                ->title('Refresh Failed')
+                                ->title(__('Refresh Failed'))
                                 ->danger()
-                                ->body($errMsg ?: 'Unable to fetch assets from the sync engine.')
+                                ->body($errMsg ?: __('Unable to fetch assets from the sync engine.'))
                                 ->send();
                         }
                     }
@@ -387,7 +395,7 @@ class DataSources extends Page
 
         return [
             \Filament\Forms\Components\CheckboxList::make('channels')
-                ->label('Select channels to authorize')
+                ->label(__('Select channels to authorize'))
                 ->options($options)
                 ->default($defaultChannels)
                 ->required()
@@ -398,7 +406,7 @@ class DataSources extends Page
     public function connectAction(): Action
     {
         return Action::make('connect')
-                ->label('Connect Account')
+                ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
                 ->visible(fn () => auth()->user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
@@ -419,14 +427,14 @@ class DataSources extends Page
     public function updateCredentialsAction(): Action
     {
         return Action::make('updateCredentials')
-                ->label('Update Permissions')
+                ->label(__('Update Permissions'))
                 ->icon('heroicon-o-key')
                 ->visible(fn () => auth()->user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn () => $this->getChannelSelectionForm())
                 ->requiresConfirmation()
-                ->modalHeading(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? 'Update Credentials' : 'Update Credentials Safely')
-                ->modalDescription(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? 'Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.' : 'Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.')
+                ->modalHeading(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Update Credentials') : __('Update Credentials Safely'))
+                ->modalDescription(fn () => (! Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.') : __('Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.'))
                 ->action(function (array $data) {
                     $tenant = Filament::getTenant();
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
@@ -443,8 +451,8 @@ class DataSources extends Page
                     \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id(), $types);
 
                     Notification::make()
-                        ->title('Safe Update Initiated')
-                        ->body('We are safely pausing your workers. You will be notified when it is safe to proceed.')
+                        ->title(__('Safe Update Initiated'))
+                        ->body(__('We are safely pausing your workers. You will be notified when it is safe to proceed.'))
                         ->warning()
                         ->send();
                 });
@@ -587,7 +595,7 @@ class DataSources extends Page
         if (! $release || empty($release->config_schemas[$this->activeChannel]['fields'])) {
             return [
                 Toggle::make($this->activeChannel . '_enabled')
-                    ->label('Enable Channel')
+                    ->label(__('Enable Channel'))
                     ->default(true),
             ];
         }
@@ -599,29 +607,29 @@ class DataSources extends Page
 
         if ($this->activeChannel === 'facebook_marketing') {
             // Insert custom extraction granularity UI in the secondary column
-            $secondarySections[] = \Filament\Forms\Components\Section::make('Extraction Granularity')
+            $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
                 ->schema([
                     \Filament\Forms\Components\Select::make($this->activeChannel . '.entity_sync_depth')
-                        ->label('Entity Depth')
+                        ->label(__('Entity Depth'))
                         ->options([
-                            'ACCOUNT' => 'Level 1: Account',
-                            'CAMPAIGN' => 'Level 2: Campaigns',
-                            'ADSET' => 'Level 3: Adsets',
-                            'AD' => 'Level 4: Ads',
+                            'ACCOUNT' => __('Level 1: Account'),
+                            'CAMPAIGN' => __('Level 2: Campaigns'),
+                            'ADSET' => __('Level 3: Adsets'),
+                            'AD' => __('Level 4: Ads'),
                         ])
                         ->default('AD')
                         ->live()
-                        ->helperText('Deepest level of entities to sync.'),
+                        ->helperText(__('Deepest level of entities to sync.')),
 
                     \Filament\Forms\Components\Select::make($this->activeChannel . '.metrics_level')
-                        ->label('Metrics Level')
+                        ->label(__('Metrics Level'))
                         ->options(function (\Filament\Forms\Get $get) {
                             $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
                             $allOptions = [
-                                'ACCOUNT' => 'L1 Metrics',
-                                'CAMPAIGN' => 'L2 Metrics',
-                                'ADSET' => 'L3 Metrics',
-                                'AD' => 'L4 Metrics',
+                                'ACCOUNT' => __('L1 Metrics'),
+                                'CAMPAIGN' => __('L2 Metrics'),
+                                'ADSET' => __('L3 Metrics'),
+                                'AD' => __('L4 Metrics'),
                             ];
 
                             $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
@@ -630,31 +638,31 @@ class DataSources extends Page
                             return array_filter($allOptions, fn ($k) => $levels[$k] <= $maxLevel, ARRAY_FILTER_USE_KEY);
                         })
                         ->default('AD')
-                        ->helperText('Cannot exceed entity sync depth.'),
+                        ->helperText(__('Cannot exceed entity sync depth.')),
                 ])->columns(1);
 
-            $secondarySections[] = \Filament\Forms\Components\Section::make('Asset Name Filters')
-                ->description('Filter which assets should be synced based on their names. Leave blank to sync all.')
+            $secondarySections[] = \Filament\Forms\Components\Section::make(__('Asset Name Filters'))
+                ->description(__('Filter which assets should be synced based on their names. Leave blank to sync all.'))
                 ->schema([
                     \Filament\Forms\Components\Actions::make([
                         \Filament\Forms\Components\Actions\Action::make('generateRegex')
-                            ->label('Regex Generator')
+                            ->label(__('Regex Generator'))
                             ->icon('heroicon-m-beaker')
                             ->color('primary')
                             ->form([
                                 \Filament\Forms\Components\Repeater::make('strings')
-                                    ->label('Strings to Match')
-                                    ->helperText('Add multiple strings to generate a regex that matches any of them.')
+                                    ->label(__('Strings to Match'))
+                                    ->helperText(__('Add multiple strings to generate a regex that matches any of them.'))
                                     ->simple(
                                         \Filament\Forms\Components\TextInput::make('string')->required()
                                     )
                                     ->defaultItems(2),
                                 \Filament\Forms\Components\Select::make('target')
-                                    ->label('Target Filter')
+                                    ->label(__('Target Filter'))
                                     ->options([
-                                        'CAMPAIGN' => 'Campaign Filter',
-                                        'ADSET' => 'Adset Filter',
-                                        'AD' => 'Ad Filter',
+                                        'CAMPAIGN' => __('Campaign Filter'),
+                                        'ADSET' => __('Adset Filter'),
+                                        'AD' => __('Ad Filter'),
                                     ])
                                     ->required()
                                     ->default('CAMPAIGN'),
@@ -674,47 +682,47 @@ class DataSources extends Page
                     ])->alignRight(),
 
                     \Filament\Forms\Components\TextInput::make($this->activeChannel . '.CAMPAIGN.cache_include')
-                        ->label('Campaign Filter')
-                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
-                        ->helperText('Only sync Campaigns matching this pattern.'),
+                        ->label(__('Campaign Filter'))
+                        ->placeholder(__('Regex (e.g. /PATTERN/i) or string'))
+                        ->helperText(__('Only sync Campaigns matching this pattern.')),
 
                     \Filament\Forms\Components\TextInput::make($this->activeChannel . '.ADSET.cache_include')
-                        ->label('Adset Filter')
-                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
-                        ->helperText('Only sync Adsets matching this pattern.'),
+                        ->label(__('Adset Filter'))
+                        ->placeholder(__('Regex (e.g. /PATTERN/i) or string'))
+                        ->helperText(__('Only sync Adsets matching this pattern.')),
 
                     \Filament\Forms\Components\TextInput::make($this->activeChannel . '.AD.cache_include')
-                        ->label('Ad Filter')
-                        ->placeholder('Regex (e.g. /PATTERN/i) or string')
-                        ->helperText('Only sync Ads matching this pattern.'),
+                        ->label(__('Ad Filter'))
+                        ->placeholder(__('Regex (e.g. /PATTERN/i) or string'))
+                        ->helperText(__('Only sync Ads matching this pattern.')),
                 ])->columns(1);
         }
 
         if ($this->activeChannel === 'google_search_console') {
-            $secondarySections[] = \Filament\Forms\Components\Section::make('Data Enrichment')
-                ->description('Advanced data recovery and attribution inference.')
+            $secondarySections[] = \Filament\Forms\Components\Section::make(__('Data Enrichment'))
+                ->description(__('Advanced data recovery and attribution inference.'))
                 ->schema([
                     \Filament\Forms\Components\Toggle::make($this->activeChannel . '.calculate_synthetics')
-                        ->label('Enable Synthetic Calculations (Möbius Reconciliation)')
+                        ->label(__('Enable Synthetic Calculations (Möbius Reconciliation)'))
                         ->default(true),
                     \Filament\Forms\Components\Placeholder::make('synthetic_explanation')
                         ->hiddenLabel()
                         ->content(new \Illuminate\Support\HtmlString('
                             <div class="space-y-3 mt-2" style="font-size: 0.875rem; opacity: 0.85;">
-                                <p><strong>What is this?</strong> Synthetic calculations use an algorithmic method to infer attribution data that Google Search Console actively removes from your reports to protect user privacy.</p>
+                                <p><strong>' . __('What is this?') . '</strong> ' . __('Synthetic calculations use an algorithmic method to infer attribution data that Google Search Console actively removes from your reports to protect user privacy.') . '</p>
                                 
-                                <p><strong>The Problem:</strong> When you look at GSC data by a single dimension (like Page), Google gives you close to 100% of the actual events. However, when you break data down by multiple dimensions simultaneously (like Page + Query + Country + Device), Google hides almost 50% of the records because those specific combinations might identify users.</p>
+                                <p><strong>' . __('The Problem:') . '</strong> ' . __('When you look at GSC data by a single dimension (like Page), Google gives you close to 100% of the actual events. However, when you break data down by multiple dimensions simultaneously (like Page + Query + Country + Device), Google hides almost 50% of the records because those specific combinations might identify users.') . '</p>
                                 
-                                <p><strong>Our Solution:</strong> We query every possible subset of Google\'s data and run a reconciliation algorithm to deduce the missing pieces. This provides an almost complete picture of your traffic at the most granular level possible.</p>
+                                <p><strong>' . __('Our Solution:') . '</strong> ' . __('We query every possible subset of Google\'s data and run a reconciliation algorithm to deduce the missing pieces. This provides an almost complete picture of your traffic at the most granular level possible.') . '</p>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3" style="border-top: 1px solid rgba(128, 128, 128, 0.2);">
                                     <div>
-                                        <h4 class="font-medium flex items-center gap-1" style="color: #10b981;">✨ The Benefits</h4>
-                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">Unlike Google, your totals will remain highly consistent no matter how deeply you filter or group the data. You get deep, granular attribution that is normally impossible to see.</p>
+                                        <h4 class="font-medium flex items-center gap-1" style="color: #10b981;">✨ ' . __('The Benefits') . '</h4>
+                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">' . __('Unlike Google, your totals will remain highly consistent no matter how deeply you filter or group the data. You get deep, granular attribution that is normally impossible to see.') . '</p>
                                     </div>
                                     <div>
-                                        <h4 class="font-medium flex items-center gap-1" style="color: #f59e0b;">⚠️ The Trade-offs</h4>
-                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets. Finally, API usage will be significantly more intense, which increases the chances of facing rate limit issues or token invalidations.</p>
+                                        <h4 class="font-medium flex items-center gap-1" style="color: #f59e0b;">⚠️ ' . __('The Trade-offs') . '</h4>
+                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">' . __('Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets. Finally, API usage will be significantly more intense, which increases the chances of facing rate limit issues or token invalidations.') . '</p>
                                     </div>
                                 </div>
                             </div>
@@ -723,7 +731,7 @@ class DataSources extends Page
         }
 
         if (! empty($parts['advanced'])) {
-            $secondarySections[] = Section::make('Advanced Configuration')
+            $secondarySections[] = Section::make(__('Advanced Configuration'))
                 ->schema(array_values($parts['advanced']))
                 ->columns(1);
         }
@@ -774,7 +782,7 @@ class DataSources extends Page
                                     <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                       <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                                     </svg>
-                                    Important: Facebook Organic
+                                    ' . __('Important: Facebook Organic') . '
                                 </h2>
                                 
                                 <div class="space-y-6">
@@ -784,9 +792,9 @@ class DataSources extends Page
                                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
                                             <div>
-                                                <h3 class="text-base font-bold tracking-tight fb-modal-warning-text">Historic Metrics Limitation</h3>
+                                                <h3 class="text-base font-bold tracking-tight fb-modal-warning-text">' . __('Historic Metrics Limitation') . '</h3>
                                                 <p class="text-sm mt-1 leading-relaxed fb-modal-warning-subtext">
-                                                    Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold fb-modal-warning-text">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
+                                                    ' . __('Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today.') . ' <strong class="font-semibold fb-modal-warning-text">' . __('To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.') . '</strong>
                                                 </p>
                                             </div>
                                         </div>
@@ -798,9 +806,9 @@ class DataSources extends Page
                                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
                                             <div>
-                                                <h3 class="text-base font-bold tracking-tight fb-modal-rl-warning-text">Rate Limits & Inactive Assets</h3>
+                                                <h3 class="text-base font-bold tracking-tight fb-modal-rl-warning-text">' . __('Rate Limits & Inactive Assets') . '</h3>
                                                 <p class="text-sm mt-1 leading-relaxed fb-modal-rl-warning-subtext">
-                                                    Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions. <strong class="font-semibold fb-modal-rl-warning-text">We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.</strong>
+                                                    ' . __('Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions.') . ' <strong class="font-semibold fb-modal-rl-warning-text">' . __('We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.') . '</strong>
                                                 </p>
                                             </div>
                                         </div>
@@ -809,7 +817,7 @@ class DataSources extends Page
                                 
                                 <div class="mt-8 flex justify-end">
                                     <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg shadow-sm transition-colors">
-                                        I understand
+                                        ' . __('I understand') . '
                                     </button>
                                 </div>
                             </div>
@@ -836,9 +844,9 @@ class DataSources extends Page
                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             <div>
-                                <h3 class="text-base font-bold tracking-tight fb-warning-text">Historic Metrics Limitation</h3>
+                                <h3 class="text-base font-bold tracking-tight fb-warning-text">' . __('Historic Metrics Limitation') . '</h3>
                                 <p class="text-sm mt-1 leading-relaxed fb-warning-subtext">
-                                    Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today. <strong class="font-semibold fb-warning-text">To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.</strong>
+                                    ' . __('Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today.') . ' <strong class="font-semibold fb-warning-text">' . __('To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.') . '</strong>
                                 </p>
                             </div>
                         </div>
@@ -864,9 +872,9 @@ class DataSources extends Page
                               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             <div>
-                                <h3 class="text-base font-bold tracking-tight fb-rl-warning-text">Rate Limits & Inactive Assets</h3>
+                                <h3 class="text-base font-bold tracking-tight fb-rl-warning-text">' . __('Rate Limits & Inactive Assets') . '</h3>
                                 <p class="text-sm mt-1 leading-relaxed fb-rl-warning-subtext">
-                                    Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions. <strong class="font-semibold fb-rl-warning-text">We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.</strong>
+                                    ' . __('Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions.') . ' <strong class="font-semibold fb-rl-warning-text">' . __('We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.') . '</strong>
                                 </p>
                             </div>
                         </div>
@@ -987,7 +995,7 @@ class DataSources extends Page
                         </div>
                     '))
                     ->helperText(fn (callable $get) => new \Illuminate\Support\HtmlString(
-                        $get('lost_access') ? '⚠️ Lost Access' : (
+                        $get('lost_access') ? __('⚠️ Lost Access') : (
                             $this->activeChannel === 'facebook_marketing' ? 'ID: ' . ($get('id') ?? 'N/A') :
                             ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://' . preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))) . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>' :
                             'ID: <a href="' . ($get('link') ?? $get('url') ?? '#') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>')
@@ -1024,14 +1032,14 @@ class DataSources extends Page
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="Live filter assets by name or ID...">
+                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="{{ __(\'Live filter assets by name or ID...\') }}">
                     </div>
                 ')),
             Repeater::make($fieldKey)
                 ->label(Str::headline($label))
                 ->hintActions([
                     \Filament\Forms\Components\Actions\Action::make('selectAll')
-                        ->label('Select All')
+                        ->label(__('Select All'))
                         ->button()
                         ->color('success')
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
@@ -1046,7 +1054,7 @@ class DataSources extends Page
                             $component->state($newState);
                         }),
                     \Filament\Forms\Components\Actions\Action::make('deselectAll')
-                        ->label('Deselect All')
+                        ->label(__('Deselect All'))
                         ->button()
                         ->color('danger')
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
@@ -1102,7 +1110,7 @@ class DataSources extends Page
         $headerComponents[] = Toggle::make('enabled')
             ->label(fn (callable $get) => new \Illuminate\Support\HtmlString('
                 <div class="flex items-center gap-2">
-                    <span>' . e($get('title') ?? $get('name') ?? 'Unknown Asset') . '</span>
+                    <span>' . e($get('title') ?? $get('name') ?? __('Unknown Asset')) . '</span>
                     <template x-if="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')">
                         <span x-html="getAssetBadge(\'' . e($get('id') ?? $get('url')) . '\')"></span>
                     </template>
@@ -1120,21 +1128,21 @@ class DataSources extends Page
         $headerComponents[] = \Filament\Forms\Components\Grid::make(2)->schema([
             // Facebook Extraction Column
             \Filament\Forms\Components\Group::make()->schema([
-                Toggle::make('page_metrics')->label('Page Metrics')->inline(true)->default(true),
-                Toggle::make('posts')->label('Posts Content')->inline(true)->default(true)->live()
+                Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
+                Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(true)->live()
                     ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
                         if (! (bool) $state) {
                             $set('post_metrics', false);
                         }
                     }),
-                Toggle::make('post_metrics')->label('Post Insights')->inline(true)->default(true)
+                Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(true)
                     ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('posts'))->dehydrated(),
             ])->extraAttributes(['class' => 'flex flex-col gap-2']),
 
             // Instagram Extraction Column
             \Filament\Forms\Components\Group::make()->schema([
-                Toggle::make('ig_accounts')->label('Sync Instagram')->inline(true)->default(true)->live()
+                Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)->live()
                     ->visible(fn (\Filament\Forms\Get $get) => ! empty($get('ig_account')))
                     ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
                         if (! (bool) $state) {
@@ -1143,10 +1151,10 @@ class DataSources extends Page
                             $set('ig_account_media_metrics', false);
                         }
                     }),
-                Toggle::make('ig_account_metrics')->label('Account Metrics')->inline(true)->default(true)
+                Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
                     ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && ! empty($get('ig_account')))->dehydrated(),
-                Toggle::make('ig_account_media')->label('Media Content')->inline(true)->default(true)->live()
+                Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
                     ->extraAttributes(['class' => 'ml-8'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && ! empty($get('ig_account')))
                     ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
@@ -1154,7 +1162,7 @@ class DataSources extends Page
                             $set('ig_account_media_metrics', false);
                         }
                     })->dehydrated(),
-                Toggle::make('ig_account_media_metrics')->label('Media Insights')->inline(true)->default(true)
+                Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
                     ->extraAttributes(['class' => 'ml-12'])
                     ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('ig_accounts') && (bool) $get('ig_account_media') && ! empty($get('ig_account')))->dehydrated(),
             ])->extraAttributes(['class' => 'flex flex-col gap-2']),
@@ -1238,13 +1246,13 @@ class DataSources extends Page
     {
         $tenant = Filament::getTenant();
         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
-            Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
+            Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
 
             return;
         }
 
         if (!auth()->user()->can('manage_channels')) {
-            Notification::make()->title('Permiso Denegado')->body('No tienes permiso para modificar las fuentes de datos.')->danger()->send();
+            Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
             return;
         }
 
@@ -1274,9 +1282,9 @@ class DataSources extends Page
 
         if ($limits['usage'] > $limits['limit']) {
             Notification::make()
-                ->title('Asset Limit Exceeded')
+                ->title(__('Asset Limit Exceeded'))
                 ->danger()
-                ->body("You have selected assets that exceed your available quota ({$limits['limit']}). Please deselect some assets or upgrade your plan.")
+                ->body(__('You have selected assets that exceed your available quota (:limit). Please deselect some assets or upgrade your plan.', ['limit' => $limits['limit']]))
                 ->send();
 
             return;
@@ -1492,7 +1500,7 @@ class DataSources extends Page
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             } catch (\Exception $e) {
                 \Filament\Notifications\Notification::make()
-                    ->title("Failed to sync {$channel} to remote engine")
+                    ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
                     ->body($e->getMessage())
                     ->danger()
                     ->send();
@@ -1515,14 +1523,14 @@ class DataSources extends Page
             }
 
             \Filament\Notifications\Notification::make()
-                ->title('Configuration Saved Partially')
-                ->body("Some assets were automatically disabled by the remote server due to insufficient permissions or invalid state: <strong>{$rejectedList}</strong>.")
+                ->title(__('Configuration Saved Partially'))
+                ->body(__('Some assets were automatically disabled by the remote server due to insufficient permissions or invalid state: <strong>:assets</strong>.', ['assets' => $rejectedList]))
                 ->warning()
                 ->persistent()
                 ->send();
         } else {
             \Filament\Notifications\Notification::make()
-                ->title('Configuration Saved')
+                ->title(__('Configuration Saved'))
                 ->success()
                 ->send();
         }

@@ -15,7 +15,15 @@ class AccountSubscription extends Page
 
     protected static ?string $navigationGroup = 'Billing & Payments';
 
-    protected static ?string $title = 'Manage Subscriptions';
+    public function getTitle(): string
+    {
+        return __('Manage Subscriptions');
+    }
+    
+    public static function getNavigationLabel(): string
+    {
+        return __('Manage Subscriptions');
+    }
 
     public $plans;
     public $selectedProfileId;
@@ -52,23 +60,23 @@ class AccountSubscription extends Page
     {
         return [
             \Filament\Actions\Action::make('downgradeToFree')
-                ->label('Cancel & Downgrade to Free')
+                ->label(__('Cancel & Downgrade to Free'))
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->requiresConfirmation()
-                ->modalHeading('Confirm Downgrade')
+                ->modalHeading(__('Confirm Downgrade'))
                 ->modalDescription(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {
-                        return 'Please select a billing profile first.';
+                        return __('Please select a billing profile first.');
                     }
 
                     if ($profile->tier === \App\Enums\UserTier::FREE) {
-                        return "The selected profile ({$profile->name}) is already on the Free tier.";
+                        return __('The selected profile (:name) is already on the Free tier.', ['name' => $profile->name]);
                     }
                     
                     if ($profile->tier === \App\Enums\UserTier::ENTERPRISE) {
-                        return "Are you sure you want to cancel the Enterprise subscription for {$profile->name}? At the end of the billing cycle, the profile will be SUSPENDED and all associated projects will stop functioning.";
+                        return __('Are you sure you want to cancel the Enterprise subscription for :name? At the end of the billing cycle, the profile will be SUSPENDED and all associated projects will stop functioning.', ['name' => $profile->name]);
                     }
                     
                     $hasOtherFree = \App\Models\BillingProfile::where('user_id', auth()->id())
@@ -77,12 +85,12 @@ class AccountSubscription extends Page
                         ->exists();
 
                     if ($hasOtherFree) {
-                        return "Ya tienes otro perfil de facturación gratuito. Si cancelas la suscripción de este perfil ({$profile->name}), al final del ciclo de facturación el perfil será SUSPENDIDO y todos sus proyectos asociados dejarán de funcionar, ya que solo se permite un único perfil de facturación gratuito por cuenta. Para evitar esto, te recomendamos mantener tu suscripción o eliminar tu perfil gratuito existente antes de que finalice el ciclo.";
+                        return __('You already have another free billing profile. If you cancel the subscription for this profile (:name), at the end of the billing cycle the profile will be SUSPENDED and all its associated projects will stop working, since only one free billing profile is allowed per account. To avoid this, we recommend maintaining your subscription or deleting your existing free profile before the cycle ends.', ['name' => $profile->name]);
                     }
                     
-                    return "Are you sure you want to cancel the subscription for {$profile->name}? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.";
+                    return __('Are you sure you want to cancel the subscription for :name? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.', ['name' => $profile->name]);
                 })
-                ->modalSubmitActionLabel('Yes, Cancel Subscription')
+                ->modalSubmitActionLabel(__('Yes, Cancel Subscription'))
                 ->action(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {
@@ -112,8 +120,8 @@ class AccountSubscription extends Page
                     }
                     
                     \Filament\Notifications\Notification::make()
-                        ->title('Subscription Cancelled')
-                        ->body("The subscription for {$profile->name} will not renew and will remain active until the end of the cycle.")
+                        ->title(__('Subscription Cancelled'))
+                        ->body(__('The subscription for :name will not renew and will remain active until the end of the cycle.', ['name' => $profile->name]))
                         ->success()
                         ->send();
                         

@@ -15,12 +15,12 @@ class ProjectRoles extends Page
 
     public static function getNavigationLabel(): string
     {
-        return 'Roles & Permissions';
+        return __('Roles & Permissions');
     }
 
     public function getTitle(): string
     {
-        return 'Roles & Permissions';
+        return __('Roles & Permissions');
     }
 
     public static function canAccess(): bool

@@ -185,6 +185,7 @@ class AppPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 VerifyReCaptcha::class,
+                \App\Http\Middleware\SetLocale::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

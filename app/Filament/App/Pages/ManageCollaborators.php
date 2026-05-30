@@ -32,12 +32,12 @@ class ManageCollaborators extends Page implements HasTable
 
     public static function getNavigationLabel(): string
     {
-        return 'Team & Collaborators';
+        return __('Team & Collaborators');
     }
 
     public function getTitle(): string
     {
-        return 'Team & Collaborators';
+        return __('Team & Collaborators');
     }
 
     /**
@@ -60,10 +60,10 @@ class ManageCollaborators extends Page implements HasTable
         return $table
             ->query(User::query()->whereHas('projects', fn($q) => $q->where('projects.id', $project->id)))
             ->columns([
-                TextColumn::make('name')->label('Nombre'),
-                TextColumn::make('email')->label('Email'),
+                TextColumn::make('name')->label(__('Name')),
+                TextColumn::make('email')->label(__('Email')),
                 TextColumn::make('project_roles')
-                    ->label('Rol en este Proyecto')
+                    ->label(__('Role in this Project'))
                     ->getStateUsing(function (User $record) use ($project) {
                         // Usamos DB directa para evitar que el HasRoles de Spatie intente
                         // sobre-filtrar basándose en un team_id estático nulo.
@@ -73,12 +73,12 @@ class ManageCollaborators extends Page implements HasTable
                             ->where('model_has_roles.project_id', $project->id)
                             ->pluck('roles.name')
                             ->map(fn ($name) => Str::headline($name))
-                            ->join(', ') ?: 'Sin rol específico';
+                            ->join(', ') ?: __('No specific role');
                     }),
             ])
             ->actions([
                 Action::make('remove')
-                    ->label('Expulsar')
+                    ->label(__('Remove'))
                     ->color('danger')
                     ->icon('heroicon-o-user-minus')
                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
@@ -96,27 +96,27 @@ class ManageCollaborators extends Page implements HasTable
                     ->action(function (User $record) use ($project) {
                         // Evitar que el owner se expulse a sí mismo si es el único
                         if ($record->id === auth()->id()) {
-                            Notification::make()->danger()->title('No puedes expulsarte a ti mismo')->send();
+                            Notification::make()->danger()->title(__('You cannot remove yourself'))->send();
                             return;
                         }
 
                         $record->projects()->detach($project->id);
-                        Notification::make()->success()->title('Usuario expulsado del proyecto')->send();
+                        Notification::make()->success()->title(__('User removed from project'))->send();
                     })
             ])
             ->headerActions([
                 Action::make('invite')
-                    ->label('Invitar Colaborador')
+                    ->label(__('Invite Collaborator'))
                     ->icon('heroicon-o-envelope')
                     ->hidden(fn () => !auth()->user()->can('manage_collaborators'))
                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
                     ->tooltip(function () {
                         $tenant = Filament::getTenant();
                         if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
-                            return 'El proyecto está suspendido o inactivo.';
+                            return __('Project is inactive or suspended.');
                         }
                         if ($tenant->billingProfile?->tier === \App\Enums\UserTier::FREE) {
-                            return 'Sube a un plan de pago para invitar colaboradores.';
+                            return __('Upgrade to a paid plan to invite collaborators.');
                         }
                         return null;
                     })
@@ -124,9 +124,9 @@ class ManageCollaborators extends Page implements HasTable
                         TextInput::make('email')
                             ->email()
                             ->required()
-                            ->label('Email del Colaborador'),
+                            ->label(__('Collaborator Email')),
                         Select::make('role')
-                            ->label('Rol en el Proyecto')
+                            ->label(__('Project Role'))
                             ->options(
                                 Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])->pluck('name', 'name')
                             )
@@ -136,7 +136,7 @@ class ManageCollaborators extends Page implements HasTable
                         // 1. Verificar si ya es miembro
                         $alreadyMember = $project->users()->where('email', $data['email'])->exists();
                         if ($alreadyMember) {
-                            Notification::make()->danger()->title('Este usuario ya es miembro del proyecto.')->send();
+                            Notification::make()->danger()->title(__('This user is already a member of the project.'))->send();
                             return;
                         }
 
@@ -146,7 +146,7 @@ class ManageCollaborators extends Page implements HasTable
                             ->exists();
                         
                         if ($alreadyInvited) {
-                            Notification::make()->warning()->title('Ya hay una invitación pendiente para este correo.')->send();
+                            Notification::make()->warning()->title(__('An invitation is already pending for this email.'))->send();
                             return;
                         }
 
@@ -162,7 +162,7 @@ class ManageCollaborators extends Page implements HasTable
                         // 4. Enviar correo
                         Mail::to($data['email'])->send(new ProjectInvitationMail($invitation));
 
-                        Notification::make()->success()->title('Invitación enviada por correo.')->send();
+                        Notification::make()->success()->title(__('Invitation sent via email.'))->send();
                     })
             ]);
     }

@@ -11,7 +11,10 @@ class FacebookMarketingDashboard extends Page
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     protected static ?string $navigationGroup = 'Meta';
-    protected static ?string $title = 'Facebook Marketing';
+    public function getTitle(): string
+    {
+        return __('Facebook Marketing');
+    }
     protected static string $view = 'filament.app.pages.facebook-marketing-dashboard';
     protected static ?string $slug = 'facebook-marketing';
 

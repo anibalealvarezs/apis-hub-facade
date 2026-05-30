@@ -12,8 +12,15 @@ class DataSync extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $navigationGroup = 'Exploration & Telemetry';
-    protected static ?string $navigationLabel = 'Telemetry';
-    protected static ?string $title = 'Data Telemetry';
+    public static function getNavigationLabel(): string
+    {
+        return __('Telemetry');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Data Telemetry');
+    }
     protected static string $view = 'filament.app.pages.data-sync';
     protected static ?string $slug = 'telemetry';
 
@@ -140,39 +147,39 @@ class DataSync extends Page
         $tenant = Filament::getTenant();
         $cooldownDays = 15;
         $canResync = true;
-        $resyncMessage = 'Esta acción borrará todas las colas y reiniciará la telemetría, forzando una resincronización total (histórica).';
+        $resyncMessage = __('This action will clear all queues and restart telemetry, forcing a total historical resync.');
         
         if ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
             if ($daysSince < $cooldownDays) {
                 $canResync = false;
-                $resyncMessage = "Disponible en " . ($cooldownDays - $daysSince) . " días.";
+                $resyncMessage = __('Available in :days days.', ['days' => ($cooldownDays - $daysSince)]);
             }
         }
 
         return [
             Action::make('refresh')
-                ->label('Refresh Data')
+                ->label(__('Refresh Data'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->action(fn() => $this->refreshData(true)),
 
             Action::make('triggerSync')
-                ->label('Run All Explorers')
+                ->label(__('Run All Explorers'))
                 ->icon('heroicon-o-play')
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Start All Explorers?')
-                ->modalDescription('This will launch all resting explorers to fetch the latest data from your social platforms.')
+                ->modalHeading(__('Start All Explorers?'))
+                ->modalDescription(__('This will launch all resting explorers to fetch the latest data from your social platforms.'))
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant();
                     $service->triggerSync($tenant);
-                    Notification::make()->title('Explorers are now working')->success()->send();
+                    Notification::make()->title(__('Explorers are now working'))->success()->send();
                     $this->refreshData(true);
                 }),
 
             Action::make('stopJobs')
-                ->label('Pause All Explorers')
+                ->label(__('Pause All Explorers'))
                 ->icon('heroicon-o-stop-circle')
                 ->color('danger')
                 ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
@@ -182,30 +189,30 @@ class DataSync extends Page
                     $response = $service->stopJobs($tenant);
                     
                     Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Explorers are resting' : 'Action Failed')
+                        ->title(($response['status'] ?? '') === 'success' ? __('Explorers are resting') : __('Action Failed'))
                         ->body($response['message'] ?? '')
                         ->send();
                     $this->refreshData(true);
                 }),
 
             Action::make('resyncAll')
-                ->label('Nuclear Resync')
+                ->label(__('Nuclear Resync'))
                 ->icon('heroicon-o-fire')
                 ->color('danger')
                 ->visible(fn () => auth()->user()->can('edit_preferences'))
                 ->disabled(!$canResync)
-                ->tooltip($canResync ? 'Reset all jobs and force a historical resync' : $resyncMessage)
+                ->tooltip($canResync ? __('Reset all jobs and force a historical resync') : $resyncMessage)
                 ->requiresConfirmation()
-                ->modalHeading('Resincronización Histórica (Nuclear)')
-                ->modalDescription($resyncMessage . ' Por favor, escribe "RESYNC" para confirmar esta acción destructiva.')
+                ->modalHeading(__('Historical Resync (Nuclear)'))
+                ->modalDescription($resyncMessage . ' ' . __('Please, type "RESYNC" to confirm this destructive action.'))
                 ->form([
                     \Filament\Forms\Components\TextInput::make('confirmation')
-                        ->label('Confirmación')
+                        ->label(__('Confirmation'))
                         ->required()
                         ->rules(['in:RESYNC'])
-                        ->placeholder('Escribe RESYNC')
+                        ->placeholder(__('Type RESYNC'))
                         ->validationMessages([
-                            'in' => 'Debes escribir RESYNC exactamente para continuar.',
+                            'in' => __('You must type RESYNC exactly to continue.'),
                         ])
                 ])
                 ->action(function (array $data, RemoteEngineService $service) use ($tenant) {
@@ -214,10 +221,10 @@ class DataSync extends Page
                     }
                     $response = $service->triggerHistoricalResync($tenant);
                     if (($response['status'] ?? '') === 'error') {
-                        Notification::make()->title('Error: ' . ($response['error'] ?? 'Unknown'))->danger()->send();
+                        Notification::make()->title(__('Error:') . ' ' . ($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
                         $tenant->update(['last_historical_resync_at' => now()]);
-                        Notification::make()->title('Resincronización histórica iniciada')->success()->send();
+                        Notification::make()->title(__('Historical resync initiated'))->success()->send();
                     }
                 }),
         ];

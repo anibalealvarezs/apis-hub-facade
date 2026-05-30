@@ -87,14 +87,14 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]" />
-                    Facebook Marketing
+                    {{ __('Facebook Marketing') }}
                 </h1>
-                <p class="fb-header-subtitle">Meta Ads Manager Mockup Data</p>
+                <p class="fb-header-subtitle">{{ __('Meta Ads Manager Mockup Data') }}</p>
             </div>
             <div class="fb-header-controls">
                 <button type="button" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" />
-                    <span>Refresh</span>
+                    <span>{{ __('Refresh') }}</span>
                 </button>
                 <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                     @foreach($accounts as $id => $name)
@@ -108,31 +108,31 @@
 
         <div class="metrics-grid-fb">
             <div class="card-stat-fb active" style="--color: var(--fb-spend);">
-                <div class="fb-label">Amount Spent</div>
+                <div class="fb-label">{{ __('Amount Spent') }}</div>
                 <div class="card-metric-value">$12,450.00</div>
             </div>
             <div class="card-stat-fb" style="--color: var(--fb-impr);">
-                <div class="fb-label">Impressions</div>
+                <div class="fb-label">{{ __('Impressions') }}</div>
                 <div class="card-metric-value">1.2M</div>
             </div>
             <div class="card-stat-fb active" style="--color: var(--fb-clicks);">
-                <div class="fb-label">Link Clicks</div>
+                <div class="fb-label">{{ __('Link Clicks') }}</div>
                 <div class="card-metric-value">45,210</div>
             </div>
             <div class="card-stat-fb" style="--color: var(--fb-ctr);">
-                <div class="fb-label">CTR (Link)</div>
+                <div class="fb-label">{{ __('CTR (Link)') }}</div>
                 <div class="card-metric-value">3.75%</div>
             </div>
             <div class="card-stat-fb" style="--color: var(--fb-cpc);">
-                <div class="fb-label">CPC (Link)</div>
+                <div class="fb-label">{{ __('CPC (Link)') }}</div>
                 <div class="card-metric-value">$0.28</div>
             </div>
             <div class="card-stat-fb active" style="--color: var(--fb-purchases);">
-                <div class="fb-label">Purchases</div>
+                <div class="fb-label">{{ __('Purchases') }}</div>
                 <div class="card-metric-value">1,204</div>
             </div>
             <div class="card-stat-fb" style="--color: var(--fb-roas);">
-                <div class="fb-label">ROAS</div>
+                <div class="fb-label">{{ __('ROAS') }}</div>
                 <div class="card-metric-value">4.2x</div>
             </div>
         </div>
@@ -140,8 +140,8 @@
         <div class="chart-container-fb flex items-center justify-center">
             <div class="text-center text-gray-500 dark:text-gray-400">
                 <x-heroicon-o-chart-bar class="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Chart visualization placeholder.</p>
-                <p class="text-sm mt-2 opacity-75">Select metrics above to map them here.</p>
+                <p>{{ __('Chart visualization placeholder.') }}</p>
+                <p class="text-sm mt-2 opacity-75">{{ __('Select metrics above to map them here.') }}</p>
             </div>
         </div>
 
@@ -149,19 +149,19 @@
             <table class="fb-table">
                 <thead>
                     <tr>
-                        <th>Campaign Name</th>
-                        <th>Delivery</th>
-                        <th class="metric-cell">Amount Spent</th>
-                        <th class="metric-cell">Impressions</th>
-                        <th class="metric-cell">Link Clicks</th>
-                        <th class="metric-cell">Purchases</th>
-                        <th class="metric-cell">ROAS</th>
+                        <th>{{ __('Campaign Name') }}</th>
+                        <th>{{ __('Delivery') }}</th>
+                        <th class="metric-cell">{{ __('Amount Spent') }}</th>
+                        <th class="metric-cell">{{ __('Impressions') }}</th>
+                        <th class="metric-cell">{{ __('Link Clicks') }}</th>
+                        <th class="metric-cell">{{ __('Purchases') }}</th>
+                        <th class="metric-cell">{{ __('ROAS') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td class="font-medium">Retargeting_Q3_All_Audiences</td>
-                        <td><span class="fb-status-active"></span>Active</td>
+                        <td><span class="fb-status-active"></span>{{ __('Active') }}</td>
                         <td class="metric-cell">$3,240.50</td>
                         <td class="metric-cell">240,120</td>
                         <td class="metric-cell">12,450</td>
@@ -170,7 +170,7 @@
                     </tr>
                     <tr>
                         <td class="font-medium">Prospecting_Lookalike_1%_US</td>
-                        <td><span class="fb-status-active"></span>Active</td>
+                        <td><span class="fb-status-active"></span>{{ __('Active') }}</td>
                         <td class="metric-cell">$8,100.00</td>
                         <td class="metric-cell">850,000</td>
                         <td class="metric-cell">28,100</td>
@@ -179,7 +179,7 @@
                     </tr>
                     <tr>
                         <td class="font-medium">Promo_Flash_Sale_48H</td>
-                        <td><span class="fb-status-paused"></span>Completed</td>
+                        <td><span class="fb-status-paused"></span>{{ __('Completed') }}</td>
                         <td class="metric-cell">$1,109.50</td>
                         <td class="metric-cell">110,000</td>
                         <td class="metric-cell">4,660</td>

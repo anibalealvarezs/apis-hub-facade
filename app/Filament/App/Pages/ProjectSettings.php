@@ -15,8 +15,15 @@ use Illuminate\Support\Str;
 class ProjectSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationLabel = 'Configuración del Proyecto';
-    protected static ?string $title = 'Configuración del Proyecto';
+    public static function getNavigationLabel(): string
+    {
+        return __('Project Settings');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Project Settings');
+    }
     protected static ?string $slug = 'project-settings';
     protected static string $view = 'filament.app.pages.project-settings';
     protected static ?string $navigationGroup = 'Administration';
@@ -61,18 +68,18 @@ class ProjectSettings extends Page
         $actions = [];
 
         $actions[] = Action::make('unsuspend')
-            ->label('Reactivar Proyecto')
+            ->label(__('Reactivate Project'))
             ->color('success')
             ->icon('heroicon-o-play-circle')
             ->visible(fn () => $user->can('manage_billing') && $project->billing_status === 'suspended')
             ->requiresConfirmation()
-            ->modalHeading('Intentar Reactivar Proyecto')
-            ->modalDescription('El sistema verificará si tu plan de facturación actual tiene cupos disponibles para reactivar este proyecto.')
+            ->modalHeading(__('Attempt to Reactivate Project'))
+            ->modalDescription(__('The system will verify if your current billing plan has available quota to reactivate this project.'))
             ->action(function () use ($project) {
                 if (!$project->billing_profile_id) {
                     Notification::make()
-                        ->title('Sin Perfil de Facturación')
-                        ->body('Este proyecto no tiene un perfil de facturación asignado. Por favor, asigna uno en la configuración de facturación.')
+                        ->title(__('No Billing Profile'))
+                        ->body(__('This project has no assigned billing profile. Please assign one in the billing settings.'))
                         ->danger()
                         ->persistent()
                         ->send();
@@ -87,8 +94,8 @@ class ProjectSettings extends Page
 
                 if ($activeCount >= $maxProjects) {
                     Notification::make()
-                        ->title('Límite de proyectos alcanzado')
-                        ->body("El perfil de facturación asignado solo permite {$maxProjects} proyectos activos. Debes mejorar el plan o suspender otro proyecto primero.")
+                        ->title(__('Project limit reached'))
+                        ->body(__('The assigned billing profile only allows :limit active projects. You must upgrade your plan or suspend another project first.', ['limit' => $maxProjects]))
                         ->danger()
                         ->persistent()
                         ->send();
@@ -106,8 +113,8 @@ class ProjectSettings extends Page
                 \App\Jobs\DeployProjectJob::dispatch($project);
 
                 Notification::make()
-                    ->title('Proyecto en Reactivación')
-                    ->body('El proyecto ha sido reactivado. La infraestructura se está levantando en segundo plano.')
+                    ->title(__('Project Reactivating'))
+                    ->body(__('The project has been reactivated. Infrastructure is booting up in the background.'))
                     ->success()
                     ->send();
                 
@@ -115,7 +122,7 @@ class ProjectSettings extends Page
             });
 
         $actions[] = Action::make('edit_settings')
-            ->label('Editar Preferencias')
+            ->label(__('Edit Preferences'))
             ->color('gray')
             ->icon('heroicon-o-pencil-square')
             ->disabled($isSuspended)
@@ -125,11 +132,11 @@ class ProjectSettings extends Page
             ])
             ->form([
                 Select::make('timezone')
-                    ->label('Zona Horaria')
+                    ->label(__('Timezone'))
                     ->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))
                     ->searchable()
                     ->required()
-                    ->helperText('La zona horaria utilizada por tu servidor virtual de APIs Hub para programar tareas y registrar eventos.'),
+                    ->helperText(__('The timezone used by your virtual APIs Hub server to schedule tasks and log events.')),
             ])
             ->action(function (array $data) use ($project) {
                 $project->update([
@@ -140,8 +147,8 @@ class ProjectSettings extends Page
                 \App\Jobs\DeployProjectJob::dispatch($project);
 
                 Notification::make()
-                    ->title('Preferencias actualizadas y Despliegue iniciado')
-                    ->body('Los cambios se aplicarán al servidor en un par de minutos.')
+                    ->title(__('Preferences updated and Deployment initiated'))
+                    ->body(__('Changes will be applied to the server in a couple of minutes.'))
                     ->success()
                     ->send();
 
@@ -149,19 +156,19 @@ class ProjectSettings extends Page
             });
 
         $actions[] = Action::make('deploy_initial')
-            ->label('Desplegar Infraestructura Inicial')
+            ->label(__('Deploy Initial Infrastructure'))
             ->color('success')
             ->icon('heroicon-o-rocket-launch')
             ->disabled($isSuspended)
             ->visible(fn () => $user->can('deploy_project') && is_null($project->last_deployed_at))
             ->requiresConfirmation()
-            ->modalHeading('Desplegar Infraestructura')
-            ->modalDescription('Esto aprovisionará el contenedor y la base de datos en el servidor remoto. ¿Estás seguro de continuar?')
+            ->modalHeading(__('Deploy Infrastructure'))
+            ->modalDescription(__('This will provision the container and database on the remote server. Are you sure you want to continue?'))
             ->action(function () use ($project) {
                 if (!$project->hasConfiguredAssets()) {
                     Notification::make()
-                        ->title('No se puede desplegar')
-                        ->body('No puedes desplegar infraestructura sin configurar al menos un recurso para sincronizar en Data Sources.')
+                        ->title(__('Cannot deploy'))
+                        ->body(__('You cannot deploy infrastructure without configuring at least one asset to sync in Data Sources.'))
                         ->danger()
                         ->persistent()
                         ->send();
@@ -171,8 +178,8 @@ class ProjectSettings extends Page
                 \App\Jobs\DeployProjectJob::dispatch($project);
                 
                 Notification::make()
-                    ->title('Despliegue Iniciado')
-                    ->body('La infraestructura se está aprovisionando en segundo plano. Esto puede tomar un par de minutos.')
+                    ->title(__('Deployment Initiated'))
+                    ->body(__('Infrastructure is being provisioned in the background. This may take a couple of minutes.'))
                     ->success()
                     ->send();
 
@@ -180,19 +187,19 @@ class ProjectSettings extends Page
             });
 
         $actions[] = Action::make('redeploy')
-            ->label('Aplicar Cambios (Redesplegar)')
+            ->label(__('Apply Changes (Redeploy)'))
             ->color('success')
             ->icon('heroicon-o-cloud-arrow-up')
             ->disabled($isSuspended)
             ->visible(fn () => $user->can('deploy_project') && !is_null($project->last_deployed_at))
             ->requiresConfirmation()
-            ->modalHeading('Redesplegar Infraestructura')
-            ->modalDescription('Esto reconstruirá los contenedores remotos para aplicar cualquier cambio de entorno. ¿Continuar?')
+            ->modalHeading(__('Redeploy Infrastructure'))
+            ->modalDescription(__('This will rebuild the remote containers to apply any environment changes. Continue?'))
             ->action(function () use ($project) {
                 if (!$project->hasConfiguredAssets()) {
                     Notification::make()
-                        ->title('No se puede desplegar')
-                        ->body('No puedes desplegar infraestructura sin configurar al menos un recurso para sincronizar en Data Sources.')
+                        ->title(__('Cannot deploy'))
+                        ->body(__('You cannot deploy infrastructure without configuring at least one asset to sync in Data Sources.'))
                         ->danger()
                         ->persistent()
                         ->send();
@@ -202,8 +209,8 @@ class ProjectSettings extends Page
                 \App\Jobs\DeployProjectJob::dispatch($project);
                 
                 Notification::make()
-                    ->title('Redespliegue Iniciado')
-                    ->body('La infraestructura se está actualizando en segundo plano.')
+                    ->title(__('Redeployment Initiated'))
+                    ->body(__('Infrastructure is being updated in the background.'))
                     ->success()
                     ->send();
 
@@ -211,7 +218,7 @@ class ProjectSettings extends Page
             });
 
         $actions[] = Action::make('transfer')
-                ->label('Transferir Propiedad')
+                ->label(__('Transfer Ownership'))
                 ->color('warning')
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
@@ -223,8 +230,8 @@ class ProjectSettings extends Page
                     return !$hasPending;
                 })
                 ->requiresConfirmation()
-                ->modalHeading('Transferir Proyecto')
-                ->modalDescription('Selecciona a un colaborador activo de este proyecto para transferirle la propiedad absoluta.')
+                ->modalHeading(__('Transfer Project'))
+                ->modalDescription(__('Select an active collaborator of this project to transfer absolute ownership.'))
                 ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($project) {
                     $hasCollaborators = $project->users()->where('users.id', '!=', auth()->id())->count() > 0;
                     if (!$hasCollaborators) {
@@ -237,9 +244,9 @@ class ProjectSettings extends Page
                         ->hidden(function () use ($project) {
                             return $project->users()->where('users.id', '!=', auth()->id())->count() > 0;
                         })
-                        ->content(new \Illuminate\Support\HtmlString('<div class="text-amber-600 font-medium bg-amber-50 p-4 rounded-lg border border-amber-200">Para poder transferir este proyecto, primero debes invitar a un colaborador desde la pestaña "Colaboradores" y este debe aceptar la invitación.</div>')),
+                        ->content(new \Illuminate\Support\HtmlString('<div class="text-amber-600 font-medium bg-amber-50 p-4 rounded-lg border border-amber-200">' . __('To transfer this project, you must first invite a collaborator from the "Collaborators" tab and they must accept the invitation.') . '</div>')),
                     Select::make('to_user_id')
-                        ->label('Nuevo Propietario')
+                        ->label(__('New Owner'))
                         ->hidden(function () use ($project) {
                             return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
                         })
@@ -254,19 +261,19 @@ class ProjectSettings extends Page
                         ->hidden(function () use ($project) {
                             return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
                         })
-                        ->label('Mantener acceso como colaborador')
-                        ->helperText('Al transferir la propiedad, serás añadido automáticamente como colaborador para no perder acceso al proyecto.')
+                        ->label(__('Retain access as collaborator'))
+                        ->helperText(__('When transferring ownership, you will be automatically added as a collaborator so you do not lose access to the project.'))
                         ->default(false),
                     \Filament\Forms\Components\Radio::make('billing_action')
                         ->hidden(function () use ($project) {
                             return $project->users()->where('users.id', '!=', auth()->id())->count() == 0;
                         })
-                        ->label('Perfil de Facturación')
+                        ->label(__('Billing Profile'))
                         ->required()
                         ->options(function (\Filament\Forms\Get $get) use ($project) {
                             $bp = $project->billingProfile;
                             if (!$bp) {
-                                return ['keep_bp' => 'Sin perfil de facturación (El proyecto ya está inactivo)'];
+                                return ['keep_bp' => __('No billing profile (Project is already inactive)')];
                             }
                             
                             $toUserId = $get('to_user_id');
@@ -277,15 +284,15 @@ class ProjectSettings extends Page
                             // If Sender owns the BP
                             if ($bp->user_id === auth()->id()) {
                                 return [
-                                    'share_sender_bp' => 'Compartir mi perfil de facturación con el receptor',
-                                    'remove_bp' => 'Desvincular mi perfil de facturación (Recomendado)',
+                                    'share_sender_bp' => __('Share my billing profile with the receiver'),
+                                    'remove_bp' => __('Unlink my billing profile (Recommended)'),
                                 ];
                             }
                             
                             // If Receiver owns the BP
                             if ($bp->user_id == $toUserId) {
                                 return [
-                                    'keep_bp' => 'Mantener el perfil actual (Ya le pertenece al receptor)',
+                                    'keep_bp' => __('Keep current profile (Already owned by receiver)'),
                                 ];
                             }
 
@@ -296,9 +303,9 @@ class ProjectSettings extends Page
                                 ->exists();
 
                             if ($hasAccess) {
-                                return ['keep_bp' => 'Mantener el perfil actual (El receptor tiene acceso a la facturación de terceros)'];
+                                return ['keep_bp' => __('Keep current profile (Receiver has access to third-party billing)')];
                             } else {
-                                return ['remove_bp' => 'Remover el perfil (El receptor no tiene acceso a la facturación actual)'];
+                                return ['remove_bp' => __('Remove profile (Receiver does not have access to current billing)')];
                             }
                         })
                         ->afterStateHydrated(function (\Filament\Forms\Components\Radio $component, \Filament\Forms\Get $get) use ($project) {
@@ -330,7 +337,7 @@ class ProjectSettings extends Page
                     $toUser = User::find($data['to_user_id']);
                     
                     if (!$toUser) {
-                        Notification::make()->title('Usuario no encontrado')->danger()->send();
+                        Notification::make()->title(__('User not found'))->danger()->send();
                         return;
                     }
 
@@ -356,14 +363,14 @@ class ProjectSettings extends Page
                     );
 
                     Notification::make()
-                        ->title('Transferencia Iniciada')
-                        ->body('Se ha enviado un correo a ' . $toUser->name . ' para que acepte la transferencia del proyecto.')
+                        ->title(__('Transfer Initiated'))
+                        ->body(__('An email has been sent to :name to accept the project transfer.', ['name' => $toUser->name]))
                         ->success()
                         ->send();
                 });
 
         $actions[] = Action::make('cancel_transfer')
-                ->label('Cancelar Transferencia')
+                ->label(__('Cancel Transfer'))
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->visible(function () use ($user, $project) {
@@ -373,8 +380,8 @@ class ProjectSettings extends Page
                         ->exists();
                 })
                 ->requiresConfirmation()
-                ->modalHeading('Cancelar Transferencia')
-                ->modalDescription('¿Estás seguro de que deseas cancelar la transferencia pendiente? El enlace enviado al destinatario dejará de ser válido.')
+                ->modalHeading(__('Cancel Transfer'))
+                ->modalDescription(__('Are you sure you want to cancel the pending transfer? The link sent to the recipient will become invalid.'))
                 ->action(function () use ($project) {
                     $transfer = \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
@@ -384,30 +391,30 @@ class ProjectSettings extends Page
                         $transfer->update(['status' => 'cancelled']);
                         // TODO: Enviar correo al destinatario notificando la cancelación
                         Notification::make()
-                            ->title('Transferencia Cancelada')
-                            ->body('La transferencia ha sido cancelada exitosamente.')
+                            ->title(__('Transfer Cancelled'))
+                            ->body(__('The transfer has been successfully cancelled.'))
                             ->success()
                             ->send();
                     }
                 });
 
         $actions[] = Action::make('delete')
-                ->label('Eliminar Proyecto')
+                ->label(__('Delete Project'))
                 ->color('danger')
                 ->icon('heroicon-o-trash')
                 ->disabled($isSuspended)
                 ->visible(fn () => $user->can('delete_project'))
                 ->requiresConfirmation()
-                ->modalHeading('Eliminar Proyecto')
-                ->modalDescription('Al eliminar este proyecto se bloqueará el acceso al dominio y a los datos de manera inmediata. Tienes 30 días para recuperarlo, luego se destruirá toda su infraestructura permanentemente.')
+                ->modalHeading(__('Delete Project'))
+                ->modalDescription(__('Deleting this project will immediately block access to the domain and data. You have 30 days to recover it before its infrastructure is permanently destroyed.'))
                 ->form([
                     TextInput::make('confirmation')
-                        ->label('Escribe "' . $project->name . '" para confirmar')
+                        ->label(__('Type ":name" to confirm', ['name' => $project->name]))
                         ->required()
                         ->rule(function () use ($project) {
                             return function (string $attribute, $value, \Closure $fail) use ($project) {
                                 if ($value !== $project->name) {
-                                    $fail('El nombre del proyecto no coincide.');
+                                    $fail(__('Project name does not match.'));
                                 }
                             };
                         }),
@@ -425,8 +432,8 @@ class ProjectSettings extends Page
                         ->first();
 
                     Notification::make()
-                        ->title('Proyecto Eliminado')
-                        ->body('El proyecto ha sido movido a la papelera. Tienes 30 días para restaurarlo.')
+                        ->title(__('Project Deleted'))
+                        ->body(__('The project has been moved to the trash. You have 30 days to restore it.'))
                         ->success()
                         ->send();
 

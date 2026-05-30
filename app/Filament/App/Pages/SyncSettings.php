@@ -19,7 +19,10 @@ class SyncSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static ?string $navigationGroup = 'Data & Integrations';
-    protected static ?string $navigationLabel = 'Synchronization Settings';
+    public static function getNavigationLabel(): string
+    {
+        return __('Synchronization Settings');
+    }
     protected static string $view = 'filament.app.pages.sync-settings';
     protected static ?string $slug = 'sync-settings';
 
@@ -30,7 +33,7 @@ class SyncSettings extends Page
     {
         return [
             Action::make('triggerSync')
-                ->label('Deploy Infrastructure Updates')
+                ->label(__('Deploy Infrastructure Updates'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
                 ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('deploy_project'))
@@ -40,8 +43,8 @@ class SyncSettings extends Page
                     $response = $service->startSync($tenant);
                     
                     Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Synchronization Sequence Started' : 'Sync Deployment Failed')
-                        ->body($response['message'] ?? 'Applying configuration, restarting workers, and scheduling initial jobs.')
+                        ->title(($response['status'] ?? '') === 'success' ? __('Synchronization Sequence Started') : __('Sync Deployment Failed'))
+                        ->body($response['message'] ?? __('Applying configuration, restarting workers, and scheduling initial jobs.'))
                         ->send();
                 }),
 
@@ -85,44 +88,44 @@ class SyncSettings extends Page
 
         return $form
             ->schema([
-                Section::make('Global Processing Settings')
-                    ->description('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.')
+                Section::make(__('Global Processing Settings'))
+                    ->description(__('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.'))
                     ->schema([
                         Select::make('jobs_timeout_hours')
-                            ->label('Jobs Timeout (Hours)')
+                            ->label(__('Jobs Timeout (Hours)'))
                             ->options([
-                                '1' => '1 Hour (Recommended)',
-                                '2' => '2 Hours',
-                                '6' => '6 Hours',
-                                '12' => '12 Hours',
+                                '1' => __('1 Hour (Recommended)'),
+                                '2' => __('2 Hours'),
+                                '6' => __('6 Hours'),
+                                '12' => __('12 Hours'),
                             ])
                             ->default('1')
-                            ->helperText('If a job takes longer than this duration, it will be automatically aborted to free up resources.'),
+                            ->helperText(__('If a job takes longer than this duration, it will be automatically aborted to free up resources.')),
                     ])->collapsed(),
 
-                Section::make('API Access (External Integration)')
-                    ->description('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)')
+                Section::make(__('API Access (External Integration)'))
+                    ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->schema([
                         TextInput::make('api_url')
-                            ->label('API Endpoint')
+                            ->label(__('API Endpoint'))
                             ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud') . '/api')
                             ->disabled()
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
-                            ->label('Secret API Key')
+                            ->label(__('Secret API Key'))
                             ->password()
                             ->revealable()
                             ->disabled()
-                            ->helperText('Keep this key secure. It provides full access to your cached data.')
+                            ->helperText(__('Keep this key secure. It provides full access to your cached data.'))
                             ->hintAction(
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
                                     ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
                                     ->requiresConfirmation()
-                                    ->modalHeading('Rotate API Key?')
-                                    ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
-                                    ->modalSubmitActionLabel('Yes, rotate and push')
+                                    ->modalHeading(__('Rotate API Key?'))
+                                    ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.'))
+                                    ->modalSubmitActionLabel(__('Yes, rotate and push'))
                                     ->action(function (\App\Services\DeployerService $deployer) {
                                         $tenant = Filament::getTenant();
                                         $newKey = bin2hex(random_bytes(32));
@@ -136,9 +139,9 @@ class SyncSettings extends Page
                                         ]);
 
                                         \Filament\Notifications\Notification::make()
-                                            ->title('API Key Rotated!')
+                                            ->title(__('API Key Rotated!'))
                                             ->success()
-                                            ->body('The new key has been generated and synchronized with your node.')
+                                            ->body(__('The new key has been generated and synchronized with your node.'))
                                             ->send();
 
                                         // 3. Update the form state
@@ -155,12 +158,12 @@ class SyncSettings extends Page
     {
         $tenant = Filament::getTenant();
         if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
-            Notification::make()->title('Acción Bloqueada')->body('El proyecto está suspendido y se encuentra en modo de solo lectura.')->danger()->send();
+            Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
             return;
         }
 
         if (! auth()->user()->can('edit_preferences')) {
-            Notification::make()->title('Permiso Denegado')->body('No tienes permiso para modificar las preferencias de sincronización.')->danger()->send();
+            Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify sync preferences.'))->danger()->send();
             return;
         }
 
@@ -207,14 +210,14 @@ class SyncSettings extends Page
 
         if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
             Notification::make()
-                ->title('Secure Settings Saved & Synchronized!')
+                ->title(__('Secure Settings Saved & Synchronized!'))
                 ->success()
                 ->send();
         } else {
             Notification::make()
-                ->title('Settings Saved Locally')
+                ->title(__('Settings Saved Locally'))
                 ->warning()
-                ->body('Could not push credentials to your server. Please ensure the server is online.')
+                ->body(__('Could not push credentials to your server. Please ensure the server is online.'))
                 ->send();
         }
     }

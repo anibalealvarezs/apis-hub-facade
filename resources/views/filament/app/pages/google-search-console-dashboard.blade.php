@@ -111,17 +111,17 @@
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]" />
-                    Google Search Console
+                    {{ __('Google Search Console') }}
                 </h1>
-                <p class="gsc-header-subtitle">Performance on Google Search results</p>
+                <p class="gsc-header-subtitle">{{ __('Performance on Google Search results') }}</p>
             </div>
             <div class="gsc-header-controls">
                 <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
-                    <span>Update</span>
+                    <span>{{ __('Update') }}</span>
                 </button>
                 <select wire:model.live="selectedAccount" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
-                    <option value="" class="bg-white dark:bg-gray-800">Select Property...</option>
+                    <option value="" class="bg-white dark:bg-gray-800">{{ __('Select Property...') }}</option>
                     @foreach($accounts as $id => $url)
                         <option value="{{ $id }}" class="bg-white dark:bg-gray-800">{{ $url }}</option>
                     @endforeach
@@ -137,7 +137,7 @@
             </div>
             
             <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')" style="--color: #4285f4;">
-                <div class="gsc-label">Total Clicks</div>
+                <div class="gsc-label">{{ __('Total Clicks') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
                     <span x-text="getVarianceIcon(variance.clicks)"></span>
@@ -145,7 +145,7 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''" @click="toggleMetric('impressions')" style="--color: #7e57c2;">
-                <div class="gsc-label">Total Impressions</div>
+                <div class="gsc-label">{{ __('Total Impressions') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
                     <span x-text="getVarianceIcon(variance.impressions)"></span>
@@ -153,7 +153,7 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')" style="--color: #0097a7;">
-                <div class="gsc-label">Average CTR</div>
+                <div class="gsc-label">{{ __('Average CTR') }}</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
                     <span x-text="getVarianceIcon(variance.ctr)"></span>
@@ -161,7 +161,7 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')" style="--color: #f4511e;">
-                <div class="gsc-label">Average Position</div>
+                <div class="gsc-label">{{ __('Average Position') }}</div>
                 <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.position, true)">
                     <span x-text="getVarianceIcon(variance.position, true)"></span>
@@ -183,9 +183,9 @@
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <x-heroicon-o-funnel class="w-4 h-4 text-primary-500" />
-                    Active Filters
+                    {{ __('Active Filters') }}
                 </h3>
-                <button @click="clearFilters()" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">Clear All</button>
+                <button @click="clearFilters()" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">{{ __('Clear All') }}</button>
             </div>
             <div class="flex flex-wrap gap-2">
                 <template x-for="(values, tab) in activeFilters" :key="tab">
@@ -207,11 +207,11 @@
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
             <div class="tab-nav-gsc">
-                <div class="tab-gsc" :class="activeTab === 'queries' ? 'active' : ''" @click="setTab('queries')">QUERIES</div>
-                <div class="tab-gsc" :class="activeTab === 'pages' ? 'active' : ''" @click="setTab('pages')">PAGES</div>
-                <div class="tab-gsc" :class="activeTab === 'countries' ? 'active' : ''" @click="setTab('countries')">COUNTRIES</div>
-                <div class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''" @click="setTab('devices')">DEVICES</div>
-                <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''" @click="setTab('appearances')">SEARCH APPEARANCE</div>
+                <div class="tab-gsc" :class="activeTab === 'queries' ? 'active' : ''" @click="setTab('queries')">{{ __('QUERIES') }}</div>
+                <div class="tab-gsc" :class="activeTab === 'pages' ? 'active' : ''" @click="setTab('pages')">{{ __('PAGES') }}</div>
+                <div class="tab-gsc" :class="activeTab === 'countries' ? 'active' : ''" @click="setTab('countries')">{{ __('COUNTRIES') }}</div>
+                <div class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''" @click="setTab('devices')">{{ __('DEVICES') }}</div>
+                <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''" @click="setTab('appearances')">{{ __('SEARCH APPEARANCE') }}</div>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -219,7 +219,7 @@
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     </div>
-                    <input type="text" x-model.debounce.300ms="searchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="Filter rows...">
+                    <input type="text" x-model.debounce.300ms="searchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
 
@@ -230,10 +230,10 @@
                             <th>
                                 <span x-text="activeTab.toUpperCase()"></span>
                             </th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">Clicks <span x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">Impressions <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('ctr')">CTR <span x-show="sortCol === 'ctr'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('position')">Position <span x-show="sortCol === 'position'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Clicks') }} <span x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }} <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('ctr')">{{ __('CTR') }} <span x-show="sortCol === 'ctr'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('position')">{{ __('Position') }} <span x-show="sortCol === 'position'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -270,7 +270,7 @@
 
             <div class="gsc-pagination-container" x-show="tableDataRaw.length > 0">
                 <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="gsc-pagination-text font-medium">Rows per page:</span>
+                    <span class="gsc-pagination-text font-medium">{{ __('Rows per page:') }}</span>
                     <select x-model="pageSize" class="gsc-pagination-select">
                         <option value="10">10</option>
                         <option value="25">25</option>
@@ -281,12 +281,12 @@
                 </div>
                 <div class="flex items-center gap-6">
                     <span class="gsc-pagination-text">
-                        Page <strong x-text="currentPage"></strong> of <strong x-text="totalPages"></strong>
-                        <span class="gsc-pagination-badge">(<span x-text="tableDataRaw.length"></span> results)</span>
+                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong x-text="totalPages"></strong>
+                        <span class="gsc-pagination-badge">(<span x-text="tableDataRaw.length"></span> {{ __('results') }})</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1" class="gsc-pagination-btn">Prev</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="gsc-pagination-btn">Next</button>
+                        <button @click="prevPage()" :disabled="currentPage === 1" class="gsc-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="gsc-pagination-btn">{{ __('Next') }}</button>
                     </div>
                 </div>
             </div>
