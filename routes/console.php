@@ -8,3 +8,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 \Illuminate\Support\Facades\Schedule::command('projects:cleanup-deleted')->daily();
+\Illuminate\Support\Facades\Schedule::command('billing:process-grace-periods')->everyFiveMinutes();
