@@ -25,7 +25,7 @@ class RemoteEngineService
         }
 
         $apiKey = $project->remote_admin_api_key;
-        if (!$apiKey) {
+        if (! $apiKey) {
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
@@ -37,7 +37,6 @@ class RemoteEngineService
         );
     }
 
-
     /**
      * Execute a task via the SDK with centralized error handling.
      */
@@ -45,6 +44,7 @@ class RemoteEngineService
     {
         try {
             $client = $this->getClient($project);
+
             return $callback($client);
         } catch (Exception $e) {
             Log::error("Remote Engine Action Failed: {$project->name}", [
@@ -77,7 +77,7 @@ class RemoteEngineService
             if ($endpoint === 'sync/stop') {
                 return $client->stopJobs();
             }
-            
+
             // Fallback for others if needed, using a generic method if available
             // but for now, let's stick to the typed methods below.
             return ['status' => 'error', 'message' => "Endpoint '{$endpoint}' should be called via its SDK method."];
@@ -89,15 +89,54 @@ class RemoteEngineService
      */
     public function triggerSync(Project $project, string $channel = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerSync($channel));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->triggerSync($channel));
     }
 
     /**
-     * Trigger a nuclear historical resync.
+     * Trigger a nuclear historical resync via SSH, bypassing the HTTP layer entirely.
+     * This avoids Swoole worker blocking issues for long-running CLI operations.
      */
     public function triggerHistoricalResync(Project $project, string $channel = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerHistoricalResync($channel));
+        try {
+            $server = $project->server;
+
+            if (! $server || ! $server->ip_address || ! $server->ssh_private_key) {
+                Log::error("Nuclear Resync SSH: No server/SSH credentials configured for project {$project->name}");
+
+                return ['status' => 'error', 'message' => 'SSH credentials not configured for this project.'];
+            }
+
+            // Write the private key to a temp file
+            $keyFile = tempnam(sys_get_temp_dir(), 'ssh_key_');
+            file_put_contents($keyFile, $server->ssh_private_key);
+            chmod($keyFile, 0600);
+
+            $host = escapeshellarg($server->ip_address);
+            $port = (int) ($server->ssh_port ?? 22);
+            $user = escapeshellarg($server->ssh_user ?? 'root');
+            $keyPath = escapeshellarg($keyFile);
+            $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
+
+            // Resolve the project's deploy path via subdomain convention
+            $deployPath = "/var/www/apis-hub/tenants/{$project->subdomain}";
+            $cliCmd = "docker compose -f {$deployPath}/docker-compose.yml exec -T master php bin/cli.php app:nuclear-resync {$channelArg}";
+
+            $sshCmd = "ssh -i {$keyPath} -p {$port} -o StrictHostKeyChecking=no -o ConnectTimeout=10 {$user}@{$host} " . escapeshellarg($cliCmd) . " > /dev/null 2>&1 &";
+
+            exec($sshCmd);
+
+            @unlink($keyFile);
+
+            Log::info("Nuclear Resync SSH: dispatched for project {$project->name}, channel: {$channel}");
+
+            return ['status' => 'success', 'message' => 'Nuclear resync dispatched via SSH.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Nuclear Resync SSH failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     /**
@@ -105,7 +144,7 @@ class RemoteEngineService
      */
     public function stopJobs(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->stopJobs());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->stopJobs());
     }
 
     /**
@@ -113,7 +152,7 @@ class RemoteEngineService
      */
     public function triggerRedeploy(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerRedeploy());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->triggerRedeploy());
     }
 
     /**
@@ -121,7 +160,7 @@ class RemoteEngineService
      */
     public function startSync(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->startSync());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->startSync());
     }
 
     /**
@@ -129,7 +168,7 @@ class RemoteEngineService
      */
     public function updateCredentials(Project $project, array $credentials)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->updateConfig($credentials));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->updateConfig($credentials));
     }
 
     /**
@@ -137,7 +176,7 @@ class RemoteEngineService
      */
     public function containerAction(Project $project, string $name, string $action)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->containerAction($name, $action));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->containerAction($name, $action));
     }
 
     /**
@@ -146,7 +185,7 @@ class RemoteEngineService
      */
     public function getHeartbeat(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getHeartbeat());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getHeartbeat());
     }
 
     /**
@@ -154,7 +193,7 @@ class RemoteEngineService
      */
     public function getStatus(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getStatus());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getStatus());
     }
 
     /**
@@ -162,7 +201,7 @@ class RemoteEngineService
      */
     public function getMonitoringData(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getMonitoringData());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getMonitoringData());
     }
 
     /**
@@ -170,7 +209,7 @@ class RemoteEngineService
      */
     public function getSyncTelemetry(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getSyncTelemetry());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getSyncTelemetry());
     }
 
     /**
@@ -178,7 +217,7 @@ class RemoteEngineService
      */
     public function validateTokens(Project $project, string $type = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]));
     }
 
     /**
@@ -186,9 +225,9 @@ class RemoteEngineService
      */
     public function fetchAssets(Project $project, string $channel, bool $refresh = false)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->fetchAssets([
+        return $this->execute($project, fn (ApisHubApi $client) => $client->fetchAssets([
             'type' => $channel,
-            'refresh' => $refresh ? 1 : 0
+            'refresh' => $refresh ? 1 : 0,
         ]));
     }
 
@@ -197,7 +236,7 @@ class RemoteEngineService
      */
     public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload));
     }
 
     /**
@@ -207,11 +246,11 @@ class RemoteEngineService
     {
         $results = [];
         $startTime = microtime(true);
-        
+
         foreach ($payloads as $key => $payload) {
             $startReq = microtime(true);
             $response = $this->aggregateChanneled($project, $channel, $entity, $payload);
-            
+
             // SDK returns the array directly, but handles errors by returning ['status' => 'error']
             if (isset($response['status']) && $response['status'] === 'error') {
                 $results[$key] = $response;
@@ -231,6 +270,6 @@ class RemoteEngineService
      */
     public function listChanneled(Project $project, string $channel, string $entity, array $params = [])
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->listChanneled($channel, $entity, $params));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->listChanneled($channel, $entity, $params));
     }
 }
