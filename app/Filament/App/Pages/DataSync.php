@@ -165,22 +165,6 @@ class DataSync extends Page
                 ->action(fn() => $this->refreshData(true)),
 
 
-            Action::make('stopJobs')
-                ->label(__('Pause All Explorers'))
-                ->icon('heroicon-o-stop-circle')
-                ->color('danger')
-                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
-                ->requiresConfirmation()
-                ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $response = $service->stopJobs($tenant);
-                    
-                    Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? __('Explorers are resting') : __('Action Failed'))
-                        ->body($response['message'] ?? '')
-                        ->send();
-                    $this->refreshData(true);
-                }),
 
             Action::make('resyncAll')
                 ->label(__('Nuclear Resync'))
