@@ -155,29 +155,34 @@ class DataSources extends Page
         // Now fill the form, which will generate the schema based on the correctly selected activeChannel
         $this->form->fill($config);
 
-        $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-            ->where('status', 'locked')
-            ->whereNull('disabled_at')
-            ->where(function ($query) use ($tenant) {
-                if ($tenant->last_deployed_at) {
-                    $query->where('locked_at', '>', $tenant->last_deployed_at);
-                }
-            })
-            ->count();
+        // Check if a resync has occurred recently (e.g., within the last 5 minutes)
+        $resyncOccurredRecently = $tenant->last_historical_resync_at && $tenant->last_historical_resync_at->gt(now()->subMinutes(5));
 
-        if ($pendingAssets > 0) {
-            Notification::make()
-                ->title(__('Action Recommended'))
-                ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
-                ->warning()
-                ->persistent()
-                ->actions([
-                    \Filament\Notifications\Actions\Action::make('deploy')
-                        ->label(__('Deploy Updates'))
-                        ->button()
-                        ->url(SyncSettings::getUrl()),
-                ])
-                ->send();
+        if (!$resyncOccurredRecently) {
+            $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+                ->where('status', 'locked')
+                ->whereNull('disabled_at')
+                ->where(function ($query) use ($tenant) {
+                    if ($tenant->last_deployed_at) {
+                        $query->where('locked_at', '>', $tenant->last_deployed_at);
+                    }
+                })
+                ->count();
+
+            if ($pendingAssets > 0) {
+                Notification::make()
+                    ->title(__('Action Recommended'))
+                    ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
+                    ->warning()
+                    ->persistent()
+                    ->actions([
+                        \Filament\Notifications\Actions\Action::make('deploy')
+                            ->label(__('Deploy Updates'))
+                            ->button()
+                            ->url(SyncSettings::getUrl()),
+                    ])
+                    ->send();
+            }
         }
     }
 
@@ -401,7 +406,7 @@ class DataSources extends Page
         $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
         $config = config("services.{$provider}.channel_scopes") ?? [];
         unset($config['default']);
-        
+
         $options = [];
         foreach (array_keys($config) as $channelKey) {
             $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
@@ -734,11 +739,11 @@ class DataSources extends Page
                         ->content(new \Illuminate\Support\HtmlString('
                             <div class="space-y-3 mt-2" style="font-size: 0.875rem; opacity: 0.85;">
                                 <p><strong>' . __('What is this?') . '</strong> ' . __('Synthetic calculations use an algorithmic method to infer attribution data that Google Search Console actively removes from your reports to protect user privacy.') . '</p>
-                                
+
                                 <p><strong>' . __('The Problem:') . '</strong> ' . __('When you look at GSC data by a single dimension (like Page), Google gives you close to 100% of the actual events. However, when you break data down by multiple dimensions simultaneously (like Page + Query + Country + Device), Google hides almost 50% of the records because those specific combinations might identify users.') . '</p>
-                                
+
                                 <p><strong>' . __('Our Solution:') . '</strong> ' . __('We query every possible subset of Google\'s data and run a reconciliation algorithm to deduce the missing pieces. This provides an almost complete picture of your traffic at the most granular level possible.') . '</p>
-                                
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3" style="border-top: 1px solid rgba(128, 128, 128, 0.2);">
                                     <div>
                                         <h4 class="font-medium flex items-center gap-1" style="color: #10b981;">✨ ' . __('The Benefits') . '</h4>
@@ -784,7 +789,7 @@ class DataSources extends Page
                             .dark .fb-modal-warning-subtext { color: #fde68a; }
                             .fb-modal-warning-icon { color: #d97706; }
                             .dark .fb-modal-warning-icon { color: #fbbf24; }
-                            
+
                             .fb-modal-rl-warning-box { background-color: #eff6ff; border-color: #3b82f6; padding: 1.25rem; }
                             .dark .fb-modal-rl-warning-box { background-color: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
                             .fb-modal-rl-warning-text { color: #1e40af; }
@@ -801,14 +806,14 @@ class DataSources extends Page
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
-                                
+
                                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                                     <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                       <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                                     </svg>
                                     ' . __('Important: Facebook Organic') . '
                                 </h2>
-                                
+
                                 <div class="space-y-6">
                                     <div class="rounded-r-xl border-l-4 fb-modal-warning-box shadow-sm">
                                         <div class="flex items-start gap-4">
@@ -823,7 +828,7 @@ class DataSources extends Page
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="rounded-r-xl border-l-4 fb-modal-rl-warning-box shadow-sm mt-4">
                                         <div class="flex items-start gap-4">
                                             <svg class="w-6 h-6 shrink-0 mt-0.5 fb-modal-rl-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -838,7 +843,7 @@ class DataSources extends Page
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mt-8 flex justify-end">
                                     <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg shadow-sm transition-colors">
                                         ' . __('I understand') . '
