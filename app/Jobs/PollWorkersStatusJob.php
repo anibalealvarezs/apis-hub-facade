@@ -71,6 +71,7 @@ class PollWorkersStatusJob implements ShouldQueue
                         ->title('Safe to Update Credentials')
                         ->body("All active sync jobs have been paused. You can now safely update your {$providerName} credentials.")
                         ->success()
+                        ->persistent()
                         ->actions([
                             Action::make('authorize')
                                 ->label('Update Now')
