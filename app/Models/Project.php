@@ -45,6 +45,8 @@ class Project extends Model
         'remote_admin_api_key',
         'remote_app_api_key',
         'last_deployed_at',
+        'deploy_started_at',
+        'last_sync_started_at',
         'git_repo',
         'git_branch',
         'is_active',
@@ -186,6 +188,8 @@ class Project extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'last_deployed_at' => 'datetime',
+        'deploy_started_at' => 'datetime',
+        'last_sync_started_at' => 'datetime',
         'last_heartbeat_at' => 'datetime',
         'past_due_at' => 'datetime',
         'health_metrics' => 'array',

@@ -29,6 +29,16 @@ class SyncSettings extends Page
     public ?array $data = [];
     public bool $isSyncable = false;
 
+    /**
+     * Re-hydrate the tenant from DB so wire:poll picks up health_status / last_sync_started_at changes.
+     */
+    public function refreshTenantStatus(): void
+    {
+        // Filament::getTenant() is cached per request — refresh from DB
+        $tenant = Filament::getTenant()->fresh();
+        $this->isSyncable = $tenant->is_active && $tenant->health_status !== 'provisioning';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -36,10 +46,17 @@ class SyncSettings extends Page
                 ->label(__('Deploy Infrastructure Updates'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
-                ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('deploy_project'))
+                ->disabled(fn () => !Filament::getTenant()->fresh()->is_active
+                    || Filament::getTenant()->fresh()->billing_status === 'suspended'
+                    || Filament::getTenant()->fresh()->health_status === 'redeploying'
+                    || !auth()->user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
+                    $tenant = Filament::getTenant()->fresh();
+
+                    // Record that a sync sequence was requested (used for UI progress banner)
+                    $tenant->update(['last_sync_started_at' => now()]);
+
                     $response = $service->startSync($tenant);
 
                     Notification::make()

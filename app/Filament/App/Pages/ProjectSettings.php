@@ -143,12 +143,18 @@ class ProjectSettings extends Page
                     'timezone' => $data['timezone'],
                 ]);
 
+                // Mark as redeploying immediately (before the queued job picks up)
+                $project->update([
+                    'health_status'    => 'redeploying',
+                    'deploy_started_at' => now(),
+                ]);
+
                 // Dispatch deployment to apply the timezone to the remote container
                 \App\Jobs\DeployProjectJob::dispatch($project);
 
                 Notification::make()
                     ->title(__('Preferences updated and Deployment initiated'))
-                    ->body(__('Changes will be applied to the server in a couple of minutes.'))
+                    ->body(__('Changes will be applied to the server. A redeployment has been queued.'))
                     ->success()
                     ->send();
 
@@ -206,11 +212,17 @@ class ProjectSettings extends Page
                     return redirect(request()->header('Referer'));
                 }
 
+                // Mark as redeploying immediately (before the queued job picks up)
+                $project->update([
+                    'health_status'    => 'redeploying',
+                    'deploy_started_at' => now(),
+                ]);
+
                 \App\Jobs\DeployProjectJob::dispatch($project);
-                
+
                 Notification::make()
                     ->title(__('Redeployment Initiated'))
-                    ->body(__('Infrastructure is being updated in the background.'))
+                    ->body(__('Infrastructure is being updated in the background. Check this page for live status.'))
                     ->success()
                     ->send();
 

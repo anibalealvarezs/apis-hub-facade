@@ -24,12 +24,19 @@ class DeployProjectJob implements ShouldQueue
 
     public function handle(DeployerService $deployer): void
     {
+        // Mark the project as redeploying immediately so the UI can reflect this state
+        // even before the detached background script begins execution on the node.
+        $this->project->update([
+            'health_status'    => 'redeploying',
+            'deploy_started_at' => now(),
+        ]);
+
         // 1. Create a Deployment Log
         $deploymentLog = ProjectDeploymentLog::create([
             'project_id' => $this->project->id,
-            'status' => 'running',
+            'status'     => 'running',
             'started_at' => now(),
-            'output' => 'Starting deployment process...',
+            'output'     => 'Starting deployment process...',
         ]);
 
         try {
@@ -38,17 +45,18 @@ class DeployProjectJob implements ShouldQueue
 
             // 3. Update Log with Result
             $deploymentLog->update([
-                'status' => $result['status'] === 'success' ? 'success' : 'failed',
-                'output' => $deploymentLog->output . "\n\n=== DEPLOYMENT OUTPUT ===\n" . $result['output'],
+                'status'       => $result['status'] === 'success' ? 'success' : 'failed',
+                'output'       => $deploymentLog->output . "\n\n=== DEPLOYMENT OUTPUT ===\n" . $result['output'],
                 'completed_at' => now(),
             ]);
 
             // 4. If success, update project active status
             if ($result['status'] === 'success') {
                 $this->project->update([
-                    'is_active' => true, 
-                    'health_status' => 'online',
-                    'last_deployed_at' => now(),
+                    'is_active'         => true,
+                    'health_status'     => 'online',
+                    'last_deployed_at'  => now(),
+                    'deploy_started_at' => null, // clear the in-progress marker
                 ]);
 
                 // 5. Hydrate remote API Hub with existing social tokens if present
@@ -60,29 +68,38 @@ class DeployProjectJob implements ShouldQueue
                         if ($profile && $profile->access_token) {
                             $config = config("services.{$provider}")['channel_scopes'] ?? [];
                             $scopes = $config['default'] ?? [];
-                            
+
                             $deployer->injectSocialTokens($this->project, $profile->access_token, $provider, [
-                                'user_id' => $profile->provider_account_id,
-                                'email' => $profile->email,
+                                'user_id'       => $profile->provider_account_id,
+                                'email'         => $profile->email,
                                 'refresh_token' => $profile->refresh_token,
-                                'scopes' => $scopes,
+                                'scopes'        => $scopes,
                             ]);
                             Log::info("Hydrated {$provider} tokens into newly deployed project {$this->project->id}");
                         }
                     }
                 }
             } else {
+                $this->project->update([
+                    'health_status'     => 'error',
+                    'deploy_started_at' => null,
+                ]);
                 Log::error("Deployment failed for project {$this->project->id}");
             }
 
         } catch (\Throwable $e) {
             // Update log on Exception
             $deploymentLog->update([
-                'status' => 'failed',
-                'output' => $deploymentLog->output . "\n\n=== EXCEPTION ===\n" . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                'status'       => 'failed',
+                'output'       => $deploymentLog->output . "\n\n=== EXCEPTION ===\n" . $e->getMessage() . "\n" . $e->getTraceAsString(),
                 'completed_at' => now(),
+            ]);
+            $this->project->update([
+                'health_status'     => 'error',
+                'deploy_started_at' => null,
             ]);
             Log::error("Deployment exception for project {$this->project->id}", ['exception' => $e]);
         }
     }
+
 }

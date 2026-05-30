@@ -28,9 +28,12 @@ class MonitoringController extends Controller
         // Update project health data
         // Store the incoming diagnostic payload
         $project->update([
-            'health_metrics' => $request->only(['channels', 'catalog', 'db', 'redis', 'system', 'status_summary']),
-            'last_heartbeat_at' => now(),
-            'health_status' => 'online',
+            'health_metrics'        => $request->only(['channels', 'catalog', 'db', 'redis', 'system', 'status_summary']),
+            'last_heartbeat_at'     => now(),
+            'health_status'         => 'online',
+            // A heartbeat means the node is alive and responsive — clear the "sync in progress" marker
+            // so the UI stops showing the sync-in-progress banner.
+            'last_sync_started_at'  => null,
         ]);
 
         return response()->json([

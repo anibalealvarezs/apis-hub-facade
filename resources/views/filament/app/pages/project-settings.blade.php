@@ -1,12 +1,43 @@
 <x-filament-panels::page>
     @php
-        $tenant = filament()->getTenant();
+        $tenant = filament()->getTenant()->fresh();
+        $isRedeploying  = $tenant->health_status === 'redeploying';
+        $elapsedRedeploy = $tenant->deploy_started_at
+            ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
+            : null;
     @endphp
+
+    {{-- Auto-refresh so status banners update without a full page reload --}}
+    <div wire:poll.15s></div>
+
     @if($tenant)
     <div class="space-y-6">
         @if(!$tenant->is_active || $tenant->billing_status === 'suspended')
             <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
               <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
+            </div>
+        @endif
+
+        @if($isRedeploying)
+            <div class="p-4 text-sm rounded-lg border bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/40 flex items-start gap-3" role="status">
+                <svg class="animate-spin mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div>
+                    <span class="font-semibold">{{ __('Redeployment in progress') }}</span>
+                    @if($elapsedRedeploy)
+                        <span class="text-xs ml-1 opacity-70">({{ __('started') }} {{ $elapsedRedeploy }})</span>
+                    @endif
+                    <p class="mt-0.5 opacity-80 text-xs">
+                        {{ __('The server is rebuilding its containers. Workers will restart once active jobs drain. This may take up to an hour. The Apply Changes button is disabled until the process completes.') }}
+                    </p>
+                </div>
+            </div>
+        @elseif($tenant->health_status === 'error')
+            <div class="p-4 text-sm rounded-lg border bg-red-50 text-red-900 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/40" role="alert">
+                <span class="font-semibold">{{ __('Last deployment failed.') }}</span>
+                {{ __('Check the activity logs below for details. You can attempt a new redeployment from the action buttons above.') }}
             </div>
         @endif
 
@@ -96,8 +127,7 @@
         </x-filament::section>
         @endif
  
-        @if(config('app.debug'))
-        @if($logs && $logs->count() > 0)
+        @if(auth()->user()->can('deploy_project') && $logs && $logs->count() > 0)
         <x-filament::section>
             <x-slot name="heading">
                 {{ __('Activity Logs') }}
@@ -106,7 +136,7 @@
                 {{ __('Live sync engine activity logs.') }}
             </x-slot>
  
-            <div wire:poll.5s>
+            <div wire:poll.10s>
                 <div class="bg-gray-950 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto max-h-96 overflow-y-auto">
                     @foreach($logs as $log)
                         <div class="mb-4 pb-4 border-b border-gray-800 last:border-0 last:pb-0 last:mb-0">
@@ -114,9 +144,10 @@
                                 <span class="text-gray-500">{{ $log->created_at->format('Y-m-d H:i:s') }}</span>
                                 <span @class([
                                     'px-2 py-0.5 rounded text-xs font-medium',
-                                    'bg-green-500/10 text-green-400' => $log->status === 'completed',
+                                    'bg-green-500/10 text-green-400' => $log->status === 'completed' || $log->status === 'success',
                                     'bg-red-500/10 text-red-400' => $log->status === 'failed',
-                                    'bg-blue-500/10 text-blue-400' => $log->status === 'running' || $log->status === 'pending',
+                                    'bg-amber-500/10 text-amber-400' => $log->status === 'running',
+                                    'bg-blue-500/10 text-blue-400' => $log->status === 'pending',
                                 ])>
                                     {{ strtoupper($log->status) }}
                                 </span>
@@ -128,7 +159,7 @@
             </div>
         </x-filament::section>
         @endif
-        @endif
     </div>
     @endif
 </x-filament-panels::page>
+
