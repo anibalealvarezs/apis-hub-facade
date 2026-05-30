@@ -95,9 +95,9 @@ class RemoteEngineService
     /**
      * Trigger a nuclear historical resync.
      */
-    public function triggerHistoricalResync(Project $project)
+    public function triggerHistoricalResync(Project $project, string $channel = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerHistoricalResync());
+        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerHistoricalResync($channel));
     }
 
     /**

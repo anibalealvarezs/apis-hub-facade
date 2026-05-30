@@ -147,7 +147,7 @@ class DataSync extends Page
         $tenant = Filament::getTenant();
         $cooldownDays = 15;
         $canResync = true;
-        $resyncMessage = __('This action will clear all queues and restart telemetry, forcing a total historical resync.');
+        $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
         
         if ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
@@ -175,27 +175,43 @@ class DataSync extends Page
                 ->tooltip($canResync ? __('Reset all jobs and force a historical resync') : $resyncMessage)
                 ->requiresConfirmation()
                 ->modalHeading(__('Historical Resync (Nuclear)'))
-                ->modalDescription($resyncMessage . ' ' . __('Please, type "RESYNC" to confirm this destructive action.'))
-                ->form([
-                    \Filament\Forms\Components\TextInput::make('confirmation')
-                        ->label(__('Confirmation'))
-                        ->required()
-                        ->rules(['in:RESYNC'])
-                        ->placeholder(__('Type RESYNC'))
-                        ->validationMessages([
-                            'in' => __('You must type RESYNC exactly to continue.'),
-                        ])
-                ])
+                ->modalDescription($resyncMessage . ' ' . __('Please, type "RESYNC" to confirm.'))
+                ->form(function () {
+                    $channels = [];
+                    if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
+                        foreach (array_keys($this->syncData['channels']) as $c) {
+                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                        }
+                    }
+                    return [
+                        \Filament\Forms\Components\Select::make('channel')
+                            ->label(__('Target Channel'))
+                            ->options(array_merge(['all' => __('All Channels')], $channels))
+                            ->default('all')
+                            ->required()
+                            ->helperText(__('Select a specific channel to limit the reset, or all channels.')),
+                        \Filament\Forms\Components\TextInput::make('confirmation')
+                            ->label(__('Confirmation'))
+                            ->required()
+                            ->rules(['in:RESYNC'])
+                            ->placeholder(__('Type RESYNC'))
+                            ->validationMessages([
+                                'in' => __('You must type RESYNC exactly to continue.'),
+                            ])
+                    ];
+                })
                 ->action(function (array $data, RemoteEngineService $service) use ($tenant) {
                     if ($data['confirmation'] !== 'RESYNC') {
                         return;
                     }
-                    $response = $service->triggerHistoricalResync($tenant);
+                    $response = $service->triggerHistoricalResync($tenant, $data['channel']);
                     if (($response['status'] ?? '') === 'error') {
                         Notification::make()->title(__('Error:') . ' ' . ($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
-                        $tenant->update(['last_historical_resync_at' => now()]);
-                        Notification::make()->title(__('Historical resync initiated'))->success()->send();
+                        if ($data['channel'] === 'all') {
+                            $tenant->update(['last_historical_resync_at' => now()]);
+                        }
+                        Notification::make()->title(__('Historical resync initiated for ') . ($data['channel'] === 'all' ? __('all channels') : $data['channel']))->success()->send();
                     }
                 }),
         ];
