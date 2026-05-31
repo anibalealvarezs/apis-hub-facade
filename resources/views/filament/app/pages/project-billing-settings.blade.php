@@ -49,7 +49,7 @@
 
                             <!-- Plan / Subscription -->
                             <div class="space-y-1">
-                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Plan del Perfil</span>
+                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{{ __('Billing profile plan') }}</span>
                                 <div class="flex items-center gap-1.5">
                                     <span class="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/10 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20">
                                         {{ strtoupper($billingProfile->tier->value ?? $billingProfile->tier) }}
