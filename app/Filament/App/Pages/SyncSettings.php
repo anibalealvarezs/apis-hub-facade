@@ -8,9 +8,6 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\View;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -18,11 +15,17 @@ use Filament\Pages\Page;
 class SyncSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Data & Integrations';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Data & Integrations');
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Synchronization Settings');
     }
+
     protected static string $view = 'filament.app.pages.sync-settings';
     protected static ?string $slug = 'sync-settings';
 
@@ -33,7 +36,7 @@ class SyncSettings extends Page
      * TTL for the "sync sequence in progress" banner (seconds).
      * start-sync.sh should complete well within this window.
      */
-    const SYNC_SEQUENCE_TTL_SECONDS = 900; // 15 minutes
+    public const SYNC_SEQUENCE_TTL_SECONDS = 3600; // 1 hour
 
     /**
      * Re-hydrate the tenant from DB so wire:poll picks up health_status / last_sync_started_at changes.
@@ -62,10 +65,10 @@ class SyncSettings extends Page
                 ->label(__('Deploy Infrastructure Updates'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
-                ->disabled(fn () => !Filament::getTenant()->fresh()->is_active
+                ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
                     || Filament::getTenant()->fresh()->billing_status === 'suspended'
                     || Filament::getTenant()->fresh()->health_status === 'redeploying'
-                    || !auth()->user()->can('deploy_project'))
+                    || ! auth()->user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant()->fresh();
@@ -94,7 +97,7 @@ class SyncSettings extends Page
             $validation = $service->validateTokens($tenant, 'facebook');
             $fbData = $validation['results']['facebook'] ?? [];
 
-            if (($fbData['status'] ?? '') === 'valid' && !empty($fbData['access_token'])) {
+            if (($fbData['status'] ?? '') === 'valid' && ! empty($fbData['access_token'])) {
                 if ($tenant->facebook_user_token !== $fbData['access_token']) {
                     // Update Facade silently with Node's truth
                     $tenant->facebook_user_token = $fbData['access_token'];
@@ -136,7 +139,7 @@ class SyncSettings extends Page
     public function form(Form $form): Form
     {
         $tenant = Filament::getTenant();
-        $isSuspended = !$tenant->is_active || $tenant->billing_status === 'suspended';
+        $isSuspended = ! $tenant->is_active || $tenant->billing_status === 'suspended';
 
         return $form
             ->schema([
@@ -173,7 +176,7 @@ class SyncSettings extends Page
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
-                                    ->disabled(fn () => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('edit_preferences'))
+                                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || ! auth()->user()->can('edit_preferences'))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('Rotate API Key?'))
                                     ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.'))
@@ -187,7 +190,7 @@ class SyncSettings extends Page
 
                                         // 2. Push to remote server via SSH
                                         $deployer->updateCredentials($tenant, [
-                                            'APP_API_KEY' => $newKey
+                                            'APP_API_KEY' => $newKey,
                                         ]);
 
                                         \Filament\Notifications\Notification::make()
@@ -199,23 +202,25 @@ class SyncSettings extends Page
                                         // 3. Update the form state
                                         $this->form->fill(['app_api_key' => $newKey]);
                                     })
-                             ),
+                            ),
                     ])->columns(2),
             ])
             ->statePath('data')
-            ->disabled($isSuspended || !auth()->user()->can('edit_preferences'));
+            ->disabled($isSuspended || ! auth()->user()->can('edit_preferences'));
     }
 
     public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
     {
         $tenant = Filament::getTenant();
-        if (!$tenant->is_active || $tenant->billing_status === 'suspended') {
+        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
             Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
+
             return;
         }
 
         if (! auth()->user()->can('edit_preferences')) {
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify sync preferences.'))->danger()->send();
+
             return;
         }
 
@@ -273,5 +278,4 @@ class SyncSettings extends Page
                 ->send();
         }
     }
-
 }
