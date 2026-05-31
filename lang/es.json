@@ -37,7 +37,7 @@
     "Error:": "Error:",
     "Historical resync initiated for ": "Resincronización histórica iniciada para ",
     "all channels...": "todos los canales...",
-    "New jobs will be processed as long as any workers are available.": "Nuevos trabajos se procesarán siempre y cuando haya trabajadores disponibles.",
+    "... New jobs will be processed as soon as workers become available.": "... La sincronización iniciará tan pronto se libere algún worker.",
     "Historical resync initiated": "Resincronización histórica iniciada",
     "Facebook Marketing": "Facebook Marketing",
     "Facebook Organic": "Facebook Orgánico",
@@ -159,6 +159,7 @@
     "Safe Update Initiated": "Actualización Segura Iniciada",
     "We are safely pausing your workers. You will be notified when it is safe to proceed.": "Estamos pausando de forma segura a tus trabajadores. Se te notificará cuando sea seguro proceder.",
     "Enable Channel": "Habilitar Canal",
+    "Last deployment": "Último despliegue",
     "Extraction Granularity": "Granularidad de Extracción",
     "Entity Depth": "Profundidad de Entidad",
     "Level 1: Account": "Nivel 1: Cuenta",
@@ -390,5 +391,11 @@
     "Activity Logs": "Logs de Actividad",
     "Live sync engine activity logs.": "Registro de actividades del motor de sincronización en vivo.",
     "Starting sync engine provisioning...": "Iniciando aprovisionamiento del motor de sincronización...",
-    "Save & Push Changes": "Guardar y Desplegar Cambios"
+    "Save & Push Changes": "Guardar y Desplegar Cambios",
+    "M j, Y H:i": "j \\d\\e F, Y",
+    "Data Explorer": "Explorador de Datos",
+    "Exploration & Telemetry": "Exploración y Telemetría",
+    "Data & Integrations": "Datos e Integraciones",
+    "Administration": "Administración",
+    "Knowledge Base": "Base de Conocimiento"
 }

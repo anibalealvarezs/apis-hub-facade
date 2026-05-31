@@ -15,9 +15,15 @@ use Illuminate\Support\Str;
 class ProjectSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+
     public static function getNavigationLabel(): string
     {
         return __('Project Settings');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Administration');
     }
 
     public function getTitle(): string
@@ -26,7 +32,6 @@ class ProjectSettings extends Page
     }
     protected static ?string $slug = 'project-settings';
     protected static string $view = 'filament.app.pages.project-settings';
-    protected static ?string $navigationGroup = 'Administration';
     protected static ?int $navigationSort = 100;
 
     /**

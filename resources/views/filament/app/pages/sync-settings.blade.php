@@ -6,7 +6,7 @@
         $syncElapsedSec = $tenant->last_sync_started_at
             ? $tenant->last_sync_started_at->diffInSeconds(now())
             : 0;
-        $syncIsStale    = $syncElapsedSec > 600; // warn after 10 minutes
+        $syncIsStale    = $syncElapsedSec > 1800; // warn after 30 minutes
         $elapsedRedeploy = $tenant->deploy_started_at
             ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
             : null;
@@ -42,7 +42,7 @@
             </div>
         </div>
     @elseif($isSyncStarted && !$syncIsStale)
-        {{-- Sync sequence started, script still likely running (< 10 min) --}}
+        {{-- Sync sequence started, script still likely running (< 30 min) --}}
         <div class="p-4 mb-4 text-sm rounded-lg border bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800/40 flex items-start gap-3" role="status">
             <svg class="animate-spin mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -74,7 +74,7 @@
         </div>
     @elseif($tenant->last_deployed_at)
         <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30" role="alert">
-          <span class="font-bold">{{ __('Last deployment') }}:</span> {{ $tenant->last_deployed_at->format('M j, Y H:i') }}
+          <span class="font-bold">{{ __('Last deployment') }}:</span> {{ $tenant->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}
         </div>
     @endif
 

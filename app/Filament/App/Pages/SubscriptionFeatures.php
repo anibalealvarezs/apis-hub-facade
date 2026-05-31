@@ -7,14 +7,16 @@ use Filament\Pages\Page;
 class SubscriptionFeatures extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-star';
-
     protected static string $view = 'filament.app.pages.subscription-features';
-
-    protected static ?string $navigationGroup = 'Knowledge Base';
 
     public static function getNavigationLabel(): string
     {
         return __('Features & Tiers');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Knowledge Base');
     }
 
     public function getTitle(): string

@@ -2,24 +2,26 @@
 
 namespace App\Filament\App\Pages;
 
-use Filament\Pages\Page;
-use Filament\Forms;
 use App\Models\BillingProfile;
 use Filament\Actions\Action;
+use Filament\Forms;
+use Filament\Pages\Page;
 
 class ProjectBillingSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
-
     protected static string $view = 'filament.app.pages.project-billing-settings';
 
-    protected static ?string $navigationGroup = 'Administration';
-    
     public function getTitle(): string
     {
         return __('Billing & Subscription');
     }
-    
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Administration');
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Billing & Subscription');
@@ -74,9 +76,10 @@ class ProjectBillingSettings extends Page
                         ->danger()
                         ->persistent()
                         ->send();
+
                     return;
                 }
-                
+
                 // Check if user is the owner of the profile
                 if ($profile->user_id === auth()->id()) {
                     $project->update([
@@ -92,12 +95,13 @@ class ProjectBillingSettings extends Page
                 } else {
                     // Shared profile of a third party
                     $isShared = $profile->sharedWithUsers()->where('users.id', auth()->id())->exists();
-                    if (!$isShared) {
+                    if (! $isShared) {
                         \Filament\Notifications\Notification::make()
                             ->title(__('Error'))
                             ->body(__('The selected billing profile is not shared with you.'))
                             ->danger()
                             ->send();
+
                         return;
                     }
 
@@ -119,12 +123,12 @@ class ProjectBillingSettings extends Page
     protected function getViewData(): array
     {
         $project = filament()->getTenant();
-        
+
         $cacheKey = "project_{$project->id}_billing_page_data";
-        
+
         $cachedData = \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function () use ($project) {
             $billingProfile = $project->billingProfile()->first();
-            
+
             $starts = null;
             $ends = null;
             if ($billingProfile) {

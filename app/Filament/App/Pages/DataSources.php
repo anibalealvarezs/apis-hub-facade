@@ -3,7 +3,6 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\ApisHubRelease;
-use App\Services\DeployerService;
 use App\Services\LocalAssetDiscoveryService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -21,11 +20,15 @@ use Illuminate\Support\Str;
 class DataSources extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-server-stack';
-    protected static ?string $navigationGroup = 'Data & Integrations';
 
     public static function getNavigationLabel(): string
     {
         return __('Data Sources');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Data & Integrations');
     }
 
     public function getTitle(): string
@@ -423,7 +426,7 @@ class DataSources extends Page
                 ->options($options)
                 ->default($defaultChannels)
                 ->required()
-                ->minItems(1)
+                ->minItems(1),
         ];
     }
 
@@ -432,7 +435,7 @@ class DataSources extends Page
         return Action::make('connect')
                 ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
-                ->visible(fn () => auth()->user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
+                ->visible(fn () => auth()->user()->can('manage_channels') && ! $this->isConnected($this->activeChannel))
                 ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn () => $this->getChannelSelectionForm())
                 ->action(function (array $data) {
@@ -481,8 +484,6 @@ class DataSources extends Page
                         ->send();
                 });
     }
-
-
 
     protected function mergeDiscoveredAssets(array $liveAssets): void
     {
@@ -945,7 +946,7 @@ class DataSources extends Page
             // Channel-level toggle
             if ($key === 'enabled') {
                 $main[] = Toggle::make($fieldKey)
-                    ->label('Enable ' . $this->getChannelLabel($this->activeChannel))
+                    ->label(__('Enable') . ' ' . $this->getChannelLabel($this->activeChannel))
                     ->default($definition['default'] ?? true)
                     ->columnSpanFull();
 
@@ -1056,7 +1057,7 @@ class DataSources extends Page
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="{{ __(\'Live filter assets by name or ID...\') }}">
+                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                     </div>
                 ')),
             Repeater::make($fieldKey)
@@ -1204,7 +1205,7 @@ class DataSources extends Page
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="Live filter assets by name or ID...">
+                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                     </div>
                 ')),
             Repeater::make($fieldKey)
@@ -1275,8 +1276,9 @@ class DataSources extends Page
             return;
         }
 
-        if (!auth()->user()->can('manage_channels')) {
+        if (! auth()->user()->can('manage_channels')) {
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
+
             return;
         }
 

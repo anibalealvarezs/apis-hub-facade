@@ -10,6 +10,7 @@
             cycleBounds: @js($this->getCycleBounds()),
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
             currentTime: new Date().getTime(),
+            cycleLabel: '{{ __('Cycle') }}',
 
             init() {
                 setInterval(() => {
@@ -152,7 +153,7 @@
         <template x-teleport="#tier-usage-header-target">
             <div class="flex items-center gap-3 text-sm transition-colors"
                  :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`' . __('Cycle') . ': ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`${cycleLabel}: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
                 <div class="flex items-center gap-2">
                     <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ __('Tier Usage') }}</span>
                     <div class="font-bold text-base">
@@ -227,7 +228,7 @@
                         {{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}
                         @if(filament()->getTenant()->last_deployed_at)
                             <span class="mx-2">|</span>
-                            {{ __('Last deployment') }}: {{ filament()->getTenant()->last_deployed_at->format('M j, Y H:i') }}
+                            {{ __('Last deployment') }}: {{ filament()->getTenant()->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}
                         @endif
                     </p>
                 </div>

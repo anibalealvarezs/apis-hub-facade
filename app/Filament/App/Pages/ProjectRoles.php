@@ -8,14 +8,16 @@ use Spatie\Permission\Models\Role;
 class ProjectRoles extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-
     protected static string $view = 'filament.app.pages.project-roles';
-
-    protected static ?string $navigationGroup = 'Knowledge Base';
 
     public static function getNavigationLabel(): string
     {
         return __('Roles & Permissions');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Knowledge Base');
     }
 
     public function getTitle(): string

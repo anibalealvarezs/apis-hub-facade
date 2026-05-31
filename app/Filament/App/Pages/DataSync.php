@@ -11,11 +11,15 @@ use Filament\Pages\Page;
 class DataSync extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
-    protected static ?string $navigationGroup = 'Exploration & Telemetry';
 
     public static function getNavigationLabel(): string
     {
         return __('Telemetry');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Exploration & Telemetry');
     }
 
     public function getTitle(): string
