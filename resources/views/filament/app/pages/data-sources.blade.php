@@ -224,21 +224,22 @@
                                         @endif
                                     </div>
                                 </button>
+                            @elseif ($channel['status'] === 'Maintenance')
+                                <button disabled
+                                        class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                                        :class="activeTab === '{{ $channel['key'] }}' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
+                                    <span class="truncate pr-2">{{ $channel['label'] }}</span>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <x-heroicon-m-exclamation-triangle class="w-5 h-5 text-yellow-600" />
+                                    </div>
+                                </button>
                             @else
                                 <button disabled
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
                                     <span class="truncate pr-2">{{ $channel['label'] }}</span>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md"
-                                            :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : ''"
-                                            x-text="getChannelCount('{{ $channel['key'] }}')">
-                                        </span>
-                                        @if(isset($this->data[$channel['key'].'_enabled']) && $this->data[$channel['key'].'_enabled'])
-                                            <span class="flex h-2 w-2 rounded-full bg-success-500"></span>
-                                        @else
-                                            <span class="flex h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-                                        @endif
+                                        <x-heroicon-m-lock-closed class="w-5 h-5 text-gray-600" />
                                     </div>
                                 </button>
                             @endif
