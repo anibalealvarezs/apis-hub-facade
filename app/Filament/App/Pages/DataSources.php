@@ -240,25 +240,25 @@ class DataSources extends Page
             'tiktok' => [
                 'label' => 'TikTok',
                 'channels' => [
-                    ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Comming Soon'],
-                    ['key' => 'tiktok_organic', 'label' => 'TikTok Organic', 'status' => 'Comming Soon'],
-                    ['key' => 'tiktok_leads', 'label' => 'TikTok Leads', 'status' => 'Comming Soon'],
+                    ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Coming Soon'],
+                    ['key' => 'tiktok_organic', 'label' => 'TikTok Organic', 'status' => 'Coming Soon'],
+                    ['key' => 'tiktok_leads', 'label' => 'TikTok Leads', 'status' => 'Coming Soon'],
                 ],
             ],
             'klaviyo' => [
                 'label' => 'Klaviyo',
                 'channels' => [
-                    ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Comming Soon'],
-                    ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events', 'status' => 'Comming Soon'],
+                    ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Coming Soon'],
+                    ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events', 'status' => 'Coming Soon'],
                 ],
             ],
             'shopify' => [
                 'label' => 'Shopify',
                 'channels' => [
-                    ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Comming Soon'],
-                    ['key' => 'shopify_orders', 'label' => 'Shopify Orders', 'status' => 'Comming Soon'],
-                    ['key' => 'shopify_products', 'label' => 'Shopify Products', 'status' => 'Comming Soon'],
-                    ['key' => 'shopify_customers', 'label' => 'Shopify Customers', 'status' => 'Comming Soon'],
+                    ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Coming Soon'],
+                    ['key' => 'shopify_orders', 'label' => 'Shopify Orders', 'status' => 'Coming Soon'],
+                    ['key' => 'shopify_products', 'label' => 'Shopify Products', 'status' => 'Coming Soon'],
+                    ['key' => 'shopify_customers', 'label' => 'Shopify Customers', 'status' => 'Coming Soon'],
                 ],
             ],
         ];

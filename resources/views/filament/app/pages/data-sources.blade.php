@@ -210,7 +210,7 @@
                             @if($channel['status'] === 'Active')
                                 <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
-                                        :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
+                                        :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-950 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'">
                                     <span class="truncate pr-2">{{ $channel['label'] }}</span>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md"
@@ -225,21 +225,29 @@
                                     </div>
                                 </button>
                             @elseif ($channel['status'] === 'Maintenance')
-                                <button disabled
+                                <button disabled data-tooltip-target="maintenance-tooltip-{{ $pKey }}"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
                                     <span class="truncate pr-2">{{ $channel['label'] }}</span>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <x-heroicon-m-exclamation-triangle class="w-5 h-5 text-yellow-600" />
                                     </div>
+                                    <div id="maintenance-tooltip-{{ $pKey }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                        Maintenance
+                                        <div class="tooltip-arrow" data-popper-arrow></div>
+                                    </div>
                                 </button>
                             @else
-                                <button disabled
+                                <button disabled data-tooltip-target="coming-soon-tooltip-{{ $pKey }}"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
                                     <span class="truncate pr-2">{{ $channel['label'] }}</span>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <x-heroicon-m-lock-closed class="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <div id="coming-soon-tooltip-{{ $pKey }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                        Coming soon
+                                        <div class="tooltip-arrow" data-popper-arrow></div>
                                     </div>
                                 </button>
                             @endif
