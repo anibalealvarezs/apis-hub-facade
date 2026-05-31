@@ -299,7 +299,7 @@
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
                         <x-filament::button type="submit" color="primary" size="lg"
                             :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
-                            wire:confirm="{{ $this->savingThisConfigurationLabel }}<br>{{ $this->currentProjectUsageLabel }}: {{ $this->currentProjectUsage }}<br>{{ $this->newlyStagedLabel }}: {{ $this->getNewlyStagedCount() }}<br>{{ $this->currentLedgerUsageLabel }}: {{ $this->currentLedgerUsage }}<br>{{ $this->availableGlobalQuotaLabel }}: {{ $this->getAvailableGlobalQuota() }}<br>{{ $this->maxAssetsLabel }}: {{ $this->maxAssets }}<br>{{ $this->selectedCountLabel }}: {{ $this->selectedCount }}<br>{{ $this->areYouSureLabel }}">
+                            wire:confirm="{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}<br>{{ __('Are you sure you want to proceed?') }}">
                             {{ __('Save Configuration') }}
                         </x-filament::button>
                     </div>
