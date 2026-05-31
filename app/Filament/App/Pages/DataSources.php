@@ -224,14 +224,41 @@ class DataSources extends Page
             'google' => [
                 'label' => 'Google',
                 'channels' => [
-                    ['key' => 'google_search_console', 'label' => 'Google Search Console'],
+                    ['key' => 'google_search_console', 'label' => 'Google Search Console', 'status' => 'Active'],
+                    ['key' => 'google_analytics', 'label' => 'Google Analytics', 'status' => 'Maintenance'],
+                    ['key' => 'google_ads', 'label' => 'Google Ads', 'status' => 'Maintenance'],
                 ],
             ],
             'facebook' => [
                 'label' => 'Facebook',
                 'channels' => [
-                    ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
-                    ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
+                    ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing', 'status' => 'Active'],
+                    ['key' => 'facebook_organic', 'label' => 'Facebook Organic', 'status' => 'Active'],
+                    ['key' => 'facebook_leads', 'label' => 'Facebook Leads', 'status' => 'Maintenance'],
+                ],
+            ],
+            'tiktok' => [
+                'label' => 'TikTok',
+                'channels' => [
+                    ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Comming Soon'],
+                    ['key' => 'tiktok_organic', 'label' => 'TikTok Organic', 'status' => 'Comming Soon'],
+                    ['key' => 'tiktok_leads', 'label' => 'TikTok Leads', 'status' => 'Comming Soon'],
+                ],
+            ],
+            'klaviyo' => [
+                'label' => 'Klaviyo',
+                'channels' => [
+                    ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Comming Soon'],
+                    ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events', 'status' => 'Comming Soon'],
+                ],
+            ],
+            'shopify' => [
+                'label' => 'Shopify',
+                'channels' => [
+                    ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Comming Soon'],
+                    ['key' => 'shopify_orders', 'label' => 'Shopify Orders', 'status' => 'Comming Soon'],
+                    ['key' => 'shopify_products', 'label' => 'Shopify Products', 'status' => 'Comming Soon'],
+                    ['key' => 'shopify_customers', 'label' => 'Shopify Customers', 'status' => 'Comming Soon'],
                 ],
             ],
         ];
