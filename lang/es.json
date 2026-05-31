@@ -490,5 +490,13 @@
     "Are you sure you want to remove this collaborator?": "¿Estás seguro de que quieres eliminar a este colaborador?",
     "No pending invitations.": "No hay invitaciones pendientes.",
     "Are you sure you want to revoke this invitation?": "¿Estás seguro de que quieres revocar esta invitación?",
-    "Manage users who have access to this project.": "Administrar usuarios que tienen acceso a este proyecto."
+    "Manage users who have access to this project.": "Administrar usuarios que tienen acceso a este proyecto.",
+    "Saving this configuration will update your tracked assets and may impact your monthly billing quota.": "Guardar esta configuración actualizará sus activos rastreados y puede afectar su cuota de facturación mensual.",
+    "Current Project Usage": "Uso Actual del Proyecto",
+    "Newly Staged": "Nuevos en Stage",
+    "Current Ledger Usage": "Uso Actual del Ledger",
+    "Available Global Quota": "Cuota Global Disponible",
+    "Max Assets": "Máximo de Activos",
+    "Selected Count": "Cantidad Seleccionada",
+    "Are you sure you want to proceed?": "¿Estás seguro de que quieres continuar?"
 }

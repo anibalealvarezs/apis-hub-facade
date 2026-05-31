@@ -11,6 +11,19 @@
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
             currentTime: new Date().getTime(),
             cycleLabel: '{{ __('Cycle') }}',
+            quotaLockedLabel: '{{ __('Quota Locked') }}',
+            lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
+            gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
+            quotaLockedRefreshNeededLabel: '{{ __('Quota Locked (Refresh needed)') }}',
+            gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
+            savingThisConfigurationLabel: '{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}',
+            areYouSureLabel: '{{ __('Are you sure you want to proceed?') }}',
+            currentProjectUsageLabel: '{{ __('Current Project Usage') }}',
+            newlyStagedLabel: '{{ __('Newly Staged') }}',
+            currentLedgerUsageLabel: '{{ __('Current Ledger Usage') }}',
+            availableGlobalQuotaLabel: '{{ __('Available Global Quota') }}',
+            maxAssetsLabel: '{{ __('Max Assets') }}',
+            selectedCountLabel: '{{ __('Selected Count') }}',
 
             init() {
                 setInterval(() => {
@@ -24,17 +37,17 @@
                 let lock = this.lockStates[id];
 
                 if (lock.status === 'locked') {
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked') . '</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedLabel}</span>`;
                 }
 
                 if (lock.status === 'pending_release') {
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>' . __('Locked until cycle end') . ' (${this.cycleBounds.ends_at})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})</span>`;
                 }
 
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period paused (Waiting for deployment)') . '</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodPausedLabel}</span>`;
                     }
 
                     let stagedAt = new Date(lock.staged_at).getTime();
@@ -45,7 +58,7 @@
                     let remainingMs = endsAt - this.currentTime;
 
                     if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>' . __('Quota Locked (Refresh needed)') . '</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedRefreshNeededLabel}</span>`;
                     }
 
                     let remainingMins = Math.floor(remainingMs / 60000);
@@ -53,7 +66,7 @@
                     let m = remainingMins % 60;
                     let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>' . __('Grace Period (Ends in') . ' ${timeStr})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodLabel} ${timeStr})</span>`;
                 }
 
                 return '';
@@ -286,7 +299,7 @@
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
                         <x-filament::button type="submit" color="primary" size="lg"
                             :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended'"
-                            wire:confirm="Saving this configuration will update your tracked assets and may impact your monthly billing quota. Are you sure you want to proceed?">
+                            wire:confirm="{{ $this->savingThisConfigurationLabel }}<br>{{ $this->currentProjectUsageLabel }}: {{ $this->currentProjectUsage }}<br>{{ $this->newlyStagedLabel }}: {{ $this->getNewlyStagedCount() }}<br>{{ $this->currentLedgerUsageLabel }}: {{ $this->currentLedgerUsage }}<br>{{ $this->availableGlobalQuotaLabel }}: {{ $this->getAvailableGlobalQuota() }}<br>{{ $this->maxAssetsLabel }}: {{ $this->maxAssets }}<br>{{ $this->selectedCountLabel }}: {{ $this->selectedCount }}<br>{{ $this->areYouSureLabel }}">
                             {{ __('Save Configuration') }}
                         </x-filament::button>
                     </div>
