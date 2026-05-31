@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Este proyecto está enlazado a un único perfil de facturación que financia el coste de su infraestructura y sus cuotas de sincronización.
+                    {{ __('This project is linked to a single billing profile that finances its infrastructure costs and sync fees.') }}
                 </p>
             </div>
         </div>
@@ -29,7 +29,7 @@
                                 </h3>
                                 @if($billingProfile->reference_name)
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        Razón Social / Legal: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $billingProfile->name }}</span>
+                                        {{ __('Legal Name') }}: <span class="font-medium text-gray-700 dark:text-gray-300">{{ $billingProfile->name }}</span>
                                     </p>
                                 @endif
                             </div>
@@ -39,7 +39,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-2">
                             <!-- Tipo -->
                             <div class="space-y-1">
-                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipo de Perfil</span>
+                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{{ __('Profile Type') }}</span>
                                 <div class="flex items-center gap-1.5">
                                     <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-white/5 dark:text-gray-400 dark:ring-white/10">
                                         {{ ucfirst($billingProfile->type ?? 'Individual') }}
@@ -59,7 +59,7 @@
 
                             <!-- Estado del Proyecto -->
                             <div class="space-y-1">
-                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Estado de Pago del Proyecto</span>
+                                <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{{ __('Project Payment Status') }}</span>
                                 <div class="flex items-center gap-1.5">
                                     @php
                                         $statusColors = [
@@ -68,9 +68,9 @@
                                             'suspended' => 'bg-rose-500/10 text-rose-500 dark:bg-rose-500/20 dark:text-rose-400 ring-rose-500/30',
                                         ];
                                         $statusLabels = [
-                                            'active' => 'Activo',
-                                            'pending_approval' => 'Pendiente de Aprobación',
-                                            'suspended' => 'Suspendido',
+                                            'active' => __('Active'),
+                                            'pending_approval' => __('Pending Approval'),
+                                            'suspended' => __('Suspended'),
                                         ];
                                         $projectStatus = $project->billing_status ?? 'active';
                                         $styleClass = $statusColors[$projectStatus] ?? 'bg-gray-500/10 text-gray-500';
@@ -95,13 +95,13 @@
                                 <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                 </svg>
-                                <span>Inicio de Ciclo: <strong class="font-semibold text-gray-950 dark:text-white">{{ $cycleStarts?->format('d M, Y') ?? 'N/A' }}</strong></span>
+                                <span>{{ __('Cycle Start') }}: <strong class="font-semibold text-gray-950 dark:text-white">{{ $cycleStarts?->format('d M, Y') ?? 'N/A' }}</strong></span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span>Próxima Renovación: <strong class="font-semibold text-gray-950 dark:text-white">{{ $cycleEnds?->format('d M, Y') ?? 'N/A' }}</strong></span>
+                                <span>{{ __('Next Renewal') }}: <strong class="font-semibold text-gray-950 dark:text-white">{{ $cycleEnds?->format('d M, Y') ?? 'N/A' }}</strong></span>
                             </div>
                         </div>
 
@@ -116,9 +116,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                     </svg>
                 </div>
-                <h3 class="text-base font-bold text-gray-950 dark:text-white">Sin Perfil de Facturación</h3>
+                <h3 class="text-base font-bold text-gray-950 dark:text-white">{{ __('No Billing Profile') }}</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                    Este proyecto no tiene asignado ningún perfil de facturación activo. Por favor, asigna uno utilizando el botón en la cabecera para evitar interrupciones de servicio.
+                    {{ __('This project does not have an active billing profile assigned. Please assign one using the button in the header to avoid service interruptions.') }}
                 </p>
             </div>
         @endif

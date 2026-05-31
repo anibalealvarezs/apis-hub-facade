@@ -28,24 +28,24 @@
                 }
 
                 if ($totalProcessing > 0) {
-                    $statusLabel = 'Workers Corriendo';
+                    $statusLabel = __('Workers Running');
                     $statusColor = 'bg-success-50 text-success-600 ring-success-600/10 dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/30';
-                    $statusDescription = "Se están procesando $totalProcessing trabajos activamente.";
+                    $statusDescription = __('There are :count jobs actively being processed.', ['count' => $totalProcessing]);
                 } elseif ($totalScheduled > 0) {
-                    $statusLabel = 'Workers en Espera / Pausados';
+                    $statusLabel = __('Workers Waiting / Paused');
                     $statusColor = 'bg-warning-50 text-warning-600 ring-warning-600/10 dark:bg-warning-400/10 dark:text-warning-400 dark:ring-warning-400/30';
-                    $statusDescription = "No hay procesamiento activo, pero hay $totalScheduled trabajos en cola.";
+                    $statusDescription = __('There are :count jobs in the queue.', ['count' => $totalScheduled]);
                 } else {
-                    $statusLabel = 'Workers Inactivos';
+                    $statusLabel = __('Workers Idle');
                     $statusColor = 'bg-danger-50 text-danger-600 ring-danger-600/10 dark:bg-danger-400/10 dark:text-danger-400 dark:ring-danger-400/30';
-                    $statusDescription = 'No hay trabajos programados ni en procesamiento. Los workers están inactivos.';
+                    $statusDescription = 'There are no scheduled or processing jobs. The workers are idle.';
                 }
             @endphp
 
             {{-- 🟢 Layer 0: Worker Status --}}
             <div class="mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
                 <div>
-                    <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">Remote Workers Status</h2>
+                    <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">{{ __('Remote Workers Status') }}</h2>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                         <span class="inline-flex items-center w-max rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColor }}">
                             {{ $statusLabel }}
@@ -61,7 +61,7 @@
             <div class="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div class="w-full md:w-1/2">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Overall Sync Progress</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Overall Sync Progress') }}</h2>
                         <div class="flex items-center gap-4">
                             <div class="flex-grow bg-gray-200 dark:bg-gray-800 rounded-full h-4 overflow-hidden">
                                 <div class="bg-primary-600 h-4 rounded-full transition-all duration-500 ease-out" style="width: {{ $globalCompletion }}%"></div>
