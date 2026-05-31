@@ -225,7 +225,7 @@
                                                             <div class="flex items-center gap-2">
                                                                 @if($isGlobal)
                                                                     <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-400" />
-                                                                    <span class="font-bold text-gray-700 dark:text-gray-300">Channel-Wide Tasks</span>
+                                                                    <span class="font-bold text-gray-700 dark:text-gray-300">{{ __('Channel-Wide Tasks') }}</span>
                                                                 @else
                                                                     @if($aFail > 0)
                                                                         <x-heroicon-m-exclamation-circle class="w-5 h-5 text-danger-500" />
