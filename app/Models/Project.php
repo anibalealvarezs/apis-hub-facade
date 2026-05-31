@@ -320,14 +320,39 @@ class Project extends Model
             if (!is_array($channelConfig)) continue;
             if (empty($channelConfig['enabled'])) continue;
 
-            foreach ($channelConfig as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $asset) {
-                        if (!empty($asset['enabled'])) {
-                            return true;
-                        }
-                    }
+            if ($this->findEnabledAsset($channelConfig)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively search any depth of a channel config array for an item
+     * that has enabled=true. This handles both flat asset lists
+     * (e.g. facebook_marketing.ad_accounts[]) and double-nested structures
+     * (e.g. google_search_console.assets.sites[]).
+     */
+    private function findEnabledAsset(array $config, int $depth = 0): bool
+    {
+        if ($depth > 5) {
+            return false; // Guard against unexpected deep structures
+        }
+
+        foreach ($config as $key => $value) {
+            if (!is_array($value)) continue;
+
+            // If any item in this array has an 'enabled' key, treat it as an asset list
+            foreach ($value as $item) {
+                if (is_array($item) && !empty($item['enabled'])) {
+                    return true;
                 }
+            }
+
+            // Otherwise recurse one level deeper (handles nested objects like assets.sites)
+            if ($this->findEnabledAsset($value, $depth + 1)) {
+                return true;
             }
         }
 
