@@ -17,7 +17,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Select a billing profile to manage its subscription tier and payments.') }}</p>
         </div>
         <div class="w-full md:w-80">
-            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('Select {{ __('Active Profile') }}') }}</label>
+            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ __('Select Active Profile') }}</label>
             <select wire:model.live="selectedProfileId" class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 text-sm font-semibold">
                 @foreach(auth()->user()->getAvailableBillingProfiles() as $p)
                     <option value="{{ $p->id }}">{{ $p->display_name }} ({{ ucfirst($p->type) }})</option>
