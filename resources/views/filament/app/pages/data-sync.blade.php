@@ -38,7 +38,7 @@
                 } else {
                     $statusLabel = __('Workers Idle');
                     $statusColor = 'bg-danger-50 text-danger-600 ring-danger-600/10 dark:bg-danger-400/10 dark:text-danger-400 dark:ring-danger-400/30';
-                    $statusDescription = 'There are no scheduled or processing jobs. The workers are idle.';
+                    $statusDescription = __('There are no scheduled or processing jobs. The workers are idle.');
                 }
             @endphp
 
