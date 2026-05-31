@@ -2,7 +2,7 @@
     <div wire:poll.10s="refreshData">
         @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
             <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
-              <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.
+              <span class="font-bold">{{ __('Project Suspended') }}</span> {{ __('This project is currently inactive due to billing issues. Read-only access is allowed to view configuration, but editing, deployment, synchronization, and ownership transfer options are blocked.') }}
             </div>
         @endif
 
@@ -13,7 +13,7 @@
         @elseif(empty($syncData) || !isset($syncData['completion_percentage']))
             <div class="p-12 text-center text-gray-500 dark:text-gray-400">
                 <x-heroicon-o-exclamation-triangle class="h-12 w-12 mx-auto mb-4" />
-                <p class="text-lg">Establishing connection to Sync Engine or data is unavailable...</p>
+                <p class="text-lg">{{ __('Establishing connection to Sync Engine or data is unavailable...') }}</p>
             </div>
         @else
             @php
@@ -72,11 +72,11 @@
 
                     <div class="w-full md:w-auto flex flex-wrap gap-6">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Assets</span>
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Total Assets') }}</span>
                             <span class="text-3xl font-semibold text-gray-900 dark:text-white">{{ $syncData['total_assets'] ?? 0 }}</span>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Fully Synced</span>
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Fully Synced') }}</span>
                             <div class="flex items-end gap-2">
                                 <span class="text-3xl font-semibold text-success-600 dark:text-success-400">{{ $syncData['fully_synced_count'] ?? 0 }}</span>
                                 <span class="text-sm text-gray-400 mb-1">({{ number_format($syncData['fully_synced_percentage'] ?? 0, 1) }}%)</span>
@@ -84,16 +84,16 @@
                         </div>
                         @if(filament()->getTenant()->last_historical_resync_at)
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Resync</span>
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Last Historical Resync') }}</span>
                             <div class="flex items-end gap-2">
-                                <span class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->format('M j, Y') }}</span>
+                                <span class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->translatedFormat('M j, Y') }}</span>
                             </div>
                         </div>
                         @endif
                         @if($totalFailed > 0)
                         <div class="flex flex-col px-4 py-2 bg-danger-50 dark:bg-danger-500/10 rounded-xl border border-danger-200 dark:border-danger-500/20">
                             <span class="text-sm font-medium text-danger-600 dark:text-danger-400 flex items-center gap-1">
-                                <x-heroicon-m-exclamation-triangle class="w-4 h-4"/> Failed Jobs
+                                <x-heroicon-m-exclamation-triangle class="w-4 h-4"/> {{ __('Failed jobs') }}
                             </span>
                             <span class="text-3xl font-semibold text-danger-700 dark:text-danger-500">{{ $totalFailed }}</span>
                         </div>
@@ -129,14 +129,14 @@
                                             {{ str_replace('_', ' ', $channelData['channel'] ?? $channelKey) }}
                                         </h3>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $channelData['total_assets'] ?? 0 }} Assets Tracker
+                                            {{ $channelData['total_assets'] ?? 0 }} {{ __('Assets Tracker') }}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="flex-grow lg:w-1/3">
                                     <div class="flex justify-between text-sm mb-1">
-                                        <span class="font-medium text-gray-700 dark:text-gray-300">Completion</span>
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ __('Completion') }}</span>
                                         <span class="font-bold text-gray-900 dark:text-white">{{ $chComp }}%</span>
                                     </div>
                                     <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5">
@@ -147,25 +147,25 @@
                                 <div class="flex items-center gap-3 lg:w-1/3 lg:justify-end flex-wrap">
                                     <div class="flex gap-2">
                                         <x-filament::badge color="success" class="flex-col !px-2 !py-1">
-                                            <span class="text-[10px] uppercase opacity-70">Completed</span>
+                                            <span class="text-[10px] uppercase opacity-70">{{ __('Completed') }}</span>
                                             <span class="font-bold text-sm">{{ $channelData['completed'] ?? 0 }}</span>
                                         </x-filament::badge>
 
                                         @if(($channelData['processing'] ?? 0) > 0)
                                         <x-filament::badge color="warning" class="flex-col !px-2 !py-1">
-                                            <span class="text-[10px] uppercase opacity-70">Processing</span>
+                                            <span class="text-[10px] uppercase opacity-70">{{ __('Processing') }}</span>
                                             <span class="font-bold text-sm">{{ $channelData['processing'] }}</span>
                                         </x-filament::badge>
                                         @endif
 
                                         <x-filament::badge color="gray" class="flex-col !px-2 !py-1" tooltip="Jobs waiting for quota or time limits">
-                                            <span class="text-[10px] uppercase opacity-70">Scheduled</span>
+                                            <span class="text-[10px] uppercase opacity-70">{{ __('Scheduled') }}</span>
                                             <span class="font-bold text-sm">{{ $channelData['scheduled'] ?? 0 }}</span>
                                         </x-filament::badge>
 
                                         @if($chFailed > 0)
                                         <x-filament::badge color="danger" class="flex-col !px-2 !py-1">
-                                            <span class="text-[10px] uppercase opacity-70">Failed</span>
+                                            <span class="text-[10px] uppercase opacity-70">{{ __('Failed') }}</span>
                                             <span class="font-bold text-sm">{{ $chFailed }}</span>
                                         </x-filament::badge>
                                         @endif
@@ -186,12 +186,12 @@
                                         <table class="w-full text-sm text-left">
                                             <thead class="text-xs text-gray-500 uppercase bg-gray-100/50 dark:bg-gray-800/50 rounded-t-lg">
                                                 <tr>
-                                                    <th class="px-4 py-3 font-medium rounded-tl-lg">Asset / Identifier</th>
-                                                    <th class="px-4 py-3 font-medium">Progress</th>
-                                                    <th class="px-4 py-3 font-medium text-center">Completed</th>
-                                                    <th class="px-4 py-3 font-medium text-center">Processing</th>
-                                                    <th class="px-4 py-3 font-medium text-center">Scheduled</th>
-                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">Failed</th>
+                                                    <th class="px-4 py-3 font-medium rounded-tl-lg">{{ __('Asset / Identifier') }}</th>
+                                                    <th class="px-4 py-3 font-medium">{{ __('Progress') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center">{{ __('Completed') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center">{{ __('Processing') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center">{{ __('Scheduled') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">{{ __('Failed') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -264,7 +264,7 @@
                                                             </div>
                                                             @if($aFail > 0)
                                                                 <p class="text-xs mt-1 text-danger-600 dark:text-danger-400 ml-7">
-                                                                    Issues detected. Check credentials or rate limits.
+                                                                    {{ __('Issues detected. Check credentials or rate limits.') }}
                                                                 </p>
                                                             @endif
                                                         </td>
@@ -315,7 +315,7 @@
                                     </div>
                                 @else
                                     <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                                        <p>No assets configured or syncing yet.</p>
+                                        <p>{{ __('No assets configured or syncing yet.') }}</p>
                                     </div>
                                 @endif
                             </div>

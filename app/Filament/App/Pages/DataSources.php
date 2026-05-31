@@ -946,7 +946,7 @@ class DataSources extends Page
             // Channel-level toggle
             if ($key === 'enabled') {
                 $main[] = Toggle::make($fieldKey)
-                    ->label(__('Enable') . ' ' . $this->getChannelLabel($this->activeChannel))
+                    ->label(__('Enable :channel', ['channel' => $this->getChannelLabel($this->activeChannel)]))
                     ->default($definition['default'] ?? true)
                     ->columnSpanFull();
 
