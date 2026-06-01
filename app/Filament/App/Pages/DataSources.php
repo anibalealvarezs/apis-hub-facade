@@ -1361,141 +1361,17 @@ class DataSources extends Page
                 continue;
             }
 
-            $fields = $release->config_schemas[$channel]['fields'] ?? [];
-            $assetListKey = null;
+            $configPayloadService = app(\App\Services\ConfigPayloadService::class);
+            $payloadData = $configPayloadService->buildPayload($tenant, $release, $channel, $channelConfig, $dbState[$channel] ?? []);
 
-            // Dynamically find which field is the array of assets (e.g., 'ad_accounts', 'assets.sites')
-            foreach ($fields as $key => $def) {
-                if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
-                    $assetListKey = $key;
-
-                    break;
-                } elseif (($def['type'] ?? '') === 'object' && isset($def['schema'])) {
-                    foreach ($def['schema'] as $subKey => $subDef) {
-                        if (($subDef['type'] ?? '') === 'array' && isset($subDef['item_schema'])) {
-                            $assetListKey = $key . '.' . $subKey;
-
-                            break 2;
-                        }
-                    }
-                }
+            if (! $payloadData) {
+                continue; // No assets array found for this channel or invalid schema
             }
 
-            if (! $assetListKey) {
-                continue; // No assets array found for this channel
-            }
-
-            $remoteAssetKey = $remoteAssetKeyMap[$channel] ?? 'assets';
-
-            $payload = $channelConfig;
-            $payload['type'] = $channel;
-
-            // Map the correct 'enabled' state from the toggle name
-            $payload['enabled'] = filter_var($channelConfig[$channel . '_enabled'] ?? $channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-            unset($payload[$channel . '_enabled']);
-
-            // Enforce Global Defaults for Jobs
-            $payload['granular_sync'] = true;
-            if ($channel === 'google_search_console') {
-                $payload['max_workers'] = 4;
-                if (isset($channelConfig['calculate_synthetics'])) {
-                    $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
-                }
-            } elseif ($channel === 'facebook_organic') {
-                $payload['max_workers'] = 1;
-
-                // Force global extraction granularity instructions for the worker cache
-                $payload['feature_toggles'] = [
-                    'page_metrics' => true,
-                    'posts' => true,
-                    'post_metrics' => true,
-                    'ig_accounts' => true,
-                    'ig_account_metrics' => true,
-                    'ig_account_media' => true,
-                    'ig_account_media_metrics' => true,
-                ];
-            } elseif ($channel === 'facebook_marketing') {
-                $payload['max_workers'] = 2;
-
-                // Map Custom UI to APIs Hub Payload schema
-                $entLevel = strtolower($channelConfig['entity_sync_depth'] ?? 'ad');
-                $metLevel = strtolower($channelConfig['metrics_level'] ?? 'ad');
-
-                if ($entLevel === 'account') {
-                    $entLevel = 'ad_account';
-                }
-                if ($metLevel === 'account') {
-                    $metLevel = 'ad_account';
-                }
-
-                $payload['feature_toggles'] = [
-                    'campaigns' => true, // API always expects this
-                    'adsets' => in_array($entLevel, ['adset', 'ad', 'creative']),
-                    'ads' => in_array($entLevel, ['ad', 'creative']),
-                    'creatives' => ($entLevel === 'creative'),
-
-                    'ad_account_metrics' => ($metLevel === 'ad_account'),
-                    'campaign_metrics' => ($metLevel === 'campaign'),
-                    'adset_metrics' => ($metLevel === 'adset'),
-                    'ad_metrics' => ($metLevel === 'ad'),
-                    'creative_metrics' => ($metLevel === 'creative'),
-                ];
-
-                $payload['metrics_strategy'] = 'default';
-                $payload['metrics_config'] = [];
-
-                $payload['entity_filters'] = [
-                    'CAMPAIGN' => $channelConfig['CAMPAIGN']['cache_include'] ?? '',
-                    'ADSET' => $channelConfig['ADSET']['cache_include'] ?? '',
-                    'AD' => $channelConfig['AD']['cache_include'] ?? '',
-                    'CREATIVE' => $channelConfig['CREATIVE']['cache_include'] ?? '',
-                ];
-
-                unset($payload['entity_sync_depth']);
-                unset($payload['metrics_level']);
-            }
-
-            // ENFORCE FREE TIER CONSTRAINT RULES:
-            $isFree = $tenant->billingProfile?->tier === \App\Enums\UserTier::FREE;
-            if ($isFree) {
-                // 1. Capping workers to a maximum of 1
-                $payload['max_workers'] = 1;
-
-                // 2. Disabling synthetic GSC calculations
-                $payload['calculate_synthetics'] = false;
-                if (isset($payload['google_search_console'])) {
-                    $payload['google_search_console']['calculate_synthetics'] = false;
-                }
-
-                // 3. Capping historical sync range to 6 months
-                $payload['cache_history_range'] = '6_months';
-                $channelConfig['cache_history_range'] = '6_months';
-                $payload[$channel . '.cache_history_range'] = '6_months';
-                $channelConfig[$channel . '.cache_history_range'] = '6_months';
-            }
-
-            // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
-            $assetsListUi = array_values(\Illuminate\Support\Arr::get($channelConfig, $assetListKey, []));
-            $assetsListDb = array_values(\Illuminate\Support\Arr::get($dbState[$channel] ?? [], $assetListKey, []));
-
-
-            foreach ($assetsListUi as $index => $uiAsset) {
-                if (isset($assetsListDb[$index])) {
-                    // Update any boolean toggles (like enabled, page_metrics, etc) from UI into the pristine DB asset
-                    foreach ($uiAsset as $key => $val) {
-                        if (is_bool($val)) {
-                            $assetsListDb[$index][$key] = $val;
-                        }
-                    }
-                }
-            }
-            // Clean up the top-level list to avoid duplicate or conflicting structures
-            \Illuminate\Support\Arr::forget($payload, $assetListKey);
-
-            // Re-map the pristine assets list to the nested structure the backend drivers expect
-            $payload['assets'] = [
-                $remoteAssetKey => $assetsListDb,
-            ];
+            $payload = $payloadData['payload'];
+            $assetListKey = $payloadData['assetListKey'];
+            $remoteAssetKey = $payloadData['remoteAssetKey'];
+            $assetsListDb = $payloadData['assetsListDb'];
 
             try {
                 $response = $service->updateCredentials($tenant, $payload);

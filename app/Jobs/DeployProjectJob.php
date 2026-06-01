@@ -79,6 +79,30 @@ class DeployProjectJob implements ShouldQueue
                         }
                     }
                 }
+
+                // 6. Hydrate remote API Hub with existing channel configuration (if any)
+                $syncConfig = $this->project->sync_config ?? [];
+                if (!empty($syncConfig)) {
+                    $configPayloadService = app(\App\Services\ConfigPayloadService::class);
+                    $remoteService = app(\App\Services\RemoteEngineService::class);
+                    $release = $this->project->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
+                    
+                    if ($release) {
+                        foreach ($syncConfig as $channel => $channelConfig) {
+                            if (!is_array($channelConfig)) continue;
+                            
+                            $payloadData = $configPayloadService->buildPayload($this->project, $release, $channel, $channelConfig, $syncConfig[$channel] ?? []);
+                            if ($payloadData) {
+                                try {
+                                    $remoteService->updateCredentials($this->project, $payloadData['payload']);
+                                    Log::info("Hydrated {$channel} configuration into newly deployed project {$this->project->id}");
+                                } catch (\Exception $e) {
+                                    Log::error("Failed to hydrate {$channel} config for project {$this->project->id}: " . $e->getMessage());
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
                 $this->project->update([
                     'health_status'     => 'error',
