@@ -988,7 +988,14 @@ class DataSources extends Page
                 $options = $definition['options'];
                 
                 // Adapt the selector to accept maximum 6 months for Free Tier users
-                if ($key === 'cache_history_range' && \Filament\Facades\Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+                $tenant = \Filament\Facades\Filament::getTenant();
+                $isFreeTier = false;
+                if ($tenant && $tenant->billingProfile) {
+                    $tier = $tenant->billingProfile->tier;
+                    $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
+                }
+                
+                if ($key === 'cache_history_range' && $isFreeTier) {
                     $options = array_filter($options, function ($k) {
                         return in_array($k, ['1 month', '3 months', '6 months']);
                     }, ARRAY_FILTER_USE_KEY);
