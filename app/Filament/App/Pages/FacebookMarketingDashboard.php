@@ -26,22 +26,45 @@ class FacebookMarketingDashboard extends Page
         return !empty($config['facebook_marketing']['enabled']);
     }
 
-    public ?string $selectedAccount = null;
+    public array $selectedAccounts = [];
     public ?string $dateStart = null;
     public ?string $dateEnd = null;
 
-    public array $accounts = [
-        'act_123456789' => 'Acme Corp Ads',
-        'act_987654321' => 'Beta Test Account',
-    ];
+    public array $accounts = [];
+    public string $activeTab = 'campaigns';
 
     public function mount(): void
     {
         $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
 
-        if (!empty($this->accounts) && !$this->selectedAccount) {
-            $this->selectedAccount = array_key_first($this->accounts);
+        $this->loadAccounts();
+    }
+
+    public function loadAccounts(): void
+    {
+        try {
+            $service = app(\App\Services\RemoteEngineService::class);
+            $tenant = Filament::getTenant();
+            
+            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeledAccount');
+
+            if (isset($response['data']) && is_array($response['data'])) {
+                foreach ($response['data'] as $account) {
+                    $this->accounts[$account['id']] = $account['name'] ?? $account['id'];
+                }
+                
+                if (!empty($this->accounts) && empty($this->selectedAccounts)) {
+                    $this->selectedAccounts = [array_key_first($this->accounts)];
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("FBM Accounts Error: " . $e->getMessage());
         }
+    }
+
+    public function setActiveTab(string $tab): void
+    {
+        $this->activeTab = $tab;
     }
 }

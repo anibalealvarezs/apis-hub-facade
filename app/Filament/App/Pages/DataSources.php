@@ -148,11 +148,23 @@ class DataSources extends Page
         // Pre-fill $this->data so that getProviders() can correctly count active assets for sorting
         $this->data = $config;
 
-        // Dynamically set default active channel to the first one available BEFORE filling the form
+        // Dynamically set default active channel to the first one available that is 'Active' BEFORE filling the form
         $providers = $this->getProviders();
-        $firstProvider = reset($providers);
-        if ($firstProvider && ! empty($firstProvider['channels'])) {
-            $this->activeChannel = $firstProvider['channels'][0]['key'];
+        foreach ($providers as $provider) {
+            foreach ($provider['channels'] as $channel) {
+                if (($channel['status'] ?? '') === 'Active') {
+                    $this->activeChannel = $channel['key'];
+                    break 2;
+                }
+            }
+        }
+        
+        // Fallback if no active channel is found
+        if (!$this->activeChannel) {
+            $firstProvider = reset($providers);
+            if ($firstProvider && ! empty($firstProvider['channels'])) {
+                $this->activeChannel = $firstProvider['channels'][0]['key'];
+            }
         }
 
         // Now fill the form, which will generate the schema based on the correctly selected activeChannel
