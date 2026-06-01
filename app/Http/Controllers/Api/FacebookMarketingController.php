@@ -102,18 +102,17 @@ class FacebookMarketingController extends Controller
                 ],
             ];
 
-            \Illuminate\Support\Facades\Log::info("FBM Summary Payload: ", $payloads);
-            // $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
-            // \Illuminate\Support\Facades\Log::info("FBM Summary Results: ", $results);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            \Illuminate\Support\Facades\Log::info("FBM Summary Results: ", $results);
             
-            // if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
-            //     \Illuminate\Support\Facades\Log::error("FBM Summary APIs Hub Error: " . json_encode($results['summary']));
-            // }
+            if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("FBM Summary APIs Hub Error: " . json_encode($results['summary']));
+            }
 
             return response()->json([
-                'summary' => new \stdClass(),
-                'previous' => new \stdClass(),
-                'debug_results' => ['payloads' => $payloads]
+                'summary' => $results['summary']['data'][0] ?? new \stdClass(),
+                'previous' => $results['previous']['data'][0] ?? new \stdClass(),
+                'debug_results' => ['payloads' => $payloads, 'meta' => $results['summary']['meta'] ?? null]
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Summary Error: " . $e->getMessage());
@@ -160,15 +159,15 @@ class FacebookMarketingController extends Controller
                 ]
             ];
 
-            // $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
 
-            // if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
-            //     \Illuminate\Support\Facades\Log::error("FBM Chart APIs Hub Error: " . json_encode($results['chart']));
-            // }
+            if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("FBM Chart APIs Hub Error: " . json_encode($results['chart']));
+            }
 
             return response()->json([
-                'chart' => [],
-                'debug_results' => ['payloads' => $payloads]
+                'chart' => $results['chart']['data'] ?? [],
+                'debug_results' => ['payloads' => $payloads, 'meta' => $results['chart']['meta'] ?? null]
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Chart Error: " . $e->getMessage());
@@ -224,13 +223,13 @@ class FacebookMarketingController extends Controller
             }
 
             $payloads = ['table' => $tabPayload];
-            // $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
 
-            // if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
-            //     \Illuminate\Support\Facades\Log::error("FBM Table APIs Hub Error: " . json_encode($results['table']));
-            // }
+            if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
+                \Illuminate\Support\Facades\Log::error("FBM Table APIs Hub Error: " . json_encode($results['table']));
+            }
 
-            $tableData = [];
+            $tableData = $results['table']['data'] ?? [];
 
             // Normalize ID and Name for frontend table rendering
             foreach ($tableData as &$row) {
