@@ -130,8 +130,20 @@ class ConfigPayloadService
                 $payload['google_search_console']['calculate_synthetics'] = false;
             }
 
-            // 3. Capping historical sync range to 6 months
-            $payload['cache_history_range'] = '6_months';
+            // 3. Capping historical sync range to a maximum of 6 months
+            $requestedRange = $payload['cache_history_range'] ?? '16 months';
+            $months = match ($requestedRange) {
+                '1 month' => 1,
+                '3 months' => 3,
+                '6 months' => 6,
+                '1 year' => 12,
+                '16 months' => 16,
+                '2 years' => 24,
+                default => 16,
+            };
+            if ($months > 6) {
+                $payload['cache_history_range'] = '6 months';
+            }
         }
 
         // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
