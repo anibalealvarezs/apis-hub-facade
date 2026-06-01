@@ -15,7 +15,7 @@ class FacebookMarketingController extends Controller
         return $request->validate([
             'tenant' => 'required|string',
             'account' => 'required|array',
-            'account.*' => 'string',
+            'account.*' => 'string|numeric',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age_gender,gender',
