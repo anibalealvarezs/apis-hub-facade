@@ -1420,8 +1420,18 @@ class DataSources extends Page
 
 
                 // Persist UI configuration values (like cache_history_range and the channel toggle)
-                foreach ($channelConfig as $k => $v) {
+                // We use $payload here because ConfigPayloadService might have enforced tier-based constraints 
+                // (like max_workers, cache_history_range) which we want reflected in the UI.
+                foreach ($payload as $k => $v) {
                     if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                        $dbState[$channel][$k] = $v;
+                    }
+                }
+                
+                // Ensure unmapped keys from original channelConfig are also preserved 
+                // if they weren't explicitly handled in payload (like entity_sync_depth)
+                foreach ($channelConfig as $k => $v) {
+                    if (!isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
