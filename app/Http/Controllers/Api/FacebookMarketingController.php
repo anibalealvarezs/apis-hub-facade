@@ -22,9 +22,6 @@ class FacebookMarketingController extends Controller
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
         ]);
-            'activeFilters' => 'nullable|array',
-            'activeFilters.*' => 'nullable|array',
-        ]);
     }
 
     private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
