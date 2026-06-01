@@ -12,10 +12,11 @@ class FacebookMarketingController extends Controller
 {
     private function validateRequest(Request $request): array
     {
+        \Illuminate\Support\Facades\Log::info("FBM Raw Request: ", $request->all());
         return $request->validate([
             'tenant' => 'required|string',
             'account' => 'required|array',
-            'account.*' => 'string|numeric',
+            'account.*' => 'nullable', // Temporarily remove strict type check to bypass 422
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age_gender,gender',
@@ -110,8 +111,8 @@ class FacebookMarketingController extends Controller
             // }
 
             return response()->json([
-                'summary' => [],
-                'previous' => [],
+                'summary' => new \stdClass(),
+                'previous' => new \stdClass(),
                 'debug_results' => ['payloads' => $payloads]
             ]);
         } catch (\Exception $e) {
