@@ -236,9 +236,10 @@ class SyncSettings extends Page
         ];
 
         $syncConfig = collect($data)->except(array_keys($modelAttributes))->except(['api_url', 'app_api_key'])->toArray();
+        $existingSyncConfig = is_array($tenant->sync_config) ? $tenant->sync_config : [];
 
         $tenant->update(array_merge($modelAttributes, [
-            'sync_config' => $syncConfig,
+            'sync_config' => array_merge($existingSyncConfig, $syncConfig),
         ]));
 
         // 1.5 Push global application logic configurations to the APIs Hub (Node)
