@@ -985,9 +985,18 @@ class DataSources extends Page
                     ->label(Str::headline($key))
                     ->default($definition['default'] ?? false);
             } elseif ($type === 'string' && isset($definition['options'])) {
+                $options = $definition['options'];
+                
+                // Adapt the selector to accept maximum 6 months for Free Tier users
+                if ($key === 'cache_history_range' && \Filament\Facades\Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+                    $options = array_filter($options, function ($k) {
+                        return in_array($k, ['1 month', '3 months', '6 months']);
+                    }, ARRAY_FILTER_USE_KEY);
+                }
+
                 $advanced[] = Select::make($fieldKey)
                     ->label(Str::headline($key))
-                    ->options($definition['options'])
+                    ->options($options)
                     ->default($definition['default'] ?? null);
             } elseif ($type === 'string') {
                 $advanced[] = TextInput::make($fieldKey)
