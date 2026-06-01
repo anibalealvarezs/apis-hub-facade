@@ -324,12 +324,25 @@ class Project extends Model
             // We explicitly target the known asset list keys defined by the driver schemas
             $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
 
-            // Check direct asset lists (e.g., $channelConfig['pages'])
+            // 1. Check direct asset lists (e.g., $channelConfig['pages'])
             foreach ($assetKeys as $assetKey) {
                 if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
                     foreach ($channelConfig[$assetKey] as $asset) {
                         if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
                             return true;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check nested asset lists under an 'assets' wrapper (e.g., $channelConfig['assets']['ad_accounts'])
+            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
+                foreach ($assetKeys as $assetKey) {
+                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
+                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
+                            if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                return true;
+                            }
                         }
                     }
                 }
