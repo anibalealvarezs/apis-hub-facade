@@ -119,12 +119,29 @@
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
                     <span>{{ __('Update') }}</span>
                 </button>
-                <select multiple wire:model.live="selectedAccounts" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 h-auto">
-                    <option value="" disabled class="bg-white dark:bg-gray-800">{{ __('Select Ad Accounts...') }}</option>
-                    @foreach($accounts as $id => $name)
-                        <option value="{{ $id }}" class="bg-white dark:bg-gray-800">{{ $name }}</option>
-                    @endforeach
-                </select>
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" @click.outside="open = false" type="button" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-64 px-4 py-2.5 h-[42px]">
+                        <span class="truncate font-medium text-gray-700 dark:text-gray-200" x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? '1 {{ __('account') }}' : accounts.length + ' {{ __('accounts') }}')"></span>
+                        <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 text-gray-500 dark:text-gray-400" />
+                    </button>
+                    
+                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full md:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-y-auto right-0 md:left-0 md:right-auto">
+                        <div class="p-2 flex flex-col gap-1">
+                            @if(count($accounts) === 0)
+                                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">{{ __('No accounts available.') }}</div>
+                            @endif
+                            @foreach($accounts as $id => $name)
+                                <label class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-150">
+                                    <input type="checkbox" value="{{ $id }}" x-model="accounts" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3">
+                                    <div class="flex flex-col overflow-hidden">
+                                        <span class="truncate font-medium" title="{{ $name }}">{{ $name }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $id }}</span>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
                 <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
             </div>

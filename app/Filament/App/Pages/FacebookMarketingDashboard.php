@@ -47,7 +47,7 @@ class FacebookMarketingDashboard extends Page
             $service = app(\App\Services\RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeledAccount');
+            $response = $service->listChanneled($tenant, 'facebook_marketing', 'meta_ad_account');
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
