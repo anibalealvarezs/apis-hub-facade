@@ -317,13 +317,18 @@ class Project extends Model
         }
 
         foreach ($syncConfig as $channelKey => $channelConfig) {
-            if (!is_array($channelConfig)) continue;
-            if (empty($channelConfig['enabled'])) continue;
+            if (!is_array($channelConfig) || empty($channelConfig['enabled'])) {
+                continue;
+            }
 
-            foreach ($channelConfig as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $asset) {
-                        if (!empty($asset['enabled'])) {
+            // We explicitly target the known asset list keys defined by the driver schemas
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+            // Check direct asset lists (e.g., $channelConfig['pages'])
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
+                    foreach ($channelConfig[$assetKey] as $asset) {
+                        if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
                             return true;
                         }
                     }
