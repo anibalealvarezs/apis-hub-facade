@@ -562,13 +562,15 @@ class DataSources extends Page
         $mergedAssets = [];
         $liveMap = [];
 
-        // Extract the actual list of assets from the associative array (e.g. ['sites' => [...]] or ['ad_accounts' => [...]])
         $actualLiveAssets = [];
-        foreach ($liveAssets as $key => $value) {
-            if (is_array($value)) {
-                $actualLiveAssets = $value;
-
-                break;
+        if (!empty($liveAssets)) {
+            // Check if it's an associative array wrapping the list (e.g., ['ad_accounts' => [...]])
+            // If the first key is a string, it's associative. Otherwise, it's already the list.
+            $firstKey = array_key_first($liveAssets);
+            if (is_string($firstKey) && is_array($liveAssets[$firstKey])) {
+                $actualLiveAssets = $liveAssets[$firstKey];
+            } else {
+                $actualLiveAssets = $liveAssets;
             }
         }
 

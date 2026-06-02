@@ -85,7 +85,7 @@ class FacebookOrganicDashboard extends Page
             // Build the dropdown options
             foreach ($fbPages as $fbId => $fbAcc) {
                 // Determine the clean Facebook ID from the response (removing 'act_' if strangely present, though FBO usually doesn't have it)
-                $cleanFbId = str_replace('act_', '', (string) ($fbAcc['platform_id'] ?? $fbId));
+                $cleanFbId = str_replace('act_', '', (string) ($fbAcc['platformId'] ?? $fbAcc['platform_id'] ?? $fbId));
                 
                 if (!in_array($cleanFbId, $enabledFbIds)) {
                     continue;
