@@ -183,7 +183,6 @@ class FacebookMarketingController extends Controller
             $service = app(RemoteEngineService::class);
 
             $aggregations = [
-                'campaign_status' => 'campaign_status', // Not all tabs will have status but APIs Hub will ignore it or return null
                 'spend' => 'spend',
                 'clicks' => 'clicks',
                 'impressions' => 'impressions',
@@ -192,6 +191,14 @@ class FacebookMarketingController extends Controller
                 'results' => 'results',
                 'purchase_roas' => 'purchase_roas',
             ];
+
+            if ($validated['activeTab'] === 'campaigns') {
+                $aggregations['campaign_status'] = 'campaign_status';
+            } elseif ($validated['activeTab'] === 'adsets') {
+                $aggregations['adset_status'] = 'adset_status';
+            } elseif ($validated['activeTab'] === 'ads') {
+                $aggregations['ad_status'] = 'ad_status';
+            }
 
             $accountFilter = [];
             if (!empty($validated['account'])) {

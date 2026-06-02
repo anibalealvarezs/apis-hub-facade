@@ -287,7 +287,7 @@
                     <thead>
                         <tr>
                             <th><span x-text="activeTab.toUpperCase()"></span></th>
-                            <th x-show="activeTab === 'campaigns'">{{ __('Delivery') }}</th>
+                            <th x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)">{{ __('Delivery') }}</th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('spend')">{{ __('Amount Spent') }} <span x-show="sortCol === 'spend'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }} <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Link Clicks') }} <span x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
@@ -306,13 +306,11 @@
                                         <span x-text="row.name"></span>
                                     </div>
                                 </td>
-                                <td x-show="activeTab === 'campaigns'">
-                                    <template x-if="row.campaign_status && row.campaign_status.toUpperCase() === 'ACTIVE'">
-                                        <span><span class="fb-status-active"></span>{{ __('Active') }}</span>
-                                    </template>
-                                    <template x-if="!row.campaign_status || row.campaign_status.toUpperCase() !== 'ACTIVE'">
-                                        <span><span class="fb-status-paused"></span><span x-text="row.campaign_status || 'Unknown'"></span></span>
-                                    </template>
+                                <td x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)">
+                                    <div class="flex items-center" x-data="{ status: activeTab === 'campaigns' ? row.campaign_status : (activeTab === 'adsets' ? row.adset_status : row.ad_status) }">
+                                        <span :class="status === 'ACTIVE' ? 'fb-status-active' : 'fb-status-paused'"></span>
+                                        <span x-text="status || '{{ __('Unknown') }}'" class="text-xs uppercase font-semibold"></span>
+                                    </div>
                                 </td>
                                 <td class="metric-cell" x-text="formatCurrency(row.spend)"></td>
                                 <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
