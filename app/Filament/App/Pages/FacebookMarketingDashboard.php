@@ -53,7 +53,16 @@ class FacebookMarketingDashboard extends Page
             $tenant = Filament::getTenant();
             
             // Extract enabled accounts from sync config
-            $config = $tenant->sync_config['facebook_marketing']['ad_accounts'] ?? [];
+            $facebookMarketingConfig = $tenant->sync_config['facebook_marketing'] ?? [];
+            \Illuminate\Support\Facades\Log::info("FBM Dashboard - RAW facebook_marketing config keys:", array_keys($facebookMarketingConfig));
+            if (isset($facebookMarketingConfig['assets'])) {
+                \Illuminate\Support\Facades\Log::info("FBM Dashboard - RAW facebook_marketing.assets keys:", array_keys($facebookMarketingConfig['assets']));
+            }
+
+            // Fallback strategy: check both potential locations for the array
+            $config = $facebookMarketingConfig['assets']['ad_accounts'] ?? $facebookMarketingConfig['ad_accounts'] ?? [];
+            \Illuminate\Support\Facades\Log::info("FBM Dashboard - EXTRACTED config array count:", ['count' => count($config)]);
+
             $enabledIds = [];
             foreach ($config as $asset) {
                 if (!empty($asset['enabled']) && !empty($asset['id'])) {
@@ -64,6 +73,8 @@ class FacebookMarketingDashboard extends Page
             \Illuminate\Support\Facades\Log::info("FBM Dashboard - Config Enabled IDs", ['tenant' => $tenant->id, 'ids' => $enabledIds]);
             
             $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account', ['limit' => 1000]);
+
+            \Illuminate\Support\Facades\Log::info("FBM Dashboard - listChanneled RAW count:", ['count' => count($response['data'] ?? [])]);
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
