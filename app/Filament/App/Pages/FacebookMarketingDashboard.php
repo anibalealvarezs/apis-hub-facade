@@ -63,7 +63,7 @@ class FacebookMarketingDashboard extends Page
             }
             \Illuminate\Support\Facades\Log::info("FBM Dashboard - Config Enabled IDs", ['tenant' => $tenant->id, 'ids' => $enabledIds]);
             
-            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account');
+            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account', ['limit' => 1000]);
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
