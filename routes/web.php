@@ -73,6 +73,10 @@ Route::post('/api/fbm/summary', [\App\Http\Controllers\Api\FacebookMarketingCont
 Route::post('/api/fbm/chart', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/fbm/table', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'table'])->middleware(['web', 'auth']);
 
+Route::post('/api/fbo/summary', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'summary'])->middleware(['web', 'auth']);
+Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'chart'])->middleware(['web', 'auth']);
+Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth']);
+
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
 // Legal Documents
