@@ -29,7 +29,7 @@ class LocalAssetDiscoveryService
                         'message' => "Channel '{$channel}' is not supported for local asset discovery."
                     ];
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -37,7 +37,7 @@ class LocalAssetDiscoveryService
 
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
             ];
         }
     }
@@ -109,11 +109,32 @@ class LocalAssetDiscoveryService
 
     protected function fetchFacebookPages(Project $project): array
     {
+        Log::info("Starting fetchFacebookPages for project: {$project->name} ({$project->id})");
         $client = $this->getFacebookClient($project);
-        $response = $client->getPages(
-            userId: $project->facebookProfile->provider_account_id,
-            fields: 'id,name,link,website,created_time,instagram_business_account{id,name,username,website}'
-        );
+
+        $userId = $project->facebookProfile->provider_account_id ?? null;
+        if (!$userId) {
+            Log::error("fetchFacebookPages: Missing provider_account_id for project {$project->id}");
+            throw new Exception("Missing provider_account_id");
+        }
+
+        Log::info("fetchFacebookPages: Calling getPages for userId: {$userId}");
+        
+        try {
+            $response = $client->getPages(
+                userId: $userId,
+                fields: 'id,name,link,website,created_time,instagram_business_account{id,name,username,website}'
+            );
+            
+            Log::info("fetchFacebookPages: getPages response received. Raw Data count: " . (isset($response['data']) ? count($response['data']) : 0));
+        } catch (\Throwable $e) {
+            Log::error("fetchFacebookPages: getPages threw an exception!", [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
 
         // Normalize using logic parity with APIs Hub FacebookOrganicDriver
         $assets = [];
@@ -148,6 +169,8 @@ class LocalAssetDiscoveryService
                 }
             }
         }
+        
+        Log::info("fetchFacebookPages: Successfully normalized " . count($assets) . " pages.");
 
         return [
             'success' => true,
