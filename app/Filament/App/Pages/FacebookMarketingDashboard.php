@@ -53,7 +53,7 @@ class FacebookMarketingDashboard extends Page
             $tenant = Filament::getTenant();
             
             // Extract enabled accounts from sync config
-            $config = $tenant->sync_config['facebook_marketing']['assets']['ad_accounts'] ?? [];
+            $config = $tenant->sync_config['facebook_marketing']['ad_accounts'] ?? [];
             $enabledIds = [];
             foreach ($config as $asset) {
                 if (!empty($asset['enabled']) && !empty($asset['id'])) {
