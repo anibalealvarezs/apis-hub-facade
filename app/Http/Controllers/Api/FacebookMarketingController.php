@@ -212,6 +212,9 @@ class FacebookMarketingController extends Controller
             
             $this->applyDynamicFilters($tabPayload['filters'], $validated['activeFilters'] ?? null);
 
+            \Illuminate\Support\Facades\Log::info("FBM Table Incoming Request ActiveFilters: ", $validated['activeFilters'] ?? []);
+            \Illuminate\Support\Facades\Log::info("FBM Table Outgoing Payload: ", $tabPayload);
+
             if ($validated['activeTab'] === 'campaigns') {
                 $tabPayload['groupBy'] = ['channeledCampaign'];
             } elseif ($validated['activeTab'] === 'adsets') {
