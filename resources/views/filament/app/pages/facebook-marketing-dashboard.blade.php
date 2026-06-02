@@ -106,7 +106,13 @@
     </style>
 
     <div x-data="fbDashboard()" x-init="initDashboard()">
-        <div class="fb-header-row" style="justify-content: flex-end;">
+        <div class="fb-header-row">
+            <div>
+                <h1 class="fb-header-title">
+                    <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]" />
+                    {{ __('Meta Ads Manager Insights') }}
+                </h1>
+            </div>
             <div class="fb-header-controls">
                 <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />

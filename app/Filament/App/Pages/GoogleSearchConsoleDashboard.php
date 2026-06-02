@@ -17,6 +17,10 @@ class GoogleSearchConsoleDashboard extends Page
     {
         return __('Performance on Google Search results');
     }
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
     protected static string $view = 'filament.app.pages.google-search-console-dashboard';
     protected static ?string $slug = 'google-search-console';
 

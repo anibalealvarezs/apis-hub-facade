@@ -15,6 +15,10 @@ class FacebookOrganicDashboard extends Page
     {
         return __('Meta Pages & Instagram Accounts');
     }
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
     protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
     protected static ?string $slug = 'facebook-organic';
 

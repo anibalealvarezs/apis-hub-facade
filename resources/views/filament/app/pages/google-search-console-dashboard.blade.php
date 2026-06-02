@@ -107,7 +107,13 @@
 
 
     <div x-data="gscDashboard()" x-init="initDashboard()">
-        <div class="gsc-header-row" style="justify-content: flex-end;">
+        <div class="gsc-header-row">
+            <div>
+                <h1 class="gsc-header-title">
+                    <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]" />
+                    {{ __('Performance on Google Search results') }}
+                </h1>
+            </div>
             <div class="gsc-header-controls">
                 <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />

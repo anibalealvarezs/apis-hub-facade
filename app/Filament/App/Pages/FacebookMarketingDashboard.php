@@ -16,6 +16,10 @@ class FacebookMarketingDashboard extends Page
     {
         return __('Meta Ads Manager Insights');
     }
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
     protected static string $view = 'filament.app.pages.facebook-marketing-dashboard';
     protected static ?string $slug = 'facebook-marketing';
 
