@@ -55,7 +55,7 @@ class FacebookOrganicDashboard extends Page
             $tenant = Filament::getTenant();
             
             // Fetch channeled accounts which returns both IG Accounts and FB Pages
-            $response = $service->listChanneled($tenant, 'facebook_organic', 'channeled_account', ['limit' => 1000]);
+            $response = $service->listChanneled($tenant, 'facebook_organic', 'channeled_account', ['limit' => 1000, 'enabled' => 1, 'type' => 'facebook_page']);
 
             $fbPages = [];
             $igAccounts = [];
