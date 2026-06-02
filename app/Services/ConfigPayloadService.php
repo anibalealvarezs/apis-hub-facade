@@ -174,7 +174,14 @@ class ConfigPayloadService
                 if ($dbAsset) {
                     // Merge UI into DB. UI takes precedence for submitted keys (name, toggles),
                     // DB preserves unmapped keys (deep tokens, raw data)
-                    $newAssetsList[] = array_merge($dbAsset, $uiAsset);
+                    
+                    // Filter out nulls and empty arrays from the UI asset since Hidden fields 
+                    // may fail to hydrate arrays or strings and submit them as null or []
+                    $uiAssetFiltered = array_filter($uiAsset, function($value) {
+                        return $value !== null && $value !== [];
+                    });
+
+                    $newAssetsList[] = array_merge($dbAsset, $uiAssetFiltered);
                 } else {
                     // Completely new asset added from UI
                     $newAssetsList[] = $uiAsset;
