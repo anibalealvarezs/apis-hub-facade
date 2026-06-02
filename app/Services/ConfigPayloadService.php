@@ -154,16 +154,33 @@ class ConfigPayloadService
         if (empty($assetsListDb)) {
             $assetsListDb = $assetsListUi;
         } else {
+            $newAssetsList = [];
             foreach ($assetsListUi as $index => $uiAsset) {
-                if (isset($assetsListDb[$index])) {
-                    // Update any boolean toggles (like enabled, page_metrics, etc) from UI into the pristine DB asset
-                    foreach ($uiAsset as $key => $val) {
-                        if (is_bool($val)) {
-                            $assetsListDb[$index][$key] = $val;
+                $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? null;
+                $dbAsset = null;
+                
+                // Match by ID/URL if possible, otherwise by index
+                if ($uiId) {
+                    foreach ($assetsListDb as $dbA) {
+                        if (($dbA['id'] ?? $dbA['url'] ?? null) === $uiId) {
+                            $dbAsset = $dbA;
+                            break;
                         }
                     }
+                } else {
+                    $dbAsset = $assetsListDb[$index] ?? null;
+                }
+
+                if ($dbAsset) {
+                    // Merge UI into DB. UI takes precedence for submitted keys (name, toggles),
+                    // DB preserves unmapped keys (deep tokens, raw data)
+                    $newAssetsList[] = array_merge($dbAsset, $uiAsset);
+                } else {
+                    // Completely new asset added from UI
+                    $newAssetsList[] = $uiAsset;
                 }
             }
+            $assetsListDb = $newAssetsList;
         }
 
         // Clean up the top-level list to avoid duplicate or conflicting structures

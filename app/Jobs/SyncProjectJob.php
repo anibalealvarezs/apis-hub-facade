@@ -52,13 +52,15 @@ class SyncProjectJob implements ShouldQueue
             // 4. Update project active status
             if ($result['status'] === 'success') {
                 $this->project->update([
-                    'health_status'     => 'online',
-                    'deploy_started_at' => null, // clear the in-progress marker
+                    'health_status'        => 'online',
+                    'deploy_started_at'    => null, // clear the in-progress marker
+                    'last_sync_started_at' => null, // clear the sync banner
                 ]);
             } else {
                 $this->project->update([
-                    'health_status'     => 'error',
-                    'deploy_started_at' => null,
+                    'health_status'        => 'error',
+                    'deploy_started_at'    => null,
+                    'last_sync_started_at' => null,
                 ]);
                 Log::error("Lightweight Sync failed for project {$this->project->id}");
             }
@@ -71,8 +73,9 @@ class SyncProjectJob implements ShouldQueue
                 'completed_at' => now(),
             ]);
             $this->project->update([
-                'health_status'     => 'error',
-                'deploy_started_at' => null,
+                'health_status'        => 'error',
+                'deploy_started_at'    => null,
+                'last_sync_started_at' => null,
             ]);
             Log::error("Lightweight Sync exception for project {$this->project->id}", ['exception' => $e]);
         }
