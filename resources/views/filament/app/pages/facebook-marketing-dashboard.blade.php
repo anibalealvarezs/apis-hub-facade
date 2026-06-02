@@ -119,12 +119,12 @@
                     <span>{{ __('Update') }}</span>
                 </button>
                 <div class="relative" x-data="{ open: false, searchAccount: '' }">
-                    <button @click="open = !open" @click.outside="open = false" type="button" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-64 px-4 py-2.5 h-[42px]">
+                    <button @click="open = !open" @click.outside="open = false" type="button" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200" x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? '1 {{ __('account') }}' : accounts.length + ' {{ __('accounts') }}')"></span>
-                        <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 text-gray-500 dark:text-gray-400" />
+                        <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400" />
                     </button>
                     
-                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full md:w-96 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full sm:w-72 md:w-[350px] mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
                         
                         <!-- Search and Select All Header -->
                         <div class="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
@@ -749,15 +749,48 @@
                     
                     updateChart() {
                         let chart = this.$refs.canvas._chartInstance;
-                        if (!chart || !this.chartDataRaw.length) return;
+                        if (!chart || !this.chartDataRaw) return;
                         
-                        const labels = this.chartDataRaw.map(r => dayjs(r.daily || r.date).format('MMM D'));
+                        const startDate = dayjs(this.dateStart);
+                        const endDate = dayjs(this.dateEnd);
+                        const daysDiff = endDate.diff(startDate, 'day');
+                        
+                        const fullDateRange = [];
+                        for (let i = 0; i <= daysDiff; i++) {
+                            fullDateRange.push(startDate.add(i, 'day').format('YYYY-MM-DD'));
+                        }
+                        
+                        const dataByDate = {};
+                        this.chartDataRaw.forEach(r => {
+                            if (r && (r.daily || r.date)) {
+                                const dateStr = dayjs(r.daily || r.date).format('YYYY-MM-DD');
+                                dataByDate[dateStr] = r;
+                            }
+                        });
+                        
+                        const paddedData = fullDateRange.map(dateStr => {
+                            if (dataByDate[dateStr]) return dataByDate[dateStr];
+                            return {
+                                daily: dateStr,
+                                spend: 0, trend_total_spend: 0,
+                                impressions: 0, trend_total_impressions: 0,
+                                clicks: 0, trend_total_clicks: 0,
+                                ctr: 0, trend_average_ctr: 0,
+                                cpc: 0, trend_average_cpc: 0,
+                                results: 0, trend_total_results: 0,
+                                purchase_roas: 0, trend_average_purchase_roas: 0
+                            };
+                        });
+                        
+                        const labels = paddedData.map(r => dayjs(r.daily || r.date).format('MMM D'));
                         const datasets = [];
+                        
+                        const chartData = paddedData;
                         
                         if (this.activeMetrics.spend) {
                             datasets.push({
                                 label: 'Amount Spent',
-                                data: this.chartDataRaw.map(r => r.spend || r.trend_total_spend),
+                                data: chartData.map(r => r.spend || r.trend_total_spend),
                                 borderColor: '#10b981',
                                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                                 borderWidth: 2,
@@ -772,7 +805,7 @@
                         if (this.activeMetrics.impressions) {
                             datasets.push({
                                 label: 'Impressions',
-                                data: this.chartDataRaw.map(r => r.impressions || r.trend_total_impressions),
+                                data: chartData.map(r => r.impressions || r.trend_total_impressions),
                                 borderColor: '#6366f1',
                                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
                                 borderWidth: 2,
@@ -787,7 +820,7 @@
                         if (this.activeMetrics.clicks) {
                             datasets.push({
                                 label: 'Clicks',
-                                data: this.chartDataRaw.map(r => r.clicks || r.trend_total_clicks),
+                                data: chartData.map(r => r.clicks || r.trend_total_clicks),
                                 borderColor: '#0ea5e9',
                                 backgroundColor: 'rgba(14, 165, 233, 0.1)',
                                 borderWidth: 2,
@@ -802,7 +835,7 @@
                         if (this.activeMetrics.ctr) {
                             datasets.push({
                                 label: 'CTR',
-                                data: this.chartDataRaw.map(r => (r.ctr || r.trend_average_ctr || 0) * 100),
+                                data: chartData.map(r => (r.ctr || r.trend_average_ctr || 0) * 100),
                                 borderColor: '#8b5cf6',
                                 backgroundColor: 'rgba(139, 92, 246, 0.1)',
                                 borderWidth: 2,
@@ -817,7 +850,7 @@
                         if (this.activeMetrics.cpc) {
                             datasets.push({
                                 label: 'CPC',
-                                data: this.chartDataRaw.map(r => r.cpc || r.trend_average_cpc || 0),
+                                data: chartData.map(r => r.cpc || r.trend_average_cpc || 0),
                                 borderColor: '#f59e0b',
                                 backgroundColor: 'rgba(245, 158, 11, 0.1)',
                                 borderWidth: 2,
@@ -832,7 +865,7 @@
                         if (this.activeMetrics.results) {
                             datasets.push({
                                 label: 'Purchases',
-                                data: this.chartDataRaw.map(r => r.results || r.trend_total_results || 0),
+                                data: chartData.map(r => r.results || r.trend_total_results || 0),
                                 borderColor: '#14b8a6',
                                 backgroundColor: 'rgba(20, 184, 166, 0.1)',
                                 borderWidth: 2,
@@ -847,7 +880,7 @@
                         if (this.activeMetrics.purchase_roas) {
                             datasets.push({
                                 label: 'ROAS',
-                                data: this.chartDataRaw.map(r => r.purchase_roas || r.trend_average_purchase_roas || 0),
+                                data: chartData.map(r => r.purchase_roas || r.trend_average_purchase_roas || 0),
                                 borderColor: '#ec4899',
                                 backgroundColor: 'rgba(236, 72, 153, 0.1)',
                                 borderWidth: 2,

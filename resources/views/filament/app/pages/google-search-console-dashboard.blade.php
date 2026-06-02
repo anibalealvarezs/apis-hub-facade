@@ -621,15 +621,45 @@
                     
                     updateChart() {
                         let chart = this.$refs.canvas._chartInstance;
-                        if (!chart || !this.chartDataRaw.length) return;
+                        if (!chart || !this.chartDataRaw) return;
                         
-                        const labels = this.chartDataRaw.map(r => dayjs(r.daily || r.date).format('MMM D'));
+                        const startDate = dayjs(this.dateStart);
+                        const endDate = dayjs(this.dateEnd);
+                        const daysDiff = endDate.diff(startDate, 'day');
+                        
+                        const fullDateRange = [];
+                        for (let i = 0; i <= daysDiff; i++) {
+                            fullDateRange.push(startDate.add(i, 'day').format('YYYY-MM-DD'));
+                        }
+                        
+                        const dataByDate = {};
+                        this.chartDataRaw.forEach(r => {
+                            if (r && (r.daily || r.date || r.metric_date)) {
+                                const dateStr = dayjs(r.daily || r.date || r.metric_date).format('YYYY-MM-DD');
+                                dataByDate[dateStr] = r;
+                            }
+                        });
+                        
+                        const paddedData = fullDateRange.map(dateStr => {
+                            if (dataByDate[dateStr]) return dataByDate[dateStr];
+                            return {
+                                daily: dateStr,
+                                clicks: 0,
+                                impressions: 0,
+                                ctr: 0,
+                                position: 0
+                            };
+                        });
+                        
+                        const labels = paddedData.map(r => dayjs(r.daily || r.date || r.metric_date).format('MMM D'));
                         const datasets = [];
+                        
+                        const chartData = paddedData;
                         
                         if (this.activeMetrics.clicks) {
                             datasets.push({
                                 label: 'Clicks',
-                                data: this.chartDataRaw.map(r => r.clicks),
+                                data: chartData.map(r => r.clicks),
                                 borderColor: '#4285f4',
                                 backgroundColor: 'rgba(66, 133, 244, 0.1)',
                                 borderWidth: 2,
@@ -644,7 +674,7 @@
                         if (this.activeMetrics.impressions) {
                             datasets.push({
                                 label: 'Impressions',
-                                data: this.chartDataRaw.map(r => r.impressions),
+                                data: chartData.map(r => r.impressions),
                                 borderColor: '#7e57c2',
                                 backgroundColor: 'rgba(126, 87, 194, 0.1)',
                                 borderWidth: 2,
@@ -659,7 +689,7 @@
                         if (this.activeMetrics.ctr) {
                             datasets.push({
                                 label: 'CTR',
-                                data: this.chartDataRaw.map(r => r.ctr * 100),
+                                data: chartData.map(r => r.ctr * 100),
                                 borderColor: '#0097a7',
                                 borderWidth: 2,
                                 pointRadius: 0,
@@ -673,7 +703,7 @@
                         if (this.activeMetrics.position) {
                             datasets.push({
                                 label: 'Position',
-                                data: this.chartDataRaw.map(r => r.position),
+                                data: chartData.map(r => r.position),
                                 borderColor: '#f4511e',
                                 borderWidth: 2,
                                 borderDash: [5, 5],
