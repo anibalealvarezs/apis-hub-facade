@@ -123,7 +123,7 @@ class LocalAssetDiscoveryService
         try {
             $response = $client->getPages(
                 userId: $userId,
-                limit: 500, // Fetch up to 500 pages per request to minimize pagination latency and prevent 408 proxy timeouts
+                limit: 50, // Fetch 50 pages per request to keep Facebook Graph API fast and responsive
                 fields: 'id,name,link,website,created_time,instagram_business_account{id,name,username,website}'
             );
             
