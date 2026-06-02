@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Models\ProjectDeploymentLog;
 use App\Services\RemoteEngineService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -61,6 +62,20 @@ class SyncSettings extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('viewLogs')
+                ->label(__('View Last Deployment Log'))
+                ->icon('heroicon-o-document-text')
+                ->color('gray')
+                ->modalHeading(__('Deployment Log Output'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel(__('Close'))
+                ->modalContent(function () {
+                    $log = ProjectDeploymentLog::where('project_id', Filament::getTenant()->id)
+                        ->latest('id')
+                        ->first();
+                    
+                    return view('filament.app.components.deployment-log-modal', ['log' => $log]);
+                }),
             Action::make('triggerSync')
                 ->label(__('Deploy Infrastructure Updates'))
                 ->icon('heroicon-o-arrow-path')

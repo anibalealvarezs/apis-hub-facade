@@ -192,9 +192,10 @@ EOT;
             $result = Process::timeout(600)->run($sshCmd);
 
             if ($result->failed()) {
-                Log::error("Deployment failed: " . $result->errorOutput());
+                $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
+                Log::error("Deployment failed on {$server->ip_address}:\n" . $combinedOutput);
 
-                return ['status' => 'error', 'output' => $result->errorOutput()];
+                return ['status' => 'error', 'output' => trim($combinedOutput)];
             }
 
             return ['status' => 'success', 'output' => $result->output()];
