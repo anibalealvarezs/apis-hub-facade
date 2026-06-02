@@ -209,13 +209,15 @@ class FacebookMarketingController extends Controller
                 'endDate' => $validated['dateEnd'],
                 'limit' => 5000
             ];
+            
+            $this->applyDynamicFilters($tabPayload['filters'], $validated['activeFilters'] ?? null);
 
             if ($validated['activeTab'] === 'campaigns') {
                 $tabPayload['groupBy'] = ['channeledCampaign'];
             } elseif ($validated['activeTab'] === 'adsets') {
-                $tabPayload['groupBy'] = ['adGroup_id', 'adGroup'];
+                $tabPayload['groupBy'] = ['adGroup'];
             } elseif ($validated['activeTab'] === 'ads') {
-                $tabPayload['groupBy'] = ['ad_id', 'ad']; // Assuming 'ad_id', 'ad'
+                $tabPayload['groupBy'] = ['ad'];
             } elseif ($validated['activeTab'] === 'age') {
                 $tabPayload['groupBy'] = ['age'];
             } elseif ($validated['activeTab'] === 'gender') {
@@ -233,21 +235,24 @@ class FacebookMarketingController extends Controller
 
             // Normalize ID and Name for frontend table rendering
             foreach ($tableData as &$row) {
-                if (isset($row['channeledCampaign'])) {
-                    $row['id'] = $row['channeledCampaign'];
-                    $row['name'] = $row['channeledCampaign']; // We might need to map to actual name if returned
-                } elseif (isset($row['adGroup_id'])) {
-                    $row['id'] = $row['adGroup_id'];
-                    $row['name'] = $row['adgroup'] ?? $row['adGroup'] ?? $row['adGroup_id'];
-                } elseif (isset($row['ad_id'])) {
-                    $row['id'] = $row['ad_id'];
-                    $row['name'] = $row['ad'] ?? $row['ad_id'];
-                } elseif (isset($row['age']) && isset($row['gender'])) {
-                    $row['id'] = $row['age'] . '_' . $row['gender'];
-                    $row['name'] = ucfirst($row['gender']) . ' / ' . $row['age'];
-                } elseif (isset($row['gender'])) {
-                    $row['id'] = $row['gender'];
-                    $row['name'] = ucfirst($row['gender']);
+                // DBAL might return lowercased keys depending on the PDO configuration
+                $rowLower = array_change_key_case($row, CASE_LOWER);
+                
+                if (isset($rowLower['channeledcampaign'])) {
+                    $row['id'] = $rowLower['channeledcampaign_id'] ?? $rowLower['channeledcampaign'];
+                    $row['name'] = $rowLower['channeledcampaign'];
+                } elseif (isset($rowLower['adgroup_id'])) {
+                    $row['id'] = $rowLower['adgroup_id'];
+                    $row['name'] = $rowLower['adgroup'] ?? $rowLower['adgroup_id'];
+                } elseif (isset($rowLower['ad_id'])) {
+                    $row['id'] = $rowLower['ad_id'];
+                    $row['name'] = $rowLower['ad'] ?? $rowLower['ad_id'];
+                } elseif (isset($rowLower['age']) && isset($rowLower['gender'])) {
+                    $row['id'] = $rowLower['age'] . '_' . $rowLower['gender'];
+                    $row['name'] = ucfirst($rowLower['gender']) . ' / ' . $rowLower['age'];
+                } elseif (isset($rowLower['gender'])) {
+                    $row['id'] = $rowLower['gender'];
+                    $row['name'] = ucfirst($rowLower['gender']);
                 } else {
                     $row['id'] = 'Unknown';
                     $row['name'] = 'Unknown';
