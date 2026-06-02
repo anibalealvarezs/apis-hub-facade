@@ -357,10 +357,10 @@
                 Alpine.data('fbDashboard', () => {
                 return {
                     tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
-                    accounts: @entangle('selectedAccounts'),
-                    dateStart: @entangle('dateStart'),
-                    dateEnd: @entangle('dateEnd'),
-                    activeTab: @entangle('activeTab'),
+                    accounts: @json($selectedAccounts),
+                    dateStart: '{{ $dateStart }}',
+                    dateEnd: '{{ $dateEnd }}',
+                    activeTab: 'campaigns',
                     
                     isSummaryLoading: false,
                     isChartLoading: false,
@@ -445,7 +445,6 @@
                         this.currentPage = 1;
                         this.searchQuery = ''; // Clear search when switching tabs
                         this.fetchTable();
-                        this.$wire.setActiveTab(tab);
                     },
 
                     loadFilters() {
