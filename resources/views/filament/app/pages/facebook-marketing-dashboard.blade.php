@@ -508,6 +508,7 @@
                                 this.filterLabels[value] = rowOrId.name;
                             }
                         }
+                        this.activeFilters[tab] = [...this.activeFilters[tab]]; // Force Alpine reactivity
                         this.saveFilters();
                         this.fetchSummary();
                         this.fetchChart();

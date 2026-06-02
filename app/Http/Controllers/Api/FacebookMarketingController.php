@@ -33,8 +33,8 @@ class FacebookMarketingController extends Controller
 
         $dimensionMap = [
             'campaigns' => 'channeledCampaign',
-            'adsets' => 'adGroup_id',
-            'ads' => 'ad_id',
+            'adsets' => 'adGroup',
+            'ads' => 'ad',
             'gender' => 'gender',
             'age' => 'age',
         ];
@@ -192,14 +192,6 @@ class FacebookMarketingController extends Controller
                 'purchase_roas' => 'purchase_roas',
             ];
 
-            if ($validated['activeTab'] === 'campaigns') {
-                $aggregations['campaign_status'] = 'campaign_status';
-            } elseif ($validated['activeTab'] === 'adsets') {
-                $aggregations['adset_status'] = 'adset_status';
-            } elseif ($validated['activeTab'] === 'ads') {
-                $aggregations['ad_status'] = 'ad_status';
-            }
-
             $accountFilter = [];
             if (!empty($validated['account'])) {
                 if (count($validated['account']) === 1) {
@@ -223,11 +215,11 @@ class FacebookMarketingController extends Controller
             \Illuminate\Support\Facades\Log::info("FBM Table Outgoing Payload: ", $tabPayload);
 
             if ($validated['activeTab'] === 'campaigns') {
-                $tabPayload['groupBy'] = ['channeledCampaign'];
+                $tabPayload['groupBy'] = ['channeledCampaign', 'campaign_status'];
             } elseif ($validated['activeTab'] === 'adsets') {
-                $tabPayload['groupBy'] = ['adGroup'];
+                $tabPayload['groupBy'] = ['adGroup', 'adset_status'];
             } elseif ($validated['activeTab'] === 'ads') {
-                $tabPayload['groupBy'] = ['ad'];
+                $tabPayload['groupBy'] = ['ad', 'ad_status'];
             } elseif ($validated['activeTab'] === 'age') {
                 $tabPayload['groupBy'] = ['age'];
             } elseif ($validated['activeTab'] === 'gender') {
