@@ -232,7 +232,7 @@
                     <template x-for="val in values" :key="val">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                             <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab + ':'"></span>
-                            <span x-text="val" class="max-w-xs truncate" :title="val"></span>
+                            <span x-text="filterLabels[val] || val" class="max-w-xs truncate" :title="filterLabels[val] || val"></span>
                             <button @click.stop="toggleFilter(tab, val)" class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
                                 <x-heroicon-m-x-mark class="w-3 h-3" />
                             </button>
@@ -279,7 +279,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="canFilter(activeTab) ? toggleFilter(activeTab, row.id) : null" class="transition duration-150" :class="[isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : 'hover:bg-gray-50 dark:hover:bg-white/5', canFilter(activeTab) ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed']">
+                            <tr @click="canFilter(activeTab) ? toggleFilter(activeTab, row) : null" class="transition duration-150" :class="[isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : 'hover:bg-gray-50 dark:hover:bg-white/5', canFilter(activeTab) ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed']">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
@@ -358,6 +358,7 @@
                     activeMetrics: { spend: true, clicks: true, impressions: true, ctr: false, cpc: false, results: false, purchase_roas: false },
                     
                     activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [] },
+                    filterLabels: {},
                     searchQuery: '',
                     
                     sortCol: 'spend',
@@ -435,9 +436,11 @@
                         if (!this.accounts.length) return;
                         const accountKey = this.accounts.join('_');
                         const saved = sessionStorage.getItem(`fbm_filters_${this.tenantId}_${accountKey}`);
+                        const savedLabels = sessionStorage.getItem(`fbm_labels_${this.tenantId}_${accountKey}`);
                         if (saved) {
                             try {
                                 this.activeFilters = JSON.parse(saved);
+                                this.filterLabels = savedLabels ? JSON.parse(savedLabels) : {};
                             } catch(e) {
                                 this.clearFiltersLocal();
                             }
@@ -450,10 +453,12 @@
                         if (!this.accounts.length) return;
                         const accountKey = this.accounts.join('_');
                         sessionStorage.setItem(`fbm_filters_${this.tenantId}_${accountKey}`, JSON.stringify(this.activeFilters));
+                        sessionStorage.setItem(`fbm_labels_${this.tenantId}_${accountKey}`, JSON.stringify(this.filterLabels));
                     },
 
                     clearFiltersLocal() {
                         this.activeFilters = { campaigns: [], adsets: [], ads: [], age: [], gender: [] };
+                        this.filterLabels = {};
                     },
 
                     clearFilters() {
@@ -471,14 +476,21 @@
                         return false;
                     },
 
-                    toggleFilter(tab, value) {
+                    toggleFilter(tab, rowOrId) {
                         if (!this.canFilter(tab)) return;
                         if (!this.activeFilters[tab]) this.activeFilters[tab] = [];
+                        
+                        const isObject = typeof rowOrId === 'object' && rowOrId !== null;
+                        const value = isObject ? rowOrId.id : rowOrId;
+                        
                         const idx = this.activeFilters[tab].indexOf(value);
                         if (idx > -1) {
                             this.activeFilters[tab].splice(idx, 1);
                         } else {
                             this.activeFilters[tab].push(value);
+                            if (isObject && rowOrId.name) {
+                                this.filterLabels[value] = rowOrId.name;
+                            }
                         }
                         this.saveFilters();
                         this.fetchSummary();

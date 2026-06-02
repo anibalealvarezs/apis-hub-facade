@@ -233,6 +233,10 @@ class FacebookMarketingController extends Controller
 
             $tableData = $results['table']['data'] ?? [];
 
+            if (!empty($tableData)) {
+                \Illuminate\Support\Facades\Log::info("FBM Raw Table Row: ", $tableData[0]);
+            }
+
             // Normalize ID and Name for frontend table rendering
             foreach ($tableData as &$row) {
                 // DBAL might return lowercased keys depending on the PDO configuration
