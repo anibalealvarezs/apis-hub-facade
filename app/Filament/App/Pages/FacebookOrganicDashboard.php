@@ -55,19 +55,23 @@ class FacebookOrganicDashboard extends Page
             $tenant = Filament::getTenant();
             
             // Fetch channeled accounts which returns both IG Accounts and FB Pages
-            $response = $service->listChanneled($tenant, 'facebook_organic', 'channeled_account', ['limit' => 1000, 'enabled' => 1, 'type' => 'facebook_page']);
+            $response = $service->listChanneled($tenant, 'facebook_organic', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
+            \Illuminate\Support\Facades\Log::info("FBO Dashboard - API Response count", ['count' => count($response['data'] ?? [])]);
+            
             $fbPages = [];
             $igAccounts = [];
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
-                    if (($account['account_type'] ?? '') === 'facebook_page') {
+                    $type = $account['type'] ?? $account['account_type'] ?? '';
+                    if ($type === 'facebook_page') {
                         $fbPages[$account['id']] = $account;
-                    } elseif (($account['account_type'] ?? '') === 'instagram_account') {
+                    } elseif ($type === 'instagram_account') {
                         $igAccounts[$account['id']] = $account;
                     }
                 }
             }
+            \Illuminate\Support\Facades\Log::info("FBO Dashboard - Parsed fbPages/igAccounts", ['fb_count' => count($fbPages), 'ig_count' => count($igAccounts)]);
 
             // Extract the mapping from the tenant's sync_config
             $configPages = $tenant->sync_config['facebook_organic']['pages'] ?? [];
@@ -81,13 +85,17 @@ class FacebookOrganicDashboard extends Page
                     }
                 }
             }
+            \Illuminate\Support\Facades\Log::info("FBO Dashboard - Config Enabled IDs", ['enabledFbIds' => $enabledFbIds, 'mapping' => $mapping]);
 
             // Build the dropdown options
             foreach ($fbPages as $fbId => $fbAcc) {
                 // Determine the clean Facebook ID from the response (removing 'act_' if strangely present, though FBO usually doesn't have it)
                 $cleanFbId = str_replace('act_', '', (string) ($fbAcc['platformId'] ?? $fbAcc['platform_id'] ?? $fbId));
                 
-                if (!in_array($cleanFbId, $enabledFbIds)) {
+                $matched = in_array($cleanFbId, $enabledFbIds);
+                \Illuminate\Support\Facades\Log::info("FBO Dashboard - Channeled Account", ['name' => $fbAcc['name'] ?? '', 'cleanFbId' => $cleanFbId, 'matched' => $matched]);
+
+                if (!$matched) {
                     continue;
                 }
 
