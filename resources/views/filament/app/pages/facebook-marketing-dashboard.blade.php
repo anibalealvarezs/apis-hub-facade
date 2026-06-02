@@ -251,7 +251,7 @@
                 <div class="tab-fb" :class="activeTab === 'campaigns' ? 'active' : ''" @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
                 <div class="tab-fb" :class="activeTab === 'adsets' ? 'active' : ''" @click="setTab('adsets')">{{ __('AD SETS') }}</div>
                 <div class="tab-fb" :class="activeTab === 'ads' ? 'active' : ''" @click="setTab('ads')">{{ __('ADS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'age_gender' ? 'active' : ''" @click="setTab('age_gender')">{{ __('AGE & GENDER') }}</div>
+                <div class="tab-fb" :class="activeTab === 'age' ? 'active' : ''" @click="setTab('age')">{{ __('AGE') }}</div>
                 <div class="tab-fb" :class="activeTab === 'gender' ? 'active' : ''" @click="setTab('gender')">{{ __('GENDER') }}</div>
             </div>
 
@@ -357,7 +357,7 @@
                     
                     activeMetrics: { spend: true, clicks: true, impressions: true, ctr: false, cpc: false, results: false, purchase_roas: false },
                     
-                    activeFilters: { campaigns: [], adsets: [], ads: [], age_gender: [], gender: [] },
+                    activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [] },
                     searchQuery: '',
                     
                     sortCol: 'spend',
@@ -434,7 +434,7 @@
                     },
 
                     clearFiltersLocal() {
-                        this.activeFilters = { campaigns: [], adsets: [], ads: [], age_gender: [], gender: [] };
+                        this.activeFilters = { campaigns: [], adsets: [], ads: [], age: [], gender: [] };
                     },
 
                     clearFilters() {

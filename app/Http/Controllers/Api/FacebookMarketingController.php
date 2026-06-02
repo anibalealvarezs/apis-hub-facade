@@ -19,7 +19,7 @@ class FacebookMarketingController extends Controller
             'account.*' => 'nullable', // Temporarily remove strict type check to bypass 422
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age_gender,gender',
+            'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
         ]);
@@ -36,7 +36,7 @@ class FacebookMarketingController extends Controller
             'adsets' => 'adGroup_id',
             'ads' => 'ad_id',
             'gender' => 'gender',
-            'age_gender' => 'age', // just an example, if they filter by age in age_gender tab
+            'age' => 'age',
         ];
 
         foreach ($dimensionMap as $tab => $dimKey) {
@@ -76,13 +76,13 @@ class FacebookMarketingController extends Controller
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $aggregations = [
-                'total_spend' => 'spend',
-                'total_clicks' => 'clicks',
-                'total_impressions' => 'impressions',
-                'average_ctr' => 'ctr',
-                'average_cpc' => 'cpc',
-                'average_purchase_roas' => 'purchase_roas',
-                'total_results' => 'results'
+                'spend' => 'spend',
+                'clicks' => 'clicks',
+                'impressions' => 'impressions',
+                'ctr' => 'ctr',
+                'cpc' => 'cpc',
+                'purchase_roas' => 'purchase_roas',
+                'results' => 'results'
             ];
 
             $payloads = [
@@ -184,13 +184,13 @@ class FacebookMarketingController extends Controller
 
             $aggregations = [
                 'campaign_status' => 'campaign_status', // Not all tabs will have status but APIs Hub will ignore it or return null
-                'total_spend' => 'spend',
-                'total_clicks' => 'clicks',
-                'total_impressions' => 'impressions',
-                'average_ctr' => 'ctr',
-                'average_cpc' => 'cpc',
-                'total_results' => 'results',
-                'average_purchase_roas' => 'purchase_roas',
+                'spend' => 'spend',
+                'clicks' => 'clicks',
+                'impressions' => 'impressions',
+                'ctr' => 'ctr',
+                'cpc' => 'cpc',
+                'results' => 'results',
+                'purchase_roas' => 'purchase_roas',
             ];
 
             $accountFilter = [];
@@ -216,8 +216,8 @@ class FacebookMarketingController extends Controller
                 $tabPayload['groupBy'] = ['adGroup_id', 'adGroup'];
             } elseif ($validated['activeTab'] === 'ads') {
                 $tabPayload['groupBy'] = ['ad_id', 'ad']; // Assuming 'ad_id', 'ad'
-            } elseif ($validated['activeTab'] === 'age_gender') {
-                $tabPayload['groupBy'] = ['age', 'gender'];
+            } elseif ($validated['activeTab'] === 'age') {
+                $tabPayload['groupBy'] = ['age'];
             } elseif ($validated['activeTab'] === 'gender') {
                 $tabPayload['groupBy'] = ['gender'];
             }
