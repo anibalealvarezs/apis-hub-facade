@@ -55,7 +55,8 @@ class LocalAssetDiscoveryService
             appSecret: config('services.facebook.client_secret') ?? config('services.facebook.app_secret'),
             redirectUrl: config('services.facebook.redirect'),
             pageId: null,
-            userAccessToken: $profile->access_token
+            userAccessToken: $profile->access_token,
+            sleep: 0 // Eliminate sleep to prevent 408 Timeout in synchronous UI discovery
         );
     }
 
@@ -110,17 +111,39 @@ class LocalAssetDiscoveryService
     {
         $client = $this->getFacebookClient($project);
         $response = $client->getPages(
-            userId: $project->facebookProfile->provider_account_id
+            userId: $project->facebookProfile->provider_account_id,
+            fields: 'id,name,link,website,created_time,instagram_business_account{id,name,username,website}'
         );
 
-        // Normalize
+        // Normalize using logic parity with APIs Hub FacebookOrganicDriver
         $assets = [];
         if (isset($response['data']) && is_array($response['data'])) {
             foreach ($response['data'] as $page) {
                 if (isset($page['id']) && isset($page['name'])) {
+                    $igAccount = $page['instagram_business_account'] ?? null;
+                    
+                    if (is_array($igAccount)) {
+                        $igUsername = $igAccount['username'] ?? null;
+                        $igHostname = $igUsername ? 'https://www.instagram.com/' . $igUsername : ($igAccount['website'] ?? null);
+                        $igAccount['website'] = $igHostname;
+                        $page['instagram_business_account'] = $igAccount;
+                    } else {
+                        $igUsername = null;
+                        $igHostname = null;
+                    }
+
                     $assets[] = [
-                        'id' => $page['id'],
-                        'name' => $page['name']
+                        'id'              => $page['id'],
+                        'title'           => $page['name'],
+                        'hostname'        => $page['website'] ?? null,
+                        'url'             => $page['link'] ?? null,
+                        'link'            => $page['link'] ?? null,
+                        'created_time'    => $page['created_time'] ?? null,
+                        'data'            => $page,
+                        'ig_account'      => is_array($igAccount) ? ($igAccount['id'] ?? null) : $igAccount,
+                        'ig_account_name' => $igUsername ?? (is_array($igAccount) ? ($igAccount['name'] ?? null) : null),
+                        'ig_hostname'     => $igHostname,
+                        'ig_data'         => is_array($igAccount) ? $igAccount : null,
                     ];
                 }
             }
