@@ -1331,6 +1331,12 @@ class DataSources extends Page
             return;
         }
 
+        if (in_array($tenant->health_status, ['redeploying', 'syncing'])) {
+            Notification::make()->title(__('Action Blocked'))->body(__('A deployment or synchronization is currently running. Please wait for it to finish.'))->warning()->send();
+
+            return;
+        }
+
         if (! auth()->user()->can('manage_channels')) {
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
 

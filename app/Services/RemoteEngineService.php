@@ -93,56 +93,17 @@ class RemoteEngineService
     }
 
     /**
-     * Trigger a nuclear historical resync via SSH, bypassing the HTTP layer entirely.
-     * This avoids Swoole worker blocking issues for long-running CLI operations.
+     * Trigger a nuclear historical resync via a tracked background job.
      */
     public function triggerHistoricalResync(Project $project, string $channel = 'all')
     {
         try {
-            $server = $project->server;
+            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channel);
 
-            if (! $server || ! $server->ip_address || ! $server->ssh_private_key) {
-                Log::error("Nuclear Resync SSH: No server/SSH credentials configured for project {$project->name}");
-
-                return ['status' => 'error', 'message' => 'SSH credentials not configured for this project.'];
-            }
-
-            // Write the private key to a temp file
-            $keyFile = tempnam(sys_get_temp_dir(), 'ssh_key_');
-            file_put_contents($keyFile, $server->ssh_private_key);
-            chmod($keyFile, 0600);
-
-            $host = escapeshellarg($server->ip_address);
-            $port = (int) ($server->ssh_port ?? 22);
-            $user = escapeshellarg($server->ssh_user ?? 'root');
-            $keyPath = escapeshellarg($keyFile);
-            $channelArg = ($channel && $channel !== 'all') ? '--channel=' . $channel : '';
-
-            // Resolve the project's deploy path via subdomain convention
-            $deployPath = "/var/www/apis-hub/tenants/{$project->subdomain}";
-            $cliCmd = "docker compose -f {$deployPath}/docker-compose.yml exec -T master php bin/cli.php app:nuclear-resync {$channelArg}";
-
-            $sshCmd = "ssh -i {$keyPath} -p {$port} -o StrictHostKeyChecking=no -o ConnectTimeout=10 {$user}@{$host} " . escapeshellarg($cliCmd);
-
-            $output = [];
-            $return_var = 0;
-            exec($sshCmd, $output, $return_var);
-
-            @unlink($keyFile);
-
-            Log::info("Nuclear Resync SSH: dispatched for project {$project->name}, channel: {$channel}", [
-                'output' => $output,
-                'return_var' => $return_var,
-            ]);
-
-            if ($return_var !== 0) {
-                return ['status' => 'error', 'message' => 'Nuclear resync failed.', 'output' => implode("\n", $output)];
-            }
-
-            return ['status' => 'success', 'message' => 'Nuclear resync completed.', 'output' => implode("\n", $output)];
+            return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
 
         } catch (\Throwable $e) {
-            Log::error("Nuclear Resync SSH failed for {$project->name}: " . $e->getMessage());
+            Log::error("Nuclear Resync Job dispatch failed for {$project->name}: " . $e->getMessage());
 
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
@@ -157,19 +118,37 @@ class RemoteEngineService
     }
 
     /**
-     * Trigger a background redeployment via the Node's management API.
+     * Trigger a background redeployment via a tracked job.
      */
     public function triggerRedeploy(Project $project)
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->triggerRedeploy());
+        try {
+            \App\Jobs\DeployProjectJob::dispatch($project);
+
+            return ['status' => 'success', 'message' => 'Redeploy initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Redeploy Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     /**
-     * Trigger a lightweight synchronization start without full downtime.
+     * Trigger a lightweight synchronization start via a tracked job.
      */
     public function startSync(Project $project)
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->startSync());
+        try {
+            \App\Jobs\SyncProjectJob::dispatch($project);
+
+            return ['status' => 'success', 'message' => 'Synchronization initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Start Sync Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     /**

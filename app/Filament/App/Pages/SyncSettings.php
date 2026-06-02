@@ -67,7 +67,7 @@ class SyncSettings extends Page
                 ->color('success')
                 ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
                     || Filament::getTenant()->fresh()->billing_status === 'suspended'
-                    || Filament::getTenant()->fresh()->health_status === 'redeploying'
+                    || in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing'])
                     || ! auth()->user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
@@ -214,6 +214,12 @@ class SyncSettings extends Page
         $tenant = Filament::getTenant();
         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
             Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
+
+            return;
+        }
+
+        if (in_array($tenant->health_status, ['redeploying', 'syncing'])) {
+            Notification::make()->title(__('Action Blocked'))->body(__('A deployment or synchronization is currently running. Please wait for it to finish.'))->warning()->send();
 
             return;
         }

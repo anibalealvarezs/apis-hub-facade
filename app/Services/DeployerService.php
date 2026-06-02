@@ -207,6 +207,35 @@ EOT;
     }
 
     /**
+     * Trigger a lightweight synchronization over SSH.
+     */
+    public function startSync(Project $project)
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $commands = [
+            "cd {$path}",
+            "bash bin/start-sync.sh"
+        ];
+
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
+     * Trigger a nuclear historical resync over SSH.
+     */
+    public function nuclearResync(Project $project, string $channel = 'all')
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
+        $commands = [
+            "cd {$path}",
+            "bash bin/nuclear-sync.sh {$channelArg}"
+        ];
+
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
      * Start the containers for a project (resume).
      */
     public function startContainers(Project $project)
