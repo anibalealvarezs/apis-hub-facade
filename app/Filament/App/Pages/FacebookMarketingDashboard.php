@@ -52,11 +52,26 @@ class FacebookMarketingDashboard extends Page
             $service = app(\App\Services\RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
+            // Extract enabled accounts from sync config
+            $config = $tenant->sync_config['facebook_marketing']['ad_accounts'] ?? [];
+            $enabledIds = [];
+            foreach ($config as $asset) {
+                if (!empty($asset['enabled']) && !empty($asset['id'])) {
+                    // Match the formatting used in discovery (removing 'act_' prefix if present)
+                    $enabledIds[] = str_replace('act_', '', (string) $asset['id']);
+                }
+            }
+            
             $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account');
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
-                    $this->accounts[$account['id']] = $account['name'] ?? $account['id'];
+                    $platformId = (string) ($account['platform_id'] ?? $account['id']);
+                    $cleanPlatformId = str_replace('act_', '', $platformId);
+                    
+                    if (in_array($cleanPlatformId, $enabledIds)) {
+                        $this->accounts[$account['id']] = $account['name'] ?? $account['id'];
+                    }
                 }
                 
                 if (!empty($this->accounts) && empty($this->selectedAccounts)) {
