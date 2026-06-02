@@ -72,7 +72,7 @@ class FacebookMarketingDashboard extends Page
             }
             \Illuminate\Support\Facades\Log::info("FBM Dashboard - Config Enabled IDs", ['tenant' => $tenant->id, 'ids' => $enabledIds]);
             
-            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account', ['limit' => 1000]);
+            $response = $service->listChanneled($tenant, 'facebook_marketing', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
             \Illuminate\Support\Facades\Log::info("FBM Dashboard - listChanneled RAW count:", ['count' => count($response['data'] ?? [])]);
 

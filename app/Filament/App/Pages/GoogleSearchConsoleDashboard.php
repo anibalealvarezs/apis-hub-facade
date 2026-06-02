@@ -53,7 +53,7 @@ class GoogleSearchConsoleDashboard extends Page
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
             
-            $response = $service->listChanneled($tenant, 'google_search_console', 'channeled_account', ['limit' => 1000]);
+            $response = $service->listChanneled($tenant, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
             $config = $tenant->sync_config['google_search_console']['assets']['sites'] ?? $tenant->sync_config['google_search_console']['sites'] ?? [];
             $enabledUrls = [];
