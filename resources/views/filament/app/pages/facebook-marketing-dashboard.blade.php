@@ -124,7 +124,7 @@
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400" />
                     </button>
                     
-                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full sm:w-72 md:w-[350px] mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                    <div x-show="open" x-transition style="display: none; min-width: 320px;" class="absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
                         
                         <!-- Search and Select All Header -->
                         <div class="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">

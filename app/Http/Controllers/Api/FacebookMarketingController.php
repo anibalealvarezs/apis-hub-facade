@@ -256,6 +256,9 @@ class FacebookMarketingController extends Controller
                 } elseif (isset($rowLower['age']) && isset($rowLower['gender'])) {
                     $row['id'] = $rowLower['age'] . '_' . $rowLower['gender'];
                     $row['name'] = ucfirst($rowLower['gender']) . ' / ' . $rowLower['age'];
+                } elseif (isset($rowLower['age'])) {
+                    $row['id'] = $rowLower['age'];
+                    $row['name'] = $rowLower['age'];
                 } elseif (isset($rowLower['gender'])) {
                     $row['id'] = $rowLower['gender'];
                     $row['name'] = ucfirst($rowLower['gender']);
