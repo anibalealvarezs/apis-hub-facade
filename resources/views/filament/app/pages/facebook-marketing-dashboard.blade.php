@@ -279,7 +279,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="toggleFilter(activeTab, row.id)" class="cursor-pointer transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5" :class="isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : ''">
+                            <tr @click="canFilter(activeTab) ? toggleFilter(activeTab, row.id) : null" class="transition duration-150" :class="[isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : 'hover:bg-gray-50 dark:hover:bg-white/5', canFilter(activeTab) ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed']">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
@@ -374,9 +374,28 @@
                         const boot = () => {
                             this.initChart();
                             
-                            this.$watch('accounts', () => {
+                            this.$watch('accounts', (val) => {
+                                if (val && val.length !== 1) {
+                                    this.activeFilters.campaigns = [];
+                                    this.activeFilters.adsets = [];
+                                    this.activeFilters.ads = [];
+                                    this.saveFilters();
+                                }
                                 this.loadFilters();
                                 this.fetchAll();
+                            });
+                            this.$watch('activeFilters.campaigns', (val) => {
+                                if (val && val.length !== 1) {
+                                    this.activeFilters.adsets = [];
+                                    this.activeFilters.ads = [];
+                                    this.saveFilters();
+                                }
+                            });
+                            this.$watch('activeFilters.adsets', (val) => {
+                                if (val && val.length !== 1) {
+                                    this.activeFilters.ads = [];
+                                    this.saveFilters();
+                                }
                             });
                             this.$watch('dateStart', () => this.fetchAll());
                             this.$watch('dateEnd', () => this.fetchAll());
@@ -444,7 +463,16 @@
                         this.fetchChart();
                     },
 
+                    canFilter(tab) {
+                        if (tab === 'age' || tab === 'gender') return true;
+                        if (tab === 'campaigns') return this.accounts.length === 1;
+                        if (tab === 'adsets') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1;
+                        if (tab === 'ads') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1 && this.activeFilters.adsets.length === 1;
+                        return false;
+                    },
+
                     toggleFilter(tab, value) {
+                        if (!this.canFilter(tab)) return;
                         if (!this.activeFilters[tab]) this.activeFilters[tab] = [];
                         const idx = this.activeFilters[tab].indexOf(value);
                         if (idx > -1) {
@@ -455,6 +483,7 @@
                         this.saveFilters();
                         this.fetchSummary();
                         this.fetchChart();
+                        this.fetchTable();
                     },
 
                     isFilterActive(tab, value) {
@@ -476,9 +505,13 @@
                         });
                     },
 
-                    getCacheKey(endpoint, includeFilters = true) {
+                    getCacheKey(endpoint, filterMode = 'all') {
                         const accountKey = this.accounts.join('_');
-                        const filterHash = includeFilters ? JSON.stringify(this.activeFilters) : 'no_filters';
+                        let filtersObj = {};
+                        if (filterMode === 'all') filtersObj = this.activeFilters;
+                        else if (filterMode === 'table') filtersObj = this.getTableFilters();
+
+                        const filterHash = filterMode === 'none' ? 'no_filters' : JSON.stringify(filtersObj);
                         return `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}`;
                     },
 
@@ -545,7 +578,7 @@
 
                     async fetchTable() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('table', false); // Table does NOT use active filters
+                        const cacheKey = this.getCacheKey('table', 'table'); // Table uses contextual filters
                         
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -555,7 +588,7 @@
 
                         this.isTableLoading = true;
                         try {
-                            const response = await fetch('/api/fbm/table', this.getFetchOptions(false));
+                            const response = await fetch('/api/fbm/table', this.getFetchOptions('table'));
                             const data = await response.json();
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -569,7 +602,24 @@
                         }
                     },
 
-                    getFetchOptions(includeFilters = true) {
+                    getTableFilters() {
+                        const filters = JSON.parse(JSON.stringify(this.activeFilters));
+                        
+                        if (this.activeTab === 'campaigns') {
+                            filters.campaigns = [];
+                            filters.adsets = [];
+                            filters.ads = [];
+                        } else if (this.activeTab === 'adsets') {
+                            filters.adsets = [];
+                            filters.ads = [];
+                        } else if (this.activeTab === 'ads') {
+                            filters.ads = [];
+                        }
+                        
+                        return filters;
+                    },
+
+                    getFetchOptions(filterMode = 'all') {
                         const payload = {
                             tenant: this.tenantId,
                             account: this.accounts,
@@ -578,8 +628,10 @@
                             activeTab: this.activeTab
                         };
                         
-                        if (includeFilters) {
+                        if (filterMode === 'all') {
                             payload.activeFilters = this.activeFilters;
+                        } else if (filterMode === 'table') {
+                            payload.activeFilters = this.getTableFilters();
                         }
 
                         return {
