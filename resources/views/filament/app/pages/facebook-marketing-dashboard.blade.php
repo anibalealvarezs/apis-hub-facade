@@ -499,16 +499,17 @@
                         const isObject = typeof rowOrId === 'object' && rowOrId !== null;
                         const value = isObject ? rowOrId.id : rowOrId;
                         
-                        const idx = this.activeFilters[tab].indexOf(value);
+                        let newArr = [...this.activeFilters[tab]];
+                        const idx = newArr.indexOf(value);
                         if (idx > -1) {
-                            this.activeFilters[tab].splice(idx, 1);
+                            newArr.splice(idx, 1);
                         } else {
-                            this.activeFilters[tab].push(value);
+                            newArr.push(value);
                             if (isObject && rowOrId.name) {
                                 this.filterLabels[value] = rowOrId.name;
                             }
                         }
-                        this.activeFilters[tab] = [...this.activeFilters[tab]]; // Force Alpine reactivity
+                        this.activeFilters[tab] = newArr;
                         this.saveFilters();
                         this.fetchSummary();
                         this.fetchChart();
