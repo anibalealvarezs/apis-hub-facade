@@ -110,28 +110,46 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]" />
-                    {{ __('Facebook Marketing') }}
+                    {{ __('Meta Ads Manager Insights') }}
                 </h1>
-                <p class="fb-header-subtitle">{{ __('Meta Ads Manager Insights') }}</p>
             </div>
             <div class="fb-header-controls">
                 <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
                     <span>{{ __('Update') }}</span>
                 </button>
-                <div class="relative" x-data="{ open: false }">
+                <div class="relative" x-data="{ open: false, searchAccount: '' }">
                     <button @click="open = !open" @click.outside="open = false" type="button" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-64 px-4 py-2.5 h-[42px]">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200" x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? '1 {{ __('account') }}' : accounts.length + ' {{ __('accounts') }}')"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 text-gray-500 dark:text-gray-400" />
                     </button>
                     
-                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full md:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-y-auto right-0 md:left-0 md:right-auto">
-                        <div class="p-2 flex flex-col gap-1">
+                    <div x-show="open" x-transition style="display: none;" class="absolute z-50 w-full md:w-96 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                        
+                        <!-- Search and Select All Header -->
+                        <div class="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <input type="text" x-model="searchAccount" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-9 p-2" placeholder="{{ __('Search accounts...') }}">
+                            </div>
+                            
+                            @if(count($accounts) > 0)
+                            <div class="flex items-center justify-between px-1">
+                                <button type="button" @click="accounts = {{ json_encode(array_keys($accounts)) }}" class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">{{ __('Select All') }}</button>
+                                <button type="button" @click="accounts = []" class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">{{ __('Clear All') }}</button>
+                            </div>
+                            @endif
+                        </div>
+
+                        <!-- Accounts List -->
+                        <div class="p-2 flex flex-col gap-1 overflow-y-auto max-h-96">
                             @if(count($accounts) === 0)
                                 <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">{{ __('No accounts available.') }}</div>
                             @endif
                             @foreach($accounts as $id => $name)
-                                <label class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-150">
+                                <label x-show="searchAccount === '' || '{{ strtolower(addslashes($name)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())" class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-150">
                                     <input type="checkbox" value="{{ $id }}" x-model="accounts" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3">
                                     <div class="flex flex-col overflow-hidden">
                                         <span class="truncate font-medium" title="{{ $name }}">{{ $name }}</span>

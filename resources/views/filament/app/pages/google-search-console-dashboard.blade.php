@@ -111,9 +111,8 @@
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]" />
-                    {{ __('Google Search Console') }}
+                    {{ __('Performance on Google Search results') }}
                 </h1>
-                <p class="gsc-header-subtitle">{{ __('Performance on Google Search results') }}</p>
             </div>
             <div class="gsc-header-controls">
                 <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">

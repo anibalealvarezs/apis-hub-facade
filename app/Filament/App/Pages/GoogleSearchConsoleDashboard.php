@@ -12,9 +12,10 @@ class GoogleSearchConsoleDashboard extends Page
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     protected static ?string $navigationGroup = 'Google';
+    protected static ?string $navigationLabel = 'Google Search Console';
     public function getTitle(): string
     {
-        return __('Google Search Console');
+        return __('Performance on Google Search results');
     }
     protected static string $view = 'filament.app.pages.google-search-console-dashboard';
     protected static ?string $slug = 'google-search-console';

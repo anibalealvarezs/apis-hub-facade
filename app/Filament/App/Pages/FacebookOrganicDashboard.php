@@ -10,9 +10,10 @@ class FacebookOrganicDashboard extends Page
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     protected static ?string $navigationGroup = 'Meta';
+    protected static ?string $navigationLabel = 'Facebook Organic';
     public function getTitle(): string
     {
-        return __('Facebook Organic');
+        return __('Meta Pages & Instagram Accounts');
     }
     protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
     protected static ?string $slug = 'facebook-organic';

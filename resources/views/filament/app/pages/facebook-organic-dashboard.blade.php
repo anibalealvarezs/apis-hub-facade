@@ -3,9 +3,8 @@
         <div>
             <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
                 <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]" />
-                {{ __('Facebook Organic') }}
+                {{ __('Meta Pages & Instagram Accounts') }}
             </h1>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ __('Placeholder for Facebook Pages and Instagram Accounts organic data.') }}</p>
         </div>
     </div>
 
