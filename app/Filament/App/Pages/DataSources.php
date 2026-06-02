@@ -1340,6 +1340,17 @@ class DataSources extends Page
         $uiState = $this->form->getState();
         $dbState = $tenant->sync_config ?? [];
 
+        // Map global fallback toggles back into their channel configurations
+        foreach ($uiState as $key => $value) {
+            if (is_string($key) && str_ends_with($key, '_enabled')) {
+                $channel = str_replace('_enabled', '', $key);
+                if (!isset($uiState[$channel])) {
+                    $uiState[$channel] = [];
+                }
+                $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+
         // Validate limits before saving
         $totalEnabled = 0;
         foreach ($uiState as $channel => $channelConfig) {
