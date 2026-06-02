@@ -72,15 +72,26 @@ class FacebookOrganicDashboard extends Page
             // Extract the mapping from the tenant's sync_config
             $configPages = $tenant->sync_config['facebook_organic']['pages'] ?? [];
             $mapping = []; // fb_page_id => ig_account_id
+            $enabledFbIds = [];
             foreach ($configPages as $p) {
-                if (!empty($p['id']) && !empty($p['instagram_business_account']['id'])) {
-                    $mapping[$p['id']] = $p['instagram_business_account']['id'];
+                if (!empty($p['id']) && !empty($p['enabled'])) {
+                    $enabledFbIds[] = (string) $p['id'];
+                    if (!empty($p['instagram_business_account']['id'])) {
+                        $mapping[$p['id']] = $p['instagram_business_account']['id'];
+                    }
                 }
             }
 
             // Build the dropdown options
             foreach ($fbPages as $fbId => $fbAcc) {
-                $igId = $mapping[$fbId] ?? null;
+                // Determine the clean Facebook ID from the response (removing 'act_' if strangely present, though FBO usually doesn't have it)
+                $cleanFbId = str_replace('act_', '', (string) ($fbAcc['platform_id'] ?? $fbId));
+                
+                if (!in_array($cleanFbId, $enabledFbIds)) {
+                    continue;
+                }
+
+                $igId = $mapping[$cleanFbId] ?? null;
                 $igAcc = $igId ? ($igAccounts[$igId] ?? null) : null;
                 
                 if ($igAcc) {

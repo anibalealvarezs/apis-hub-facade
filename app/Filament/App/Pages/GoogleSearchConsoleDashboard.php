@@ -55,9 +55,21 @@ class GoogleSearchConsoleDashboard extends Page
             
             $response = $service->listChanneled($tenant, 'google_search_console', 'page');
 
+            $config = $tenant->sync_config['google_search_console']['assets']['sites'] ?? [];
+            $enabledUrls = [];
+            foreach ($config as $site) {
+                if (!empty($site['enabled']) && !empty($site['url'])) {
+                    $enabledUrls[] = str_replace(['https://', 'http://'], '', rtrim($site['url'], '/'));
+                }
+            }
+
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $this->accounts[$page['id']] = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
+                    $cleanUrl = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
+                    
+                    if (in_array($cleanUrl, $enabledUrls)) {
+                        $this->accounts[$page['id']] = $cleanUrl;
+                    }
                 }
                 
                 if (!empty($this->accounts) && !$this->selectedAccount) {
