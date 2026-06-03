@@ -80,8 +80,8 @@ class FacebookOrganicDashboard extends Page
             foreach ($configPages as $p) {
                 if (!empty($p['id']) && !empty($p['enabled'])) {
                     $enabledFbIds[] = (string) $p['id'];
-                    if (!empty($p['instagram_business_account']['id'])) {
-                        $mapping[$p['id']] = $p['instagram_business_account']['id'];
+                    if (!empty($p['ig_account'])) {
+                        $mapping[$p['id']] = $p['ig_account'];
                     }
                 }
             }
@@ -98,14 +98,16 @@ class FacebookOrganicDashboard extends Page
                 if (!$matched) {
                     continue;
                 }
-
+                
                 $igPlatformId = $mapping[$cleanFbId] ?? null;
                 $igAcc = null;
                 $igInternalId = null;
+                $debugMatch = [];
 
                 if ($igPlatformId) {
                     foreach ($igAccounts as $acc) {
                         $accPlatId = str_replace('act_', '', (string) ($acc['platformId'] ?? $acc['platform_id'] ?? ''));
+                        $debugMatch[] = ['accPlatId' => $accPlatId, 'targetPlatId' => (string)$igPlatformId, 'acc' => $acc];
                         if ($accPlatId === (string)$igPlatformId) {
                             $igAcc = $acc;
                             $igInternalId = $acc['id'] ?? null;
