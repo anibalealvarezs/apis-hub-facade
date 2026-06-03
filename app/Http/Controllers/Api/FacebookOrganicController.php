@@ -111,7 +111,7 @@ class FacebookOrganicController extends Controller
                 }
             } else {
                 if (!empty($fbAccountIds)) {
-                    $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
+                    $baseFilters['page'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
                 }
             }
 
@@ -178,7 +178,7 @@ class FacebookOrganicController extends Controller
                 }
             } else {
                 if (!empty($fbAccountIds)) {
-                    $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
+                    $baseFilters['page'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
                 }
             }
 
@@ -245,7 +245,7 @@ class FacebookOrganicController extends Controller
                 }
             } else {
                 if (!empty($fbAccountIds)) {
-                    $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
+                    $baseFilters['page'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
                 }
             }
 
