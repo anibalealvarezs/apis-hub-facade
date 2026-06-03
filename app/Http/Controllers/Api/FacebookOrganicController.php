@@ -18,7 +18,8 @@ class FacebookOrganicController extends Controller
             'account.*' => 'nullable',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'required|string|in:fb_pages,fb_posts,ig_accounts,ig_posts',
+            'activeTab' => 'required|string|in:facebook,instagram',
+            'postId' => 'nullable|string',
         ]);
     }
 
@@ -85,7 +86,8 @@ class FacebookOrganicController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $config = $this->getTabConfig($validated['activeTab']);
+            $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_pages' : 'ig_accounts';
+            $config = $this->getTabConfig($internalTab);
             
             $baseFilters = $config['filters'];
             
@@ -101,7 +103,7 @@ class FacebookOrganicController extends Controller
                 }
             }
 
-            if ($validated['activeTab'] === 'ig_accounts' || $validated['activeTab'] === 'ig_posts') {
+            if ($validated['activeTab'] === 'instagram') {
                 if (empty($igAccountIds)) {
                     $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
                 } else {
@@ -148,7 +150,11 @@ class FacebookOrganicController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $config = $this->getTabConfig($validated['activeTab']);
+            $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_pages' : 'ig_accounts';
+            if (!empty($validated['postId'])) {
+                $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_posts' : 'ig_posts';
+            }
+            $config = $this->getTabConfig($internalTab);
             
             $baseFilters = $config['filters'];
             
@@ -164,7 +170,7 @@ class FacebookOrganicController extends Controller
                 }
             }
 
-            if ($validated['activeTab'] === 'ig_accounts' || $validated['activeTab'] === 'ig_posts') {
+            if ($validated['activeTab'] === 'instagram') {
                 if (empty($igAccountIds)) {
                     $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
                 } else {
@@ -174,6 +180,10 @@ class FacebookOrganicController extends Controller
                 if (!empty($fbAccountIds)) {
                     $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
                 }
+            }
+
+            if (!empty($validated['postId'])) {
+                $baseFilters['post'] = $validated['postId'];
             }
 
             $aggregations = [];
@@ -210,7 +220,8 @@ class FacebookOrganicController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $config = $this->getTabConfig($validated['activeTab']);
+            $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_posts' : 'ig_posts';
+            $config = $this->getTabConfig($internalTab);
             
             $baseFilters = $config['filters'];
             
@@ -226,7 +237,7 @@ class FacebookOrganicController extends Controller
                 }
             }
 
-            if ($validated['activeTab'] === 'ig_accounts' || $validated['activeTab'] === 'ig_posts') {
+            if ($validated['activeTab'] === 'instagram') {
                 if (empty($igAccountIds)) {
                     $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
                 } else {
@@ -245,7 +256,7 @@ class FacebookOrganicController extends Controller
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
-                    'limit' => 5000
+                    'limit' => 500
                 ]
             ];
 
@@ -275,6 +286,30 @@ class FacebookOrganicController extends Controller
 
             return response()->json([
                 'table' => $tableData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    public function post(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tenant' => 'required|string',
+                'postId' => 'required|string',
+            ]);
+            
+            $tenant = Project::findOrFail($validated['tenant']);
+            $service = app(RemoteEngineService::class);
+            
+            // Query the orchestrator for the specific post entity
+            $results = $service->listChanneled($tenant, 'facebook_organic', 'post', [
+                'limit' => 1,
+                'post_id' => $validated['postId'] // The API will handle the filter mapping
+            ]);
+
+            return response()->json([
+                'post' => $results['data'][0] ?? null,
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

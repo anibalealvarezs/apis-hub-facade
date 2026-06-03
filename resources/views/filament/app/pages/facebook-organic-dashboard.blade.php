@@ -159,6 +159,11 @@
             </div>
         </div>
 
+        <div class="tab-nav-fb" style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; border: 1px solid var(--fb-border);">
+            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''" @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
+            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''" @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+        </div>
+
         <div class="metrics-grid-fb relative">
             <div x-show="isSummaryLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
@@ -228,11 +233,8 @@
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
             
-            <div class="tab-nav-fb">
-                <div class="tab-fb" :class="activeTab === 'fb_pages' ? 'active' : ''" @click="setTab('fb_pages')">{{ __('FB PAGES') }}</div>
-                <div class="tab-fb" :class="activeTab === 'fb_posts' ? 'active' : ''" @click="setTab('fb_posts')">{{ __('FB POSTS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'ig_accounts' ? 'active' : ''" @click="setTab('ig_accounts')">{{ __('IG ACCOUNTS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'ig_posts' ? 'active' : ''" @click="setTab('ig_posts')">{{ __('IG POSTS') }}</div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -248,7 +250,7 @@
                 <table class="fb-table">
                     <thead>
                         <tr>
-                            <th><span x-text="activeTab.toUpperCase()"></span></th>
+                            <th>{{ __('POST') }}</th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('reach')">{{ __('Reach') }} <span x-show="sortCol === 'reach'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('interactions')">{{ __('Interactions') }} <span x-show="sortCol === 'interactions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('likes')">{{ __('Likes') }} <span x-show="sortCol === 'likes'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
@@ -259,7 +261,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
+                            <tr @click="openPostModal(row)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <a x-show="row.permalink_url || row.permalink" :href="row.permalink_url || row.permalink" target="_blank" class="text-primary-500 hover:text-primary-700">
@@ -307,6 +309,94 @@
                 </div>
             </div>
         </div>
+
+        <!-- Post Details & History Modal -->
+        <div x-show="isPostModalOpen" 
+             style="display: none;" 
+             class="fixed inset-0 z-[999] overflow-y-auto" 
+             aria-labelledby="modal-title" 
+             role="dialog" 
+             aria-modal="true">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" 
+                 x-show="isPostModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="closePostModal()"></div>
+
+            <!-- Modal panel -->
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div x-show="isPostModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row">
+                    
+                    <!-- Close Button -->
+                    <button @click="closePostModal()" type="button" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 bg-white/50 dark:bg-gray-800/50 rounded-full p-1 backdrop-blur-md">
+                        <span class="sr-only">Close</span>
+                        <x-heroicon-o-x-mark class="h-6 w-6" />
+                    </button>
+
+                    <!-- Left Side: Post Preview -->
+                    <div class="w-full sm:w-1/3 bg-gray-50 dark:bg-black/20 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-white/10 relative">
+                        
+                        <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
+                            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+                        </div>
+
+                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col h-full">
+                            <!-- Media Preview -->
+                            <div class="w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 aspect-square flex items-center justify-center relative shadow-inner mb-4">
+                                <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
+                                    <img :src="selectedPostData.data.media_url || selectedPostData.data.full_picture" class="w-full h-full object-cover" alt="Post preview" />
+                                </template>
+                                <template x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
+                                    <div class="text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                                        <x-heroicon-o-photo class="w-12 h-12 mb-2 opacity-50" />
+                                        <span class="text-xs uppercase font-medium">{{ __('No Media') }}</span>
+                                    </div>
+                                </template>
+                                <div x-show="selectedPostData?.data?.media_type" class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm" x-text="selectedPostData.data.media_type"></div>
+                            </div>
+
+                            <!-- Post Details -->
+                            <div class="flex-grow flex flex-col">
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData.data.created_time || selectedPostData.data.timestamp).toLocaleString() : ''"></div>
+                                <div class="text-sm text-gray-800 dark:text-gray-200 mb-4 flex-grow line-clamp-6 whitespace-pre-line" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
+                                
+                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="mt-auto inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
+                                    <x-heroicon-o-link class="w-4 h-4 mr-2" />
+                                    {{ __('View Original Post') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Metrics Chart -->
+                    <div class="w-full sm:w-2/3 p-6 flex flex-col relative">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
+                        </div>
+                        
+                        <div class="flex-grow relative min-h-[300px]">
+                            <div x-show="isPostChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
+                                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+                            </div>
+                            <canvas x-ref="postCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -318,7 +408,7 @@
                     accounts: @json($selectedAccounts),
                     dateStart: '{{ $dateStart }}',
                     dateEnd: '{{ $dateEnd }}',
-                    activeTab: 'fb_pages',
+                    activeTab: 'facebook',
                     
                     isSummaryLoading: false,
                     isChartLoading: false,
@@ -328,6 +418,14 @@
                     previousRaw: {},
                     chartDataRaw: [],
                     tableDataRaw: [],
+                    
+                    isPostModalOpen: false,
+                    selectedPost: null,
+                    isPostChartLoading: false,
+                    postChartInstance: null,
+                    postChartDataRaw: [],
+                    selectedPostData: null,
+                    isPostDetailsLoading: false,
                     
                     activeMetrics: { reach: true, interactions: true, likes: true, comments: false, views: false, follows: false },
                     
@@ -398,6 +496,168 @@
                         this.fetchSummary();
                         this.fetchChart();
                         this.fetchTable();
+                    },
+                    
+                    openPostModal(row) {
+                        this.selectedPost = row;
+                        this.isPostModalOpen = true;
+                        // Prevent body scrolling
+                        document.body.style.overflow = 'hidden';
+                        
+                        // Wait for modal to render to get canvas, then init chart
+                        this.$nextTick(() => {
+                            if (!this.postChartInstance) {
+                                this.initPostChart();
+                            }
+                            this.fetchPostChart(row.id);
+                            this.fetchPostDetails(row.id);
+                        });
+                    },
+                    
+                    closePostModal() {
+                        this.isPostModalOpen = false;
+                        this.selectedPost = null;
+                        this.selectedPostData = null;
+                        document.body.style.overflow = '';
+                        if (this.postChartInstance) {
+                            this.postChartInstance.destroy();
+                            this.postChartInstance = null;
+                        }
+                    },
+
+                    initPostChart() {
+                        const ctx = this.$refs.postCanvas.getContext('2d');
+                        
+                        Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
+                        Chart.defaults.font.family = "'Inter', sans-serif";
+                        
+                        this.postChartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: { labels: [], datasets: [] },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                                    tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, cornerRadius: 8, displayColors: true }
+                                },
+                                scales: {
+                                    x: { grid: { display: false, drawBorder: false } },
+                                    y: { beginAtZero: true, grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false } }
+                                }
+                            }
+                        });
+                    },
+                    
+                    async fetchPostChart(postId) {
+                        this.isPostChartLoading = true;
+                        try {
+                            const payload = {
+                                tenant: this.tenantId,
+                                account: this.accounts,
+                                dateStart: this.dateStart,
+                                dateEnd: this.dateEnd,
+                                activeTab: this.activeTab,
+                                postId: postId
+                            };
+                            
+                            const response = await fetch('/api/fbo/chart', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            const data = await response.json();
+                            this.postChartDataRaw = data.chart || [];
+                            this.renderPostChart();
+                        } catch (err) {
+                            console.error('Failed to fetch post chart:', err);
+                        } finally {
+                            this.isPostChartLoading = false;
+                        }
+                    },
+                    
+                    async fetchPostDetails(postId) {
+                        this.isPostDetailsLoading = true;
+                        this.selectedPostData = null;
+                        try {
+                            const payload = {
+                                tenant: this.tenantId,
+                                postId: postId
+                            };
+                            
+                            const response = await fetch('/api/fbo/post', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            const data = await response.json();
+                            this.selectedPostData = data.post || null;
+                        } catch (err) {
+                            console.error('Failed to fetch post details:', err);
+                        } finally {
+                            this.isPostDetailsLoading = false;
+                        }
+                    },
+                    
+                    renderPostChart() {
+                        if (!this.postChartInstance) return;
+                        
+                        const raw = this.postChartDataRaw;
+                        if (!raw || raw.length === 0) {
+                            this.postChartInstance.data.labels = [];
+                            this.postChartInstance.data.datasets = [];
+                            this.postChartInstance.update();
+                            return;
+                        }
+                        
+                        raw.sort((a, b) => new Date(a.daily) - new Date(b.daily));
+                        const labels = raw.map(row => dayjs(row.daily).format('MMM D'));
+                        
+                        const datasets = [];
+                        const addDataset = (label, key, color, bgColor) => {
+                            const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
+                            if (dataPoints.some(v => v > 0)) {
+                                datasets.push({
+                                    label: label,
+                                    data: dataPoints,
+                                    borderColor: color,
+                                    backgroundColor: bgColor,
+                                    borderWidth: 2,
+                                    pointRadius: 2,
+                                    pointHoverRadius: 5,
+                                    fill: true,
+                                    tension: 0.4
+                                });
+                            }
+                        };
+                        
+                        const style = getComputedStyle(document.body);
+                        const cReach = style.getPropertyValue('--fb-reach').trim() || '#3b82f6';
+                        const cInteractions = style.getPropertyValue('--fb-interactions').trim() || '#10b981';
+                        const cLikes = style.getPropertyValue('--fb-likes').trim() || '#f59e0b';
+                        const cComments = style.getPropertyValue('--fb-comments').trim() || '#8b5cf6';
+                        const cViews = style.getPropertyValue('--fb-views').trim() || '#ec4899';
+                        
+                        // Check which metrics we actually want to show for a post
+                        addDataset('{{ __('Reach') }}', 'reach', cReach, `${cReach}20`);
+                        addDataset('{{ __('Interactions') }}', 'total_interactions', cInteractions, `${cInteractions}20`);
+                        addDataset('{{ __('Likes') }}', 'likes', cLikes, `${cLikes}20`);
+                        addDataset('{{ __('Comments') }}', 'comments', cComments, `${cComments}20`);
+                        addDataset('{{ __('Views') }}', 'views', cViews, `${cViews}20`);
+                        addDataset('{{ __('Views') }}', 'video_views', cViews, `${cViews}20`); // fallback
+                        
+                        this.postChartInstance.data.labels = labels;
+                        this.postChartInstance.data.datasets = datasets;
+                        this.postChartInstance.update();
                     },
                     
                     async fetchSummary() {
