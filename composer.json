@@ -33,14 +33,14 @@
     "require-dev":  {
                         "pestphp/pest":  "^3.8",
                         "laravel/pint":  "^1.24",
-                        "laravel/sail":  "^1.41",
                         "nunomaduro/collision":  "^8.6",
-                        "friendsofphp/php-cs-fixer":  "^3.94",
+                        "phpunit/phpunit":  "^11.5.50",
                         "fakerphp/faker":  "^1.23",
+                        "laravel/sail":  "^1.41",
                         "laravel/pail":  "^1.2.2",
                         "pestphp/pest-plugin-laravel":  "^3.2",
                         "doctrine/instantiator":  "^1.5",
-                        "phpunit/phpunit":  "^11.5.50",
+                        "friendsofphp/php-cs-fixer":  "^3.94",
                         "mockery/mockery":  "^1.6"
                     },
     "autoload":  {

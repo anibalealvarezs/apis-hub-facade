@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "44572809dba46e6270d2bcbf966fc97a",
+    "content-hash": "7b679eb749ce670316dfe174f69fcbb5",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -12,13 +12,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/api-client-skeleton.git",
-                "reference": "0d6b0fa325304714a54562b8877097e1eaaaccb4"
+                "reference": "42d510da3d3f04ac448296979c29e68ead189d08"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/api-client-skeleton/anibalealvarezs-api-client-skeleton-0d6b0fa325304714a54562b8877097e1eaaaccb4-zip-7c0cc8.zip",
-                "reference": "0d6b0fa325304714a54562b8877097e1eaaaccb4",
-                "shasum": "6ece9dfef280cfb7a03117e3a747b8824ec94086"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/api-client-skeleton/anibalealvarezs-api-client-skeleton-42d510da3d3f04ac448296979c29e68ead189d08-zip-1709bd.zip",
+                "reference": "42d510da3d3f04ac448296979c29e68ead189d08",
+                "shasum": "eef85f77b374dc2e87fbe9797361eccac056d1f7"
             },
             "require": {
                 "anibalealvarezs/oauth-v1": "^1.0.0",
@@ -67,7 +67,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/api-client-skeleton/issues"
             },
-            "time": "2026-05-25T00:43:10+00:00"
+            "time": "2026-05-27T21:09:00+00:00"
         },
         {
             "name": "anibalealvarezs/apis-hub-api",
@@ -75,13 +75,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/apis-hub-api.git",
-                "reference": "2580ff76e0b1287c4a0f65d3cec0a2b874b31fca"
+                "reference": "26c98918fd7cd91594d7b7bc0b4134ccf759fe3f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-2580ff76e0b1287c4a0f65d3cec0a2b874b31fca-zip-3085dc.zip",
-                "reference": "2580ff76e0b1287c4a0f65d3cec0a2b874b31fca",
-                "shasum": "696d806c5898449fe08cd83ff891eea87bf09728"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-26c98918fd7cd91594d7b7bc0b4134ccf759fe3f-zip-2b51ef.zip",
+                "reference": "26c98918fd7cd91594d7b7bc0b4134ccf759fe3f",
+                "shasum": "6029ed3f4e9a2b1cf518c7bfdfb5afec76b37e83"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "^1.0.0",
@@ -142,7 +142,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/apis-hub-api/issues"
             },
-            "time": "2026-05-27T22:39:26+00:00"
+            "time": "2026-06-03T15:24:00+00:00"
         },
         {
             "name": "anibalealvarezs/facebook-graph-api",
@@ -150,13 +150,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/facebook-graph-api.git",
-                "reference": "264c16980628db46031983e1ef9c20ff4c3e04aa"
+                "reference": "d190941b83c86959f2a61f236c6d988e44ef0ad8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/facebook-graph-api/anibalealvarezs-facebook-graph-api-264c16980628db46031983e1ef9c20ff4c3e04aa-zip-650c74.zip",
-                "reference": "264c16980628db46031983e1ef9c20ff4c3e04aa",
-                "shasum": "733cb9f44a691ade2351c92773372f5e64492dec"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/facebook-graph-api/anibalealvarezs-facebook-graph-api-d190941b83c86959f2a61f236c6d988e44ef0ad8-zip-f5d3d6.zip",
+                "reference": "d190941b83c86959f2a61f236c6d988e44ef0ad8",
+                "shasum": "99f9329c8a02ddf632ac2fb36f0b35f298a1aebd"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "^1.0.0",
@@ -207,7 +207,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/facebook-graph-api/issues"
             },
-            "time": "2026-05-27T03:13:46+00:00"
+            "time": "2026-06-03T03:12:29+00:00"
         },
         {
             "name": "anibalealvarezs/google-api",
@@ -2357,25 +2357,26 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.10.5",
+            "version": "7.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "7c8d84b39e680315f687e8662a9d6fb0865c5148"
+                "reference": "c987f8ce84b8434fa430795eca0f3430663da72b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7c8d84b39e680315f687e8662a9d6fb0865c5148",
-                "reference": "7c8d84b39e680315f687e8662a9d6fb0865c5148",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/c987f8ce84b8434fa430795eca0f3430663da72b",
+                "reference": "c987f8ce84b8434fa430795eca0f3430663da72b",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "guzzlehttp/promises": "^2.3",
-                "guzzlehttp/psr7": "^2.8",
+                "guzzlehttp/promises": "^2.5",
+                "guzzlehttp/psr7": "^2.11",
                 "php": "^7.2.5 || ^8.0",
                 "psr/http-client": "^1.0",
-                "symfony/deprecation-contracts": "^2.2 || ^3.0"
+                "symfony/deprecation-contracts": "^2.5 || ^3.0",
+                "symfony/polyfill-php80": "^1.24"
             },
             "provide": {
                 "psr/http-client-implementation": "1.0"
@@ -2464,7 +2465,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.10.5"
+                "source": "https://github.com/guzzle/guzzle/tree/7.11.0"
             },
             "funding": [
                 {
@@ -2480,24 +2481,25 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-27T11:53:46+00:00"
+            "time": "2026-06-02T12:40:51+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.4.1",
+            "version": "2.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "09e8a212562fb1fb6a512c4156ed71525969d6c2"
+                "reference": "4360e982f87f5f258bf872d094647791db2f4c8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/09e8a212562fb1fb6a512c4156ed71525969d6c2",
-                "reference": "09e8a212562fb1fb6a512c4156ed71525969d6c2",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/4360e982f87f5f258bf872d094647791db2f4c8e",
+                "reference": "4360e982f87f5f258bf872d094647791db2f4c8e",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.2.5 || ^8.0"
+                "php": "^7.2.5 || ^8.0",
+                "symfony/deprecation-contracts": "^2.5 || ^3.0"
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
@@ -2547,7 +2549,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.4.1"
+                "source": "https://github.com/guzzle/promises/tree/2.5.0"
             },
             "funding": [
                 {
@@ -2563,27 +2565,29 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-20T22:57:30+00:00"
+            "time": "2026-06-02T12:23:43+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.10.3",
+            "version": "2.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "7c1472269227dc6f18930bd903d7a88fe6c52130"
+                "reference": "bbb5e61349fa5cb822b3e87842b951088b76b81f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/7c1472269227dc6f18930bd903d7a88fe6c52130",
-                "reference": "7c1472269227dc6f18930bd903d7a88fe6c52130",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/bbb5e61349fa5cb822b3e87842b951088b76b81f",
+                "reference": "bbb5e61349fa5cb822b3e87842b951088b76b81f",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.2.5 || ^8.0",
                 "psr/http-factory": "^1.0",
                 "psr/http-message": "^1.1 || ^2.0",
-                "ralouphie/getallheaders": "^3.0"
+                "ralouphie/getallheaders": "^3.0",
+                "symfony/deprecation-contracts": "^2.5 || ^3.0",
+                "symfony/polyfill-php80": "^1.24"
             },
             "provide": {
                 "psr/http-factory-implementation": "1.0",
@@ -2664,7 +2668,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.10.3"
+                "source": "https://github.com/guzzle/psr7/tree/2.11.0"
             },
             "funding": [
                 {
@@ -2680,7 +2684,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-27T11:48:20+00:00"
+            "time": "2026-06-02T12:30:48+00:00"
         },
         {
             "name": "guzzlehttp/uri-template",
@@ -4509,16 +4513,16 @@
         },
         {
             "name": "livewire/livewire",
-            "version": "v3.8.0",
+            "version": "v3.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/livewire.git",
-                "reference": "d81d269243c3f18d302663c0ce5672990df08ca1"
+                "reference": "0a7c2ec6c5c958cab32870ce5a7836a2fca0b459"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/livewire/zipball/d81d269243c3f18d302663c0ce5672990df08ca1",
-                "reference": "d81d269243c3f18d302663c0ce5672990df08ca1",
+                "url": "https://api.github.com/repos/livewire/livewire/zipball/0a7c2ec6c5c958cab32870ce5a7836a2fca0b459",
+                "reference": "0a7c2ec6c5c958cab32870ce5a7836a2fca0b459",
                 "shasum": ""
             },
             "require": {
@@ -4573,7 +4577,7 @@
             "description": "A front-end framework for Laravel.",
             "support": {
                 "issues": "https://github.com/livewire/livewire/issues",
-                "source": "https://github.com/livewire/livewire/tree/v3.8.0"
+                "source": "https://github.com/livewire/livewire/tree/v3.8.1"
             },
             "funding": [
                 {
@@ -4581,7 +4585,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-30T23:56:43+00:00"
+            "time": "2026-06-02T08:18:44+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -5922,16 +5926,16 @@
         },
         {
             "name": "predis/predis",
-            "version": "v3.4.2",
+            "version": "v3.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/predis/predis.git",
-                "reference": "2033429520d8997a7815a2485f56abe6d2d0e075"
+                "reference": "8cc4319c06924c8ff0c5c7eec4243a19e3be32f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/predis/predis/zipball/2033429520d8997a7815a2485f56abe6d2d0e075",
-                "reference": "2033429520d8997a7815a2485f56abe6d2d0e075",
+                "url": "https://api.github.com/repos/predis/predis/zipball/8cc4319c06924c8ff0c5c7eec4243a19e3be32f1",
+                "reference": "8cc4319c06924c8ff0c5c7eec4243a19e3be32f1",
                 "shasum": ""
             },
             "require": {
@@ -5973,7 +5977,7 @@
             ],
             "support": {
                 "issues": "https://github.com/predis/predis/issues",
-                "source": "https://github.com/predis/predis/tree/v3.4.2"
+                "source": "https://github.com/predis/predis/tree/v3.5.0"
             },
             "funding": [
                 {
@@ -5981,7 +5985,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-03-09T20:33:04+00:00"
+            "time": "2026-06-02T19:25:56+00:00"
         },
         {
             "name": "psr/cache",
@@ -11226,23 +11230,23 @@
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.95.2",
+            "version": "v3.95.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "a28d88a5e172b27e78d0816992b15a9df3da20f1"
+                "reference": "3d681493acc0e93283481b1c63c263737df78687"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/a28d88a5e172b27e78d0816992b15a9df3da20f1",
-                "reference": "a28d88a5e172b27e78d0816992b15a9df3da20f1",
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/3d681493acc0e93283481b1c63c263737df78687",
+                "reference": "3d681493acc0e93283481b1c63c263737df78687",
                 "shasum": ""
             },
             "require": {
                 "clue/ndjson-react": "^1.3",
                 "composer/semver": "^3.4",
                 "composer/xdebug-handler": "^3.0.5",
-                "ergebnis/agent-detector": "^1.1.1",
+                "ergebnis/agent-detector": "^1.2",
                 "ext-filter": "*",
                 "ext-hash": "*",
                 "ext-json": "*",
@@ -11259,10 +11263,10 @@
                 "symfony/filesystem": "^5.4.45 || ^6.4.24 || ^7.0 || ^8.0",
                 "symfony/finder": "^5.4.45 || ^6.4.24 || ^7.0 || ^8.0",
                 "symfony/options-resolver": "^5.4.45 || ^6.4.24 || ^7.0 || ^8.0",
-                "symfony/polyfill-mbstring": "^1.33",
-                "symfony/polyfill-php80": "^1.33",
-                "symfony/polyfill-php81": "^1.33",
-                "symfony/polyfill-php84": "^1.33",
+                "symfony/polyfill-mbstring": "^1.37",
+                "symfony/polyfill-php80": "^1.37",
+                "symfony/polyfill-php81": "^1.37",
+                "symfony/polyfill-php84": "^1.37",
                 "symfony/process": "^5.4.47 || ^6.4.24 || ^7.2 || ^8.0",
                 "symfony/stopwatch": "^5.4.45 || ^6.4.24 || ^7.0 || ^8.0"
             },
@@ -11276,9 +11280,9 @@
                 "php-cs-fixer/phpunit-constraint-isidenticalstring": "^1.8",
                 "php-cs-fixer/phpunit-constraint-xmlmatchesxsd": "^1.8",
                 "phpunit/phpunit": "^9.6.34 || ^10.5.63 || ^11.5.55",
-                "symfony/polyfill-php85": "^1.33",
+                "symfony/polyfill-php85": "^1.37",
                 "symfony/var-dumper": "^5.4.48 || ^6.4.32 || ^7.4.4 || ^8.0.8",
-                "symfony/yaml": "^5.4.45 || ^6.4.30 || ^7.4.1 || ^8.0.8"
+                "symfony/yaml": "^5.4.45 || ^6.4.30 || ^7.4.1 || ^8.0.11"
             },
             "suggest": {
                 "ext-dom": "For handling output formats in XML",
@@ -11319,7 +11323,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/issues",
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.2"
+                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.3"
             },
             "funding": [
                 {
@@ -11327,7 +11331,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-15T09:20:44+00:00"
+            "time": "2026-05-29T20:35:26+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -11590,16 +11594,16 @@
         },
         {
             "name": "laravel/sail",
-            "version": "v1.61.0",
+            "version": "v1.62.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
-                "reference": "68ef35015630fe510432e63e11e21749006df688"
+                "reference": "3aaeefc979f8ba6586fbc5b6e0b1b3638058f98e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/68ef35015630fe510432e63e11e21749006df688",
-                "reference": "68ef35015630fe510432e63e11e21749006df688",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/3aaeefc979f8ba6586fbc5b6e0b1b3638058f98e",
+                "reference": "3aaeefc979f8ba6586fbc5b6e0b1b3638058f98e",
                 "shasum": ""
             },
             "require": {
@@ -11649,7 +11653,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
-            "time": "2026-05-23T23:33:57+00:00"
+            "time": "2026-05-27T04:02:01+00:00"
         },
         {
             "name": "mockery/mockery",
