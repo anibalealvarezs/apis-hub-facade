@@ -120,8 +120,11 @@ class FacebookOrganicDashboard extends Page
                 $this->accounts[$value] = $label;
             }
             
-            if (!empty($this->accounts) && empty($this->selectedAccounts)) {
+            $validSelected = array_intersect($this->selectedAccounts, array_keys($this->accounts));
+            if (empty($validSelected) && !empty($this->accounts)) {
                 $this->selectedAccounts = [array_key_first($this->accounts)];
+            } else {
+                $this->selectedAccounts = array_values($validSelected);
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBO Accounts Error: " . $e->getMessage());
