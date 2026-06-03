@@ -228,6 +228,15 @@ class RemoteEngineService
     }
 
     /**
+     * Compute a Custom KPI using an AST via the remote node.
+     */
+    public function computeKpi(Project $project, array $payload)
+    {
+        $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
+        return $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+    }
+
+    /**
      * Perform concurrent aggregation queries via the remote node.
      */
     public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads)
