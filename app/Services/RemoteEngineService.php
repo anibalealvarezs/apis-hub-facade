@@ -233,6 +233,7 @@ class RemoteEngineService
     public function computeKpi(Project $project, array $payload)
     {
         $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
+        $payload['analytics_engine_host'] = env('ANALYTICS_ENGINE_HOST', 'https://analytics.apis-hub.cloud/');
         return $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
     }
 
