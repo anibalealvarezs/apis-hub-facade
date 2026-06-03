@@ -99,16 +99,24 @@ class FacebookOrganicDashboard extends Page
                     continue;
                 }
 
-                $igId = $mapping[$cleanFbId] ?? null;
-                $igAcc = $igId ? ($igAccounts[$igId] ?? null) : null;
-                
-                if ($igAcc) {
-                    $label = "Instagram: {$igAcc['name']} (via {$fbAcc['name']})";
-                } else {
-                    $label = "Facebook: {$fbAcc['name']}";
+                $igPlatformId = $mapping[$cleanFbId] ?? null;
+                $igAcc = null;
+                $igInternalId = null;
+
+                if ($igPlatformId) {
+                    foreach ($igAccounts as $acc) {
+                        $accPlatId = str_replace('act_', '', (string) ($acc['platformId'] ?? $acc['platform_id'] ?? ''));
+                        if ($accPlatId === (string)$igPlatformId) {
+                            $igAcc = $acc;
+                            $igInternalId = $acc['id'] ?? null;
+                            break;
+                        }
+                    }
                 }
+                
+                $label = $fbAcc['name'] ?? 'Facebook Page';
                     
-                $value = $fbId . '|' . ($igId ?? 'NONE');
+                $value = $fbId . '|' . ($igInternalId ?? 'NONE');
                 $this->accounts[$value] = $label;
             }
             

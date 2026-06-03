@@ -613,11 +613,12 @@
                             const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
                             if (dataPoints.some(v => v > 0)) {
                                 const info = this.getMetricInfo(key);
+                                const resolvedColor = this.getComputedColor(info.color);
                                 datasets.push({
                                     label: info.label,
                                     data: dataPoints,
-                                    borderColor: info.color,
-                                    backgroundColor: info.color + '20',
+                                    borderColor: resolvedColor,
+                                    backgroundColor: resolvedColor + '20',
                                     borderWidth: 2,
                                     pointRadius: 2,
                                     pointHoverRadius: 5,
@@ -745,7 +746,17 @@
                     },
 
                     getMetricInfo(key) {
-                        return this.metricDictionary[key] || { label: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), color: '#6b7280' };
+                        return this.metricDictionary[key] || { label: key.replace(/_/g, ' ').toUpperCase(), color: '#6b7280' };
+                    },
+                    
+                    getComputedColor(colorVal) {
+                        if (typeof colorVal === 'string' && colorVal.startsWith('var(')) {
+                            const match = colorVal.match(/var\(([^)]+)\)/);
+                            if (match) {
+                                return getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim() || '#6b7280';
+                            }
+                        }
+                        return colorVal;
                     },
                     
                     get dynamicMetrics() {
@@ -886,11 +897,12 @@
                             const data = paddedData.map(r => r[key]);
                             
                             if (data.some(v => v > 0)) {
+                                const resolvedColor = this.getComputedColor(info.color);
                                 datasets.push({
                                     label: info.label,
                                     data: data,
-                                    borderColor: info.color,
-                                    backgroundColor: info.color + '20',
+                                    borderColor: resolvedColor,
+                                    backgroundColor: resolvedColor + '20',
                                     borderWidth: 2,
                                     pointRadius: 0,
                                     pointHoverRadius: 6,
