@@ -314,7 +314,7 @@
                             <!-- Media Preview -->
                             <div class="w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 aspect-square flex items-center justify-center relative shadow-inner mb-4">
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
-                                    <img :src="selectedPostData.data.media_url || selectedPostData.data.full_picture" class="w-full h-full object-cover" alt="Post preview" />
+                                    <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-cover" alt="Post preview" />
                                 </template>
                                 <template x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
                                     <div class="text-gray-400 dark:text-gray-500 flex flex-col items-center">
@@ -322,12 +322,12 @@
                                         <span class="text-xs uppercase font-medium">{{ __('No Media') }}</span>
                                     </div>
                                 </template>
-                                <div x-show="selectedPostData?.data?.media_type" class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm" x-text="selectedPostData.data.media_type"></div>
+                                <div x-show="selectedPostData?.data?.media_type" class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm" x-text="selectedPostData?.data?.media_type"></div>
                             </div>
 
                             <!-- Post Details -->
                             <div class="flex-grow flex flex-col">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData.data.created_time || selectedPostData.data.timestamp).toLocaleString() : ''"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
                                 <div class="text-sm text-gray-800 dark:text-gray-200 mb-4 flex-grow line-clamp-6 whitespace-pre-line" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
                                 
                                 <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="mt-auto inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
@@ -917,7 +917,7 @@
                         activeKeys.forEach(key => {
                             let scaleId = 'y' + key;
                             if(!chart.options.scales[scaleId]) {
-                                chart.options.scales[scaleId] = { type: 'linear', display: false, grid: { drawOnChartArea: false, drawBorder: false } };
+                                chart.options.scales[scaleId] = { type: 'linear', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: {} };
                             }
                             
                             const ds = datasets.find(d => d.yAxisID === scaleId);
