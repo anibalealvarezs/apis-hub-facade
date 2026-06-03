@@ -32,8 +32,7 @@
         .fb-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
         .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
-        
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 25px; }
+        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-fb {
             background: var(--fb-bg-card);
@@ -169,54 +168,16 @@
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
 
-            <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''" @click="toggleMetric('reach')" style="--color: var(--fb-reach);">
-                <div class="fb-label">{{ __('Reach') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
-                    <span x-text="getVarianceIcon(variance.reach)"></span>
-                    <span x-text="formatVariance(variance.reach)"></span>
+            <template x-for="metric in dynamicMetrics" :key="metric.key">
+                <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''" @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
+                    <div class="fb-label" x-text="metric.label"></div>
+                    <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
+                        <span x-text="getVarianceIcon(metric.variance)"></span>
+                        <span x-text="formatVariance(metric.variance)"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.interactions ? 'active' : ''" @click="toggleMetric('interactions')" style="--color: var(--fb-interactions);">
-                <div class="fb-label">{{ __('Interactions') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.interactions)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.interactions)">
-                    <span x-text="getVarianceIcon(variance.interactions)"></span>
-                    <span x-text="formatVariance(variance.interactions)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.likes ? 'active' : ''" @click="toggleMetric('likes')" style="--color: var(--fb-likes);">
-                <div class="fb-label">{{ __('Likes') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.likes)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.likes)">
-                    <span x-text="getVarianceIcon(variance.likes)"></span>
-                    <span x-text="formatVariance(variance.likes)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.comments ? 'active' : ''" @click="toggleMetric('comments')" style="--color: var(--fb-comments);">
-                <div class="fb-label">{{ __('Comments') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.comments)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.comments)">
-                    <span x-text="getVarianceIcon(variance.comments)"></span>
-                    <span x-text="formatVariance(variance.comments)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.views ? 'active' : ''" @click="toggleMetric('views')" style="--color: var(--fb-views);">
-                <div class="fb-label">{{ __('Views') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.views)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.views)">
-                    <span x-text="getVarianceIcon(variance.views)"></span>
-                    <span x-text="formatVariance(variance.views)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.follows ? 'active' : ''" @click="toggleMetric('follows')" style="--color: var(--fb-follows);">
-                <div class="fb-label">{{ __('Follows') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.follows)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.follows)">
-                    <span x-text="getVarianceIcon(variance.follows)"></span>
-                    <span x-text="formatVariance(variance.follows)"></span>
-                </div>
-            </div>
+            </template>
         </div>
 
         <div class="chart-container-fb relative w-full" wire:ignore>
@@ -247,16 +208,16 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="fb-table">
+                <table class="fb-table" style="min-width: 800px;">
                     <thead>
                         <tr>
-                            <th>{{ __('POST') }}</th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('reach')">{{ __('Reach') }} <span x-show="sortCol === 'reach'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('interactions')">{{ __('Interactions') }} <span x-show="sortCol === 'interactions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('likes')">{{ __('Likes') }} <span x-show="sortCol === 'likes'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('comments')">{{ __('Comments') }} <span x-show="sortCol === 'comments'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('views')">{{ __('Views') }} <span x-show="sortCol === 'views'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                            <th class="metric-cell cursor-pointer" @click="sortBy('follows')">{{ __('Follows') }} <span x-show="sortCol === 'follows'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th>{{ __('POST / PAGE') }}</th>
+                            <template x-for="metricKey in availableTableMetrics" :key="metricKey">
+                                <th class="metric-cell cursor-pointer" @click="sortBy(metricKey)">
+                                    <span x-text="getMetricInfo(metricKey).label"></span>
+                                    <span x-show="sortCol === metricKey" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                                </th>
+                            </template>
                         </tr>
                     </thead>
                     <tbody>
@@ -271,16 +232,13 @@
                                     </div>
                                     <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase" x-text="row.media_type"></div>
                                 </td>
-                                <td class="metric-cell" x-text="formatNumber(row.reach)"></td>
-                                <td class="metric-cell" x-text="formatNumber(row.total_interactions || row.interactions)"></td>
-                                <td class="metric-cell" x-text="formatNumber(row.likes)"></td>
-                                <td class="metric-cell" x-text="formatNumber(row.comments)"></td>
-                                <td class="metric-cell" x-text="formatNumber(row.views || row.video_views || row.page_views_total || row.ig_reels_video_view_total_time)"></td>
-                                <td class="metric-cell" x-text="formatNumber(row.follows || row.follows_and_unfollows)"></td>
+                                <template x-for="metricKey in availableTableMetrics" :key="metricKey">
+                                    <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
+                                </template>
                             </tr>
                         </template>
                         <tr x-show="paginatedTableData.length === 0">
-                            <td colspan="7" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                            <td :colspan="availableTableMetrics.length + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -427,7 +385,35 @@
                     selectedPostData: null,
                     isPostDetailsLoading: false,
                     
-                    activeMetrics: { reach: true, interactions: true, likes: true, comments: false, views: false, follows: false },
+                    metricDictionary: {
+                        'reach': { label: '{{ __('Reach') }}', color: 'var(--fb-reach)' },
+                        'total_interactions': { label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)' },
+                        'interactions': { label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)' },
+                        'likes': { label: '{{ __('Likes') }}', color: 'var(--fb-likes)' },
+                        'comments': { label: '{{ __('Comments') }}', color: 'var(--fb-comments)' },
+                        'views': { label: '{{ __('Views') }}', color: 'var(--fb-views)' },
+                        'video_views': { label: '{{ __('Video Views') }}', color: 'var(--fb-views)' },
+                        'page_views_total': { label: '{{ __('Page Views') }}', color: 'var(--fb-views)' },
+                        'follows_and_unfollows': { label: '{{ __('Follows') }}', color: 'var(--fb-follows)' },
+                        'follows': { label: '{{ __('Follows') }}', color: 'var(--fb-follows)' },
+                        'profile_views': { label: '{{ __('Profile Views') }}', color: '#14b8a6' },
+                        'website_clicks': { label: '{{ __('Website Clicks') }}', color: '#06b6d4' },
+                        'profile_links_taps': { label: '{{ __('Link Taps') }}', color: '#3b82f6' },
+                        'saves': { label: '{{ __('Saves') }}', color: '#8b5cf6' },
+                        'saved': { label: '{{ __('Saved') }}', color: '#8b5cf6' },
+                        'shares': { label: '{{ __('Shares') }}', color: '#d946ef' },
+                        'replies': { label: '{{ __('Replies') }}', color: '#f43f5e' },
+                        'accounts_engaged': { label: '{{ __('Accounts Engaged') }}', color: '#f97316' },
+                        'post_clicks': { label: '{{ __('Post Clicks') }}', color: '#06b6d4' },
+                        'post_video_avg_time_watched': { label: '{{ __('Avg Watch Time') }}', color: '#eab308' },
+                        'ig_reels_avg_watch_time': { label: '{{ __('Reels Avg Time') }}', color: '#eab308' },
+                        'ig_reels_video_view_total_time': { label: '{{ __('Reels Total Time') }}', color: '#f59e0b' },
+                        'profile_activity': { label: '{{ __('Profile Activity') }}', color: '#10b981' },
+                        'profile_visits': { label: '{{ __('Profile Visits') }}', color: '#14b8a6' },
+                        'reposts': { label: '{{ __('Reposts') }}', color: '#8b5cf6' }
+                    },
+                    
+                    activeMetrics: {},
                     
                     searchQuery: '',
                     sortCol: 'reach',
@@ -623,14 +609,15 @@
                         const labels = raw.map(row => dayjs(row.daily).format('MMM D'));
                         
                         const datasets = [];
-                        const addDataset = (label, key, color, bgColor) => {
+                        const addDataset = (key) => {
                             const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
                             if (dataPoints.some(v => v > 0)) {
+                                const info = this.getMetricInfo(key);
                                 datasets.push({
-                                    label: label,
+                                    label: info.label,
                                     data: dataPoints,
-                                    borderColor: color,
-                                    backgroundColor: bgColor,
+                                    borderColor: info.color,
+                                    backgroundColor: info.color + '20',
                                     borderWidth: 2,
                                     pointRadius: 2,
                                     pointHoverRadius: 5,
@@ -640,20 +627,18 @@
                             }
                         };
                         
-                        const style = getComputedStyle(document.body);
-                        const cReach = style.getPropertyValue('--fb-reach').trim() || '#3b82f6';
-                        const cInteractions = style.getPropertyValue('--fb-interactions').trim() || '#10b981';
-                        const cLikes = style.getPropertyValue('--fb-likes').trim() || '#f59e0b';
-                        const cComments = style.getPropertyValue('--fb-comments').trim() || '#8b5cf6';
-                        const cViews = style.getPropertyValue('--fb-views').trim() || '#ec4899';
-                        
-                        // Check which metrics we actually want to show for a post
-                        addDataset('{{ __('Reach') }}', 'reach', cReach, `${cReach}20`);
-                        addDataset('{{ __('Interactions') }}', 'total_interactions', cInteractions, `${cInteractions}20`);
-                        addDataset('{{ __('Likes') }}', 'likes', cLikes, `${cLikes}20`);
-                        addDataset('{{ __('Comments') }}', 'comments', cComments, `${cComments}20`);
-                        addDataset('{{ __('Views') }}', 'views', cViews, `${cViews}20`);
-                        addDataset('{{ __('Views') }}', 'video_views', cViews, `${cViews}20`); // fallback
+                        // Dynamically add datasets for any metric returned in the chart payload
+                        if (raw.length > 0) {
+                            const firstRow = raw[0];
+                            const ignoredKeys = ['daily', 'id', 'name'];
+                            const metricsInChart = Object.keys(firstRow).filter(k => !ignoredKeys.includes(k));
+                            
+                            metricsInChart.forEach(key => {
+                                // If trend_total_ is prefixed, extract the real key
+                                const actualKey = key.startsWith('trend_total_') ? key.replace('trend_total_', '') : key;
+                                addDataset(actualKey);
+                            });
+                        }
                         
                         this.postChartInstance.data.labels = labels;
                         this.postChartInstance.data.datasets = datasets;
@@ -759,41 +744,48 @@
                         };
                     },
 
-                    get summary() {
-                        return {
-                            reach: this.summaryRaw.reach || 0,
-                            interactions: this.summaryRaw.total_interactions || 0,
-                            likes: this.summaryRaw.likes || 0,
-                            comments: this.summaryRaw.comments || 0,
-                            views: (this.summaryRaw.views || 0) + (this.summaryRaw.video_views || 0) + (this.summaryRaw.page_views_total || 0),
-                            follows: (this.summaryRaw.follows || 0) + (this.summaryRaw.follows_and_unfollows || 0)
-                        };
+                    getMetricInfo(key) {
+                        return this.metricDictionary[key] || { label: key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), color: '#6b7280' };
                     },
-
-                    get previous() {
-                        return {
-                            reach: this.previousRaw.reach || 0,
-                            interactions: this.previousRaw.total_interactions || 0,
-                            likes: this.previousRaw.likes || 0,
-                            comments: this.previousRaw.comments || 0,
-                            views: (this.previousRaw.views || 0) + (this.previousRaw.video_views || 0) + (this.previousRaw.page_views_total || 0),
-                            follows: (this.previousRaw.follows || 0) + (this.previousRaw.follows_and_unfollows || 0)
-                        };
-                    },
-
-                    get variance() {
-                        const calc = (current, prev) => {
+                    
+                    get dynamicMetrics() {
+                        const metrics = [];
+                        const calcVariance = (current, prev) => {
                             if (!prev || Number(prev) === 0) return 0;
                             return ((Number(current) - Number(prev)) / Number(prev)) * 100;
                         };
-                        return {
-                            reach: calc(this.summary.reach, this.previous.reach),
-                            interactions: calc(this.summary.interactions, this.previous.interactions),
-                            likes: calc(this.summary.likes, this.previous.likes),
-                            comments: calc(this.summary.comments, this.previous.comments),
-                            views: calc(this.summary.views, this.previous.views),
-                            follows: calc(this.summary.follows, this.previous.follows)
-                        };
+                        
+                        for (const key in this.summaryRaw) {
+                            // Initialize activeMetrics to true for newly discovered keys
+                            if (this.activeMetrics[key] === undefined) {
+                                this.activeMetrics[key] = true;
+                            }
+                            
+                            const val = this.summaryRaw[key] || 0;
+                            const prev = this.previousRaw[key] || 0;
+                            const info = this.getMetricInfo(key);
+                            metrics.push({
+                                key: key,
+                                label: info.label,
+                                color: info.color,
+                                value: val,
+                                prevValue: prev,
+                                variance: calcVariance(val, prev)
+                            });
+                        }
+                        return metrics;
+                    },
+                    
+                    get availableTableMetrics() {
+                        if (this.tableDataRaw.length === 0) return [];
+                        const firstRow = this.tableDataRaw[0];
+                        const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
+                        return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
+                    },
+                    
+                    toggleMetric(key) {
+                        this.activeMetrics[key] = !this.activeMetrics[key];
+                        this.updateChart();
                     },
 
                     getVarianceClass(val) {
@@ -872,99 +864,75 @@
                         });
                         
                         const paddedData = fullDateRange.map(dateStr => {
+                            let obj = { daily: dateStr };
                             if (dataByDate[dateStr]) {
                                 const r = dataByDate[dateStr];
-                                return {
-                                    daily: dateStr,
-                                    reach: r.trend_total_reach || 0,
-                                    interactions: r.trend_total_total_interactions || 0,
-                                    likes: r.trend_total_likes || 0,
-                                    comments: r.trend_total_comments || 0,
-                                    views: (r.trend_total_views || 0) + (r.trend_total_video_views || 0) + (r.trend_total_page_views_total || 0),
-                                    follows: (r.trend_total_follows || 0) + (r.trend_total_follows_and_unfollows || 0)
-                                };
+                                Object.keys(this.metricDictionary).forEach(k => {
+                                    obj[k] = parseFloat(r['trend_total_' + k] || r[k] || 0);
+                                });
+                            } else {
+                                Object.keys(this.metricDictionary).forEach(k => obj[k] = 0);
                             }
-                            return {
-                                daily: dateStr, reach: 0, interactions: 0, likes: 0, comments: 0, views: 0, follows: 0
-                            };
+                            return obj;
                         });
                         
                         const labels = paddedData.map(r => dayjs(r.daily).format('MMM D'));
                         const datasets = [];
-                        const chartData = paddedData;
                         
-                        if (this.activeMetrics.reach) {
-                            datasets.push({
-                                label: 'Reach', data: chartData.map(r => r.reach),
-                                borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: true, yAxisID: 'yReach', tension: 0.4
-                            });
-                        }
+                        const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
                         
-                        if (this.activeMetrics.interactions) {
-                            datasets.push({
-                                label: 'Interactions', data: chartData.map(r => r.interactions),
-                                borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: true, yAxisID: 'yInteractions', tension: 0.4
-                            });
-                        }
+                        activeKeys.forEach(key => {
+                            const info = this.getMetricInfo(key);
+                            const data = paddedData.map(r => r[key]);
+                            
+                            if (data.some(v => v > 0)) {
+                                datasets.push({
+                                    label: info.label,
+                                    data: data,
+                                    borderColor: info.color,
+                                    backgroundColor: info.color + '20',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: true,
+                                    yAxisID: 'y' + key,
+                                    tension: 0.4
+                                });
+                            }
+                        });
                         
-                        if (this.activeMetrics.likes) {
-                            datasets.push({
-                                label: 'Likes', data: chartData.map(r => r.likes),
-                                borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: true, yAxisID: 'yLikes', tension: 0.4
-                            });
-                        }
-                        
-                        if (this.activeMetrics.comments) {
-                            datasets.push({
-                                label: 'Comments', data: chartData.map(r => r.comments),
-                                borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: false, yAxisID: 'yComments', tension: 0.4
-                            });
-                        }
-
-                        if (this.activeMetrics.views) {
-                            datasets.push({
-                                label: 'Views', data: chartData.map(r => r.views),
-                                borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: false, yAxisID: 'yViews', tension: 0.4
-                            });
-                        }
-
-                        if (this.activeMetrics.follows) {
-                            datasets.push({
-                                label: 'Follows', data: chartData.map(r => r.follows),
-                                borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: false, yAxisID: 'yFollows', tension: 0.4
-                            });
-                        }
-                        
-                        // Manage scale visibility and background grid dynamically
                         let gridDrawn = false;
-                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim();
-                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim();
+                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';
+                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || '#6b7280';
                         
                         chart.options.scales.x.grid.color = cssGridColor;
                         chart.options.scales.x.ticks.color = cssTicksColor;
                         
-                        ['reach', 'interactions', 'likes', 'comments', 'views', 'follows'].forEach(m => {
-                            let scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
-                            
+                        Object.keys(chart.options.scales).forEach(scaleId => {
+                            if (scaleId !== 'x') {
+                                chart.options.scales[scaleId].display = false;
+                            }
+                        });
+                        
+                        activeKeys.forEach(key => {
+                            let scaleId = 'y' + key;
                             if(!chart.options.scales[scaleId]) {
                                 chart.options.scales[scaleId] = { type: 'linear', display: false, grid: { drawOnChartArea: false, drawBorder: false } };
                             }
-
-                            chart.options.scales[scaleId].display = this.activeMetrics[m];
-                            if (this.activeMetrics[m]) {
+                            
+                            const ds = datasets.find(d => d.yAxisID === scaleId);
+                            if (ds) {
+                                chart.options.scales[scaleId].display = true;
                                 if (!gridDrawn) {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = true;
                                     chart.options.scales[scaleId].grid.color = cssGridColor;
+                                    chart.options.scales[scaleId].position = 'left';
                                     gridDrawn = true;
                                 } else {
                                     chart.options.scales[scaleId].grid.drawOnChartArea = false;
+                                    chart.options.scales[scaleId].position = 'right';
                                 }
+                                chart.options.scales[scaleId].ticks.color = ds.borderColor;
                             }
                         });
                         
