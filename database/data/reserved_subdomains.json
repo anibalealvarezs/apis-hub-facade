@@ -9,5 +9,6 @@
   "dev",
   "test",
   "demo",
-  "gbs"
+  "gbs",
+  "analytics-dev"
 ]
