@@ -90,6 +90,13 @@ class RegisterProject extends RegisterTenant
                                     if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
                                         $fail(__('No \'-dev\' subdomains are allowed in the production environment to prevent collisions with development environments.'));
                                     }
+                                    
+                                    $reserved = ['analytics', 'api', 'app', 'www', 'admin', 'facade', 'server', 'dev', 'test', 'demo', 'gbs'];
+                                    $cleanValue = strtolower(str_replace('-dev', '', $value));
+                                    
+                                    if (in_array($cleanValue, $reserved)) {
+                                        $fail(__('The subdomain ":subdomain" is reserved for internal infrastructure and cannot be used.', ['subdomain' => $cleanValue]));
+                                    }
                                 };
                             })
                             ->helperText(function () {

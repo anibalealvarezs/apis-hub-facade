@@ -57,6 +57,13 @@ class ProjectResource extends Resource
                                     if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
                                         $fail('No se permiten subdominios terminados en "-dev" en producción.');
                                     }
+                                    
+                                    $reserved = ['analytics', 'api', 'app', 'www', 'admin', 'facade', 'server', 'dev', 'test', 'demo', 'gbs'];
+                                    $cleanValue = strtolower(str_replace('-dev', '', $value));
+                                    
+                                    if (in_array($cleanValue, $reserved)) {
+                                        $fail('The subdomain "' . $cleanValue . '" is reserved for internal infrastructure and cannot be used.');
+                                    }
                                 };
                             })
                             ->live(onBlur: true)
