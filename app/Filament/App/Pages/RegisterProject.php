@@ -91,7 +91,8 @@ class RegisterProject extends RegisterTenant
                                         $fail(__('No \'-dev\' subdomains are allowed in the production environment to prevent collisions with development environments.'));
                                     }
                                     
-                                    $reserved = ['analytics', 'api', 'app', 'www', 'admin', 'facade', 'server', 'dev', 'test', 'demo', 'gbs'];
+                                    $reservedFile = database_path('data/reserved_subdomains.json');
+                                    $reserved = file_exists($reservedFile) ? json_decode(file_get_contents($reservedFile), true) : [];
                                     $cleanValue = strtolower(str_replace('-dev', '', $value));
                                     
                                     if (in_array($cleanValue, $reserved)) {

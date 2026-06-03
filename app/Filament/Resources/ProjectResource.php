@@ -58,7 +58,8 @@ class ProjectResource extends Resource
                                         $fail('No se permiten subdominios terminados en "-dev" en producción.');
                                     }
                                     
-                                    $reserved = ['analytics', 'api', 'app', 'www', 'admin', 'facade', 'server', 'dev', 'test', 'demo', 'gbs'];
+                                    $reservedFile = database_path('data/reserved_subdomains.json');
+                                    $reserved = file_exists($reservedFile) ? json_decode(file_get_contents($reservedFile), true) : [];
                                     $cleanValue = strtolower(str_replace('-dev', '', $value));
                                     
                                     if (in_array($cleanValue, $reserved)) {
