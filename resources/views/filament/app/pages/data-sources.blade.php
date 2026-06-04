@@ -260,9 +260,9 @@
         <!-- Content Area -->
         <div class="w-full relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
             
-            <div wire:loading.block wire:target="activeChannel" class="absolute inset-0 z-[99] bg-white/75 dark:bg-gray-900/75 backdrop-blur-md rounded-xl">
+            <div wire:loading.flex wire:target="activeChannel" class="absolute inset-0 z-[99] rounded-xl" style="background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
                 <div class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                    <svg class="animate-spin h-12 w-12 text-primary-500 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin text-primary-500 drop-shadow-lg" style="width: 4rem; height: 4rem;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
