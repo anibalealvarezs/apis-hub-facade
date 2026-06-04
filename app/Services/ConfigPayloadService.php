@@ -20,7 +20,7 @@ class ConfigPayloadService
     public function buildPayload(Project $tenant, ApisHubRelease $release, string $channel, array $channelConfig, array $dbChannelConfig = []): ?array
     {
         $remoteAssetKeyMap = [
-            'google_search_console' => 'sites',
+            'google_search_console' => 'gsc',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
         ];
@@ -189,6 +189,13 @@ class ConfigPayloadService
             }
             $assetsListDb = $newAssetsList;
         }
+
+        // Filter out empty rows from the repeater to prevent driver crashes
+        $assetsListDb = array_filter($assetsListDb, function ($item) {
+            $id = $item['url'] ?? $item['id'] ?? null;
+            return !empty($id) && $id !== '-';
+        });
+        $assetsListDb = array_values($assetsListDb); // Reindex
 
         // Clean up the top-level list to avoid duplicate or conflicting structures
         \Illuminate\Support\Arr::forget($payload, $assetListKey);
