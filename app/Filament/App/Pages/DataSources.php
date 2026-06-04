@@ -1355,35 +1355,20 @@ class DataSources extends Page
 
     public function save(): void
     {
-        \Illuminate\Support\Facades\Log::emergency('DSG_SAVE_CALLED', [
-            'ts' => now()->toIso8601String(),
-        ]);
-
         $tenant = Filament::getTenant();
-
-        \Illuminate\Support\Facades\Log::emergency('DSG_TENANT_STATE', [
-            'health_status'    => $tenant->health_status ?? 'NULL',
-            'is_active'        => $tenant->is_active ?? 'NULL',
-            'billing_status'   => $tenant->billing_status ?? 'NULL',
-            'can_manage'       => auth()->user()?->can('manage_channels') ? 'YES' : 'NO',
-        ]);
-
         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
-            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: suspended');
             Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
 
             return;
         }
 
         if (in_array($tenant->health_status, ['redeploying', 'syncing'])) {
-            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: health_status=' . $tenant->health_status);
             Notification::make()->title(__('Action Blocked'))->body(__('A deployment or synchronization is currently running. Please wait for it to finish.'))->warning()->send();
 
             return;
         }
 
         if (! auth()->user()->can('manage_channels')) {
-            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: no manage_channels permission');
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
 
             return;
@@ -1469,13 +1454,7 @@ class DataSources extends Page
         // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
         $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
-        \Illuminate\Support\Facades\Log::info('DataSources Validation Debug', [
-            'uiState' => $uiState,
-            'proposedProjectAssets' => $proposedProjectAssets,
-            'lockedAssets' => $lockedAssets,
-            'newlyStaged' => $newlyStaged,
-            'limits' => $limits,
-        ]);
+
 
         if ($limits['usage'] > $limits['limit']) {
             Notification::make()
@@ -1508,21 +1487,6 @@ class DataSources extends Page
             $configPayloadService = app(\App\Services\ConfigPayloadService::class);
             $payloadData = $configPayloadService->buildPayload($tenant, $release, $channel, $channelConfig, $dbState[$channel] ?? []);
 
-            // === DIAGNOSTIC LOGGING ===
-            $logFile = storage_path('logs/datasources_save_debug.log');
-            $logEntry = '[' . now()->toIso8601String() . '] CHANNEL: ' . $channel . "\n";
-            $logEntry .= 'UI_CHANNEL_CONFIG: ' . json_encode($channelConfig, JSON_PRETTY_PRINT) . "\n";
-            $logEntry .= 'DB_CHANNEL_CONFIG: ' . json_encode($dbState[$channel] ?? [], JSON_PRETTY_PRINT) . "\n";
-            $logEntry .= 'PAYLOAD_DATA_NULL: ' . ($payloadData ? 'NO' : 'YES (SKIPPED)') . "\n";
-            if ($payloadData) {
-                $logEntry .= 'PAYLOAD: ' . json_encode($payloadData['payload'], JSON_PRETTY_PRINT) . "\n";
-                $logEntry .= 'ASSET_LIST_KEY: ' . $payloadData['assetListKey'] . "\n";
-                $logEntry .= 'REMOTE_ASSET_KEY: ' . $payloadData['remoteAssetKey'] . "\n";
-                $logEntry .= 'ASSETS_COUNT: ' . count($payloadData['assetsListDb']) . "\n";
-            }
-            file_put_contents($logFile, $logEntry . str_repeat('-', 80) . "\n", FILE_APPEND);
-            // === END DIAGNOSTIC LOGGING ===
-
             if (! $payloadData) {
                 continue; // No assets array found for this channel or invalid schema
             }
@@ -1534,7 +1498,6 @@ class DataSources extends Page
 
             try {
                 $response = $service->updateCredentials($tenant, $payload);
-                file_put_contents($logFile, '[' . now()->toIso8601String() . '] RESPONSE for ' . $channel . ': ' . json_encode($response, JSON_PRETTY_PRINT) . "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
 
                 // If successful, we update the DB state with the merged assets so it remains the source of truth
                 if (! isset($dbState[$channel])) {
@@ -1598,7 +1561,6 @@ class DataSources extends Page
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             } catch (\Exception $e) {
-                file_put_contents(storage_path('logs/datasources_save_debug.log'), '[' . now()->toIso8601String() . '] EXCEPTION for ' . $channel . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" . str_repeat('!', 80) . "\n", FILE_APPEND);
                 \Filament\Notifications\Notification::make()
                     ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
                     ->body($e->getMessage())
