@@ -1387,24 +1387,37 @@ class DataSources extends Page
 
         // Collect all enabled asset IDs in the proposed state for this project
         $proposedProjectAssets = [];
-        foreach ($proposedState as $channel => $channelConfig) {
-            if (!is_array($channelConfig) || !filter_var($channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
-            foreach ($channelConfig as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $asset) {
-                        $isEnabled = filter_var($asset['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                        $hasLostAccess = filter_var($asset['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                        
-                        if ($isEnabled && !$hasLostAccess) {
-                            $id = $asset['id'] ?? $asset['url'] ?? null;
-                            if ($id) {
-                                $proposedProjectAssets[] = $id;
-                            }
+        
+        $scanner = function ($obj) use (&$scanner, &$proposedProjectAssets) {
+            if (is_array($obj)) {
+                // If it looks like an asset object
+                if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
+                    $isEnabled = filter_var($obj['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasLostAccess = filter_var($obj['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    
+                    if ($isEnabled && !$hasLostAccess) {
+                        $id = $obj['id'] ?? $obj['url'] ?? null;
+                        if ($id) {
+                            $proposedProjectAssets[] = $id;
                         }
+                    }
+                    return; // Stop recursing down this branch
+                }
+                
+                // Otherwise recurse into children
+                foreach ($obj as $child) {
+                    if (is_array($child)) {
+                        $scanner($child);
                     }
                 }
             }
+        };
+
+        foreach ($proposedState as $channel => $channelConfig) {
+            if (!is_array($channelConfig) || !filter_var($channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
+            $scanner($channelConfig);
         }
+        
         $proposedProjectAssets = array_unique($proposedProjectAssets);
 
         // Calculate how many of these enabled assets are NEW (not already in AssetBillingLock regardless of status)
