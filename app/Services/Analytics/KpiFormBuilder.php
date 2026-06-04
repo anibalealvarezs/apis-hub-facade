@@ -123,9 +123,74 @@ class KpiFormBuilder
                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
                             if (!$state) return;
                             $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$state] ?? null;
-                            if ($kpi) {
-                                $set('calculation_type', $kpi['calculation_type']);
-                                // We will populate the ast fields here eventually based on template
+                            if (!$kpi) return;
+
+                            $set('calculation_type', $kpi['calculation_type']);
+                            
+                            $activeChannels = array_keys(self::getActiveChannels());
+                            $registryTags = ChannelCapabilityRegistry::getTags();
+                            
+                            // Helper to find an active channel satisfying a placeholder tag
+                            $resolveChannel = function($placeholder) use ($activeChannels, $registryTags) {
+                                // Extract tag from placeholder, e.g. __SPENDABLE_CHANNEL_1__ -> spendable
+                                preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
+                                if (empty($matches[1])) return null;
+                                
+                                $requiredTag = strtolower($matches[1]);
+                                
+                                foreach ($activeChannels as $channel) {
+                                    $tags = $registryTags[$channel] ?? [];
+                                    if (in_array($requiredTag, $tags)) {
+                                        return $channel;
+                                    }
+                                }
+                                return null;
+                            };
+
+                            $ast = $kpi['template']['ast'] ?? [];
+                            
+                            // Univariate
+                            if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly'])) {
+                                if (isset($ast['channel'])) {
+                                    $set('dependent_channel', $resolveChannel($ast['channel']));
+                                    $set('dependent_metric', $ast['metric'] ?? '');
+                                }
+                                return;
+                            }
+
+                            // Bivariate (Left is dependent, Right is independent)
+                            if (isset($ast['left']['channel'])) {
+                                $set('dependent_channel', $resolveChannel($ast['left']['channel']));
+                                $set('dependent_metric', $ast['left']['metric'] ?? '');
+                            }
+
+                            if (isset($ast['right'])) {
+                                $independents = [];
+                                
+                                // Recursive helper to unpack '+' operators into flat list
+                                $unpackIndependents = function($node) use (&$unpackIndependents, $resolveChannel, &$independents) {
+                                    if (($node['type'] ?? '') === 'metric') {
+                                        $independents[] = [
+                                            'independent_channel' => $resolveChannel($node['channel']),
+                                            'independent_metric' => $node['metric'] ?? '',
+                                            'independent_asset_filter' => null,
+                                        ];
+                                    } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
+                                        $unpackIndependents($node['left']);
+                                        $unpackIndependents($node['right']);
+                                    }
+                                };
+                                
+                                $unpackIndependents($ast['right']);
+                                
+                                if (!empty($independents)) {
+                                    // Livewire repeaters require unique UUID keys
+                                    $repeaterData = [];
+                                    foreach ($independents as $idx => $ind) {
+                                        $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
+                                    }
+                                    $set('independent_variables', $repeaterData);
+                                }
                             }
                         }),
 
