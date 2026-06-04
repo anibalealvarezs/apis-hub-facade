@@ -1182,7 +1182,7 @@ class DataSources extends Page
             ->reorderable(false)
             ->columnSpanFull()
             ->extraAttributes(['class' => 'compact-repeater']),
-        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all' }", 'class' => 'w-full']);
+        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
     }
 
     protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1339,7 +1339,7 @@ class DataSources extends Page
             ->reorderable(false)
             ->columnSpanFull()
             ->extraAttributes(['class' => 'compact-repeater']),
-        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all' }", 'class' => 'w-full']);
+        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
     }
 
     public function save(): void
