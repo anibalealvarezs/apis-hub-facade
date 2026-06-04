@@ -117,6 +117,7 @@ USE_SWOOLE=true
 USE_SSL=false
 APP_TIMEZONE={$project->timezone}
 CLI_MEMORY_LIMIT=4G
+ENABLE_NON_API_ROUTES=false
 
 # Database (Instance specific)
 DB_DRIVER=pdo_pgsql
