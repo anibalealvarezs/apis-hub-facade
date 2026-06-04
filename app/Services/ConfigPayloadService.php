@@ -20,7 +20,7 @@ class ConfigPayloadService
     public function buildPayload(Project $tenant, ApisHubRelease $release, string $channel, array $channelConfig, array $dbChannelConfig = []): ?array
     {
         $remoteAssetKeyMap = [
-            'google_search_console' => 'sites',
+            'google_search_console' => 'gsc',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
         ];
