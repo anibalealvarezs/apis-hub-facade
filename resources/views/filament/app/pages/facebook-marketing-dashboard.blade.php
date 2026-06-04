@@ -563,7 +563,7 @@
                         else if (filterMode === 'table') filtersObj = this.getTableFilters();
 
                         const filterHash = filterMode === 'none' ? 'no_filters' : JSON.stringify(filtersObj);
-                        return `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}_v2`;
+                        return `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}_v3`;
                     },
 
                     async fetchAll() {
