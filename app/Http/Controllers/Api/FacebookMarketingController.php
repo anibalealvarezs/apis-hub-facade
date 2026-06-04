@@ -76,15 +76,15 @@ class FacebookMarketingController extends Controller
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $aggregations = [
-                'spend' => 'spend',
-                'clicks' => 'clicks',
-                'impressions' => 'impressions',
-                'ctr' => 'ctr',
-                'cpc' => 'cpc',
-                'purchase_roas' => 'purchase_roas',
-                'results' => 'results',
-                'cost_per_result' => 'cost_per_result',
-                'result_rate' => 'result_rate'
+                'total_spend' => 'spend',
+                'total_clicks' => 'clicks',
+                'total_impressions' => 'impressions',
+                'average_ctr' => 'ctr',
+                'average_cpc' => 'cpc',
+                'average_purchase_roas' => 'purchase_roas',
+                'total_results' => 'results',
+                'average_cost_per_result' => 'cost_per_result',
+                'average_result_rate' => 'result_rate'
             ];
 
             $payloads = [
@@ -111,9 +111,36 @@ class FacebookMarketingController extends Controller
                 \Illuminate\Support\Facades\Log::error("FBM Summary APIs Hub Error: " . json_encode($results['summary']));
             }
 
+            $summaryData = $results['summary']['data'][0] ?? [];
+            $previousData = $results['previous']['data'][0] ?? [];
+
+            $mapPrefixes = function (&$data) {
+                if (empty($data)) return;
+                $mappings = [
+                    'total_spend' => 'spend',
+                    'total_clicks' => 'clicks',
+                    'total_impressions' => 'impressions',
+                    'average_ctr' => 'ctr',
+                    'average_cpc' => 'cpc',
+                    'average_purchase_roas' => 'purchase_roas',
+                    'total_results' => 'results',
+                    'average_cost_per_result' => 'cost_per_result',
+                    'average_result_rate' => 'result_rate'
+                ];
+                foreach ($mappings as $prefixed => $standard) {
+                    if (isset($data[$prefixed])) {
+                        $data[$standard] = $data[$prefixed];
+                        unset($data[$prefixed]);
+                    }
+                }
+            };
+
+            $mapPrefixes($summaryData);
+            $mapPrefixes($previousData);
+
             return response()->json([
-                'summary' => $results['summary']['data'][0] ?? new \stdClass(),
-                'previous' => $results['previous']['data'][0] ?? new \stdClass(),
+                'summary' => empty($summaryData) ? new \stdClass() : $summaryData,
+                'previous' => empty($previousData) ? new \stdClass() : $previousData,
                 'debug_results' => ['payloads' => $payloads, 'meta' => $results['summary']['meta'] ?? null]
             ]);
         } catch (\Exception $e) {
@@ -187,15 +214,15 @@ class FacebookMarketingController extends Controller
             $service = app(RemoteEngineService::class);
 
             $aggregations = [
-                'spend' => 'spend',
-                'clicks' => 'clicks',
-                'impressions' => 'impressions',
-                'ctr' => 'ctr',
-                'cpc' => 'cpc',
-                'results' => 'results',
-                'purchase_roas' => 'purchase_roas',
-                'cost_per_result' => 'cost_per_result',
-                'result_rate' => 'result_rate'
+                'total_spend' => 'spend',
+                'total_clicks' => 'clicks',
+                'total_impressions' => 'impressions',
+                'average_ctr' => 'ctr',
+                'average_cpc' => 'cpc',
+                'total_results' => 'results',
+                'average_purchase_roas' => 'purchase_roas',
+                'average_cost_per_result' => 'cost_per_result',
+                'average_result_rate' => 'result_rate'
             ];
 
             $accountFilter = [];
@@ -271,6 +298,24 @@ class FacebookMarketingController extends Controller
                 } else {
                     $row['id'] = 'Unknown';
                     $row['name'] = 'Unknown';
+                }
+
+                $mappings = [
+                    'total_spend' => 'spend',
+                    'total_clicks' => 'clicks',
+                    'total_impressions' => 'impressions',
+                    'average_ctr' => 'ctr',
+                    'average_cpc' => 'cpc',
+                    'average_purchase_roas' => 'purchase_roas',
+                    'total_results' => 'results',
+                    'average_cost_per_result' => 'cost_per_result',
+                    'average_result_rate' => 'result_rate'
+                ];
+
+                foreach ($mappings as $prefixed => $standard) {
+                    if (isset($rowLower[$prefixed])) {
+                        $row[$standard] = $rowLower[$prefixed];
+                    }
                 }
             }
 
