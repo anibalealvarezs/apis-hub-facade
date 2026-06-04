@@ -168,6 +168,11 @@ class DataSources extends Page
         }
 
         // Now fill the form, which will generate the schema based on the correctly selected activeChannel
+        foreach ($config as $channelKey => $channelConfig) {
+            if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
+                $config[$channelKey . '_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
         $this->form->fill($config);
 
         $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
@@ -638,6 +643,11 @@ class DataSources extends Page
 
         $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
 
+        foreach ($fullDbState as $channelKey => $channelConfig) {
+            if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
+                $fullDbState[$channelKey . '_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
         // Fill the form with the updated active channel data
         $this->form->fill($fullDbState);
     }
@@ -1568,6 +1578,11 @@ class DataSources extends Page
         app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);
 
         // Refresh UI state seamlessly via Livewire so the user sees the actual final state
+        foreach ($dbState as $channelKey => $channelConfig) {
+            if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
+                $dbState[$channelKey . '_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
         $this->form->fill($dbState);
 
         if (count($rejectedAssets) > 0) {
