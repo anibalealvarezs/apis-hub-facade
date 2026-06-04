@@ -69,13 +69,17 @@ class KpiFormBuilder
                             if (!$channel) return [];
                             $tenant = Filament::getTenant();
                             $config = $tenant->sync_config[$channel] ?? [];
-                            // Extract assets dynamically based on channel
-                            $assets = [];
-                            // Quick simplified extraction
-                            foreach ($config as $key => $items) {
-                                if (is_array($items)) {
-                                    foreach ($items as $item) {
-                                        if (isset($item['id']) || isset($item['url'])) {
+                            $assets = [
+                                '__DYNAMIC__' => 'Dynamic (Passed at runtime)'
+                            ];
+                            
+                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+                            // 1. Direct lists
+                            foreach ($assetKeys as $assetKey) {
+                                if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+                                    foreach ($config[$assetKey] as $item) {
+                                        if (is_array($item) && (isset($item['id']) || isset($item['url']))) {
                                             $id = $item['id'] ?? $item['url'];
                                             $nameStr = $item['name'] ?? $item['url'] ?? $id;
                                             $assets[$id] = $nameStr;
@@ -83,6 +87,22 @@ class KpiFormBuilder
                                     }
                                 }
                             }
+
+                            // 2. Nested under 'assets'
+                            if (!empty($config['assets']) && is_array($config['assets'])) {
+                                foreach ($assetKeys as $assetKey) {
+                                    if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                                        foreach ($config['assets'][$assetKey] as $item) {
+                                            if (is_array($item) && (isset($item['id']) || isset($item['url']))) {
+                                                $id = $item['id'] ?? $item['url'];
+                                                $nameStr = $item['name'] ?? $item['url'] ?? $id;
+                                                $assets[$id] = $nameStr;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             return $assets;
                         })
                 ])->columns(3)

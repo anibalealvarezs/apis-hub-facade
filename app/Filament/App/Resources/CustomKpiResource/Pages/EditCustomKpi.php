@@ -10,9 +10,34 @@ class EditCustomKpi extends EditRecord
 {
     protected static string $resource = CustomKpiResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Unpack the UI state into the top-level form data so it hydrates the fields
+        if (!empty($data['filters']['_ui_state'])) {
+            foreach ($data['filters']['_ui_state'] as $key => $val) {
+                $data[$key] = $val;
+            }
+        }
+        return $data;
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $data['ast'] = \App\Services\Analytics\KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
+        
+        // Package the UI state and scope into the filters column
+        $filters = $data['filters'] ?? [];
+        $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template']);
+        $data['filters'] = $filters;
+
+        // Clean up flat fields so Eloquent doesn't complain
+        $allowedColumns = ['name', 'description', 'calculation_type', 'is_active', 'template', 'ast', 'filters', 'project_id'];
+        foreach (array_keys($data) as $key) {
+            if (!in_array($key, $allowedColumns)) {
+                unset($data[$key]);
+            }
+        }
+
         return $data;
     }
 
