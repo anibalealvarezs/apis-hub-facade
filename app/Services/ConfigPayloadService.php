@@ -200,6 +200,16 @@ class ConfigPayloadService
             return !empty($id) && $id !== '-';
         }));
 
+        // Normalize: the driver calls getCleanString($sel['url']) and will crash if url is null.
+        // The Facade stores GSC assets by 'id' (e.g. "sc-domain:...") but leaves url as null.
+        // Populate url from id so the driver always receives a valid string.
+        $assetsListDb = array_map(function ($item) {
+            if (empty($item['url']) && !empty($item['id'])) {
+                $item['url'] = $item['id'];
+            }
+            return $item;
+        }, $assetsListDb);
+
         // Clean up the top-level list to avoid duplicate or conflicting structures
         \Illuminate\Support\Arr::forget($payload, $assetListKey);
 
