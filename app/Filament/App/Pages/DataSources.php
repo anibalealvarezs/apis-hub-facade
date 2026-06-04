@@ -1108,13 +1108,22 @@ class DataSources extends Page
             \Filament\Forms\Components\Placeholder::make('filter_' . $fieldKey)
                 ->hiddenLabel()
                 ->content(new \Illuminate\Support\HtmlString('
-                    <div class="relative w-full max-w-sm mb-4">
-                        <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                            </svg>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="relative w-full max-w-sm">
+                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
+                        <div class="w-48">
+                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Statuses').'</option>
+                                <option value="enabled">'.__('Enabled Only').'</option>
+                                <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
                     </div>
                 ')),
             Repeater::make($fieldKey)
@@ -1162,7 +1171,7 @@ class DataSources extends Page
                         $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
 
                         return [
-                            'x-effect' => "\$el.closest('li').style.display = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())) ? '' : 'none'",
+                            'x-effect' => "let matchesText = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
                         ];
                     }),
                 ])
@@ -1173,7 +1182,7 @@ class DataSources extends Page
             ->reorderable(false)
             ->columnSpanFull()
             ->extraAttributes(['class' => 'compact-repeater']),
-        ])->extraAttributes(['x-data' => "{ assetFilter: '' }", 'class' => 'w-full']);
+        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all' }", 'class' => 'w-full']);
     }
 
     protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1256,13 +1265,22 @@ class DataSources extends Page
             \Filament\Forms\Components\Placeholder::make('filter_' . $fieldKey)
                 ->hiddenLabel()
                 ->content(new \Illuminate\Support\HtmlString('
-                    <div class="relative w-full max-w-sm mb-4">
-                        <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                            </svg>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="relative w-full max-w-sm">
+                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
+                        <div class="w-48">
+                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Statuses').'</option>
+                                <option value="enabled">'.__('Enabled Only').'</option>
+                                <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
                     </div>
                 ')),
             Repeater::make($fieldKey)
@@ -1310,7 +1328,7 @@ class DataSources extends Page
                         $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
 
                         return [
-                            'x-effect' => "\$el.closest('li').style.display = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())) ? '' : 'none'",
+                            'x-effect' => "let matchesText = (assetFilter === '' || '" . $searchableText . "'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
                         ];
                     }),
                 ])
@@ -1321,7 +1339,7 @@ class DataSources extends Page
             ->reorderable(false)
             ->columnSpanFull()
             ->extraAttributes(['class' => 'compact-repeater']),
-        ])->extraAttributes(['x-data' => "{ assetFilter: '' }", 'class' => 'w-full']);
+        ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all' }", 'class' => 'w-full']);
     }
 
     public function save(): void
