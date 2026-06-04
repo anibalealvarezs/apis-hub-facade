@@ -1489,6 +1489,21 @@ class DataSources extends Page
             $configPayloadService = app(\App\Services\ConfigPayloadService::class);
             $payloadData = $configPayloadService->buildPayload($tenant, $release, $channel, $channelConfig, $dbState[$channel] ?? []);
 
+            // === DIAGNOSTIC LOGGING ===
+            $logFile = storage_path('logs/datasources_save_debug.log');
+            $logEntry = '[' . now()->toIso8601String() . '] CHANNEL: ' . $channel . "\n";
+            $logEntry .= 'UI_CHANNEL_CONFIG: ' . json_encode($channelConfig, JSON_PRETTY_PRINT) . "\n";
+            $logEntry .= 'DB_CHANNEL_CONFIG: ' . json_encode($dbState[$channel] ?? [], JSON_PRETTY_PRINT) . "\n";
+            $logEntry .= 'PAYLOAD_DATA_NULL: ' . ($payloadData ? 'NO' : 'YES (SKIPPED)') . "\n";
+            if ($payloadData) {
+                $logEntry .= 'PAYLOAD: ' . json_encode($payloadData['payload'], JSON_PRETTY_PRINT) . "\n";
+                $logEntry .= 'ASSET_LIST_KEY: ' . $payloadData['assetListKey'] . "\n";
+                $logEntry .= 'REMOTE_ASSET_KEY: ' . $payloadData['remoteAssetKey'] . "\n";
+                $logEntry .= 'ASSETS_COUNT: ' . count($payloadData['assetsListDb']) . "\n";
+            }
+            file_put_contents($logFile, $logEntry . str_repeat('-', 80) . "\n", FILE_APPEND);
+            // === END DIAGNOSTIC LOGGING ===
+
             if (! $payloadData) {
                 continue; // No assets array found for this channel or invalid schema
             }
@@ -1500,6 +1515,7 @@ class DataSources extends Page
 
             try {
                 $response = $service->updateCredentials($tenant, $payload);
+                file_put_contents($logFile, '[' . now()->toIso8601String() . '] RESPONSE for ' . $channel . ': ' . json_encode($response, JSON_PRETTY_PRINT) . "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
 
                 // If successful, we update the DB state with the merged assets so it remains the source of truth
                 if (! isset($dbState[$channel])) {
@@ -1563,6 +1579,7 @@ class DataSources extends Page
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             } catch (\Exception $e) {
+                file_put_contents(storage_path('logs/datasources_save_debug.log'), '[' . now()->toIso8601String() . '] EXCEPTION for ' . $channel . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n" . str_repeat('!', 80) . "\n", FILE_APPEND);
                 \Filament\Notifications\Notification::make()
                     ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
                     ->body($e->getMessage())
