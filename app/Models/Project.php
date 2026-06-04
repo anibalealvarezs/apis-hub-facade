@@ -149,6 +149,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Custom KPIs defined for this project.
+     */
+    public function customKpis(): HasMany
+    {
+        return $this->hasMany(CustomKpi::class);
+    }
+
+    /**
      * Get the APIs Hub Release associated with the project.
      */
     public function apisHubRelease(): BelongsTo
