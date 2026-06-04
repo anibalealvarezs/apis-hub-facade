@@ -58,8 +58,9 @@ class GoogleSearchConsoleDashboard extends Page
             $config = $tenant->sync_config['google_search_console']['assets']['sites'] ?? $tenant->sync_config['google_search_console']['sites'] ?? [];
             $enabledUrls = [];
             foreach ($config as $site) {
-                if (!empty($site['enabled']) && !empty($site['url'])) {
-                    $enabledUrls[] = str_replace(['https://', 'http://'], '', rtrim($site['url'], '/'));
+                $siteUrl = $site['url'] ?? $site['id'] ?? null;
+                if (!empty($site['enabled']) && !empty($siteUrl)) {
+                    $enabledUrls[] = str_replace(['https://', 'http://'], '', rtrim($siteUrl, '/'));
                 }
             }
 
