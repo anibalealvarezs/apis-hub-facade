@@ -81,7 +81,7 @@ class KpiFormBuilder
                             foreach ($assetKeys as $assetKey) {
                                 if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
                                     foreach ($config[$assetKey] as $item) {
-                                        if (is_array($item) && (isset($item['id']) || isset($item['url']))) {
+                                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
                                             $id = $item['id'] ?? $item['url'];
                                             $nameStr = $item['name'] ?? $item['url'] ?? $id;
                                             $assets[$id] = $nameStr;
@@ -95,7 +95,7 @@ class KpiFormBuilder
                                 foreach ($assetKeys as $assetKey) {
                                     if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                                         foreach ($config['assets'][$assetKey] as $item) {
-                                            if (is_array($item) && (isset($item['id']) || isset($item['url']))) {
+                                            if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
                                                 $id = $item['id'] ?? $item['url'];
                                                 $nameStr = $item['name'] ?? $item['url'] ?? $id;
                                                 $assets[$id] = $nameStr;
