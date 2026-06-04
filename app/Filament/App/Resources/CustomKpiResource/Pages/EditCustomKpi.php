@@ -75,6 +75,25 @@ class EditCustomKpi extends EditRecord
                             ->send();
                     }
                 }),
+            Actions\Action::make('debug')
+                ->label('Debug Payload')
+                ->icon('heroicon-o-code-bracket')
+                ->color('gray')
+                ->visible(fn () => config('app.env') !== 'production')
+                ->modalHeading('Payload Debugger')
+                ->modalContent(function () {
+                    $state = $this->form->getState();
+                    if (empty($state['calculation_type'])) {
+                        return new \Illuminate\Support\HtmlString('<p>Please select a calculation type first.</p>');
+                    }
+                    $payload = \App\Services\Analytics\KpiPayloadBuilder::build(
+                        $state['calculation_type'], 
+                        $state
+                    );
+                    return new \Illuminate\Support\HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">' . json_encode($payload, JSON_PRETTY_PRINT) . '</pre>');
+                })
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close'),
             Actions\DeleteAction::make(),
         ];
     }
