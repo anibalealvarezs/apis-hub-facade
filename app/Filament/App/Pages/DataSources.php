@@ -1427,6 +1427,13 @@ class DataSources extends Page
         // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
         $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
+        \Illuminate\Support\Facades\Log::info('DataSources Validation Debug', [
+            'proposedProjectAssets' => $proposedProjectAssets,
+            'lockedAssets' => $lockedAssets,
+            'newlyStaged' => $newlyStaged,
+            'limits' => $limits,
+        ]);
+
         if ($limits['usage'] > $limits['limit']) {
             Notification::make()
                 ->title(__('Asset Limit Exceeded'))
