@@ -36,7 +36,7 @@ class KpiPayloadBuilder
 
         if (!empty($state['dependent_asset_filter'])) {
             // Very simplified filter key, real implementation would map channel to filter key e.g. channeledCampaign
-            $dependentNode['filters'] = ['asset_id' => $state['dependent_asset_filter']];
+            $dependentNode['filters'] = ['asset_platform_id' => $state['dependent_asset_filter']];
         }
 
         // For Univariate, AST is just the dependent node
@@ -71,7 +71,7 @@ class KpiPayloadBuilder
                 'metric' => ($var['independent_channel'] ?? '') . '.' . ($var['independent_metric'] ?? ''),
             ];
             if (!empty($var['independent_asset_filter'])) {
-                $node['filters'] = ['asset_id' => $var['independent_asset_filter']];
+                $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
             }
             return $node;
         }
@@ -83,7 +83,7 @@ class KpiPayloadBuilder
             'metric' => ($first['independent_channel'] ?? '') . '.' . ($first['independent_metric'] ?? ''),
         ];
         if (!empty($first['independent_asset_filter'])) {
-            $left['filters'] = ['asset_id' => $first['independent_asset_filter']];
+            $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
         }
 
         return [
