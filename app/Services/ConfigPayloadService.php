@@ -193,6 +193,13 @@ class ConfigPayloadService
             $assetsListDb = $newAssetsList;
         }
 
+        // Filter out malformed/empty entries (e.g. YAML stubs '-' or null URLs).
+        // The driver exits early and saves NOTHING if the incoming list is empty and type !== 'global'.
+        $assetsListDb = array_values(array_filter($assetsListDb, function ($item) {
+            $id = $item['url'] ?? $item['id'] ?? null;
+            return !empty($id) && $id !== '-';
+        }));
+
         // Clean up the top-level list to avoid duplicate or conflicting structures
         \Illuminate\Support\Arr::forget($payload, $assetListKey);
 
