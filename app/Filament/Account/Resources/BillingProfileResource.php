@@ -26,16 +26,6 @@ class BillingProfileResource extends Resource
         return parent::getEloquentQuery()->where('user_id', auth()->id());
     }
 
-    public static function canCreate(): bool
-    {
-        // Check if the user already owns a free tier billing profile
-        $hasFreeProfile = BillingProfile::where('user_id', auth()->id())
-            ->where('tier', 'free')
-            ->exists();
-            
-        return !$hasFreeProfile;
-    }
-
     public static function form(Form $form): Form
     {
         return $form
@@ -54,6 +44,23 @@ class BillingProfileResource extends Resource
                         ->required()
                         ->default('individual')
                         ->live(),
+                    Forms\Components\Select::make('tier')
+                        ->options(\App\Enums\UserTier::class)
+                        ->required()
+                        ->default('free')
+                        ->rule(function () {
+                            return function (string $attribute, $value, \Closure $fail) {
+                                if ($value === 'free') {
+                                    $hasFree = \App\Models\BillingProfile::where('user_id', auth()->id())
+                                        ->when(request()->route('record'), fn ($q, $id) => $q->where('id', '!=', $id))
+                                        ->where('tier', 'free')
+                                        ->exists();
+                                    if ($hasFree) {
+                                        $fail('You already have a free tier billing profile. Please select a paid tier or upgrade your existing profile.');
+                                    }
+                                }
+                            };
+                        }),
                     Forms\Components\TextInput::make('name')
                         ->label(fn (Forms\Get $get) => $get('type') === 'company' ? 'Company Name' : 'Full Name')
                         ->required()
@@ -94,6 +101,8 @@ class BillingProfileResource extends Resource
                         'company' => 'info',
                         'individual' => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('tier')
+                    ->badge(),
                 Tables\Columns\IconColumn::make('is_default')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
