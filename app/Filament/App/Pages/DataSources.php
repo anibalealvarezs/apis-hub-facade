@@ -154,13 +154,14 @@ class DataSources extends Page
             foreach ($provider['channels'] as $channel) {
                 if (($channel['status'] ?? '') === 'Active') {
                     $this->activeChannel = $channel['key'];
+
                     break 2;
                 }
             }
         }
-        
+
         // Fallback if no active channel is found
-        if (!$this->activeChannel) {
+        if (! $this->activeChannel) {
             $firstProvider = reset($providers);
             if ($firstProvider && ! empty($firstProvider['channels'])) {
                 $this->activeChannel = $firstProvider['channels'][0]['key'];
@@ -568,7 +569,7 @@ class DataSources extends Page
         $liveMap = [];
 
         $actualLiveAssets = [];
-        if (!empty($liveAssets)) {
+        if (! empty($liveAssets)) {
             // Check if it's an associative array wrapping the list (e.g., ['ad_accounts' => [...]])
             // If the first key is a string, it's associative. Otherwise, it's already the list.
             $firstKey = array_key_first($liveAssets);
@@ -1010,7 +1011,7 @@ class DataSources extends Page
                     ->default($definition['default'] ?? false);
             } elseif ($type === 'string' && isset($definition['options'])) {
                 $options = $definition['options'];
-                
+
                 // Adapt the selector to accept maximum 6 months for Free Tier users
                 $tenant = \Filament\Facades\Filament::getTenant();
                 $isFreeTier = false;
@@ -1018,7 +1019,7 @@ class DataSources extends Page
                     $tier = $tenant->billingProfile->tier;
                     $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
                 }
-                
+
                 if ($key === 'cache_history_range' && $isFreeTier) {
                     $options = array_filter($options, function ($k) {
                         return in_array($k, ['1 month', '3 months', '6 months']);
@@ -1354,26 +1355,35 @@ class DataSources extends Page
 
     public function save(): void
     {
-        $debugLog = storage_path('logs/datasources_save_debug.log');
-        file_put_contents($debugLog, '[' . now()->toIso8601String() . '] save() CALLED' . "\n", FILE_APPEND);
+        \Illuminate\Support\Facades\Log::emergency('DSG_SAVE_CALLED', [
+            'ts' => now()->toIso8601String(),
+        ]);
 
         $tenant = Filament::getTenant();
+
+        \Illuminate\Support\Facades\Log::emergency('DSG_TENANT_STATE', [
+            'health_status'    => $tenant->health_status ?? 'NULL',
+            'is_active'        => $tenant->is_active ?? 'NULL',
+            'billing_status'   => $tenant->billing_status ?? 'NULL',
+            'can_manage'       => auth()->user()?->can('manage_channels') ? 'YES' : 'NO',
+        ]);
+
         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
-            file_put_contents($debugLog, '[' . now()->toIso8601String() . '] EARLY RETURN: tenant suspended' . "\n", FILE_APPEND);
+            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: suspended');
             Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
 
             return;
         }
 
         if (in_array($tenant->health_status, ['redeploying', 'syncing'])) {
-            file_put_contents($debugLog, '[' . now()->toIso8601String() . '] EARLY RETURN: health_status=' . $tenant->health_status . "\n", FILE_APPEND);
+            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: health_status=' . $tenant->health_status);
             Notification::make()->title(__('Action Blocked'))->body(__('A deployment or synchronization is currently running. Please wait for it to finish.'))->warning()->send();
 
             return;
         }
 
         if (! auth()->user()->can('manage_channels')) {
-            file_put_contents($debugLog, '[' . now()->toIso8601String() . '] EARLY RETURN: no manage_channels permission' . "\n", FILE_APPEND);
+            \Illuminate\Support\Facades\Log::emergency('DSG_EARLY_RETURN: no manage_channels permission');
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
 
             return;
@@ -1386,7 +1396,7 @@ class DataSources extends Page
         foreach ($uiState as $key => $value) {
             if (is_string($key) && str_ends_with($key, '_enabled')) {
                 $channel = str_replace('_enabled', '', $key);
-                if (!isset($uiState[$channel])) {
+                if (! isset($uiState[$channel])) {
                     $uiState[$channel] = [];
                 }
                 $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
@@ -1403,23 +1413,24 @@ class DataSources extends Page
 
         // Collect all enabled asset IDs in the proposed state for this project
         $proposedProjectAssets = [];
-        
+
         $scanner = function ($obj) use (&$scanner, &$proposedProjectAssets) {
             if (is_array($obj)) {
                 // If it looks like an asset object
                 if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
                     $isEnabled = filter_var($obj['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
                     $hasLostAccess = filter_var($obj['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                    
-                    if ($isEnabled && !$hasLostAccess) {
+
+                    if ($isEnabled && ! $hasLostAccess) {
                         $id = $obj['id'] ?? $obj['url'] ?? null;
                         if ($id) {
                             $proposedProjectAssets[] = $id;
                         }
                     }
+
                     return; // Stop recursing down this branch
                 }
-                
+
                 // Otherwise recurse into children
                 foreach ($obj as $child) {
                     if (is_array($child)) {
@@ -1430,10 +1441,12 @@ class DataSources extends Page
         };
 
         foreach ($proposedState as $channel => $channelConfig) {
-            if (!is_array($channelConfig) || !filter_var($channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
+            if (! is_array($channelConfig) || ! filter_var($channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                continue;
+            }
             $scanner($channelConfig);
         }
-        
+
         $proposedProjectAssets = array_unique($proposedProjectAssets);
 
         // Calculate how many of these enabled assets are NEW (not already in AssetBillingLock regardless of status)
@@ -1444,15 +1457,15 @@ class DataSources extends Page
 
         $newlyStaged = 0;
         foreach ($proposedProjectAssets as $id) {
-            if (!in_array($id, $lockedAssets)) {
+            if (! in_array($id, $lockedAssets)) {
                 $newlyStaged++;
             }
         }
 
         $quotaService = app(\App\Services\AssetQuotaService::class);
         $user = auth()->user();
-        
-        // Pass the newly staged count. The AssetQuotaService adds this to the global ledger count 
+
+        // Pass the newly staged count. The AssetQuotaService adds this to the global ledger count
         // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
         $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
@@ -1567,18 +1580,18 @@ class DataSources extends Page
 
 
                 // Persist UI configuration values (like cache_history_range and the channel toggle)
-                // We use $payload here because ConfigPayloadService might have enforced tier-based constraints 
+                // We use $payload here because ConfigPayloadService might have enforced tier-based constraints
                 // (like max_workers, cache_history_range) which we want reflected in the UI.
                 foreach ($payload as $k => $v) {
                     if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
-                
-                // Ensure unmapped keys from original channelConfig are also preserved 
+
+                // Ensure unmapped keys from original channelConfig are also preserved
                 // if they weren't explicitly handled in payload (like entity_sync_depth)
                 foreach ($channelConfig as $k => $v) {
-                    if (!isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                    if (! isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
