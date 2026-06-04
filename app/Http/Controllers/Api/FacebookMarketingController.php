@@ -64,7 +64,7 @@ class FacebookMarketingController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $baseFilters = [];
+            $baseFilters = ['channel' => 'facebook_marketing'];
             if (!empty($validated['account'])) {
                 if (count($validated['account']) === 1) {
                     $baseFilters['channeledAccount'] = $validated['account'][0];
@@ -158,7 +158,7 @@ class FacebookMarketingController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $baseFilters = [];
+            $baseFilters = ['channel' => 'facebook_marketing'];
             if (!empty($validated['account'])) {
                 if (count($validated['account']) === 1) {
                     $baseFilters['channeledAccount'] = $validated['account'][0];
@@ -227,7 +227,7 @@ class FacebookMarketingController extends Controller
                 'average_result_rate' => 'result_rate'
             ];
 
-            $accountFilter = [];
+            $accountFilter = ['channel' => 'facebook_marketing'];
             if (!empty($validated['account'])) {
                 if (count($validated['account']) === 1) {
                     $accountFilter['channeledAccount'] = $validated['account'][0];
