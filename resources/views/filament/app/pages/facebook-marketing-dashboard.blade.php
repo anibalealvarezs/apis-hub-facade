@@ -563,7 +563,7 @@
                         else if (filterMode === 'table') filtersObj = this.getTableFilters();
 
                         const filterHash = filterMode === 'none' ? 'no_filters' : JSON.stringify(filtersObj);
-                        return `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}_v3`;
+                        return `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}_v4`;
                     },
 
                     async fetchAll() {
@@ -957,9 +957,11 @@
                         chart.options.scales.x.grid.color = cssGridColor;
                         chart.options.scales.x.ticks.color = cssTicksColor;
                         
-                        ['spend', 'impressions', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas'].forEach(m => {
+                        ['spend', 'impressions', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
                             let scaleId;
                             if (m === 'purchase_roas') scaleId = 'yRoas';
+                            else if (m === 'cost_per_result') scaleId = 'yCpr';
+                            else if (m === 'result_rate') scaleId = 'yRr';
                             else scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
                             
                             if(!chart.options.scales[scaleId]) {

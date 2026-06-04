@@ -116,6 +116,8 @@ class FacebookMarketingController extends Controller
 
             $mapPrefixes = function (&$data) {
                 if (empty($data)) return;
+                // Ensure all keys are lowercase to match the mappings
+                $data = array_change_key_case($data, CASE_LOWER);
                 $mappings = [
                     'total_spend' => 'spend',
                     'total_clicks' => 'clicks',
