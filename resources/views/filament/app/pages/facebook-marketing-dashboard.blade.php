@@ -8,6 +8,8 @@
             --fb-cpc: #f59e0b;
             --fb-roas: #ec4899;
             --fb-purchases: #14b8a6;
+            --fb-cpr: #a855f7;
+            --fb-rr: #ef4444;
             
             --fb-text-main: #111827;
             --fb-text-dim: #6b7280;
@@ -35,7 +37,7 @@
         .fb-header-subtitle { color: var(--fb-text-dim); font-size: 0.9rem; }
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
         
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 25px; }
+        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-fb {
             background: var(--fb-bg-card);
@@ -218,6 +220,22 @@
                     <span x-text="formatVariance(variance.results)"></span>
                 </div>
             </div>
+            <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''" @click="toggleMetric('cost_per_result')" style="--color: var(--fb-cpr);">
+                <div class="fb-label">{{ __('Cost per Result') }}</div>
+                <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_result)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_result, true)">
+                    <span x-text="getVarianceIcon(variance.cost_per_result, true)"></span>
+                    <span x-text="formatVariance(variance.cost_per_result)"></span>
+                </div>
+            </div>
+            <div class="card-stat-fb" :class="activeMetrics.result_rate ? 'active' : ''" @click="toggleMetric('result_rate')" style="--color: var(--fb-rr);">
+                <div class="fb-label">{{ __('Result Rate') }}</div>
+                <div class="card-metric-value" x-text="formatPercent(summary.result_rate)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.result_rate)">
+                    <span x-text="getVarianceIcon(variance.result_rate)"></span>
+                    <span x-text="formatVariance(variance.result_rate)"></span>
+                </div>
+            </div>
             <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''" @click="toggleMetric('purchase_roas')" style="--color: var(--fb-roas);">
                 <div class="fb-label">{{ __('ROAS') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.purchase_roas) + 'x'"></div>
@@ -292,6 +310,8 @@
                             <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }} <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Link Clicks') }} <span x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('results')">{{ __('Purchases') }} <span x-show="sortCol === 'results'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('cost_per_result')">{{ __('CPR') }} <span x-show="sortCol === 'cost_per_result'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                            <th class="metric-cell cursor-pointer" @click="sortBy('result_rate')">{{ __('RR') }} <span x-show="sortCol === 'result_rate'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                             <th class="metric-cell cursor-pointer" @click="sortBy('purchase_roas')">{{ __('ROAS') }} <span x-show="sortCol === 'purchase_roas'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                         </tr>
                     </thead>
@@ -316,11 +336,13 @@
                                 <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
                                 <td class="metric-cell" x-text="formatNumber(row.clicks)"></td>
                                 <td class="metric-cell" x-text="formatNumber(row.results)"></td>
+                                <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
+                                <td class="metric-cell" x-text="formatPercent(row.result_rate)"></td>
                                 <td class="metric-cell" x-text="formatNumber(row.purchase_roas) + 'x'"></td>
                             </tr>
                         </template>
                         <tr x-show="paginatedTableData.length === 0">
-                            <td colspan="7" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                            <td colspan="9" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -366,12 +388,12 @@
                     isChartLoading: false,
                     isTableLoading: false,
                     
-                    summary: { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 },
-                    previous: { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 },
+                    summary: { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 },
+                    previous: { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 },
                     chartDataRaw: [],
                     tableDataRaw: [],
                     
-                    activeMetrics: { spend: true, clicks: true, impressions: true, ctr: false, cpc: false, results: false, purchase_roas: false },
+                    activeMetrics: { spend: true, clicks: true, impressions: true, ctr: false, cpc: false, results: false, purchase_roas: false, cost_per_result: false, result_rate: false },
                     
                     activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [] },
                     filterLabels: {},
@@ -557,8 +579,8 @@
                         
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                            this.summary = data.summary || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 };
-                            this.previous = data.previous || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 };
+                            this.summary = data.summary || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
+                            this.previous = data.previous || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
                             return;
                         }
 
@@ -568,8 +590,8 @@
                             const data = await response.json();
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                                this.summary = data.summary || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 };
-                                this.previous = data.previous || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0 };
+                                this.summary = data.summary || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
+                                this.previous = data.previous || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
                             }
                         } catch (error) {
                             console.error('Error fetching summary:', error);
@@ -685,7 +707,9 @@
                             ctr: calc(this.summary.ctr, this.previous.ctr),
                             cpc: calc(this.summary.cpc, this.previous.cpc),
                             results: calc(this.summary.results, this.previous.results),
-                            purchase_roas: calc(this.summary.purchase_roas, this.previous.purchase_roas)
+                            purchase_roas: calc(this.summary.purchase_roas, this.previous.purchase_roas),
+                            cost_per_result: calc(this.summary.cost_per_result, this.previous.cost_per_result),
+                            result_rate: calc(this.summary.result_rate, this.previous.result_rate)
                         };
                     },
 
@@ -779,7 +803,9 @@
                                 ctr: 0, trend_average_ctr: 0,
                                 cpc: 0, trend_average_cpc: 0,
                                 results: 0, trend_total_results: 0,
-                                purchase_roas: 0, trend_average_purchase_roas: 0
+                                purchase_roas: 0, trend_average_purchase_roas: 0,
+                                cost_per_result: 0, trend_average_cost_per_result: 0,
+                                result_rate: 0, trend_average_result_rate: 0
                             };
                         });
                         
@@ -889,6 +915,36 @@
                                 pointHoverRadius: 6,
                                 fill: false,
                                 yAxisID: 'yRoas',
+                                tension: 0.4
+                            });
+                        }
+                        
+                        if (this.activeMetrics.cost_per_result) {
+                            datasets.push({
+                                label: 'Cost per Result',
+                                data: chartData.map(r => r.cost_per_result || r.trend_average_cost_per_result || 0),
+                                borderColor: '#a855f7',
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 6,
+                                fill: false,
+                                yAxisID: 'yCpr',
+                                tension: 0.4
+                            });
+                        }
+                        
+                        if (this.activeMetrics.result_rate) {
+                            datasets.push({
+                                label: 'Result Rate',
+                                data: chartData.map(r => (r.result_rate || r.trend_average_result_rate || 0) * 100),
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 6,
+                                fill: false,
+                                yAxisID: 'yRr',
                                 tension: 0.4
                             });
                         }

@@ -82,7 +82,9 @@ class FacebookMarketingController extends Controller
                 'ctr' => 'ctr',
                 'cpc' => 'cpc',
                 'purchase_roas' => 'purchase_roas',
-                'results' => 'results'
+                'results' => 'results',
+                'cost_per_result' => 'cost_per_result',
+                'result_rate' => 'result_rate'
             ];
 
             $payloads = [
@@ -145,7 +147,9 @@ class FacebookMarketingController extends Controller
                 'trend_average_ctr' => 'ctr',
                 'trend_average_cpc' => 'cpc',
                 'trend_total_results' => 'results',
-                'trend_average_purchase_roas' => 'purchase_roas'
+                'trend_average_purchase_roas' => 'purchase_roas',
+                'trend_average_cost_per_result' => 'cost_per_result',
+                'trend_average_result_rate' => 'result_rate'
             ];
 
             $payloads = [
@@ -190,6 +194,8 @@ class FacebookMarketingController extends Controller
                 'cpc' => 'cpc',
                 'results' => 'results',
                 'purchase_roas' => 'purchase_roas',
+                'cost_per_result' => 'cost_per_result',
+                'result_rate' => 'result_rate'
             ];
 
             $accountFilter = [];
