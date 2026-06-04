@@ -22,10 +22,12 @@ class KpiFormBuilder
             return [];
         }
         
+        $validChannels = array_keys(ChannelCapabilityRegistry::getTags());
         $active = [];
         foreach ($tenant->sync_config as $channel => $data) {
-            // Very simplified check, real check can use DataSources logic
-            $active[$channel] = \Illuminate\Support\Str::headline($channel);
+            if (in_array($channel, $validChannels)) {
+                $active[$channel] = \Illuminate\Support\Str::headline($channel);
+            }
         }
         return $active;
     }
