@@ -1377,26 +1377,49 @@ class DataSources extends Page
             }
         }
 
-        // Validate limits before saving
-        $totalEnabled = 0;
+        // Build the proposed full configuration state by merging the UI state into the DB state
+        $proposedState = $dbState;
         foreach ($uiState as $channel => $channelConfig) {
             if (is_array($channelConfig)) {
-                foreach ($channelConfig as $key => $value) {
-                    if (is_array($value)) {
-                        // It's the assets array
-                        foreach ($value as $asset) {
-                            if (! empty($asset['enabled']) && empty($asset['lost_access'])) {
-                                $totalEnabled++;
+                $proposedState[$channel] = array_merge($proposedState[$channel] ?? [], $channelConfig);
+            }
+        }
+
+        // Collect all enabled asset IDs in the proposed state for this project
+        $proposedProjectAssets = [];
+        foreach ($proposedState as $channel => $channelConfig) {
+            if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+            foreach ($channelConfig as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $asset) {
+                        if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
+                            $id = $asset['id'] ?? $asset['url'] ?? null;
+                            if ($id) {
+                                $proposedProjectAssets[] = $id;
                             }
                         }
                     }
                 }
             }
         }
+        $proposedProjectAssets = array_unique($proposedProjectAssets);
+
+        // Calculate how many of these enabled assets are NEW (not already locked)
+        $lockedAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->distinct('asset_identifier')
+            ->pluck('asset_identifier')
+            ->toArray();
+
+        $newlyStaged = 0;
+        foreach ($proposedProjectAssets as $id) {
+            if (!in_array($id, $lockedAssets)) {
+                $newlyStaged++;
+            }
+        }
 
         $quotaService = app(\App\Services\AssetQuotaService::class);
         $user = auth()->user();
-        $limits = $quotaService->calculateLimits($tenant, $user, $totalEnabled);
+        $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
         if ($limits['usage'] > $limits['limit']) {
             Notification::make()
