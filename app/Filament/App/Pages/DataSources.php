@@ -1388,11 +1388,14 @@ class DataSources extends Page
         // Collect all enabled asset IDs in the proposed state for this project
         $proposedProjectAssets = [];
         foreach ($proposedState as $channel => $channelConfig) {
-            if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+            if (!is_array($channelConfig) || !filter_var($channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
             foreach ($channelConfig as $key => $value) {
                 if (is_array($value)) {
                     foreach ($value as $asset) {
-                        if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
+                        $isEnabled = filter_var($asset['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                        $hasLostAccess = filter_var($asset['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                        
+                        if ($isEnabled && !$hasLostAccess) {
                             $id = $asset['id'] ?? $asset['url'] ?? null;
                             if ($id) {
                                 $proposedProjectAssets[] = $id;
@@ -1404,7 +1407,7 @@ class DataSources extends Page
         }
         $proposedProjectAssets = array_unique($proposedProjectAssets);
 
-        // Calculate how many of these enabled assets are NEW (not already locked)
+        // Calculate how many of these enabled assets are NEW (not already in AssetBillingLock regardless of status)
         $lockedAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
             ->distinct('asset_identifier')
             ->pluck('asset_identifier')
@@ -1419,6 +1422,9 @@ class DataSources extends Page
 
         $quotaService = app(\App\Services\AssetQuotaService::class);
         $user = auth()->user();
+        
+        // Pass the newly staged count. The AssetQuotaService adds this to the global ledger count 
+        // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
         $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
         if ($limits['usage'] > $limits['limit']) {
