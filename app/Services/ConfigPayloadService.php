@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Project;
 use App\Models\ApisHubRelease;
+use App\Models\Project;
 
 class ConfigPayloadService
 {
@@ -32,11 +32,13 @@ class ConfigPayloadService
         foreach ($fields as $key => $def) {
             if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
                 $assetListKey = $key;
+
                 break;
             } elseif (($def['type'] ?? '') === 'object' && isset($def['schema'])) {
                 foreach ($def['schema'] as $subKey => $subDef) {
                     if (($subDef['type'] ?? '') === 'array' && isset($subDef['item_schema'])) {
                         $assetListKey = $key . '.' . $subKey;
+
                         break 2;
                     }
                 }
@@ -58,7 +60,7 @@ class ConfigPayloadService
 
         // Enforce Global Defaults for Jobs
         $payload['granular_sync'] = true;
-        
+
         if ($channel === 'google_search_console') {
             $payload['max_workers'] = 4;
             if (isset($channelConfig['calculate_synthetics'])) {
@@ -158,12 +160,13 @@ class ConfigPayloadService
             foreach ($assetsListUi as $index => $uiAsset) {
                 $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? null;
                 $dbAsset = null;
-                
+
                 // Match by ID/URL if possible, otherwise by index
                 if ($uiId) {
                     foreach ($assetsListDb as $dbA) {
                         if (($dbA['id'] ?? $dbA['url'] ?? null) === $uiId) {
                             $dbAsset = $dbA;
+
                             break;
                         }
                     }
@@ -174,10 +177,10 @@ class ConfigPayloadService
                 if ($dbAsset) {
                     // Merge UI into DB. UI takes precedence for submitted keys (name, toggles),
                     // DB preserves unmapped keys (deep tokens, raw data)
-                    
-                    // Filter out nulls and empty arrays from the UI asset since Hidden fields 
+
+                    // Filter out nulls and empty arrays from the UI asset since Hidden fields
                     // may fail to hydrate arrays or strings and submit them as null or []
-                    $uiAssetFiltered = array_filter($uiAsset, function($value) {
+                    $uiAssetFiltered = array_filter($uiAsset, function ($value) {
                         return $value !== null && $value !== [];
                     });
 
@@ -189,13 +192,6 @@ class ConfigPayloadService
             }
             $assetsListDb = $newAssetsList;
         }
-
-        // Filter out empty rows from the repeater to prevent driver crashes
-        $assetsListDb = array_filter($assetsListDb, function ($item) {
-            $id = $item['url'] ?? $item['id'] ?? null;
-            return !empty($id) && $id !== '-';
-        });
-        $assetsListDb = array_values($assetsListDb); // Reindex
 
         // Clean up the top-level list to avoid duplicate or conflicting structures
         \Illuminate\Support\Arr::forget($payload, $assetListKey);
