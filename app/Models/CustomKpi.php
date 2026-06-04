@@ -14,12 +14,15 @@ class CustomKpi extends Model
         'project_id',
         'name',
         'description',
+        'calculation_type',
+        'filters',
         'ast',
         'is_active',
     ];
 
     protected $casts = [
         'ast' => 'array',
+        'filters' => 'array',
         'is_active' => 'boolean',
     ];
 

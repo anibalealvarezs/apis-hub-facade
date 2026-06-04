@@ -24,21 +24,59 @@ class CustomKpiResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Active')
-                    ->default(true),
-                Forms\Components\Textarea::make('description')
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('ast')
-                    ->label('AST (JSON Payload)')
-                    ->required()
-                    ->columnSpanFull()
-                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT) : $state)
-                    ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state)
+                Forms\Components\Section::make('General Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Active')
+                            ->default(true),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('KPI Configuration')
+                    ->schema([
+                        Forms\Components\Select::make('template')
+                            ->label('Quick Start Template')
+                            ->options(function () {
+                                // We will load active channels and get templates
+                                // Placeholder for now
+                                return \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+                            })
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                // Auto fill logic here
+                            }),
+
+                        Forms\Components\Select::make('calculation_type')
+                            ->label('Calculation Type')
+                            ->options([
+                                'calculate_regression' => 'Multiple Linear Regression',
+                                'calculate_elasticity' => 'Elasticity',
+                                'calculate_autocorrelation' => 'Autocorrelation',
+                                'calculate_granger' => 'Granger Causality',
+                                'calculate_macd' => 'MACD Momentum',
+                                'calculate_anomaly' => 'Anomaly Detection',
+                            ])
+                            ->required()
+                            ->live(),
+                        
+                        // Temporarily keeping AST as textarea until we build the full dynamic form
+                        Forms\Components\Textarea::make('ast')
+                            ->label('AST (JSON Payload)')
+                            ->required()
+                            ->columnSpanFull()
+                            ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT) : $state)
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state),
+                        
+                        Forms\Components\KeyValue::make('filters')
+                            ->label('Scope / Filters')
+                            ->default(['startDate' => '', 'endDate' => '', 'groupBy' => 'daily'])
+                            ->columnSpanFull(),
+                    ])->columns(2),
             ]);
     }
 
@@ -78,7 +116,9 @@ class CustomKpiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageCustomKpis::route('/'),
+            'index' => Pages\ListCustomKpis::route('/'),
+            'create' => Pages\CreateCustomKpi::route('/create'),
+            'edit' => Pages\EditCustomKpi::route('/{record}/edit'),
         ];
     }
 }
