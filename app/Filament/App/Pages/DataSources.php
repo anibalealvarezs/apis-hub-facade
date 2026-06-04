@@ -1428,6 +1428,7 @@ class DataSources extends Page
         $limits = $quotaService->calculateLimits($tenant, $user, $newlyStaged);
 
         \Illuminate\Support\Facades\Log::info('DataSources Validation Debug', [
+            'uiState' => $uiState,
             'proposedProjectAssets' => $proposedProjectAssets,
             'lockedAssets' => $lockedAssets,
             'newlyStaged' => $newlyStaged,
