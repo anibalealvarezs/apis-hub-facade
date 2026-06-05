@@ -61,3 +61,5 @@ scratch_test_api.php
 scratch_test.php
 
 dashboard_history.txt
+
+scratch_check_state.php

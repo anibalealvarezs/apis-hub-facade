@@ -1479,7 +1479,7 @@ class DataSources extends Page
         $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
         $rejectedAssets = [];
 
-        foreach ($uiState as $channel => $channelConfig) {
+        foreach ($proposedState as $channel => $channelConfig) {
             if (! is_array($channelConfig)) {
                 continue;
             }
@@ -1501,7 +1501,8 @@ class DataSources extends Page
             }
 
             // Determine if the project is brand new (never deployed)
-            $isFirstDeployment = empty($tenant->last_deployed_at) && empty($tenant->has_remote_node_deployed);
+            $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
+            $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
 
             // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
             if (!$isFirstDeployment) {
