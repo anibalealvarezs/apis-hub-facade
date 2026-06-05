@@ -73,17 +73,23 @@ class DataSync extends Page
                         }
 
                         // Check if current node represents an asset
-                        if (isset($data['id']) && isset($data['name']) && is_string($data['name'])) {
-                            $accountMap[(string)$data['id']] = [
-                                'name' => $data['name'],
+                        $assetName = $data['title'] ?? $data['name'] ?? null;
+                        if (isset($data['id']) && is_string($assetName) && !empty($assetName)) {
+                            // Some telemetry systems prefix FB ids with 'act_'
+                            $cleanId = str_replace('act_', '', (string)$data['id']);
+                            
+                            $accountMap[$cleanId] = [
+                                'name' => $assetName,
                                 'ig_username' => null,
                             ];
+                            $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
 
                             // Check for IG account inside FB page
                             if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
                                 $ig = $data['instagram_business_account'];
                                 if (isset($ig['username'])) {
-                                    $accountMap[(string)$data['id']]['ig_username'] = $ig['username'];
+                                    $accountMap[$cleanId]['ig_username'] = $ig['username'];
+                                    $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
                                 }
                             }
                         }
