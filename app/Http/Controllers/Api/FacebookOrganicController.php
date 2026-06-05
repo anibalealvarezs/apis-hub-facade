@@ -184,10 +184,10 @@ class FacebookOrganicController extends Controller
 
             if (!empty($validated['postId'])) {
                 $baseFilters['post'] = $validated['postId'];
-                // For historic charts of posts, we want the daily deltas (which are virtual metrics)
-                // rather than the lifetime latest snapshot.
+                // For historic charts of posts, we want the daily deltas (which are virtual metrics generated from lifetime snapshots).
+                // We must query the lifetime snapshots to allow the backend to generate the deltas,
+                // so we only unset 'latest_snapshot' to get all historic records instead of just one.
                 unset($baseFilters['latest_snapshot']);
-                $baseFilters['period'] = 'daily';
             }
 
             $aggregations = [];
