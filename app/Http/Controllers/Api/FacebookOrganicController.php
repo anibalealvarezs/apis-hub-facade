@@ -305,7 +305,7 @@ class FacebookOrganicController extends Controller
             // Query the orchestrator for the specific post entity
             $results = $service->listChanneled($tenant, 'facebook_organic', 'post', [
                 'limit' => 1,
-                'post_id' => $validated['postId'] // The API will handle the filter mapping
+                'postId' => $validated['postId'] // Doctrine ORM expects camelCase property name
             ]);
 
             return response()->json([
