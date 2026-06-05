@@ -56,21 +56,20 @@ class GoogleSearchConsoleDashboard extends Page
             $response = $service->listChanneled($tenant, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
             $config = $tenant->sync_config['google_search_console']['assets']['sites'] ?? $tenant->sync_config['google_search_console']['sites'] ?? [];
-            $enabledUrls = [];
+            $enabledIds = [];
             foreach ($config as $site) {
                 $siteUrl = $site['url'] ?? $site['id'] ?? null;
                 if (!empty($site['enabled']) && !empty($siteUrl)) {
-                    $enabledUrls[] = str_replace(['https://', 'http://'], '', rtrim($siteUrl, '/'));
+                    $enabledIds[] = md5(rtrim($siteUrl, '/'));
                 }
             }
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $platformId = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['url'] ?? $page['id']);
-                    $cleanUrl = str_replace(['https://', 'http://'], '', rtrim($platformId, '/'));
+                    $platformId = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']);
                     
-                    if (in_array($cleanUrl, $enabledUrls)) {
-                        $this->accounts[$page['id']] = $cleanUrl;
+                    if (in_array($platformId, $enabledIds)) {
+                        $this->accounts[$page['id']] = $page['name'] ?? $platformId;
                     }
                 }
                 
