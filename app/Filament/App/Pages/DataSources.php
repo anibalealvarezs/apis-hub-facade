@@ -1500,26 +1500,11 @@ class DataSources extends Page
                 $dbState[$channel] = [];
             }
 
-            // Always persist UI configuration values locally first
-            // We use $payload here because ConfigPayloadService might have enforced tier-based constraints
-            // (like max_workers, cache_history_range) which we want reflected in the UI.
-            foreach ($payload as $k => $v) {
-                if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
-                    $dbState[$channel][$k] = $v;
-                }
-            }
+            // Determine if the project is brand new (never deployed)
+            $isFirstDeployment = empty($tenant->last_deployed_at) && empty($tenant->has_remote_node_deployed);
 
-            // Ensure unmapped keys from original channelConfig are also preserved
-            foreach ($channelConfig as $k => $v) {
-                if (! isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
-                    $dbState[$channel][$k] = $v;
-                }
-            }
-
-            \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
-
-            // Only attempt to sync to the remote engine if it is theoretically reachable
-            if (!in_array($tenant->health_status, ['pending', 'provisioning', 'error'])) {
+            // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
+            if (!$isFirstDeployment) {
                 try {
                     $response = $service->updateCredentials($tenant, $payload);
 
@@ -1555,20 +1540,35 @@ class DataSources extends Page
                             }
                         }
                         unset($dbAsset);
-
-                        // Re-set the updated assets list back into the state
-                        \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
                     }
                 } catch (\Exception $e) {
                     \Filament\Notifications\Notification::make()
                         ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
                         ->body($e->getMessage())
-                        ->warning() // Changed to warning because it's non-fatal for local state
+                        ->danger()
                         ->send();
 
-                    // Do NOT return here. Continue to allow the local DB state to be saved at the end.
+                    // ABORT: Prevent local DB update because the server couldn't confirm the changes
+                    return;
                 }
             }
+
+            // If we reached here, either it's a first deployment (safe to save offline)
+            // or the remote validation succeeded. We now persist the UI configuration locally.
+            foreach ($payload as $k => $v) {
+                if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                    $dbState[$channel][$k] = $v;
+                }
+            }
+
+            // Ensure unmapped keys from original channelConfig are also preserved
+            foreach ($channelConfig as $k => $v) {
+                if (! isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                    $dbState[$channel][$k] = $v;
+                }
+            }
+
+            \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
         }
         $tenant->update(['sync_config' => $dbState]);
 
