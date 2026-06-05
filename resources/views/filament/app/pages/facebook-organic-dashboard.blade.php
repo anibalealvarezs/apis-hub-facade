@@ -145,6 +145,29 @@
                 border-bottom: 1px solid var(--fb-border);
             }
         }
+        .fb-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 50;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--fb-bg-card);
+            border: 1px solid var(--fb-border);
+            color: var(--fb-text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+        .fb-close-btn:hover {
+            background: var(--fb-bg-hover);
+            color: var(--fb-text-main);
+            transform: scale(1.05);
+        }
     </style>
 
     <div x-data="fboDashboard()" x-init="initDashboard()">
@@ -346,9 +369,9 @@
                      class="fb-modal-panel relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all border border-gray-200 dark:border-white/10">
                     
                     <!-- Close Button -->
-                    <button @click="closePostModal()" type="button" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 bg-white/50 dark:bg-gray-800/50 rounded-full p-1 backdrop-blur-md">
+                    <button @click="closePostModal()" type="button" class="fb-close-btn">
                         <span class="sr-only">Close</span>
-                        <x-heroicon-o-x-mark class="h-6 w-6" />
+                        <x-heroicon-o-x-mark style="width: 20px; height: 20px;" />
                     </button>
 
                     <!-- Left Side: Post Preview -->
