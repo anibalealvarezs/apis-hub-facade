@@ -387,7 +387,7 @@
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
                                     <div class="w-full h-full relative">
                                         <template x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
-                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls class="w-full h-full object-contain bg-black" autoplay muted loop playsinline></video>
+                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls class="w-full h-full object-contain bg-black" muted loop playsinline></video>
                                         </template>
                                         <template x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
                                             <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-contain" alt="Post preview" />
