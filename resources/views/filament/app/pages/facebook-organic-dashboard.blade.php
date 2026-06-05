@@ -147,6 +147,8 @@
         }
         .fb-close-btn {
             position: absolute;
+        .fb-close-btn {
+            position: absolute;
             top: 15px;
             right: 15px;
             z-index: 50;
@@ -167,6 +169,16 @@
             background: var(--fb-bg-hover);
             color: var(--fb-text-main);
             transform: scale(1.05);
+        }
+        .fb-modal-image-container {
+            width: 100%;
+            aspect-ratio: 4/5;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
         }
     </style>
 
@@ -375,19 +387,19 @@
                     </button>
 
                     <!-- Left Side: Post Preview -->
-                    <div class="fb-modal-left bg-gray-50 dark:bg-gray-800 p-6 relative">
+                    <div class="fb-modal-left bg-gray-50 dark:bg-gray-800 p-6 relative h-full overflow-y-auto">
                         
                         <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
                             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
                         </div>
 
-                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col flex-1 min-h-0">
+                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col flex-1 min-h-0 h-full">
                             <!-- Media Preview -->
                             <div class="fb-modal-image-container bg-gray-200 dark:bg-gray-950 relative shadow-inner">
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
                                     <div class="w-full h-full relative">
                                         <template x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
-                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls class="w-full h-full object-contain bg-black" muted loop playsinline></video>
+                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls preload="metadata" class="w-full h-full object-contain bg-black" muted loop playsinline></video>
                                         </template>
                                         <template x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
                                             <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-contain" alt="Post preview" />
@@ -404,13 +416,13 @@
                             </div>
 
                             <!-- Post Details -->
-                            <div class="flex-1 overflow-y-auto pr-2 mb-4">
+                            <div class="flex-1 pr-2 mb-4">
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
-                                <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
+                                <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line break-words" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
                             </div>
                             
                             <!-- Actions -->
-                            <div class="shrink-0 mt-auto">
+                            <div class="shrink-0 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
                                     <x-heroicon-o-link class="w-4 h-4 mr-2" />
                                     {{ __('View Original Post') }}
@@ -420,13 +432,13 @@
                     </div>
 
                     <!-- Right Side: Metrics Chart -->
-                    <div class="fb-modal-right p-6 relative">
-                        <div class="mb-4">
+                    <div class="fb-modal-right p-6 relative flex flex-col h-full overflow-hidden">
+                        <div class="mb-4 shrink-0">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
                         </div>
                         
-                        <div class="flex-grow relative min-h-0 h-full">
+                        <div class="relative flex-1 min-h-0 min-w-0" style="position: relative; height: 100%; width: 100%;">
                             <div x-show="isPostChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
                                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
                             </div>

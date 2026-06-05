@@ -28,14 +28,15 @@ class FacebookOrganicController extends Controller
         switch ($tab) {
             case 'ig_accounts':
                 return [
-                    'filters' => ['account_type' => 'instagram_account'],
+                    'filters' => ['account_type' => 'instagram_account', 'channel' => 'facebook_organic', 'period' => 'daily'],
                     'groupBy' => ['channeledAccount', 'channeled_account_id', 'page_platform_id', 'linked_fb_page_id'],
                     'aggregations' => [
                         'likes' => 'likes', 'comments' => 'comments', 'reach' => 'reach', 'views' => 'views',
                         'profile_views' => 'profile_views', 'website_clicks' => 'website_clicks', 
                         'profile_links_taps' => 'profile_links_taps', 'follows_and_unfollows' => 'follows_and_unfollows',
                         'saves' => 'saves', 'shares' => 'shares', 'total_interactions' => 'total_interactions',
-                        'replies' => 'replies', 'accounts_engaged' => 'accounts_engaged'
+                        'replies' => 'replies', 'accounts_engaged' => 'accounts_engaged', 'follower_count' => 'follower_count',
+                        'impressions' => 'impressions'
                     ]
                 ];
             case 'fb_pages':
