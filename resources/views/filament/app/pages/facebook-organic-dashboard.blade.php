@@ -287,7 +287,7 @@
                  @click="closePostModal()"></div>
 
             <!-- Modal panel -->
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="flex min-h-full items-center justify-center p-4 sm:p-8 text-center">
                 <div x-show="isPostModalOpen"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -295,7 +295,7 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row">
+                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-6xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row max-h-[calc(100vh-4rem)]">
                     
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 bg-white/50 dark:bg-gray-800/50 rounded-full p-1 backdrop-blur-md">
@@ -304,7 +304,7 @@
                     </button>
 
                     <!-- Left Side: Post Preview -->
-                    <div class="w-full sm:w-1/3 bg-gray-50 dark:bg-black/20 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-white/10 relative">
+                    <div class="w-full sm:w-1/3 bg-gray-50 dark:bg-black/20 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-white/10 relative overflow-y-auto">
                         
                         <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
                             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
@@ -339,7 +339,7 @@
                     </div>
 
                     <!-- Right Side: Metrics Chart -->
-                    <div class="w-full sm:w-2/3 p-6 flex flex-col relative">
+                    <div class="w-full sm:w-2/3 p-6 flex flex-col relative overflow-y-auto">
                         <div class="mb-4">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
