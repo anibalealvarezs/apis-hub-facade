@@ -1496,78 +1496,78 @@ class DataSources extends Page
             $remoteAssetKey = $payloadData['remoteAssetKey'];
             $assetsListDb = $payloadData['assetsListDb'];
 
-            try {
-                $response = $service->updateCredentials($tenant, $payload);
+            if (! isset($dbState[$channel])) {
+                $dbState[$channel] = [];
+            }
 
-                // If successful, we update the DB state with the merged assets so it remains the source of truth
-                if (! isset($dbState[$channel])) {
-                    $dbState[$channel] = [];
+            // Always persist UI configuration values locally first
+            // We use $payload here because ConfigPayloadService might have enforced tier-based constraints
+            // (like max_workers, cache_history_range) which we want reflected in the UI.
+            foreach ($payload as $k => $v) {
+                if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                    $dbState[$channel][$k] = $v;
                 }
+            }
 
-                // Sync status back from Remote Node
-                // Remote node may have disabled assets due to permission checks
-                $remoteListKey = last(explode('.', $assetListKey));
-                if (isset($response['config'][$channel][$remoteListKey])) {
-                    $remoteAssets = $response['config'][$channel][$remoteListKey];
-                    // Create a map by URL or ID from remote
-                    $remoteMap = [];
-                    foreach ($remoteAssets as $ra) {
-                        $id = $ra['url'] ?? $ra['id'] ?? null;
-                        if ($id) {
-                            $remoteMap[$id] = $ra;
-                        }
-                    }
+            // Ensure unmapped keys from original channelConfig are also preserved
+            foreach ($channelConfig as $k => $v) {
+                if (! isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                    $dbState[$channel][$k] = $v;
+                }
+            }
 
-                    // Update local db state with remote status
-                    foreach ($assetsListDb as $index => &$dbAsset) {
-                        $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
-                        if ($id && isset($remoteMap[$id])) {
-                            $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                            $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
 
-                            $dbAsset['enabled'] = $remoteEnabled;
+            // Only attempt to sync to the remote engine if it is theoretically reachable
+            if (!in_array($tenant->health_status, ['pending', 'provisioning', 'error'])) {
+                try {
+                    $response = $service->updateCredentials($tenant, $payload);
 
-                            // If the user turned it on, but the remote engine turned it off, track it
-                            if ($intendedEnabled && ! $remoteEnabled) {
-                                $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
-                                $rejectedAssets[] = $assetName;
-                            }
-
-                            if (isset($remoteMap[$id]['lost_access'])) {
-                                $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                    // Sync status back from Remote Node
+                    $remoteListKey = last(explode('.', $assetListKey));
+                    if (isset($response['config'][$channel][$remoteListKey])) {
+                        $remoteAssets = $response['config'][$channel][$remoteListKey];
+                        $remoteMap = [];
+                        foreach ($remoteAssets as $ra) {
+                            $id = $ra['url'] ?? $ra['id'] ?? null;
+                            if ($id) {
+                                $remoteMap[$id] = $ra;
                             }
                         }
+
+                        // Update local db state with remote status
+                        foreach ($assetsListDb as $index => &$dbAsset) {
+                            $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
+                            if ($id && isset($remoteMap[$id])) {
+                                $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                                $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+                                $dbAsset['enabled'] = $remoteEnabled;
+
+                                if ($intendedEnabled && ! $remoteEnabled) {
+                                    $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
+                                    $rejectedAssets[] = $assetName;
+                                }
+
+                                if (isset($remoteMap[$id]['lost_access'])) {
+                                    $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                                }
+                            }
+                        }
+                        unset($dbAsset);
+
+                        // Re-set the updated assets list back into the state
+                        \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
                     }
-                    unset($dbAsset);
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
+                        ->body($e->getMessage())
+                        ->warning() // Changed to warning because it's non-fatal for local state
+                        ->send();
+
+                    // Do NOT return here. Continue to allow the local DB state to be saved at the end.
                 }
-
-
-                // Persist UI configuration values (like cache_history_range and the channel toggle)
-                // We use $payload here because ConfigPayloadService might have enforced tier-based constraints
-                // (like max_workers, cache_history_range) which we want reflected in the UI.
-                foreach ($payload as $k => $v) {
-                    if (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
-                        $dbState[$channel][$k] = $v;
-                    }
-                }
-
-                // Ensure unmapped keys from original channelConfig are also preserved
-                // if they weren't explicitly handled in payload (like entity_sync_depth)
-                foreach ($channelConfig as $k => $v) {
-                    if (! isset($dbState[$channel][$k]) && (! is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
-                        $dbState[$channel][$k] = $v;
-                    }
-                }
-
-                \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
-            } catch (\Exception $e) {
-                \Filament\Notifications\Notification::make()
-                    ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
-                    ->body($e->getMessage())
-                    ->danger()
-                    ->send();
-
-                return;
             }
         }
         $tenant->update(['sync_config' => $dbState]);
