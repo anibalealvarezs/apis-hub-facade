@@ -192,12 +192,8 @@ class FacebookOrganicController extends Controller
 
             $aggregations = [];
             foreach ($config['aggregations'] as $k => $v) {
-                if (!empty($validated['postId'])) {
-                    // Use the _daily virtual metric for posts to get the historic deltas
-                    $aggregations['trend_total_' . $k] = $v . '_daily';
-                } else {
-                    $aggregations['trend_total_' . $k] = $v;
-                }
+                // For chart, prefix with trend_total_ or trend_average_
+                $aggregations['trend_total_' . $k] = $v;
             }
 
             $payloads = [
