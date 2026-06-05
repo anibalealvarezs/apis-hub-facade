@@ -295,7 +295,7 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-6xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row h-[85vh] min-h-[500px]">
+                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-6xl border border-gray-200 dark:border-white/10 flex flex-col md:flex-row" style="height: 85vh; min-height: 500px; max-height: 900px;">
                     
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 bg-white/50 dark:bg-gray-800/50 rounded-full p-1 backdrop-blur-md">
@@ -304,15 +304,15 @@
                     </button>
 
                     <!-- Left Side: Post Preview -->
-                    <div class="w-full sm:w-[350px] lg:w-[400px] shrink-0 bg-gray-50 dark:bg-gray-800 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 relative h-full">
+                    <div class="w-full md:w-80 lg:w-96 shrink-0 bg-gray-50 dark:bg-gray-800 p-6 flex flex-col border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 relative min-h-0">
                         
                         <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
                             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
                         </div>
 
-                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col h-full">
+                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col flex-1 min-h-0">
                             <!-- Media Preview -->
-                            <div class="w-full h-[250px] lg:h-[300px] shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-950 flex items-center justify-center relative shadow-inner mb-4">
+                            <div class="w-full h-64 lg:h-72 shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-950 flex items-center justify-center relative shadow-inner mb-4">
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
                                     <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-cover" alt="Post preview" />
                                 </template>
@@ -342,13 +342,13 @@
                     </div>
 
                     <!-- Right Side: Metrics Chart -->
-                    <div class="flex-1 p-6 flex flex-col relative h-full min-w-0">
+                    <div class="flex-1 p-6 flex flex-col relative min-w-0 min-h-0">
                         <div class="mb-4">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
                         </div>
                         
-                        <div class="flex-grow relative min-h-[300px]">
+                        <div class="flex-grow relative min-h-0 h-full">
                             <div x-show="isPostChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
                                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
                             </div>
