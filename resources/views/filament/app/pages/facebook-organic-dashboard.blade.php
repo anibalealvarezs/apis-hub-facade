@@ -295,7 +295,7 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-6xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row max-h-[calc(100vh-4rem)]">
+                     class="relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all w-full max-w-6xl border border-gray-200 dark:border-white/10 flex flex-col sm:flex-row h-[85vh] min-h-[500px]">
                     
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 bg-white/50 dark:bg-gray-800/50 rounded-full p-1 backdrop-blur-md">
@@ -304,7 +304,7 @@
                     </button>
 
                     <!-- Left Side: Post Preview -->
-                    <div class="w-full sm:w-1/3 bg-gray-50 dark:bg-black/20 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-white/10 relative overflow-y-auto">
+                    <div class="w-full sm:w-[350px] lg:w-[400px] shrink-0 bg-gray-50 dark:bg-gray-800 p-6 flex flex-col border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 relative h-full">
                         
                         <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
                             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
@@ -312,7 +312,7 @@
 
                         <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col h-full">
                             <!-- Media Preview -->
-                            <div class="w-full rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 aspect-square flex items-center justify-center relative shadow-inner mb-4">
+                            <div class="w-full h-[250px] lg:h-[300px] shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-950 flex items-center justify-center relative shadow-inner mb-4">
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
                                     <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-cover" alt="Post preview" />
                                 </template>
@@ -326,11 +326,14 @@
                             </div>
 
                             <!-- Post Details -->
-                            <div class="flex-grow flex flex-col">
+                            <div class="flex-1 overflow-y-auto pr-2 mb-4">
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
-                                <div class="text-sm text-gray-800 dark:text-gray-200 mb-4 flex-grow line-clamp-6 whitespace-pre-line" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
-                                
-                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="mt-auto inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
+                                <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="shrink-0 mt-auto">
+                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
                                     <x-heroicon-o-link class="w-4 h-4 mr-2" />
                                     {{ __('View Original Post') }}
                                 </a>
@@ -339,7 +342,7 @@
                     </div>
 
                     <!-- Right Side: Metrics Chart -->
-                    <div class="w-full sm:w-2/3 p-6 flex flex-col relative overflow-y-auto">
+                    <div class="flex-1 p-6 flex flex-col relative h-full min-w-0">
                         <div class="mb-4">
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
