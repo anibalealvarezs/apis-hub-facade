@@ -66,7 +66,8 @@ class GoogleSearchConsoleDashboard extends Page
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $cleanUrl = str_replace(['https://', 'http://'], '', rtrim($page['url'] ?? $page['id'], '/'));
+                    $platformId = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['url'] ?? $page['id']);
+                    $cleanUrl = str_replace(['https://', 'http://'], '', rtrim($platformId, '/'));
                     
                     if (in_array($cleanUrl, $enabledUrls)) {
                         $this->accounts[$page['id']] = $cleanUrl;
