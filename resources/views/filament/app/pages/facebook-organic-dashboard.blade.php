@@ -362,7 +362,14 @@
                             <!-- Media Preview -->
                             <div class="fb-modal-image-container bg-gray-200 dark:bg-gray-950 relative shadow-inner">
                                 <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
-                                    <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-cover" alt="Post preview" />
+                                    <div class="w-full h-full relative">
+                                        <template x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
+                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls class="w-full h-full object-contain bg-black" autoplay muted loop playsinline></video>
+                                        </template>
+                                        <template x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
+                                            <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-contain" alt="Post preview" />
+                                        </template>
+                                    </div>
                                 </template>
                                 <template x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
                                     <div class="text-gray-400 dark:text-gray-500 flex flex-col items-center">
