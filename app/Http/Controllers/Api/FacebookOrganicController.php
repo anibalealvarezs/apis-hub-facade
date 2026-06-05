@@ -43,8 +43,8 @@ class FacebookOrganicController extends Controller
                     'filters' => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily'],
                     'groupBy' => ['page', 'page_id', 'page_title'],
                     'aggregations' => [
-                        'reach' => 'reach', 'page_views_total' => 'page_views_total', 'video_views' => 'video_views',
-                        'follows_and_unfollows' => 'follows_and_unfollows', 'total_interactions' => 'total_interactions', 'likes' => 'likes'
+                        'reach' => 'page_impressions_unique', 'page_views_total' => 'page_views_total', 'video_views' => 'page_video_views',
+                        'follows_and_unfollows' => 'page_follows', 'total_interactions' => 'page_post_engagements', 'likes' => 'page_actions_post_reactions_total'
                     ]
                 ];
             case 'ig_posts':
@@ -63,8 +63,8 @@ class FacebookOrganicController extends Controller
                     'filters' => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true],
                     'groupBy' => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                     'aggregations' => [
-                        'reach' => 'reach', 'total_interactions' => 'total_interactions', 'likes' => 'likes',
-                        'post_clicks' => 'post_clicks', 'views' => 'views', 'video_views' => 'video_views',
+                        'reach' => 'post_impressions_unique', 'total_interactions' => 'post_engagements', 'likes' => 'post_reactions_by_type_total',
+                        'post_clicks' => 'post_clicks', 'views' => 'post_impressions', 'video_views' => 'post_video_views',
                         'post_video_avg_time_watched' => 'post_video_avg_time_watched'
                     ]
                 ];
