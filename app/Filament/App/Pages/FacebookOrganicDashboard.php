@@ -118,7 +118,11 @@ class FacebookOrganicDashboard extends Page
 
                 $label = $fbAcc['name'] ?? 'Facebook Page';
 
-                $value = $fbId . '|' . ($igInternalId ?? 'NONE');
+                $fbPageId = (string) ($fbAcc['pageId'] ?? $fbAcc['page_id'] ?? 'NONE');
+                $fbPlatformId = $cleanFbId !== '' ? $cleanFbId : 'NONE';
+
+                // Composite value: fbChanneledAccountId|igChanneledAccountId|fbPlatformId|fbPageId
+                $value = $fbId . '|' . ($igInternalId ?? 'NONE') . '|' . $fbPlatformId . '|' . $fbPageId;
                 $this->accounts[$value] = $label;
             }
 

@@ -47,8 +47,8 @@
                         'filters'      => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily', 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['page', 'page_id', 'page_title'],
                         'aggregations' => [
-                            'reach'                 => 'page_impressions_unique', 'page_views_total' => 'page_views_total', 'video_views' => 'page_video_views',
-                            'follows_and_unfollows' => 'page_follows', 'total_interactions' => 'page_post_engagements', 'likes' => 'page_actions_post_reactions_total'
+                            'reach'                 => 'reach', 'page_views_total' => 'page_views_total', 'video_views' => 'video_views',
+                            'follows_and_unfollows' => 'follows_and_unfollows', 'total_interactions' => 'total_interactions', 'likes' => 'likes'
                         ]
                     ];
                 case 'ig_posts':
@@ -67,14 +67,87 @@
                         'filters'      => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                         'aggregations' => [
-                            'reach'                       => 'post_impressions_unique', 'total_interactions' => 'post_engagements', 'likes' => 'post_reactions_by_type_total',
-                            'post_clicks'                 => 'post_clicks', 'views' => 'post_impressions', 'video_views' => 'post_video_views',
+                            'reach'                       => 'reach', 'total_interactions' => 'total_interactions', 'likes' => 'likes',
+                            'post_clicks'                 => 'post_clicks', 'views' => 'views', 'video_views' => 'video_views',
                             'post_video_avg_time_watched' => 'post_video_avg_time_watched'
                         ]
                     ];
             }
 
             return [];
+        }
+
+        private function parseSelectedAccounts(array $selectedAccounts): array
+        {
+            $parsed = [
+                'fbAccountIds' => [],
+                'igAccountIds' => [],
+                'fbPlatformIds' => [],
+                'fbPageIds' => [],
+            ];
+
+            foreach ($selectedAccounts as $accValue) {
+                $parts = explode('|', (string) $accValue);
+
+                if (!empty($parts[0]) && $parts[0] !== 'NONE') {
+                    $parsed['fbAccountIds'][] = (string) $parts[0];
+                }
+
+                if (!empty($parts[1]) && $parts[1] !== 'NONE') {
+                    $parsed['igAccountIds'][] = (string) $parts[1];
+                }
+
+                if (!empty($parts[2]) && $parts[2] !== 'NONE') {
+                    $parsed['fbPlatformIds'][] = (string) $parts[2];
+                }
+
+                if (!empty($parts[3]) && $parts[3] !== 'NONE') {
+                    $parsed['fbPageIds'][] = (string) $parts[3];
+                }
+            }
+
+            foreach ($parsed as $key => $values) {
+                $parsed[$key] = array_values(array_unique($values));
+            }
+
+            return $parsed;
+        }
+
+        private function applySelectedAccountFilters(array &$filters, string $activeTab, string $internalTab, array $accounts): void
+        {
+            if ($activeTab === 'instagram') {
+                if (empty($accounts['igAccountIds'])) {
+                    $filters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
+                    return;
+                }
+
+                $filters['channeledAccount'] = count($accounts['igAccountIds']) === 1
+                    ? $accounts['igAccountIds'][0]
+                    : ['operator' => 'in', 'value' => $accounts['igAccountIds']];
+
+                return;
+            }
+
+            // For Facebook tabs, prefer page identity filtering; many rows are page-scoped and not reliably filtered by channeledAccount.
+            if (in_array($internalTab, ['fb_pages', 'fb_posts'], true)) {
+                if (!empty($accounts['fbPageIds'])) {
+                    $filters['page'] = count($accounts['fbPageIds']) === 1
+                        ? $accounts['fbPageIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbPageIds']];
+                }
+
+                if (!empty($accounts['fbPlatformIds'])) {
+                    $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
+                        ? $accounts['fbPlatformIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
+                }
+
+                if (!isset($filters['page']) && !isset($filters['page_platform_id']) && !empty($accounts['fbAccountIds'])) {
+                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
+                        ? $accounts['fbAccountIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+                }
+            }
         }
 
         private function getAllowedBreakdownKeys(string $tab): array
@@ -223,29 +296,8 @@
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
-                $fbAccountIds = [];
-                $igAccountIds = [];
-                if (!empty($validated['account'])) {
-                    foreach ($validated['account'] as $accValue) {
-                        $parts = explode('|', $accValue);
-                        $fbAccountIds[] = $parts[0];
-                        if (isset($parts[1]) && $parts[1] !== 'NONE') {
-                            $igAccountIds[] = $parts[1];
-                        }
-                    }
-                }
-
-                if ($validated['activeTab'] === 'instagram') {
-                    if (empty($igAccountIds)) {
-                        $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
-                    } else {
-                        $baseFilters['channeledAccount'] = count($igAccountIds) === 1 ? $igAccountIds[0] : ['operator' => 'in', 'value' => $igAccountIds];
-                    }
-                } else {
-                    if (!empty($fbAccountIds)) {
-                        $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
-                    }
-                }
+                $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $payloads = [
                     'summary'  => [
@@ -266,8 +318,10 @@
 
                 \Illuminate\Support\Facades\Log::info("FBO Summary - Payloads for tab={$validated['activeTab']}", [
                     'internalTab'     => $internalTab,
-                    'fbAccountIds'    => $fbAccountIds,
-                    'igAccountIds'    => $igAccountIds,
+                    'fbAccountIds'    => $parsedAccounts['fbAccountIds'],
+                    'igAccountIds'    => $parsedAccounts['igAccountIds'],
+                    'fbPlatformIds'   => $parsedAccounts['fbPlatformIds'],
+                    'fbPageIds'       => $parsedAccounts['fbPageIds'],
                     'baseFilters'     => $baseFilters,
                     'summary_payload' => $payloads['summary'],
                 ]);
@@ -336,29 +390,8 @@
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
-                $fbAccountIds = [];
-                $igAccountIds = [];
-                if (!empty($validated['account'])) {
-                    foreach ($validated['account'] as $accValue) {
-                        $parts = explode('|', $accValue);
-                        $fbAccountIds[] = $parts[0];
-                        if (isset($parts[1]) && $parts[1] !== 'NONE') {
-                            $igAccountIds[] = $parts[1];
-                        }
-                    }
-                }
-
-                if ($validated['activeTab'] === 'instagram') {
-                    if (empty($igAccountIds)) {
-                        $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
-                    } else {
-                        $baseFilters['channeledAccount'] = count($igAccountIds) === 1 ? $igAccountIds[0] : ['operator' => 'in', 'value' => $igAccountIds];
-                    }
-                } else {
-                    if (!empty($fbAccountIds)) {
-                        $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
-                    }
-                }
+                $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 if (!empty($validated['postId'])) {
                     $baseFilters['post'] = $validated['postId'];
@@ -413,29 +446,8 @@
                     $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
                     unset($baseFilters['dimensionSet']);
 
-                    $fbAccountIds = [];
-                    $igAccountIds = [];
-                    if (!empty($validated['account'])) {
-                        foreach ($validated['account'] as $accValue) {
-                            $parts = explode('|', $accValue);
-                            $fbAccountIds[] = $parts[0];
-                            if (isset($parts[1]) && $parts[1] !== 'NONE') {
-                                $igAccountIds[] = $parts[1];
-                            }
-                        }
-                    }
-
-                    if ($validated['activeTab'] === 'instagram') {
-                        if (empty($igAccountIds)) {
-                            $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
-                        } else {
-                            $baseFilters['channeledAccount'] = count($igAccountIds) === 1 ? $igAccountIds[0] : ['operator' => 'in', 'value' => $igAccountIds];
-                        }
-                    } else {
-                        if (!empty($fbAccountIds)) {
-                            $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
-                        }
-                    }
+                    $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                    $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                     $payloads = [
                         'table' => [
@@ -472,29 +484,8 @@
 
                 $baseFilters = $config['filters'];
 
-                $fbAccountIds = [];
-                $igAccountIds = [];
-                if (!empty($validated['account'])) {
-                    foreach ($validated['account'] as $accValue) {
-                        $parts = explode('|', $accValue);
-                        $fbAccountIds[] = $parts[0];
-                        if (isset($parts[1]) && $parts[1] !== 'NONE') {
-                            $igAccountIds[] = $parts[1];
-                        }
-                    }
-                }
-
-                if ($validated['activeTab'] === 'instagram') {
-                    if (empty($igAccountIds)) {
-                        $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
-                    } else {
-                        $baseFilters['channeledAccount'] = count($igAccountIds) === 1 ? $igAccountIds[0] : ['operator' => 'in', 'value' => $igAccountIds];
-                    }
-                } else {
-                    if (!empty($fbAccountIds)) {
-                        $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
-                    }
-                }
+                $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $payloads = [
                     'table' => [
