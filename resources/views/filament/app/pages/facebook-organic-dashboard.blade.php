@@ -267,8 +267,8 @@
             </div>
         </div>
 
-        <div class="fb-table-container relative">
-            <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+        <div class="fb-table-container relative" style="margin-bottom: 20px;">
+            <div x-show="isBreakdownTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
 
@@ -280,6 +280,81 @@
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="(availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab)?.label || '').toUpperCase()"></h3>
+            </div>
+
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <input type="text" x-model.debounce.300ms="breakdownSearchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="{{ __('Filter breakdown values...') }}">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="fb-table" style="min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th>{{ __('BREAKDOWN VALUE') }}</th>
+                            <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
+                                <th class="metric-cell cursor-pointer" @click="sortBreakdownBy(metricKey)">
+                                    <span x-text="getMetricInfo(metricKey).label"></span>
+                                    <span x-show="breakdownSortCol === metricKey" x-text="breakdownSortDir === 'desc' ? '↓' : '↑'"></span>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
+                            <tr @click="toggleFilter(activeBreakdownTab, row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150" :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
+                                <td class="font-medium">
+                                    <div class="flex items-center gap-2">
+                                        <span x-text="row.name"></span>
+                                    </div>
+                                </td>
+                                <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
+                                    <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
+                                </template>
+                            </tr>
+                        </template>
+                        <tr x-show="paginatedBreakdownData.length === 0">
+                            <td :colspan="availableBreakdownMetrics.length + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No breakdown data available.') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="fb-pagination-container" x-show="breakdownDataRaw.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="fb-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="breakdownPageSize" class="fb-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="fb-pagination-text">
+                        {{ __('Page') }} <strong x-text="breakdownCurrentPage"></strong> {{ __('of') }} <strong x-text="breakdownTotalPages"></strong>
+                        <span class="fb-pagination-badge">(<span x-text="breakdownDataRaw.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="prevBreakdownPage()" :disabled="breakdownCurrentPage === 1" class="fb-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="nextBreakdownPage()" :disabled="breakdownCurrentPage === breakdownTotalPages" class="fb-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fb-table-container relative">
+            <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            </div>
+
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -306,7 +381,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="toggleFilter(activeBreakdownTab, row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150" :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
+                            <tr @click="openPostModal(row)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <a x-show="row.permalink_url || row.permalink" :href="row.permalink_url || row.permalink" target="_blank" class="text-primary-500 hover:text-primary-700">
@@ -466,11 +541,13 @@
                     isSummaryLoading: false,
                     isChartLoading: false,
                     isTableLoading: false,
+                    isBreakdownTableLoading: false,
 
                     summaryRaw: {},
                     previousRaw: {},
                     chartDataRaw: [],
                     tableDataRaw: [],
+                    breakdownDataRaw: [],
 
                     isPostModalOpen: false,
                     selectedPost: null,
@@ -514,6 +591,9 @@
                     searchQuery: '',
                     sortCol: 'reach',
                     sortDir: 'desc',
+                    breakdownSearchQuery: '',
+                    breakdownSortCol: 'reach',
+                    breakdownSortDir: 'desc',
                     activeFilters: {
                         reaction_type: [],
                         contact_button_type: [],
@@ -523,6 +603,8 @@
 
                     currentPage: 1,
                     pageSize: 10,
+                    breakdownCurrentPage: 1,
+                    breakdownPageSize: 10,
 
                     initDashboard() {
                         const boot = () => {
@@ -532,7 +614,7 @@
                             this.$watch('dateStart', () => this.fetchAll());
                             this.$watch('dateEnd', () => this.fetchAll());
                             this.$watch('pageSize', () => { this.currentPage = 1; });
-                            this.$watch('activeBreakdownTab', () => this.fetchTable());
+                            this.$watch('breakdownPageSize', () => { this.breakdownCurrentPage = 1; });
 
                             if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
                                 this.fetchAll();
@@ -582,8 +664,8 @@
 
                     setBreakdownTab(tab) {
                         this.activeBreakdownTab = tab;
-                        this.currentPage = 1;
-                        this.fetchTable();
+                        this.breakdownCurrentPage = 1;
+                        this.fetchBreakdownTable();
                     },
 
                     toggleFilter(tab, value) {
@@ -645,11 +727,17 @@
                         return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v3`;
                     },
 
+                    getPostsCacheKey() {
+                        const accountKey = this.accounts.join('_');
+                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_posts_${this.activeTab}_v1`;
+                    },
+
                     async fetchAll() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                         this.fetchSummary();
                         this.fetchChart();
                         this.fetchTable();
+                        this.fetchBreakdownTable();
                     },
 
                     openPostModal(row) {
@@ -871,7 +959,7 @@
 
                     async fetchTable() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('table');
+                        const cacheKey = this.getPostsCacheKey();
 
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -881,7 +969,7 @@
 
                         this.isTableLoading = true;
                         try {
-                            const response = await fetch('/api/fbo/table', this.getFetchOptions());
+                            const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'posts' }));
                             const data = await response.json();
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -895,7 +983,33 @@
                         }
                     },
 
-                    getFetchOptions() {
+                    async fetchBreakdownTable() {
+                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                        const cacheKey = this.getCacheKey('breakdown_table');
+
+                        if (sessionStorage.getItem(cacheKey)) {
+                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                            this.breakdownDataRaw = data.table || [];
+                            return;
+                        }
+
+                        this.isBreakdownTableLoading = true;
+                        try {
+                            const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'breakdown' }));
+                            const data = await response.json();
+                            if (!data.error) {
+                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.breakdownDataRaw = data.table || [];
+                                this.breakdownCurrentPage = 1;
+                            }
+                        } catch (error) {
+                            console.error('Error fetching breakdown table:', error);
+                        } finally {
+                            this.isBreakdownTableLoading = false;
+                        }
+                    },
+
+                    getFetchOptions(extraPayload = {}) {
                         const payload = {
                             tenant: this.tenantId,
                             account: this.accounts,
@@ -903,7 +1017,8 @@
                             dateEnd: this.dateEnd,
                             activeTab: this.activeTab,
                             activeFilters: this.activeFilters,
-                            breakdownTab: this.activeBreakdownTab || null
+                            breakdownTab: this.activeBreakdownTab || null,
+                            ...extraPayload
                         };
 
                         return {
@@ -962,6 +1077,13 @@
                         if (this.tableDataRaw.length === 0) return [];
                         const firstRow = this.tableDataRaw[0];
                         const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
+                        return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
+                    },
+
+                    get availableBreakdownMetrics() {
+                        if (this.breakdownDataRaw.length === 0) return [];
+                        const firstRow = this.breakdownDataRaw[0];
+                        const ignoredKeys = ['id', 'name', 'daily'];
                         return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
                     },
 
@@ -1134,6 +1256,16 @@
                         this.currentPage = 1;
                     },
 
+                    sortBreakdownBy(col) {
+                        if (this.breakdownSortCol === col) {
+                            this.breakdownSortDir = this.breakdownSortDir === 'desc' ? 'asc' : 'desc';
+                        } else {
+                            this.breakdownSortCol = col;
+                            this.breakdownSortDir = 'desc';
+                        }
+                        this.breakdownCurrentPage = 1;
+                    },
+
                     get sortedTableData() {
                         let data = [...this.tableDataRaw];
 
@@ -1168,10 +1300,43 @@
                         return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
                     },
 
+                    get sortedBreakdownData() {
+                        let data = [...this.breakdownDataRaw];
+
+                        if (this.breakdownSearchQuery && this.breakdownSearchQuery.trim() !== '') {
+                            const query = this.breakdownSearchQuery.toLowerCase().trim();
+                            data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
+                        }
+
+                        return data.sort((a, b) => {
+                            let valA = Number(a[this.breakdownSortCol] || 0);
+                            let valB = Number(b[this.breakdownSortCol] || 0);
+
+                            if (isNaN(valA) || isNaN(valB)) {
+                                valA = String(a[this.breakdownSortCol] || '').toLowerCase();
+                                valB = String(b[this.breakdownSortCol] || '').toLowerCase();
+                            }
+
+                            if (valA === valB) return 0;
+                            if (this.breakdownSortDir === 'desc') return valA < valB ? 1 : -1;
+                            return valA > valB ? 1 : -1;
+                        });
+                    },
+
+                    get breakdownTotalPages() {
+                        return Math.ceil(this.sortedBreakdownData.length / this.breakdownPageSize) || 1;
+                    },
+
                     get paginatedTableData() {
                         const start = (this.currentPage - 1) * this.pageSize;
                         const end = start + Number(this.pageSize);
                         return this.sortedTableData.slice(start, end);
+                    },
+
+                    get paginatedBreakdownData() {
+                        const start = (this.breakdownCurrentPage - 1) * this.breakdownPageSize;
+                        const end = start + Number(this.breakdownPageSize);
+                        return this.sortedBreakdownData.slice(start, end);
                     },
 
                     nextPage() {
@@ -1180,6 +1345,14 @@
 
                     prevPage() {
                         if (this.currentPage > 1) this.currentPage--;
+                    },
+
+                    nextBreakdownPage() {
+                        if (this.breakdownCurrentPage < this.breakdownTotalPages) this.breakdownCurrentPage++;
+                    },
+
+                    prevBreakdownPage() {
+                        if (this.breakdownCurrentPage > 1) this.breakdownCurrentPage--;
                     },
 
                     formatNumber(num) {

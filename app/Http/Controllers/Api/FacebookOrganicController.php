@@ -23,6 +23,7 @@
                 'activeFilters' => 'nullable|array',
                 'activeFilters.*' => 'nullable|array',
                 'breakdownTab' => 'nullable|string',
+                'tableMode' => 'nullable|string|in:posts,breakdown',
             ]);
         }
 
@@ -221,7 +222,6 @@
 
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
-                $baseFilters['dimensionSet'] = ['operator' => 'is_not_null'];
 
                 $fbAccountIds = [];
                 $igAccountIds = [];
@@ -402,12 +402,76 @@
                 $tenant = Project::findOrFail($validated['tenant']);
                 $service = app(RemoteEngineService::class);
 
+                $tableMode = $validated['tableMode'] ?? 'posts';
+
+                if ($tableMode === 'breakdown') {
+                    $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_pages' : 'ig_accounts';
+                    $config = $this->getTabConfig($internalTab);
+                    $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownTab'] ?? null);
+
+                    $baseFilters = $config['filters'];
+                    $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
+                    $baseFilters['dimensionSet'] = ['operator' => 'is_not_null'];
+
+                    $fbAccountIds = [];
+                    $igAccountIds = [];
+                    if (!empty($validated['account'])) {
+                        foreach ($validated['account'] as $accValue) {
+                            $parts = explode('|', $accValue);
+                            $fbAccountIds[] = $parts[0];
+                            if (isset($parts[1]) && $parts[1] !== 'NONE') {
+                                $igAccountIds[] = $parts[1];
+                            }
+                        }
+                    }
+
+                    if ($validated['activeTab'] === 'instagram') {
+                        if (empty($igAccountIds)) {
+                            $baseFilters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
+                        } else {
+                            $baseFilters['channeledAccount'] = count($igAccountIds) === 1 ? $igAccountIds[0] : ['operator' => 'in', 'value' => $igAccountIds];
+                        }
+                    } else {
+                        if (!empty($fbAccountIds)) {
+                            $baseFilters['channeledAccount'] = count($fbAccountIds) === 1 ? $fbAccountIds[0] : ['operator' => 'in', 'value' => $fbAccountIds];
+                        }
+                    }
+
+                    $payloads = [
+                        'table' => [
+                            'aggregations' => $config['aggregations'],
+                            'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : [],
+                            'filters'      => $baseFilters,
+                            'startDate'    => $validated['dateStart'],
+                            'endDate'      => $validated['dateEnd'],
+                            'limit'        => 500
+                        ]
+                    ];
+
+                    $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+                    $tableData = $results['table']['data'] ?? [];
+
+                    foreach ($tableData as &$row) {
+                        $rowLower = array_change_key_case($row, CASE_LOWER);
+                        $breakdownField = strtolower((string) $breakdownGroupBy);
+                        $breakdownKey = strtolower(str_replace('dimensions.', '', (string) $breakdownGroupBy));
+                        $breakdownValue = $rowLower[$breakdownField]
+                            ?? $rowLower['dimensions.'.$breakdownKey]
+                            ?? $rowLower[$breakdownKey]
+                            ?? null;
+                        $row['id'] = $breakdownValue ?? 'Unknown';
+                        $row['name'] = $breakdownValue ?? 'Unknown';
+                    }
+
+                    return response()->json([
+                        'table' => $tableData,
+                    ]);
+                }
+
                 $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_posts' : 'ig_posts';
                 $config = $this->getTabConfig($internalTab);
-                $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownTab'] ?? null);
 
                 $baseFilters = $config['filters'];
-                $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $fbAccountIds = [];
                 $igAccountIds = [];
@@ -436,7 +500,7 @@
                 $payloads = [
                     'table' => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : $config['groupBy'],
+                        'groupBy'      => $config['groupBy'],
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
@@ -462,15 +526,6 @@
                     } elseif (isset($rowLower['channeled_account_id'])) {
                         $row['id'] = $rowLower['channeled_account_id'];
                         $row['name'] = $rowLower['channeledaccount'] ?? $rowLower['channeled_account_id'];
-                    } elseif ($breakdownGroupBy) {
-                        $breakdownField = strtolower($breakdownGroupBy);
-                        $breakdownKey = strtolower(str_replace('dimensions.', '', $breakdownGroupBy));
-                        $breakdownValue = $rowLower[$breakdownField]
-                            ?? $rowLower['dimensions.'.$breakdownKey]
-                            ?? $rowLower[$breakdownKey]
-                            ?? null;
-                        $row['id'] = $breakdownValue ?? 'Unknown';
-                        $row['name'] = $breakdownValue ?? 'Unknown';
                     } else {
                         $row['id'] = 'Unknown';
                         $row['name'] = 'Unknown';
