@@ -411,7 +411,7 @@
 
                     $baseFilters = $config['filters'];
                     $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
-                    $baseFilters['dimensionSet'] = ['operator' => 'is_not_null'];
+                    unset($baseFilters['dimensionSet']);
 
                     $fbAccountIds = [];
                     $igAccountIds = [];
@@ -453,11 +453,10 @@
 
                     foreach ($tableData as &$row) {
                         $rowLower = array_change_key_case($row, CASE_LOWER);
-                        $breakdownField = strtolower((string) $breakdownGroupBy);
                         $breakdownKey = strtolower(str_replace('dimensions.', '', (string) $breakdownGroupBy));
-                        $breakdownValue = $rowLower[$breakdownField]
+                        $breakdownValue = $rowLower[$breakdownKey]
                             ?? $rowLower['dimensions.'.$breakdownKey]
-                            ?? $rowLower[$breakdownKey]
+                            ?? $rowLower['id']
                             ?? null;
                         $row['id'] = $breakdownValue ?? 'Unknown';
                         $row['name'] = $breakdownValue ?? 'Unknown';
