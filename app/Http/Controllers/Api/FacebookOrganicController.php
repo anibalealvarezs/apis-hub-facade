@@ -347,8 +347,15 @@
                 $metricKeys = array_keys($config['aggregations']);
                 $summaryData = $results['summary']['data'] ?? [];
                 $previousData = $results['previous']['data'] ?? [];
-                $summaryRow = (array)($summaryData[0] ?? []);
-                $previousRow = (array)($previousData[0] ?? []);
+
+                if ($validated['activeTab'] === 'facebook') {
+                    // FB can return page identity fields when grouped; collapse to metrics-only output for tiles.
+                    $summaryRow = $this->collapseGroupedMetrics($summaryData, $metricKeys);
+                    $previousRow = $this->collapseGroupedMetrics($previousData, $metricKeys);
+                } else {
+                    $summaryRow = (array)($summaryData[0] ?? []);
+                    $previousRow = (array)($previousData[0] ?? []);
+                }
 
                 if ($validated['activeTab'] === 'instagram' && $this->areAllMetricValuesNull($summaryRow, $metricKeys)) {
                     $fallbackPayloads = [
@@ -475,15 +482,10 @@
                     $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                     $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
-                    $breakdownGroupByList = $breakdownGroupBy ? [$breakdownGroupBy] : [];
-                    if ($validated['activeTab'] === 'facebook') {
-                        $breakdownGroupByList = array_values(array_unique(array_merge($breakdownGroupByList, ['page', 'page_id', 'page_title'])));
-                    }
-
                     $payloads = [
                         'table' => [
                             'aggregations' => $config['aggregations'],
-                            'groupBy'      => $breakdownGroupByList,
+                            'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : [],
                             'filters'      => $baseFilters,
                             'startDate'    => $validated['dateStart'],
                             'endDate'      => $validated['dateEnd'],
@@ -518,15 +520,10 @@
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
-                $postsGroupBy = $config['groupBy'];
-                if ($validated['activeTab'] === 'facebook') {
-                    $postsGroupBy = array_values(array_unique(array_merge($postsGroupBy, ['page', 'page_id', 'page_title'])));
-                }
-
                 $payloads = [
                     'table' => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => $postsGroupBy,
+                        'groupBy'      => $config['groupBy'],
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
