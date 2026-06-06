@@ -20,6 +20,7 @@
                 'dateEnd'   => 'required|date',
                 'activeTab' => 'required|string|in:facebook,instagram',
                 'postId'    => 'nullable|string',
+                'breakdownKey' => 'nullable|string',
             ]);
         }
 
@@ -71,6 +72,32 @@
             }
 
             return [];
+        }
+
+        private function getAllowedBreakdownKeys(string $tab): array
+        {
+            return match ($tab) {
+                'ig_accounts', 'ig_posts' => ['contact_button_type', 'follow_type', 'media_product_type'],
+                'fb_pages', 'fb_posts' => ['reaction_type'],
+                default => [],
+            };
+        }
+
+        private function applyBreakdownFilters(array &$filters, string $tab, ?string $breakdownKey = null): void
+        {
+            $allowedKeys = $this->getAllowedBreakdownKeys($tab);
+
+            foreach ($allowedKeys as $allowedKey) {
+                unset($filters['dimensions.'.$allowedKey]);
+            }
+
+            if (empty($breakdownKey) || !in_array($breakdownKey, $allowedKeys, true)) {
+                $filters['dimensionSet'] = ['operator' => 'is_null'];
+                return;
+            }
+
+            $filters['dimensionSet'] = ['operator' => 'is_not_null'];
+            $filters['dimensions.'.$breakdownKey] = ['operator' => 'is_not_null'];
         }
 
         private function areAllMetricValuesNull(array $row, array $metricKeys): bool
@@ -131,6 +158,7 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
+                $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
 
                 $fbAccountIds = [];
                 $igAccountIds = [];
@@ -242,6 +270,7 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
+                $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
 
                 $fbAccountIds = [];
                 $igAccountIds = [];
@@ -313,6 +342,7 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
+                $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
 
                 $fbAccountIds = [];
                 $igAccountIds = [];

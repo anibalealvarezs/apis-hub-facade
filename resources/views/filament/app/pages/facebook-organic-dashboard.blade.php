@@ -208,6 +208,18 @@
                         @endif
                     </select>
                 </div>
+                <div class="relative">
+                    <select
+                        x-model="breakdownKey"
+                        @change="fetchAll()"
+                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]"
+                    >
+                        <option value="">{{ __('No breakdown') }}</option>
+                        <template x-for="option in availableBreakdowns" :key="option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </div>
                 <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
             </div>
@@ -429,6 +441,7 @@
                 return {
                     tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                     accounts: @json($selectedAccounts),
+                    breakdownKey: @json($breakdownKey),
                     dateStart: '{{ $dateStart }}',
                     dateEnd: '{{ $dateEnd }}',
                     activeTab: 'facebook',
@@ -520,7 +533,20 @@
                         this.activeTab = tab;
                         this.currentPage = 1;
                         this.searchQuery = '';
+                        if (!this.availableBreakdowns.some(option => option.value === this.breakdownKey)) {
+                            this.breakdownKey = '';
+                        }
                         this.fetchAll(); // Refetch everything since metrics depend on the tab
+                    },
+
+                    get availableBreakdowns() {
+                        return this.activeTab === 'facebook'
+                            ? [{ value: 'reaction_type', label: '{{ __('Reaction type') }}' }]
+                            : [
+                                { value: 'contact_button_type', label: '{{ __('Contact button type') }}' },
+                                { value: 'follow_type', label: '{{ __('Follow type') }}' },
+                                { value: 'media_product_type', label: '{{ __('Media product type') }}' },
+                            ];
                     },
 
                     forceRefresh() {
@@ -540,7 +566,8 @@
 
                     getCacheKey(endpoint) {
                         const accountKey = this.accounts.join('_');
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_v1`;
+                        const breakdownKey = this.breakdownKey || 'none';
+                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownKey}_v2`;
                     },
 
                     async fetchAll() {
@@ -611,6 +638,7 @@
                                 dateStart: this.dateStart,
                                 dateEnd: this.dateEnd,
                                 activeTab: this.activeTab,
+                                breakdownKey: this.breakdownKey || null,
                                 postId: postId
                             };
 
@@ -798,7 +826,8 @@
                             account: this.accounts,
                             dateStart: this.dateStart,
                             dateEnd: this.dateEnd,
-                            activeTab: this.activeTab
+                            activeTab: this.activeTab,
+                            breakdownKey: this.breakdownKey || null
                         };
 
                         return {
