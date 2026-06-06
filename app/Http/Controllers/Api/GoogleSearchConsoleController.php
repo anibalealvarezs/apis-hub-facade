@@ -60,11 +60,12 @@ class GoogleSearchConsoleController extends Controller
             $start = Carbon::parse($validated['dateStart']);
             $end = Carbon::parse($validated['dateEnd']);
             $diff = $start->diffInDays($end) + 1;
-            
+
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $baseFilters = ['page' => (string)$validated['account']];
+            // The dashboard account selector sends channeled_account IDs, not page IDs.
+            $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $payloads = [
@@ -79,7 +80,7 @@ class GoogleSearchConsoleController extends Controller
                     'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                     'groupBy' => [],
                     'filters' => $baseFilters,
-                    'startDate' => $prevStart->format('Y-m-d'), 
+                    'startDate' => $prevStart->format('Y-m-d'),
                     'endDate' => $prevEnd->format('Y-m-d')
                 ],
             ];
@@ -87,7 +88,7 @@ class GoogleSearchConsoleController extends Controller
             \Illuminate\Support\Facades\Log::info("GSC Summary Payload: ", $payloads);
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
             \Illuminate\Support\Facades\Log::info("GSC Summary Results: ", $results);
-            
+
             if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("GSC Summary APIs Hub Error: " . json_encode($results['summary']));
             }
@@ -110,7 +111,8 @@ class GoogleSearchConsoleController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $baseFilters = ['page' => (string)$validated['account']];
+            // The dashboard account selector sends channeled_account IDs, not page IDs.
+            $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $payloads = [
@@ -150,7 +152,8 @@ class GoogleSearchConsoleController extends Controller
             $tabPayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'filters' => [
-                    'page' => (string)$validated['account'],
+                    // The dashboard account selector sends channeled_account IDs, not page IDs.
+                    'channeledAccount' => (string)$validated['account'],
                     'dimensions.searchAppearance' => 'standard'
                 ],
                 'startDate' => $validated['dateStart'],
