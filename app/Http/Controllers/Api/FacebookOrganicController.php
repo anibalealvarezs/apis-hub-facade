@@ -85,19 +85,58 @@
 
         private function applyBreakdownFilters(array &$filters, string $tab, ?string $breakdownKey = null): void
         {
-            $allowedKeys = $this->getAllowedBreakdownKeys($tab);
-
-            foreach ($allowedKeys as $allowedKey) {
-                unset($filters['dimensions.'.$allowedKey]);
-            }
-
-            if (empty($breakdownKey) || !in_array($breakdownKey, $allowedKeys, true)) {
+            if (empty($breakdownKey) || !in_array($breakdownKey, $this->getAllowedBreakdownKeys($tab), true)) {
                 $filters['dimensionSet'] = ['operator' => 'is_null'];
                 return;
             }
 
             $filters['dimensionSet'] = ['operator' => 'is_not_null'];
-            $filters['dimensions.'.$breakdownKey] = ['operator' => 'is_not_null'];
+        }
+
+        private function resolveBreakdownGroupBy(string $tab, ?string $breakdownKey = null): ?string
+        {
+            if (empty($breakdownKey) || !in_array($breakdownKey, $this->getAllowedBreakdownKeys($tab), true)) {
+                return null;
+            }
+
+            return 'dimensions.'.$breakdownKey;
+        }
+
+        /**
+         * @param array<int, array<string, mixed>> $rows
+         * @param array<int, string> $metricKeys
+         * @return array<int, array<string, mixed>>
+         */
+        private function collapseRowsByDate(array $rows, array $metricKeys): array
+        {
+            $collapsed = [];
+
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $date = $row['daily'] ?? $row['metric_date'] ?? $row['date'] ?? null;
+                if (empty($date)) {
+                    continue;
+                }
+
+                if (!isset($collapsed[$date])) {
+                    $collapsed[$date] = array_fill_keys($metricKeys, 0);
+                    $collapsed[$date]['daily'] = $date;
+                }
+
+                foreach ($metricKeys as $metricKey) {
+                    $value = $row[$metricKey] ?? $row['trend_total_'.$metricKey] ?? null;
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+
+                    $collapsed[$date][$metricKey] += (float) $value;
+                }
+            }
+
+            return array_values($collapsed);
         }
 
         private function areAllMetricValuesNull(array $row, array $metricKeys): bool
@@ -156,6 +195,7 @@
 
                 $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_pages' : 'ig_accounts';
                 $config = $this->getTabConfig($internalTab);
+                $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownKey'] ?? null);
 
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
@@ -187,7 +227,7 @@
                 $payloads = [
                     'summary'  => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => [],
+                        'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : [],
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd']
@@ -212,15 +252,19 @@
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
 
                 $metricKeys = array_keys($config['aggregations']);
-                $summaryRow = (array)($results['summary']['data'][0] ?? []);
-                $previousRow = (array)($results['previous']['data'][0] ?? []);
+                $summaryData = $results['summary']['data'] ?? [];
+                $previousData = $results['previous']['data'] ?? [];
+                $summaryRow = (array)($summaryData[0] ?? []);
+                $previousRow = (array)($previousData[0] ?? []);
 
-                // If IG account summary comes back as all null, retry with grouped rows and collapse totals.
-                if ($validated['activeTab'] === 'instagram' && $this->areAllMetricValuesNull($summaryRow, $metricKeys)) {
+                if ($breakdownGroupBy) {
+                    $summaryRow = $this->collapseGroupedMetrics($summaryData, $metricKeys);
+                    $previousRow = $this->collapseGroupedMetrics($previousData, $metricKeys);
+                } elseif ($validated['activeTab'] === 'instagram' && $this->areAllMetricValuesNull($summaryRow, $metricKeys)) {
                     $fallbackPayloads = [
                         'summary'  => [
                             'aggregations' => $config['aggregations'],
-                            'groupBy'      => $config['groupBy'],
+                            'groupBy'      => [],
                             'filters'      => $baseFilters,
                             'startDate'    => $validated['dateStart'],
                             'endDate'      => $validated['dateEnd'],
@@ -268,6 +312,7 @@
                     $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_posts' : 'ig_posts';
                 }
                 $config = $this->getTabConfig($internalTab);
+                $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownKey'] ?? null);
 
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
@@ -313,7 +358,7 @@
                 $payloads = [
                     'chart' => [
                         'aggregations' => $aggregations,
-                        'groupBy'      => ['daily'],
+                        'groupBy'      => array_values(array_filter(array_merge(['daily'], $breakdownGroupBy ? [$breakdownGroupBy] : []))),
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
@@ -324,7 +369,7 @@
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
 
                 return response()->json([
-                    'chart' => $results['chart']['data'] ?? [],
+                    'chart' => $breakdownGroupBy ? $this->collapseRowsByDate($results['chart']['data'] ?? [], array_keys($config['aggregations'])) : ($results['chart']['data'] ?? []),
                 ]);
             } catch (\Exception $e) {
                 return response()->json(['error' => $e->getMessage()], 500);
@@ -340,6 +385,7 @@
 
                 $internalTab = $validated['activeTab'] === 'facebook' ? 'fb_posts' : 'ig_posts';
                 $config = $this->getTabConfig($internalTab);
+                $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownKey'] ?? null);
 
                 $baseFilters = $config['filters'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['breakdownKey'] ?? null);
@@ -371,7 +417,7 @@
                 $payloads = [
                     'table' => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => $config['groupBy'],
+                        'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : $config['groupBy'],
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
@@ -397,6 +443,11 @@
                     } elseif (isset($rowLower['channeled_account_id'])) {
                         $row['id'] = $rowLower['channeled_account_id'];
                         $row['name'] = $rowLower['channeledaccount'] ?? $rowLower['channeled_account_id'];
+                    } elseif ($breakdownGroupBy) {
+                        $breakdownField = strtolower($breakdownGroupBy);
+                        $breakdownValue = $rowLower[$breakdownField] ?? $rowLower['dimensions.'.str_replace('dimensions.', '', $breakdownField)] ?? $rowLower[str_replace('dimensions.', '', $breakdownField)] ?? null;
+                        $row['id'] = $breakdownValue ?? 'Unknown';
+                        $row['name'] = $breakdownValue ?? 'Unknown';
                     } else {
                         $row['id'] = 'Unknown';
                         $row['name'] = 'Unknown';
