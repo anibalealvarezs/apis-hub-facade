@@ -128,12 +128,28 @@
                 return;
             }
 
-            // For Facebook tabs, prefer page identity filtering; many rows are page-scoped and not reliably filtered by channeledAccount.
+            // For Facebook tabs, prefer the most specific available identity filter to avoid over-constraining the query.
             if (in_array($internalTab, ['fb_pages', 'fb_posts'], true)) {
                 if (!empty($accounts['fbPageIds'])) {
                     $filters['page'] = count($accounts['fbPageIds']) === 1
                         ? $accounts['fbPageIds'][0]
                         : ['operator' => 'in', 'value' => $accounts['fbPageIds']];
+
+                    if (!empty($accounts['fbPlatformIds'])) {
+                        $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
+                            ? $accounts['fbPlatformIds'][0]
+                            : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
+                    }
+
+                    return;
+                }
+
+                if (!empty($accounts['fbAccountIds'])) {
+                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
+                        ? $accounts['fbAccountIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+
+                    return;
                 }
 
                 if (!empty($accounts['fbPlatformIds'])) {
@@ -141,9 +157,6 @@
                         ? $accounts['fbPlatformIds'][0]
                         : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
                 }
-
-                // Do not fallback to channeledAccount for Facebook metrics: many metric rows are page-scoped
-                // and this fallback can accidentally exclude valid data when only legacy account tuples are sent.
             }
         }
 
