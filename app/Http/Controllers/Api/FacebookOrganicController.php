@@ -44,7 +44,7 @@
                     ];
                 case 'fb_pages':
                     return [
-                        'filters'      => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily', 'dimensionSet' => ['operator' => 'is_null']],
+                        'filters'      => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily'],
                         'groupBy'      => ['page', 'page_id', 'page_title'],
                         'aggregations' => [
                             'reach'                 => 'reach', 'page_views_total' => 'page_views_total', 'video_views' => 'video_views',
@@ -64,7 +64,7 @@
                     ];
                 case 'fb_posts':
                     return [
-                        'filters'      => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimensionSet' => ['operator' => 'is_null']],
+                        'filters'      => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true],
                         'groupBy'      => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                         'aggregations' => [
                             'reach'                       => 'reach', 'total_interactions' => 'total_interactions', 'likes' => 'likes',
@@ -142,11 +142,8 @@
                         : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
                 }
 
-                if (!isset($filters['page']) && !isset($filters['page_platform_id']) && !empty($accounts['fbAccountIds'])) {
-                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
-                        ? $accounts['fbAccountIds'][0]
-                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
-                }
+                // Do not fallback to channeledAccount for Facebook metrics: many metric rows are page-scoped
+                // and this fallback can accidentally exclude valid data when only legacy account tuples are sent.
             }
         }
 
@@ -178,7 +175,11 @@
             }
 
             if (!$hasAnyBreakdownFilter) {
-                $filters['dimensionSet'] = ['operator' => 'is_null'];
+                if (str_starts_with($tab, 'ig_')) {
+                    $filters['dimensionSet'] = ['operator' => 'is_null'];
+                } else {
+                    unset($filters['dimensionSet']);
+                }
                 return;
             }
 
