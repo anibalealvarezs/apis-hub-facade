@@ -12,17 +12,17 @@ class FacebookOrganicDashboard extends Page
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     protected static ?string $navigationGroup = 'Meta';
     protected static ?string $navigationLabel = 'Facebook Organic';
-    
+
     public function getTitle(): string
     {
         return __('Meta Pages & Instagram Accounts');
     }
-    
+
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {
         return '';
     }
-    
+
     protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
     protected static ?string $slug = 'facebook-organic';
 
@@ -53,12 +53,12 @@ class FacebookOrganicDashboard extends Page
         try {
             $service = app(\App\Services\RemoteEngineService::class);
             $tenant = Filament::getTenant();
-            
+
             // Fetch channeled accounts which returns both IG Accounts and FB Pages
             $response = $service->listChanneled($tenant, 'facebook_organic', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
             \Illuminate\Support\Facades\Log::info("FBO Dashboard - API Response count", ['count' => count($response['data'] ?? [])]);
-            
+
             $fbPages = [];
             $igAccounts = [];
             if (isset($response['data']) && is_array($response['data'])) {
@@ -91,14 +91,14 @@ class FacebookOrganicDashboard extends Page
             foreach ($fbPages as $fbId => $fbAcc) {
                 // Determine the clean Facebook ID from the response (removing 'act_' if strangely present, though FBO usually doesn't have it)
                 $cleanFbId = str_replace('act_', '', (string) ($fbAcc['platformId'] ?? $fbAcc['platform_id'] ?? $fbId));
-                
+
                 $matched = in_array($cleanFbId, $enabledFbIds);
                 \Illuminate\Support\Facades\Log::info("FBO Dashboard - Channeled Account", ['name' => $fbAcc['name'] ?? '', 'cleanFbId' => $cleanFbId, 'matched' => $matched]);
 
                 if (!$matched) {
                     continue;
                 }
-                
+
                 $igPlatformId = $mapping[$cleanFbId] ?? null;
                 $igAcc = null;
                 $igInternalId = null;
@@ -115,18 +115,21 @@ class FacebookOrganicDashboard extends Page
                         }
                     }
                 }
-                
+
                 $label = $fbAcc['name'] ?? 'Facebook Page';
-                    
+
                 $value = $fbId . '|' . ($igInternalId ?? 'NONE');
                 $this->accounts[$value] = $label;
             }
-            
-            $validSelected = array_intersect($this->selectedAccounts, array_keys($this->accounts));
+
+            $validSelected = array_values(array_intersect($this->selectedAccounts, array_keys($this->accounts)));
             if (empty($validSelected) && !empty($this->accounts)) {
                 $this->selectedAccounts = [array_key_first($this->accounts)];
+            } elseif (!empty($validSelected)) {
+                // FB Organic dashboard now uses one account at a time.
+                $this->selectedAccounts = [$validSelected[0]];
             } else {
-                $this->selectedAccounts = array_values($validSelected);
+                $this->selectedAccounts = [];
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBO Accounts Error: " . $e->getMessage());

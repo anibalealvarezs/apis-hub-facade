@@ -7,7 +7,7 @@
             --fb-comments: #8b5cf6;
             --fb-views: #f59e0b;
             --fb-follows: #ec4899;
-            
+
             --fb-text-main: #111827;
             --fb-text-dim: #6b7280;
             --fb-bg-card: rgba(0,0,0,0.02);
@@ -51,7 +51,7 @@
 
         .fb-label { font-size: 0.65rem; font-weight: 700; color: var(--fb-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
         .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--fb-text-main); line-height: 1.2; }
-        
+
         .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
         .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
         .dark .trend-up { color: #4ade80; }
@@ -59,20 +59,20 @@
         .dark .trend-down { color: #f87171; }
         .trend-neutral { background: var(--fb-border); color: var(--fb-text-dim); }
 
-        .chart-container-fb { 
-            background: var(--fb-bg-card); 
-            border: 1px solid var(--fb-border); 
-            border-radius: 16px; 
-            padding: 25px; 
-            margin-bottom: 30px; 
-            height: 400px; 
+        .chart-container-fb {
+            background: var(--fb-bg-card);
+            border: 1px solid var(--fb-border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            height: 400px;
             position: relative;
         }
 
-        .fb-table-container { 
-            background: var(--fb-bg-card); 
-            border: 1px solid var(--fb-border); 
-            border-radius: 16px; 
+        .fb-table-container {
+            background: var(--fb-bg-card);
+            border: 1px solid var(--fb-border);
+            border-radius: 16px;
             overflow: hidden;
             margin-top: 20px;
         }
@@ -86,7 +86,7 @@
         .fb-table th { padding: 12px 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--fb-text-dim); font-weight: 700; border-bottom: 1px solid var(--fb-border); }
         .fb-table td { padding: 12px 20px; border-bottom: 1px solid var(--fb-border); vertical-align: middle; font-size: 0.9rem; color: var(--fb-text-main); }
         .fb-table tr:hover { background: var(--fb-bg-hover); }
-        
+
         .metric-cell { text-align: right; }
 
         .fb-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--fb-border); background: var(--fb-bg-active); }
@@ -147,8 +147,6 @@
         }
         .fb-close-btn {
             position: absolute;
-        .fb-close-btn {
-            position: absolute;
             top: 15px;
             right: 15px;
             z-index: 50;
@@ -195,46 +193,20 @@
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
                     <span>{{ __('Update') }}</span>
                 </button>
-                <div class="relative" x-data="{ open: false, searchAccount: '' }">
-                    <button @click="open = !open" @click.outside="open = false" type="button" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]">
-                        <span class="truncate font-medium text-gray-700 dark:text-gray-200" x-text="accounts.length === 0 ? '{{ __('Select Pages...') }}' : (accounts.length === 1 ? '1 {{ __('page') }}' : accounts.length + ' {{ __('pages') }}')"></span>
-                        <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400" />
-                    </button>
-                    
-                    <div x-show="open" x-transition style="display: none; min-width: 320px;" class="absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
-                        
-                        <!-- Search and Select All Header -->
-                        <div class="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                </div>
-                                <input type="text" x-model="searchAccount" class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-9 p-2" placeholder="{{ __('Search pages...') }}">
-                            </div>
-                            
-                            @if(count($accounts) > 0)
-                            <div class="flex items-center justify-between px-1">
-                                <button type="button" @click="accounts = {{ json_encode(array_keys($accounts)) }}" class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">{{ __('Select All') }}</button>
-                                <button type="button" @click="accounts = []" class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">{{ __('Clear All') }}</button>
-                            </div>
-                            @endif
-                        </div>
-
-                        <!-- Accounts List -->
-                        <div class="p-2 flex flex-col gap-1 overflow-y-auto max-h-96">
-                            @if(count($accounts) === 0)
-                                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">{{ __('No pages available.') }}</div>
-                            @endif
+                <div class="relative">
+                    <select
+                        x-model="accounts[0]"
+                        @change="accounts = $event.target.value ? [$event.target.value] : []"
+                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]"
+                    >
+                        @if(count($accounts) === 0)
+                            <option value="">{{ __('No pages available.') }}</option>
+                        @else
                             @foreach($accounts as $id => $name)
-                                <label x-show="searchAccount === '' || '{{ strtolower(addslashes($name)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())" class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-150">
-                                    <input type="checkbox" value="{{ $id }}" x-model="accounts" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3">
-                                    <div class="flex flex-col overflow-hidden">
-                                        <span class="truncate font-medium" title="{{ $name }}">{{ $name }}</span>
-                                    </div>
-                                </label>
+                                <option value="{{ $id }}">{{ $name }}</option>
                             @endforeach
-                        </div>
-                    </div>
+                        @endif
+                    </select>
                 </div>
                 <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
@@ -276,7 +248,7 @@
             <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
-            
+
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
             </div>
@@ -352,14 +324,14 @@
         </div>
 
         <!-- Post Details & History Modal -->
-        <div x-show="isPostModalOpen" 
-             style="display: none;" 
-             class="fixed inset-0 z-[999] overflow-y-auto" 
-             aria-labelledby="modal-title" 
-             role="dialog" 
+        <div x-show="isPostModalOpen"
+             style="display: none;"
+             class="fixed inset-0 z-[999] overflow-y-auto"
+             aria-labelledby="modal-title"
+             role="dialog"
              aria-modal="true">
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity" 
+            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity"
                  x-show="isPostModalOpen"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0"
@@ -379,7 +351,7 @@
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                      class="fb-modal-panel relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all border border-gray-200 dark:border-white/10">
-                    
+
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="fb-close-btn">
                         <span class="sr-only">Close</span>
@@ -388,7 +360,7 @@
 
                     <!-- Left Side: Post Preview -->
                     <div class="fb-modal-left bg-gray-50 dark:bg-gray-800 p-6 relative h-full overflow-y-auto">
-                        
+
                         <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
                             <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
                         </div>
@@ -420,7 +392,7 @@
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
                                 <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line break-words" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
                             </div>
-                            
+
                             <!-- Actions -->
                             <div class="shrink-0 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
@@ -437,7 +409,7 @@
                             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Post History') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
                         </div>
-                        
+
                         <div class="relative flex-1 min-h-0 min-w-0" style="position: relative; height: 100%; width: 100%;">
                             <div x-show="isPostChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
                                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
@@ -460,16 +432,16 @@
                     dateStart: '{{ $dateStart }}',
                     dateEnd: '{{ $dateEnd }}',
                     activeTab: 'facebook',
-                    
+
                     isSummaryLoading: false,
                     isChartLoading: false,
                     isTableLoading: false,
-                    
+
                     summaryRaw: {},
                     previousRaw: {},
                     chartDataRaw: [],
                     tableDataRaw: [],
-                    
+
                     isPostModalOpen: false,
                     selectedPost: null,
                     isPostChartLoading: false,
@@ -477,7 +449,7 @@
                     postChartDataRaw: [],
                     selectedPostData: null,
                     isPostDetailsLoading: false,
-                    
+
                     metricDictionary: {
                         'reach': { label: '{{ __('Reach') }}', color: 'var(--fb-reach)' },
                         'total_interactions': { label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)' },
@@ -485,6 +457,7 @@
                         'likes': { label: '{{ __('Likes') }}', color: 'var(--fb-likes)' },
                         'comments': { label: '{{ __('Comments') }}', color: 'var(--fb-comments)' },
                         'views': { label: '{{ __('Views') }}', color: 'var(--fb-views)' },
+                        'content_views': { label: '{{ __('Content Views') }}', color: 'var(--fb-views)' },
                         'video_views': { label: '{{ __('Video Views') }}', color: 'var(--fb-views)' },
                         'page_views_total': { label: '{{ __('Page Views') }}', color: 'var(--fb-views)' },
                         'follows_and_unfollows': { label: '{{ __('Follows') }}', color: 'var(--fb-follows)' },
@@ -505,25 +478,25 @@
                         'profile_visits': { label: '{{ __('Profile Visits') }}', color: '#14b8a6' },
                         'reposts': { label: '{{ __('Reposts') }}', color: '#8b5cf6' }
                     },
-                    
+
                     activeMetrics: {},
-                    
+
                     searchQuery: '',
                     sortCol: 'reach',
                     sortDir: 'desc',
-                    
+
                     currentPage: 1,
                     pageSize: 10,
-                    
+
                     initDashboard() {
                         const boot = () => {
                             this.initChart();
-                            
+
                             this.$watch('accounts', () => this.fetchAll());
                             this.$watch('dateStart', () => this.fetchAll());
                             this.$watch('dateEnd', () => this.fetchAll());
                             this.$watch('pageSize', () => { this.currentPage = 1; });
-                            
+
                             if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
                                 this.fetchAll();
                             }
@@ -542,7 +515,7 @@
                             }).catch(err => console.error("Failed to load charting libraries", err));
                         }
                     },
-                    
+
                     setTab(tab) {
                         this.activeTab = tab;
                         this.currentPage = 1;
@@ -576,13 +549,13 @@
                         this.fetchChart();
                         this.fetchTable();
                     },
-                    
+
                     openPostModal(row) {
                         this.selectedPost = row;
                         this.isPostModalOpen = true;
                         // Prevent body scrolling
                         document.body.style.overflow = 'hidden';
-                        
+
                         // Wait for modal to render to get canvas, then init chart
                         this.$nextTick(() => {
                             if (!this.postChartInstance) {
@@ -592,7 +565,7 @@
                             this.fetchPostDetails(row.id);
                         });
                     },
-                    
+
                     closePostModal() {
                         this.isPostModalOpen = false;
                         this.selectedPost = null;
@@ -606,10 +579,10 @@
 
                     initPostChart() {
                         const ctx = this.$refs.postCanvas.getContext('2d');
-                        
+
                         Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
                         Chart.defaults.font.family = "'Inter', sans-serif";
-                        
+
                         this.postChartInstance = new Chart(ctx, {
                             type: 'line',
                             data: { labels: [], datasets: [] },
@@ -628,7 +601,7 @@
                             }
                         });
                     },
-                    
+
                     async fetchPostChart(postId) {
                         this.isPostChartLoading = true;
                         try {
@@ -640,7 +613,7 @@
                                 activeTab: this.activeTab,
                                 postId: postId
                             };
-                            
+
                             const response = await fetch('/api/fbo/chart', {
                                 method: 'POST',
                                 headers: {
@@ -649,7 +622,7 @@
                                 },
                                 body: JSON.stringify(payload)
                             });
-                            
+
                             const data = await response.json();
                             this.postChartDataRaw = data.chart || [];
                             this.renderPostChart();
@@ -659,7 +632,7 @@
                             this.isPostChartLoading = false;
                         }
                     },
-                    
+
                     async fetchPostDetails(postId) {
                         this.isPostDetailsLoading = true;
                         this.selectedPostData = null;
@@ -668,7 +641,7 @@
                                 tenant: this.tenantId,
                                 postId: postId
                             };
-                            
+
                             const response = await fetch('/api/fbo/post', {
                                 method: 'POST',
                                 headers: {
@@ -677,7 +650,7 @@
                                 },
                                 body: JSON.stringify(payload)
                             });
-                            
+
                             const data = await response.json();
                             this.selectedPostData = data.post || null;
                         } catch (err) {
@@ -686,10 +659,10 @@
                             this.isPostDetailsLoading = false;
                         }
                     },
-                    
+
                     renderPostChart() {
                         if (!this.postChartInstance) return;
-                        
+
                         const raw = this.postChartDataRaw;
                         if (!raw || raw.length === 0) {
                             this.postChartInstance.data.labels = [];
@@ -697,10 +670,10 @@
                             this.postChartInstance.update();
                             return;
                         }
-                        
+
                         raw.sort((a, b) => new Date(a.daily) - new Date(b.daily));
                         const labels = raw.map(row => dayjs(row.daily).format('MMM D'));
-                        
+
                         const datasets = [];
                         const addDataset = (key) => {
                             const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
@@ -720,29 +693,29 @@
                                 });
                             }
                         };
-                        
+
                         // Dynamically add datasets for any metric returned in the chart payload
                         if (raw.length > 0) {
                             const firstRow = raw[0];
                             const ignoredKeys = ['daily', 'id', 'name'];
                             const metricsInChart = Object.keys(firstRow).filter(k => !ignoredKeys.includes(k));
-                            
+
                             metricsInChart.forEach(key => {
                                 // If trend_total_ is prefixed, extract the real key
                                 const actualKey = key.startsWith('trend_total_') ? key.replace('trend_total_', '') : key;
                                 addDataset(actualKey);
                             });
                         }
-                        
+
                         this.postChartInstance.data.labels = labels;
                         this.postChartInstance.data.datasets = datasets;
                         this.postChartInstance.update();
                     },
-                    
+
                     async fetchSummary() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                         const cacheKey = this.getCacheKey('summary');
-                        
+
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.summaryRaw = data.summary || {};
@@ -769,7 +742,7 @@
                     async fetchChart() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                         const cacheKey = this.getCacheKey('chart');
-                        
+
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.chartDataRaw = data.chart || [];
@@ -796,7 +769,7 @@
                     async fetchTable() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                         const cacheKey = this.getCacheKey('table');
-                        
+
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.tableDataRaw = data.table || [];
@@ -827,7 +800,7 @@
                             dateEnd: this.dateEnd,
                             activeTab: this.activeTab
                         };
-                        
+
                         return {
                             method: 'POST',
                             headers: {
@@ -841,7 +814,7 @@
                     getMetricInfo(key) {
                         return this.metricDictionary[key] || { label: key.replace(/_/g, ' ').toUpperCase(), color: '#6b7280' };
                     },
-                    
+
                     getComputedColor(colorVal) {
                         if (typeof colorVal === 'string' && colorVal.startsWith('var(')) {
                             const match = colorVal.match(/var\(([^)]+)\)/);
@@ -851,20 +824,20 @@
                         }
                         return colorVal;
                     },
-                    
+
                     get dynamicMetrics() {
                         const metrics = [];
                         const calcVariance = (current, prev) => {
                             if (!prev || Number(prev) === 0) return 0;
                             return ((Number(current) - Number(prev)) / Number(prev)) * 100;
                         };
-                        
+
                         for (const key in this.summaryRaw) {
                             // Initialize activeMetrics to true for newly discovered keys
                             if (this.activeMetrics[key] === undefined) {
                                 this.activeMetrics[key] = true;
                             }
-                            
+
                             const val = this.summaryRaw[key] || 0;
                             const prev = this.previousRaw[key] || 0;
                             const info = this.getMetricInfo(key);
@@ -879,14 +852,14 @@
                         }
                         return metrics;
                     },
-                    
+
                     get availableTableMetrics() {
                         if (this.tableDataRaw.length === 0) return [];
                         const firstRow = this.tableDataRaw[0];
                         const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
                         return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
                     },
-                    
+
                     toggleMetric(key) {
                         this.activeMetrics[key] = !this.activeMetrics[key];
                         this.updateChart();
@@ -906,15 +879,15 @@
                         if (val === 0) return '0%';
                         return Math.abs(val).toFixed(1) + '%';
                     },
-                    
+
                     toggleMetric(metric) {
                         this.activeMetrics[metric] = !this.activeMetrics[metric];
                         this.updateChart();
                     },
-                    
+
                     initChart() {
                         const ctx = this.$refs.canvas.getContext('2d');
-                        
+
                         const config = {
                             type: 'line',
                             data: { labels: [], datasets: [] },
@@ -942,23 +915,23 @@
                                 }
                             }
                         };
-                        
+
                         this.$refs.canvas._chartInstance = new Chart(ctx, config);
                     },
-                    
+
                     updateChart() {
                         let chart = this.$refs.canvas._chartInstance;
                         if (!chart || !this.chartDataRaw) return;
-                        
+
                         const startDate = dayjs(this.dateStart);
                         const endDate = dayjs(this.dateEnd);
                         const daysDiff = endDate.diff(startDate, 'day');
-                        
+
                         const fullDateRange = [];
                         for (let i = 0; i <= daysDiff; i++) {
                             fullDateRange.push(startDate.add(i, 'day').format('YYYY-MM-DD'));
                         }
-                        
+
                         const dataByDate = {};
                         this.chartDataRaw.forEach(r => {
                             if (r && (r.daily || r.date)) {
@@ -966,7 +939,7 @@
                                 dataByDate[dateStr] = r;
                             }
                         });
-                        
+
                         const paddedData = fullDateRange.map(dateStr => {
                             let obj = { daily: dateStr };
                             if (dataByDate[dateStr]) {
@@ -979,16 +952,16 @@
                             }
                             return obj;
                         });
-                        
+
                         const labels = paddedData.map(r => dayjs(r.daily).format('MMM D'));
                         const datasets = [];
-                        
+
                         const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
-                        
+
                         activeKeys.forEach(key => {
                             const info = this.getMetricInfo(key);
                             const data = paddedData.map(r => r[key]);
-                            
+
                             if (data.some(v => v > 0)) {
                                 const resolvedColor = this.getComputedColor(info.color);
                                 datasets.push({
@@ -1005,26 +978,26 @@
                                 });
                             }
                         });
-                        
+
                         let gridDrawn = false;
                         const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';
                         const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || '#6b7280';
-                        
+
                         chart.options.scales.x.grid.color = cssGridColor;
                         chart.options.scales.x.ticks.color = cssTicksColor;
-                        
+
                         Object.keys(chart.options.scales).forEach(scaleId => {
                             if (scaleId !== 'x') {
                                 chart.options.scales[scaleId].display = false;
                             }
                         });
-                        
+
                         activeKeys.forEach(key => {
                             let scaleId = 'y' + key;
                             if(!chart.options.scales[scaleId]) {
                                 chart.options.scales[scaleId] = { type: 'linear', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: {} };
                             }
-                            
+
                             const ds = datasets.find(d => d.yAxisID === scaleId);
                             if (ds) {
                                 chart.options.scales[scaleId].display = true;
@@ -1040,12 +1013,12 @@
                                 chart.options.scales[scaleId].ticks.color = ds.borderColor;
                             }
                         });
-                        
+
                         chart.data.labels = labels;
                         chart.data.datasets = datasets;
                         chart.update();
                     },
-                    
+
                     sortBy(col) {
                         if (this.sortCol === col) {
                             this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
@@ -1055,10 +1028,10 @@
                         }
                         this.currentPage = 1;
                     },
-                    
+
                     get sortedTableData() {
                         let data = [...this.tableDataRaw];
-                        
+
                         if (this.searchQuery && this.searchQuery.trim() !== '') {
                             const query = this.searchQuery.toLowerCase().trim();
                             data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
@@ -1074,7 +1047,7 @@
 
                             let valA = getValue(a, this.sortCol);
                             let valB = getValue(b, this.sortCol);
-                            
+
                             if (isNaN(valA) || isNaN(valB)) {
                                 valA = String(a[this.sortCol] || '').toLowerCase();
                                 valB = String(b[this.sortCol] || '').toLowerCase();
@@ -1085,25 +1058,25 @@
                             return valA > valB ? 1 : -1;
                         });
                     },
-                    
+
                     get totalPages() {
                         return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
                     },
-                    
+
                     get paginatedTableData() {
                         const start = (this.currentPage - 1) * this.pageSize;
                         const end = start + Number(this.pageSize);
                         return this.sortedTableData.slice(start, end);
                     },
-                    
+
                     nextPage() {
                         if (this.currentPage < this.totalPages) this.currentPage++;
                     },
-                    
+
                     prevPage() {
                         if (this.currentPage > 1) this.currentPage--;
                     },
-                    
+
                     formatNumber(num) {
                         if (num === undefined || num === null || isNaN(num)) return '0';
                         return new Intl.NumberFormat('en-US').format(num);
