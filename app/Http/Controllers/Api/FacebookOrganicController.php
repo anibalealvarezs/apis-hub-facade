@@ -313,17 +313,19 @@
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
+                $summaryGroupBy = $validated['activeTab'] === 'facebook' ? $config['groupBy'] : [];
+
                 $payloads = [
                     'summary'  => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => [],
+                        'groupBy'      => $summaryGroupBy,
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd']
                     ],
                     'previous' => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => [],
+                        'groupBy'      => $summaryGroupBy,
                         'filters'      => $baseFilters,
                         'startDate'    => $prevStart->format('Y-m-d'),
                         'endDate'      => $prevEnd->format('Y-m-d')
@@ -421,10 +423,15 @@
                     $aggregations['trend_total_'.$k] = $v;
                 }
 
+                $chartGroupBy = ['daily'];
+                if ($validated['activeTab'] === 'facebook') {
+                    $chartGroupBy = array_values(array_unique(array_merge($chartGroupBy, $config['groupBy'])));
+                }
+
                 $payloads = [
                     'chart' => [
                         'aggregations' => $aggregations,
-                        'groupBy'      => ['daily'],
+                        'groupBy'      => $chartGroupBy,
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
@@ -433,9 +440,14 @@
                 ];
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+                $chartData = $results['chart']['data'] ?? [];
+
+                if ($validated['activeTab'] === 'facebook' && is_array($chartData)) {
+                    $chartData = $this->collapseRowsByDate($chartData, array_keys($config['aggregations']));
+                }
 
                 return response()->json([
-                    'chart' => $results['chart']['data'] ?? [],
+                    'chart' => $chartData,
                 ]);
             } catch (\Exception $e) {
                 return response()->json(['error' => $e->getMessage()], 500);
@@ -463,10 +475,15 @@
                     $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                     $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
+                    $breakdownGroupByList = $breakdownGroupBy ? [$breakdownGroupBy] : [];
+                    if ($validated['activeTab'] === 'facebook') {
+                        $breakdownGroupByList = array_values(array_unique(array_merge($breakdownGroupByList, ['page', 'page_id', 'page_title'])));
+                    }
+
                     $payloads = [
                         'table' => [
                             'aggregations' => $config['aggregations'],
-                            'groupBy'      => $breakdownGroupBy ? [$breakdownGroupBy] : [],
+                            'groupBy'      => $breakdownGroupByList,
                             'filters'      => $baseFilters,
                             'startDate'    => $validated['dateStart'],
                             'endDate'      => $validated['dateEnd'],
@@ -501,10 +518,15 @@
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
+                $postsGroupBy = $config['groupBy'];
+                if ($validated['activeTab'] === 'facebook') {
+                    $postsGroupBy = array_values(array_unique(array_merge($postsGroupBy, ['page', 'page_id', 'page_title'])));
+                }
+
                 $payloads = [
                     'table' => [
                         'aggregations' => $config['aggregations'],
-                        'groupBy'      => $config['groupBy'],
+                        'groupBy'      => $postsGroupBy,
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
