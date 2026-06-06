@@ -28,7 +28,7 @@
             switch ($tab) {
                 case 'ig_accounts':
                     return [
-                        'filters'      => ['account_type' => 'instagram_account'],
+                        'filters'      => ['account_type' => 'instagram_account', 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['channeledAccount', 'channeled_account_id', 'page_platform_id', 'linked_fb_page_id'],
                         'aggregations' => [
                             'likes'              => 'likes', 'comments' => 'comments', 'reach' => 'reach', 'views' => 'views',
@@ -41,7 +41,7 @@
                     ];
                 case 'fb_pages':
                     return [
-                        'filters'      => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily'],
+                        'filters'      => ['account_type' => 'facebook_page', 'channel' => 'facebook_organic', 'period' => 'daily', 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['page', 'page_id', 'page_title'],
                         'aggregations' => [
                             'reach'                 => 'page_impressions_unique', 'page_views_total' => 'page_views_total', 'video_views' => 'page_video_views',
@@ -50,7 +50,7 @@
                     ];
                 case 'ig_posts':
                     return [
-                        'filters'      => ['account_type' => 'instagram_account', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true],
+                        'filters'      => ['account_type' => 'instagram_account', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                         'aggregations' => [
                             'comments'                       => 'comments', 'follows' => 'follows', 'ig_reels_avg_watch_time' => 'ig_reels_avg_watch_time',
@@ -61,7 +61,7 @@
                     ];
                 case 'fb_posts':
                     return [
-                        'filters'      => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true],
+                        'filters'      => ['account_type' => 'facebook_page', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimensionSet' => ['operator' => 'is_null']],
                         'groupBy'      => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                         'aggregations' => [
                             'reach'                       => 'post_impressions_unique', 'total_interactions' => 'post_engagements', 'likes' => 'post_reactions_by_type_total',
