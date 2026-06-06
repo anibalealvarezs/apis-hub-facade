@@ -37,7 +37,6 @@ class FacebookOrganicDashboard extends Page
     public array $selectedAccounts = [];
     public ?string $dateStart = null;
     public ?string $dateEnd = null;
-    public ?string $breakdownKey = null;
 
     public array $accounts = [];
 

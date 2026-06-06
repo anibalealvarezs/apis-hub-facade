@@ -208,18 +208,6 @@
                         @endif
                     </select>
                 </div>
-                <div class="relative">
-                    <select
-                        x-model="breakdownKey"
-                        @change="fetchAll()"
-                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]"
-                    >
-                        <option value="">{{ __('No breakdown') }}</option>
-                        <template x-for="option in availableBreakdowns" :key="option.value">
-                            <option :value="option.value" x-text="option.label"></option>
-                        </template>
-                    </select>
-                </div>
                 <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
             </div>
@@ -256,13 +244,42 @@
             </div>
         </div>
 
+        <div x-show="hasAnyFilters" class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm" style="display: none;" x-transition>
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <x-heroicon-o-funnel class="w-4 h-4 text-primary-500" />
+                    {{ __('Active Breakdown Filters') }}
+                </h3>
+                <button @click="clearFilters()" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">{{ __('Clear All') }}</button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="tab in availableBreakdownTabs" :key="tab.value + '_chips'">
+                    <template x-for="val in (activeFilters[tab.value] || [])" :key="tab.value + '_' + val">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                            <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab.label + ':'"></span>
+                            <span x-text="val"></span>
+                            <button @click.stop="toggleFilter(tab.value, val)" class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
+                                <x-heroicon-m-x-mark class="w-3 h-3" />
+                            </button>
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </div>
+
         <div class="fb-table-container relative">
             <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
             </div>
 
+            <div class="tab-nav-fb">
+                <template x-for="tab in availableBreakdownTabs" :key="tab.value">
+                    <div class="tab-fb" :class="activeBreakdownTab === tab.value ? 'active' : ''" @click="setBreakdownTab(tab.value)" x-text="tab.label"></div>
+                </template>
+            </div>
+
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
+                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="(availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab)?.label || '').toUpperCase()"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -289,7 +306,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="openPostModal(row)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
+                            <tr @click="toggleFilter(activeBreakdownTab, row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150" :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <a x-show="row.permalink_url || row.permalink" :href="row.permalink_url || row.permalink" target="_blank" class="text-primary-500 hover:text-primary-700">
@@ -441,10 +458,10 @@
                 return {
                     tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                     accounts: @json($selectedAccounts),
-                    breakdownKey: @json($breakdownKey),
                     dateStart: '{{ $dateStart }}',
                     dateEnd: '{{ $dateEnd }}',
                     activeTab: 'facebook',
+                    activeBreakdownTab: 'reaction_type',
 
                     isSummaryLoading: false,
                     isChartLoading: false,
@@ -497,6 +514,12 @@
                     searchQuery: '',
                     sortCol: 'reach',
                     sortDir: 'desc',
+                    activeFilters: {
+                        reaction_type: [],
+                        contact_button_type: [],
+                        follow_type: [],
+                        media_product_type: [],
+                    },
 
                     currentPage: 1,
                     pageSize: 10,
@@ -509,6 +532,7 @@
                             this.$watch('dateStart', () => this.fetchAll());
                             this.$watch('dateEnd', () => this.fetchAll());
                             this.$watch('pageSize', () => { this.currentPage = 1; });
+                            this.$watch('activeBreakdownTab', () => this.fetchTable());
 
                             if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
                                 this.fetchAll();
@@ -533,13 +557,16 @@
                         this.activeTab = tab;
                         this.currentPage = 1;
                         this.searchQuery = '';
-                        if (!this.availableBreakdowns.some(option => option.value === this.breakdownKey)) {
-                            this.breakdownKey = '';
-                        }
+                        this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
+                        Object.keys(this.activeFilters).forEach((key) => {
+                            if (!this.availableBreakdownTabs.some(tab => tab.value === key)) {
+                                this.activeFilters[key] = [];
+                            }
+                        });
                         this.fetchAll(); // Refetch everything since metrics depend on the tab
                     },
 
-                    get availableBreakdowns() {
+                    get availableBreakdownTabs() {
                         return this.activeTab === 'facebook'
                             ? [{ value: 'reaction_type', label: '{{ __('Reaction type') }}' }]
                             : [
@@ -547,6 +574,50 @@
                                 { value: 'follow_type', label: '{{ __('Follow type') }}' },
                                 { value: 'media_product_type', label: '{{ __('Media product type') }}' },
                             ];
+                    },
+
+                    get hasAnyFilters() {
+                        return Object.values(this.activeFilters).some((values) => Array.isArray(values) && values.length > 0);
+                    },
+
+                    setBreakdownTab(tab) {
+                        this.activeBreakdownTab = tab;
+                        this.currentPage = 1;
+                        this.fetchTable();
+                    },
+
+                    toggleFilter(tab, value) {
+                        if (!tab || value === undefined || value === null || value === '') {
+                            return;
+                        }
+
+                        if (!Array.isArray(this.activeFilters[tab])) {
+                            this.activeFilters[tab] = [];
+                        }
+
+                        const normalized = String(value);
+                        const existingIndex = this.activeFilters[tab].indexOf(normalized);
+                        if (existingIndex >= 0) {
+                            this.activeFilters[tab].splice(existingIndex, 1);
+                        } else {
+                            this.activeFilters[tab].push(normalized);
+                        }
+
+                        this.currentPage = 1;
+                        this.fetchAll();
+                    },
+
+                    isFilterActive(tab, value) {
+                        const values = this.activeFilters[tab] || [];
+                        return values.includes(String(value));
+                    },
+
+                    clearFilters() {
+                        Object.keys(this.activeFilters).forEach((key) => {
+                            this.activeFilters[key] = [];
+                        });
+                        this.currentPage = 1;
+                        this.fetchAll();
                     },
 
                     forceRefresh() {
@@ -566,8 +637,12 @@
 
                     getCacheKey(endpoint) {
                         const accountKey = this.accounts.join('_');
-                        const breakdownKey = this.breakdownKey || 'none';
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownKey}_v2`;
+                        const breakdownTab = this.activeBreakdownTab || 'none';
+                        const filtersKey = Object.keys(this.activeFilters)
+                            .sort()
+                            .map(key => `${key}:${(this.activeFilters[key] || []).join(',')}`)
+                            .join('|');
+                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v3`;
                     },
 
                     async fetchAll() {
@@ -638,7 +713,7 @@
                                 dateStart: this.dateStart,
                                 dateEnd: this.dateEnd,
                                 activeTab: this.activeTab,
-                                breakdownKey: this.breakdownKey || null,
+                                activeFilters: this.activeFilters,
                                 postId: postId
                             };
 
@@ -827,7 +902,8 @@
                             dateStart: this.dateStart,
                             dateEnd: this.dateEnd,
                             activeTab: this.activeTab,
-                            breakdownKey: this.breakdownKey || null
+                            activeFilters: this.activeFilters,
+                            breakdownTab: this.activeBreakdownTab || null
                         };
 
                         return {
