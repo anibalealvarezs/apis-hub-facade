@@ -67,3 +67,11 @@ scratch_check_state.php
 scratch_test_payload.php
 
 scratch_test_db.php
+
+scratch_api_test.php
+
+scratch_debug_ig.php
+
+test_output.txt
+
+test_output2.txt

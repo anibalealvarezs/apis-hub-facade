@@ -144,18 +144,18 @@
                     return;
                 }
 
-                if (!empty($accounts['fbAccountIds'])) {
-                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
-                        ? $accounts['fbAccountIds'][0]
-                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
-
-                    return;
-                }
-
                 if (!empty($accounts['fbPlatformIds'])) {
                     $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
                         ? $accounts['fbPlatformIds'][0]
                         : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
+
+                    return;
+                }
+
+                if (!empty($accounts['fbAccountIds'])) {
+                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
+                        ? $accounts['fbAccountIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
                 }
             }
         }
