@@ -558,16 +558,18 @@
                     unset($baseFilters['latest_snapshot']);
                 }
 
-                $aggregations = [];
-                foreach ($config['aggregations'] as $k => $v) {
-                    // For chart, prefix with trend_total_ or trend_average_
-                    $aggregations['trend_total_'.$k] = $v;
+                $isFacebookPageChart = $validated['activeTab'] === 'facebook' && empty($validated['postId']);
+
+                // For Facebook page-level chart, use direct metric aliases to keep true daily values.
+                $aggregations = $isFacebookPageChart ? $config['aggregations'] : [];
+                if (!$isFacebookPageChart) {
+                    foreach ($config['aggregations'] as $k => $v) {
+                        // Post/IG charts use trend aliases to support delta-aware rendering.
+                        $aggregations['trend_total_'.$k] = $v;
+                    }
                 }
 
                 $chartGroupBy = ['daily'];
-                if ($validated['activeTab'] === 'facebook' && empty($validated['postId'])) {
-                    $chartGroupBy = array_values(array_unique(array_merge($chartGroupBy, ['page', 'page_id', 'page_title'])));
-                }
 
                 $payloads = [
                     'chart' => [
