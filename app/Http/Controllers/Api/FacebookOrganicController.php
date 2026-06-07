@@ -423,6 +423,31 @@
         }
 
         /**
+         * @param array<string, mixed> $context
+         * @param array<string, mixed> $payloads
+         */
+        private function appendAggregationDebugLog(string $scope, array $context, array $payloads): void
+        {
+            try {
+                $logPath = storage_path('logs/datasources_save_debug.log');
+                $entry = [
+                    'timestamp_utc' => gmdate('c'),
+                    'scope' => $scope,
+                    'context' => $context,
+                    'payloads' => $payloads,
+                ];
+
+                @file_put_contents(
+                    $logPath,
+                    json_encode($entry, JSON_UNESCAPED_SLASHES).PHP_EOL,
+                    FILE_APPEND | LOCK_EX
+                );
+            } catch (\Throwable) {
+                // Debug logging must never break API responses.
+            }
+        }
+
+        /**
          * For non-summary Facebook queries, prefer the resolved internal page id when available.
          * This matches the internal APIs Hub post/breakdown flows more closely than platform-id-only filters.
          *
@@ -479,6 +504,13 @@
                         'endDate'      => $prevEnd->format('Y-m-d')
                     ],
                 ];
+
+                $this->appendAggregationDebugLog('fbo.summary', [
+                    'tenant' => (string) $validated['tenant'],
+                    'activeTab' => (string) $validated['activeTab'],
+                    'internalTab' => $internalTab,
+                    'account' => $validated['account'] ?? [],
+                ], $payloads);
 
                 \Illuminate\Support\Facades\Log::info("FBO Summary - Payloads for tab={$validated['activeTab']}", [
                     'internalTab'     => $internalTab,
@@ -593,6 +625,14 @@
                     ]
                 ];
 
+                $this->appendAggregationDebugLog('fbo.chart', [
+                    'tenant' => (string) $validated['tenant'],
+                    'activeTab' => (string) $validated['activeTab'],
+                    'internalTab' => $internalTab,
+                    'account' => $validated['account'] ?? [],
+                    'postId' => $validated['postId'] ?? null,
+                ], $payloads);
+
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
                 $chartData = $results['chart']['data'] ?? [];
 
@@ -644,6 +684,14 @@
                         ]
                     ];
 
+                    $this->appendAggregationDebugLog('fbo.table.breakdown', [
+                        'tenant' => (string) $validated['tenant'],
+                        'activeTab' => (string) $validated['activeTab'],
+                        'internalTab' => $internalTab,
+                        'account' => $validated['account'] ?? [],
+                        'breakdownTab' => $validated['breakdownTab'] ?? null,
+                    ], $payloads);
+
                     $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
                     $tableData = $results['table']['data'] ?? [];
 
@@ -685,6 +733,13 @@
                         'limit'        => 500
                     ]
                 ];
+
+                $this->appendAggregationDebugLog('fbo.table.posts', [
+                    'tenant' => (string) $validated['tenant'],
+                    'activeTab' => (string) $validated['activeTab'],
+                    'internalTab' => $internalTab,
+                    'account' => $validated['account'] ?? [],
+                ], $payloads);
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
                 $tableData = $results['table']['data'] ?? [];
