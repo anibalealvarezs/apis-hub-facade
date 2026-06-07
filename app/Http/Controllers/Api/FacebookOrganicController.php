@@ -404,6 +404,22 @@
             }));
         }
 
+        /**
+         * For non-summary Facebook queries, prefer the resolved internal page id when available.
+         * This matches the internal APIs Hub post/breakdown flows more closely than platform-id-only filters.
+         *
+         * @param array<string, mixed> $filters
+         * @param array{fbAccountIds: array<int, string>, igAccountIds: array<int, string>, fbPlatformIds: array<int, string>, fbPageIds: array<int, string>} $accounts
+         */
+        private function preferResolvedFacebookPageFilter(array &$filters, string $activeTab, string $internalTab, array $accounts): void
+        {
+            if ($activeTab !== 'facebook' || !in_array($internalTab, ['fb_pages', 'fb_posts'], true) || $accounts['fbPageIds'] === []) {
+                return;
+            }
+
+            unset($filters['page_platform_id'], $filters['channeledAccount']);
+        }
+
         public function summary(Request $request)
         {
             try {
@@ -425,9 +441,6 @@
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
-                if ($validated['activeTab'] === 'facebook') {
-                    $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
-                }
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $summaryGroupBy = $validated['activeTab'] === 'facebook' ? $config['groupBy'] : [];
@@ -531,7 +544,11 @@
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                if ($validated['activeTab'] === 'facebook') {
+                    $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
+                }
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
+                $this->preferResolvedFacebookPageFilter($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 if (!empty($validated['postId'])) {
                     $baseFilters['post'] = $validated['postId'];
@@ -597,7 +614,11 @@
                     unset($baseFilters['dimensionSet']);
 
                     $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                    if ($validated['activeTab'] === 'facebook') {
+                        $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
+                    }
                     $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
+                    $this->preferResolvedFacebookPageFilter($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                     $payloads = [
                         'table' => [
@@ -639,6 +660,7 @@
                     $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
                 }
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
+                $this->preferResolvedFacebookPageFilter($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $payloads = [
                     'table' => [
@@ -650,9 +672,6 @@
                         'limit'        => 500
                     ]
                 ];
-                                                        if ($validated['activeTab'] === 'facebook') {
-                                                            $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
-                                                        }
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
                 $tableData = $results['table']['data'] ?? [];

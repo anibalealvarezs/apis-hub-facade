@@ -121,6 +121,35 @@ final class FacebookOrganicControllerTest extends TestCase
         $this->assertSame('112975583443266_122140387034074498', $rows[1]['post_id']);
     }
 
+    public function test_prefer_resolved_facebook_page_filter_replaces_platform_filters_for_non_summary_queries(): void
+    {
+        $controller = new FacebookOrganicController();
+        $filters = [
+            'account_type' => 'facebook_page',
+            'page' => '119',
+            'page_platform_id' => '112975583443266',
+            'channeledAccount' => '177',
+            'post' => 'NOT_NULL',
+        ];
+
+        $accounts = [
+            'fbAccountIds' => ['177'],
+            'igAccountIds' => ['178'],
+            'fbPlatformIds' => ['112975583443266'],
+            'fbPageIds' => ['119'],
+        ];
+
+        $this->invokePrivate(
+            $controller,
+            'preferResolvedFacebookPageFilter',
+            [&$filters, 'facebook', 'fb_posts', $accounts]
+        );
+
+        $this->assertSame('119', $filters['page']);
+        $this->assertArrayNotHasKey('page_platform_id', $filters);
+        $this->assertArrayNotHasKey('channeledAccount', $filters);
+    }
+
     /**
      * @param array<int, mixed> $arguments
      */
