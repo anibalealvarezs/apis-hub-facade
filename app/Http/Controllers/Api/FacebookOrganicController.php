@@ -144,6 +144,29 @@
                     return;
                 }
 
+                // Page-level summary/breakdown/chart queries resolve best by platform page id.
+                if ($internalTab === 'fb_pages' && !empty($accounts['fbPlatformIds'])) {
+                    $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
+                        ? $accounts['fbPlatformIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
+
+                    if (!empty($accounts['fbAccountIds'])) {
+                        $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
+                            ? $accounts['fbAccountIds'][0]
+                            : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+                    }
+
+                    return;
+                }
+
+                if ($internalTab === 'fb_posts' && !empty($accounts['fbAccountIds'])) {
+                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
+                        ? $accounts['fbAccountIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+
+                    return;
+                }
+
                 if (!empty($accounts['fbPlatformIds'])) {
                     $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
                         ? $accounts['fbPlatformIds'][0]
@@ -156,6 +179,8 @@
                     $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
                         ? $accounts['fbAccountIds'][0]
                         : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+
+                    return;
                 }
             }
         }
