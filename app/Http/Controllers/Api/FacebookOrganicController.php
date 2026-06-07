@@ -150,19 +150,14 @@
                         ? $accounts['fbPlatformIds'][0]
                         : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
 
-                    if (!empty($accounts['fbAccountIds'])) {
-                        $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
-                            ? $accounts['fbAccountIds'][0]
-                            : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
-                    }
-
                     return;
                 }
 
-                if ($internalTab === 'fb_posts' && !empty($accounts['fbAccountIds'])) {
-                    $filters['channeledAccount'] = count($accounts['fbAccountIds']) === 1
-                        ? $accounts['fbAccountIds'][0]
-                        : ['operator' => 'in', 'value' => $accounts['fbAccountIds']];
+                // FB post queries should prefer page platform id to avoid pulling linked IG posts.
+                if ($internalTab === 'fb_posts' && !empty($accounts['fbPlatformIds'])) {
+                    $filters['page_platform_id'] = count($accounts['fbPlatformIds']) === 1
+                        ? $accounts['fbPlatformIds'][0]
+                        : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
 
                     return;
                 }
@@ -455,10 +450,8 @@
                     $aggregations['trend_total_'.$k] = $v;
                 }
 
+                // Keep chart at date granularity; additional dimensions can lead to sparse/empty series.
                 $chartGroupBy = ['daily'];
-                if ($validated['activeTab'] === 'facebook') {
-                    $chartGroupBy = array_values(array_unique(array_merge($chartGroupBy, $config['groupBy'])));
-                }
 
                 $payloads = [
                     'chart' => [

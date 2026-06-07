@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class FacebookOrganicControllerTest extends TestCase
 {
-    public function test_fb_pages_filters_include_platform_and_account_when_available(): void
+    public function test_fb_pages_filters_prefer_platform_id_over_channeled_account(): void
     {
         $controller = new FacebookOrganicController();
         $filters = [
@@ -31,7 +31,7 @@ final class FacebookOrganicControllerTest extends TestCase
         );
 
         $this->assertSame('147613761768682', $filters['page_platform_id']);
-        $this->assertSame('123', $filters['channeledAccount']);
+        $this->assertArrayNotHasKey('channeledAccount', $filters);
     }
 
     public function test_facebook_filters_fallback_to_channeled_account_when_platform_id_missing(): void
@@ -58,7 +58,7 @@ final class FacebookOrganicControllerTest extends TestCase
         $this->assertSame('123', $filters['channeledAccount']);
     }
 
-    public function test_fb_posts_filters_prefer_channeled_account_when_both_ids_exist(): void
+    public function test_fb_posts_filters_prefer_platform_id_when_both_ids_exist(): void
     {
         $controller = new FacebookOrganicController();
         $filters = [
@@ -78,8 +78,8 @@ final class FacebookOrganicControllerTest extends TestCase
             [&$filters, 'facebook', 'fb_posts', $accounts]
         );
 
-        $this->assertSame('123', $filters['channeledAccount']);
-        $this->assertArrayNotHasKey('page_platform_id', $filters);
+        $this->assertSame('147613761768682', $filters['page_platform_id']);
+        $this->assertArrayNotHasKey('channeledAccount', $filters);
     }
 
     /**
