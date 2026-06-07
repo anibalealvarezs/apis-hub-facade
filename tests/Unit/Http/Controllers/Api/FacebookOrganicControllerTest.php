@@ -82,13 +82,51 @@ final class FacebookOrganicControllerTest extends TestCase
         $this->assertArrayNotHasKey('channeledAccount', $filters);
     }
 
+    public function test_extract_facebook_page_ids_from_aggregate_response_returns_unique_ids(): void
+    {
+        $controller = new FacebookOrganicController();
+
+        $pageIds = $this->invokePrivate(
+            $controller,
+            'extractFacebookPageIdsFromAggregateResponse',
+            [[
+                'data' => [
+                    ['page_id' => 119],
+                    ['PAGE_ID' => '119'],
+                    ['page_id' => 120],
+                    ['page_id' => null],
+                ],
+            ]]
+        );
+
+        $this->assertSame(['119', '120'], $pageIds);
+    }
+
+    public function test_filter_facebook_post_rows_keeps_only_selected_page_platform_posts(): void
+    {
+        $controller = new FacebookOrganicController();
+
+        $rows = $this->invokePrivate(
+            $controller,
+            'filterFacebookPostRows',
+            [[
+                ['post_id' => '112975583443266_122267048786074498', 'reach' => '330'],
+                ['post_id' => '18043593167523327', 'reach' => '876'],
+                ['post_id' => '112975583443266_122140387034074498', 'reach' => '36'],
+            ], ['112975583443266']]
+        );
+
+        $this->assertCount(2, $rows);
+        $this->assertSame('112975583443266_122267048786074498', $rows[0]['post_id']);
+        $this->assertSame('112975583443266_122140387034074498', $rows[1]['post_id']);
+    }
+
     /**
      * @param array<int, mixed> $arguments
      */
     private function invokePrivate(object $object, string $method, array $arguments): mixed
     {
         $reflection = new \ReflectionMethod($object, $method);
-        $reflection->setAccessible(true);
 
         return $reflection->invokeArgs($object, $arguments);
     }

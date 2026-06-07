@@ -310,6 +310,100 @@
             return $collapsed;
         }
 
+        /**
+         * @param array<string, mixed> $response
+         * @return array<int, string>
+         */
+        private function extractFacebookPageIdsFromAggregateResponse(array $response): array
+        {
+            $pageIds = [];
+
+            foreach ((array) ($response['data'] ?? []) as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $pageId = $row['page_id'] ?? $row['PAGE_ID'] ?? null;
+                if ($pageId === null || $pageId === '') {
+                    continue;
+                }
+
+                $pageIds[] = (string) $pageId;
+            }
+
+            return array_values(array_unique($pageIds));
+        }
+
+        /**
+         * @param array{fbAccountIds: array<int, string>, igAccountIds: array<int, string>, fbPlatformIds: array<int, string>, fbPageIds: array<int, string>} $accounts
+         * @param array<string, mixed> $validated
+         * @return array{fbAccountIds: array<int, string>, igAccountIds: array<int, string>, fbPlatformIds: array<int, string>, fbPageIds: array<int, string>}
+         */
+        private function hydrateResolvedFacebookPageIds(Project $tenant, RemoteEngineService $service, array $validated, array $accounts): array
+        {
+            if (($validated['activeTab'] ?? null) !== 'facebook' || $accounts['fbPageIds'] !== [] || $accounts['fbPlatformIds'] === []) {
+                return $accounts;
+            }
+
+            $pagePlatformFilter = count($accounts['fbPlatformIds']) === 1
+                ? $accounts['fbPlatformIds'][0]
+                : ['operator' => 'in', 'value' => $accounts['fbPlatformIds']];
+
+            $response = $service->aggregateChanneled($tenant, 'facebook_organic', 'metric', [
+                'aggregations' => ['reach' => 'reach'],
+                'filters' => [
+                    'account_type' => 'facebook_page',
+                    'channel' => 'facebook_organic',
+                    'period' => 'daily',
+                    'page_platform_id' => $pagePlatformFilter,
+                ],
+                'groupBy' => ['page', 'page_id', 'page_title'],
+                'startDate' => $validated['dateStart'],
+                'endDate' => $validated['dateEnd'],
+                'limit' => 100,
+            ]);
+
+            $resolvedPageIds = $this->extractFacebookPageIdsFromAggregateResponse($response);
+            if ($resolvedPageIds !== []) {
+                $accounts['fbPageIds'] = $resolvedPageIds;
+            }
+
+            return $accounts;
+        }
+
+        /**
+         * @param array<int, array<string, mixed>> $rows
+         * @param array<int, string> $fbPlatformIds
+         * @return array<int, array<string, mixed>>
+         */
+        private function filterFacebookPostRows(array $rows, array $fbPlatformIds): array
+        {
+            if ($fbPlatformIds === []) {
+                return $rows;
+            }
+
+            $prefixes = array_map(static fn (string $id): string => $id.'_', $fbPlatformIds);
+
+            return array_values(array_filter($rows, static function ($row) use ($prefixes): bool {
+                if (!is_array($row)) {
+                    return false;
+                }
+
+                $postId = (string) ($row['post_id'] ?? $row['POST_ID'] ?? '');
+                if ($postId === '') {
+                    return false;
+                }
+
+                foreach ($prefixes as $prefix) {
+                    if (str_starts_with($postId, $prefix)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }));
+        }
+
         public function summary(Request $request)
         {
             try {
@@ -331,6 +425,9 @@
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                if ($validated['activeTab'] === 'facebook') {
+                    $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
+                }
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $summaryGroupBy = $validated['activeTab'] === 'facebook' ? $config['groupBy'] : [];
@@ -450,8 +547,10 @@
                     $aggregations['trend_total_'.$k] = $v;
                 }
 
-                // Keep chart at date granularity; additional dimensions can lead to sparse/empty series.
                 $chartGroupBy = ['daily'];
+                if ($validated['activeTab'] === 'facebook' && empty($validated['postId'])) {
+                    $chartGroupBy = array_values(array_unique(array_merge($chartGroupBy, ['page', 'page_id', 'page_title'])));
+                }
 
                 $payloads = [
                     'chart' => [
@@ -536,6 +635,9 @@
                 $baseFilters = $config['filters'];
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+                if ($validated['activeTab'] === 'facebook') {
+                    $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
+                }
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $payloads = [
@@ -548,9 +650,16 @@
                         'limit'        => 500
                     ]
                 ];
+                                                        if ($validated['activeTab'] === 'facebook') {
+                                                            $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
+                                                        }
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
                 $tableData = $results['table']['data'] ?? [];
+
+                if ($validated['activeTab'] === 'facebook') {
+                    $tableData = $this->filterFacebookPostRows($tableData, $parsedAccounts['fbPlatformIds']);
+                }
 
                 // Normalize ID and Name for frontend table rendering
                 foreach ($tableData as &$row) {
