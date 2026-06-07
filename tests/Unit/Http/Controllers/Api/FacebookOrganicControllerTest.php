@@ -150,6 +150,44 @@ final class FacebookOrganicControllerTest extends TestCase
         $this->assertArrayNotHasKey('channeledAccount', $filters);
     }
 
+    public function test_build_chart_aggregations_keeps_plain_aliases_for_account_charts(): void
+    {
+        $controller = new FacebookOrganicController();
+
+        $result = $this->invokePrivate(
+            $controller,
+            'buildChartAggregations',
+            [[
+                'reach' => 'reach',
+                'likes' => 'likes',
+            ], false]
+        );
+
+        $this->assertSame([
+            'reach' => 'reach',
+            'likes' => 'likes',
+        ], $result);
+    }
+
+    public function test_build_chart_aggregations_adds_trend_aliases_for_post_charts(): void
+    {
+        $controller = new FacebookOrganicController();
+
+        $result = $this->invokePrivate(
+            $controller,
+            'buildChartAggregations',
+            [[
+                'reach' => 'reach',
+                'likes' => 'likes',
+            ], true]
+        );
+
+        $this->assertSame([
+            'trend_total_reach' => 'reach',
+            'trend_total_likes' => 'likes',
+        ], $result);
+    }
+
     /**
      * @param array<int, mixed> $arguments
      */

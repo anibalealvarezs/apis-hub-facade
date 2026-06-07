@@ -405,6 +405,24 @@
         }
 
         /**
+         * @param array<string, string> $aggregations
+         * @return array<string, string>
+         */
+        private function buildChartAggregations(array $aggregations, bool $useTrendAliases): array
+        {
+            if (!$useTrendAliases) {
+                return $aggregations;
+            }
+
+            $trendAggregations = [];
+            foreach ($aggregations as $alias => $metric) {
+                $trendAggregations['trend_total_'.$alias] = $metric;
+            }
+
+            return $trendAggregations;
+        }
+
+        /**
          * For non-summary Facebook queries, prefer the resolved internal page id when available.
          * This matches the internal APIs Hub post/breakdown flows more closely than platform-id-only filters.
          *
@@ -558,16 +576,9 @@
                     unset($baseFilters['latest_snapshot']);
                 }
 
-                $isFacebookPageChart = $validated['activeTab'] === 'facebook' && empty($validated['postId']);
-
-                // For Facebook page-level chart, use direct metric aliases to keep true daily values.
-                $aggregations = $isFacebookPageChart ? $config['aggregations'] : [];
-                if (!$isFacebookPageChart) {
-                    foreach ($config['aggregations'] as $k => $v) {
-                        // Post/IG charts use trend aliases to support delta-aware rendering.
-                        $aggregations['trend_total_'.$k] = $v;
-                    }
-                }
+                // Trend aliases are required only for post-level charts (snapshot-delta rendering).
+                $useTrendAliases = !empty($validated['postId']);
+                $aggregations = $this->buildChartAggregations($config['aggregations'], $useTrendAliases);
 
                 $chartGroupBy = ['daily'];
 
