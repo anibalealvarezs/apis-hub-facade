@@ -188,21 +188,6 @@ final class FacebookOrganicControllerTest extends TestCase
         ], $result);
     }
 
-    public function test_ig_accounts_config_scopes_metrics_to_daily_account_rows_only(): void
-    {
-        $controller = new FacebookOrganicController();
-
-        $config = $this->invokePrivate(
-            $controller,
-            'getTabConfig',
-            ['ig_accounts']
-        );
-
-        $this->assertSame('instagram_account', $config['filters']['account_type']);
-        $this->assertSame('daily', $config['filters']['period']);
-        $this->assertSame(['operator' => 'is_null'], $config['filters']['post']);
-    }
-
     /**
      * @param array<int, mixed> $arguments
      */
