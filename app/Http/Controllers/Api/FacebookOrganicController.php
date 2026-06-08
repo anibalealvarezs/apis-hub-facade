@@ -13,17 +13,17 @@
         private function validateRequest(Request $request): array
         {
             return $request->validate([
-                'tenant'    => 'required|string',
-                'account'   => 'required|array',
-                'account.*' => 'nullable',
-                'dateStart' => 'required|date',
-                'dateEnd'   => 'required|date',
-                'activeTab' => 'required|string|in:facebook,instagram',
-                'postId'    => 'nullable|string',
-                'activeFilters' => 'nullable|array',
+                'tenant'          => 'required|string',
+                'account'         => 'required|array',
+                'account.*'       => 'nullable',
+                'dateStart'       => 'required|date',
+                'dateEnd'         => 'required|date',
+                'activeTab'       => 'required|string|in:facebook,instagram',
+                'postId'          => 'nullable|string',
+                'activeFilters'   => 'nullable|array',
                 'activeFilters.*' => 'nullable|array',
-                'breakdownTab' => 'nullable|string',
-                'tableMode' => 'nullable|string|in:posts,breakdown',
+                'breakdownTab'    => 'nullable|string',
+                'tableMode'       => 'nullable|string|in:posts,breakdown',
             ]);
         }
 
@@ -53,7 +53,7 @@
                     ];
                 case 'ig_posts':
                     return [
-                        'filters'      => ['account_type' => 'instagram_account', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimensionSet' => ['operator' => 'is_null']],
+                        'filters'      => ['account_type' => 'instagram_account', 'post' => 'NOT_NULL', 'snapshot_fallback_mode' => 'resilient', 'period' => 'lifetime', 'latest_snapshot' => true, 'dimension_set_id' => ['operator' => 'is_null']],
                         'groupBy'      => ['post', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time'],
                         'aggregations' => [
                             'comments'                       => 'comments', 'follows' => 'follows', 'ig_reels_avg_watch_time' => 'ig_reels_avg_watch_time',
@@ -80,29 +80,29 @@
         private function parseSelectedAccounts(array $selectedAccounts): array
         {
             $parsed = [
-                'fbAccountIds' => [],
-                'igAccountIds' => [],
+                'fbAccountIds'  => [],
+                'igAccountIds'  => [],
                 'fbPlatformIds' => [],
-                'fbPageIds' => [],
+                'fbPageIds'     => [],
             ];
 
             foreach ($selectedAccounts as $accValue) {
-                $parts = explode('|', (string) $accValue);
+                $parts = explode('|', (string)$accValue);
 
                 if (!empty($parts[0]) && $parts[0] !== 'NONE') {
-                    $parsed['fbAccountIds'][] = (string) $parts[0];
+                    $parsed['fbAccountIds'][] = (string)$parts[0];
                 }
 
                 if (!empty($parts[1]) && $parts[1] !== 'NONE') {
-                    $parsed['igAccountIds'][] = (string) $parts[1];
+                    $parsed['igAccountIds'][] = (string)$parts[1];
                 }
 
                 if (!empty($parts[2]) && $parts[2] !== 'NONE') {
-                    $parsed['fbPlatformIds'][] = (string) $parts[2];
+                    $parsed['fbPlatformIds'][] = (string)$parts[2];
                 }
 
                 if (!empty($parts[3]) && $parts[3] !== 'NONE') {
-                    $parsed['fbPageIds'][] = (string) $parts[3];
+                    $parsed['fbPageIds'][] = (string)$parts[3];
                 }
             }
 
@@ -118,6 +118,7 @@
             if ($activeTab === 'instagram') {
                 if (empty($accounts['igAccountIds'])) {
                     $filters['channeledAccount'] = ['operator' => 'in', 'value' => ['__NONE__']];
+
                     return;
                 }
 
@@ -196,7 +197,7 @@
             $hasAnyBreakdownFilter = false;
 
             foreach ($allowedKeys as $allowedKey) {
-                $filterValues = array_values(array_filter((array) ($activeFilters[$allowedKey] ?? []), static fn ($v) => $v !== null && $v !== ''));
+                $filterValues = array_values(array_filter((array)($activeFilters[$allowedKey] ?? []), static fn($v) => $v !== null && $v !== ''));
                 if ($filterValues === []) {
                     continue;
                 }
@@ -209,14 +210,15 @@
 
             if (!$hasAnyBreakdownFilter) {
                 if (str_starts_with($tab, 'ig_')) {
-                    $filters['dimensionSet'] = ['operator' => 'is_null'];
+                    $filters['dimension_set_id'] = ['operator' => 'is_null'];
                 } else {
-                    unset($filters['dimensionSet']);
+                    unset($filters['dimension_set_id']);
                 }
+
                 return;
             }
 
-            $filters['dimensionSet'] = ['operator' => 'is_not_null'];
+            $filters['dimension_set_id'] = ['operator' => 'is_not_null'];
         }
 
         private function resolveBreakdownGroupBy(string $tab, ?string $breakdownTab = null): ?string
@@ -263,7 +265,7 @@
                         continue;
                     }
 
-                    $collapsed[$date][$metricKey] += (float) $value;
+                    $collapsed[$date][$metricKey] += (float)$value;
                 }
             }
 
@@ -318,7 +320,7 @@
         {
             $pageIds = [];
 
-            foreach ((array) ($response['data'] ?? []) as $row) {
+            foreach ((array)($response['data'] ?? []) as $row) {
                 if (!is_array($row)) {
                     continue;
                 }
@@ -328,7 +330,7 @@
                     continue;
                 }
 
-                $pageIds[] = (string) $pageId;
+                $pageIds[] = (string)$pageId;
             }
 
             return array_values(array_unique($pageIds));
@@ -351,16 +353,16 @@
 
             $response = $service->aggregateChanneled($tenant, 'facebook_organic', 'metric', [
                 'aggregations' => ['reach' => 'reach'],
-                'filters' => [
-                    'account_type' => 'facebook_page',
-                    'channel' => 'facebook_organic',
-                    'period' => 'daily',
+                'filters'      => [
+                    'account_type'     => 'facebook_page',
+                    'channel'          => 'facebook_organic',
+                    'period'           => 'daily',
                     'page_platform_id' => $pagePlatformFilter,
                 ],
-                'groupBy' => ['page', 'page_id', 'page_title'],
-                'startDate' => $validated['dateStart'],
-                'endDate' => $validated['dateEnd'],
-                'limit' => 100,
+                'groupBy'      => ['page', 'page_id', 'page_title'],
+                'startDate'    => $validated['dateStart'],
+                'endDate'      => $validated['dateEnd'],
+                'limit'        => 100,
             ]);
 
             $resolvedPageIds = $this->extractFacebookPageIdsFromAggregateResponse($response);
@@ -382,14 +384,14 @@
                 return $rows;
             }
 
-            $prefixes = array_map(static fn (string $id): string => $id.'_', $fbPlatformIds);
+            $prefixes = array_map(static fn(string $id): string => $id.'_', $fbPlatformIds);
 
             return array_values(array_filter($rows, static function ($row) use ($prefixes): bool {
                 if (!is_array($row)) {
                     return false;
                 }
 
-                $postId = (string) ($row['post_id'] ?? $row['POST_ID'] ?? '');
+                $postId = (string)($row['post_id'] ?? $row['POST_ID'] ?? '');
                 if ($postId === '') {
                     return false;
                 }
@@ -432,9 +434,9 @@
                 $logPath = storage_path('logs/datasources_save_debug.log');
                 $entry = [
                     'timestamp_utc' => gmdate('c'),
-                    'scope' => $scope,
-                    'context' => $context,
-                    'payloads' => $payloads,
+                    'scope'         => $scope,
+                    'context'       => $context,
+                    'payloads'      => $payloads,
                 ];
 
                 @file_put_contents(
@@ -506,10 +508,10 @@
                 ];
 
                 $this->appendAggregationDebugLog('fbo.summary', [
-                    'tenant' => (string) $validated['tenant'],
-                    'activeTab' => (string) $validated['activeTab'],
+                    'tenant'      => (string)$validated['tenant'],
+                    'activeTab'   => (string)$validated['activeTab'],
                     'internalTab' => $internalTab,
-                    'account' => $validated['account'] ?? [],
+                    'account'     => $validated['account'] ?? [],
                 ], $payloads);
 
                 \Illuminate\Support\Facades\Log::info("FBO Summary - Payloads for tab={$validated['activeTab']}", [
@@ -626,11 +628,11 @@
                 ];
 
                 $this->appendAggregationDebugLog('fbo.chart', [
-                    'tenant' => (string) $validated['tenant'],
-                    'activeTab' => (string) $validated['activeTab'],
+                    'tenant'      => (string)$validated['tenant'],
+                    'activeTab'   => (string)$validated['activeTab'],
                     'internalTab' => $internalTab,
-                    'account' => $validated['account'] ?? [],
-                    'postId' => $validated['postId'] ?? null,
+                    'account'     => $validated['account'] ?? [],
+                    'postId'      => $validated['postId'] ?? null,
                 ], $payloads);
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
@@ -664,7 +666,7 @@
 
                     $baseFilters = $config['filters'];
                     $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
-                    unset($baseFilters['dimensionSet']);
+                    unset($baseFilters['dimension_set_id']);
 
                     $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                     if ($validated['activeTab'] === 'facebook') {
@@ -685,10 +687,10 @@
                     ];
 
                     $this->appendAggregationDebugLog('fbo.table.breakdown', [
-                        'tenant' => (string) $validated['tenant'],
-                        'activeTab' => (string) $validated['activeTab'],
-                        'internalTab' => $internalTab,
-                        'account' => $validated['account'] ?? [],
+                        'tenant'       => (string)$validated['tenant'],
+                        'activeTab'    => (string)$validated['activeTab'],
+                        'internalTab'  => $internalTab,
+                        'account'      => $validated['account'] ?? [],
                         'breakdownTab' => $validated['breakdownTab'] ?? null,
                     ], $payloads);
 
@@ -697,7 +699,7 @@
 
                     foreach ($tableData as &$row) {
                         $rowLower = array_change_key_case($row, CASE_LOWER);
-                        $breakdownKey = strtolower(str_replace('dimensions.', '', (string) $breakdownGroupBy));
+                        $breakdownKey = strtolower(str_replace('dimensions.', '', (string)$breakdownGroupBy));
                         $breakdownValue = $rowLower[$breakdownKey]
                             ?? $rowLower['dimensions.'.$breakdownKey]
                             ?? $rowLower['id']
@@ -735,10 +737,10 @@
                 ];
 
                 $this->appendAggregationDebugLog('fbo.table.posts', [
-                    'tenant' => (string) $validated['tenant'],
-                    'activeTab' => (string) $validated['activeTab'],
+                    'tenant'      => (string)$validated['tenant'],
+                    'activeTab'   => (string)$validated['activeTab'],
                     'internalTab' => $internalTab,
-                    'account' => $validated['account'] ?? [],
+                    'account'     => $validated['account'] ?? [],
                 ], $payloads);
 
                 $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
