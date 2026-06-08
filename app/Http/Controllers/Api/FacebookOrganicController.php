@@ -36,7 +36,7 @@
                             'account_type' => 'instagram_account',
                             // 'period' => 'daily',
                             // Keep account-level charts/totals isolated from post snapshot metrics.
-                            // 'post_id'      => ['operator' => 'is_null'],
+                            'post_id'      => ['operator' => 'is_null'],
                         ],
                         'groupBy'      => ['channeledAccount', 'channeled_account_id', 'page_platform_id', 'linked_fb_page_id'],
                         'aggregations' => [
@@ -488,7 +488,6 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
-                $baseFilters['post_id'] = ['operator' => 'is_null'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
@@ -599,7 +598,6 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
-                $baseFilters['post_id'] = ['operator' => 'is_null'];
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
@@ -672,7 +670,6 @@
                     $breakdownGroupBy = $this->resolveBreakdownGroupBy($internalTab, $validated['breakdownTab'] ?? null);
 
                     $baseFilters = $config['filters'];
-                    $baseFilters['post_id'] = ['operator' => 'is_not_null'];
                     $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
                     unset($baseFilters['dimensionSet']);
 
@@ -725,7 +722,6 @@
                 $config = $this->getTabConfig($internalTab);
 
                 $baseFilters = $config['filters'];
-                $baseFilters['post_id'] = ['operator' => 'is_not_null'];
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                 if ($validated['activeTab'] === 'facebook') {
