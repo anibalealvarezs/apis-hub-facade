@@ -579,6 +579,17 @@
             }
         }
 
+        /**
+         * Post/media chart requests must use daily metrics instead of lifetime snapshot fallback mode.
+         *
+         * @param array<string, mixed> $filters
+         */
+        private function applyPostChartDailyFilters(array &$filters): void
+        {
+            $filters['period'] = 'daily';
+            unset($filters['snapshot_fallback_mode'], $filters['latest_snapshot']);
+        }
+
         public function chart(Request $request)
         {
             try {
@@ -604,10 +615,7 @@
 
                 if (!empty($validated['postId'])) {
                     $baseFilters['post'] = $validated['postId'];
-                    // For historic charts of posts, we want the daily deltas (which are virtual metrics generated from lifetime snapshots).
-                    // We must query the lifetime snapshots to allow the backend to generate the deltas,
-                    // so we only unset 'latest_snapshot' to get all historic records instead of just one.
-                    unset($baseFilters['latest_snapshot']);
+                    $this->applyPostChartDailyFilters($baseFilters);
                 }
 
                 // Trend aliases are required only for post-level charts (snapshot-delta rendering).

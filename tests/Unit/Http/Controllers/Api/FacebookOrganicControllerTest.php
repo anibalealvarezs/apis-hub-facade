@@ -198,6 +198,30 @@ final class FacebookOrganicControllerTest extends TestCase
         $this->assertSame('views', $result['aggregations']['content_views']);
     }
 
+    public function test_post_chart_filters_use_daily_period_for_fb_posts(): void
+    {
+        $controller = new FacebookOrganicController();
+        $filters = $this->invokePrivate($controller, 'getTabConfig', ['fb_posts'])['filters'];
+
+        $this->invokePrivate($controller, 'applyPostChartDailyFilters', [&$filters]);
+
+        $this->assertSame('daily', $filters['period']);
+        $this->assertArrayNotHasKey('snapshot_fallback_mode', $filters);
+        $this->assertArrayNotHasKey('latest_snapshot', $filters);
+    }
+
+    public function test_post_chart_filters_use_daily_period_for_ig_posts(): void
+    {
+        $controller = new FacebookOrganicController();
+        $filters = $this->invokePrivate($controller, 'getTabConfig', ['ig_posts'])['filters'];
+
+        $this->invokePrivate($controller, 'applyPostChartDailyFilters', [&$filters]);
+
+        $this->assertSame('daily', $filters['period']);
+        $this->assertArrayNotHasKey('snapshot_fallback_mode', $filters);
+        $this->assertArrayNotHasKey('latest_snapshot', $filters);
+    }
+
     /**
      * @param array<int, mixed> $arguments
      */
@@ -208,4 +232,3 @@ final class FacebookOrganicControllerTest extends TestCase
         return $reflection->invokeArgs($object, $arguments);
     }
 }
-
