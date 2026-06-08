@@ -778,6 +778,14 @@
                     }
                 }
 
+                \Illuminate\Support\Facades\Log::info("FBO Summary - Raw results for tab={$validated['activeTab']}", [
+                    'summary_data'   => $results['summary']['data'] ?? 'NO_DATA_KEY',
+                    'summary_status' => $results['summary']['status'] ?? 'NO_STATUS',
+                    'summary_error'  => $results['summary']['error'] ?? null,
+                    'summary_meta'   => $results['summary']['meta'] ?? null,
+                    'previous_data'  => $results['previous']['data'] ?? 'NO_DATA_KEY',
+                ]);
+
                 return response()->json([
                     'table' => $tableData,
                 ]);
