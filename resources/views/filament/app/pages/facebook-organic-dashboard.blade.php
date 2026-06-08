@@ -381,7 +381,7 @@
                     </thead>
                     <tbody>
                         <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="openPostModal(row)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
+                            <tr @click="openPostModal(row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                                 <td class="font-medium">
                                     <div class="flex items-center gap-2">
                                         <a x-show="row.permalink_url || row.permalink" :href="row.permalink_url || row.permalink" target="_blank" class="text-primary-500 hover:text-primary-700">
@@ -548,11 +548,9 @@
                     chartDataRaw: [],
                     tableDataRaw: [],
                     breakdownDataRaw: [],
-
                     isPostModalOpen: false,
                     selectedPost: null,
                     isPostChartLoading: false,
-                    postChartInstance: null,
                     postChartDataRaw: [],
                     selectedPostData: null,
                     isPostDetailsLoading: false,
@@ -740,19 +738,24 @@
                         this.fetchBreakdownTable();
                     },
 
-                    openPostModal(row) {
-                        this.selectedPost = row;
+                    openPostModal(postId) {
+                        const normalizedPostId = String(postId ?? '').trim();
+                        if (!normalizedPostId) {
+                            return;
+                        }
+
+                        this.selectedPost = { id: normalizedPostId };
                         this.isPostModalOpen = true;
                         // Prevent body scrolling
                         document.body.style.overflow = 'hidden';
 
                         // Wait for modal to render to get canvas, then init chart
                         this.$nextTick(() => {
-                            if (!this.postChartInstance) {
+                            if (!this.getPostChartInstance()) {
                                 this.initPostChart();
                             }
-                            this.fetchPostChart(row.id);
-                            this.fetchPostDetails(row.id);
+                            this.fetchPostChart(normalizedPostId);
+                            this.fetchPostDetails(normalizedPostId);
                         });
                     },
 
@@ -761,9 +764,20 @@
                         this.selectedPost = null;
                         this.selectedPostData = null;
                         document.body.style.overflow = '';
-                        if (this.postChartInstance) {
-                            this.postChartInstance.destroy();
-                            this.postChartInstance = null;
+                        const chart = this.getPostChartInstance();
+                        if (chart) {
+                            chart.destroy();
+                            this.setPostChartInstance(null);
+                        }
+                    },
+
+                    getPostChartInstance() {
+                        return this.$refs.postCanvas?._chartInstance || null;
+                    },
+
+                    setPostChartInstance(instance) {
+                        if (this.$refs.postCanvas) {
+                            this.$refs.postCanvas._chartInstance = instance;
                         }
                     },
 
@@ -773,7 +787,7 @@
                         Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
                         Chart.defaults.font.family = "'Inter', sans-serif";
 
-                        this.postChartInstance = new Chart(ctx, {
+                        const chart = new Chart(ctx, {
                             type: 'line',
                             data: { labels: [], datasets: [] },
                             options: {
@@ -781,20 +795,37 @@
                                 maintainAspectRatio: false,
                                 interaction: { mode: 'index', intersect: false },
                                 plugins: {
-                                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
-                                    tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, cornerRadius: 8, displayColors: true }
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                        titleColor: '#fff',
+                                        bodyColor: '#e2e8f0',
+                                        borderColor: 'rgba(255,255,255,0.1)',
+                                        borderWidth: 1,
+                                        padding: 12,
+                                        boxPadding: 6,
+                                        usePointStyle: true
+                                    }
                                 },
                                 scales: {
-                                    x: { grid: { display: false, drawBorder: false } },
-                                    y: { beginAtZero: true, grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', drawBorder: false } }
+                                    x: { grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: 'var(--fb-chart-ticks)' } },
+                                    yReach: { type: 'linear', position: 'left', display: false, grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: '#10b981' } },
+                                    yInteractions: { type: 'linear', position: 'right', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#6366f1' } }
                                 }
                             }
                         });
+
+                        this.setPostChartInstance(chart);
                     },
 
                     async fetchPostChart(postId) {
                         this.isPostChartLoading = true;
                         try {
+                            const normalizedPostId = String(postId ?? '').trim();
+                            if (!normalizedPostId) {
+                                return;
+                            }
+
                             const payload = {
                                 tenant: this.tenantId,
                                 account: this.accounts,
@@ -802,7 +833,7 @@
                                 dateEnd: this.dateEnd,
                                 activeTab: this.activeTab,
                                 activeFilters: this.activeFilters,
-                                postId: postId
+                                postId: normalizedPostId
                             };
 
                             const response = await fetch('/api/fbo/chart', {
@@ -852,13 +883,14 @@
                     },
 
                     renderPostChart() {
-                        if (!this.postChartInstance) return;
+                        const chart = this.getPostChartInstance();
+                        if (!chart) return;
 
                         const raw = this.postChartDataRaw;
                         if (!raw || raw.length === 0) {
-                            this.postChartInstance.data.labels = [];
-                            this.postChartInstance.data.datasets = [];
-                            this.postChartInstance.update();
+                            chart.data.labels = [];
+                            chart.data.datasets = [];
+                            chart.update();
                             return;
                         }
 
@@ -877,9 +909,10 @@
                                     borderColor: resolvedColor,
                                     backgroundColor: resolvedColor + '20',
                                     borderWidth: 2,
-                                    pointRadius: 2,
-                                    pointHoverRadius: 5,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
                                     fill: true,
+                                    yAxisID: 'y' + key,
                                     tension: 0.4
                                 });
                             }
@@ -898,9 +931,9 @@
                             });
                         }
 
-                        this.postChartInstance.data.labels = labels;
-                        this.postChartInstance.data.datasets = datasets;
-                        this.postChartInstance.update();
+                        chart.data.labels = labels;
+                        chart.data.datasets = datasets;
+                        chart.update();
                     },
 
                     async fetchSummary() {
