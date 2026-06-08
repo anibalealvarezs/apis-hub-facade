@@ -36,7 +36,7 @@
                             'account_type' => 'instagram_account',
                             // 'period' => 'daily',
                             // Keep account-level charts/totals isolated from post snapshot metrics.
-                            'post'         => ['operator' => 'is_null'],
+                            'post_id'      => ['operator' => 'is_null'],
                         ],
                         'groupBy'      => ['channeledAccount', 'channeled_account_id', 'page_platform_id', 'linked_fb_page_id'],
                         'aggregations' => [
