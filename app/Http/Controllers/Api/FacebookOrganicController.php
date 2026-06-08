@@ -628,6 +628,7 @@
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
+                        'limit'        => 5000
                     ]
                 ];
 
