@@ -188,6 +188,16 @@ final class FacebookOrganicControllerTest extends TestCase
         ], $result);
     }
 
+    public function test_ig_accounts_tab_config_is_channel_scoped_and_content_views_uses_supported_expression(): void
+    {
+        $controller = new FacebookOrganicController();
+
+        $result = $this->invokePrivate($controller, 'getTabConfig', ['ig_accounts']);
+
+        $this->assertSame('facebook_organic', $result['filters']['channel']);
+        $this->assertSame('views', $result['aggregations']['content_views']);
+    }
+
     /**
      * @param array<int, mixed> $arguments
      */
