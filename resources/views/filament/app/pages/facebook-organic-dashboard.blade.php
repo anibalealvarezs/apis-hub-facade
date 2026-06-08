@@ -435,7 +435,7 @@
              role="dialog"
              aria-modal="true">
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity"
+            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xl transition-opacity"
                  x-show="isPostModalOpen"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0"
@@ -636,14 +636,48 @@
                     setTab(tab) {
                         this.activeTab = tab;
                         this.currentPage = 1;
+                        this.breakdownCurrentPage = 1;
                         this.searchQuery = '';
+                        this.breakdownSearchQuery = '';
+                        this.activeMetrics = {};
+                        this.chartDataRaw = [];
+                        this.tableDataRaw = [];
+                        this.breakdownDataRaw = [];
                         this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
                         Object.keys(this.activeFilters).forEach((key) => {
                             if (!this.availableBreakdownTabs.some(tab => tab.value === key)) {
                                 this.activeFilters[key] = [];
                             }
                         });
+                        this.clearCache();
                         this.fetchAll(); // Refetch everything since metrics depend on the tab
+                    },
+
+                    syncActiveMetricsFromSummary() {
+                        Object.keys(this.summaryRaw || {}).forEach((key) => {
+                            if (this.activeMetrics[key] === undefined) {
+                                this.activeMetrics[key] = true;
+                            }
+                        });
+                    },
+
+                    syncActiveMetricsFromChart() {
+                        const firstRow = Array.isArray(this.chartDataRaw) ? this.chartDataRaw[0] : null;
+                        if (!firstRow || typeof firstRow !== 'object') {
+                            return;
+                        }
+
+                        const ignoredKeys = ['daily', 'date', 'metric_date', 'id', 'name'];
+                        Object.keys(firstRow).forEach((rawKey) => {
+                            if (ignoredKeys.includes(rawKey)) {
+                                return;
+                            }
+
+                            const key = rawKey.startsWith('trend_total_') ? rawKey.replace('trend_total_', '') : rawKey;
+                            if (this.activeMetrics[key] === undefined) {
+                                this.activeMetrics[key] = true;
+                            }
+                        });
                     },
 
                     get availableBreakdownTabs() {
@@ -722,20 +756,20 @@
                             .sort()
                             .map(key => `${key}:${(this.activeFilters[key] || []).join(',')}`)
                             .join('|');
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v3`;
+                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v4`;
                     },
 
                     getPostsCacheKey() {
                         const accountKey = this.accounts.join('_');
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_posts_${this.activeTab}_v1`;
+                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_posts_${this.activeTab}_v2`;
                     },
 
                     async fetchAll() {
                         if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        this.fetchSummary();
-                        this.fetchChart();
-                        this.fetchTable();
-                        this.fetchBreakdownTable();
+                        await this.fetchSummary();
+                        await this.fetchChart();
+                        await this.fetchTable();
+                        await this.fetchBreakdownTable();
                     },
 
                     openPostModal(postId) {
@@ -784,7 +818,7 @@
                     initPostChart() {
                         const ctx = this.$refs.postCanvas.getContext('2d');
 
-                        Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280';
+                        Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#6b7280';
                         Chart.defaults.font.family = "'Inter', sans-serif";
 
                         const chart = new Chart(ctx, {
@@ -795,7 +829,14 @@
                                 maintainAspectRatio: false,
                                 interaction: { mode: 'index', intersect: false },
                                 plugins: {
-                                    legend: { display: false },
+                                    legend: {
+                                        display: true,
+                                        position: 'bottom',
+                                        labels: {
+                                            usePointStyle: true,
+                                            boxWidth: 8,
+                                        }
+                                    },
                                     tooltip: {
                                         backgroundColor: 'rgba(15, 23, 42, 0.9)',
                                         titleColor: '#fff',
@@ -809,13 +850,34 @@
                                 },
                                 scales: {
                                     x: { grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: 'var(--fb-chart-ticks)' } },
-                                    yReach: { type: 'linear', position: 'left', display: false, grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: '#10b981' } },
-                                    yInteractions: { type: 'linear', position: 'right', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#6366f1' } }
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: 'var(--fb-chart-grid)', drawBorder: false },
+                                        ticks: { display: false },
+                                    }
                                 }
                             }
                         });
 
                         this.setPostChartInstance(chart);
+                        this.applyPostChartTheme();
+                    },
+
+                    applyPostChartTheme() {
+                        const chart = this.getPostChartInstance();
+                        if (!chart) return;
+
+                        const isDark = document.documentElement.classList.contains('dark');
+                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
+                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || (isDark ? '#94a3b8' : '#6b7280');
+
+                        chart.options.plugins.legend.labels.color = cssTicksColor;
+                        chart.options.scales.x.grid.color = cssGridColor;
+                        chart.options.scales.x.ticks.color = cssTicksColor;
+                        chart.options.scales.y.grid.color = cssGridColor;
+                        chart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.96)';
+                        chart.options.plugins.tooltip.titleColor = isDark ? '#fff' : '#111827';
+                        chart.options.plugins.tooltip.bodyColor = isDark ? '#e2e8f0' : '#1f2937';
                     },
 
                     async fetchPostChart(postId) {
@@ -912,7 +974,6 @@
                                     pointRadius: 0,
                                     pointHoverRadius: 6,
                                     fill: true,
-                                    yAxisID: 'y' + key,
                                     tension: 0.4
                                 });
                             }
@@ -933,6 +994,7 @@
 
                         chart.data.labels = labels;
                         chart.data.datasets = datasets;
+                        this.applyPostChartTheme();
                         chart.update();
                     },
 
@@ -944,6 +1006,7 @@
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.summaryRaw = data.summary || {};
                             this.previousRaw = data.previous || {};
+                            this.syncActiveMetricsFromSummary();
                             return;
                         }
 
@@ -955,6 +1018,7 @@
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
                                 this.summaryRaw = data.summary || {};
                                 this.previousRaw = data.previous || {};
+                                this.syncActiveMetricsFromSummary();
                             }
                         } catch (error) {
                             console.error('Error fetching summary:', error);
@@ -970,6 +1034,7 @@
                         if (sessionStorage.getItem(cacheKey)) {
                             const data = JSON.parse(sessionStorage.getItem(cacheKey));
                             this.chartDataRaw = data.chart || [];
+                            this.syncActiveMetricsFromChart();
                             this.updateChart();
                             return;
                         }
@@ -981,6 +1046,7 @@
                             if (!data.error) {
                                 sessionStorage.setItem(cacheKey, JSON.stringify(data));
                                 this.chartDataRaw = data.chart || [];
+                                this.syncActiveMetricsFromChart();
                                 this.updateChart();
                             }
                         } catch (error) {
@@ -1140,10 +1206,6 @@
                         return Math.abs(val).toFixed(1) + '%';
                     },
 
-                    toggleMetric(metric) {
-                        this.activeMetrics[metric] = !this.activeMetrics[metric];
-                        this.updateChart();
-                    },
 
                     initChart() {
                         const ctx = this.$refs.canvas.getContext('2d');
