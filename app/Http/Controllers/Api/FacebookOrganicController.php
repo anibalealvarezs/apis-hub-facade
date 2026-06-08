@@ -32,7 +32,12 @@
             switch ($tab) {
                 case 'ig_accounts':
                     return [
-                        'filters'      => ['account_type' => 'instagram_account'],
+                        'filters'      => [
+                            'account_type' => 'instagram_account',
+                            'period' => 'daily',
+                            // Keep account-level charts/totals isolated from post snapshot metrics.
+                            'post' => ['operator' => 'is_null'],
+                        ],
                         'groupBy'      => ['channeledAccount', 'channeled_account_id', 'page_platform_id', 'linked_fb_page_id'],
                         'aggregations' => [
                             'likes'              => 'likes', 'comments' => 'comments', 'reach' => 'reach', 'views' => 'views',
@@ -621,7 +626,6 @@
                         'filters'      => $baseFilters,
                         'startDate'    => $validated['dateStart'],
                         'endDate'      => $validated['dateEnd'],
-                        'limit'        => 1000
                     ]
                 ];
 
