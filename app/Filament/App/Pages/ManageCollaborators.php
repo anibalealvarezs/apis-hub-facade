@@ -103,7 +103,22 @@ class ManageCollaborators extends Page implements HasTable
                     ->action(function (User $record) use ($project) {
                         $record->projects()->detach($project->id);
 
-                        return redirect(Filament::getUrl());
+                        $editorAndOwnerIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->whereIn('roles.name', ['project_editor', 'project_owner'])
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->where('model_has_roles.model_id', '!=', $record->id)
+                            ->pluck('model_has_roles.model_id')
+                            ->unique()
+                            ->values()
+                            ->toArray();
+
+                        $usersToNotify = User::whereIn('id', $editorAndOwnerIds)->get();
+                        foreach ($usersToNotify as $notifyUser) {
+                            $notifyUser->notify(new \App\Notifications\CollaboratorLeftProject($project, $record->name));
+                        }
+
+                        return redirect(Filament::getUrl())->with('success', __('You have abandoned the project'));
                     }),
                 Action::make('remove')
                     ->label(__('Remove'))
@@ -125,7 +140,6 @@ class ManageCollaborators extends Page implements HasTable
                             ->exists();
                     })
                     ->action(function (User $record) use ($project) {
-                        // Evitar que el owner se expulse a sí mismo si es el único
                         if ($record->id === auth()->id()) {
                             Notification::make()->danger()->title(__('You cannot remove yourself'))->send();
 
@@ -133,6 +147,9 @@ class ManageCollaborators extends Page implements HasTable
                         }
 
                         $record->projects()->detach($project->id);
+
+                        $record->notify(new \App\Notifications\MemberExpelledFromProject($project));
+
                         Notification::make()->success()->title(__('User removed from project'))->send();
                     }),
             ])
@@ -196,6 +213,20 @@ class ManageCollaborators extends Page implements HasTable
 
                         // 4. Enviar correo
                         Mail::to($data['email'])->send(new ProjectInvitationMail($invitation));
+
+                        $editorAndOwnerIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->whereIn('roles.name', ['project_editor', 'project_owner'])
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->pluck('model_has_roles.model_id')
+                            ->unique()
+                            ->values()
+                            ->toArray();
+
+                        $usersToNotify = User::whereIn('id', $editorAndOwnerIds)->get();
+                        foreach ($usersToNotify as $notifyUser) {
+                            $notifyUser->notify(new \App\Notifications\InvitationSent($project, $data['email'], $data['role']));
+                        }
 
                         Notification::make()->success()->title(__('Invitation sent via email.'))->send();
                     }),

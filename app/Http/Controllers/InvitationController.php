@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProjectInvitation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class InvitationController extends Controller
 {
@@ -70,7 +72,7 @@ class InvitationController extends Controller
         // 2. Asignar rol usando Spatie (inserción directa para evitar problemas de caché)
         $roleObj = \Spatie\Permission\Models\Role::where('name', $invitation->role)->first();
         if ($roleObj) {
-            \Illuminate\Support\Facades\DB::table('model_has_roles')->insertOrIgnore([
+            DB::table('model_has_roles')->insertOrIgnore([
                 'role_id' => $roleObj->id,
                 'model_type' => get_class($user),
                 'model_id' => $user->id,
@@ -78,7 +80,24 @@ class InvitationController extends Controller
             ]);
         }
 
-        // 3. Eliminar invitación
+        // 3. Notificar a editores y owner del proyecto
+        $project = $invitation->project;
+        $editorAndOwnerIds = DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->whereIn('roles.name', ['project_editor', 'project_owner'])
+            ->where('model_has_roles.project_id', $project->id)
+            ->where('model_has_roles.model_id', '!=', $user->id)
+            ->pluck('model_has_roles.model_id')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $usersToNotify = User::whereIn('id', $editorAndOwnerIds)->get();
+        foreach ($usersToNotify as $notifyUser) {
+            $notifyUser->notify(new \App\Notifications\InvitationAccepted($project, $user));
+        }
+
+        // 4. Eliminar invitación
         $invitation->delete();
     }
 }
