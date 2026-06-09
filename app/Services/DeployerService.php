@@ -334,8 +334,8 @@ EOT;
         Log::info("Upgrading project {$project->name} to release {$targetRelease->version_tag}");
 
         $commands = [
-            // 1. Fetch and checkout new version
-            "cd {$path} && git fetch --tags && git checkout {$versionTag}",
+            // 1. Fetch, discard local changes, and checkout new version
+            "cd {$path} && git fetch --tags && git reset --hard && git checkout {$versionTag}",
         ];
 
         // 2. Run per-version upgrade commands (e.g. DB migrations, data transformations)
