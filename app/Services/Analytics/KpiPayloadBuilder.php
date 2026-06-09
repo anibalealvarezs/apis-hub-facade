@@ -23,6 +23,7 @@ class KpiPayloadBuilder
                 'endDate' => $runtimeOverrides['end_date'] ?? $state['end_date'] ?? '',
                 'groupBy' => [$runtimeOverrides['granularity'] ?? $state['granularity'] ?? 'daily'],
             ],
+            'zero_handling' => $runtimeOverrides['zero_handling'] ?? $state['zero_handling'] ?? 'remove',
             $calculationType => true,
         ];
     }

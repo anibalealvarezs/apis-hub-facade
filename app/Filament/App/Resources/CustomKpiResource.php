@@ -161,6 +161,71 @@
                             $idx++;
                         }
 
+                        $fields[] = Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('previewPayload')
+                                ->label('Preview Payload')
+                                ->icon('heroicon-o-code-bracket')
+                                ->color('gray')
+                                ->modalHeading('Payload Preview')
+                                ->modalContent(function (Get $get, CustomKpi $record) {
+                                    $uiState = $record->filters['_ui_state'] ?? [];
+
+                                    foreach (['start_date', 'end_date', 'granularity'] as $field) {
+                                        $val = $get($field);
+                                        if (!empty($val)) {
+                                            $uiState[$field] = $val;
+                                        }
+                                    }
+
+                                    $channel = $get('runtime_dependent_channel');
+                                    if (!empty($channel)) {
+                                        $uiState['dependent_channel'] = $channel;
+                                    }
+                                    $metric = $get('runtime_dependent_metric');
+                                    if (!empty($metric)) {
+                                        $uiState['dependent_metric'] = $metric;
+                                    }
+                                    $asset = $get('runtime_dependent_asset_filter');
+                                    if (!empty($asset)) {
+                                        $uiState['dependent_asset_filter'] = $asset;
+                                    }
+
+                                    $independents = $uiState['independent_variables'] ?? [];
+                                    $idx = 0;
+                                    foreach ($independents as $key => $var) {
+                                        $prefix = "runtime_independent_{$idx}";
+                                        $ch = $get("{$prefix}_channel");
+                                        $me = $get("{$prefix}_metric");
+                                        $as = $get("{$prefix}_asset_filter");
+                                        if (!empty($ch)) {
+                                            $independents[$key]['independent_channel'] = $ch;
+                                        }
+                                        if (!empty($me)) {
+                                            $independents[$key]['independent_metric'] = $me;
+                                        }
+                                        if (!empty($as)) {
+                                            $independents[$key]['independent_asset_filter'] = $as;
+                                        }
+                                        $idx++;
+                                    }
+                                    $uiState['independent_variables'] = $independents;
+
+                                    $payload = KpiPayloadBuilder::build(
+                                        $record->calculation_type,
+                                        $uiState
+                                    );
+
+                                    return new HtmlString(
+                                        '<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'
+                                        . json_encode($payload, JSON_PRETTY_PRINT)
+                                        . '</pre>'
+                                    );
+                                })
+                                ->modalSubmitAction(false)
+                                ->modalCancelActionLabel('Close'),
+                        ])
+                            ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production');
+
                         return $fields;
                     })
                     ->action(function (array $data, CustomKpi $record, RemoteEngineService $service) {
