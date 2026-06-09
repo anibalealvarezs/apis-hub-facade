@@ -178,9 +178,10 @@ EOT;
     /**
      * Run commands over SSH on the remote server using the provided identity.
      */
-    public function runSshCommands(Server $server, array $commands)
+    public function runSshCommands(Server $server, array $commands, ?int $timeout = null)
     {
         $allCommands = implode(" && ", $commands);
+        $timeout = $timeout ?? 600;
 
         // 1. Escribir la clave SSH privada en un archivo temporal seguro
         $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
@@ -190,7 +191,7 @@ EOT;
         try {
             // 2. Ejecutar con la identity explicitamente - Aumentamos timeout a 600s (10 min)
             $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"";
-            $result = Process::timeout(600)->run($sshCmd);
+            $result = Process::timeout($timeout)->run($sshCmd);
 
             if ($result->failed()) {
                 $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
@@ -312,6 +313,46 @@ EOT;
         ];
 
         return $this->runSshCommands($server, $commands);
+    }
+
+    /**
+     * Upgrade a project to a new APIs Hub release.
+     *
+     * Steps:
+     * 1. git fetch && git checkout new version tag
+     * 2. Run ORM schema update (Doctrine)
+     * 3. Execute per-version upgrade commands
+     * 4. Full redeployment (full-deploy.sh) to rebuild containers and restart services
+     *
+     * Note: Workers are killed forcefully (no graceful drain). APIs Hub handles
+     * job re-scheduling on restart via its own resilient queue logic.
+     */
+    public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $versionTag = escapeshellarg($targetRelease->version_tag);
+
+        Log::info("Upgrading project {$project->name} to release {$targetRelease->version_tag}");
+
+        $commands = [
+            // 1. Fetch and checkout new version
+            "cd {$path} && git fetch --tags && git checkout {$versionTag}",
+            // 2. Apply ORM schema changes
+            "cd {$path} && docker compose exec -T master php bin/cli.php orm:schema-tool:update --force",
+        ];
+
+        // 3. Run per-version upgrade commands
+        foreach ($targetRelease->upgrade_commands ?? [] as $cmd) {
+            $cmdText = is_array($cmd) ? ($cmd['command'] ?? '') : $cmd;
+            if (filled($cmdText)) {
+                $commands[] = "cd {$path} && {$cmdText}";
+            }
+        }
+
+        // 4. Full redeployment: rebuilds images, runs migrations, restarts all services
+        $commands[] = "cd {$path} && sh bin/full-deploy.sh";
+
+        return $this->runSshCommands($project->server, $commands, timeout: 900);
     }
 
     /**

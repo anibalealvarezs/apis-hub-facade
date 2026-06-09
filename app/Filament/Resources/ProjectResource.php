@@ -129,7 +129,14 @@ class ProjectResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
-                    ])->columns(3),
+                        Forms\Components\Select::make('apis_hub_release_id')
+                            ->relationship('apisHubRelease', 'version_tag')
+                            ->label('APIs Hub Release')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Auto (use active release)')
+                            ->helperText('Pin a specific release version. If empty, the active release is used as fallback.'),
+                    ])->columns(4),
 
                 Forms\Components\Section::make('Database Configuration')
                     ->description('Isolated DB settings for this project instance.')
@@ -204,6 +211,7 @@ class ProjectResource extends Resource
                         'online' => 'success',
                         'offline' => 'gray',
                         'error' => 'danger',
+                        'upgrading' => 'info',
                         default => 'warning',
                     })
                     ->sortable(),
@@ -234,6 +242,12 @@ class ProjectResource extends Resource
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('apisHubRelease.version_tag')
+                    ->label('Release')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('Auto (active)')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_deployed_at')
                     ->dateTime()
@@ -389,6 +403,46 @@ class ProjectResource extends Resource
                         Notification::make()
                             ->title('Deployment Job Queued')
                             ->body('You can check the logs inside the Project edit page to see the progress.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('upgradeRelease')
+                    ->label('Upgrade Release')
+                    ->icon('heroicon-o-arrow-up-circle')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->visible(fn (Project $record) => $record->apisHubRelease !== null)
+                    ->modalHeading(fn (Project $record) => "Upgrade {$record->name}")
+                    ->modalDescription(fn (Project $record) => sprintf(
+                        'Current: %s. Select a newer release to upgrade to.',
+                        $record->apisHubRelease->version_tag
+                    ))
+                    ->form(fn (Project $record) => [
+                        Forms\Components\Select::make('target_release_id')
+                            ->label('Target Release')
+                            ->options(
+                                \App\Models\ApisHubRelease::availableUpgradesFor($record->apisHubRelease->version_tag)
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->version_tag])
+                            )
+                            ->required()
+                            ->helperText('Newer releases only.'),
+                    ])
+                    ->action(function (Project $record, array $data) {
+                        $target = \App\Models\ApisHubRelease::find($data['target_release_id']);
+                        if (!$target) {
+                            Notification::make()
+                                ->title('Invalid Release')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
+
+                        Notification::make()
+                            ->title('Upgrade Queued')
+                            ->body("Upgrade to {$target->version_tag} has been dispatched.")
                             ->success()
                             ->send();
                     }),
