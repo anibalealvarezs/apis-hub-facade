@@ -1611,21 +1611,9 @@
                         formatMetaDuration(metricValue) {
                             if (!metricValue || metricValue < 0) return "00:00";
 
-                            let totalSeconds;
+                            // Enforce millisecond conversion (1 Second = 1000 Milliseconds)
+                            const totalSeconds = Math.floor(metricValue / 1000);
 
-                            // AUTO-DETECTION COUPLING:
-                            if (metricValue > 99999999) {
-                                // 1. Massive values (e.g. 125,000,000) -> Microseconds
-                                totalSeconds = Math.floor(metricValue / 1000000);
-                            } else if (metricValue > 9999) {
-                                // 2. Mid-range values (e.g. 15,000 for 15s) -> Milliseconds
-                                totalSeconds = Math.floor(metricValue / 1000);
-                            } else {
-                                // 3. Low values or fallback -> Already in seconds
-                                totalSeconds = Math.floor(metricValue);
-                            }
-
-                            // Extract hours, minutes, seconds
                             const hours = Math.floor(totalSeconds / 3600);
                             const minutes = Math.floor((totalSeconds % 3600) / 60);
                             const seconds = totalSeconds % 60;
@@ -1633,6 +1621,7 @@
                             const paddedMinutes = String(minutes).padStart(2, '0');
                             const paddedSeconds = String(seconds).padStart(2, '0');
 
+                            // Display format: HH:MM:SS if hours exist, otherwise MM:SS
                             if (hours > 0) {
                                 const paddedHours = String(hours).padStart(2, '0');
                                 return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
