@@ -35,7 +35,7 @@ class BillingProfileResource extends Resource
                             ->disabled(),
                         Forms\Components\TextInput::make('tier')
                             ->disabled()
-                            ->formatStateUsing(fn (\App\Enums\UserTier $state): string => $state->getLabel()),
+                            ->formatStateUsing(fn ($state): string => $state instanceof \App\Enums\UserTier ? $state->getLabel() : ucfirst($state)),
                         Forms\Components\TextInput::make('status')
                             ->disabled(),
                         Forms\Components\Toggle::make('is_default')
