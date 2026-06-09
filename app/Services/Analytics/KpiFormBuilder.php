@@ -232,6 +232,15 @@ class KpiFormBuilder
                                     'weekly' => 'Weekly',
                                     'monthly' => 'Monthly'
                                 ]),
+                            Select::make('zero_handling')
+                                ->label('Zero Handling')
+                                ->options([
+                                    'remove' => 'Remove Zeroes',
+                                    'trim' => 'Trim Leading/Trailing Zeroes',
+                                    'keep' => 'Keep Zeroes',
+                                ])
+                                ->default('remove')
+                                ->helperText('How to treat zero values in the time series before analysis.'),
                         ])->columns(3),
                 ])->columns(1)
         ];
