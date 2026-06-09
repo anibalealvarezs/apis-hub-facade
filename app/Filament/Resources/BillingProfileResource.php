@@ -117,7 +117,7 @@ class BillingProfileResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quota')
                     ->label('Quota')
-                    ->state(fn (BillingProfile $record): string => {
+                    ->state(function (BillingProfile $record): string {
                         $service = app(BillingLifecycleService::class);
                         $max = $service->getMaxProjectsForTier($record->tier);
                         $count = $record->projects()->count();
