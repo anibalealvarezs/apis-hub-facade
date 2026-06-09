@@ -76,8 +76,35 @@ class ManageCollaborators extends Page implements HasTable
                             ->map(fn ($name) => Str::headline($name))
                             ->join(', ') ?: __('No specific role');
                     }),
+                TextColumn::make('can_expel')
+                    ->label(__('Can Expel'))
+                    ->badge()
+                    ->getStateUsing(fn (User $record) => $record->can('manage_collaborators') ? __('Yes') : __('No'))
+                    ->color(fn (User $record) => $record->can('manage_collaborators') ? 'success' : 'danger'),
             ])
             ->actions([
+                Action::make('abandon')
+                    ->label(__('Abandon Project'))
+                    ->color('warning')
+                    ->icon('heroicon-o-arrow-right-on-rectangle')
+                    ->requiresConfirmation()
+                    ->visible(function (User $record) use ($project) {
+                        if ($record->id !== auth()->id()) {
+                            return false;
+                        }
+
+                        return ! \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('model_has_roles.model_id', $record->id)
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->where('roles.name', 'project_owner')
+                            ->exists();
+                    })
+                    ->action(function (User $record) use ($project) {
+                        $record->projects()->detach($project->id);
+
+                        Notification::make()->success()->title(__('You have abandoned the project'))->send();
+                    }),
                 Action::make('remove')
                     ->label(__('Remove'))
                     ->color('danger')
