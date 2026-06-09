@@ -195,7 +195,7 @@ final class FacebookOrganicControllerTest extends TestCase
         $result = $this->invokePrivate($controller, 'getTabConfig', ['ig_accounts']);
 
         $this->assertSame('facebook_organic', $result['filters']['channel']);
-        $this->assertSame('views', $result['aggregations']['content_views']);
+        $this->assertSame('content_views', $result['aggregations']['content_views']);
     }
 
     public function test_post_chart_filters_use_daily_period_for_fb_posts(): void
