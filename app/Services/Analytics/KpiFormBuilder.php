@@ -44,6 +44,15 @@ class KpiFormBuilder
         return $options;
     }
 
+    public static function getMetricOptionsForChannel(?string $channel): array
+    {
+        if (!$channel) return [];
+        if (str_contains($channel, 'facebook_marketing')) return ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions'];
+        if (str_contains($channel, 'google_search_console')) return ['clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR'];
+        if (str_contains($channel, 'facebook_organic')) return ['reach' => 'Reach', 'likes' => 'Likes'];
+        return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
+    }
+
     public static function getAssetOptionsForChannel(?string $channel): array
     {
         if (!$channel) return [];
@@ -89,22 +98,14 @@ class KpiFormBuilder
             Fieldset::make($label)
                 ->schema([
                     Select::make($name . '_channel')
-                        ->label('Channel')
+                        ->label('Channel (keep empty for runtime)')
                         ->options(fn () => self::getActiveChannels())
                         ->live(),
                     Select::make($name . '_metric')
-                        ->label('Metric')
-                        ->options(function (Get $get) use ($name) {
-                            $channel = $get($name . '_channel');
-                            if (!$channel) return [];
-                            // Hardcoded for now, ideally dynamically fetched from release config schemas
-                            if (str_contains($channel, 'facebook_marketing')) return ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions'];
-                            if (str_contains($channel, 'google_search_console')) return ['clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR'];
-                            if (str_contains($channel, 'facebook_organic')) return ['reach' => 'Reach', 'likes' => 'Likes'];
-                            return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
-                        }),
+                        ->label('Metric (keep empty for runtime)')
+                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'))),
                     Select::make($name . '_asset_filter')
-                        ->label('Asset Filter (Optional)')
+                        ->label('Asset Filter (keep empty for runtime)')
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                 ])->columns(3)
         ];
