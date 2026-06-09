@@ -54,25 +54,28 @@ class BillingProfileResource extends Resource
 
                 Forms\Components\Section::make('Billing Cycle')
                     ->schema([
-                        Forms\Components\Placeholder::make('current_cycle_starts_at')
+                        Forms\Components\TextInput::make('current_cycle_starts_at')
                             ->label('Cycle Start')
-                            ->content(fn (BillingProfile $record): ?string => $record->current_cycle_starts_at?->format('Y-m-d H:i:s')),
-                        Forms\Components\Placeholder::make('current_cycle_ends_at')
+                            ->disabled()
+                            ->formatStateUsing(fn ($state): ?string => $state ? \Illuminate\Support\Carbon::parse($state)->format('Y-m-d H:i:s') : null),
+                        Forms\Components\TextInput::make('current_cycle_ends_at')
                             ->label('Cycle End')
-                            ->content(fn (BillingProfile $record): ?string => $record->current_cycle_ends_at?->format('Y-m-d H:i:s')),
+                            ->disabled()
+                            ->formatStateUsing(fn ($state): ?string => $state ? \Illuminate\Support\Carbon::parse($state)->format('Y-m-d H:i:s') : null),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Payment Method')
                     ->schema([
-                        Forms\Components\Placeholder::make('payment_card')
+                        Forms\Components\TextInput::make('payment_method')
                             ->label('Card')
-                            ->content(fn (BillingProfile $record): string => $record->pm_type
-                                ? ucfirst($record->pm_type) . ' (****' . ($record->pm_last_four ?? '') . ')'
-                                : '—'),
-                        Forms\Components\Placeholder::make('paypal_email')
-                            ->label('PayPal Email')
-                            ->content(fn (BillingProfile $record): ?string => $record->paypal_email),
-                    ])->columns(2),
+                            ->disabled()
+                            ->formatStateUsing(function ($state, BillingProfile $record): string {
+                                if ($record->pm_type) {
+                                    return ucfirst($record->pm_type) . ' (****' . ($record->pm_last_four ?? '') . ')';
+                                }
+                                return $record->paypal_email ? 'PayPal (' . $record->paypal_email . ')' : '—';
+                            }),
+                    ])->columns(1),
             ]);
     }
 
