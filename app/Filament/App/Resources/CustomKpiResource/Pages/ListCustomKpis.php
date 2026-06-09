@@ -13,8 +13,7 @@ class ListCustomKpis extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->visible(fn () => auth()->user()->can('edit_preferences')),
+            Actions\CreateAction::make(),
         ];
     }
 }

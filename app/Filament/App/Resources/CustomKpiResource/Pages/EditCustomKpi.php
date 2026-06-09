@@ -3,12 +3,8 @@
 namespace App\Filament\App\Resources\CustomKpiResource\Pages;
 
 use App\Filament\App\Resources\CustomKpiResource;
-use App\Services\Analytics\KpiPayloadBuilder;
 use Filament\Actions;
-use Filament\Forms\Form;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\HtmlString;
 
 class EditCustomKpi extends EditRecord
 {
@@ -16,6 +12,7 @@ class EditCustomKpi extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        // Unpack the UI state into the top-level form data so it hydrates the fields
         if (!empty($data['filters']['_ui_state'])) {
             foreach ($data['filters']['_ui_state'] as $key => $val) {
                 $data[$key] = $val;
@@ -26,12 +23,14 @@ class EditCustomKpi extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
+        $data['ast'] = \App\Services\Analytics\KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
         
+        // Package the UI state and scope into the filters column
         $filters = $data['filters'] ?? [];
         $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template']);
         $data['filters'] = $filters;
 
+        // Clean up flat fields so Eloquent doesn't complain
         $allowedColumns = ['name', 'description', 'calculation_type', 'is_active', 'template', 'ast', 'filters', 'project_id'];
         foreach (array_keys($data) as $key) {
             if (!in_array($key, $allowedColumns)) {
@@ -40,20 +39,6 @@ class EditCustomKpi extends EditRecord
         }
 
         return $data;
-    }
-
-    protected function form(Form $form): Form
-    {
-        return parent::form($form)
-            ->disabled(!auth()->user()->can('edit_preferences'));
-    }
-
-    protected function getFormActions(): array
-    {
-        if (!auth()->user()->can('edit_preferences')) {
-            return [];
-        }
-        return parent::getFormActions();
     }
 
     protected function getHeaderActions(): array
@@ -65,7 +50,7 @@ class EditCustomKpi extends EditRecord
                 ->color('success')
                 ->action(function () {
                     $record = $this->getRecord();
-                    $payload = KpiPayloadBuilder::build(
+                    $payload = \App\Services\Analytics\KpiPayloadBuilder::build(
                         $record->calculation_type, 
                         $this->form->getState()
                     );
@@ -75,14 +60,14 @@ class EditCustomKpi extends EditRecord
                     $result = $service->computeKpi($project, $payload);
 
                     if (isset($result['success']) && $result['success']) {
-                        Notification::make()
+                        \Filament\Notifications\Notification::make()
                             ->title('Execution Successful')
                             ->success()
                             ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">' . json_encode($result['data'] ?? [], JSON_PRETTY_PRINT) . '</pre>')
                             ->persistent()
                             ->send();
                     } else {
-                        Notification::make()
+                        \Filament\Notifications\Notification::make()
                             ->title('Execution Failed')
                             ->danger()
                             ->body($result['message'] ?? 'An unknown error occurred.')
@@ -94,23 +79,22 @@ class EditCustomKpi extends EditRecord
                 ->label('Debug Payload')
                 ->icon('heroicon-o-code-bracket')
                 ->color('gray')
-                ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
+                ->visible(fn () => config('app.env') !== 'production')
                 ->modalHeading('Payload Debugger')
                 ->modalContent(function () {
                     $state = $this->form->getState();
                     if (empty($state['calculation_type'])) {
-                        return new HtmlString('<p>Please select a calculation type first.</p>');
+                        return new \Illuminate\Support\HtmlString('<p>Please select a calculation type first.</p>');
                     }
-                    $payload = KpiPayloadBuilder::build(
+                    $payload = \App\Services\Analytics\KpiPayloadBuilder::build(
                         $state['calculation_type'], 
                         $state
                     );
-                    return new HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">' . json_encode($payload, JSON_PRETTY_PRINT) . '</pre>');
+                    return new \Illuminate\Support\HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">' . json_encode($payload, JSON_PRETTY_PRINT) . '</pre>');
                 })
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Close'),
-            Actions\DeleteAction::make()
-                ->visible(fn () => auth()->user()->can('edit_preferences')),
+            Actions\DeleteAction::make(),
         ];
     }
 }
