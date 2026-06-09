@@ -62,12 +62,11 @@ class ApisHubRelease extends Model
     /**
      * Get the available upgrades for a given version tag.
      */
-    public static function availableUpgradesFor(string $versionTag): array
+    public static function availableUpgradesFor(string $versionTag): \Illuminate\Support\Collection
     {
         return static::where('is_active', true)
             ->get()
             ->filter(fn (ApisHubRelease $release) => static::isNewerThan($release->version_tag, $versionTag))
-            ->values()
-            ->all();
+            ->values();
     }
 }
