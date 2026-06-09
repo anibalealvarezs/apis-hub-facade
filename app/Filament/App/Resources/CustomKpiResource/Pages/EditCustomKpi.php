@@ -42,7 +42,7 @@ class EditCustomKpi extends EditRecord
         return $data;
     }
 
-    protected function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return parent::form($form)
             ->disabled(!auth()->user()->can('edit_preferences'));
