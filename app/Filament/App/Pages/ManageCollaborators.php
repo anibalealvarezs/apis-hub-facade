@@ -103,7 +103,7 @@ class ManageCollaborators extends Page implements HasTable
                     ->action(function (User $record) use ($project) {
                         $record->projects()->detach($project->id);
 
-                        Notification::make()->success()->title(__('You have abandoned the project'))->send();
+                        return redirect(Filament::getUrl());
                     }),
                 Action::make('remove')
                     ->label(__('Remove'))
