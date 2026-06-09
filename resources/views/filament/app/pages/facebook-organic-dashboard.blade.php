@@ -465,7 +465,7 @@
                             <template x-for="metricKey in availableTableMetrics" :key="metricKey">
                                 <td class="metric-cell"
                                     x-text="(metricKey === 'ig_reels_avg_watch_time') || (metricKey === 'ig_reels_video_view_total_time')
-                                    ? formatReelsAvgTimeFromMicroseconds(row[metricKey] || 0)
+                                    ? formatMetaDuration(row[metricKey] || 0)
                                     : formatNumber(row[metricKey] || 0)"></td>
                             </template>
                         </tr>
@@ -1583,22 +1583,31 @@
                             return new Intl.NumberFormat('en-US').format(num);
                         },
 
-                        formatReelsAvgTimeFromMicroseconds(metricValue) {
-                            // Handle edge cases like null, undefined, or negative values
+                        formatMetaDuration(metricValue) {
                             if (!metricValue || metricValue < 0) return "00:00";
 
-                            // Convert microseconds directly to total seconds (1 second = 1,000,000 microseconds)
-                            const totalSeconds = Math.floor(metricValue / 1000000);
+                            let totalSeconds;
 
+                            // AUTO-DETECTION COUPLING:
+                            if (metricValue > 99999999) {
+                                // 1. Massive values (e.g. 125,000,000) -> Microseconds
+                                totalSeconds = Math.floor(metricValue / 1000000);
+                            } else if (metricValue > 9999) {
+                                // 2. Mid-range values (e.g. 15,000 for 15s) -> Milliseconds
+                                totalSeconds = Math.floor(metricValue / 1000);
+                            } else {
+                                // 3. Low values or fallback -> Already in seconds
+                                totalSeconds = Math.floor(metricValue);
+                            }
+
+                            // Extract hours, minutes, seconds
                             const hours = Math.floor(totalSeconds / 3600);
                             const minutes = Math.floor((totalSeconds % 3600) / 60);
                             const seconds = totalSeconds % 60;
 
-                            // Pad numbers with leading zeros to ensure standard time format
                             const paddedMinutes = String(minutes).padStart(2, '0');
                             const paddedSeconds = String(seconds).padStart(2, '0');
 
-                            // If the average watch time exceeds an hour, include hours
                             if (hours > 0) {
                                 const paddedHours = String(hours).padStart(2, '0');
                                 return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
