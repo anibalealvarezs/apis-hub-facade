@@ -33,9 +33,9 @@ class BillingProfileResource extends Resource
                         Forms\Components\TextInput::make('reference_name')
                             ->label('Reference Name')
                             ->disabled(),
-                        Forms\Components\Select::make('tier')
+                        Forms\Components\TextInput::make('tier')
                             ->disabled()
-                            ->options(fn () => \App\Enums\UserTier::class),
+                            ->formatStateUsing(fn (\App\Enums\UserTier $state): string => $state->getLabel()),
                         Forms\Components\TextInput::make('status')
                             ->disabled(),
                         Forms\Components\Toggle::make('is_default')
@@ -44,34 +44,35 @@ class BillingProfileResource extends Resource
 
                 Forms\Components\Section::make('Owner')
                     ->schema([
-                        Forms\Components\TextInput::make('user.name')
+                        Forms\Components\Placeholder::make('owner_name')
                             ->label('Name')
-                            ->disabled(),
-                        Forms\Components\TextInput::make('user.email')
+                            ->content(fn (BillingProfile $record): ?string => $record->user?->name),
+                        Forms\Components\Placeholder::make('owner_email')
                             ->label('Email')
-                            ->disabled(),
+                            ->content(fn (BillingProfile $record): ?string => $record->user?->email),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Billing Cycle')
                     ->schema([
-                        Forms\Components\DateTimePicker::make('current_cycle_starts_at')
-                            ->disabled(),
-                        Forms\Components\DateTimePicker::make('current_cycle_ends_at')
-                            ->disabled(),
+                        Forms\Components\Placeholder::make('current_cycle_starts_at')
+                            ->label('Cycle Start')
+                            ->content(fn (BillingProfile $record): ?string => $record->current_cycle_starts_at?->format('Y-m-d H:i:s')),
+                        Forms\Components\Placeholder::make('current_cycle_ends_at')
+                            ->label('Cycle End')
+                            ->content(fn (BillingProfile $record): ?string => $record->current_cycle_ends_at?->format('Y-m-d H:i:s')),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Payment Method')
                     ->schema([
-                        Forms\Components\TextInput::make('pm_type')
-                            ->label('Card Type')
-                            ->disabled(),
-                        Forms\Components\TextInput::make('pm_last_four')
-                            ->label('Last 4 Digits')
-                            ->disabled(),
-                        Forms\Components\TextInput::make('paypal_email')
+                        Forms\Components\Placeholder::make('payment_card')
+                            ->label('Card')
+                            ->content(fn (BillingProfile $record): string => $record->pm_type
+                                ? ucfirst($record->pm_type) . ' (****' . ($record->pm_last_four ?? '') . ')'
+                                : '—'),
+                        Forms\Components\Placeholder::make('paypal_email')
                             ->label('PayPal Email')
-                            ->disabled(),
-                    ])->columns(3),
+                            ->content(fn (BillingProfile $record): ?string => $record->paypal_email),
+                    ])->columns(2),
             ]);
     }
 
