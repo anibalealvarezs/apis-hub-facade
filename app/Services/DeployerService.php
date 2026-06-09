@@ -321,9 +321,9 @@ EOT;
      * Steps:
      * 1. git fetch && git checkout new version tag
      * 2. Execute per-version upgrade commands
-     * 3. Full redeployment (full-deploy.sh) rebuilds images, runs schema updates, and restarts services
+     * 3. Rebuild Docker images and restart services (docker compose up --build)
      *
-     * Note: Workers are killed forcefully (no graceful drain). APIs Hub handles
+     * Note: Containers are replaced immediately (no graceful drain). APIs Hub handles
      * job re-scheduling on restart via its own resilient queue logic.
      */
     public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
@@ -346,8 +346,8 @@ EOT;
             }
         }
 
-        // 3. Full redeployment: builds new images, runs schema updates, restarts all services
-        $commands[] = "cd {$path} && sh bin/full-deploy.sh";
+        // 3. Rebuild images and restart services (no full-deploy.sh — it's too heavy for upgrades)
+        $commands[] = "cd {$path} && docker compose up -d --build --remove-orphans";
 
         return $this->runSshCommands($project->server, $commands, timeout: 900);
     }
