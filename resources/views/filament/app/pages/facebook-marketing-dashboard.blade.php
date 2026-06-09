@@ -489,8 +489,8 @@
                     saveFilters() {
                         if (!this.accounts.length) return;
                         const accountKey = this.accounts.join('_');
-                        sessionStorage.setItem(`fbm_filters_${this.tenantId}_${accountKey}`, JSON.stringify(this.activeFilters));
-                        sessionStorage.setItem(`fbm_labels_${this.tenantId}_${accountKey}`, JSON.stringify(this.filterLabels));
+                        this.safeCacheSet(`fbm_filters_${this.tenantId}_${accountKey}`, JSON.stringify(this.activeFilters));
+                        this.safeCacheSet(`fbm_labels_${this.tenantId}_${accountKey}`, JSON.stringify(this.filterLabels));
                     },
 
                     clearFiltersLocal() {
@@ -546,6 +546,30 @@
                         this.fetchAll();
                     },
 
+                    safeCacheSet(key, value) {
+                        try {
+                            sessionStorage.setItem(key, value);
+                            return true;
+                        } catch (e) {
+                            if (e.name === 'QuotaExceededError' || e.code === 22) {
+                                Object.keys(sessionStorage).forEach(k => {
+                                    if (k.startsWith('fbm_') || k.startsWith('fbo_') || k.startsWith('gsc_')) {
+                                        sessionStorage.removeItem(k);
+                                    }
+                                });
+                                try {
+                                    sessionStorage.setItem(key, value);
+                                    return true;
+                                } catch {
+                                    console.warn('Cache still full after eviction, skipping cache for', key);
+                                    return false;
+                                }
+                            }
+                            console.warn('Cache write failed:', e);
+                            return false;
+                        }
+                    },
+
                     clearCache() {
                         const accountKey = this.accounts.join('_');
                         const prefix = `fbm_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}`;
@@ -589,7 +613,7 @@
                             const response = await fetch('/api/fbm/summary', this.getFetchOptions());
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.summary = data.summary || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
                                 this.previous = data.previous || { spend: 0, clicks: 0, impressions: 0, ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0 };
                             }
@@ -616,7 +640,7 @@
                             const response = await fetch('/api/fbm/chart', this.getFetchOptions());
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.chartDataRaw = data.chart || [];
                                 this.updateChart();
                             }
@@ -642,7 +666,7 @@
                             const response = await fetch('/api/fbm/table', this.getFetchOptions('table'));
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.tableDataRaw = data.table || [];
                                 this.currentPage = 1;
                             }

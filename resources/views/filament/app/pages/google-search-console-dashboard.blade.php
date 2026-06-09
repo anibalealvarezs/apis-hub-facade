@@ -385,7 +385,7 @@
 
                     saveFilters() {
                         if (!this.account) return;
-                        sessionStorage.setItem(`gsc_filters_${this.tenantId}_${this.account}`, JSON.stringify(this.activeFilters));
+                        this.safeCacheSet(`gsc_filters_${this.tenantId}_${this.account}`, JSON.stringify(this.activeFilters));
                     },
 
                     clearFiltersLocal() {
@@ -420,6 +420,30 @@
                     forceRefresh() {
                         this.clearCache();
                         this.fetchAll();
+                    },
+
+                    safeCacheSet(key, value) {
+                        try {
+                            sessionStorage.setItem(key, value);
+                            return true;
+                        } catch (e) {
+                            if (e.name === 'QuotaExceededError' || e.code === 22) {
+                                Object.keys(sessionStorage).forEach(k => {
+                                    if (k.startsWith('gsc_') || k.startsWith('fbo_') || k.startsWith('fbm_')) {
+                                        sessionStorage.removeItem(k);
+                                    }
+                                });
+                                try {
+                                    sessionStorage.setItem(key, value);
+                                    return true;
+                                } catch {
+                                    console.warn('Cache still full after eviction, skipping cache for', key);
+                                    return false;
+                                }
+                            }
+                            console.warn('Cache write failed:', e);
+                            return false;
+                        }
                     },
 
                     clearCache() {
@@ -459,7 +483,7 @@
                             const response = await fetch('/api/gsc/summary', this.getFetchOptions());
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.summary = data.summary || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
                                 this.previous = data.previous || { clicks: 0, impressions: 0, ctr: 0, position: 0 };
                             }
@@ -486,7 +510,7 @@
                             const response = await fetch('/api/gsc/chart', this.getFetchOptions());
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.chartDataRaw = data.chart || [];
                                 this.updateChart();
                             }
@@ -512,7 +536,7 @@
                             const response = await fetch('/api/gsc/table', this.getFetchOptions(false));
                             const data = await response.json();
                             if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                this.safeCacheSet(cacheKey, JSON.stringify(data));
                                 this.tableDataRaw = data.table || [];
                                 this.currentPage = 1;
                             }

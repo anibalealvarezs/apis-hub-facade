@@ -842,6 +842,31 @@
                             this.fetchAll();
                         },
 
+                        safeCacheSet(key, value) {
+                            try {
+                                sessionStorage.setItem(key, value);
+                                return true;
+                            } catch (e) {
+                                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                                    // Evict all fbo cache entries (old tenants/dates) and retry
+                                    Object.keys(sessionStorage).forEach(k => {
+                                        if (k.startsWith('fbo_')) {
+                                            sessionStorage.removeItem(k);
+                                        }
+                                    });
+                                    try {
+                                        sessionStorage.setItem(key, value);
+                                        return true;
+                                    } catch {
+                                        console.warn('Cache still full after eviction, skipping cache for', key);
+                                        return false;
+                                    }
+                                }
+                                console.warn('Cache write failed:', e);
+                                return false;
+                            }
+                        },
+
                         clearCache() {
                             const accountKey = this.accounts.join('_');
                             const prefix = `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}`;
@@ -1121,7 +1146,7 @@
                                 const response = await fetch('/api/fbo/summary', this.getFetchOptions());
                                 const data = await response.json();
                                 if (!data.error) {
-                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.summaryRaw = data.summary || {};
                                     this.previousRaw = data.previous || {};
                                     this.syncActiveMetricsFromSummary();
@@ -1150,7 +1175,7 @@
                                 const response = await fetch('/api/fbo/chart', this.getFetchOptions());
                                 const data = await response.json();
                                 if (!data.error) {
-                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
                                     this.syncActiveMetricsFromChart();
                                     this.updateChart();
@@ -1177,7 +1202,7 @@
                                 const response = await fetch('/api/fbo/table', this.getFetchOptions({tableMode: 'posts'}));
                                 const data = await response.json();
                                 if (!data.error) {
-                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.tableDataRaw = data.table || [];
                                     this.currentPage = 1;
                                 }
@@ -1203,7 +1228,7 @@
                                 const response = await fetch('/api/fbo/table', this.getFetchOptions({tableMode: 'breakdown'}));
                                 const data = await response.json();
                                 if (!data.error) {
-                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.breakdownDataRaw = data.table || [];
                                     this.breakdownCurrentPage = 1;
                                 }
