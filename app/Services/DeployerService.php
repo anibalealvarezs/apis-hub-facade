@@ -320,9 +320,8 @@ EOT;
      *
      * Steps:
      * 1. git fetch && git checkout new version tag
-     * 2. Run ORM schema update (Doctrine)
-     * 3. Execute per-version upgrade commands
-     * 4. Full redeployment (full-deploy.sh) to rebuild containers and restart services
+     * 2. Execute per-version upgrade commands
+     * 3. Full redeployment (full-deploy.sh) rebuilds images, runs schema updates, and restarts services
      *
      * Note: Workers are killed forcefully (no graceful drain). APIs Hub handles
      * job re-scheduling on restart via its own resilient queue logic.
@@ -337,11 +336,9 @@ EOT;
         $commands = [
             // 1. Fetch and checkout new version
             "cd {$path} && git fetch --tags && git checkout {$versionTag}",
-            // 2. Apply ORM schema changes
-            "cd {$path} && docker compose exec -T master php bin/cli.php orm:schema-tool:update --force",
         ];
 
-        // 3. Run per-version upgrade commands
+        // 2. Run per-version upgrade commands (e.g. DB migrations, data transformations)
         foreach ($targetRelease->upgrade_commands ?? [] as $cmd) {
             $cmdText = is_array($cmd) ? ($cmd['command'] ?? '') : $cmd;
             if (filled($cmdText)) {
@@ -349,7 +346,7 @@ EOT;
             }
         }
 
-        // 4. Full redeployment: rebuilds images, runs migrations, restarts all services
+        // 3. Full redeployment: builds new images, runs schema updates, restarts all services
         $commands[] = "cd {$path} && sh bin/full-deploy.sh";
 
         return $this->runSshCommands($project->server, $commands, timeout: 900);

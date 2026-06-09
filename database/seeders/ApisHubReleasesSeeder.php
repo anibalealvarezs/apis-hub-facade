@@ -19,12 +19,6 @@
                 $schemaV1[$profile->getChannelKey()] = $profile->getSchemaDefinition();
             }
 
-        $upgradeCommands = [
-            [
-                'command' => 'docker compose exec -T master php bin/cli.php orm:schema-tool:update --force',
-            ],
-        ];
-
         ApisHubRelease::updateOrCreate(
             ['version_tag' => 'v1.13.3'], // Rama o tag estable actual
             [
@@ -33,7 +27,7 @@
                 'changelog' => "## v1.13.3\n\n- Bug fixes\n- Performance improvements",
                 'supported_channels' => array_keys($schemaV1),
                 'config_schemas' => $schemaV1,
-                'upgrade_commands' => $upgradeCommands,
+                'upgrade_commands' => [],
             ]
         );
 
