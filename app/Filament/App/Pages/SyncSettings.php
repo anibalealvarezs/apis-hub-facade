@@ -66,6 +66,7 @@ class SyncSettings extends Page
                 ->label(__('View Last Deployment Log'))
                 ->icon('heroicon-o-document-text')
                 ->color('gray')
+                ->visible(fn () => auth()->user()->can('edit_preferences'))
                 ->modalHeading(__('Deployment Log Output'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(__('Close'))

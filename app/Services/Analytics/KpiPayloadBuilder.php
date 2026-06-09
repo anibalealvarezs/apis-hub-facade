@@ -12,16 +12,16 @@ class KpiPayloadBuilder
      * @param array $scope
      * @return array
      */
-    public static function build(string $calculationType, array $state): array
+    public static function build(string $calculationType, array $state, array $runtimeOverrides = []): array
     {
         $ast = self::buildAstFromState($calculationType, $state);
 
         return [
             'ast' => $ast,
             'filters' => [
-                'startDate' => $state['start_date'] ?? '',
-                'endDate' => $state['end_date'] ?? '',
-                'groupBy' => [$state['granularity'] ?? 'daily'],
+                'startDate' => $runtimeOverrides['start_date'] ?? $state['start_date'] ?? '',
+                'endDate' => $runtimeOverrides['end_date'] ?? $state['end_date'] ?? '',
+                'groupBy' => [$runtimeOverrides['granularity'] ?? $state['granularity'] ?? 'daily'],
             ],
             $calculationType => true,
         ];
