@@ -44,6 +44,45 @@ class KpiFormBuilder
         return $options;
     }
 
+    public static function getAssetOptionsForChannel(?string $channel): array
+    {
+        if (!$channel) return [];
+        $tenant = Filament::getTenant();
+        if (!$tenant) return [];
+        $config = $tenant->sync_config[$channel] ?? [];
+        $assets = [];
+
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+        foreach ($assetKeys as $assetKey) {
+            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+                foreach ($config[$assetKey] as $item) {
+                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
+                        $id = $item['id'] ?? $item['url'];
+                        $nameStr = $item['name'] ?? $item['url'] ?? $id;
+                        $assets[$id] = $nameStr;
+                    }
+                }
+            }
+        }
+
+        if (!empty($config['assets']) && is_array($config['assets'])) {
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                    foreach ($config['assets'][$assetKey] as $item) {
+                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
+                            $id = $item['id'] ?? $item['url'];
+                            $nameStr = $item['name'] ?? $item['url'] ?? $id;
+                            $assets[$id] = $nameStr;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $assets;
+    }
+
     public static function getNodeSchema(string $name, string $label): array
     {
         return [
@@ -66,47 +105,7 @@ class KpiFormBuilder
                         }),
                     Select::make($name . '_asset_filter')
                         ->label('Asset Filter (Optional)')
-                        ->options(function (Get $get) use ($name) {
-                            $channel = $get($name . '_channel');
-                            if (!$channel) return [];
-                            $tenant = Filament::getTenant();
-                            $config = $tenant->sync_config[$channel] ?? [];
-                            $assets = [
-                                '__DYNAMIC__' => 'Dynamic (Passed at runtime)'
-                            ];
-                            
-                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
-
-                            // 1. Direct lists
-                            foreach ($assetKeys as $assetKey) {
-                                if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
-                                    foreach ($config[$assetKey] as $item) {
-                                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                                            $id = $item['id'] ?? $item['url'];
-                                            $nameStr = $item['name'] ?? $item['url'] ?? $id;
-                                            $assets[$id] = $nameStr;
-                                        }
-                                    }
-                                }
-                            }
-
-                            // 2. Nested under 'assets'
-                            if (!empty($config['assets']) && is_array($config['assets'])) {
-                                foreach ($assetKeys as $assetKey) {
-                                    if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
-                                        foreach ($config['assets'][$assetKey] as $item) {
-                                            if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                                                $id = $item['id'] ?? $item['url'];
-                                                $nameStr = $item['name'] ?? $item['url'] ?? $id;
-                                                $assets[$id] = $nameStr;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            return $assets;
-                        })
+                        ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                 ])->columns(3)
         ];
     }

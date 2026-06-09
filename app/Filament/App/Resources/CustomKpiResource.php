@@ -71,53 +71,102 @@
                     //
                 ])
                 ->actions([
-                    Tables\Actions\Action::make('execute')
-                        ->label('Execute KPI')
-                        ->icon('heroicon-o-play')
-                        ->color('success')
-                        ->form(fn(CustomKpi $record) => [
-                            Forms\Components\DatePicker::make('start_date')
-                                ->label('Start Date')
-                                ->default($record->filters['_ui_state']['start_date'] ?? now()->subMonth()->format('Y-m-d')),
-                            Forms\Components\DatePicker::make('end_date')
-                                ->label('End Date')
-                                ->default($record->filters['_ui_state']['end_date'] ?? now()->format('Y-m-d')),
-                            Forms\Components\Select::make('granularity')
+                Tables\Actions\Action::make('execute')
+                    ->label('Execute KPI')
+                    ->icon('heroicon-o-play')
+                    ->color('success')
+                    ->form(function (CustomKpi $record) {
+                        $uiState = $record->filters['_ui_state'] ?? [];
+                        $fields = [];
+
+                        if (empty($uiState['start_date'])) {
+                            $fields[] = Forms\Components\DatePicker::make('start_date')
+                                ->label('Start Date');
+                        }
+                        if (empty($uiState['end_date'])) {
+                            $fields[] = Forms\Components\DatePicker::make('end_date')
+                                ->label('End Date');
+                        }
+                        if (empty($uiState['granularity'])) {
+                            $fields[] = Forms\Components\Select::make('granularity')
                                 ->label('Granularity')
                                 ->options([
-                                    'daily'   => 'Daily',
-                                    'weekly'  => 'Weekly',
+                                    'daily' => 'Daily',
+                                    'weekly' => 'Weekly',
                                     'monthly' => 'Monthly',
-                                ])
-                                ->default($record->filters['_ui_state']['granularity'] ?? 'daily'),
-                        ])
-                        ->action(function (array $data, CustomKpi $record, RemoteEngineService $service) {
-                            $uiState = $record->filters['_ui_state'] ?? [];
-                            $payload = KpiPayloadBuilder::build(
-                                $record->calculation_type,
-                                $uiState,
-                                $data
-                            );
+                                ]);
+                        }
 
-                            $project = \Filament\Facades\Filament::getTenant();
-                            $result = $service->computeKpi($project, $payload);
-
-                            if (isset($result['success']) && $result['success']) {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Execution Successful')
-                                    ->success()
-                                    ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">'.json_encode($result['data'] ?? [], JSON_PRETTY_PRINT).'</pre>')
-                                    ->persistent()
-                                    ->send();
-                            } else {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Execution Failed')
-                                    ->danger()
-                                    ->body($result['message'] ?? 'An unknown error occurred.')
-                                    ->persistent()
-                                    ->send();
+                        if (empty($uiState['dependent_asset_filter'])) {
+                            $channel = $uiState['dependent_channel'] ?? null;
+                            $options = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
+                            if (!empty($options)) {
+                                $fields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
+                                    ->label('Dependent Asset Filter')
+                                    ->options($options);
                             }
-                        }),
+                        }
+
+                        $independents = $uiState['independent_variables'] ?? [];
+                        $idx = 0;
+                        foreach ($independents as $var) {
+                            if (empty($var['independent_asset_filter'])) {
+                                $channel = $var['independent_channel'] ?? null;
+                                $options = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
+                                if (!empty($options)) {
+                                    $fields[] = Forms\Components\Select::make("runtime_independent_asset_filter_{$idx}")
+                                        ->label('Variable ' . ($idx + 1) . ' - Asset Filter')
+                                        ->options($options);
+                                }
+                            }
+                            $idx++;
+                        }
+
+                        return $fields;
+                    })
+                    ->action(function (array $data, CustomKpi $record, RemoteEngineService $service) {
+                        $uiState = $record->filters['_ui_state'] ?? [];
+
+                        if (!empty($data['runtime_dependent_asset_filter'])) {
+                            $uiState['dependent_asset_filter'] = $data['runtime_dependent_asset_filter'];
+                        }
+
+                        $independents = $uiState['independent_variables'] ?? [];
+                        $idx = 0;
+                        foreach ($independents as $key => $var) {
+                            $field = "runtime_independent_asset_filter_{$idx}";
+                            if (!empty($data[$field])) {
+                                $independents[$key]['independent_asset_filter'] = $data[$field];
+                            }
+                            $idx++;
+                        }
+                        $uiState['independent_variables'] = $independents;
+
+                        $payload = KpiPayloadBuilder::build(
+                            $record->calculation_type,
+                            $uiState,
+                            $data
+                        );
+
+                        $project = \Filament\Facades\Filament::getTenant();
+                        $result = $service->computeKpi($project, $payload);
+
+                        if (isset($result['success']) && $result['success']) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Execution Successful')
+                                ->success()
+                                ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">'.json_encode($result['data'] ?? [], JSON_PRETTY_PRINT).'</pre>')
+                                ->persistent()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Execution Failed')
+                                ->danger()
+                                ->body($result['message'] ?? 'An unknown error occurred.')
+                                ->persistent()
+                                ->send();
+                        }
+                    }),
                     Tables\Actions\Action::make('debugPayload')
                         ->label('Debug Payload')
                         ->icon('heroicon-o-code-bracket')
