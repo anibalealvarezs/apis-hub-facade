@@ -498,5 +498,14 @@
     "Available Global Quota": "Cuota Global Disponible",
     "Max Assets": "Máximo de Activos",
     "Selected Count": "Cantidad Seleccionada",
-    "Are you sure you want to proceed?": "¿Estás seguro de que quieres continuar?"
+    "Are you sure you want to proceed?": "¿Estás seguro de que quieres continuar?",
+    "KPI Reference": "Referencia de KPIs",
+    "Predefined KPI Templates": "Plantillas de KPIs Predefinidos",
+    "Predefined KPI templates are quick-start configurations that automatically resolve channel placeholders based on your project's synced accounts. Select one from the \"Quick Start Template\" dropdown when creating a new Custom KPI.": "Las plantillas de KPIs predefinidos son configuraciones de inicio rápido que resuelven automáticamente los marcadores de canal según las cuentas sincronizadas de tu proyecto. Selecciona una del menú desplegable \"Plantilla de Inicio Rápido\" al crear un nuevo KPI Personalizado.",
+    "Type": "Tipo",
+    "How it works": "Cómo funciona",
+    "Required Channel Tags": "Tags de Canal Requeridos",
+    "Template AST Structure": "Estructura AST de la Plantilla",
+    "Channel Placeholders": "Marcadores de Canal",
+    "Templates use placeholders like <code>__SPENDABLE_CHANNEL_1__</code> that are automatically resolved to your actual synced channels based on the channel's capability tags. For example, a channel tagged as <code>spendable</code> will be used to fill <code>__SPENDABLE_CHANNEL_*__</code> placeholders. Only channels you have synced and enabled will be considered.": "Las plantillas usan marcadores como <code>__SPENDABLE_CHANNEL_1__</code> que se resuelven automáticamente a tus canales sincronizados según sus tags de capacidad. Por ejemplo, un canal etiquetado como <code>spendable</code> se usará para llenar los marcadores <code>__SPENDABLE_CHANNEL_*__</code>. Solo se considerarán los canales que hayas sincronizado y habilitado."
 }
