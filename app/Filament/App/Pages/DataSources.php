@@ -389,7 +389,7 @@ class DataSources extends Page
         return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
-                ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
+                ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || ! auth()->user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
                     $response = $service->fetchAssets($tenant, $this->activeChannel);
@@ -661,7 +661,7 @@ class DataSources extends Page
         return $form
             ->schema($this->getDynamicSchema())
             ->statePath('data')
-            ->disabled($isSuspended);
+            ->disabled($isSuspended || ! auth()->user()->can('manage_channels'));
     }
 
     protected function getDynamicSchema(): array
@@ -722,11 +722,12 @@ class DataSources extends Page
                 ->description(__('Filter which assets should be synced based on their names. Leave blank to sync all.'))
                 ->schema([
                     \Filament\Forms\Components\Actions::make([
-                        \Filament\Forms\Components\Actions\Action::make('generateRegex')
-                            ->label(__('Regex Generator'))
-                            ->icon('heroicon-m-beaker')
-                            ->color('primary')
-                            ->form([
+                            \Filament\Forms\Components\Actions\Action::make('generateRegex')
+                                ->label(__('Regex Generator'))
+                                ->icon('heroicon-m-beaker')
+                                ->color('primary')
+                                ->visible(fn () => auth()->user()->can('manage_channels'))
+                                ->form([
                                 \Filament\Forms\Components\Repeater::make('strings')
                                     ->label(__('Strings to Match'))
                                     ->helperText(__('Add multiple strings to generate a regex that matches any of them.'))
@@ -1144,6 +1145,7 @@ class DataSources extends Page
                         ->label(__('Select All'))
                         ->button()
                         ->color('success')
+                        ->visible(fn () => auth()->user()->can('manage_channels'))
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
                             $state = $component->getState();
                             $newState = collect($state)->map(function ($item) {
@@ -1159,6 +1161,7 @@ class DataSources extends Page
                         ->label(__('Deselect All'))
                         ->button()
                         ->color('danger')
+                        ->visible(fn () => auth()->user()->can('manage_channels'))
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
                             $state = $component->getState();
                             $newState = collect($state)->map(function ($item) {
@@ -1301,6 +1304,7 @@ class DataSources extends Page
                         ->label('Select All')
                         ->button()
                         ->color('success')
+                        ->visible(fn () => auth()->user()->can('manage_channels'))
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
                             $state = $component->getState();
                             $newState = collect($state)->map(function ($item) {
@@ -1316,6 +1320,7 @@ class DataSources extends Page
                         ->label('Deselect All')
                         ->button()
                         ->color('danger')
+                        ->visible(fn () => auth()->user()->can('manage_channels'))
                         ->action(function (\Filament\Forms\Components\Repeater $component) {
                             $state = $component->getState();
                             $newState = collect($state)->map(function ($item) {

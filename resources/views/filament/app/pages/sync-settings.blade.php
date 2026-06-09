@@ -82,7 +82,7 @@
         {{ $this->form }}
 
         <div class="mt-6">
-            <x-filament::button type="submit" :disabled="!$tenant->is_active || $tenant->billing_status === 'suspended'">
+            <x-filament::button type="submit" :disabled="!$tenant->is_active || $tenant->billing_status === 'suspended' || !auth()->user()->can('edit_preferences')">
                 {{ __('Save & Push Changes') }}
             </x-filament::button>
         </div>
