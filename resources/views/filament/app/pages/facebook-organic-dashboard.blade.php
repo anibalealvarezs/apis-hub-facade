@@ -10,10 +10,10 @@
 
             --fb-text-main: #111827;
             --fb-text-dim: #6b7280;
-            --fb-bg-card: rgba(0,0,0,0.02);
-            --fb-border: rgba(0,0,0,0.06);
-            --fb-bg-hover: rgba(0,0,0,0.04);
-            --fb-bg-active: rgba(0,0,0,0.06);
+            --fb-bg-card: rgba(0, 0, 0, 0.02);
+            --fb-border: rgba(0, 0, 0, 0.06);
+            --fb-bg-hover: rgba(0, 0, 0, 0.04);
+            --fb-bg-active: rgba(0, 0, 0, 0.06);
             --fb-chart-grid: rgba(0, 0, 0, 0.05);
             --fb-chart-ticks: #6b7280;
         }
@@ -21,17 +21,20 @@
         .dark {
             --fb-text-main: #ffffff;
             --fb-text-dim: #94a3b8;
-            --fb-bg-card: rgba(255,255,255,0.03);
-            --fb-border: rgba(255,255,255,0.05);
-            --fb-bg-hover: rgba(255,255,255,0.05);
-            --fb-bg-active: rgba(255,255,255,0.08);
+            --fb-bg-card: rgba(255, 255, 255, 0.03);
+            --fb-border: rgba(255, 255, 255, 0.05);
+            --fb-bg-hover: rgba(255, 255, 255, 0.05);
+            --fb-bg-active: rgba(255, 255, 255, 0.08);
             --fb-chart-grid: rgba(255, 255, 255, 0.05);
             --fb-chart-ticks: #94a3b8;
         }
 
         .fb-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+
         .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
+
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
+
         .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-fb {
@@ -46,17 +49,25 @@
             position: relative;
             overflow: hidden;
         }
+
         .card-stat-fb:hover { transform: translateY(-3px); background: var(--fb-bg-hover); }
+
         .card-stat-fb.active { opacity: 1; border-bottom-color: var(--color); background: var(--fb-bg-active); }
 
         .fb-label { font-size: 0.65rem; font-weight: 700; color: var(--fb-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+
         .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--fb-text-main); line-height: 1.2; }
 
         .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
+
         .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+
         .dark .trend-up { color: #4ade80; }
+
         .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
         .dark .trend-down { color: #f87171; }
+
         .trend-neutral { background: var(--fb-border); color: var(--fb-text-dim); }
 
         .chart-container-fb {
@@ -78,24 +89,37 @@
         }
 
         .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); }
+
         .tab-fb { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
+
         .tab-fb:hover { background: var(--fb-bg-hover); }
+
         .tab-fb.active { background: var(--fb-bg-card); color: var(--fb-reach); border-bottom: 2px solid var(--fb-reach); }
 
         .fb-table { width: 100%; border-collapse: collapse; text-align: left; }
+
         .fb-table th { padding: 12px 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--fb-text-dim); font-weight: 700; border-bottom: 1px solid var(--fb-border); }
+
         .fb-table td { padding: 12px 20px; border-bottom: 1px solid var(--fb-border); vertical-align: middle; font-size: 0.9rem; color: var(--fb-text-main); }
+
         .fb-table tr:hover { background: var(--fb-bg-hover); }
 
         .metric-cell { text-align: right; }
 
         .fb-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--fb-border); background: var(--fb-bg-active); }
+
         .fb-pagination-text { font-size: 0.875rem; color: var(--fb-text-dim); }
+
         .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
+
         .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 12px; outline: none; }
+
         .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
+
         .fb-pagination-btn:hover:not(:disabled) { background: var(--fb-bg-hover); }
+
         .fb-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         .fb-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--fb-bg-card); border-radius: 4px; font-size: 0.75rem; }
 
         /* Custom Modal Layout */
@@ -108,6 +132,7 @@
             width: 100%;
             max-width: 1152px; /* max-w-6xl */
         }
+
         .fb-modal-left {
             width: 380px;
             flex-shrink: 0;
@@ -116,6 +141,7 @@
             min-height: 0;
             border-right: 1px solid var(--fb-border);
         }
+
         .fb-modal-right {
             flex: 1;
             display: flex;
@@ -124,6 +150,7 @@
             min-height: 0;
             overflow-y: auto;
         }
+
         .fb-modal-image-container {
             width: 100%;
             height: 280px;
@@ -135,16 +162,19 @@
             border-radius: 0.5rem;
             margin-bottom: 1rem;
         }
+
         @media (max-width: 768px) {
             .fb-modal-panel {
                 flex-direction: column;
             }
+
             .fb-modal-left {
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid var(--fb-border);
             }
         }
+
         .fb-close-btn {
             position: absolute;
             top: 15px;
@@ -163,11 +193,13 @@
             transition: all 0.2s ease;
             backdrop-filter: blur(4px);
         }
+
         .fb-close-btn:hover {
             background: var(--fb-bg-hover);
             color: var(--fb-text-main);
             transform: scale(1.05);
         }
+
         .fb-modal-image-container {
             width: 100%;
             aspect-ratio: 4/5;
@@ -184,13 +216,17 @@
         <div class="fb-header-row">
             <div>
                 <h1 class="fb-header-title">
-                    <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]" />
+                    <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
                     {{ __('Meta Pages & Instagram Accounts') }}
                 </h1>
             </div>
             <div class="fb-header-controls">
-                <button type="button" @click="forceRefresh()" class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm" :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }" :disabled="isSummaryLoading || isChartLoading || isTableLoading">
-                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }" />
+                <button type="button" @click="forceRefresh()"
+                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
+                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
+                        :disabled="isSummaryLoading || isChartLoading || isTableLoading">
+                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
+                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
                     <span>{{ __('Update') }}</span>
                 </button>
                 <div class="relative">
@@ -208,23 +244,30 @@
                         @endif
                     </select>
                 </div>
-                <input type="date" x-model.lazy="dateStart" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
-                <input type="date" x-model.lazy="dateEnd" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
+                <input type="date" x-model.lazy="dateStart"
+                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
+                <input type="date" x-model.lazy="dateEnd"
+                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
             </div>
         </div>
 
-        <div class="tab-nav-fb" style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; border: 1px solid var(--fb-border);">
-            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''" @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
-            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''" @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+        <div class="tab-nav-fb"
+             style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; border: 1px solid var(--fb-border);">
+            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
+                 @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
+            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
+                 @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
         </div>
 
         <div class="metrics-grid-fb relative">
-            <div x-show="isSummaryLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            <div x-show="isSummaryLoading"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
 
             <template x-for="metric in dynamicMetrics" :key="metric.key">
-                <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''" @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
+                <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
+                     @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
                     <div class="fb-label" x-text="metric.label"></div>
                     <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
@@ -236,30 +279,36 @@
         </div>
 
         <div class="chart-container-fb relative w-full" wire:ignore>
-            <div x-show="isChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            <div x-show="isChartLoading"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
             <div style="position: relative; width: 100%; height: 100%; display: block;">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 
-        <div x-show="hasAnyFilters" class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm" style="display: none;" x-transition>
+        <div x-show="hasAnyFilters"
+             class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm"
+             style="display: none;" x-transition>
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <x-heroicon-o-funnel class="w-4 h-4 text-primary-500" />
+                    <x-heroicon-o-funnel class="w-4 h-4 text-primary-500"/>
                     {{ __('Active Breakdown Filters') }}
                 </h3>
-                <button @click="clearFilters()" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">{{ __('Clear All') }}</button>
+                <button @click="clearFilters()"
+                        class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">{{ __('Clear All') }}</button>
             </div>
             <div class="flex flex-wrap gap-2">
                 <template x-for="tab in availableBreakdownTabs" :key="tab.value + '_chips'">
                     <template x-for="val in (activeFilters[tab.value] || [])" :key="tab.value + '_' + val">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                             <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab.label + ':'"></span>
                             <span x-text="val"></span>
-                            <button @click.stop="toggleFilter(tab.value, val)" class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
-                                <x-heroicon-m-x-mark class="w-3 h-3" />
+                            <button @click.stop="toggleFilter(tab.value, val)"
+                                    class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
+                                <x-heroicon-m-x-mark class="w-3 h-3"/>
                             </button>
                         </span>
                     </template>
@@ -268,58 +317,68 @@
         </div>
 
         <div class="fb-table-container relative" style="margin-bottom: 20px;">
-            <div x-show="isBreakdownTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            <div x-show="isBreakdownTableLoading"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
 
             <div class="tab-nav-fb">
                 <template x-for="tab in availableBreakdownTabs" :key="tab.value">
-                    <div class="tab-fb" :class="activeBreakdownTab === tab.value ? 'active' : ''" @click="setBreakdownTab(tab.value)" x-text="tab.label"></div>
+                    <div class="tab-fb" :class="activeBreakdownTab === tab.value ? 'active' : ''"
+                         @click="setBreakdownTab(tab.value)" x-text="tab.label"></div>
                 </template>
             </div>
 
-            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="(availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab)?.label || '').toUpperCase()"></h3>
+            <div
+                class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
+                    x-text="(availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab)?.label || '').toUpperCase()"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
                 <div class="relative w-full max-w-md">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
-                    <input type="text" x-model.debounce.300ms="breakdownSearchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="{{ __('Filter breakdown values...') }}">
+                    <input type="text" x-model.debounce.300ms="breakdownSearchQuery"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           placeholder="{{ __('Filter breakdown values...') }}">
                 </div>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="fb-table" style="min-width: 800px;">
                     <thead>
-                        <tr>
-                            <th>{{ __('BREAKDOWN VALUE') }}</th>
-                            <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
-                                <th class="metric-cell cursor-pointer" @click="sortBreakdownBy(metricKey)">
-                                    <span x-text="getMetricInfo(metricKey).label"></span>
-                                    <span x-show="breakdownSortCol === metricKey" x-text="breakdownSortDir === 'desc' ? '↓' : '↑'"></span>
-                                </th>
-                            </template>
-                        </tr>
+                    <tr>
+                        <th>{{ __('BREAKDOWN VALUE') }}</th>
+                        <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
+                            <th class="metric-cell cursor-pointer" @click="sortBreakdownBy(metricKey)">
+                                <span x-text="getMetricInfo(metricKey).label"></span>
+                                <span x-show="breakdownSortCol === metricKey"
+                                      x-text="breakdownSortDir === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
                     </thead>
                     <tbody>
-                        <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
-                            <tr @click="toggleFilter(activeBreakdownTab, row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150" :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
-                                <td class="font-medium">
-                                    <div class="flex items-center gap-2">
-                                        <span x-text="row.name"></span>
-                                    </div>
-                                </td>
-                                <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
-                                    <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
-                                </template>
-                            </tr>
-                        </template>
-                        <tr x-show="paginatedBreakdownData.length === 0">
-                            <td :colspan="availableBreakdownMetrics.length + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No breakdown data available.') }}</td>
+                    <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
+                        <tr @click="toggleFilter(activeBreakdownTab, row.id)"
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150"
+                            :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
+                            <td class="font-medium">
+                                <div class="flex items-center gap-2">
+                                    <span x-text="row.name"></span>
+                                </div>
+                            </td>
+                            <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
+                                <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
+                            </template>
                         </tr>
+                    </template>
+                    <tr x-show="paginatedBreakdownData.length === 0">
+                        <td :colspan="availableBreakdownMetrics.length + 1"
+                            class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No breakdown data available.') }}</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -337,68 +396,84 @@
                 </div>
                 <div class="flex items-center gap-6">
                     <span class="fb-pagination-text">
-                        {{ __('Page') }} <strong x-text="breakdownCurrentPage"></strong> {{ __('of') }} <strong x-text="breakdownTotalPages"></strong>
+                        {{ __('Page') }} <strong x-text="breakdownCurrentPage"></strong> {{ __('of') }} <strong
+                            x-text="breakdownTotalPages"></strong>
                         <span class="fb-pagination-badge">(<span x-text="breakdownDataRaw.length"></span> {{ __('results') }})</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevBreakdownPage()" :disabled="breakdownCurrentPage === 1" class="fb-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextBreakdownPage()" :disabled="breakdownCurrentPage === breakdownTotalPages" class="fb-pagination-btn">{{ __('Next') }}</button>
+                        <button @click="prevBreakdownPage()" :disabled="breakdownCurrentPage === 1"
+                                class="fb-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="nextBreakdownPage()" :disabled="breakdownCurrentPage === breakdownTotalPages"
+                                class="fb-pagination-btn">{{ __('Next') }}</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="fb-table-container relative">
-            <div x-show="isTableLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+            <div x-show="isTableLoading"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
 
-            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase" x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
+            <div
+                class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
+                    x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
                 <div class="relative w-full max-w-md">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
-                    <input type="text" x-model.debounce.300ms="searchQuery" class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2" placeholder="{{ __('Filter rows...') }}">
+                    <input type="text" x-model.debounce.300ms="searchQuery"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="fb-table" style="min-width: 800px;">
                     <thead>
-                        <tr>
-                            <th>{{ __('POST / PAGE') }}</th>
-                            <template x-for="metricKey in availableTableMetrics" :key="metricKey">
-                                <th class="metric-cell cursor-pointer" @click="sortBy(metricKey)">
-                                    <span x-text="getMetricInfo(metricKey).label"></span>
-                                    <span x-show="sortCol === metricKey" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                                </th>
-                            </template>
-                        </tr>
+                    <tr>
+                        <th>{{ __('POST / PAGE') }}</th>
+                        <template x-for="metricKey in availableTableMetrics" :key="metricKey">
+                            <th class="metric-cell cursor-pointer" @click="sortBy(metricKey)">
+                                <span x-text="getMetricInfo(metricKey).label"></span>
+                                <span x-show="sortCol === metricKey" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
                     </thead>
                     <tbody>
-                        <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                            <tr @click="openPostModal(row.id)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
-                                <td class="font-medium">
-                                    <div class="flex items-center gap-2">
-                                        <a x-show="row.permalink_url || row.permalink" :href="row.permalink_url || row.permalink" target="_blank" class="text-primary-500 hover:text-primary-700">
-                                            <x-heroicon-o-link class="w-4 h-4" />
-                                        </a>
-                                        <span x-text="row.name"></span>
-                                    </div>
-                                    <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase" x-text="row.media_type"></div>
-                                </td>
-                                <template x-for="metricKey in availableTableMetrics" :key="metricKey">
-                                    <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
-                                </template>
-                            </tr>
-                        </template>
-                        <tr x-show="paginatedTableData.length === 0">
-                            <td :colspan="availableTableMetrics.length + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
+                        <tr @click="openPostModal(row.id)"
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
+                            <td class="font-medium">
+                                <div class="flex items-center gap-2">
+                                    <a x-show="row.permalink_url || row.permalink"
+                                       :href="row.permalink_url || row.permalink" target="_blank"
+                                       class="text-primary-500 hover:text-primary-700">
+                                        <x-heroicon-o-link class="w-4 h-4"/>
+                                    </a>
+                                    <span x-text="row.name"></span>
+                                </div>
+                                <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase"
+                                     x-text="row.media_type"></div>
+                            </td>
+                            <template x-for="metricKey in availableTableMetrics" :key="metricKey">
+                                <td class="metric-cell"
+                                    x-text="(metricKey === 'ig_reels_avg_watch_time') || (metricKey === 'ig_reels_video_view_total_time')
+                                    ? formatReelsAvgTimeFromMicroseconds(row[metricKey] || 0)
+                                    : formatNumber(row[metricKey] || 0)"></td>
+                            </template>
                         </tr>
+                    </template>
+                    <tr x-show="paginatedTableData.length === 0">
+                        <td :colspan="availableTableMetrics.length + 1"
+                            class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -416,12 +491,15 @@
                 </div>
                 <div class="flex items-center gap-6">
                     <span class="fb-pagination-text">
-                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong x-text="totalPages"></strong>
+                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong
+                            x-text="totalPages"></strong>
                         <span class="fb-pagination-badge">(<span x-text="tableDataRaw.length"></span> {{ __('results') }})</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1" class="fb-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="fb-pagination-btn">{{ __('Next') }}</button>
+                        <button @click="prevPage()" :disabled="currentPage === 1"
+                                class="fb-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages"
+                                class="fb-pagination-btn">{{ __('Next') }}</button>
                     </div>
                 </div>
             </div>
@@ -459,48 +537,67 @@
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="fb-close-btn">
                         <span class="sr-only">Close</span>
-                        <x-heroicon-o-x-mark style="width: 20px; height: 20px;" />
+                        <x-heroicon-o-x-mark style="width: 20px; height: 20px;"/>
                     </button>
 
                     <!-- Left Side: Post Preview -->
                     <div class="fb-modal-left bg-gray-50 dark:bg-gray-800 p-6 relative h-full overflow-y-auto">
 
-                        <div x-show="isPostDetailsLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
-                            <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+                        <div x-show="isPostDetailsLoading"
+                             class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
+                            <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                         </div>
 
-                        <div x-show="!isPostDetailsLoading && selectedPostData" class="flex flex-col flex-1 min-h-0 h-full">
+                        <div x-show="!isPostDetailsLoading && selectedPostData"
+                             class="flex flex-col flex-1 min-h-0 h-full">
                             <!-- Media Preview -->
                             <div class="fb-modal-image-container bg-gray-200 dark:bg-gray-950 relative shadow-inner">
-                                <template x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
+                                <template
+                                    x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
                                     <div class="w-full h-full relative">
-                                        <template x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
-                                            <video :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" controls preload="metadata" class="w-full h-full object-contain bg-black" muted loop playsinline></video>
+                                        <template
+                                            x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
+                                            <video
+                                                :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture"
+                                                controls preload="metadata"
+                                                class="w-full h-full object-contain bg-black" muted loop
+                                                playsinline></video>
                                         </template>
-                                        <template x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
-                                            <img :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture" class="w-full h-full object-contain" alt="Post preview" />
+                                        <template
+                                            x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
+                                            <img
+                                                :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture"
+                                                class="w-full h-full object-contain" alt="Post preview"/>
                                         </template>
                                     </div>
                                 </template>
-                                <template x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
+                                <template
+                                    x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
                                     <div class="text-gray-400 dark:text-gray-500 flex flex-col items-center">
-                                        <x-heroicon-o-photo class="w-12 h-12 mb-2 opacity-50" />
+                                        <x-heroicon-o-photo class="w-12 h-12 mb-2 opacity-50"/>
                                         <span class="text-xs uppercase font-medium">{{ __('No Media') }}</span>
                                     </div>
                                 </template>
-                                <div x-show="selectedPostData?.data?.media_type" class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm" x-text="selectedPostData?.data?.media_type"></div>
+                                <div x-show="selectedPostData?.data?.media_type"
+                                     class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm"
+                                     x-text="selectedPostData?.data?.media_type"></div>
                             </div>
 
                             <!-- Post Details -->
                             <div class="flex-1 pr-2 mb-4">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium" x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
-                                <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line break-words" x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium"
+                                     x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
+                                <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line break-words"
+                                     x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
                             </div>
 
                             <!-- Actions -->
                             <div class="shrink-0 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" target="_blank" x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink" class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
-                                    <x-heroicon-o-link class="w-4 h-4 mr-2" />
+                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink"
+                                   target="_blank"
+                                   x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink"
+                                   class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
+                                    <x-heroicon-o-link class="w-4 h-4 mr-2"/>
                                     {{ __('View Original Post') }}
                                 </a>
                             </div>
@@ -514,9 +611,11 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
                         </div>
 
-                        <div class="relative flex-1 min-h-0 min-w-0" style="position: relative; height: 100%; width: 100%;">
-                            <div x-show="isPostChartLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
-                                <x-filament::loading-indicator class="h-8 w-8 text-primary-500" />
+                        <div class="relative flex-1 min-h-0 min-w-0"
+                             style="position: relative; height: 100%; width: 100%;">
+                            <div x-show="isPostChartLoading"
+                                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
+                                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                             </div>
                             <canvas x-ref="postCanvas"></canvas>
                         </div>
@@ -530,364 +629,592 @@
         (function () {
             const registerFboDashboard = () => {
                 Alpine.data('fboDashboard', () => {
-                return {
-                    tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
-                    accounts: @json($selectedAccounts),
-                    dateStart: '{{ $dateStart }}',
-                    dateEnd: '{{ $dateEnd }}',
-                    activeTab: 'facebook',
-                    activeBreakdownTab: 'reaction_type',
+                    return {
+                        tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
+                        accounts: @json($selectedAccounts),
+                        dateStart: '{{ $dateStart }}',
+                        dateEnd: '{{ $dateEnd }}',
+                        activeTab: 'facebook',
+                        activeBreakdownTab: 'reaction_type',
 
-                    isSummaryLoading: false,
-                    isChartLoading: false,
-                    isTableLoading: false,
-                    isBreakdownTableLoading: false,
+                        isSummaryLoading: false,
+                        isChartLoading: false,
+                        isTableLoading: false,
+                        isBreakdownTableLoading: false,
 
-                    summaryRaw: {},
-                    previousRaw: {},
-                    chartDataRaw: [],
-                    tableDataRaw: [],
-                    breakdownDataRaw: [],
-                    isPostModalOpen: false,
-                    selectedPost: null,
-                    isPostChartLoading: false,
-                    postChartDataRaw: [],
-                    selectedPostData: null,
-                    isPostDetailsLoading: false,
+                        summaryRaw: {},
+                        previousRaw: {},
+                        chartDataRaw: [],
+                        tableDataRaw: [],
+                        breakdownDataRaw: [],
+                        isPostModalOpen: false,
+                        selectedPost: null,
+                        isPostChartLoading: false,
+                        postChartDataRaw: [],
+                        selectedPostData: null,
+                        isPostDetailsLoading: false,
 
-                    metricDictionary: {
-                        'reach': { label: '{{ __('Reach') }}', color: 'var(--fb-reach)' },
-                        'total_interactions': { label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)' },
-                        'interactions': { label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)' },
-                        'likes': { label: '{{ __('Likes') }}', color: 'var(--fb-likes)' },
-                        'comments': { label: '{{ __('Comments') }}', color: 'var(--fb-comments)' },
-                        'views': { label: '{{ __('Views') }}', color: 'var(--fb-views)' },
-                        'content_views': { label: '{{ __('Content Views') }}', color: 'var(--fb-views)' },
-                        'video_views': { label: '{{ __('Video Views') }}', color: 'var(--fb-views)' },
-                        'page_views_total': { label: '{{ __('Page Views') }}', color: 'var(--fb-views)' },
-                        'follows_and_unfollows': { label: '{{ __('Follows') }}', color: 'var(--fb-follows)' },
-                        'follows': { label: '{{ __('Follows') }}', color: 'var(--fb-follows)' },
-                        'profile_views': { label: '{{ __('Profile Views') }}', color: '#14b8a6' },
-                        'website_clicks': { label: '{{ __('Website Clicks') }}', color: '#06b6d4' },
-                        'profile_links_taps': { label: '{{ __('Link Taps') }}', color: '#3b82f6' },
-                        'saves': { label: '{{ __('Saves') }}', color: '#8b5cf6' },
-                        'saved': { label: '{{ __('Saved') }}', color: '#8b5cf6' },
-                        'shares': { label: '{{ __('Shares') }}', color: '#d946ef' },
-                        'replies': { label: '{{ __('Replies') }}', color: '#f43f5e' },
-                        'accounts_engaged': { label: '{{ __('Accounts Engaged') }}', color: '#f97316' },
-                        'post_clicks': { label: '{{ __('Post Clicks') }}', color: '#06b6d4' },
-                        'post_video_avg_time_watched': { label: '{{ __('Avg Watch Time') }}', color: '#eab308' },
-                        'ig_reels_avg_watch_time': { label: '{{ __('Reels Avg Time') }}', color: '#eab308' },
-                        'ig_reels_video_view_total_time': { label: '{{ __('Reels Total Time') }}', color: '#f59e0b' },
-                        'profile_activity': { label: '{{ __('Profile Activity') }}', color: '#10b981' },
-                        'profile_visits': { label: '{{ __('Profile Visits') }}', color: '#14b8a6' },
-                        'reposts': { label: '{{ __('Reposts') }}', color: '#8b5cf6' }
-                    },
+                        metricDictionary: {
+                            'reach': {label: '{{ __('Reach') }}', color: 'var(--fb-reach)'},
+                            'total_interactions': {label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)'},
+                            'interactions': {label: '{{ __('Interactions') }}', color: 'var(--fb-interactions)'},
+                            'likes': {label: '{{ __('Likes') }}', color: 'var(--fb-likes)'},
+                            'comments': {label: '{{ __('Comments') }}', color: 'var(--fb-comments)'},
+                            'views': {label: '{{ __('Views') }}', color: 'var(--fb-views)'},
+                            'content_views': {label: '{{ __('Content Views') }}', color: 'var(--fb-views)'},
+                            'video_views': {label: '{{ __('Video Views') }}', color: 'var(--fb-views)'},
+                            'page_views_total': {label: '{{ __('Page Views') }}', color: 'var(--fb-views)'},
+                            'follows_and_unfollows': {label: '{{ __('Follows') }}', color: 'var(--fb-follows)'},
+                            'follows': {label: '{{ __('Follows') }}', color: 'var(--fb-follows)'},
+                            'profile_views': {label: '{{ __('Profile Views') }}', color: '#14B8A6'},
+                            'website_clicks': {label: '{{ __('Website Clicks') }}', color: '#06B6D4'},
+                            'profile_links_taps': {label: '{{ __('Link Taps') }}', color: '#3B82F6'},
+                            'saves': {label: '{{ __('Saves') }}', color: '#8B5CF6'},
+                            'saved': {label: '{{ __('Saved') }}', color: '#8B5CF6'},
+                            'shares': {label: '{{ __('Shares') }}', color: '#D946EF'},
+                            'replies': {label: '{{ __('Replies') }}', color: '#F43F5E'},
+                            'accounts_engaged': {label: '{{ __('Accounts Engaged') }}', color: '#F97316'},
+                            'post_clicks': {label: '{{ __('Post Clicks') }}', color: '#06B6D4'},
+                            'post_video_avg_time_watched': {label: '{{ __('Avg Watch Time') }}', color: '#EAB308'},
+                            'ig_reels_avg_watch_time': {label: '{{ __('Reels Avg Time') }}', color: '#EAB308'},
+                            'ig_reels_video_view_total_time': {label: '{{ __('Reels Total Time') }}', color: '#F59E0B'},
+                            'profile_activity': {label: '{{ __('Profile Activity') }}', color: '#10B981'},
+                            'profile_visits': {label: '{{ __('Profile Visits') }}', color: '#14B8A6'},
+                            'reposts': {label: '{{ __('Reposts') }}', color: '#8B5CF6'}
+                        },
 
-                    activeMetrics: {},
+                        activeMetrics: {},
 
-                    searchQuery: '',
-                    sortCol: 'reach',
-                    sortDir: 'desc',
-                    breakdownSearchQuery: '',
-                    breakdownSortCol: 'reach',
-                    breakdownSortDir: 'desc',
-                    activeFilters: {
-                        reaction_type: [],
-                        contact_button_type: [],
-                        follow_type: [],
-                        media_product_type: [],
-                    },
+                        searchQuery: '',
+                        sortCol: 'reach',
+                        sortDir: 'desc',
+                        breakdownSearchQuery: '',
+                        breakdownSortCol: 'reach',
+                        breakdownSortDir: 'desc',
+                        activeFilters: {
+                            reaction_type: [],
+                            contact_button_type: [],
+                            follow_type: [],
+                            media_product_type: [],
+                        },
 
-                    currentPage: 1,
-                    pageSize: 10,
-                    breakdownCurrentPage: 1,
-                    breakdownPageSize: 10,
+                        currentPage: 1,
+                        pageSize: 10,
+                        breakdownCurrentPage: 1,
+                        breakdownPageSize: 10,
 
-                    initDashboard() {
-                        const boot = () => {
-                            this.initChart();
+                        initDashboard() {
+                            const boot = () => {
+                                this.initChart();
 
-                            this.$watch('accounts', () => this.fetchAll());
-                            this.$watch('dateStart', () => this.fetchAll());
-                            this.$watch('dateEnd', () => this.fetchAll());
-                            this.$watch('pageSize', () => { this.currentPage = 1; });
-                            this.$watch('breakdownPageSize', () => { this.breakdownCurrentPage = 1; });
+                                this.$watch('accounts', () => this.fetchAll());
+                                this.$watch('dateStart', () => this.fetchAll());
+                                this.$watch('dateEnd', () => this.fetchAll());
+                                this.$watch('pageSize', () => {
+                                    this.currentPage = 1;
+                                });
+                                this.$watch('breakdownPageSize', () => {
+                                    this.breakdownCurrentPage = 1;
+                                });
 
-                            if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
-                                this.fetchAll();
-                            }
-                        };
+                                if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
+                                    this.fetchAll();
+                                }
+                            };
 
-                        if (window.Chart && window.dayjs) {
-                            boot();
-                        } else {
-                            Promise.all([
-                                window.importChartJs(),
-                                window.importDayJs()
-                            ]).then(([chartModule, dayjsModule]) => {
-                                window.Chart = chartModule.default;
-                                window.dayjs = dayjsModule.default;
+                            if (window.Chart && window.dayjs) {
                                 boot();
-                            }).catch(err => console.error("Failed to load charting libraries", err));
-                        }
-                    },
-
-                    setTab(tab) {
-                        this.activeTab = tab;
-                        this.currentPage = 1;
-                        this.breakdownCurrentPage = 1;
-                        this.searchQuery = '';
-                        this.breakdownSearchQuery = '';
-                        this.activeMetrics = {};
-                        this.chartDataRaw = [];
-                        this.tableDataRaw = [];
-                        this.breakdownDataRaw = [];
-                        this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
-                        Object.keys(this.activeFilters).forEach((key) => {
-                            if (!this.availableBreakdownTabs.some(tab => tab.value === key)) {
-                                this.activeFilters[key] = [];
+                            } else {
+                                Promise.all([
+                                    window.importChartJs(),
+                                    window.importDayJs()
+                                ]).then(([chartModule, dayjsModule]) => {
+                                    window.Chart = chartModule.default;
+                                    window.dayjs = dayjsModule.default;
+                                    boot();
+                                }).catch(err => console.error("Failed to load charting libraries", err));
                             }
-                        });
-                        this.clearCache();
-                        this.fetchAll(); // Refetch everything since metrics depend on the tab
-                    },
+                        },
 
-                    syncActiveMetricsFromSummary() {
-                        Object.keys(this.summaryRaw || {}).forEach((key) => {
-                            if (this.activeMetrics[key] === undefined) {
-                                this.activeMetrics[key] = true;
-                            }
-                        });
-                    },
+                        setTab(tab) {
+                            this.activeTab = tab;
+                            this.currentPage = 1;
+                            this.breakdownCurrentPage = 1;
+                            this.searchQuery = '';
+                            this.breakdownSearchQuery = '';
+                            this.activeMetrics = {};
+                            this.chartDataRaw = [];
+                            this.tableDataRaw = [];
+                            this.breakdownDataRaw = [];
+                            this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
+                            Object.keys(this.activeFilters).forEach((key) => {
+                                if (!this.availableBreakdownTabs.some(tab => tab.value === key)) {
+                                    this.activeFilters[key] = [];
+                                }
+                            });
+                            this.clearCache();
+                            this.fetchAll(); // Refetch everything since metrics depend on the tab
+                        },
 
-                    syncActiveMetricsFromChart() {
-                        const firstRow = Array.isArray(this.chartDataRaw) ? this.chartDataRaw[0] : null;
-                        if (!firstRow || typeof firstRow !== 'object') {
-                            return;
-                        }
+                        syncActiveMetricsFromSummary() {
+                            Object.keys(this.summaryRaw || {}).forEach((key) => {
+                                if (this.activeMetrics[key] === undefined) {
+                                    this.activeMetrics[key] = true;
+                                }
+                            });
+                        },
 
-                        const ignoredKeys = ['daily', 'date', 'metric_date', 'id', 'name'];
-                        Object.keys(firstRow).forEach((rawKey) => {
-                            if (ignoredKeys.includes(rawKey)) {
+                        syncActiveMetricsFromChart() {
+                            const firstRow = Array.isArray(this.chartDataRaw) ? this.chartDataRaw[0] : null;
+                            if (!firstRow || typeof firstRow !== 'object') {
                                 return;
                             }
 
-                            const key = rawKey.startsWith('trend_total_') ? rawKey.replace('trend_total_', '') : rawKey;
-                            if (this.activeMetrics[key] === undefined) {
-                                this.activeMetrics[key] = true;
-                            }
-                        });
-                    },
-
-                    get availableBreakdownTabs() {
-                        return this.activeTab === 'facebook'
-                            ? [{ value: 'reaction_type', label: '{{ __('Reaction type') }}' }]
-                            : [
-                                { value: 'contact_button_type', label: '{{ __('Contact button type') }}' },
-                                { value: 'follow_type', label: '{{ __('Follow type') }}' },
-                                { value: 'media_product_type', label: '{{ __('Media product type') }}' },
-                            ];
-                    },
-
-                    get hasAnyFilters() {
-                        return Object.values(this.activeFilters).some((values) => Array.isArray(values) && values.length > 0);
-                    },
-
-                    setBreakdownTab(tab) {
-                        this.activeBreakdownTab = tab;
-                        this.breakdownCurrentPage = 1;
-                        this.fetchBreakdownTable();
-                    },
-
-                    toggleFilter(tab, value) {
-                        if (!tab || value === undefined || value === null || value === '') {
-                            return;
-                        }
-
-                        if (!Array.isArray(this.activeFilters[tab])) {
-                            this.activeFilters[tab] = [];
-                        }
-
-                        const normalized = String(value);
-                        const existingIndex = this.activeFilters[tab].indexOf(normalized);
-                        if (existingIndex >= 0) {
-                            this.activeFilters[tab].splice(existingIndex, 1);
-                        } else {
-                            this.activeFilters[tab].push(normalized);
-                        }
-
-                        this.currentPage = 1;
-                        this.fetchAll();
-                    },
-
-                    isFilterActive(tab, value) {
-                        const values = this.activeFilters[tab] || [];
-                        return values.includes(String(value));
-                    },
-
-                    clearFilters() {
-                        Object.keys(this.activeFilters).forEach((key) => {
-                            this.activeFilters[key] = [];
-                        });
-                        this.currentPage = 1;
-                        this.fetchAll();
-                    },
-
-                    forceRefresh() {
-                        this.clearCache();
-                        this.fetchAll();
-                    },
-
-                    clearCache() {
-                        const accountKey = this.accounts.join('_');
-                        const prefix = `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}`;
-                        Object.keys(sessionStorage).forEach(key => {
-                            if (key.startsWith(prefix)) {
-                                sessionStorage.removeItem(key);
-                            }
-                        });
-                    },
-
-                    getCacheKey(endpoint) {
-                        const accountKey = this.accounts.join('_');
-                        const breakdownTab = this.activeBreakdownTab || 'none';
-                        const filtersKey = Object.keys(this.activeFilters)
-                            .sort()
-                            .map(key => `${key}:${(this.activeFilters[key] || []).join(',')}`)
-                            .join('|');
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v4`;
-                    },
-
-                    getPostsCacheKey() {
-                        const accountKey = this.accounts.join('_');
-                        return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_posts_${this.activeTab}_v2`;
-                    },
-
-                    async fetchAll() {
-                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        await this.fetchSummary();
-                        await this.fetchChart();
-                        await this.fetchTable();
-                        await this.fetchBreakdownTable();
-                    },
-
-                    openPostModal(postId) {
-                        const normalizedPostId = String(postId ?? '').trim();
-                        if (!normalizedPostId) {
-                            return;
-                        }
-
-                        this.selectedPost = { id: normalizedPostId };
-                        this.isPostModalOpen = true;
-                        // Prevent body scrolling
-                        document.body.style.overflow = 'hidden';
-
-                        // Wait for modal to render to get canvas, then init chart
-                        this.$nextTick(() => {
-                            if (!this.getPostChartInstance()) {
-                                this.initPostChart();
-                            }
-                            this.fetchPostChart(normalizedPostId);
-                            this.fetchPostDetails(normalizedPostId);
-                        });
-                    },
-
-                    closePostModal() {
-                        this.isPostModalOpen = false;
-                        this.selectedPost = null;
-                        this.selectedPostData = null;
-                        document.body.style.overflow = '';
-                        const chart = this.getPostChartInstance();
-                        if (chart) {
-                            chart.destroy();
-                            this.setPostChartInstance(null);
-                        }
-                    },
-
-                    getPostChartInstance() {
-                        return this.$refs.postCanvas?._chartInstance || null;
-                    },
-
-                    setPostChartInstance(instance) {
-                        if (this.$refs.postCanvas) {
-                            this.$refs.postCanvas._chartInstance = instance;
-                        }
-                    },
-
-                    initPostChart() {
-                        const ctx = this.$refs.postCanvas.getContext('2d');
-
-                        Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#6b7280';
-                        Chart.defaults.font.family = "'Inter', sans-serif";
-
-                        const chart = new Chart(ctx, {
-                            type: 'line',
-                            data: { labels: [], datasets: [] },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: { mode: 'index', intersect: false },
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'bottom',
-                                        labels: {
-                                            usePointStyle: true,
-                                            boxWidth: 8,
-                                        }
-                                    },
-                                    tooltip: {
-                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                        titleColor: '#fff',
-                                        bodyColor: '#e2e8f0',
-                                        borderColor: 'rgba(255,255,255,0.1)',
-                                        borderWidth: 1,
-                                        padding: 12,
-                                        boxPadding: 6,
-                                        usePointStyle: true
-                                    }
-                                },
-                                scales: {
-                                    x: { grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: 'var(--fb-chart-ticks)' } },
-                                    y: {
-                                        beginAtZero: true,
-                                        grid: { color: 'var(--fb-chart-grid)', drawBorder: false },
-                                        ticks: { display: false },
-                                    }
+                            const ignoredKeys = ['daily', 'date', 'metric_date', 'id', 'name'];
+                            Object.keys(firstRow).forEach((rawKey) => {
+                                if (ignoredKeys.includes(rawKey)) {
+                                    return;
                                 }
+
+                                const key = rawKey.startsWith('trend_total_') ? rawKey.replace('trend_total_', '') : rawKey;
+                                if (this.activeMetrics[key] === undefined) {
+                                    this.activeMetrics[key] = true;
+                                }
+                            });
+                        },
+
+                        get availableBreakdownTabs() {
+                            return this.activeTab === 'facebook'
+                                ? [{value: 'reaction_type', label: '{{ __('Reaction type') }}'}]
+                                : [
+                                    {value: 'contact_button_type', label: '{{ __('Contact button type') }}'},
+                                    {value: 'follow_type', label: '{{ __('Follow type') }}'},
+                                    {value: 'media_product_type', label: '{{ __('Media product type') }}'},
+                                ];
+                        },
+
+                        get hasAnyFilters() {
+                            return Object.values(this.activeFilters).some((values) => Array.isArray(values) && values.length > 0);
+                        },
+
+                        setBreakdownTab(tab) {
+                            this.activeBreakdownTab = tab;
+                            this.breakdownCurrentPage = 1;
+                            this.fetchBreakdownTable();
+                        },
+
+                        toggleFilter(tab, value) {
+                            if (!tab || value === undefined || value === null || value === '') {
+                                return;
                             }
-                        });
 
-                        this.setPostChartInstance(chart);
-                        this.applyPostChartTheme();
-                    },
+                            if (!Array.isArray(this.activeFilters[tab])) {
+                                this.activeFilters[tab] = [];
+                            }
 
-                    applyPostChartTheme() {
-                        const chart = this.getPostChartInstance();
-                        if (!chart) return;
+                            const normalized = String(value);
+                            const existingIndex = this.activeFilters[tab].indexOf(normalized);
+                            if (existingIndex >= 0) {
+                                this.activeFilters[tab].splice(existingIndex, 1);
+                            } else {
+                                this.activeFilters[tab].push(normalized);
+                            }
 
-                        const isDark = document.documentElement.classList.contains('dark');
-                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
-                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || (isDark ? '#94a3b8' : '#6b7280');
+                            this.currentPage = 1;
+                            this.fetchAll();
+                        },
 
-                        chart.options.plugins.legend.labels.color = cssTicksColor;
-                        chart.options.scales.x.grid.color = cssGridColor;
-                        chart.options.scales.x.ticks.color = cssTicksColor;
-                        chart.options.scales.y.grid.color = cssGridColor;
-                        chart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.96)';
-                        chart.options.plugins.tooltip.titleColor = isDark ? '#fff' : '#111827';
-                        chart.options.plugins.tooltip.bodyColor = isDark ? '#e2e8f0' : '#1f2937';
-                    },
+                        isFilterActive(tab, value) {
+                            const values = this.activeFilters[tab] || [];
+                            return values.includes(String(value));
+                        },
 
-                    async fetchPostChart(postId) {
-                        this.isPostChartLoading = true;
-                        try {
+                        clearFilters() {
+                            Object.keys(this.activeFilters).forEach((key) => {
+                                this.activeFilters[key] = [];
+                            });
+                            this.currentPage = 1;
+                            this.fetchAll();
+                        },
+
+                        forceRefresh() {
+                            this.clearCache();
+                            this.fetchAll();
+                        },
+
+                        clearCache() {
+                            const accountKey = this.accounts.join('_');
+                            const prefix = `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}`;
+                            Object.keys(sessionStorage).forEach(key => {
+                                if (key.startsWith(prefix)) {
+                                    sessionStorage.removeItem(key);
+                                }
+                            });
+                        },
+
+                        getCacheKey(endpoint) {
+                            const accountKey = this.accounts.join('_');
+                            const breakdownTab = this.activeBreakdownTab || 'none';
+                            const filtersKey = Object.keys(this.activeFilters)
+                                .sort()
+                                .map(key => `${key}:${(this.activeFilters[key] || []).join(',')}`)
+                                .join('|');
+                            return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v4`;
+                        },
+
+                        getPostsCacheKey() {
+                            const accountKey = this.accounts.join('_');
+                            return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_posts_${this.activeTab}_v2`;
+                        },
+
+                        async fetchAll() {
+                            if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                            await this.fetchSummary();
+                            await this.fetchChart();
+                            await this.fetchTable();
+                            await this.fetchBreakdownTable();
+                        },
+
+                        openPostModal(postId) {
                             const normalizedPostId = String(postId ?? '').trim();
                             if (!normalizedPostId) {
                                 return;
                             }
 
+                            this.selectedPost = {id: normalizedPostId};
+                            this.isPostModalOpen = true;
+                            // Prevent body scrolling
+                            document.body.style.overflow = 'hidden';
+
+                            // Wait for modal to render to get canvas, then init chart
+                            this.$nextTick(() => {
+                                if (!this.getPostChartInstance()) {
+                                    this.initPostChart();
+                                }
+                                this.fetchPostChart(normalizedPostId);
+                                this.fetchPostDetails(normalizedPostId);
+                            });
+                        },
+
+                        closePostModal() {
+                            this.isPostModalOpen = false;
+                            this.selectedPost = null;
+                            this.selectedPostData = null;
+                            document.body.style.overflow = '';
+                            const chart = this.getPostChartInstance();
+                            if (chart) {
+                                chart.destroy();
+                                this.setPostChartInstance(null);
+                            }
+                        },
+
+                        getPostChartInstance() {
+                            return this.$refs.postCanvas?._chartInstance || null;
+                        },
+
+                        setPostChartInstance(instance) {
+                            if (this.$refs.postCanvas) {
+                                this.$refs.postCanvas._chartInstance = instance;
+                            }
+                        },
+
+                        initPostChart() {
+                            const ctx = this.$refs.postCanvas.getContext('2d');
+
+                            Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#94A3B8' : '#6B7280';
+                            Chart.defaults.font.family = "'Inter', sans-serif";
+
+                            const chart = new Chart(ctx, {
+                                type: 'line',
+                                data: {labels: [], datasets: []},
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {mode: 'index', intersect: false},
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'bottom',
+                                            labels: {
+                                                usePointStyle: true,
+                                                boxWidth: 8,
+                                            }
+                                        },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                            titleColor: '#FFF',
+                                            bodyColor: '#E2E8F0',
+                                            borderColor: 'rgba(255,255,255,0.1)',
+                                            borderWidth: 1,
+                                            padding: 12,
+                                            boxPadding: 6,
+                                            usePointStyle: true
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
+                                            ticks: {color: 'var(--fb-chart-ticks)'}
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
+                                            ticks: {display: false},
+                                        }
+                                    }
+                                }
+                            });
+
+                            this.setPostChartInstance(chart);
+                            this.applyPostChartTheme();
+                        },
+
+                        applyPostChartTheme() {
+                            const chart = this.getPostChartInstance();
+                            if (!chart) return;
+
+                            const isDark = document.documentElement.classList.contains('dark');
+                            const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
+                            const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || (isDark ? '#94A3B8' : '#6B7280');
+
+                            chart.options.plugins.legend.labels.color = cssTicksColor;
+                            chart.options.scales.x.grid.color = cssGridColor;
+                            chart.options.scales.x.ticks.color = cssTicksColor;
+                            chart.options.scales.y.grid.color = cssGridColor;
+                            chart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.96)';
+                            chart.options.plugins.tooltip.titleColor = isDark ? '#FFF' : '#111827';
+                            chart.options.plugins.tooltip.bodyColor = isDark ? '#E2E8F0' : '#1F2937';
+                        },
+
+                        async fetchPostChart(postId) {
+                            this.isPostChartLoading = true;
+                            try {
+                                const normalizedPostId = String(postId ?? '').trim();
+                                if (!normalizedPostId) {
+                                    return;
+                                }
+
+                                const payload = {
+                                    tenant: this.tenantId,
+                                    account: this.accounts,
+                                    dateStart: this.dateStart,
+                                    dateEnd: this.dateEnd,
+                                    activeTab: this.activeTab,
+                                    activeFilters: this.activeFilters,
+                                    postId: normalizedPostId
+                                };
+
+                                const response = await fetch('/api/fbo/chart', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                const data = await response.json();
+                                this.postChartDataRaw = data.chart || [];
+                                this.renderPostChart();
+                            } catch (err) {
+                                console.error('Failed to fetch post chart:', err);
+                            } finally {
+                                this.isPostChartLoading = false;
+                            }
+                        },
+
+                        async fetchPostDetails(postId) {
+                            this.isPostDetailsLoading = true;
+                            this.selectedPostData = null;
+                            try {
+                                const payload = {
+                                    tenant: this.tenantId,
+                                    postId: postId
+                                };
+
+                                const response = await fetch('/api/fbo/post', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                const data = await response.json();
+                                this.selectedPostData = data.post || null;
+                            } catch (err) {
+                                console.error('Failed to fetch post details:', err);
+                            } finally {
+                                this.isPostDetailsLoading = false;
+                            }
+                        },
+
+                        renderPostChart() {
+                            const chart = this.getPostChartInstance();
+                            if (!chart) return;
+
+                            const raw = this.postChartDataRaw;
+                            if (!raw || raw.length === 0) {
+                                chart.data.labels = [];
+                                chart.data.datasets = [];
+                                chart.update();
+                                return;
+                            }
+
+                            raw.sort((a, b) => new Date(a.daily) - new Date(b.daily));
+                            const labels = raw.map(row => dayjs(row.daily).format('MMM D'));
+
+                            const datasets = [];
+                            const addDataset = (key) => {
+                                const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
+                                if (dataPoints.some(v => v > 0)) {
+                                    const info = this.getMetricInfo(key);
+                                    const resolvedColor = this.getComputedColor(info.color);
+                                    datasets.push({
+                                        label: info.label,
+                                        data: dataPoints,
+                                        borderColor: resolvedColor,
+                                        backgroundColor: resolvedColor + '20',
+                                        borderWidth: 2,
+                                        pointRadius: 0,
+                                        pointHoverRadius: 6,
+                                        fill: true,
+                                        tension: 0.4
+                                    });
+                                }
+                            };
+
+                            // Dynamically add datasets for any metric returned in the chart payload
+                            if (raw.length > 0) {
+                                const firstRow = raw[0];
+                                const ignoredKeys = ['daily', 'id', 'name'];
+                                const metricsInChart = Object.keys(firstRow).filter(k => !ignoredKeys.includes(k));
+
+                                metricsInChart.forEach(key => {
+                                    // If trend_total_ is prefixed, extract the real key
+                                    const actualKey = key.startsWith('trend_total_') ? key.replace('trend_total_', '') : key;
+                                    addDataset(actualKey);
+                                });
+                            }
+
+                            chart.data.labels = labels;
+                            chart.data.datasets = datasets;
+                            this.applyPostChartTheme();
+                            chart.update();
+                        },
+
+                        async fetchSummary() {
+                            if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                            const cacheKey = this.getCacheKey('summary');
+
+                            if (sessionStorage.getItem(cacheKey)) {
+                                const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                                this.summaryRaw = data.summary || {};
+                                this.previousRaw = data.previous || {};
+                                this.syncActiveMetricsFromSummary();
+                                return;
+                            }
+
+                            this.isSummaryLoading = true;
+                            try {
+                                const response = await fetch('/api/fbo/summary', this.getFetchOptions());
+                                const data = await response.json();
+                                if (!data.error) {
+                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.summaryRaw = data.summary || {};
+                                    this.previousRaw = data.previous || {};
+                                    this.syncActiveMetricsFromSummary();
+                                }
+                            } catch (error) {
+                                console.error('Error fetching summary:', error);
+                            } finally {
+                                this.isSummaryLoading = false;
+                            }
+                        },
+
+                        async fetchChart() {
+                            if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                            const cacheKey = this.getCacheKey('chart');
+
+                            if (sessionStorage.getItem(cacheKey)) {
+                                const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                                this.chartDataRaw = data.chart || [];
+                                this.syncActiveMetricsFromChart();
+                                this.updateChart();
+                                return;
+                            }
+
+                            this.isChartLoading = true;
+                            try {
+                                const response = await fetch('/api/fbo/chart', this.getFetchOptions());
+                                const data = await response.json();
+                                if (!data.error) {
+                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.chartDataRaw = data.chart || [];
+                                    this.syncActiveMetricsFromChart();
+                                    this.updateChart();
+                                }
+                            } catch (error) {
+                                console.error('Error fetching chart:', error);
+                            } finally {
+                                this.isChartLoading = false;
+                            }
+                        },
+
+                        async fetchTable() {
+                            if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                            const cacheKey = this.getPostsCacheKey();
+
+                            if (sessionStorage.getItem(cacheKey)) {
+                                const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                                this.tableDataRaw = data.table || [];
+                                return;
+                            }
+
+                            this.isTableLoading = true;
+                            try {
+                                const response = await fetch('/api/fbo/table', this.getFetchOptions({tableMode: 'posts'}));
+                                const data = await response.json();
+                                if (!data.error) {
+                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.tableDataRaw = data.table || [];
+                                    this.currentPage = 1;
+                                }
+                            } catch (error) {
+                                console.error('Error fetching table:', error);
+                            } finally {
+                                this.isTableLoading = false;
+                            }
+                        },
+
+                        async fetchBreakdownTable() {
+                            if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
+                            const cacheKey = this.getCacheKey('breakdown_table');
+
+                            if (sessionStorage.getItem(cacheKey)) {
+                                const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                                this.breakdownDataRaw = data.table || [];
+                                return;
+                            }
+
+                            this.isBreakdownTableLoading = true;
+                            try {
+                                const response = await fetch('/api/fbo/table', this.getFetchOptions({tableMode: 'breakdown'}));
+                                const data = await response.json();
+                                if (!data.error) {
+                                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                                    this.breakdownDataRaw = data.table || [];
+                                    this.breakdownCurrentPage = 1;
+                                }
+                            } catch (error) {
+                                console.error('Error fetching breakdown table:', error);
+                            } finally {
+                                this.isBreakdownTableLoading = false;
+                            }
+                        },
+
+                        getFetchOptions(extraPayload = {}) {
                             const payload = {
                                 tenant: this.tenantId,
                                 account: this.accounts,
@@ -895,567 +1222,392 @@
                                 dateEnd: this.dateEnd,
                                 activeTab: this.activeTab,
                                 activeFilters: this.activeFilters,
-                                postId: normalizedPostId
+                                breakdownTab: this.activeBreakdownTab || null,
+                                ...extraPayload
                             };
 
-                            const response = await fetch('/api/fbo/chart', {
+                            return {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
                                 body: JSON.stringify(payload)
-                            });
+                            };
+                        },
 
-                            const data = await response.json();
-                            this.postChartDataRaw = data.chart || [];
-                            this.renderPostChart();
-                        } catch (err) {
-                            console.error('Failed to fetch post chart:', err);
-                        } finally {
-                            this.isPostChartLoading = false;
-                        }
-                    },
+                        getMetricInfo(key) {
+                            return this.metricDictionary[key] || {
+                                label: key.replace(/_/g, ' ').toUpperCase(),
+                                color: '#6B7280'
+                            };
+                        },
 
-                    async fetchPostDetails(postId) {
-                        this.isPostDetailsLoading = true;
-                        this.selectedPostData = null;
-                        try {
-                            const payload = {
-                                tenant: this.tenantId,
-                                postId: postId
+                        getComputedColor(colorVal) {
+                            if (typeof colorVal === 'string' && colorVal.startsWith('var(')) {
+                                const match = colorVal.match(/var\(([^)]+)\)/);
+                                if (match) {
+                                    return getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim() || '#6B7280';
+                                }
+                            }
+                            return colorVal;
+                        },
+
+                        get dynamicMetrics() {
+                            const metrics = [];
+                            const calcVariance = (current, prev) => {
+                                if (!prev || Number(prev) === 0) return 0;
+                                return ((Number(current) - Number(prev)) / Number(prev)) * 100;
                             };
 
-                            const response = await fetch('/api/fbo/post', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify(payload)
-                            });
+                            for (const key in this.summaryRaw) {
+                                // Initialize activeMetrics to true for newly discovered keys
+                                if (this.activeMetrics[key] === undefined) {
+                                    this.activeMetrics[key] = true;
+                                }
 
-                            const data = await response.json();
-                            this.selectedPostData = data.post || null;
-                        } catch (err) {
-                            console.error('Failed to fetch post details:', err);
-                        } finally {
-                            this.isPostDetailsLoading = false;
-                        }
-                    },
-
-                    renderPostChart() {
-                        const chart = this.getPostChartInstance();
-                        if (!chart) return;
-
-                        const raw = this.postChartDataRaw;
-                        if (!raw || raw.length === 0) {
-                            chart.data.labels = [];
-                            chart.data.datasets = [];
-                            chart.update();
-                            return;
-                        }
-
-                        raw.sort((a, b) => new Date(a.daily) - new Date(b.daily));
-                        const labels = raw.map(row => dayjs(row.daily).format('MMM D'));
-
-                        const datasets = [];
-                        const addDataset = (key) => {
-                            const dataPoints = raw.map(row => parseFloat(row[key] || row['trend_total_' + key] || 0));
-                            if (dataPoints.some(v => v > 0)) {
+                                const val = this.summaryRaw[key] || 0;
+                                const prev = this.previousRaw[key] || 0;
                                 const info = this.getMetricInfo(key);
-                                const resolvedColor = this.getComputedColor(info.color);
-                                datasets.push({
+                                metrics.push({
+                                    key: key,
                                     label: info.label,
-                                    data: dataPoints,
-                                    borderColor: resolvedColor,
-                                    backgroundColor: resolvedColor + '20',
-                                    borderWidth: 2,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6,
-                                    fill: true,
-                                    tension: 0.4
+                                    color: info.color,
+                                    value: val,
+                                    prevValue: prev,
+                                    variance: calcVariance(val, prev)
                                 });
                             }
-                        };
+                            return metrics;
+                        },
 
-                        // Dynamically add datasets for any metric returned in the chart payload
-                        if (raw.length > 0) {
-                            const firstRow = raw[0];
-                            const ignoredKeys = ['daily', 'id', 'name'];
-                            const metricsInChart = Object.keys(firstRow).filter(k => !ignoredKeys.includes(k));
+                        get availableTableMetrics() {
+                            if (this.tableDataRaw.length === 0) return [];
+                            const firstRow = this.tableDataRaw[0];
+                            const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
+                            return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
+                        },
 
-                            metricsInChart.forEach(key => {
-                                // If trend_total_ is prefixed, extract the real key
-                                const actualKey = key.startsWith('trend_total_') ? key.replace('trend_total_', '') : key;
-                                addDataset(actualKey);
-                            });
-                        }
+                        get availableBreakdownMetrics() {
+                            if (this.breakdownDataRaw.length === 0) return [];
+                            const firstRow = this.breakdownDataRaw[0];
+                            const ignoredKeys = ['id', 'name', 'daily'];
+                            return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
+                        },
 
-                        chart.data.labels = labels;
-                        chart.data.datasets = datasets;
-                        this.applyPostChartTheme();
-                        chart.update();
-                    },
-
-                    async fetchSummary() {
-                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('summary');
-
-                        if (sessionStorage.getItem(cacheKey)) {
-                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                            this.summaryRaw = data.summary || {};
-                            this.previousRaw = data.previous || {};
-                            this.syncActiveMetricsFromSummary();
-                            return;
-                        }
-
-                        this.isSummaryLoading = true;
-                        try {
-                            const response = await fetch('/api/fbo/summary', this.getFetchOptions());
-                            const data = await response.json();
-                            if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                                this.summaryRaw = data.summary || {};
-                                this.previousRaw = data.previous || {};
-                                this.syncActiveMetricsFromSummary();
-                            }
-                        } catch (error) {
-                            console.error('Error fetching summary:', error);
-                        } finally {
-                            this.isSummaryLoading = false;
-                        }
-                    },
-
-                    async fetchChart() {
-                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('chart');
-
-                        if (sessionStorage.getItem(cacheKey)) {
-                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                            this.chartDataRaw = data.chart || [];
-                            this.syncActiveMetricsFromChart();
+                        toggleMetric(key) {
+                            this.activeMetrics[key] = !this.activeMetrics[key];
                             this.updateChart();
-                            return;
-                        }
+                        },
 
-                        this.isChartLoading = true;
-                        try {
-                            const response = await fetch('/api/fbo/chart', this.getFetchOptions());
-                            const data = await response.json();
-                            if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                                this.chartDataRaw = data.chart || [];
-                                this.syncActiveMetricsFromChart();
-                                this.updateChart();
-                            }
-                        } catch (error) {
-                            console.error('Error fetching chart:', error);
-                        } finally {
-                            this.isChartLoading = false;
-                        }
-                    },
+                        getVarianceClass(val) {
+                            if (val === 0) return 'trend-neutral';
+                            return val > 0 ? 'trend-up' : 'trend-down';
+                        },
 
-                    async fetchTable() {
-                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getPostsCacheKey();
+                        getVarianceIcon(val) {
+                            if (val === 0) return '-';
+                            return val > 0 ? '↑' : '↓';
+                        },
 
-                        if (sessionStorage.getItem(cacheKey)) {
-                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                            this.tableDataRaw = data.table || [];
-                            return;
-                        }
+                        formatVariance(val) {
+                            if (val === 0) return '0%';
+                            return Math.abs(val).toFixed(1) + '%';
+                        },
 
-                        this.isTableLoading = true;
-                        try {
-                            const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'posts' }));
-                            const data = await response.json();
-                            if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                                this.tableDataRaw = data.table || [];
-                                this.currentPage = 1;
-                            }
-                        } catch (error) {
-                            console.error('Error fetching table:', error);
-                        } finally {
-                            this.isTableLoading = false;
-                        }
-                    },
+                        initChart() {
+                            const ctx = this.$refs.canvas.getContext('2d');
 
-                    async fetchBreakdownTable() {
-                        if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-                        const cacheKey = this.getCacheKey('breakdown_table');
-
-                        if (sessionStorage.getItem(cacheKey)) {
-                            const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                            this.breakdownDataRaw = data.table || [];
-                            return;
-                        }
-
-                        this.isBreakdownTableLoading = true;
-                        try {
-                            const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'breakdown' }));
-                            const data = await response.json();
-                            if (!data.error) {
-                                sessionStorage.setItem(cacheKey, JSON.stringify(data));
-                                this.breakdownDataRaw = data.table || [];
-                                this.breakdownCurrentPage = 1;
-                            }
-                        } catch (error) {
-                            console.error('Error fetching breakdown table:', error);
-                        } finally {
-                            this.isBreakdownTableLoading = false;
-                        }
-                    },
-
-                    getFetchOptions(extraPayload = {}) {
-                        const payload = {
-                            tenant: this.tenantId,
-                            account: this.accounts,
-                            dateStart: this.dateStart,
-                            dateEnd: this.dateEnd,
-                            activeTab: this.activeTab,
-                            activeFilters: this.activeFilters,
-                            breakdownTab: this.activeBreakdownTab || null,
-                            ...extraPayload
-                        };
-
-                        return {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(payload)
-                        };
-                    },
-
-                    getMetricInfo(key) {
-                        return this.metricDictionary[key] || { label: key.replace(/_/g, ' ').toUpperCase(), color: '#6b7280' };
-                    },
-
-                    getComputedColor(colorVal) {
-                        if (typeof colorVal === 'string' && colorVal.startsWith('var(')) {
-                            const match = colorVal.match(/var\(([^)]+)\)/);
-                            if (match) {
-                                return getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim() || '#6b7280';
-                            }
-                        }
-                        return colorVal;
-                    },
-
-                    get dynamicMetrics() {
-                        const metrics = [];
-                        const calcVariance = (current, prev) => {
-                            if (!prev || Number(prev) === 0) return 0;
-                            return ((Number(current) - Number(prev)) / Number(prev)) * 100;
-                        };
-
-                        for (const key in this.summaryRaw) {
-                            // Initialize activeMetrics to true for newly discovered keys
-                            if (this.activeMetrics[key] === undefined) {
-                                this.activeMetrics[key] = true;
-                            }
-
-                            const val = this.summaryRaw[key] || 0;
-                            const prev = this.previousRaw[key] || 0;
-                            const info = this.getMetricInfo(key);
-                            metrics.push({
-                                key: key,
-                                label: info.label,
-                                color: info.color,
-                                value: val,
-                                prevValue: prev,
-                                variance: calcVariance(val, prev)
-                            });
-                        }
-                        return metrics;
-                    },
-
-                    get availableTableMetrics() {
-                        if (this.tableDataRaw.length === 0) return [];
-                        const firstRow = this.tableDataRaw[0];
-                        const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
-                        return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
-                    },
-
-                    get availableBreakdownMetrics() {
-                        if (this.breakdownDataRaw.length === 0) return [];
-                        const firstRow = this.breakdownDataRaw[0];
-                        const ignoredKeys = ['id', 'name', 'daily'];
-                        return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
-                    },
-
-                    toggleMetric(key) {
-                        this.activeMetrics[key] = !this.activeMetrics[key];
-                        this.updateChart();
-                    },
-
-                    getVarianceClass(val) {
-                        if (val === 0) return 'trend-neutral';
-                        return val > 0 ? 'trend-up' : 'trend-down';
-                    },
-
-                    getVarianceIcon(val) {
-                        if (val === 0) return '-';
-                        return val > 0 ? '↑' : '↓';
-                    },
-
-                    formatVariance(val) {
-                        if (val === 0) return '0%';
-                        return Math.abs(val).toFixed(1) + '%';
-                    },
-
-
-                    initChart() {
-                        const ctx = this.$refs.canvas.getContext('2d');
-
-                        const config = {
-                            type: 'line',
-                            data: { labels: [], datasets: [] },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: { mode: 'index', intersect: false },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                        titleColor: '#fff',
-                                        bodyColor: '#e2e8f0',
-                                        borderColor: 'rgba(255,255,255,0.1)',
-                                        borderWidth: 1,
-                                        padding: 12,
-                                        boxPadding: 6,
-                                        usePointStyle: true
+                            const config = {
+                                type: 'line',
+                                data: {labels: [], datasets: []},
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {mode: 'index', intersect: false},
+                                    plugins: {
+                                        legend: {display: false},
+                                        tooltip: {
+                                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                            titleColor: '#FFF',
+                                            bodyColor: '#E2E8F0',
+                                            borderColor: 'rgba(255,255,255,0.1)',
+                                            borderWidth: 1,
+                                            padding: 12,
+                                            boxPadding: 6,
+                                            usePointStyle: true
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
+                                            ticks: {color: 'var(--fb-chart-ticks)'}
+                                        },
+                                        yReach: {
+                                            type: 'linear',
+                                            position: 'left',
+                                            display: false,
+                                            grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
+                                            ticks: {color: '#10B981'}
+                                        },
+                                        yInteractions: {
+                                            type: 'linear',
+                                            position: 'right',
+                                            display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#6366F1'}
+                                        }
                                     }
-                                },
-                                scales: {
-                                    x: { grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: 'var(--fb-chart-ticks)' } },
-                                    yReach: { type: 'linear', position: 'left', display: false, grid: { color: 'var(--fb-chart-grid)', drawBorder: false }, ticks: { color: '#10b981' } },
-                                    yInteractions: { type: 'linear', position: 'right', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: { color: '#6366f1' } }
                                 }
-                            }
-                        };
-
-                        this.$refs.canvas._chartInstance = new Chart(ctx, config);
-                    },
-
-                    updateChart() {
-                        let chart = this.$refs.canvas._chartInstance;
-                        if (!chart || !this.chartDataRaw) return;
-
-                        const startDate = dayjs(this.dateStart);
-                        const endDate = dayjs(this.dateEnd);
-                        const daysDiff = endDate.diff(startDate, 'day');
-
-                        const fullDateRange = [];
-                        for (let i = 0; i <= daysDiff; i++) {
-                            fullDateRange.push(startDate.add(i, 'day').format('YYYY-MM-DD'));
-                        }
-
-                        const dataByDate = {};
-                        this.chartDataRaw.forEach(r => {
-                            if (r && (r.daily || r.date)) {
-                                const dateStr = dayjs(r.daily || r.date).format('YYYY-MM-DD');
-                                dataByDate[dateStr] = r;
-                            }
-                        });
-
-                        const paddedData = fullDateRange.map(dateStr => {
-                            let obj = { daily: dateStr };
-                            if (dataByDate[dateStr]) {
-                                const r = dataByDate[dateStr];
-                                Object.keys(this.metricDictionary).forEach(k => {
-                                    obj[k] = parseFloat(r['trend_total_' + k] || r[k] || 0);
-                                });
-                            } else {
-                                Object.keys(this.metricDictionary).forEach(k => obj[k] = 0);
-                            }
-                            return obj;
-                        });
-
-                        const labels = paddedData.map(r => dayjs(r.daily).format('MMM D'));
-                        const datasets = [];
-
-                        const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
-
-                        activeKeys.forEach(key => {
-                            const info = this.getMetricInfo(key);
-                            const data = paddedData.map(r => r[key]);
-
-                            if (data.some(v => v > 0)) {
-                                const resolvedColor = this.getComputedColor(info.color);
-                                datasets.push({
-                                    label: info.label,
-                                    data: data,
-                                    borderColor: resolvedColor,
-                                    backgroundColor: resolvedColor + '20',
-                                    borderWidth: 2,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6,
-                                    fill: true,
-                                    yAxisID: 'y' + key,
-                                    tension: 0.4
-                                });
-                            }
-                        });
-
-                        let gridDrawn = false;
-                        const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';
-                        const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || '#6b7280';
-
-                        chart.options.scales.x.grid.color = cssGridColor;
-                        chart.options.scales.x.ticks.color = cssTicksColor;
-
-                        Object.keys(chart.options.scales).forEach(scaleId => {
-                            if (scaleId !== 'x') {
-                                chart.options.scales[scaleId].display = false;
-                            }
-                        });
-
-                        activeKeys.forEach(key => {
-                            let scaleId = 'y' + key;
-                            if(!chart.options.scales[scaleId]) {
-                                chart.options.scales[scaleId] = { type: 'linear', display: false, grid: { drawOnChartArea: false, drawBorder: false }, ticks: {} };
-                            }
-
-                            const ds = datasets.find(d => d.yAxisID === scaleId);
-                            if (ds) {
-                                chart.options.scales[scaleId].display = true;
-                                if (!gridDrawn) {
-                                    chart.options.scales[scaleId].grid.drawOnChartArea = true;
-                                    chart.options.scales[scaleId].grid.color = cssGridColor;
-                                    chart.options.scales[scaleId].position = 'left';
-                                    gridDrawn = true;
-                                } else {
-                                    chart.options.scales[scaleId].grid.drawOnChartArea = false;
-                                    chart.options.scales[scaleId].position = 'right';
-                                }
-                                chart.options.scales[scaleId].ticks.color = ds.borderColor;
-                            }
-                        });
-
-                        chart.data.labels = labels;
-                        chart.data.datasets = datasets;
-                        chart.update();
-                    },
-
-                    sortBy(col) {
-                        if (this.sortCol === col) {
-                            this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
-                        } else {
-                            this.sortCol = col;
-                            this.sortDir = 'desc';
-                        }
-                        this.currentPage = 1;
-                    },
-
-                    sortBreakdownBy(col) {
-                        if (this.breakdownSortCol === col) {
-                            this.breakdownSortDir = this.breakdownSortDir === 'desc' ? 'asc' : 'desc';
-                        } else {
-                            this.breakdownSortCol = col;
-                            this.breakdownSortDir = 'desc';
-                        }
-                        this.breakdownCurrentPage = 1;
-                    },
-
-                    get sortedTableData() {
-                        let data = [...this.tableDataRaw];
-
-                        if (this.searchQuery && this.searchQuery.trim() !== '') {
-                            const query = this.searchQuery.toLowerCase().trim();
-                            data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
-                        }
-
-                        return data.sort((a, b) => {
-                            const getValue = (row, field) => {
-                                if (field === 'interactions') return Number(row.total_interactions || row.interactions || 0);
-                                if (field === 'views') return Number(row.views || row.video_views || row.page_views_total || row.ig_reels_video_view_total_time || 0);
-                                if (field === 'follows') return Number(row.follows || row.follows_and_unfollows || 0);
-                                return Number(row[field] || 0);
                             };
 
-                            let valA = getValue(a, this.sortCol);
-                            let valB = getValue(b, this.sortCol);
+                            this.$refs.canvas._chartInstance = new Chart(ctx, config);
+                        },
 
-                            if (isNaN(valA) || isNaN(valB)) {
-                                valA = String(a[this.sortCol] || '').toLowerCase();
-                                valB = String(b[this.sortCol] || '').toLowerCase();
+                        updateChart() {
+                            let chart = this.$refs.canvas._chartInstance;
+                            if (!chart || !this.chartDataRaw) return;
+
+                            const startDate = dayjs(this.dateStart);
+                            const endDate = dayjs(this.dateEnd);
+                            const daysDiff = endDate.diff(startDate, 'day');
+
+                            const fullDateRange = [];
+                            for (let i = 0; i <= daysDiff; i++) {
+                                fullDateRange.push(startDate.add(i, 'day').format('YYYY-MM-DD'));
                             }
 
-                            if (valA === valB) return 0;
-                            if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
-                            return valA > valB ? 1 : -1;
-                        });
-                    },
+                            const dataByDate = {};
+                            this.chartDataRaw.forEach(r => {
+                                if (r && (r.daily || r.date)) {
+                                    const dateStr = dayjs(r.daily || r.date).format('YYYY-MM-DD');
+                                    dataByDate[dateStr] = r;
+                                }
+                            });
 
-                    get totalPages() {
-                        return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
-                    },
+                            const paddedData = fullDateRange.map(dateStr => {
+                                let obj = {daily: dateStr};
+                                if (dataByDate[dateStr]) {
+                                    const r = dataByDate[dateStr];
+                                    Object.keys(this.metricDictionary).forEach(k => {
+                                        obj[k] = parseFloat(r['trend_total_' + k] || r[k] || 0);
+                                    });
+                                } else {
+                                    Object.keys(this.metricDictionary).forEach(k => obj[k] = 0);
+                                }
+                                return obj;
+                            });
 
-                    get sortedBreakdownData() {
-                        let data = [...this.breakdownDataRaw];
+                            const labels = paddedData.map(r => dayjs(r.daily).format('MMM D'));
+                            const datasets = [];
 
-                        if (this.breakdownSearchQuery && this.breakdownSearchQuery.trim() !== '') {
-                            const query = this.breakdownSearchQuery.toLowerCase().trim();
-                            data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
+                            const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+
+                            activeKeys.forEach(key => {
+                                const info = this.getMetricInfo(key);
+                                const data = paddedData.map(r => r[key]);
+
+                                if (data.some(v => v > 0)) {
+                                    const resolvedColor = this.getComputedColor(info.color);
+                                    datasets.push({
+                                        label: info.label,
+                                        data: data,
+                                        borderColor: resolvedColor,
+                                        backgroundColor: resolvedColor + '20',
+                                        borderWidth: 2,
+                                        pointRadius: 0,
+                                        pointHoverRadius: 6,
+                                        fill: true,
+                                        yAxisID: 'y' + key,
+                                        tension: 0.4
+                                    });
+                                }
+                            });
+
+                            let gridDrawn = false;
+                            const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';
+                            const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || '#6B7280';
+
+                            chart.options.scales.x.grid.color = cssGridColor;
+                            chart.options.scales.x.ticks.color = cssTicksColor;
+
+                            Object.keys(chart.options.scales).forEach(scaleId => {
+                                if (scaleId !== 'x') {
+                                    chart.options.scales[scaleId].display = false;
+                                }
+                            });
+
+                            activeKeys.forEach(key => {
+                                let scaleId = 'y' + key;
+                                if (!chart.options.scales[scaleId]) {
+                                    chart.options.scales[scaleId] = {
+                                        type: 'linear',
+                                        display: false,
+                                        grid: {drawOnChartArea: false, drawBorder: false},
+                                        ticks: {}
+                                    };
+                                }
+
+                                const ds = datasets.find(d => d.yAxisID === scaleId);
+                                if (ds) {
+                                    chart.options.scales[scaleId].display = true;
+                                    if (!gridDrawn) {
+                                        chart.options.scales[scaleId].grid.drawOnChartArea = true;
+                                        chart.options.scales[scaleId].grid.color = cssGridColor;
+                                        chart.options.scales[scaleId].position = 'left';
+                                        gridDrawn = true;
+                                    } else {
+                                        chart.options.scales[scaleId].grid.drawOnChartArea = false;
+                                        chart.options.scales[scaleId].position = 'right';
+                                    }
+                                    chart.options.scales[scaleId].ticks.color = ds.borderColor;
+                                }
+                            });
+
+                            chart.data.labels = labels;
+                            chart.data.datasets = datasets;
+                            chart.update();
+                        },
+
+                        sortBy(col) {
+                            if (this.sortCol === col) {
+                                this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
+                            } else {
+                                this.sortCol = col;
+                                this.sortDir = 'desc';
+                            }
+                            this.currentPage = 1;
+                        },
+
+                        sortBreakdownBy(col) {
+                            if (this.breakdownSortCol === col) {
+                                this.breakdownSortDir = this.breakdownSortDir === 'desc' ? 'asc' : 'desc';
+                            } else {
+                                this.breakdownSortCol = col;
+                                this.breakdownSortDir = 'desc';
+                            }
+                            this.breakdownCurrentPage = 1;
+                        },
+
+                        get sortedTableData() {
+                            let data = [...this.tableDataRaw];
+
+                            if (this.searchQuery && this.searchQuery.trim() !== '') {
+                                const query = this.searchQuery.toLowerCase().trim();
+                                data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
+                            }
+
+                            return data.sort((a, b) => {
+                                const getValue = (row, field) => {
+                                    if (field === 'interactions') return Number(row.total_interactions || row.interactions || 0);
+                                    if (field === 'views') return Number(row.views || row.video_views || row.page_views_total || row.ig_reels_video_view_total_time || 0);
+                                    if (field === 'follows') return Number(row.follows || row.follows_and_unfollows || 0);
+                                    return Number(row[field] || 0);
+                                };
+
+                                let valA = getValue(a, this.sortCol);
+                                let valB = getValue(b, this.sortCol);
+
+                                if (isNaN(valA) || isNaN(valB)) {
+                                    valA = String(a[this.sortCol] || '').toLowerCase();
+                                    valB = String(b[this.sortCol] || '').toLowerCase();
+                                }
+
+                                if (valA === valB) return 0;
+                                if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
+                                return valA > valB ? 1 : -1;
+                            });
+                        },
+
+                        get totalPages() {
+                            return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
+                        },
+
+                        get sortedBreakdownData() {
+                            let data = [...this.breakdownDataRaw];
+
+                            if (this.breakdownSearchQuery && this.breakdownSearchQuery.trim() !== '') {
+                                const query = this.breakdownSearchQuery.toLowerCase().trim();
+                                data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
+                            }
+
+                            return data.sort((a, b) => {
+                                let valA = Number(a[this.breakdownSortCol] || 0);
+                                let valB = Number(b[this.breakdownSortCol] || 0);
+
+                                if (isNaN(valA) || isNaN(valB)) {
+                                    valA = String(a[this.breakdownSortCol] || '').toLowerCase();
+                                    valB = String(b[this.breakdownSortCol] || '').toLowerCase();
+                                }
+
+                                if (valA === valB) return 0;
+                                if (this.breakdownSortDir === 'desc') return valA < valB ? 1 : -1;
+                                return valA > valB ? 1 : -1;
+                            });
+                        },
+
+                        get breakdownTotalPages() {
+                            return Math.ceil(this.sortedBreakdownData.length / this.breakdownPageSize) || 1;
+                        },
+
+                        get paginatedTableData() {
+                            const start = (this.currentPage - 1) * this.pageSize;
+                            const end = start + Number(this.pageSize);
+                            return this.sortedTableData.slice(start, end);
+                        },
+
+                        get paginatedBreakdownData() {
+                            const start = (this.breakdownCurrentPage - 1) * this.breakdownPageSize;
+                            const end = start + Number(this.breakdownPageSize);
+                            return this.sortedBreakdownData.slice(start, end);
+                        },
+
+                        nextPage() {
+                            if (this.currentPage < this.totalPages) this.currentPage++;
+                        },
+
+                        prevPage() {
+                            if (this.currentPage > 1) this.currentPage--;
+                        },
+
+                        nextBreakdownPage() {
+                            if (this.breakdownCurrentPage < this.breakdownTotalPages) this.breakdownCurrentPage++;
+                        },
+
+                        prevBreakdownPage() {
+                            if (this.breakdownCurrentPage > 1) this.breakdownCurrentPage--;
+                        },
+
+                        formatNumber(num) {
+                            if (num === undefined || num === null || isNaN(num)) return '0';
+                            return new Intl.NumberFormat('en-US').format(num);
+                        },
+
+                        formatReelsAvgTimeFromMicroseconds(metricValue) {
+                            // Handle edge cases like null, undefined, or negative values
+                            if (!metricValue || metricValue < 0) return "00:00";
+
+                            // Convert microseconds directly to total seconds (1 second = 1,000,000 microseconds)
+                            const totalSeconds = Math.floor(metricValue / 1000000);
+
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = totalSeconds % 60;
+
+                            // Pad numbers with leading zeros to ensure standard time format
+                            const paddedMinutes = String(minutes).padStart(2, '0');
+                            const paddedSeconds = String(seconds).padStart(2, '0');
+
+                            // If the average watch time exceeds an hour, include hours
+                            if (hours > 0) {
+                                const paddedHours = String(hours).padStart(2, '0');
+                                return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+                            }
+
+                            return `${paddedMinutes}:${paddedSeconds}`;
                         }
-
-                        return data.sort((a, b) => {
-                            let valA = Number(a[this.breakdownSortCol] || 0);
-                            let valB = Number(b[this.breakdownSortCol] || 0);
-
-                            if (isNaN(valA) || isNaN(valB)) {
-                                valA = String(a[this.breakdownSortCol] || '').toLowerCase();
-                                valB = String(b[this.breakdownSortCol] || '').toLowerCase();
-                            }
-
-                            if (valA === valB) return 0;
-                            if (this.breakdownSortDir === 'desc') return valA < valB ? 1 : -1;
-                            return valA > valB ? 1 : -1;
-                        });
-                    },
-
-                    get breakdownTotalPages() {
-                        return Math.ceil(this.sortedBreakdownData.length / this.breakdownPageSize) || 1;
-                    },
-
-                    get paginatedTableData() {
-                        const start = (this.currentPage - 1) * this.pageSize;
-                        const end = start + Number(this.pageSize);
-                        return this.sortedTableData.slice(start, end);
-                    },
-
-                    get paginatedBreakdownData() {
-                        const start = (this.breakdownCurrentPage - 1) * this.breakdownPageSize;
-                        const end = start + Number(this.breakdownPageSize);
-                        return this.sortedBreakdownData.slice(start, end);
-                    },
-
-                    nextPage() {
-                        if (this.currentPage < this.totalPages) this.currentPage++;
-                    },
-
-                    prevPage() {
-                        if (this.currentPage > 1) this.currentPage--;
-                    },
-
-                    nextBreakdownPage() {
-                        if (this.breakdownCurrentPage < this.breakdownTotalPages) this.breakdownCurrentPage++;
-                    },
-
-                    prevBreakdownPage() {
-                        if (this.breakdownCurrentPage > 1) this.breakdownCurrentPage--;
-                    },
-
-                    formatNumber(num) {
-                        if (num === undefined || num === null || isNaN(num)) return '0';
-                        return new Intl.NumberFormat('en-US').format(num);
                     }
-                }
-            });
+                });
             };
 
             if (window.Alpine) {
