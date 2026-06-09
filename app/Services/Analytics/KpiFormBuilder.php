@@ -222,17 +222,15 @@ class KpiFormBuilder
                     
                     Fieldset::make('Scope / Filters')
                         ->schema([
-                            DatePicker::make('start_date')->label('Start Date')->required(),
-                            DatePicker::make('end_date')->label('End Date')->required(),
+                            DatePicker::make('start_date')->label('Start Date'),
+                            DatePicker::make('end_date')->label('End Date'),
                             Select::make('granularity')
                                 ->label('Granularity')
                                 ->options([
                                     'daily' => 'Daily',
                                     'weekly' => 'Weekly',
                                     'monthly' => 'Monthly'
-                                ])
-                                ->default('daily')
-                                ->required(),
+                                ]),
                         ])->columns(3),
                 ])->columns(1)
         ];
