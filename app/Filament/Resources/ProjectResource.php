@@ -286,11 +286,6 @@ class ProjectResource extends Resource
                     ->counts('users')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('pending_invitations_count')
-                    ->label('Pending')
-                    ->counts('pendingInvitations')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('deployment_logs_count')
                     ->label('Deploys')
                     ->counts('deploymentLogs')
