@@ -39,6 +39,11 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('filament.hooks.topbar-logo'),
             )
 
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
+                fn () => view('filament.hooks.sidebar-tier-badge'),
+            )
+
             ->profile()
             ->sidebarCollapsibleOnDesktop()
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
