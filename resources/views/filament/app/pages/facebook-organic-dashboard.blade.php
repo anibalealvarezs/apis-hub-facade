@@ -989,6 +989,7 @@
                                             beginAtZero: true,
                                             grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
                                             ticks: {display: false},
+                                            min: 0
                                         }
                                     }
                                 }

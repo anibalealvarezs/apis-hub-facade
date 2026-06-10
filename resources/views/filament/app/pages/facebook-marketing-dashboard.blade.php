@@ -1174,7 +1174,8 @@
                                     chart.options.scales[scaleId] = {
                                         type: 'linear',
                                         display: false,
-                                        grid: {drawOnChartArea: false, drawBorder: false}
+                                        grid: {drawOnChartArea: false, drawBorder: false},
+                                        min: 0
                                     };
                                 }
 
