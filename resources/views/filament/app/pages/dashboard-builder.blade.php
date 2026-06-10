@@ -67,7 +67,7 @@
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item"
-                                 x-init="$el.setAttribute('gs-id', widget.id); $el.setAttribute('gs-x', widget.grid_x); $el.setAttribute('gs-y', widget.grid_y); $el.setAttribute('gs-w', widget.grid_w); $el.setAttribute('gs-h', widget.grid_h); $el.setAttribute('gs-min-w', 2); $el.setAttribute('gs-min-h', 2);">
+                                 x-init="$el.setAttribute('gs-id', widget.id); $el.setAttribute('gs-x', widget.grid_x); $el.setAttribute('gs-y', widget.grid_y); $el.setAttribute('gs-w', widget.grid_w); $el.setAttribute('gs-h', widget.grid_h); $el.setAttribute('gs-min-w', 2); $el.setAttribute('gs-min-h', 2); if (grid) grid.makeWidget($el);">
                                 <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative">
                                     {{-- Widget Header --}}
                                     <div
@@ -794,16 +794,7 @@
                     },
 
                     syncGridWithWidgets() {
-                        if (this.grid && this.widgets && this.widgets.length > 0) {
-                            this.grid.load(this.widgets.map(w => ({
-                                id: w.id,
-                                x: w.grid_x,
-                                y: w.grid_y,
-                                w: w.grid_w,
-                                h: w.grid_h,
-                                'gs-id': String(w.id),
-                            })));
-                        }
+                        // Handled natively by x-init calling grid.makeWidget($el)
                     },
 
                     // ─── Helpers ──
@@ -984,7 +975,6 @@
                     @this.addWidget(data).then(widget => {
                         this.widgets.push(widget);
                         this.showAddWidgetModal = false;
-                        this.$nextTick(() => this.syncGridWithWidgets());
                     })
                         ;
                     },
@@ -1041,8 +1031,9 @@
                     deleteWidget(id) {
                         if (confirm('Remove this widget?')) {
                         @this.deleteWidget(id).then(() => {
+                            const el = document.querySelector(`[gs-id="${id}"]`);
+                            if (el && this.grid) this.grid.removeWidget(el, false);
                             this.widgets = this.widgets.filter(w => w.id !== id);
-                            this.$nextTick(() => this.syncGridWithWidgets());
                         })
                             ;
                         }
@@ -1051,7 +1042,6 @@
                     duplicateWidget(id) {
                     @this.duplicateWidget(id).then(widget => {
                         this.widgets.push(widget);
-                        this.$nextTick(() => this.syncGridWithWidgets());
                     })
                         ;
                     },
