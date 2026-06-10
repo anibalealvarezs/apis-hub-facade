@@ -143,8 +143,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Explicit resize handle for GridStack + Alpine integration -->
-                                <div class="ui-resizable-handle ui-resizable-se"></div>
                             </div>
                         </template>
                     </div>
@@ -650,6 +648,19 @@
     </div>
 
     @push('scripts')
+        <style>
+            /* Force native GridStack resize handle to bottom right */
+            .grid-stack-item > .ui-resizable-handle.ui-resizable-se {
+                display: block !important;
+                position: absolute !important;
+                bottom: 0px !important;
+                right: 0px !important;
+                width: 20px !important;
+                height: 20px !important;
+                cursor: se-resize !important;
+                z-index: 100 !important;
+            }
+        </style>
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
 
