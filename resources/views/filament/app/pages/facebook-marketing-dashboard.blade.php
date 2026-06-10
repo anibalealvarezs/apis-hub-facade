@@ -153,7 +153,7 @@
                     <button @click="open = !open" @click.outside="open = false" type="button"
                             class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
-                              x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? '1 {{ __('account') }}' : accounts.length + ' {{ __('accounts') }}')"></span>
+                              x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? accountNames[accounts[0]] : accounts.length + ' {{ __('accounts') }}')"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
                     </button>
 
@@ -190,16 +190,22 @@
                                     class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">{{ __('No accounts available.') }}</div>
                             @endif
                             @foreach($accounts as $id => $name)
-                                <label
+                                <div
                                     x-show="searchAccount === '' || '{{ strtolower(addslashes($name)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())"
-                                    class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md cursor-pointer transition-colors duration-150">
-                                    <input type="checkbox" value="{{ $id }}" x-model="accounts"
-                                           class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-3">
-                                    <div class="flex flex-col overflow-hidden">
-                                        <span class="truncate font-medium" title="{{ $name }}">{{ $name }}</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $id }}</span>
+                                    @click="accounts.includes('{{ $id }}') ? accounts = accounts.filter(a => a !== '{{ $id }}') : accounts.push('{{ $id }}')"
+                                    class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"
+                                    :class="accounts.includes('{{ $id }}') ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
+                                    <div class="w-5 h-5 mr-3 shrink-0 flex items-center justify-center rounded-full border-2 transition-colors duration-150"
+                                         :class="accounts.includes('{{ $id }}') ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600'">
+                                        <svg x-show="accounts.includes('{{ $id }}')" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                        </svg>
                                     </div>
-                                </label>
+                                    <div class="flex flex-col overflow-hidden">
+                                        <span class="truncate font-medium" :class="accounts.includes('{{ $id }}') ? 'text-primary-700 dark:text-primary-300' : ''" title="{{ $name }}">{{ $name }}</span>
+                                        <span class="text-xs truncate" :class="accounts.includes('{{ $id }}') ? 'text-primary-500 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'">{{ $id }}</span>
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -469,6 +475,7 @@
                     return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         accounts: @json($selectedAccounts),
+                        accountNames: @json($accounts),
                         dateStart: '{{ $dateStart }}',
                         dateEnd: '{{ $dateEnd }}',
                         activeTab: 'campaigns',
