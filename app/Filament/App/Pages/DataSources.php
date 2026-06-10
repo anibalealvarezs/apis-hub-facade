@@ -16,6 +16,7 @@
     use Filament\Notifications\Notification;
     use Filament\Pages\Page;
     use Illuminate\Support\Str;
+    use Livewire\Attributes\Url;
 
     class DataSources extends Page
     {
@@ -39,6 +40,7 @@
         protected static string $view = 'filament.app.pages.data-sources';
         protected static ?string $slug = 'data-sources';
 
+        #[Url(history: true)]
         public ?string $activeChannel = null;
         public ?array $data = [];
         public bool $apiHubUnreachable = false;
@@ -149,23 +151,42 @@
             // Pre-fill $this->data so that getProviders() can correctly count active assets for sorting
             $this->data = $config;
 
-            // Dynamically set default active channel to the first one available that is 'Active' BEFORE filling the form
-            $providers = $this->getProviders();
-            foreach ($providers as $provider) {
-                foreach ($provider['channels'] as $channel) {
-                    if (($channel['status'] ?? '') === 'Active') {
-                        $this->activeChannel = $channel['key'];
-
-                        break 2;
+            // Validate URL-set activeChannel against available providers
+            if ($this->activeChannel) {
+                $valid = false;
+                $providers = $this->getProviders();
+                foreach ($providers as $provider) {
+                    foreach ($provider['channels'] as $channel) {
+                        if ($channel['key'] === $this->activeChannel) {
+                            $valid = true;
+                            break 2;
+                        }
                     }
+                }
+                if (!$valid) {
+                    $this->activeChannel = null;
                 }
             }
 
-            // Fallback if no active channel is found
+            // Auto-select first active channel if none set via URL
             if (!$this->activeChannel) {
-                $firstProvider = reset($providers);
-                if ($firstProvider && !empty($firstProvider['channels'])) {
-                    $this->activeChannel = $firstProvider['channels'][0]['key'];
+                $providers = $providers ?? $this->getProviders();
+                foreach ($providers as $provider) {
+                    foreach ($provider['channels'] as $channel) {
+                        if (($channel['status'] ?? '') === 'Active') {
+                            $this->activeChannel = $channel['key'];
+
+                            break 2;
+                        }
+                    }
+                }
+
+                // Fallback if no active channel is found
+                if (!$this->activeChannel) {
+                    $firstProvider = reset($providers);
+                    if ($firstProvider && !empty($firstProvider['channels'])) {
+                        $this->activeChannel = $firstProvider['channels'][0]['key'];
+                    }
                 }
             }
 
