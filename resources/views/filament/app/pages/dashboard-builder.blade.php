@@ -673,7 +673,7 @@
 
                         this.grid.on('change', (event, items) => {
                             this.gridLayout = items.map(item => ({
-                                id: parseInt(item.getAttribute('gs-id')) || item.id,
+                                id: item.id || parseInt(item.getAttribute?.('gs-id')) || 0,
                                 x: item.x, y: item.y, w: item.w, h: item.h,
                             }));
                         });
