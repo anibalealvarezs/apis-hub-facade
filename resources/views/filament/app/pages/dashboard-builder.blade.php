@@ -77,17 +77,17 @@
                                             <span class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="widget.title || widget.name"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
-                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                     x-on:click="openWidgetControls(widget)"
                                                     title="Configure">
                                                 <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4" />
                                             </button>
-                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                     x-on:click="duplicateWidget(widget.id)"
                                                     title="Duplicate">
                                                 <x-filament::icon name="heroicon-o-document-duplicate" class="w-4 h-4" />
                                             </button>
-                                            <button class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
+                                            <button class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                                     x-on:click="deleteWidget(widget.id)"
                                                     title="Remove">
                                                 <x-filament::icon name="heroicon-o-trash" class="w-4 h-4" />
