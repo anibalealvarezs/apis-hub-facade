@@ -708,7 +708,10 @@
                                                     var label = context.dataset.label || '';
                                                     var value = context.parsed.y;
                                                     if (label === 'CTR') {
-                                                        return label + ': ' + value + '%';
+                                                        return label + ': ' + value.toFixed(2) + '%';
+                                                    }
+                                                    if (label === 'Position') {
+                                                        return label + ': ' + value.toFixed(2);
                                                     }
                                                     return label + ': ' + value;
                                                 }
@@ -741,7 +744,7 @@
                                             position: 'left',
                                             display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#0097A7', callback: (v) => v + '%'},
+                                            ticks: {color: '#0097A7', callback: (v) => Number(v).toFixed(2) + '%'},
                                             min: 0,
                                             suggestedMax: 5
                                         },
@@ -751,7 +754,7 @@
                                             reverse: true,
                                             display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#F4511E'},
+                                            ticks: {color: '#F4511E', callback: (v) => Number(v).toFixed(2)},
                                             min: 1
                                         }
                                     }
@@ -956,8 +959,8 @@
                         },
 
                         formatDecimals(num) {
-                            if (num === undefined || num === null) return '0.0';
-                            return Number(num).toFixed(1);
+                            if (num === undefined || num === null) return '0.00';
+                            return Number(num).toFixed(2);
                         }
                     }
                 });
