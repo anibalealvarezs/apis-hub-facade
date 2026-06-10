@@ -21,7 +21,7 @@
                     Share
                 </button>
                 @endcan
-                <x-filament::button wire:click="saveLayout(gridState)" color="primary" icon="heroicon-o-check">
+                <x-filament::button x-on:click="$wire.saveLayout(gridLayout)" color="primary" icon="heroicon-o-check">
                     Save Layout
                 </x-filament::button>
             </div>
@@ -666,7 +666,26 @@
                             draggable: { handle: '.grid-stack-item-content' },
                         });
 
-                        if (this.widgets && this.widgets.length > 0) {
+                        this.syncGridWithWidgets();
+
+                        this.grid.on('change', (event, items) => {
+                            this.gridLayout = items.map(item => ({
+                                id: parseInt(item.getAttribute('gs-id')) || item.id,
+                                x: item.x, y: item.y, w: item.w, h: item.h,
+                            }));
+                        });
+                    },
+
+                    reloadGrid() {
+                        if (this.grid) {
+                            this.grid.destroy(false);
+                            this.grid = null;
+                        }
+                        this.$nextTick(() => this.initGrid());
+                    },
+
+                    syncGridWithWidgets() {
+                        if (this.grid && this.widgets && this.widgets.length > 0) {
                             this.grid.load(this.widgets.map(w => ({
                                 id: w.id,
                                 x: w.grid_x,
@@ -676,13 +695,6 @@
                                 'gs-id': String(w.id),
                             })));
                         }
-
-                        this.grid.on('change', (event, items) => {
-                            this.gridLayout = items.map(item => ({
-                                id: parseInt(item.getAttribute('gs-id')) || item.id,
-                                x: item.x, y: item.y, w: item.w, h: item.h,
-                            }));
-                        });
                     },
 
                     // ─── Helpers ──
@@ -847,8 +859,11 @@
                             grid_h: 3,
                         };
 
-                        @this.addWidget(data);
-                        this.showAddWidgetModal = false;
+                        @this.addWidget(data).then(widget => {
+                            this.widgets.push(widget);
+                            this.showAddWidgetModal = false;
+                            this.$nextTick(() => this.syncGridWithWidgets());
+                        });
                     },
 
                     // ─── Share ──
@@ -897,12 +912,18 @@
 
                     deleteWidget(id) {
                         if (confirm('Remove this widget?')) {
-                            @this.deleteWidget(id);
+                            @this.deleteWidget(id).then(() => {
+                                this.widgets = this.widgets.filter(w => w.id !== id);
+                                this.$nextTick(() => this.syncGridWithWidgets());
+                            });
                         }
                     },
 
                     duplicateWidget(id) {
-                        @this.duplicateWidget(id);
+                        @this.duplicateWidget(id).then(widget => {
+                            this.widgets.push(widget);
+                            this.$nextTick(() => this.syncGridWithWidgets());
+                        });
                     },
                 };
             }

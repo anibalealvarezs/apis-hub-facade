@@ -182,10 +182,10 @@ class DashboardBuilder extends Page
 
     // ─── Widget CRUD ───
 
-    public function addWidget(array $data): void
+    public function addWidget(array $data): array
     {
         $service = app(\App\Services\DashboardService::class);
-        $service->addWidget($this->dashboard, $data);
+        $widget = $service->addWidget($this->dashboard, $data);
 
         $this->loadWidgets();
 
@@ -193,6 +193,8 @@ class DashboardBuilder extends Page
             ->title('Widget added')
             ->success()
             ->send();
+
+        return $widget->toArray();
     }
 
     public function deleteWidget(int $widgetId): void
@@ -213,7 +215,7 @@ class DashboardBuilder extends Page
             ->send();
     }
 
-    public function duplicateWidget(int $widgetId): void
+    public function duplicateWidget(int $widgetId): array
     {
         $service = app(\App\Services\DashboardService::class);
         $widget = DashboardWidget::findOrFail($widgetId);
@@ -222,13 +224,15 @@ class DashboardBuilder extends Page
             abort(403);
         }
 
-        $service->duplicateWidget($widget);
+        $newWidget = $service->duplicateWidget($widget);
         $this->loadWidgets();
 
         Notification::make()
             ->title('Widget duplicated')
             ->success()
             ->send();
+
+        return $newWidget->toArray();
     }
 
     // ─── Sharing ───
