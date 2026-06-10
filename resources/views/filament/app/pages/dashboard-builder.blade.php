@@ -67,13 +67,7 @@
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item"
-                                 :gs-id="widget.id"
-                                 :gs-x="widget.grid_x"
-                                 :gs-y="widget.grid_y"
-                                 :gs-w="widget.grid_w"
-                                 :gs-h="widget.grid_h"
-                                 :gs-min-w="2"
-                                 :gs-min-h="2">
+                                 x-init="$el.setAttribute('gs-id', widget.id); $el.setAttribute('gs-x', widget.grid_x); $el.setAttribute('gs-y', widget.grid_y); $el.setAttribute('gs-w', widget.grid_w); $el.setAttribute('gs-h', widget.grid_h); $el.setAttribute('gs-min-w', 2); $el.setAttribute('gs-min-h', 2);">
                                 <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative">
                                     {{-- Widget Header --}}
                                     <div
