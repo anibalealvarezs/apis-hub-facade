@@ -58,12 +58,8 @@
     cursor: grabbing;
 }
 
-/* Resize handle - visible bottom-right corner */
-.grid-stack-item-content {
-    position: relative;
-}
-.grid-stack-resize-handle {
-    position: absolute;
+/* Resize handle (gridstack generates .ui-resizable-se) */
+.grid-stack-item > .ui-resizable-se {
     bottom: 4px;
     right: 4px;
     width: 16px;
@@ -79,11 +75,11 @@
     background-position: 0 0, 4px 4px;
     background-repeat: no-repeat;
 }
-.grid-stack-item:hover .grid-stack-resize-handle,
-.grid-stack-item.resizing .grid-stack-resize-handle {
+.grid-stack-item:hover > .ui-resizable-se,
+.grid-stack-item.ui-resizable-resizing > .ui-resizable-se {
     opacity: 1;
 }
-.dark .grid-stack-resize-handle {
+.dark .grid-stack-item > .ui-resizable-se {
     background:
         linear-gradient(135deg, transparent 6px, rgb(161 161 170) 6px, transparent 7px),
         linear-gradient(135deg, transparent 10px, rgb(161 161 170) 10px, transparent 11px);

@@ -76,7 +76,6 @@
                                  :gs-min-h="2">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                                    <div class="grid-stack-resize-handle" title="Resize"></div>
                                     {{-- Widget Header --}}
                                     <div
                                         class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
@@ -748,7 +747,7 @@
                             float: true,
                             acceptWidgets: true,
                             removable: false,
-                            resizable: {handles: '.grid-stack-resize-handle'},
+                            resizable: {handles: 'se'},
                             draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
                         });
 
