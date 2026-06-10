@@ -76,6 +76,7 @@
                                  :gs-min-h="2">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                                    <div class="grid-stack-resize-handle" title="Resize"></div>
                                     {{-- Widget Header --}}
                                     <div
                                         class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
@@ -747,14 +748,8 @@
                             float: true,
                             acceptWidgets: true,
                             removable: false,
-                            resizable: {handles: 'se'},
+                            resizable: {handles: '.grid-stack-resize-handle'},
                             draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
-                        });
-
-                        // Ensure all existing items are resizable (DOM items adopted by init may need this)
-                        this.grid.engine.nodes.forEach(node => {
-                            this.grid.resizable(node.el, true);
-                            this.grid.movable(node.el, '.rounded-t-lg');
                         });
 
                         this.grid.on('change', (event, items) => {

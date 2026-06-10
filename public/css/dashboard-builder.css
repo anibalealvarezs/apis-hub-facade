@@ -58,6 +58,40 @@
     cursor: grabbing;
 }
 
+/* Resize handle - visible bottom-right corner */
+.grid-stack-item-content {
+    position: relative;
+}
+.grid-stack-resize-handle {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    cursor: se-resize;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+    background:
+        linear-gradient(135deg, transparent 6px, rgb(156 163 175) 6px, transparent 7px),
+        linear-gradient(135deg, transparent 10px, rgb(156 163 175) 10px, transparent 11px);
+    background-size: 16px 16px, 16px 16px;
+    background-position: 0 0, 4px 4px;
+    background-repeat: no-repeat;
+}
+.grid-stack-item:hover .grid-stack-resize-handle,
+.grid-stack-item.resizing .grid-stack-resize-handle {
+    opacity: 1;
+}
+.dark .grid-stack-resize-handle {
+    background:
+        linear-gradient(135deg, transparent 6px, rgb(161 161 170) 6px, transparent 7px),
+        linear-gradient(135deg, transparent 10px, rgb(161 161 170) 10px, transparent 11px);
+    background-size: 16px 16px, 16px 16px;
+    background-position: 0 0, 4px 4px;
+    background-repeat: no-repeat;
+}
+
 /* Prevent filament layout shift */
 .grid-stack {
     background: transparent !important;
