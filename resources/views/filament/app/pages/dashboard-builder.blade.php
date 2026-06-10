@@ -660,12 +660,6 @@
                         const container = document.getElementById('grid-stack');
                         if (!container) return;
 
-                        const existingGrid = GridStack.get(container);
-                        if (existingGrid) {
-                            this.grid = existingGrid;
-                            return;
-                        }
-
                         this.grid = GridStack.init({
                             column: 12,
                             cellHeight: 100,
