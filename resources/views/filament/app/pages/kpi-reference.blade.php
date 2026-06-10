@@ -1,7 +1,6 @@
 <x-filament-panels::page>
     <div
         x-data="kpiBrowser()"
-        x-init="init()"
         class="space-y-6"
     >
         <div class="prose prose-sm max-w-none text-gray-500 dark:text-gray-400 mb-2">
@@ -93,47 +92,45 @@
 
     @script
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('kpiBrowser', () => ({
-                kpis: @js($this->getKpisWithGuidance()),
-                categories: @js($this->getCategoryOptions()),
-                search: '',
-                selectedCategories: [],
+        Alpine.data('kpiBrowser', () => ({
+            kpis: @js($this->getKpisWithGuidance()),
+            categories: @js($this->getCategoryOptions()),
+            search: '',
+            selectedCategories: [],
 
-                toggleCategory(cat) {
-                    const idx = this.selectedCategories.indexOf(cat);
-                    if (idx === -1) {
-                        this.selectedCategories.push(cat);
-                    } else {
-                        this.selectedCategories.splice(idx, 1);
-                    }
-                },
-
-                get filteredKpis() {
-                    return this.kpis.filter(kpi => {
-                        const q = this.search.toLowerCase().trim();
-                        if (q) {
-                            const haystack = [
-                                kpi.name,
-                                kpi.type_label,
-                                kpi.explanation,
-                                kpi.use_case,
-                                kpi.interpretation,
-                            ].join(' ').toLowerCase();
-                            if (!haystack.includes(q)) return false;
-                        }
-
-                        if (this.selectedCategories.length > 0) {
-                            for (const cat of this.selectedCategories) {
-                                if (!kpi.categories.includes(cat)) return false;
-                            }
-                        }
-
-                        return true;
-                    });
+            toggleCategory(cat) {
+                const idx = this.selectedCategories.indexOf(cat);
+                if (idx === -1) {
+                    this.selectedCategories.push(cat);
+                } else {
+                    this.selectedCategories.splice(idx, 1);
                 }
-            }));
-        });
+            },
+
+            get filteredKpis() {
+                return this.kpis.filter(kpi => {
+                    const q = this.search.toLowerCase().trim();
+                    if (q) {
+                        const haystack = [
+                            kpi.name,
+                            kpi.type_label,
+                            kpi.explanation,
+                            kpi.use_case,
+                            kpi.interpretation,
+                        ].join(' ').toLowerCase();
+                        if (!haystack.includes(q)) return false;
+                    }
+
+                    if (this.selectedCategories.length > 0) {
+                        for (const cat of this.selectedCategories) {
+                            if (!kpi.categories.includes(cat)) return false;
+                        }
+                    }
+
+                    return true;
+                });
+            }
+        }));
     </script>
     @endscript
 </x-filament-panels::page>
