@@ -649,8 +649,8 @@
     </div>
 
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack-all.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css"/>
+        <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
 
         <script>
             function dashboardBuilder() {
@@ -743,7 +743,7 @@
                         this.grid = GridStack.init({
                             column: 12,
                             cellHeight: 100,
-                            verticalMargin: 12,
+                            margin: 12,
                             float: true,
                             acceptWidgets: true,
                             removable: false,
