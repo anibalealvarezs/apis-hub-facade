@@ -32,24 +32,30 @@
 @endphp
 
 <div class="flex-1 flex items-center justify-center gap-4 px-2" wire:poll.30s>
-    @if($showSync)
-        <a href="{{ \App\Filament\App\Pages\DataSync::getUrl() }}" class="flex items-center gap-2 group" title="{{ __('Sync Progress') }}: {{ $syncPercentage }}%">
-            <div class="w-20 sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-500 ease-out" style="width: {{ $syncPercentage }}%"></div>
-            </div>
-            <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors whitespace-nowrap">{{ $syncPercentage }}%</span>
-        </a>
-    @endif
-
     <div class="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg" title="{{ $statusText }}">
         <div class="relative flex h-3 w-3 shrink-0">
             @if($isProcessing)
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgb({{ $statusColorRGB }});"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                      style="background-color: rgb({{ $statusColorRGB }});"></span>
             @endif
-            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgb({{ $statusColorRGB }});"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}"
+                  style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
         <span class="text-xs font-medium text-gray-600 dark:text-gray-300 max-w-[120px] truncate">
             {{ $statusText }}
         </span>
     </div>
+    
+    @if($showSync)
+        <a href="{{ \App\Filament\App\Pages\DataSync::getUrl() }}"
+           class="flex items-center gap-2 group px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg"
+           title="{{ __('Sync Progress') }}: {{ $syncPercentage }}%">
+            <div class="w-20 sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                     style="width: {{ $syncPercentage }}%"></div>
+            </div>
+            <span
+                class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors whitespace-nowrap">{{ $syncPercentage }}%</span>
+        </a>
+    @endif
 </div>
