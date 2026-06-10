@@ -628,8 +628,8 @@
                     $live['post_metrics'] = false;
                     $live['ig_accounts'] = true;
                     $live['ig_account_metrics'] = true;
-                    $live['ig_account_media'] = false;
-                    $live['ig_account_media_metrics'] = false;
+                    $live['ig_account_media'] = true;
+                    $live['ig_account_media_metrics'] = true;
                 }
 
                 $mergedAssets[$identifier] = $live;
@@ -1261,7 +1261,7 @@
                     Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
                         ->extraAttributes(['class' => 'ml-8'])
                         ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
-                    Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(false)->live()
+                    Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
                         ->extraAttributes(['class' => 'ml-8'])
                         ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))
                         ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
@@ -1269,7 +1269,7 @@
                                 $set('ig_account_media_metrics', false);
                             }
                         })->dehydrated(),
-                    Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(false)
+                    Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
                         ->extraAttributes(['class' => 'ml-12'])
                         ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && (bool)$get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
                 ])->extraAttributes(['class' => 'flex flex-col gap-2']),
@@ -1322,7 +1322,7 @@
                                     ->descriptions([
                                         'keep'    => __('Turn on the asset, leave all syncing toggles unchanged.'),
                                         'full'    => __('Turn on the asset and enable all syncing options: Page Metrics, Posts Content, Post Insights, and all Instagram options.'),
-                                        'default' => __('Turn on the asset, enable Page Metrics and Instagram sync, but keep Posts Content, Post Insights, and Media options disabled.'),
+                                        'default' => __('Turn on the asset, enable Page Metrics and Instagram sync, but keep Posts Content and Post Insights disabled.'),
                                     ])
                                     ->default('default'),
                             ])
@@ -1346,8 +1346,8 @@
                                             $item['post_metrics'] = false;
                                             $item['ig_accounts'] = true;
                                             $item['ig_account_metrics'] = true;
-                                            $item['ig_account_media'] = false;
-                                            $item['ig_account_media_metrics'] = false;
+                                            $item['ig_account_media'] = true;
+                                            $item['ig_account_media_metrics'] = true;
                                         }
                                     }
 
