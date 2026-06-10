@@ -20,16 +20,16 @@
 
             <div class="flex flex-wrap gap-2">
                 <template x-for="[catKey, catLabel] in Object.entries(categories)" :key="catKey">
-                    <x-filament::button
-                        size="xs"
-                        color="gray"
+                    <button
+                        type="button"
                         x-on:click="toggleCategory(catKey)"
                         x-bind:class="selectedCategories.includes(catKey)
-                            ? '!bg-primary-500 !text-white !border-primary-500'
-                            : 'opacity-60 hover:opacity-100'"
+                            ? 'bg-primary-500 text-white ring-2 ring-primary-300 dark:ring-primary-600 shadow-md'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'"
+                        class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer"
                     >
                         <span x-text="catLabel"></span>
-                    </x-filament::button>
+                    </button>
                 </template>
             </div>
         </div>
