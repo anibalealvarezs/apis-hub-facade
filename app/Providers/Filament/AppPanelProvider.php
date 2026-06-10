@@ -67,7 +67,7 @@ class AppPanelProvider extends PanelProvider
                 fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
-                \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
+                \Filament\View\PanelsRenderHook::TOPBAR_BEFORE,
                 fn () => \Illuminate\Support\Facades\Blade::render('@livewire(\'global-infrastructure-status\')')
             )
             ->renderHook(

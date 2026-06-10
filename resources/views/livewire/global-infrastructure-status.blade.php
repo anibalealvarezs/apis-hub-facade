@@ -1,17 +1,16 @@
 @php
-    // Si hay un despliegue en curso, mostramos eso. Si no, mostramos el estado de salud real del proyecto.
     $isProcessing = $latestLog && in_array($latestLog->status, ['running', 'pending']);
-    
+
     $statusKey = $isProcessing ? 'provisioning' : ($tenant?->health_status ?? 'undeployed');
 
     $statusColorRGB = match($statusKey) {
-        'provisioning' => '59, 130, 246', // Blue 500
-        'online', 'active', 'healthy' => '34, 197, 94', // Green 500
-        'offline', 'failed', 'error' => '239, 68, 68', // Red 500
-        'suspended', 'stopping_workers', 'ready_for_auth', 'disputed' => '234, 179, 8', // Yellow 500
-        default => '107, 114, 128', // Gray 500
+        'provisioning' => '59, 130, 246',
+        'online', 'active', 'healthy' => '34, 197, 94',
+        'offline', 'failed', 'error' => '239, 68, 68',
+        'suspended', 'stopping_workers', 'ready_for_auth', 'disputed' => '234, 179, 8',
+        default => '107, 114, 128',
     };
-    
+
     $statusTextArray = [
         'provisioning' => __('Provisioning...'),
         'online' => __('Active and Online'),
@@ -26,9 +25,9 @@
         'disputed' => __('Disputed Payment'),
         'undeployed' => __('Undeployed'),
     ];
-    
+
     $statusText = $statusTextArray[$statusKey] ?? __('Unknown');
-    
+
     $tierLabel = $tenant?->billingProfile?->tier?->getLabel() ?? 'Unknown';
     $tierColors = [
         'Free' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 ring-gray-500/10 dark:ring-gray-400/20',
@@ -51,32 +50,34 @@
         'Unknown' => 'heroicon-m-question-mark-circle',
     ];
     $tierIcon = $tierIcons[$tierLabel] ?? $tierIcons['Unknown'];
+
+    $showSync = $syncPercentage !== null;
 @endphp
 
-<div class="flex flex-col gap-2 mx-4 mt-2">
-    <!-- Tier Badge -->
-    <div class="w-full flex justify-center mt-1">
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} justify-center shadow-sm ring-1 ring-inset" 
-              :class="{ 'w-full': $store.sidebar.isOpen, 'w-auto px-1.5': !$store.sidebar.isOpen }"
-              title="{{ $tierLabel }}">
-            <x-filament::icon :icon="$tierIcon" class="w-4 h-4" />
-            <span x-show="$store.sidebar.isOpen" x-transition>{{ $tierLabel }}</span>
-        </span>
-    </div>
+<div class="flex-1 flex items-center justify-center gap-4 px-2" wire:poll.30s>
+    @if($showSync)
+        <a href="{{ \App\Filament\App\Pages\DataSync::getUrl() }}" class="flex items-center gap-2 group" title="{{ __('Sync Progress') }}: {{ $syncPercentage }}%">
+            <div class="w-20 sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-500 ease-out" style="width: {{ $syncPercentage }}%"></div>
+            </div>
+            <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors whitespace-nowrap">{{ $syncPercentage }}%</span>
+        </a>
+    @endif
 
-    <!-- Infrastructure Status -->
-    <div wire:poll.5s class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg flex items-center justify-center gap-3" :class="{ 'px-0 bg-transparent border-transparent dark:bg-transparent dark:border-transparent py-1': !$store.sidebar.isOpen }">
-        <div class="relative flex h-3 w-3 shrink-0" title="{{ $statusText }}">
+    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} shadow-sm ring-1 ring-inset whitespace-nowrap">
+        <x-filament::icon :icon="$tierIcon" class="w-3.5 h-3.5" />
+        <span>{{ $tierLabel }}</span>
+    </span>
+
+    <div class="flex items-center gap-1.5" title="{{ $statusText }}">
+        <div class="relative flex h-2.5 w-2.5 shrink-0">
             @if($isProcessing)
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: rgb({{ $statusColorRGB }});"></span>
             @endif
-            <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgb({{ $statusColorRGB }});"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 {{ $isProcessing ? 'animate-pulse' : '' }}" style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
-        <div x-show="$store.sidebar.isOpen" class="flex flex-col overflow-hidden">
-            <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">{{ __('Server Status') }}</span>
-            <span class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate" title="{{ $statusText }}">
-                {{ $statusText }}
-            </span>
-        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-400 hidden lg:inline max-w-[120px] truncate">
+            {{ $statusText }}
+        </span>
     </div>
 </div>
