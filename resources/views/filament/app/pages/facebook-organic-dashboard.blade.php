@@ -236,10 +236,10 @@
                         class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]"
                     >
                         @if(count($accounts) === 0)
-                            <option value="">{{ __('No pages available.') }}</option>
+                            <option value="" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ __('No pages available.') }}</option>
                         @else
                             @foreach($accounts as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
+                                <option value="{{ $id }}" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ $name }}</option>
                             @endforeach
                         @endif
                     </select>
