@@ -66,7 +66,7 @@
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
-                            <div class="grid-stack-item"
+                            <div class="grid-stack-item resizable"
                                  :gs-id="widget.id"
                                  :gs-x="widget.grid_x"
                                  :gs-y="widget.grid_y"
@@ -749,6 +749,12 @@
                             removable: false,
                             resizable: {handles: 'se'},
                             draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
+                        });
+
+                        // Explicitly enable resize on all existing items (DOM items adopted by init)
+                        this.grid.engine.nodes.forEach(node => {
+                            this.grid.resizable(node.el, true);
+                            this.grid.movable(node.el, '.rounded-t-lg');
                         });
 
                         this.grid.on('change', (event, items) => {
