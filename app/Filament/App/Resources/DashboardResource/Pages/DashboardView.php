@@ -19,9 +19,9 @@ class DashboardView extends Page
 
     public array $resolvedControls = [];
 
-    public function mount(): void
+    public function mount(Dashboard $record): void
     {
-        $this->dashboard = $this->record;
+        $this->dashboard = $record;
 
         $this->widgets = $this->dashboard->widgets()
             ->orderBy('grid_y')

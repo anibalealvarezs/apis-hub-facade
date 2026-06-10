@@ -24,9 +24,9 @@ class DashboardBuilder extends Page
 
     public ?array $gridState = [];
 
-    public function mount(): void
+    public function mount(Dashboard $record): void
     {
-        $this->dashboard = $this->record;
+        $this->dashboard = $record;
         $this->loadWidgets();
     }
 
