@@ -120,7 +120,7 @@
 
         .gsc-pagination-text strong { color: var(--gsc-text-main); font-weight: 700; }
 
-        .gsc-pagination-select { background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 12px; outline: none; }
+        .gsc-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
 
         .gsc-pagination-btn { padding: 8px 16px; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gsc-text-main); cursor: pointer; transition: background 0.2s; }
 
