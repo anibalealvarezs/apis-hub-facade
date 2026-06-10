@@ -14,12 +14,13 @@
                     <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1" />
                     Controls
                 </button>
+                @can('edit_preferences')
                 <button class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                        x-on:click="openShareDialog()"
-                        @can('edit_preferences')>
+                        x-on:click="openShareDialog()">
                     <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1" />
                     Share
                 </button>
+                @endcan
                 <x-filament::button wire:click="saveLayout(gridState)" color="primary" icon="heroicon-o-check">
                     Save Layout
                 </x-filament::button>
