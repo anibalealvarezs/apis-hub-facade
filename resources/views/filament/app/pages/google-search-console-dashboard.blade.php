@@ -831,7 +831,7 @@
                             if (this.activeMetrics.position) {
                                 datasets.push({
                                     label: 'Position',
-                                    data: chartData.map(r => r.position),
+                                    data: chartData.map(r => r.position === 0 ? null : r.position),
                                     borderColor: '#F4511E',
                                     borderWidth: 2,
                                     borderDash: [5, 5],
