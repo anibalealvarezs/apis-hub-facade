@@ -25,7 +25,7 @@ class DashboardWidgetDataController extends Controller
             'tenant' => 'required|string',
         ]);
 
-        $project = Project::findOrFail($validated['tenant']);
+        $project = Project::where('subdomain', $validated['tenant'])->firstOrFail();
         $dashboard = $widget->dashboard;
 
         if ($dashboard->project_id !== $project->id) {
@@ -34,15 +34,17 @@ class DashboardWidgetDataController extends Controller
 
         $user = $request->user();
 
-        if (!$user || $user->cannot('view', $dashboard)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if (!$dashboard->is_public) {
+            if (!$user || $user->cannot('view', $dashboard)) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
         }
 
         $dashboard = $widget->dashboard;
 
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
 
-        if ($user && !empty($resolvedControls['channel'])) {
+        if (!$dashboard->is_public && $user && !empty($resolvedControls['channel'])) {
             $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
             $allowedAssets = $this->widgetDataService->filterAllowedAssets(
                 $project, $user->id, $resolvedControls['channel'], $assetList
