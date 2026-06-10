@@ -218,7 +218,7 @@
                 </div>
                 <input type="date" x-model.lazy="dateStart"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
-                <input type="date" x-model.lazy="dateEnd"
+                <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
             </div>
         </div>
@@ -955,7 +955,23 @@
                                             borderWidth: 1,
                                             padding: 12,
                                             boxPadding: 6,
-                                            usePointStyle: true
+                                            usePointStyle: true,
+                                            callbacks: {
+                                                label: function(context) {
+                                                    var label = context.dataset.label || '';
+                                                    var value = context.parsed.y;
+                                                    if (['Amount Spent', 'CPC', 'Cost per Result'].includes(label)) {
+                                                        return label + ': $' + Number(value).toFixed(2);
+                                                    }
+                                                    if (['CTR', 'Result Rate'].includes(label)) {
+                                                        return label + ': ' + Number(value).toFixed(2) + '%';
+                                                    }
+                                                    if (label === 'ROAS') {
+                                                        return label + ': ' + Number(value).toFixed(2) + 'x';
+                                                    }
+                                                    return label + ': ' + Number(value).toLocaleString('en-US');
+                                                }
+                                            }
                                         }
                                     },
                                     scales: {

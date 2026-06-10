@@ -126,12 +126,15 @@ class FacebookOrganicDashboard extends Page
                 $this->accounts[$value] = $label;
             }
 
+            // Sort accounts alphabetically by name
+            uasort($this->accounts, fn($a, $b) => strcasecmp($a, $b));
+
             $validSelected = array_values(array_intersect($this->selectedAccounts, array_keys($this->accounts)));
             if (empty($validSelected) && !empty($this->accounts)) {
-                $this->selectedAccounts = [array_key_first($this->accounts)];
+                $this->selectedAccounts = [(string) array_key_first($this->accounts)];
             } elseif (!empty($validSelected)) {
                 // FB Organic dashboard now uses one account at a time.
-                $this->selectedAccounts = [$validSelected[0]];
+                $this->selectedAccounts = [(string) $validSelected[0]];
             } else {
                 $this->selectedAccounts = [];
             }

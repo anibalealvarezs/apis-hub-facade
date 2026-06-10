@@ -158,7 +158,7 @@
                 </select>
                 <input type="date" x-model.lazy="dateStart"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
-                <input type="date" x-model.lazy="dateEnd"
+                <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
             </div>
         </div>
@@ -708,12 +708,12 @@
                                                     var label = context.dataset.label || '';
                                                     var value = context.parsed.y;
                                                     if (label === 'CTR') {
-                                                        return label + ': ' + value.toFixed(2) + '%';
+                                                        return label + ': ' + Number(value).toFixed(2) + '%';
                                                     }
                                                     if (label === 'Position') {
-                                                        return label + ': ' + value.toFixed(2);
+                                                        return label + ': ' + Number(value).toFixed(2);
                                                     }
-                                                    return label + ': ' + value;
+                                                    return label + ': ' + Number(value).toLocaleString('en-US');
                                                 }
                                             }
                                         }

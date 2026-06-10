@@ -74,12 +74,13 @@ class FacebookMarketingDashboard extends Page
                     $cleanPlatformId = str_replace('act_', '', $platformId);
                     
                     if (in_array($cleanPlatformId, $enabledIds)) {
-                        $this->accounts[$account['id']] = $account['name'] ?? $account['id'];
+                        $accountId = (string) $account['id'];
+                        $this->accounts[$accountId] = $account['name'] ?? $accountId;
                     }
                 }
                 
                 if (!empty($this->accounts) && empty($this->selectedAccounts)) {
-                    $this->selectedAccounts = [array_key_first($this->accounts)];
+                    $this->selectedAccounts = [(string) array_key_first($this->accounts)];
                 }
             }
         } catch (\Exception $e) {
