@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardBuilder()" x-init="init()" class="space-y-4">
+    <div x-data="dashboardBuilder()" class="space-y-4">
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div class="flex items-center gap-2">
@@ -634,8 +634,13 @@
 
                     // ─── Initialization ──
                     init() {
-                        this.$nextTick(() => this.initGrid());
-                        this.initAllAssets();
+                        this.$nextTick(() => {
+                            const container = document.getElementById('grid-stack');
+                            if (container && !this.grid) {
+                                this.initGrid();
+                            }
+                            this.initAllAssets();
+                        });
                     },
 
                     initAllAssets() {
@@ -655,6 +660,12 @@
                         const container = document.getElementById('grid-stack');
                         if (!container) return;
 
+                        const existingGrid = GridStack.get(container);
+                        if (existingGrid) {
+                            this.grid = existingGrid;
+                            return;
+                        }
+
                         this.grid = GridStack.init({
                             column: 12,
                             cellHeight: 100,
@@ -665,8 +676,6 @@
                             resizable: { handles: 'se' },
                             draggable: { handle: '.grid-stack-item-content' },
                         });
-
-                        this.syncGridWithWidgets();
 
                         this.grid.on('change', (event, items) => {
                             this.gridLayout = items.map(item => ({
