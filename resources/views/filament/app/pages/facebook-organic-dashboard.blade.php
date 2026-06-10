@@ -1137,7 +1137,6 @@
                                     type: 'linear',
                                     display: true,
                                     beginAtZero: true,
-                                    min: 0,
                                     grid: {drawOnChartArea: !gridDrawn, color: cssGridColor, drawBorder: false},
                                     position: i % 2 === 0 ? 'left' : 'right',
                                     ticks: {display: false, color: ds.borderColor}
