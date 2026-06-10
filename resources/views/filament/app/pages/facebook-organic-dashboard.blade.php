@@ -984,12 +984,6 @@
                                         x: {
                                             grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
                                             ticks: {color: 'var(--fb-chart-ticks)'}
-                                        },
-                                        y: {
-                                            beginAtZero: true,
-                                            grid: {color: 'var(--fb-chart-grid)', drawBorder: false},
-                                            ticks: {display: false},
-                                            min: 0
                                         }
                                     }
                                 }
@@ -1010,7 +1004,6 @@
                             chart.options.plugins.legend.labels.color = cssTicksColor;
                             chart.options.scales.x.grid.color = cssGridColor;
                             chart.options.scales.x.ticks.color = cssTicksColor;
-                            chart.options.scales.y.grid.color = cssGridColor;
                             chart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.96)';
                             chart.options.plugins.tooltip.titleColor = isDark ? '#FFF' : '#111827';
                             chart.options.plugins.tooltip.bodyColor = isDark ? '#E2E8F0' : '#1F2937';
@@ -1101,6 +1094,7 @@
                                 if (dataPoints.some(v => v > 0)) {
                                     const info = this.getMetricInfo(key);
                                     const resolvedColor = this.getComputedColor(info.color);
+                                    const scaleId = 'y' + key.replace(/[^a-zA-Z0-9]/g, '_');
                                     datasets.push({
                                         label: info.label,
                                         data: dataPoints,
@@ -1110,6 +1104,7 @@
                                         pointRadius: 0,
                                         pointHoverRadius: 6,
                                         fill: true,
+                                        yAxisID: scaleId,
                                         tension: 0.4
                                     });
                                 }
@@ -1122,11 +1117,33 @@
                                 const metricsInChart = Object.keys(firstRow).filter(k => !ignoredKeys.includes(k));
 
                                 metricsInChart.forEach(key => {
-                                    // If trend_total_ is prefixed, extract the real key
                                     const actualKey = key.startsWith('trend_total_') ? key.replace('trend_total_', '') : key;
                                     addDataset(actualKey);
                                 });
                             }
+
+                            // Remove old y-scales (keep x)
+                            Object.keys(chart.options.scales).forEach(sid => {
+                                if (sid !== 'x') delete chart.options.scales[sid];
+                            });
+
+                            let gridDrawn = false;
+                            const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';
+                            const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-ticks').trim() || '#6B7280';
+
+                            datasets.forEach((ds, i) => {
+                                const scaleId = ds.yAxisID;
+                                chart.options.scales[scaleId] = {
+                                    type: 'linear',
+                                    display: true,
+                                    beginAtZero: true,
+                                    min: 0,
+                                    grid: {drawOnChartArea: !gridDrawn, color: cssGridColor, drawBorder: false},
+                                    position: i % 2 === 0 ? 'left' : 'right',
+                                    ticks: {display: false, color: ds.borderColor}
+                                };
+                                gridDrawn = true;
+                            });
 
                             chart.data.labels = labels;
                             chart.data.datasets = datasets;
