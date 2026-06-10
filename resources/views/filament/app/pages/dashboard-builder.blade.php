@@ -143,6 +143,8 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Explicit resize handle for GridStack + Alpine integration -->
+                                <div class="ui-resizable-handle ui-resizable-se"></div>
                             </div>
                         </template>
                     </div>
