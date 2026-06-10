@@ -35,6 +35,44 @@ class KpiReference extends Page
         return PredefinedKpiRegistry::getPredefinedKpis();
     }
 
+    public function getKpisWithGuidance(): array
+    {
+        $kpis = $this->getKpis();
+        $result = [];
+        foreach ($kpis as $key => $kpi) {
+            $guidance = $this->getGuidance($key);
+            $result[] = [
+                'key' => $key,
+                'name' => $kpi['name'],
+                'description' => $kpi['description'],
+                'type_label' => $guidance['type_label'],
+                'explanation' => $guidance['explanation'],
+                'use_case' => $guidance['use_case'],
+                'interpretation' => $guidance['interpretation'],
+                'categories' => $kpi['categories'] ?? [],
+            ];
+        }
+        return $result;
+    }
+
+    public function getCategoryOptions(): array
+    {
+        return [
+            'performance' => __('Performance'),
+            'cost' => __('Cost'),
+            'results' => __('Results'),
+            'clicks' => __('Clicks'),
+            'impressions' => __('Impressions'),
+            'seasonality' => __('Seasonality'),
+            'trends' => __('Trends'),
+            'scalability' => __('Scalability'),
+            'cross-channel' => __('Cross-Channel'),
+            'alerts' => __('Alerts'),
+            'seo' => __('SEO'),
+            'organic' => __('Organic'),
+        ];
+    }
+
     public function getGuidance(string $key): array
     {
         $guidance = [
@@ -103,6 +141,24 @@ class KpiReference extends Page
                 'explanation' => __('Analyzes how effectively your search impressions convert into clicks. As you rank for more keywords (especially lower-volume, long-tail ones), your average CTR naturally changes. This KPI helps you understand if your search snippets and rankings are becoming more or less compelling.'),
                 'use_case' => __('Your Google Search Console shows you\'re getting more impressions than ever, but clicks aren\'t keeping pace. Are you ranking for irrelevant keywords? Did your snippet titles lose their appeal? This KPI isolates the click-through efficiency so you can diagnose if it\'s a ranking issue or a messaging issue.'),
                 'interpretation' => __('A rising value means your search snippets are becoming more effective — better titles, descriptions, or rich results are convincing users to click. A falling value means something is off: maybe you\'re ranking for impressions without clicks (position too low), or your snippets have become less compelling. Investigate which queries are dragging CTR down.'),
+            ],
+            'revenue_elasticity' => [
+                'type_label' => __('Revenue Growth Predictor'),
+                'explanation' => __('Measures how your actual revenue responds to changes in ad spend. If you double your ad budget, does revenue double too — or do you hit a point where extra spend stops being profitable? This KPI quantifies the real efficiency of your ad-to-revenue pipeline.'),
+                'use_case' => __('Your e-commerce store spends $10,000 on ads and generates $30,000 in revenue — a 3x ROAS. But when you increase to $15,000, revenue only goes to $35,000. ROAS dropped to 2.3x. Are you past the sweet spot? This KPI tells you exactly how scalable your revenue is relative to spend.'),
+                'interpretation' => __('A result above 1 means your revenue scales well with spend — each extra dollar still brings strong returns. A result below 1 means you\'re past peak efficiency: you\'re spending more but getting proportionally less revenue. Time to optimize targeting, creative, or consider diminishing returns in your budget allocation.'),
+            ],
+            'cpa_trend' => [
+                'type_label' => __('Acquisition Cost Monitor'),
+                'explanation' => __('Tracks whether your cost per acquisition is getting cheaper or more expensive on a rolling basis. Instead of reacting to daily CPA fluctuations, this KPI detects the real underlying direction of your acquisition costs.'),
+                'use_case' => __('Your Facebook ads are bringing in 50 conversions per week, but your CPA has gone from $12 to $14 to $16 over the last month. Is this just random weekly variation or a genuine upward trend? This KPI tells you if you need to take action before your margins get squeezed.'),
+                'interpretation' => __('An upward signal means your CPA is rising — your acquisition costs are creeping up. Consider refreshing audiences, creatives, or optimizing your funnel. A downward signal means you\'re getting more efficient — your targeting or funnel improvements are working. No clear signal means CPA is stable.'),
+            ],
+            'seo_to_revenue_influence' => [
+                'type_label' => __('Organic Revenue Detector'),
+                'explanation' => __('Tests whether your organic search traffic has a measurable impact on future revenue. Moves beyond "traffic is up" to answer the real question: is SEO actually driving the bottom line?'),
+                'use_case' => __('Your SEO team reports that organic sessions increased 30% this quarter, but revenue is flat. Is SEO just bringing in tire-kickers, or does it take time for organic visitors to convert? This KPI separates correlation from causation, telling you if organic search is truly a revenue driver.'),
+                'interpretation' => __('A positive result means your SEO traffic is genuinely driving revenue — there\'s a predictive relationship. You should invest more in organic. A weak or negative result means organic visits aren\'t translating to revenue in a predictable way. Consider whether you\'re attracting the right kind of traffic (commercial intent vs. informational queries).'),
             ],
         ];
 

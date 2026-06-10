@@ -17,7 +17,8 @@ class ChannelCapabilityRegistry
             'facebook_organic' => ['organic_social', 'reach_driven', 'impressionable'],
             // Future channels:
             // 'google_ads' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
-            // 'shopify' => ['ecommerce', 'revenue_driven'],
+            // 'google_analytics' => ['clickable', 'conversion_tracked', 'revenue_tracked'],
+            // 'klaviyo' => ['revenue_tracked', 'conversion_tracked'],
         ];
     }
 
