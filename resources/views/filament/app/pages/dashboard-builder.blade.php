@@ -1,25 +1,27 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
 
     <div x-data="dashboardBuilder()" class="space-y-4">
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div class="flex items-center gap-2">
-                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400"/>
                 <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $this->dashboard->name }}</span>
             </div>
             <div class="flex items-center gap-2">
-                <button class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                        x-on:click="openDashboardControls()">
-                    <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1" />
+                <button
+                    class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                    x-on:click="openDashboardControls()">
+                    <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1"/>
                     Controls
                 </button>
                 @can('edit_preferences')
-                <button class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                    <button
+                        class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                         x-on:click="openShareDialog()">
-                    <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1" />
-                    Share
-                </button>
+                        <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1"/>
+                        Share
+                    </button>
                 @endcan
                 <x-filament::button x-on:click="$wire.saveLayout(gridLayout)" color="primary" icon="heroicon-o-check">
                     Save Layout
@@ -31,16 +33,20 @@
             {{-- Widget Palette (sidebar) --}}
             <div class="col-span-2 hidden lg:block">
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 space-y-4">
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Widget Palette</h3>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Widget
+                        Palette</h3>
                     <div class="space-y-2">
-                        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                             x-on:click="openAddWidgetModal()">
-                            <x-filament::icon name="heroicon-o-plus-circle" class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500" />
+                        <div
+                            class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                            x-on:click="openAddWidgetModal()">
+                            <x-filament::icon name="heroicon-o-plus-circle"
+                                              class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500"/>
                             <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">Add Widget</span>
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                        <p class="text-xs text-gray-400 dark:text-gray-500">Drag to reposition. Resize from bottom-right.</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Drag to reposition. Resize from
+                            bottom-right.</p>
                         <div class="text-xs text-gray-400 dark:text-gray-500">
                             <div class="flex items-center gap-1 mb-1">
                                 <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
@@ -57,7 +63,8 @@
 
             {{-- Grid Area --}}
             <div class="col-span-12 lg:col-span-10">
-                <div id="grid-container" class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
+                <div id="grid-container"
+                     class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item"
@@ -68,36 +75,61 @@
                                  :gs-h="widget.grid_h"
                                  :gs-min-w="2"
                                  :gs-min-h="2">
-                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                                <div
+                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                                     {{-- Widget Header --}}
-                                    <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+                                    <div
+                                        class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
                                         <div class="flex items-center gap-2 min-w-0">
-                                            <span x-show="widgetHasCustomControls(widget)" class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" title="Has custom controls"></span>
-                                            <span x-show="!widgetHasCustomControls(widget)" class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0" title="Inheriting dashboard controls"></span>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="widget.title || widget.name"></span>
+                                            <span x-show="widgetHasCustomControls(widget)"
+                                                  class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
+                                                  title="Has custom controls"></span>
+                                            <span x-show="!widgetHasCustomControls(widget)"
+                                                  class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
+                                                  title="Inheriting dashboard controls"></span>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                                                  x-text="widget.title || widget.name"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
-                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                    x-on:click="openWidgetControls(widget)"
-                                                    title="Configure">
-                                                <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4" style="display: inline-block;" />
+                                            <button
+                                                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                x-on:click="openWidgetControls(widget)"
+                                                title="Configure">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                     stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                </svg>
                                             </button>
-                                            <button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                    x-on:click="duplicateWidget(widget.id)"
-                                                    title="Duplicate">
-                                                <x-filament::icon name="heroicon-o-document-duplicate" class="w-4 h-4" style="display: inline-block;" />
+                                            <button
+                                                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                x-on:click="duplicateWidget(widget.id)"
+                                                title="Duplicate">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                     stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
+                                                </svg>
                                             </button>
-                                            <button class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                                                    x-on:click="deleteWidget(widget.id)"
-                                                    title="Remove">
-                                                <x-filament::icon name="heroicon-o-trash" class="w-4 h-4" style="display: inline-block;" />
+                                            <button
+                                                class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                                                x-on:click="deleteWidget(widget.id)"
+                                                title="Remove">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                     stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                                </svg>
                                             </button>
                                         </div>
                                     </div>
                                     {{-- Widget Content (placeholder) --}}
                                     <div class="p-4 flex items-center justify-center h-[calc(100%-2.5rem)]">
                                         <div class="text-center">
-                                            <x-filament::icon :name="'heroicon-o-chart-bar'" class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600" />
+                                            <x-filament::icon :name="'heroicon-o-chart-bar'"
+                                                              class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600"/>
                                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                                 <span x-text="widget.widget_type"></span>
                                                 <template x-if="widget.source_type === 'kpi'">
@@ -118,9 +150,11 @@
                     </div>
                     <template x-if="!widgets || widgets.length === 0">
                         <div class="flex flex-col items-center justify-center py-24 text-center">
-                            <x-filament::icon name="heroicon-o-squares-2x2" class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+                            <x-filament::icon name="heroicon-o-squares-2x2"
+                                              class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"/>
                             <p class="text-gray-500 dark:text-gray-400 text-lg">No widgets yet</p>
-                            <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Click "Add Widget" in the palette to get started.</p>
+                            <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Click "Add Widget" in the palette
+                                to get started.</p>
                         </div>
                     </template>
                 </div>
@@ -132,9 +166,11 @@
         {{-- ============================================================ --}}
         <div x-show="showDashboardControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showDashboardControls = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
+            <div
+                class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Controls</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">These defaults apply to all widgets. Widgets can override individually.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">These defaults apply to all widgets. Widgets can
+                    override individually.</p>
 
                 {{-- Date Range --}}
                 <div>
@@ -143,19 +179,20 @@
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Start</span>
                             <input type="date" x-model="dashboardControls.date_start"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm" />
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">End</span>
                             <input type="date" x-model="dashboardControls.date_end" max="{{ date('Y-m-d') }}"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm" />
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
                     </div>
                 </div>
 
                 {{-- Zero Handling --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Zero / Missing Data</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Zero / Missing
+                        Data</label>
                     <select x-model="dashboardControls.zero_handling"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
                         <option value="remove">Remove zeros from results</option>
@@ -166,7 +203,8 @@
 
                 {{-- Series: Channel + Asset + Granularity --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Series Defaults</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Series
+                        Defaults</label>
                     <div class="space-y-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                         {{-- Channel --}}
                         <div>
@@ -218,18 +256,22 @@
                         {{-- Multiple Assets --}}
                         <template x-if="dashboardControls.asset_mode === 'multiple'">
                             <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Assets (select all that apply)</span>
-                                <div class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+                                <span
+                                    class="text-xs text-gray-500 dark:text-gray-400">Assets (select all that apply)</span>
+                                <div
+                                    class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
                                     <template x-for="(name, id) in dashboardAssets" :key="id">
-                                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                        <label
+                                            class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
                                             <input type="checkbox" :value="id" x-model="dashboardControls.assets"
-                                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500" />
+                                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
                                             <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
                                         </label>
                                     </template>
                                 </div>
                                 <template x-if="Object.keys(dashboardAssets).length === 0">
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to
+                                        see available assets.</p>
                                 </template>
                             </div>
                         </template>
@@ -248,10 +290,13 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <button class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
-                            x-on:click="showDashboardControls = false">Cancel</button>
+                    <button
+                        class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
+                        x-on:click="showDashboardControls = false">Cancel
+                    </button>
                     <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 text-sm"
-                            x-on:click="confirmDashboardControls()">Save Controls</button>
+                            x-on:click="confirmDashboardControls()">Save Controls
+                    </button>
                 </div>
             </div>
         </div>
@@ -261,17 +306,23 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showWidgetControls = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white" x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h2>
+            <div
+                class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white"
+                    x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h2>
 
                 {{-- Info line --}}
                 <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-400" x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
-                    <span class="inline-block w-2 h-2 rounded-full bg-blue-400" x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-400"
+                          x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
+                    <span class="inline-block w-2 h-2 rounded-full bg-blue-400"
+                          x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
                     <span x-show="!widgetHasCustomControls(widgetControlsTarget)">All controls inherited from dashboard defaults.</span>
-                    <span x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
+                    <span
+                        x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
                     <button class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                            x-on:click="resetWidgetControls()">Reset all to inherit</button>
+                            x-on:click="resetWidgetControls()">Reset all to inherit
+                    </button>
                 </div>
 
                 {{-- Date Range --}}
@@ -279,25 +330,27 @@
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Date Range</span>
                         <label class="inherit-toggle">
-                            <input type="checkbox" x-model="widgetControlsForm.date_inherit" />
+                            <input type="checkbox" x-model="widgetControlsForm.date_inherit"/>
                             <span class="slider"></span>
-                            <span class="text-xs" x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
+                            <span class="text-xs"
+                                  x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
                         </label>
                     </div>
                     <template x-if="widgetControlsForm.date_inherit">
-                        <div class="inherited-value" x-text="'Inherited: ' + (dashboardControls.date_start || '—') + ' → ' + (dashboardControls.date_end || '—')"></div>
+                        <div class="inherited-value"
+                             x-text="'Inherited: ' + (dashboardControls.date_start || '—') + ' → ' + (dashboardControls.date_end || '—')"></div>
                     </template>
                     <template x-if="!widgetControlsForm.date_inherit">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">Start</span>
                                 <input type="date" x-model="widgetControlsForm.date_start"
-                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm" />
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">End</span>
                                 <input type="date" x-model="widgetControlsForm.date_end" max="{{ date('Y-m-d') }}"
-                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm" />
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                         </div>
                     </template>
@@ -308,13 +361,15 @@
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zero / Missing Data</span>
                         <label class="inherit-toggle">
-                            <input type="checkbox" x-model="widgetControlsForm.zero_inherit" />
+                            <input type="checkbox" x-model="widgetControlsForm.zero_inherit"/>
                             <span class="slider"></span>
-                            <span class="text-xs" x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
+                            <span class="text-xs"
+                                  x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
                         </label>
                     </div>
                     <template x-if="widgetControlsForm.zero_inherit">
-                        <div class="inherited-value" x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', dashboardControls.zero_handling) || 'Remove zeros')"></div>
+                        <div class="inherited-value"
+                             x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', dashboardControls.zero_handling) || 'Remove zeros')"></div>
                     </template>
                     <template x-if="!widgetControlsForm.zero_inherit">
                         <select x-model="widgetControlsForm.zero_handling"
@@ -331,17 +386,21 @@
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Series</span>
                         <label class="inherit-toggle">
-                            <input type="checkbox" x-model="widgetControlsForm.series_inherit" />
+                            <input type="checkbox" x-model="widgetControlsForm.series_inherit"/>
                             <span class="slider"></span>
-                            <span class="text-xs" x-text="widgetControlsForm.series_inherit ? 'Inherit' : 'Custom'"></span>
+                            <span class="text-xs"
+                                  x-text="widgetControlsForm.series_inherit ? 'Inherit' : 'Custom'"></span>
                         </label>
                     </div>
 
                     <template x-if="widgetControlsForm.series_inherit">
                         <div class="space-y-1">
-                            <div class="inherited-value" x-text="'Channel: ' + (channels[dashboardControls.channel] || dashboardControls.channel || 'Auto-detect')"></div>
-                            <div class="inherited-value" x-text="'Asset: ' + (dashboardControls.asset || (dashboardControls.assets && dashboardControls.assets.length > 0 ? dashboardControls.assets.length + ' assets' : 'All'))"></div>
-                            <div class="inherited-value" x-text="'Granularity: ' + inheritedControlLabel('granularity', dashboardControls.granularity)"></div>
+                            <div class="inherited-value"
+                                 x-text="'Channel: ' + (channels[dashboardControls.channel] || dashboardControls.channel || 'Auto-detect')"></div>
+                            <div class="inherited-value"
+                                 x-text="'Asset: ' + (dashboardControls.asset || (dashboardControls.assets && dashboardControls.assets.length > 0 ? dashboardControls.assets.length + ' assets' : 'All'))"></div>
+                            <div class="inherited-value"
+                                 x-text="'Granularity: ' + inheritedControlLabel('granularity', dashboardControls.granularity)"></div>
                         </div>
                     </template>
                     <template x-if="!widgetControlsForm.series_inherit">
@@ -390,17 +449,20 @@
                             <template x-if="widgetControlsForm.asset_mode === 'multiple'">
                                 <div>
                                     <span class="text-xs text-gray-500 dark:text-gray-400">Assets</span>
-                                    <div class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+                                    <div
+                                        class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
                                         <template x-for="(name, id) in widgetAssets" :key="id">
-                                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                            <label
+                                                class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
                                                 <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
-                                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500" />
+                                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
                                                 <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
                                             </label>
                                         </template>
                                     </div>
                                     <template x-if="Object.keys(widgetAssets).length === 0">
-                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first
+                                            to see available assets.</p>
                                     </template>
                                 </div>
                             </template>
@@ -418,10 +480,13 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <button class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
-                            x-on:click="showWidgetControls = false">Cancel</button>
+                    <button
+                        class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
+                        x-on:click="showWidgetControls = false">Cancel
+                    </button>
                     <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 text-sm"
-                            x-on:click="confirmWidgetControls()">Save Controls</button>
+                            x-on:click="confirmWidgetControls()">Save Controls
+                    </button>
                 </div>
             </div>
         </div>
@@ -453,7 +518,8 @@
                 {{-- Step 2: KPI (if kpi source) --}}
                 <template x-if="addWidgetForm.source_type === 'kpi'">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select KPI</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select
+                            KPI</label>
                         <select x-model="addWidgetForm.custom_kpi_id"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                             <option value="">Choose a KPI...</option>
@@ -467,7 +533,8 @@
                 {{-- Step 3: Widget Type --}}
                 <template x-if="addWidgetForm.source_type">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Type</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget
+                            Type</label>
                         <div class="grid grid-cols-2 gap-2">
                             <template x-for="(label, type) in availableWidgetTypes" :key="type">
                                 <button class="p-2 rounded-lg border text-center text-xs transition-colors"
@@ -487,15 +554,19 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Name</label>
                     <input type="text" x-model="addWidgetForm.name"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                           placeholder="My Widget" />
+                           placeholder="My Widget"/>
                 </div>
 
                 <div class="flex justify-end gap-3">
-                    <button class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            x-on:click="showAddWidgetModal = false">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
-                            :disabled="!canAddWidget()"
-                            x-on:click="confirmAddWidget()">Add Widget</button>
+                    <button
+                        class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        x-on:click="showAddWidgetModal = false">Cancel
+                    </button>
+                    <button
+                        class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
+                        :disabled="!canAddWidget()"
+                        x-on:click="confirmAddWidget()">Add Widget
+                    </button>
                 </div>
             </div>
         </div>
@@ -509,10 +580,12 @@
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Share Dashboard</h2>
 
                 {{-- Public Toggle --}}
-                <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div
+                    class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div>
                         <p class="text-sm font-medium text-gray-900 dark:text-white">Public access</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Anyone with the link can view this dashboard</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Anyone with the link can view this
+                            dashboard</p>
                     </div>
                     <button class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                             :class="isPublic ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
@@ -527,13 +600,15 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Shared with</label>
                     <div class="space-y-2 max-h-48 overflow-y-auto">
                         <template x-for="user in sharedUsers" :key="user.id">
-                            <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div
+                                class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
                                 <div>
                                     <p class="text-sm text-gray-900 dark:text-white" x-text="user.name"></p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400" x-text="user.email"></p>
                                 </div>
                                 <button class="text-xs text-red-500 hover:underline"
-                                        x-on:click="unshareUser(user.id)">Remove</button>
+                                        x-on:click="unshareUser(user.id)">Remove
+                                </button>
                             </div>
                         </template>
                         <template x-if="!sharedUsers.length">
@@ -544,7 +619,8 @@
 
                 {{-- Add User --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add collaborator</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add
+                        collaborator</label>
                     <div class="flex gap-2">
                         <select x-model="shareUserId"
                                 class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
@@ -555,15 +631,19 @@
                                 </template>
                             </template>
                         </select>
-                        <button class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 disabled:opacity-50"
-                                :disabled="!shareUserId"
-                                x-on:click="addSharedUser()">Add</button>
+                        <button
+                            class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 disabled:opacity-50"
+                            :disabled="!shareUserId"
+                            x-on:click="addSharedUser()">Add
+                        </button>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <button class="px-4 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            x-on:click="showShareDialog = false">Close</button>
+                    <button
+                        class="px-4 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        x-on:click="showShareDialog = false">Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -571,7 +651,7 @@
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack-all.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css"/>
 
         <script>
             function dashboardBuilder() {
@@ -646,12 +726,13 @@
                     initAllAssets() {
                         const channelKeys = Object.keys(this.channels);
                         channelKeys.forEach(ch => {
-                            @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
-                                if (ch === this.dashboardControls.channel) {
-                                    this.dashboardAssets = assets;
-                                }
-                            });
+                        @this.getAssetsForChannel(ch).then(assets => {
+                            this.allChannelAssets[ch] = assets;
+                            if (ch === this.dashboardControls.channel) {
+                                this.dashboardAssets = assets;
+                            }
+                        })
+                            ;
                         });
                     },
 
@@ -667,8 +748,8 @@
                             float: true,
                             acceptWidgets: true,
                             removable: false,
-                            resizable: { handles: 'se' },
-                            draggable: { handle: '.grid-stack-item-content' },
+                            resizable: {handles: 'se'},
+                            draggable: {handle: '.grid-stack-item-content'},
                         });
 
                         this.grid.on('change', (event, items) => {
@@ -703,8 +784,8 @@
                     // ─── Helpers ──
                     inheritedControlLabel(key, value) {
                         const labels = {
-                            zero_handling: { remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros' },
-                            granularity: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' },
+                            zero_handling: {remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros'},
+                            granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly'},
                         };
                         return (labels[key] && labels[key][value]) || value || '—';
                     },
@@ -726,10 +807,11 @@
                         if (ch && this.allChannelAssets[ch]) {
                             this.dashboardAssets = this.allChannelAssets[ch];
                         } else if (ch) {
-                            @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
-                                this.dashboardAssets = assets;
-                            });
+                        @this.getAssetsForChannel(ch).then(assets => {
+                            this.allChannelAssets[ch] = assets;
+                            this.dashboardAssets = assets;
+                        })
+                            ;
                         } else {
                             this.dashboardAssets = {};
                         }
@@ -747,7 +829,8 @@
                             assets: c.asset_mode === 'multiple' ? (c.assets || []) : [],
                             granularity: c.granularity || 'daily',
                         };
-                        @this.saveDashboardControls(payload);
+                    @this.saveDashboardControls(payload)
+                        ;
                         this.showDashboardControls = false;
                     },
 
@@ -783,10 +866,11 @@
                         if (this.allChannelAssets[ch]) {
                             this.widgetAssets = this.allChannelAssets[ch];
                         } else if (ch) {
-                            @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
-                                this.widgetAssets = assets;
-                            });
+                        @this.getAssetsForChannel(ch).then(assets => {
+                            this.allChannelAssets[ch] = assets;
+                            this.widgetAssets = assets;
+                        })
+                            ;
                         } else {
                             this.widgetAssets = {};
                         }
@@ -794,9 +878,17 @@
 
                     resetWidgetControls() {
                         this.widgetControlsForm = {
-                            date_inherit: true, date_start: '', date_end: '',
-                            zero_inherit: true, zero_handling: 'remove',
-                            series_inherit: true, channel: '', asset_mode: 'single', asset: '', assets: [], granularity: 'daily',
+                            date_inherit: true,
+                            date_start: '',
+                            date_end: '',
+                            zero_inherit: true,
+                            zero_handling: 'remove',
+                            series_inherit: true,
+                            channel: '',
+                            asset_mode: 'single',
+                            asset: '',
+                            assets: [],
+                            granularity: 'daily',
                         };
                     },
 
@@ -822,7 +914,8 @@
                             payload.granularity = f.granularity || 'daily';
                         }
 
-                        @this.saveWidgetControls(this.widgetControlsTarget.id, payload);
+                    @this.saveWidgetControls(this.widgetControlsTarget.id, payload)
+                        ;
                         this.showWidgetControls = false;
 
                         // Update local widget data
@@ -834,7 +927,7 @@
 
                     // ─── Add Widget ──
                     openAddWidgetModal() {
-                        this.addWidgetForm = { source_type: '', custom_kpi_id: '', widget_type: '', name: '' };
+                        this.addWidgetForm = {source_type: '', custom_kpi_id: '', widget_type: '', name: ''};
                         this.showAddWidgetModal = true;
                     },
 
@@ -853,7 +946,7 @@
                             name: form.name || form.widget_type,
                             title: form.name || form.widget_type,
                             source_type: form.source_type,
-                            source_config: form.source_type === 'kpi' ? { custom_kpi_id: form.custom_kpi_id } : {},
+                            source_config: form.source_type === 'kpi' ? {custom_kpi_id: form.custom_kpi_id} : {},
                             widget_type: form.widget_type,
                             controls: {},
                             grid_x: 0,
@@ -862,21 +955,24 @@
                             grid_h: 3,
                         };
 
-                        @this.addWidget(data).then(widget => {
-                            this.widgets.push(widget);
-                            this.showAddWidgetModal = false;
-                            this.$nextTick(() => this.syncGridWithWidgets());
-                        });
+                    @this.addWidget(data).then(widget => {
+                        this.widgets.push(widget);
+                        this.showAddWidgetModal = false;
+                        this.$nextTick(() => this.syncGridWithWidgets());
+                    })
+                        ;
                     },
 
                     // ─── Share ──
                     openShareDialog() {
-                        @this.getProjectCollaborators().then(users => {
-                            this.collaborators = users || [];
-                        });
-                        @this.getSharedUserIds().then(ids => {
-                            this.sharedUsers = this.collaborators.filter(u => (ids || []).includes(u.id));
-                        });
+                    @this.getProjectCollaborators().then(users => {
+                        this.collaborators = users || [];
+                    })
+                        ;
+                    @this.getSharedUserIds().then(ids => {
+                        this.sharedUsers = this.collaborators.filter(u => (ids || []).includes(u.id));
+                    })
+                        ;
                         this.showShareDialog = true;
                     },
 
@@ -890,22 +986,25 @@
                         const user = this.collaborators.find(u => u.id === userId);
                         if (!user) return;
 
-                        @this.shareWithUser(userId).then(() => {
-                            this.sharedUsers.push(user);
-                            this.shareUserId = '';
-                        });
+                    @this.shareWithUser(userId).then(() => {
+                        this.sharedUsers.push(user);
+                        this.shareUserId = '';
+                    })
+                        ;
                     },
 
                     unshareUser(userId) {
-                        @this.unshareUser(userId).then(() => {
-                            this.sharedUsers = this.sharedUsers.filter(u => u.id !== userId);
-                        });
+                    @this.unshareUser(userId).then(() => {
+                        this.sharedUsers = this.sharedUsers.filter(u => u.id !== userId);
+                    })
+                        ;
                     },
 
                     togglePublic() {
-                        @this.togglePublic().then(() => {
-                            this.isPublic = !this.isPublic;
-                        });
+                    @this.togglePublic().then(() => {
+                        this.isPublic = !this.isPublic;
+                    })
+                        ;
                     },
 
                     configureWidget(id) {
@@ -915,18 +1014,20 @@
 
                     deleteWidget(id) {
                         if (confirm('Remove this widget?')) {
-                            @this.deleteWidget(id).then(() => {
-                                this.widgets = this.widgets.filter(w => w.id !== id);
-                                this.$nextTick(() => this.syncGridWithWidgets());
-                            });
+                        @this.deleteWidget(id).then(() => {
+                            this.widgets = this.widgets.filter(w => w.id !== id);
+                            this.$nextTick(() => this.syncGridWithWidgets());
+                        })
+                            ;
                         }
                     },
 
                     duplicateWidget(id) {
-                        @this.duplicateWidget(id).then(widget => {
-                            this.widgets.push(widget);
-                            this.$nextTick(() => this.syncGridWithWidgets());
-                        });
+                    @this.duplicateWidget(id).then(widget => {
+                        this.widgets.push(widget);
+                        this.$nextTick(() => this.syncGridWithWidgets());
+                    })
+                        ;
                     },
                 };
             }
