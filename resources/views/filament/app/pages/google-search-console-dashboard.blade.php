@@ -739,7 +739,8 @@
                                             reverse: true,
                                             display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#F4511E'}
+                                            ticks: {color: '#F4511E'},
+                                            min: 1
                                         }
                                     }
                                 }
