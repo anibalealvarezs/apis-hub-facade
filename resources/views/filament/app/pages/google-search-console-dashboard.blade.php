@@ -702,9 +702,19 @@
                                             borderWidth: 1,
                                             padding: 12,
                                             boxPadding: 6,
-                                            usePointStyle: true
+                                            usePointStyle: true,
+                                            callbacks: {
+                                                label: function(context) {
+                                                    var label = context.dataset.label || '';
+                                                    var value = context.parsed.y;
+                                                    if (label === 'CTR') {
+                                                        return label + ': ' + value + '%';
+                                                    }
+                                                    return label + ': ' + value;
+                                                }
+                                            }
                                         }
-                                    },
+                                        },
                                     scales: {
                                         x: {
                                             grid: {color: 'var(--gsc-chart-grid)', drawBorder: false},
@@ -716,7 +726,8 @@
                                             display: false,
                                             grid: {color: 'var(--gsc-chart-grid)', drawBorder: false},
                                             ticks: {color: '#4285F4'},
-                                            min: 0
+                                            min: 0,
+                                            suggestedMax: 5
                                         },
                                         yImpressions: {
                                             type: 'linear',
@@ -730,8 +741,9 @@
                                             position: 'left',
                                             display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#0097A7'},
-                                            min: 0
+                                            ticks: {color: '#0097A7', callback: (v) => v + '%'},
+                                            min: 0,
+                                            suggestedMax: 5
                                         },
                                         yPosition: {
                                             type: 'linear',
