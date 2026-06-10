@@ -317,6 +317,17 @@
                     </button>
                 </div>
 
+                {{-- Data Source Info (Read Only) --}}
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 space-y-1">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">Data Source</span>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
+                         x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : (widgetControlsTarget.source_type === 'metric' ? 'Metric (Raw Aggregation)' : 'Entity (Channel Table)')"></div>
+                    <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
+                        <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
+                             x-text="'KPI: ' + (kpiOptions[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
+                    </template>
+                </div>
+
                 {{-- Date Range --}}
                 <div class="control-group" :class="widgetControlsForm.date_inherit ? 'is-inherited' : 'has-custom'">
                     <div class="flex items-center justify-between mb-2">
@@ -960,6 +971,7 @@
                             name: form.name || form.widget_type,
                             title: form.name || form.widget_type,
                             source_type: form.source_type,
+                            custom_kpi_id: form.source_type === 'kpi' ? form.custom_kpi_id : null,
                             source_config: form.source_type === 'kpi' ? {custom_kpi_id: form.custom_kpi_id} : {},
                             widget_type: form.widget_type,
                             controls: {},
