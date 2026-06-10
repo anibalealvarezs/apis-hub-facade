@@ -75,6 +75,10 @@ class KpiReference extends Page
             'scope_global' => __('Global'),
             'scope_channel' => __('Channel'),
             'scope_asset' => __('Asset'),
+            'org_mkt_organic' => __('Organic Focus'),
+            'org_mkt_marketing' => __('Marketing Focus'),
+            'source_src' => __('Source Data'),
+            'source_tracking' => __('Tracking Data'),
         ];
     }
 
