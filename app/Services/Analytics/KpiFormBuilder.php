@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Repeater;
@@ -66,7 +67,12 @@ class KpiFormBuilder
             }
             $name = htmlspecialchars($kpi['name'], ENT_QUOTES, 'UTF-8');
             $desc = htmlspecialchars($kpi['description'], ENT_QUOTES, 'UTF-8');
-            $options[$key] = "<strong>{$name}</strong><br><span class=\"text-xs text-gray-500\">{$desc}</span>";
+            $options[$key] = "
+                <div class=\"w-full\">
+                    <div class=\"font-semibold text-sm\">{$name}</div>
+                    <div class=\"text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed\">{$desc}</div>
+                </div>
+            ";
         }
         return $options;
     }
@@ -149,10 +155,11 @@ class KpiFormBuilder
                         ->options(fn () => self::getCategoryOptions())
                         ->live(),
 
-                    Select::make('template')
+                    Radio::make('template')
                         ->label('Quick Start Template')
                         ->allowHtml()
                         ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
+                        ->columns(2)
                         ->live()
                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
                             if (!$state) return;
