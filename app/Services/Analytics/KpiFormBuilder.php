@@ -66,9 +66,20 @@ class KpiFormBuilder
             }
             $name = htmlspecialchars($kpi['name'], ENT_QUOTES, 'UTF-8');
             $desc = htmlspecialchars($kpi['description'], ENT_QUOTES, 'UTF-8');
-            $options[$key] = "<span class=\"font-semibold\">{$name}</span> <span class=\"text-gray-400\">— {$desc}</span>";
+            $options[] = [
+                'key' => $key,
+                'name' => $name,
+                'html' => "<span class=\"font-semibold\">{$name}</span> <span class=\"text-gray-400\">— {$desc}</span>",
+            ];
         }
-        return $options;
+
+        usort($options, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+
+        $sorted = [];
+        foreach ($options as $item) {
+            $sorted[$item['key']] = $item['html'];
+        }
+        return $sorted;
     }
 
     public static function getMetricOptionsForChannel(?string $channel): array
@@ -143,91 +154,93 @@ class KpiFormBuilder
         return [
             Section::make('KPI Configuration')
                 ->schema([
-                    Select::make('category_filter')
-                        ->label('Filter by category')
-                        ->multiple()
-                        ->options(fn () => self::getCategoryOptions())
-                        ->live(),
+                    Section::make('Quick Start')
+                        ->description('Browse and pick a predefined template to auto-fill the configuration below.')
+                        ->collapsible()
+                        ->compact()
+                        ->extraAttributes(['class' => 'bg-gray-50 dark:bg-white/5 rounded-lg'])
+                        ->schema([
+                            Select::make('category_filter')
+                                ->label('Filter by category')
+                                ->multiple()
+                                ->options(fn () => self::getCategoryOptions())
+                                ->live(),
 
-                    Select::make('template')
-                        ->label('Quick Start Template')
-                        ->allowHtml()
-                        ->searchable()
-                        ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
-                        ->live()
-                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
-                            if (!$state) return;
-                            $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$state] ?? null;
-                            if (!$kpi) return;
+                            Select::make('template')
+                                ->label('Quick Start Template')
+                                ->allowHtml()
+                                ->searchable()
+                                ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
+                                ->live()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
+                                    if (!$state) return;
+                                    $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$state] ?? null;
+                                    if (!$kpi) return;
 
-                            $set('calculation_type', $kpi['calculation_type']);
-                            
-                            $activeChannels = array_keys(self::getActiveChannels());
-                            $registryTags = ChannelCapabilityRegistry::getTags();
-                            
-                            // Helper to find an active channel satisfying a placeholder tag
-                            $resolveChannel = function($placeholder) use ($activeChannels, $registryTags) {
-                                // Extract tag from placeholder, e.g. __SPENDABLE_CHANNEL_1__ -> spendable
-                                preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
-                                if (empty($matches[1])) return null;
-                                
-                                $requiredTag = strtolower($matches[1]);
-                                
-                                foreach ($activeChannels as $channel) {
-                                    $tags = $registryTags[$channel] ?? [];
-                                    if (in_array($requiredTag, $tags)) {
-                                        return $channel;
+                                    $set('calculation_type', $kpi['calculation_type']);
+
+                                    $activeChannels = array_keys(self::getActiveChannels());
+                                    $registryTags = ChannelCapabilityRegistry::getTags();
+
+                                    $resolveChannel = function($placeholder) use ($activeChannels, $registryTags) {
+                                        preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
+                                        if (empty($matches[1])) return null;
+
+                                        $requiredTag = strtolower($matches[1]);
+
+                                        foreach ($activeChannels as $channel) {
+                                            $tags = $registryTags[$channel] ?? [];
+                                            if (in_array($requiredTag, $tags)) {
+                                                return $channel;
+                                            }
+                                        }
+                                        return null;
+                                    };
+
+                                    $ast = $kpi['template']['ast'] ?? [];
+
+                                    if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly'])) {
+                                        if (isset($ast['channel'])) {
+                                            $set('dependent_channel', $resolveChannel($ast['channel']));
+                                            $set('dependent_metric', $ast['metric'] ?? '');
+                                        }
+                                        return;
                                     }
-                                }
-                                return null;
-                            };
 
-                            $ast = $kpi['template']['ast'] ?? [];
-                            
-                            // Univariate
-                            if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly'])) {
-                                if (isset($ast['channel'])) {
-                                    $set('dependent_channel', $resolveChannel($ast['channel']));
-                                    $set('dependent_metric', $ast['metric'] ?? '');
-                                }
-                                return;
-                            }
-
-                            // Bivariate (Left is dependent, Right is independent)
-                            if (isset($ast['left']['channel'])) {
-                                $set('dependent_channel', $resolveChannel($ast['left']['channel']));
-                                $set('dependent_metric', $ast['left']['metric'] ?? '');
-                            }
-
-                            if (isset($ast['right'])) {
-                                $independents = [];
-                                
-                                // Recursive helper to unpack '+' operators into flat list
-                                $unpackIndependents = function($node) use (&$unpackIndependents, $resolveChannel, &$independents) {
-                                    if (($node['type'] ?? '') === 'metric') {
-                                        $independents[] = [
-                                            'independent_channel' => $resolveChannel($node['channel']),
-                                            'independent_metric' => $node['metric'] ?? '',
-                                            'independent_asset_filter' => null,
-                                        ];
-                                    } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
-                                        $unpackIndependents($node['left']);
-                                        $unpackIndependents($node['right']);
+                                    if (isset($ast['left']['channel'])) {
+                                        $set('dependent_channel', $resolveChannel($ast['left']['channel']));
+                                        $set('dependent_metric', $ast['left']['metric'] ?? '');
                                     }
-                                };
-                                
-                                $unpackIndependents($ast['right']);
-                                
-                                if (!empty($independents)) {
-                                    // Livewire repeaters require unique UUID keys
-                                    $repeaterData = [];
-                                    foreach ($independents as $idx => $ind) {
-                                        $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
+
+                                    if (isset($ast['right'])) {
+                                        $independents = [];
+
+                                        $unpackIndependents = function($node) use (&$unpackIndependents, $resolveChannel, &$independents) {
+                                            if (($node['type'] ?? '') === 'metric') {
+                                                $independents[] = [
+                                                    'independent_channel' => $resolveChannel($node['channel']),
+                                                    'independent_metric' => $node['metric'] ?? '',
+                                                    'independent_asset_filter' => null,
+                                                ];
+                                            } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
+                                                $unpackIndependents($node['left']);
+                                                $unpackIndependents($node['right']);
+                                            }
+                                        };
+
+                                        $unpackIndependents($ast['right']);
+
+                                        if (!empty($independents)) {
+                                            $repeaterData = [];
+                                            foreach ($independents as $idx => $ind) {
+                                                $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
+                                            }
+                                            $set('independent_variables', $repeaterData);
+                                        }
                                     }
-                                    $set('independent_variables', $repeaterData);
-                                }
-                            }
-                        }),
+                                }),
+
+                    ]),
 
                     Select::make('calculation_type')
                         ->label('Calculation Type')
