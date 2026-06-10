@@ -74,6 +74,36 @@ class KpiReference extends Page
                 'use_case' => __('Your impressions suddenly jump from 10,000 to 100,000 in one day. Did a post go viral? Or is there a reporting glitch? Or did a competitor stop bidding? This KPI alerts you when something out of the ordinary happens so you can investigate immediately.'),
                 'interpretation' => __('When an anomaly is detected, check what happened on that date: Was there a campaign change? A viral post? A bot attack? A tracking error? Spikes aren\'t always good (bot traffic) and drops aren\'t always bad (better targeting). The KPI says "look here" — your judgement determines what it means.'),
             ],
+            'seo_click_momentum' => [
+                'type_label' => __('SEO Traffic Trend'),
+                'explanation' => __('Monitors whether your organic search clicks are trending up or down over a rolling window. It cuts through daily noise to reveal the real direction of your SEO performance — are you gaining ground or losing it?'),
+                'use_case' => __('You\'ve been publishing blog posts and optimizing your site for months, but daily traffic bounces up and down. Is all that effort actually paying off? This KPI tells you if the underlying trend is positive (your SEO is working) or negative (something needs attention).'),
+                'interpretation' => __('An upward signal means your organic traffic is growing — keep doing what you\'re doing. A downward signal means you\'re losing traction: check for algorithm updates, new competitors, or technical SEO issues. No clear signal means traffic is stable.'),
+            ],
+            'reach_elasticity' => [
+                'type_label' => __('Audience Saturation Finder'),
+                'explanation' => __('Measures how much additional audience reach you actually get for every extra dollar spent on paid media. Unlike clicks (which can scale almost linearly), reach has a natural ceiling — you can only show ads to so many people before you start saturating.'),
+                'use_case' => __('You\'ve been increasing your Facebook ad budget from $1,000 to $3,000, but your dashboard shows your frequency is going up (people seeing the same ad 5+ times). Are you actually reaching NEW people, or just annoying the same audience? This KPI tells you if your reach is still growing efficiently per dollar.'),
+                'interpretation' => __('A value above 1 means you still have room to grow — your ads are reaching new audiences efficiently. A value below 1 means you\'re hitting saturation: each dollar buys less new reach. Time to refresh audiences, expand targeting, or rotate creatives to re-engage different segments.'),
+            ],
+            'content_half_life' => [
+                'type_label' => __('Engagement Decay Meter'),
+                'explanation' => __('Measures how quickly the engagement on your organic posts drops off after publishing. Some content stays relevant for days (long half-life), while other content peaks and dies within hours (short half-life). This KPI quantifies that decay rate.'),
+                'use_case' => __('You post daily on Facebook — some posts get 80% of their reach in the first 3 hours, while others trickle in over 3 days. Which type of content has longer-lasting value? This KPI helps you identify what kind of posts keep delivering results long after publishing, so you can invest more effort there.'),
+                'interpretation' => __('A longer half-life means your content has staying power — evergreen topics, tutorials, or discussions that keep generating engagement. A shorter half-life means time-sensitive content (news, promotions, trends) that burns bright and fast. Neither is bad, but knowing your mix helps you balance your content calendar.'),
+            ],
+            'paid_organic_cannibalization' => [
+                'type_label' => __('Channel Conflict Detector'),
+                'explanation' => __('Tests whether your paid campaigns are reducing your organic reach. This is the flip side of the Halo Effect: instead of paid helping organic, this detects if your own ads are competing with and diminishing your unpaid content visibility.'),
+                'use_case' => __('You launch a big Facebook ad campaign and notice your organic page reach drops during the same period. Is this a coincidence or are your ads actually stealing reach that your organic posts would have gotten? This KPI tells you if your paid and organic channels are eating each other\'s lunch.'),
+                'interpretation' => __('A positive result means cannibalization is happening — your ads are reducing your organic reach. Consider separating paid and organic audiences, or pausing paid campaigns during important organic pushes. A negative result means no conflict; your channels coexist independently.'),
+            ],
+            'ctr_efficiency' => [
+                'type_label' => __('Search Presence Quality'),
+                'explanation' => __('Analyzes how effectively your search impressions convert into clicks. As you rank for more keywords (especially lower-volume, long-tail ones), your average CTR naturally changes. This KPI helps you understand if your search snippets and rankings are becoming more or less compelling.'),
+                'use_case' => __('Your Google Search Console shows you\'re getting more impressions than ever, but clicks aren\'t keeping pace. Are you ranking for irrelevant keywords? Did your snippet titles lose their appeal? This KPI isolates the click-through efficiency so you can diagnose if it\'s a ranking issue or a messaging issue.'),
+                'interpretation' => __('A rising value means your search snippets are becoming more effective — better titles, descriptions, or rich results are convincing users to click. A falling value means something is off: maybe you\'re ranking for impressions without clicks (position too low), or your snippets have become less compelling. Investigate which queries are dragging CTR down.'),
+            ],
         ];
 
         return $guidance[$key] ?? [

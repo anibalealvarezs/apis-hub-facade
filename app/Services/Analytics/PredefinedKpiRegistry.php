@@ -135,6 +135,98 @@ class PredefinedKpiRegistry
                     ]
                 ]
             ],
+            'seo_click_momentum' => [
+                'name' => 'SEO Click Momentum',
+                'description' => 'Detect whether your organic search clicks are gaining or losing momentum over time.',
+                'required_tags' => ['seo', 'clickable'],
+                'calculation_type' => 'calculate_macd',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__SEO_CHANNEL_1__',
+                        'metric' => 'clicks'
+                    ]
+                ]
+            ],
+            'reach_elasticity' => [
+                'name' => 'Reach Scalability / Elasticity',
+                'description' => 'Find your audience saturation ceiling. How much does a 10% increase in spend actually expand your reach?',
+                'required_tags' => ['spendable', 'impressionable'],
+                'calculation_type' => 'calculate_elasticity',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
+                            'metric' => 'impressions'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend'
+                        ]
+                    ]
+                ]
+            ],
+            'content_half_life' => [
+                'name' => 'Content Half-Life',
+                'description' => 'Measure how quickly your organic content engagement decays over time.',
+                'required_tags' => ['organic_social', 'reach_driven'],
+                'calculation_type' => 'calculate_autocorrelation',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                        'metric' => 'reach'
+                    ]
+                ]
+            ],
+            'paid_organic_cannibalization' => [
+                'name' => 'Paid to Organic Cannibalization',
+                'description' => 'Detect if paid campaigns are stealing reach from your organic content.',
+                'required_tags' => ['spendable', 'organic_social', 'impressionable'],
+                'calculation_type' => 'calculate_granger',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                            'metric' => 'reach'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend'
+                        ]
+                    ]
+                ]
+            ],
+            'ctr_efficiency' => [
+                'name' => 'CTR Efficiency (SEO)',
+                'description' => 'Is your organic search presence becoming more or less effective at turning impressions into clicks?',
+                'required_tags' => ['seo', 'clickable', 'impressionable'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions'
+                        ]
+                    ]
+                ]
+            ],
         ];
     }
 
