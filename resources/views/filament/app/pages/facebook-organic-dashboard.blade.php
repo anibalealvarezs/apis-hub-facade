@@ -1477,6 +1477,7 @@
                                         ticks: {}
                                     };
                                 }
+                                chart.options.scales[scaleId].min = 0;
 
                                 const ds = datasets.find(d => d.yAxisID === scaleId);
                                 if (ds) {
