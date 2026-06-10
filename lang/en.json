@@ -1,3 +1,4 @@
 {
-    "api_credentials_notice": "API access credentials (Internal Integration) are reserved for users on the :ultra and :enterprise plans. If you are on a :free or :pro plan and need to use the API, you must upgrade your Billing Profile or transfer the project to a higher-tier Billing Profile."
+    "api_credentials_notice": "API access credentials (Internal Integration) are reserved for users on the :ultra and :enterprise plans. If you are on a :free or :pro plan and need to use the API, you must upgrade your Billing Profile or transfer the project to a higher-tier Billing Profile.",
+    "permissions_vs_tiers": "Permissions define what tasks users can perform based on their assigned role, but :tiers define the strategic capabilities available for the project as a whole."
 }

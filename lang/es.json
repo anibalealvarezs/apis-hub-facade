@@ -292,7 +292,7 @@
     "Could not assign a server to your project. Deployment will be queued.": "No se pudo asignar un servidor a tu proyecto. El despliegue será puesto en cola.",
     "Project Created": "Proyecto Creado",
     "The project has been registered. Please configure your data sources before starting the infrastructure deployment.": "El proyecto ha sido registrado. Por favor, configura tus fuentes de datos antes de iniciar el despliegue de la infraestructura.",
-    "Permissions define what tasks users can perform based on their assigned role, but <strong>Tiers<\/strong> define the strategic capabilities available for the project as a whole.": "Los permisos establecen qué tipo de tareas pueden hacer los usuarios según el rol asignado, pero los <strong>planes (Tiers)<\/strong> definen las capacidades estratégicas disponibles para el proyecto de manera transversal.",
+    "permissions_vs_tiers": "Los permisos establecen qué tipo de tareas pueden hacer los usuarios según el rol asignado, pero los <strong>planes (Tiers)<\/strong> definen las capacidades estratégicas disponibles para el proyecto de manera transversal.",
     "Basic access plan. Limited functionalities designed for testing and small projects.": "Plan de acceso básico. Funcionalidades limitadas diseñadas para pruebas y proyectos pequeños.",
     "Projects": "Proyectos",
     "1 maximum": "1 máximo",

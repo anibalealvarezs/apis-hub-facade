@@ -1,7 +1,9 @@
 <x-filament-panels::page>
     <div class="space-y-6">
         <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {{ __('Permissions define what tasks users can perform based on their assigned role, but <strong>Tiers</strong> define the strategic capabilities available for the project as a whole.') }}
+            {!! __('permissions_vs_tiers', [
+                'tiers' => '<strong>Tiers</strong>'
+            ]) !!}
         </div>
 
         <x-filament::grid default="1" md="2" xl="4" class="gap-6">
