@@ -750,12 +750,6 @@
                             draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
                         });
 
-                        // Explicitly enable resize on all existing items (DOM items adopted by init)
-                        this.grid.engine.nodes.forEach(node => {
-                            this.grid.resizable(node.el, true);
-                            this.grid.movable(node.el, '.rounded-t-lg');
-                        });
-
                         this.grid.on('change', (event, items) => {
                             this.gridLayout = items.map(item => ({
                                 id: item.id || parseInt(item.getAttribute?.('gs-id')) || 0,
