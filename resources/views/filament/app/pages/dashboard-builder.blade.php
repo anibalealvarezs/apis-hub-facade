@@ -143,8 +143,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Explicit resize handle for GridStack + Alpine integration -->
-                                <div class="ui-resizable-handle ui-resizable-se"></div>
                             </div>
                         </template>
                     </div>
@@ -652,7 +650,8 @@
     @push('scripts')
         <style>
             /* Force native GridStack resize handle to bottom right */
-            .grid-stack-item > .ui-resizable-handle.ui-resizable-se {
+            .grid-stack-item > .ui-resizable-handle,
+            .grid-stack-item > .gs-resize-handle {
                 display: block !important;
                 position: absolute !important;
                 bottom: 0px !important;
@@ -660,7 +659,14 @@
                 width: 20px !important;
                 height: 20px !important;
                 cursor: se-resize !important;
-                z-index: 100 !important;
+                z-index: 1000 !important;
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23666" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>') !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
+            }
+            .dark .grid-stack-item > .ui-resizable-handle,
+            .dark .grid-stack-item > .gs-resize-handle {
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>') !important;
             }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
