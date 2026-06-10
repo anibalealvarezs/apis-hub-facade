@@ -50,7 +50,6 @@
 
 /* Subtle grid lines for layout visualization */
 #grid-stack {
-    position: relative;
     background-image:
         repeating-linear-gradient(
             to right,
@@ -67,7 +66,7 @@
             rgba(0, 0, 0, 0.04) 101px,
             transparent 101px,
             transparent 112px
-        );
+        ) !important;
 }
 
 .dark #grid-stack {
@@ -87,7 +86,7 @@
             rgba(255, 255, 255, 0.04) 101px,
             transparent 101px,
             transparent 112px
-        );
+        ) !important;
 }
 
 /* Widget card hover effects */
