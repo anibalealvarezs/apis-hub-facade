@@ -756,6 +756,7 @@
 
                         this.grid = GridStack.init({
                             column: 12,
+                            minRow: 6,
                             cellHeight: 100,
                             margin: 12,
                             float: true,
