@@ -707,13 +707,41 @@
                         breakdownCurrentPage: 1,
                         breakdownPageSize: 10,
 
+                        restoreFromUrl() {
+                            const params = new URLSearchParams(window.location.search);
+                            const accParam = params.get('accounts');
+                            if (accParam) {
+                                const ids = accParam.split(',').filter(id => id);
+                                if (ids.length > 0) this.accounts = ids;
+                            }
+                            const ds = params.get('dateStart');
+                            if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
+                            const de = params.get('dateEnd');
+                            if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
+                            const tab = params.get('tab');
+                            if (tab && ['facebook', 'instagram'].includes(tab)) this.activeTab = tab;
+                        },
+
+                        syncToUrl() {
+                            const params = new URLSearchParams();
+                            if (this.accounts.length > 0) params.set('accounts', this.accounts.join(','));
+                            if (this.dateStart) params.set('dateStart', this.dateStart);
+                            if (this.dateEnd) params.set('dateEnd', this.dateEnd);
+                            if (this.activeTab) params.set('tab', this.activeTab);
+                            const qs = params.toString();
+                            const url = qs ? window.location.pathname + '?' + qs : window.location.pathname;
+                            history.replaceState(null, '', url);
+                        },
+
                         initDashboard() {
+                            this.restoreFromUrl();
+
                             const boot = () => {
                                 this.initChart();
 
-                                this.$watch('accounts', () => this.fetchAll());
-                                this.$watch('dateStart', () => this.fetchAll());
-                                this.$watch('dateEnd', () => this.fetchAll());
+                                this.$watch('accounts', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('dateStart', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('dateEnd', () => { this.syncToUrl(); this.fetchAll(); });
                                 this.$watch('pageSize', () => {
                                     this.currentPage = 1;
                                 });
@@ -752,10 +780,11 @@
                             this.breakdownDataRaw = [];
                             this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
                             Object.keys(this.activeFilters).forEach((key) => {
-                                if (!this.availableBreakdownTabs.some(tab => tab.value === key)) {
+                                if (!this.availableBreakdownTabs.some(t => t.value === key)) {
                                     this.activeFilters[key] = [];
                                 }
                             });
+                            this.syncToUrl();
                             this.clearCache();
                             this.fetchAll(); // Refetch everything since metrics depend on the tab
                         },

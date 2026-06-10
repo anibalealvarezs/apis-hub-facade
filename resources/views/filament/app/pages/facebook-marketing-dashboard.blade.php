@@ -175,7 +175,7 @@
 
                             @if(count($accounts) > 0)
                                 <div class="flex items-center justify-between px-1">
-                                    <button type="button" @click="accounts = {{ json_encode(array_keys($accounts)) }}"
+                                    <button type="button" @click="accounts = @json(array_keys($accounts))"
                                             class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">{{ __('Select All') }}</button>
                                     <button type="button" @click="accounts = []"
                                             class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">{{ __('Clear All') }}</button>
@@ -541,7 +541,44 @@
                             return Object.values(this.activeFilters).some(arr => arr.length > 0);
                         },
 
+                        restoreFromUrl() {
+                            const params = new URLSearchParams(window.location.search);
+                            const accParam = params.get('accounts');
+                            if (accParam) {
+                                const parsed = accParam.split(',').filter(id => this.accountNames[id]);
+                                if (parsed.length > 0) this.accounts = parsed;
+                            }
+                            const ds = params.get('dateStart');
+                            if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
+                            const de = params.get('dateEnd');
+                            if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
+                            const tab = params.get('tab');
+                            if (tab && ['campaigns', 'adsets', 'ads', 'age', 'gender'].includes(tab)) this.activeTab = tab;
+                            const metricsParam = params.get('metrics');
+                            if (metricsParam) {
+                                const enabledMetrics = metricsParam.split(',');
+                                Object.keys(this.activeMetrics).forEach(key => {
+                                    this.activeMetrics[key] = enabledMetrics.includes(key);
+                                });
+                            }
+                        },
+
+                        syncToUrl() {
+                            const params = new URLSearchParams();
+                            if (this.accounts.length > 0) params.set('accounts', this.accounts.join(','));
+                            if (this.dateStart) params.set('dateStart', this.dateStart);
+                            if (this.dateEnd) params.set('dateEnd', this.dateEnd);
+                            if (this.activeTab) params.set('tab', this.activeTab);
+                            const enabledMetrics = Object.entries(this.activeMetrics).filter(([k, v]) => v).map(([k]) => k);
+                            if (enabledMetrics.length > 0) params.set('metrics', enabledMetrics.join(','));
+                            const qs = params.toString();
+                            const url = qs ? window.location.pathname + '?' + qs : window.location.pathname;
+                            history.replaceState(null, '', url);
+                        },
+
                         initDashboard() {
+                            this.restoreFromUrl();
+
                             const boot = () => {
                                 this.initChart();
 
@@ -553,6 +590,7 @@
                                         this.saveFilters();
                                     }
                                     this.loadFilters();
+                                    this.syncToUrl();
                                     this.fetchAll();
                                 });
                                 this.$watch('activeFilters.campaigns', (val) => {
@@ -568,8 +606,8 @@
                                         this.saveFilters();
                                     }
                                 });
-                                this.$watch('dateStart', () => this.fetchAll());
-                                this.$watch('dateEnd', () => this.fetchAll());
+                                this.$watch('dateStart', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('dateEnd', () => { this.syncToUrl(); this.fetchAll(); });
                                 this.$watch('pageSize', () => {
                                     this.currentPage = 1;
                                 });
@@ -600,6 +638,7 @@
                             this.activeTab = tab;
                             this.currentPage = 1;
                             this.searchQuery = ''; // Clear search when switching tabs
+                            this.syncToUrl();
                             this.fetchTable();
                         },
 
@@ -932,6 +971,7 @@
 
                         toggleMetric(metric) {
                             this.activeMetrics[metric] = !this.activeMetrics[metric];
+                            this.syncToUrl();
                             this.updateChart();
                         },
 

@@ -400,16 +400,51 @@
                             return Object.values(this.activeFilters).some(arr => arr.length > 0);
                         },
 
+                        restoreFromUrl() {
+                            const params = new URLSearchParams(window.location.search);
+                            const accParam = params.get('account');
+                            if (accParam) this.account = accParam;
+                            const ds = params.get('dateStart');
+                            if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
+                            const de = params.get('dateEnd');
+                            if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
+                            const tab = params.get('tab');
+                            if (tab && ['queries', 'pages', 'countries', 'devices', 'appearances'].includes(tab)) this.activeTab = tab;
+                            const metricsParam = params.get('metrics');
+                            if (metricsParam) {
+                                const enabledMetrics = metricsParam.split(',');
+                                Object.keys(this.activeMetrics).forEach(key => {
+                                    this.activeMetrics[key] = enabledMetrics.includes(key);
+                                });
+                            }
+                        },
+
+                        syncToUrl() {
+                            const params = new URLSearchParams();
+                            if (this.account) params.set('account', this.account);
+                            if (this.dateStart) params.set('dateStart', this.dateStart);
+                            if (this.dateEnd) params.set('dateEnd', this.dateEnd);
+                            if (this.activeTab) params.set('tab', this.activeTab);
+                            const enabledMetrics = Object.entries(this.activeMetrics).filter(([k, v]) => v).map(([k]) => k);
+                            if (enabledMetrics.length > 0) params.set('metrics', enabledMetrics.join(','));
+                            const qs = params.toString();
+                            const url = qs ? window.location.pathname + '?' + qs : window.location.pathname;
+                            history.replaceState(null, '', url);
+                        },
+
                         initDashboard() {
+                            this.restoreFromUrl();
+
                             const boot = () => {
                                 this.initChart();
 
                                 this.$watch('account', () => {
                                     this.loadFilters();
+                                    this.syncToUrl();
                                     this.fetchAll();
                                 });
-                                this.$watch('dateStart', () => this.fetchAll());
-                                this.$watch('dateEnd', () => this.fetchAll());
+                                this.$watch('dateStart', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('dateEnd', () => { this.syncToUrl(); this.fetchAll(); });
                                 this.$watch('pageSize', () => {
                                     this.currentPage = 1;
                                 });
@@ -440,6 +475,7 @@
                             this.activeTab = tab;
                             this.currentPage = 1;
                             this.searchQuery = ''; // Clear search when switching tabs
+                            this.syncToUrl();
                             this.fetchTable();
                             this.$wire.setActiveTab(tab);
                         },
@@ -679,6 +715,7 @@
 
                         toggleMetric(metric) {
                             this.activeMetrics[metric] = !this.activeMetrics[metric];
+                            this.syncToUrl();
                             this.updateChart();
                         },
 
