@@ -45,10 +45,10 @@
             {{ $statusText }}
         </span>
     </div>
-    
+
     @if($showSync)
         <a href="{{ \App\Filament\App\Pages\DataSync::getUrl() }}"
-           class="flex items-center gap-2 group px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg"
+           class="flex items-center gap-2 group px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg dark:hover:bg-custom-400"
            title="{{ __('Sync Progress') }}: {{ $syncPercentage }}%">
             <div class="w-20 sm:w-28 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                 <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-500 ease-out"

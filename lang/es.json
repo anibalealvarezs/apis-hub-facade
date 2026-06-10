@@ -318,7 +318,7 @@
     "Share Billing Profiles": "Compartir Billing Profiles",
     "Support and Guaranteed SLA Stability": "Soporte y Estabilidad SLA garantizada",
     "Important Note on API Access": "Nota Importante sobre Acceso a la API",
-    "API access credentials (Internal Integration) are reserved for users on the <strong>Ultra<\/strong> and <strong>Enterprise<\/strong> plans. If you are on a <em>Free<\/em> or <em>Pro<\/em> plan and need to use the API, you must upgrade your Billing Profile or transfer the project to a higher-tier Billing Profile.": "Las credenciales de acceso a la API (Internal Integration) están reservadas para usuarios del plan <strong>Ultra<\/strong> y <strong>Enterprise<\/strong>. Si te encuentras en un plan <em>Free<\/em> o <em>Pro<\/em> y necesitas usar la API, deberás actualizar tu Billing Profile o transferir el proyecto a un Billing Profile de nivel superior.",
+    "api_credentials_notice": "Las credenciales de acceso a la API (Internal Integration) están reservadas para usuarios del plan :ultra y :enterprise. Si te encuentras en un plan :free o :pro y necesitas usar la API, deberás actualizar tu Billing Profile o transferir el proyecto a un Billing Profile de nivel superior.",
     "Quota Locked": "Cuota Bloqueada",
     "Locked until cycle end": "Bloqueado hasta fin de ciclo",
     "Grace Period paused (Waiting for deployment)": "Periodo de Gracia pausado (Esperando despliegue)",
