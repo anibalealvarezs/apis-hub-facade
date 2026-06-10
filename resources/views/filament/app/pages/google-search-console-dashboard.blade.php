@@ -715,7 +715,8 @@
                                             position: 'left',
                                             display: false,
                                             grid: {color: 'var(--gsc-chart-grid)', drawBorder: false},
-                                            ticks: {color: '#4285F4'}
+                                            ticks: {color: '#4285F4'},
+                                            min: 0
                                         },
                                         yImpressions: {
                                             type: 'linear',
@@ -729,7 +730,8 @@
                                             position: 'left',
                                             display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#0097A7'}
+                                            ticks: {color: '#0097A7'},
+                                            min: 0
                                         },
                                         yPosition: {
                                             type: 'linear',
