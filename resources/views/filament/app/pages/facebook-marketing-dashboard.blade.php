@@ -1174,8 +1174,7 @@
                                     chart.options.scales[scaleId] = {
                                         type: 'linear',
                                         display: false,
-                                        grid: {drawOnChartArea: false, drawBorder: false},
-                                        min: 0
+                                        grid: {drawOnChartArea: false, drawBorder: false}
                                     };
                                 }
 
@@ -1189,6 +1188,7 @@
                                         chart.options.scales[scaleId].grid.drawOnChartArea = false;
                                     }
                                 }
+                                chart.options.scales[scaleId].min = 0;
                             });
 
                             chart.data.labels = labels;
