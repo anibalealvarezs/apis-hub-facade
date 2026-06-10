@@ -14,6 +14,12 @@
                     <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1" />
                     Controls
                 </button>
+                <button class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                        x-on:click="openShareDialog()"
+                        @can('edit_preferences')>
+                    <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1" />
+                    Share
+                </button>
                 <x-filament::button wire:click="saveLayout(gridState)" color="primary" icon="heroicon-o-check">
                     Save Layout
                 </x-filament::button>
@@ -492,6 +498,74 @@
                 </div>
             </div>
         </div>
+
+        {{-- ============================================================ --}}
+        {{-- SHARE DIALOG                                               --}}
+        {{-- ============================================================ --}}
+        <div x-show="showShareDialog" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/50" x-on:click="showShareDialog = false"></div>
+            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-6">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Share Dashboard</h2>
+
+                {{-- Public Toggle --}}
+                <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Public access</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Anyone with the link can view this dashboard</p>
+                    </div>
+                    <button class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                            :class="isPublic ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'"
+                            x-on:click="togglePublic()">
+                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                              :class="isPublic ? 'translate-x-6' : 'translate-x-1'"></span>
+                    </button>
+                </div>
+
+                {{-- Shared Users --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Shared with</label>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        <template x-for="user in sharedUsers" :key="user.id">
+                            <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                <div>
+                                    <p class="text-sm text-gray-900 dark:text-white" x-text="user.name"></p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="user.email"></p>
+                                </div>
+                                <button class="text-xs text-red-500 hover:underline"
+                                        x-on:click="unshareUser(user.id)">Remove</button>
+                            </div>
+                        </template>
+                        <template x-if="!sharedUsers.length">
+                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No users shared yet</p>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Add User --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add collaborator</label>
+                    <div class="flex gap-2">
+                        <select x-model="shareUserId"
+                                class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                            <option value="">Select a user...</option>
+                            <template x-for="user in collaborators" :key="user.id">
+                                <template x-if="!isShared(user.id)">
+                                    <option :value="user.id" x-text="user.name + ' (' + user.email + ')'"></option>
+                                </template>
+                            </template>
+                        </select>
+                        <button class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 disabled:opacity-50"
+                                :disabled="!shareUserId"
+                                x-on:click="addSharedUser()">Add</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <button class="px-4 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            x-on:click="showShareDialog = false">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -541,6 +615,13 @@
                         granularity: 'daily',
                     },
                     widgetAssets: {},
+
+                    // ─── Share ──
+                    showShareDialog: false,
+                    isPublic: {{ $this->dashboard->is_public ? 'true' : 'false' }},
+                    collaborators: [],
+                    sharedUsers: [],
+                    shareUserId: '',
 
                     // ─── Add Widget Modal ──
                     showAddWidgetModal: false,
@@ -776,6 +857,45 @@
 
                         @this.addWidget(data);
                         this.showAddWidgetModal = false;
+                    },
+
+                    // ─── Share ──
+                    openShareDialog() {
+                        @this.getProjectCollaborators().then(users => {
+                            this.collaborators = users || [];
+                        });
+                        @this.getSharedUserIds().then(ids => {
+                            this.sharedUsers = this.collaborators.filter(u => (ids || []).includes(u.id));
+                        });
+                        this.showShareDialog = true;
+                    },
+
+                    isShared(userId) {
+                        return this.sharedUsers.some(u => u.id === userId);
+                    },
+
+                    addSharedUser() {
+                        const userId = parseInt(this.shareUserId);
+                        if (!userId) return;
+                        const user = this.collaborators.find(u => u.id === userId);
+                        if (!user) return;
+
+                        @this.shareWithUser(userId).then(() => {
+                            this.sharedUsers.push(user);
+                            this.shareUserId = '';
+                        });
+                    },
+
+                    unshareUser(userId) {
+                        @this.unshareUser(userId).then(() => {
+                            this.sharedUsers = this.sharedUsers.filter(u => u.id !== userId);
+                        });
+                    },
+
+                    togglePublic() {
+                        @this.togglePublic().then(() => {
+                            this.isPublic = !this.isPublic;
+                        });
                     },
 
                     configureWidget(id) {

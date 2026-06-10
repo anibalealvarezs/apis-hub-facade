@@ -87,3 +87,5 @@ Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->nam
 Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos');
 Route::get('/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion');
+
+Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');

@@ -34,6 +34,10 @@ class DashboardWidgetDataController extends Controller
 
         $user = $request->user();
 
+        if (!$user || $user->cannot('view', $dashboard)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $dashboard = $widget->dashboard;
 
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);

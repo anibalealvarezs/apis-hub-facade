@@ -217,6 +217,57 @@ class DashboardBuilder extends Page
             ->send();
     }
 
+    // ─── Sharing ───
+
+    public function getProjectCollaborators(): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        return $project->users()
+            ->select('users.id', 'users.name', 'users.email')
+            ->get()
+            ->toArray();
+    }
+
+    public function getSharedUserIds(): array
+    {
+        return $this->dashboard->sharedUsers()->pluck('user_id')->toArray();
+    }
+
+    public function shareWithUser(int $userId): void
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        $user = \App\Models\User::findOrFail($userId);
+
+        if (!$project->users()->where('user_id', $userId)->exists()) {
+            Notification::make()->title('User is not a collaborator on this project')->danger()->send();
+            return;
+        }
+
+        if ($this->dashboard->sharedUsers()->where('user_id', $userId)->exists()) {
+            Notification::make()->title('Already shared with this user')->warning()->send();
+            return;
+        }
+
+        $this->dashboard->sharedUsers()->attach($userId);
+        Notification::make()->title('Dashboard shared with ' . $user->name)->success()->send();
+    }
+
+    public function unshareUser(int $userId): void
+    {
+        $this->dashboard->sharedUsers()->detach($userId);
+        Notification::make()->title('User removed from shared list')->success()->send();
+    }
+
+    public function togglePublic(): void
+    {
+        $this->dashboard->update(['is_public' => !$this->dashboard->is_public]);
+        $this->dashboard->refresh();
+        Notification::make()
+            ->title($this->dashboard->is_public ? 'Dashboard is now public' : 'Dashboard is now private')
+            ->success()
+            ->send();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
