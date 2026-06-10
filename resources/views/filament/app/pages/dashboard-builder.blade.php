@@ -62,7 +62,7 @@
 
             {{-- Grid Area --}}
             <div class="col-span-12 lg:col-span-10">
-                <div id="grid-container"
+                <div id="grid-container" wire:ignore
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
