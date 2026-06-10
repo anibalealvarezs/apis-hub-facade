@@ -588,16 +588,7 @@
                     // ─── Dashboard Controls ──
                     showDashboardControls: false,
                     showWidgetControls: false,
-                    dashboardControls: @json($this->dashboard->controls ?? [
-                        'date_start' => '',
-                        'date_end' => '',
-                        'zero_handling' => 'remove',
-                        'channel' => '',
-                        'asset_mode' => 'single',
-                        'asset' => '',
-                        'assets' => [],
-                        'granularity' => 'daily',
-                    ]),
+                    dashboardControls: @json($this->getDashboardControls()),
 
                     // ─── Widget Controls ──
                     widgetControlsTarget: {},

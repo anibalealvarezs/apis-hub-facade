@@ -85,6 +85,20 @@ class DashboardBuilder extends Page
             ->send();
     }
 
+    public function getDashboardControls(): array
+    {
+        return $this->dashboard->controls ?? [
+            'date_start' => '',
+            'date_end' => '',
+            'zero_handling' => 'remove',
+            'channel' => '',
+            'asset_mode' => 'single',
+            'asset' => '',
+            'assets' => [],
+            'granularity' => 'daily',
+        ];
+    }
+
     // ─── Data Sources ───
 
     public function getActiveChannels(): array
