@@ -96,16 +96,29 @@ class DashboardWidgetDataController extends Controller
             return $cached->result;
         }
 
+        $uiState = $kpi->filters['_ui_state'] ?? [];
+        $controlsToMerge = [];
+        if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
+        if (!empty($controls['asset'])) $controlsToMerge['dependent_asset_filter'] = $controls['asset'];
+        if (!empty($controls['date_start'])) $controlsToMerge['start_date'] = $controls['date_start'];
+        if (!empty($controls['date_end'])) $controlsToMerge['end_date'] = $controls['date_end'];
+        if (!empty($controls['granularity'])) $controlsToMerge['granularity'] = $controls['granularity'];
+
+        // If independent variables are present and missing channels/assets, override them with controls
+        if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+            foreach ($uiState['independent_variables'] as $key => $var) {
+                if (empty($var['independent_channel']) && !empty($controls['channel'])) {
+                    $uiState['independent_variables'][$key]['independent_channel'] = $controls['channel'];
+                }
+                if (empty($var['independent_asset_filter']) && !empty($controls['asset'])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['asset'];
+                }
+            }
+        }
+
         $payload = KpiPayloadBuilder::build(
             $kpi->calculation_type,
-            array_merge($kpi->filters ?? [], [
-                'dependent_channel' => $controls['channel'] ?? null,
-                'dependent_asset_filter' => $controls['asset'] ?? null,
-                'dependent_series' => [],
-                'start_date' => $controls['date_start'] ?? null,
-                'end_date' => $controls['date_end'] ?? null,
-                'granularity' => $controls['granularity'] ?? 'daily',
-            ]),
+            array_merge($uiState, $controlsToMerge),
             [
                 'start_date' => $controls['date_start'] ?? null,
                 'end_date' => $controls['date_end'] ?? null,
