@@ -97,6 +97,7 @@ class DashboardWidgetDataController extends Controller
         }
 
         $uiState = $kpi->filters['_ui_state'] ?? [];
+        \Illuminate\Support\Facades\Log::info('UI State:', $uiState);
         $controlsToMerge = [];
         if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
         if (!empty($controls['asset'])) $controlsToMerge['dependent_asset_filter'] = $controls['asset'];
@@ -116,9 +117,15 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        $mergedState = array_merge($uiState, $controlsToMerge);
+
+        if (empty($mergedState['dependent_metric'])) {
+            throw new \RuntimeException("This KPI is incomplete. You must select a 'Dependent Metric' in the Custom KPI configuration page.");
+        }
+
         $payload = KpiPayloadBuilder::build(
             $kpi->calculation_type,
-            array_merge($uiState, $controlsToMerge),
+            $mergedState,
             [
                 'start_date' => $controls['date_start'] ?? null,
                 'end_date' => $controls['date_end'] ?? null,

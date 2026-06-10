@@ -168,8 +168,9 @@ class KpiFormBuilder
                         ->options(fn () => self::getActiveChannels())
                         ->live(),
                     Select::make($name . '_metric')
-                        ->label('Metric (keep empty for runtime)')
-                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'))),
+                        ->label('Metric')
+                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
+                        ->required(fn () => $name === 'dependent'),
                     Select::make($name . '_asset_filter')
                         ->label('Asset Filter (keep empty for runtime)')
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
