@@ -59,7 +59,6 @@ class DashboardResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->where('project_id', auth()->user()->currentProject?->id))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
