@@ -18,20 +18,25 @@
                 </x-filament::input.wrapper>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-                <template x-for="[catKey, catLabel] in Object.entries(categories)" :key="catKey">
-                    <button
-                        type="button"
-                        x-on:click="toggleCategory(catKey)"
-                        x-bind:class="selectedCategories.includes(catKey)
-                            ? 'bg-primary-500 text-white ring-2 ring-primary-300 dark:ring-primary-600 shadow-md'
-                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'"
-                        class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer"
-                    >
-                        <span x-text="catLabel"></span>
-                    </button>
-                </template>
-            </div>
+            <template x-for="(group, groupName) in categoryGroups" :key="groupName">
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 ml-0.5" x-text="groupName"></div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="(catLabel, catKey) in group" :key="catKey">
+                            <button
+                                type="button"
+                                x-on:click="toggleCategory(catKey)"
+                                x-bind:class="selectedCategories.includes(catKey)
+                                    ? 'bg-primary-500 text-white ring-2 ring-primary-300 dark:ring-primary-600 shadow-md'
+                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer"
+                            >
+                                <span x-text="catLabel"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </template>
         </div>
 
         <div>
@@ -94,7 +99,7 @@
     <script>
         Alpine.data('kpiBrowser', () => ({
             kpis: @js($this->getKpisWithGuidance()),
-            categories: @js($this->getCategoryOptions()),
+            categoryGroups: @js($this->getCategoryGroups()),
             search: '',
             selectedCategories: [],
 

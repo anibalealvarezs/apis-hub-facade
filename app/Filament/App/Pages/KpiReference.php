@@ -59,26 +59,64 @@ class KpiReference extends Page
     public function getCategoryOptions(): array
     {
         return [
-            'performance' => __('Performance'),
-            'cost' => __('Cost'),
-            'results' => __('Results'),
-            'clicks' => __('Clicks'),
-            'impressions' => __('Impressions'),
-            'seasonality' => __('Seasonality'),
-            'trends' => __('Trends'),
-            'scalability' => __('Scalability'),
-            'cross-channel' => __('Cross-Channel'),
-            'alerts' => __('Alerts'),
-            'seo' => __('SEO'),
-            'organic' => __('Organic'),
             'agency' => __('Agency Performance'),
-            'scope_global' => __('Global'),
-            'scope_channel' => __('Channel'),
-            'scope_asset' => __('Asset'),
-            'org_mkt_organic' => __('Organic Focus'),
+            'alerts' => __('Alerts'),
+            'clicks' => __('Clicks'),
+            'cost' => __('Cost'),
+            'cross-channel' => __('Cross-Channel'),
+            'impressions' => __('Impressions'),
+            'organic' => __('Organic'),
             'org_mkt_marketing' => __('Marketing Focus'),
+            'org_mkt_organic' => __('Organic Focus'),
+            'performance' => __('Performance'),
+            'results' => __('Results'),
+            'scalability' => __('Scalability'),
+            'scope_asset' => __('Asset'),
+            'scope_channel' => __('Channel'),
+            'scope_global' => __('Global'),
+            'seasonality' => __('Seasonality'),
+            'seo' => __('SEO'),
             'source_src' => __('Source Data'),
             'source_tracking' => __('Tracking Data'),
+            'trends' => __('Trends'),
+        ];
+    }
+
+    public function getCategoryGroups(): array
+    {
+        return [
+            'Channel' => [
+                'cross-channel' => __('Cross-Channel'),
+                'organic' => __('Organic'),
+                'seo' => __('SEO'),
+            ],
+            'Data Origin' => [
+                'source_src' => __('Source Data'),
+                'source_tracking' => __('Tracking Data'),
+            ],
+            'Data Perspective' => [
+                'org_mkt_marketing' => __('Marketing Focus'),
+                'org_mkt_organic' => __('Organic Focus'),
+            ],
+            'Focus' => [
+                'agency' => __('Agency Performance'),
+                'alerts' => __('Alerts'),
+                'cost' => __('Cost'),
+                'performance' => __('Performance'),
+                'scalability' => __('Scalability'),
+                'seasonality' => __('Seasonality'),
+                'trends' => __('Trends'),
+            ],
+            'Metric' => [
+                'clicks' => __('Clicks'),
+                'impressions' => __('Impressions'),
+                'results' => __('Results'),
+            ],
+            'Scope' => [
+                'scope_asset' => __('Asset'),
+                'scope_channel' => __('Channel'),
+                'scope_global' => __('Global'),
+            ],
         ];
     }
 
