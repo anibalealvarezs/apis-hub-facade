@@ -736,7 +736,6 @@
                                             position: 'right',
                                             reverse: true,
                                             display: false,
-                                            min: 1,
                                             grid: {drawOnChartArea: false, drawBorder: false},
                                             ticks: {color: '#F4511E'}
                                         }
