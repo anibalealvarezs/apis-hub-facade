@@ -748,7 +748,13 @@
                             acceptWidgets: true,
                             removable: false,
                             resizable: {handles: 'se'},
-                            draggable: {handle: '.grid-stack-item-content'},
+                            draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
+                        });
+
+                        // Ensure all existing items are resizable (DOM items adopted by init may need this)
+                        this.grid.engine.nodes.forEach(node => {
+                            this.grid.resizable(node.el, true);
+                            this.grid.movable(node.el, '.rounded-t-lg');
                         });
 
                         this.grid.on('change', (event, items) => {
