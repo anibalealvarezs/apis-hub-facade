@@ -66,7 +66,7 @@
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
-                            <div class="grid-stack-item resizable"
+                            <div class="grid-stack-item"
                                  :gs-id="widget.id"
                                  :gs-x="widget.grid_x"
                                  :gs-y="widget.grid_y"
@@ -74,8 +74,8 @@
                                  :gs-h="widget.grid_h"
                                  :gs-min-w="2"
                                  :gs-min-h="2">
-                                <div
-                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative">
+                                    <div class="gridstack-resize-handle" title="Resize"></div>
                                     {{-- Widget Header --}}
                                     <div
                                         class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
