@@ -181,3 +181,8 @@
 .grid-stack-item:not(.ui-draggable-dragging) {
     animation: widget-fade-in 0.25s ease;
 }
+
+/* Fix icon sizing: Filament SVG icons have display:inline which ignores width/height */
+.grid-stack-item-content .fi-icon {
+    display: inline-block !important;
+}
