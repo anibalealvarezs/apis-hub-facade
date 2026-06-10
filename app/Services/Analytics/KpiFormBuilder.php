@@ -47,6 +47,10 @@ class KpiFormBuilder
             'alerts' => __('Alerts'),
             'seo' => __('SEO'),
             'organic' => __('Organic'),
+            'agency' => __('Agency Performance'),
+            'scope_global' => __('Global'),
+            'scope_channel' => __('Channel'),
+            'scope_asset' => __('Asset'),
         ];
     }
 
@@ -85,9 +89,17 @@ class KpiFormBuilder
     public static function getMetricOptionsForChannel(?string $channel): array
     {
         if (!$channel) return [];
-        if (str_contains($channel, 'facebook_marketing')) return ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions'];
-        if (str_contains($channel, 'google_search_console')) return ['clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR'];
-        if (str_contains($channel, 'facebook_organic')) return ['reach' => 'Reach', 'likes' => 'Likes'];
+        if (str_contains($channel, 'facebook_marketing')) return [
+            'spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions',
+            'results' => 'Results', 'result_rate' => 'Result Rate', 'cpc' => 'CPC',
+            'purchase_roas' => 'ROAS (Purchase)',
+        ];
+        if (str_contains($channel, 'google_search_console')) return [
+            'clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR', 'position' => 'Position',
+        ];
+        if (str_contains($channel, 'facebook_organic')) return [
+            'reach' => 'Reach', 'impressions' => 'Impressions', 'engaged_users' => 'Engaged Users', 'likes' => 'Likes',
+        ];
         return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
     }
 
@@ -199,11 +211,13 @@ class KpiFormBuilder
 
                                     $ast = $kpi['template']['ast'] ?? [];
 
-                                    if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly'])) {
+                                    $isUnivariateAst = ($ast['type'] ?? '') === 'metric';
+                                    if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly']) || $isUnivariateAst) {
                                         if (isset($ast['channel'])) {
                                             $set('dependent_channel', $resolveChannel($ast['channel']));
                                             $set('dependent_metric', $ast['metric'] ?? '');
                                         }
+                                        $set('independent_variables', []);
                                         return;
                                     }
 
@@ -266,7 +280,7 @@ class KpiFormBuilder
                                 ->label('')
                                 ->schema(self::getNodeSchema('independent', 'Variable'))
                                 ->defaultItems(1)
-                                ->minItems(1)
+                                ->minItems(0)
                         ]),
                     
                     Fieldset::make('Scope / Filters')

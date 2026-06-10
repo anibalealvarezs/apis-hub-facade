@@ -50,6 +50,7 @@ class KpiReference extends Page
                 'use_case' => $guidance['use_case'],
                 'interpretation' => $guidance['interpretation'],
                 'categories' => $kpi['categories'] ?? [],
+                'scope' => $kpi['scope'] ?? '',
             ];
         }
         return $result;
@@ -70,6 +71,10 @@ class KpiReference extends Page
             'alerts' => __('Alerts'),
             'seo' => __('SEO'),
             'organic' => __('Organic'),
+            'agency' => __('Agency Performance'),
+            'scope_global' => __('Global'),
+            'scope_channel' => __('Channel'),
+            'scope_asset' => __('Asset'),
         ];
     }
 
@@ -159,6 +164,42 @@ class KpiReference extends Page
                 'explanation' => __('Tests whether your organic search traffic has a measurable impact on future revenue. Moves beyond "traffic is up" to answer the real question: is SEO actually driving the bottom line?'),
                 'use_case' => __('Your SEO team reports that organic sessions increased 30% this quarter, but revenue is flat. Is SEO just bringing in tire-kickers, or does it take time for organic visitors to convert? This KPI separates correlation from causation, telling you if organic search is truly a revenue driver.'),
                 'interpretation' => __('A positive result means your SEO traffic is genuinely driving revenue — there\'s a predictive relationship. You should invest more in organic. A weak or negative result means organic visits aren\'t translating to revenue in a predictable way. Consider whether you\'re attracting the right kind of traffic (commercial intent vs. informational queries).'),
+            ],
+            'result_efficiency' => [
+                'type_label' => __('Campaign Efficiency Analyzer'),
+                'explanation' => __('Measures how efficiently your ad spend converts into results. Instead of looking at total results, this KPI regresses results against spend to reveal the marginal efficiency — are you getting more or less output per dollar over time?'),
+                'use_case' => __('Your Facebook campaigns generated 500 results last month on $2,000 spend and 550 results this month on $2,500 spend. Raw numbers look like improvement, but this KPI tells you your marginal efficiency actually dropped — each dollar is buying fewer results now.'),
+                'interpretation' => __('An upward-sloping regression line means your campaigns are becoming more efficient — each dollar buys more results than before. A downward slope means you\'re losing efficiency: either audience fatigue, creative burnout, or increased competition. Watch the R² value — the higher it is, the more predictable your efficiency trend.'),
+            ],
+            'result_rate_momentum' => [
+                'type_label' => __('Conversion Momentum Tracker'),
+                'explanation' => __('Tracks whether your conversion rate is gaining or losing momentum using MACD analysis. Unlike a simple up/down comparison, this KPI detects the underlying directional force in your result rate trend, filtering out day-to-day noise.'),
+                'use_case' => __('Your result rate fluctuates between 2% and 4% on any given day — is that normal volatility or the start of a real decline? This KPI tells you when the momentum shifts before the aggregate numbers make it obvious.'),
+                'interpretation' => __('When the MACD line crosses above the signal line, your conversion momentum is accelerating — your targeting or creative improvements are working. A cross below means momentum is stalling. Sustained divergence in either direction is a strong signal to investigate what changed in your funnel.'),
+            ],
+            'organic_engagement_efficiency' => [
+                'type_label' => __('Content Quality Gauge'),
+                'explanation' => __('Measures how engaging your organic content is relative to the number of people reached. This isolates content quality from content reach — a post that reaches 100,000 people but only engages 100 is a reach vs. quality mismatch.'),
+                'use_case' => __('Your organic reach has been growing steadily, but likes and comments aren\'t keeping pace. Are you reaching the wrong people, or is your content becoming less compelling? This KPI separates the two so you know which problem to fix.'),
+                'interpretation' => __('A rising trend means your content quality is improving — each person reached is more likely to engage. A declining trend is a red flag: your reach is growing faster than engagement, which often means you\'re hitting the wrong audience or your content is losing relevance. Investigate audience targeting and content strategy when this declines.'),
+            ],
+            'roas_momentum' => [
+                'type_label' => __('Profitability Early Warning'),
+                'explanation' => __('Detects shifts in your Return on Ad Spend momentum before they become obvious in aggregate numbers. Uses MACD analysis on the purchase_roas metric to give you early warning of profitability changes.'),
+                'use_case' => __('Your monthly ROAS reports show a healthy 3.5x, but you feel like something has changed in the last week. Instead of waiting for the month-end report, this KPI tells you right now if your ROAS momentum is shifting — giving you days or weeks of extra reaction time.'),
+                'interpretation' => __('A bullish crossover (MACD line crossing above signal) means your ROAS momentum is building — recent campaigns are becoming more profitable. A bearish crossover (crossing below) means profitability is eroding. Check for creative fatigue, audience saturation, or increased auction costs when you see a bearish signal.'),
+            ],
+            'cpc_anomaly' => [
+                'type_label' => __('Cost Spike Detector'),
+                'explanation' => __('Flags unusual spikes or drops in your Cost Per Click that fall outside normal statistical patterns. Unlike fixed thresholds, this KPI adapts to your normal CPC range and only alerts when something truly unusual happens.'),
+                'use_case' => __('Your CPC is normally around $0.50–$0.70, but it jumped to $1.20 today. Is this a temporary auction fluctuation or the start of a lasting cost increase? This KPI tells you if the spike is statistically anomalous and worth investigating immediately.'),
+                'interpretation' => __('When an anomaly is detected, investigate immediately: Did a competitor enter the auction? Did your ad relevance score drop? Was there a targeting change? CPC spikes are often early indicators of broader auction dynamics shifting. A downward anomaly (CPC dropping unusually low) can also be worth investigating — it might mean your ads are working better, or it could mean you\'ve accidentally narrowed your targeting too much.'),
+            ],
+            'search_position_efficiency' => [
+                'type_label' => __('Snippet Appeal Score'),
+                'explanation' => __('Measures how many clicks you generate per unit of search position. A page ranking #5 that gets as many clicks as a page ranking #2 has higher "snippet appeal" — its title, description, and rich results are more compelling. This KPI tracks that ratio over time.'),
+                'use_case' => __('You\'ve been optimizing your meta titles and descriptions, but rankings haven\'t changed much. Are the changes working? This KPI tells you if your click-through efficiency is improving even when positions stay the same — proving that your snippet optimization is paying off.'),
+                'interpretation' => __('A rising trend means your search snippets are becoming more compelling — better titles, descriptions, or structured data are convincing users to click regardless of ranking position. A falling trend means something is off: your snippets might be losing relevance, or you\'re ranking for queries with lower click intent. Compare this with CTR Efficiency to distinguish between ranking issues and snippet quality issues.'),
             ],
         ];
 
