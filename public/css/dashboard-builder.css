@@ -38,11 +38,6 @@
         linear-gradient(135deg, transparent 10px, rgb(156 163 175) 10px, transparent 11px);
     background-size: 16px 16px, 16px 16px;
     background-position: 0 0, 4px 4px;
-    background-repeat: no-repeat;
-}
-.grid-stack-item:hover > .ui-resizable-se,
-.grid-stack-item.is-resizing > .ui-resizable-se {
-    opacity: 1;
 }
 .dark .grid-stack-item > .ui-resizable-se {
     background:
@@ -50,16 +45,16 @@
         linear-gradient(135deg, transparent 10px, rgb(161 161 170) 10px, transparent 11px);
     background-size: 16px 16px, 16px 16px;
     background-position: 0 0, 4px 4px;
-    background-repeat: no-repeat;
 }
 
-.grid-stack-item:hover {
+/* Drag: only on the header, not the whole content (avoid blocking resize on edges) */
+.grid-stack-item .grid-stack-item-content {
     cursor: default;
 }
-.grid-stack-item .grid-stack-item-content:hover {
+.grid-stack-item .grid-stack-item-content .rounded-t-lg {
     cursor: grab;
 }
-.grid-stack-item.ui-draggable-dragging .grid-stack-item-content {
+.grid-stack-item.ui-draggable-dragging .grid-stack-item-content .rounded-t-lg {
     cursor: grabbing;
 }
 
