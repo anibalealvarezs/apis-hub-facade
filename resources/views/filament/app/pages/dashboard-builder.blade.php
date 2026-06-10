@@ -318,7 +318,7 @@
                 </div>
 
                 {{-- Data Source Info (Read Only) --}}
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800 space-y-1">
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
                     <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">Data Source</span>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
                          x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : (widgetControlsTarget.source_type === 'metric' ? 'Metric (Raw Aggregation)' : 'Entity (Channel Table)')"></div>
