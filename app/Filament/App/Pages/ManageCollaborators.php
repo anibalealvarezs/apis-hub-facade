@@ -4,10 +4,13 @@ namespace App\Filament\App\Pages;
 
 use App\Mail\ProjectInvitationMail;
 use App\Models\ProjectInvitation;
+use App\Models\ProjectUserAllowedAsset;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Actions\Action;
@@ -152,6 +155,64 @@ class ManageCollaborators extends Page implements HasTable
 
                         Notification::make()->success()->title(__('User removed from project'))->send();
                     }),
+                Action::make('manage_assets')
+                    ->label('Manage Assets')
+                    ->icon('heroicon-o-shield-check')
+                    ->modalHeading(fn (User $record) => "Asset scoping: {$record->name}")
+                    ->modalDescription('Restrict which assets this user can see in dashboards. When "Allow all" is on, the user sees every enabled asset for that channel.')
+                    ->modalWidth('2xl')
+                    ->hidden(function (User $record) use ($project) {
+                        if (!auth()->user()->can('manage_collaborators')) {
+                            return true;
+                        }
+
+                        return \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('model_has_roles.model_id', $record->id)
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->where('roles.name', 'project_owner')
+                            ->exists();
+                    })
+                    ->mountUsing(function (Action $action, User $record) use ($project) {
+                        $allowedAssets = ProjectUserAllowedAsset::where('project_id', $project->id)
+                            ->where('user_id', $record->id)
+                            ->get()
+                            ->keyBy('channel');
+
+                        $data = [];
+                        foreach ($this->getActiveChannels($project) as $channel => $label) {
+                            $existing = $allowedAssets->get($channel);
+                            $data["allow_all_{$channel}"] = !$existing || $existing->allowed_assets === null;
+                            $data["assets_{$channel}"] = $existing && $existing->allowed_assets !== null
+                                ? $existing->allowed_assets
+                                : [];
+                        }
+                        $action->fill($data);
+                    })
+                    ->form(fn (User $record) => $this->buildAssetScopeForm($record, $project))
+                    ->action(function (array $data, User $record) use ($project) {
+                        foreach ($this->getActiveChannels($project) as $channel => $label) {
+                            $allowAll = $data["allow_all_{$channel}"] ?? false;
+
+                            if ($allowAll) {
+                                ProjectUserAllowedAsset::updateOrCreate(
+                                    ['project_id' => $project->id, 'user_id' => $record->id, 'channel' => $channel],
+                                    ['allowed_assets' => null]
+                                );
+                            } else {
+                                $assets = $data["assets_{$channel}"] ?? [];
+                                ProjectUserAllowedAsset::updateOrCreate(
+                                    ['project_id' => $project->id, 'user_id' => $record->id, 'channel' => $channel],
+                                    ['allowed_assets' => $assets]
+                                );
+                            }
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title("Asset scoping updated for {$record->name}")
+                            ->send();
+                    }),
             ])
             ->headerActions([
                 Action::make('invite')
@@ -231,5 +292,91 @@ class ManageCollaborators extends Page implements HasTable
                         Notification::make()->success()->title(__('Invitation sent via email.'))->send();
                     }),
             ]);
+    }
+
+    protected function getActiveChannels($project): array
+    {
+        if (!$project || empty($project->sync_config)) {
+            return [];
+        }
+
+        $validChannels = ['facebook_marketing', 'facebook_organic', 'google_search_console'];
+        $active = [];
+
+        foreach ($project->sync_config as $channel => $data) {
+            if (in_array($channel, $validChannels) && !empty($data['enabled'])) {
+                $active[$channel] = Str::headline(str_replace('_', ' ', $channel));
+            }
+        }
+
+        return $active;
+    }
+
+    protected function getAssetsForChannel($project, string $channel): array
+    {
+        $config = $project->sync_config[$channel] ?? [];
+        $assets = [];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+        $searchIn = function ($items) use (&$assets) {
+            if (!is_array($items)) {
+                return;
+            }
+            foreach ($items as $item) {
+                if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                    $id = $item['id'] ?? $item['url'] ?? '';
+                    $name = $item['name'] ?? $item['url'] ?? $id;
+                    if ($id) {
+                        $assets[$id] = $name;
+                    }
+                }
+            }
+        };
+
+        foreach ($assetKeys as $assetKey) {
+            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+                $searchIn($config[$assetKey]);
+            }
+        }
+
+        if (!empty($config['assets']) && is_array($config['assets'])) {
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                    $searchIn($config['assets'][$assetKey]);
+                }
+            }
+        }
+
+        return $assets;
+    }
+
+    protected function buildAssetScopeForm(User $record, $project): array
+    {
+        $schema = [];
+
+        foreach ($this->getActiveChannels($project) as $channel => $label) {
+            $assets = $this->getAssetsForChannel($project, $channel);
+
+            if (empty($assets)) {
+                continue;
+            }
+
+            $schema[] = Section::make($label)
+                ->description('Restrict which ' . $label . ' assets this user can access')
+                ->schema([
+                    Toggle::make("allow_all_{$channel}")
+                        ->label("Allow all {$label} assets")
+                        ->default(true)
+                        ->reactive(),
+                    Select::make("assets_{$channel}")
+                        ->label("Select specific assets")
+                        ->options($assets)
+                        ->multiple()
+                        ->visible(fn (callable $get) => !$get("allow_all_{$channel}")),
+                ])
+                ->columns(1);
+        }
+
+        return $schema;
     }
 }

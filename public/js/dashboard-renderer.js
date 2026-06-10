@@ -32,12 +32,16 @@ window.dashboardRenderer = {
             const json = await response.json();
 
             if (!json.success) {
-                throw new Error(json.error || 'Unknown error');
+                throw new Error(json.message || json.error || 'Unknown error');
             }
 
             this.render(containerEl, json);
         } catch (e) {
-            containerEl.innerHTML = this.errorState(e.message);
+            if (e.message === 'access_restricted') {
+                containerEl.innerHTML = this.accessRestrictedState();
+            } else {
+                containerEl.innerHTML = this.errorState(e.message);
+            }
         }
     },
 
@@ -83,6 +87,20 @@ window.dashboardRenderer = {
                     ${icon}
                     <p class="text-xs text-red-400 mt-2">${this.escapeHtml(message)}</p>
                     <button onclick="this.closest('[x-ref]') ? null : location.reload()" class="text-xs text-primary-500 hover:underline mt-1">Retry</button>
+                </div>
+            </div>`;
+    },
+
+    accessRestrictedState() {
+        return `
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="text-center">
+                    <svg class="w-6 h-6 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 1112 3a9 9 0 017.364 4.636z"/>
+                    </svg>
+                    <p class="text-xs text-amber-500 mt-2 font-medium">Access Restricted</p>
+                    <p class="text-xs text-gray-400 mt-1">You don't have permission to view this widget's data.</p>
+                    <p class="text-xs text-gray-500 mt-1">Contact your project owner or editor to request access.</p>
                 </div>
             </div>`;
     },

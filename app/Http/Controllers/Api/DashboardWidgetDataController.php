@@ -42,6 +42,21 @@ class DashboardWidgetDataController extends Controller
 
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
 
+        if ($user && !empty($resolvedControls['channel'])) {
+            $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
+            $allowedAssets = $this->widgetDataService->filterAllowedAssets(
+                $project, $user->id, $resolvedControls['channel'], $assetList
+            );
+
+            if (empty($allowedAssets)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'access_restricted',
+                    'message' => 'You do not have access to the selected asset for this dashboard.',
+                ], 403);
+            }
+        }
+
         try {
             $data = match ($widget->source_type) {
                 'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
