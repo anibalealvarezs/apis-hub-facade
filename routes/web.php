@@ -79,6 +79,8 @@ Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicControll
 Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth']);
 
+Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web', 'auth']);
+
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
 // Legal Documents

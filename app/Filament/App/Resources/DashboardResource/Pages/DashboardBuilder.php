@@ -4,12 +4,13 @@ namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
 use App\Models\Dashboard;
+use App\Models\DashboardWidget;
 use App\Models\CustomKpi;
 use App\Services\WidgetTypeRegistry;
+use App\Services\Analytics\KpiFormBuilder;
 use Filament\Actions;
 use Filament\Resources\Pages\Page;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Arr;
 
 class DashboardBuilder extends Page
 {
@@ -57,6 +58,90 @@ class DashboardBuilder extends Page
             ->send();
     }
 
+    // ─── Dashboard Controls ───
+
+    public function saveDashboardControls(array $controls): void
+    {
+        $this->dashboard->update(['controls' => $controls]);
+
+        Notification::make()
+            ->title('Dashboard controls saved')
+            ->success()
+            ->send();
+    }
+
+    // ─── Widget Controls ───
+
+    public function saveWidgetControls(int $widgetId, array $controls): void
+    {
+        $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
+            ->findOrFail($widgetId);
+
+        $widget->update(['controls' => $controls]);
+
+        Notification::make()
+            ->title('Widget controls saved')
+            ->success()
+            ->send();
+    }
+
+    // ─── Data Sources ───
+
+    public function getActiveChannels(): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project || empty($project->sync_config)) {
+            return [];
+        }
+
+        $validChannels = array_keys(\App\Services\Analytics\ChannelCapabilityRegistry::getTags());
+        $active = [];
+        foreach ($project->sync_config as $channel => $data) {
+            if (in_array($channel, $validChannels) && !empty($data['enabled'])) {
+                $active[$channel] = \Illuminate\Support\Str::headline($channel);
+            }
+        }
+        return $active;
+    }
+
+    public function getAssetsForChannel(string $channel): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project) return [];
+
+        $config = $project->sync_config[$channel] ?? [];
+        $assets = [];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+        foreach ($assetKeys as $assetKey) {
+            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+                foreach ($config[$assetKey] as $item) {
+                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                        $id = $item['id'] ?? $item['url'] ?? '';
+                        $name = $item['name'] ?? $item['url'] ?? $id;
+                        if ($id) $assets[$id] = $name;
+                    }
+                }
+            }
+        }
+
+        if (!empty($config['assets']) && is_array($config['assets'])) {
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                    foreach ($config['assets'][$assetKey] as $item) {
+                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                            $id = $item['id'] ?? $item['url'] ?? '';
+                            $name = $item['name'] ?? $item['url'] ?? $id;
+                            if ($id) $assets[$id] = $name;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $assets;
+    }
+
     public function getKpisForWidgetPicker(): array
     {
         $project = \Filament\Facades\Filament::getTenant();
@@ -81,10 +166,12 @@ class DashboardBuilder extends Page
         return WidgetTypeRegistry::getWidgetLabels();
     }
 
+    // ─── Widget CRUD ───
+
     public function addWidget(array $data): void
     {
         $service = app(\App\Services\DashboardService::class);
-        $widget = $service->addWidget($this->dashboard, $data);
+        $service->addWidget($this->dashboard, $data);
 
         $this->loadWidgets();
 
@@ -97,7 +184,7 @@ class DashboardBuilder extends Page
     public function deleteWidget(int $widgetId): void
     {
         $service = app(\App\Services\DashboardService::class);
-        $widget = \App\Models\DashboardWidget::findOrFail($widgetId);
+        $widget = DashboardWidget::findOrFail($widgetId);
 
         if ($widget->dashboard_id !== $this->dashboard->id) {
             abort(403);
@@ -115,7 +202,7 @@ class DashboardBuilder extends Page
     public function duplicateWidget(int $widgetId): void
     {
         $service = app(\App\Services\DashboardService::class);
-        $widget = \App\Models\DashboardWidget::findOrFail($widgetId);
+        $widget = DashboardWidget::findOrFail($widgetId);
 
         if ($widget->dashboard_id !== $this->dashboard->id) {
             abort(403);

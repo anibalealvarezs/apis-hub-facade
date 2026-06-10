@@ -1,0 +1,183 @@
+/* ─── Dashboard Builder ─── */
+
+#grid-container {
+    min-height: 500px;
+}
+
+/* Gridstack overrides for Filament dark mode */
+.dark .grid-stack-item-content {
+    background: rgb(24 24 27) !important;
+    border-color: rgb(63 63 70) !important;
+}
+
+.dark .grid-stack-placeholder .placeholder-content {
+    background: rgb(39 39 42) !important;
+    border-color: rgb(63 63 70) !important;
+}
+
+.grid-stack-item {
+    transition: opacity 0.15s ease;
+}
+.grid-stack-item.ui-draggable-dragging {
+    opacity: 0.85;
+    z-index: 1000;
+}
+
+/* Resize handle styling */
+.grid-stack-item > .ui-resizable-se {
+    bottom: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    border-right: 2px solid rgb(156 163 175);
+    border-bottom: 2px solid rgb(156 163 175);
+    border-radius: 0 0 4px 0;
+    cursor: se-resize;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+}
+.grid-stack-item:hover > .ui-resizable-se {
+    opacity: 1;
+}
+.dark .grid-stack-item > .ui-resizable-se {
+    border-color: rgb(113 113 122);
+}
+
+/* Prevent filament layout shift */
+.grid-stack {
+    background: transparent !important;
+}
+
+/* Widget card hover effects */
+.grid-stack-item-content {
+    transition: box-shadow 0.2s ease;
+}
+.grid-stack-item-content:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.dark .grid-stack-item-content:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Widget Controls Flyout ─── */
+
+.control-group {
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s ease;
+}
+.control-group.has-custom {
+    border-left-color: rgb(0 167 249);
+}
+.control-group.is-inherited {
+    border-left-color: rgb(156 163 175);
+}
+
+/* Inherit badge */
+.inherit-badge {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgb(243 244 246);
+    color: rgb(107 114 128);
+    white-space: nowrap;
+}
+.dark .inherit-badge {
+    background: rgb(39 39 42);
+    color: rgb(161 161 170);
+}
+
+/* Inherited value read-only display */
+.inherited-value {
+    font-size: 0.8rem;
+    color: rgb(107 114 128);
+    padding: 6px 10px;
+    background: rgb(249 250 251);
+    border-radius: 6px;
+    border: 1px solid rgb(229 231 235);
+}
+.dark .inherited-value {
+    color: rgb(161 161 170);
+    background: rgb(39 39 42);
+    border-color: rgb(63 63 70);
+}
+
+/* Toggle switch for inherit/custom */
+.inherit-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+.inherit-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.inherit-toggle .slider {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgb(209 213 219);
+    transition: background 0.2s ease;
+    position: relative;
+}
+.inherit-toggle .slider::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.inherit-toggle input:checked + .slider {
+    background: rgb(0 167 249);
+}
+.inherit-toggle input:checked + .slider::after {
+    transform: translateX(16px);
+}
+.dark .inherit-toggle .slider {
+    background: rgb(63 63 70);
+}
+.dark .inherit-toggle input:checked + .slider {
+    background: rgb(0 167 249);
+}
+
+/* ─── View Mode ─── */
+
+#view-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1rem;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+    #grid-container {
+        padding: 0.75rem !important;
+    }
+    #grid-stack .grid-stack-item {
+        width: 100% !important;
+    }
+}
+
+/* ─── Animations ─── */
+@keyframes widget-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.grid-stack-item:not(.ui-draggable-dragging) {
+    animation: widget-fade-in 0.25s ease;
+}
