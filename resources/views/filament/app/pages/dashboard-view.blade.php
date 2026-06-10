@@ -46,20 +46,26 @@
         @endif
 
         {{-- Grid --}}
-        <div id="view-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+        <div id="view-grid-stack" class="grid-stack">
             @foreach ($this->widgets as $widget)
-                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden"
-                     style="grid-column: span min({{ min($widget['grid_w'] ?? 2, 12) }}, 1); grid-row: span {{ max(1, ($widget['grid_h'] ?? 2) / 2) }};">
-                    @if ($widget['title'] || $widget['name'])
-                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
-                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
-                            @if (!empty($widget['resolved_controls']['channel']))
-                                <span class="text-xs text-gray-400 dark:text-gray-500">{{ \Illuminate\Support\Str::headline($widget['resolved_controls']['channel']) }}</span>
-                            @endif
+                <div class="grid-stack-item"
+                     gs-id="{{ $widget['id'] }}"
+                     gs-x="{{ $widget['grid_x'] }}"
+                     gs-y="{{ $widget['grid_y'] }}"
+                     gs-w="{{ $widget['grid_w'] }}"
+                     gs-h="{{ $widget['grid_h'] }}">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col">
+                        @if ($widget['title'] || $widget['name'])
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0">
+                                <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
+                                @if (!empty($widget['resolved_controls']['channel']))
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ \Illuminate\Support\Str::headline($widget['resolved_controls']['channel']) }}</span>
+                                @endif
+                            </div>
+                        @endif
+                        <div class="widget-content flex-grow p-4 relative"
+                             x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
                         </div>
-                    @endif
-                    <div class="widget-content" style="height: {{ max(100, $widget['grid_h'] * 80) }}px;"
-                         x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
                     </div>
                 </div>
             @endforeach
@@ -74,6 +80,8 @@
     </div>
 
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
         <script src="{{ asset('js/dashboard-renderer.js') }}"></script>
         <script>
             function dashboardView() {
@@ -82,7 +90,17 @@
                     totalCount: {{ count($this->widgets) }},
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
 
-                    init() {},
+                    init() {
+                        this.$nextTick(() => {
+                            GridStack.init({
+                                staticGrid: true,
+                                column: 12,
+                                cellHeight: 100,
+                                margin: 12,
+                                minRow: 6
+                            }, '#view-grid-stack');
+                        });
+                    },
 
                     renderWidget(widgetId, el, controls) {
                         window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)

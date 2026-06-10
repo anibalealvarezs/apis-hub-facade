@@ -50,20 +50,26 @@
         </div>
 
         {{-- Widget Grid --}}
-        <div id="view-grid" class="gap-4">
+        <div id="view-grid-stack" class="grid-stack">
             @foreach ($widgets as $widget)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                     style="grid-column: span {{ min($widget->grid_w, 12) }};">
-                    @if ($widget->title || $widget->name)
-                        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                            <h3 class="text-sm font-semibold text-gray-900">{{ $widget->title ?? $widget->name }}</h3>
-                            @if (!empty($widget->resolved_controls['channel']))
-                                <span class="text-xs text-gray-400">{{ \Illuminate\Support\Str::headline($widget->resolved_controls['channel']) }}</span>
-                            @endif
+                <div class="grid-stack-item"
+                     gs-id="{{ $widget->id }}"
+                     gs-x="{{ $widget->grid_x }}"
+                     gs-y="{{ $widget->grid_y }}"
+                     gs-w="{{ $widget->grid_w }}"
+                     gs-h="{{ $widget->grid_h }}">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 bg-white shadow-sm relative flex flex-col">
+                        @if ($widget->title || $widget->name)
+                            <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0">
+                                <h3 class="text-sm font-semibold text-gray-900">{{ $widget->title ?? $widget->name }}</h3>
+                                @if (!empty($widget->resolved_controls['channel']))
+                                    <span class="text-xs text-gray-400">{{ \Illuminate\Support\Str::headline($widget->resolved_controls['channel']) }}</span>
+                                @endif
+                            </div>
+                        @endif
+                        <div class="widget-content flex-grow p-4 relative"
+                             x-init="renderWidget({{ $widget->id }}, $el, {{ json_encode($widget->resolved_controls) }})">
                         </div>
-                    @endif
-                    <div class="widget-content" style="height: {{ max(100, $widget->grid_h * 80) }}px;"
-                         x-init="renderWidget({{ $widget->id }}, $el, {{ json_encode($widget->resolved_controls) }})">
                     </div>
                 </div>
             @endforeach
@@ -80,6 +86,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
     <script src="{{ asset('js/dashboard-renderer.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <script>
@@ -89,7 +97,17 @@
                 totalCount: {{ $widgets->count() }},
                 tenant: '{{ $project->subdomain }}',
 
-                init() {},
+                init() {
+                    this.$nextTick(() => {
+                        GridStack.init({
+                            staticGrid: true,
+                            column: 12,
+                            cellHeight: 100,
+                            margin: 12,
+                            minRow: 6
+                        }, '#view-grid-stack');
+                    });
+                },
 
                 renderWidget(widgetId, el, controls) {
                     window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)
