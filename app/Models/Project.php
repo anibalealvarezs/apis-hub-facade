@@ -157,6 +157,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Dashboards belonging to this project.
+     */
+    public function dashboards(): HasMany
+    {
+        return $this->hasMany(Dashboard::class);
+    }
+
+    /**
      * Get the APIs Hub Release associated with the project.
      */
     public function apisHubRelease(): BelongsTo
