@@ -67,10 +67,6 @@ class AppPanelProvider extends PanelProvider
                 fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
-                \Filament\View\PanelsRenderHook::TOPBAR_BEFORE,
-                fn () => \Illuminate\Support\Facades\Blade::render('@livewire(\'global-infrastructure-status\')')
-            )
-            ->renderHook(
                 'panels::head.start',
                 fn () => \Illuminate\Support\Facades\Blade::render('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">')
             )
