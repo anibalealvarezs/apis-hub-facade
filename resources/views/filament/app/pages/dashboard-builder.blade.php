@@ -23,7 +23,7 @@
                         Share
                     </button>
                 @endcan
-                <x-filament::button x-on:click="$wire.saveLayout(gridLayout)" color="primary" icon="heroicon-o-check">
+                <x-filament::button x-on:click="$wire.saveLayout(getLayout())" color="primary" icon="heroicon-o-check">
                     Save Layout
                 </x-filament::button>
             </div>
@@ -778,11 +778,19 @@
                         });
 
                         this.grid.on('change', (event, items) => {
-                            this.gridLayout = items.map(item => ({
-                                id: item.id || parseInt(item.getAttribute?.('gs-id')) || 0,
-                                x: item.x, y: item.y, w: item.w, h: item.h,
-                            }));
+                            // The layout is now captured synchronously by getLayout()
                         });
+                    },
+
+                    getLayout() {
+                        if (!this.grid) return [];
+                        return this.grid.engine.nodes.map(node => ({
+                            id: node.id || (node.el ? parseInt(node.el.getAttribute('gs-id')) : 0),
+                            x: node.x,
+                            y: node.y,
+                            w: node.w,
+                            h: node.h,
+                        })).filter(node => node.id !== 0);
                     },
 
                     reloadGrid() {
