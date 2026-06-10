@@ -45,8 +45,7 @@
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                        <p class="text-xs text-gray-400 dark:text-gray-500">Drag to reposition. Resize from
-                            bottom-right.</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Drag title to reposition. Grab bottom-right corner <span class="inline-block w-3 h-3 align-text-bottom" style="background:linear-gradient(135deg,transparent 5px,#9CA3AF 5px,transparent 6px),linear-gradient(135deg,transparent 8px,#9CA3AF 8px,transparent 9px);background-size:12px 12px;background-position:0 0,3px 3px;border-radius:1px;"></span> to resize.</p>
                         <div class="text-xs text-gray-400 dark:text-gray-500">
                             <div class="flex items-center gap-1 mb-1">
                                 <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
