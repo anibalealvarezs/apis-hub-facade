@@ -99,8 +99,24 @@ class DashboardResource extends Resource
                     ->icon('heroicon-o-pencil-square')
                     ->url(fn (Dashboard $record): string => DashboardResource::getUrl('builder', ['record' => $record]))
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('open_view')
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record])),
+                Tables\Actions\Action::make('set_default')
+                    ->label('Set as default')
+                    ->icon('heroicon-o-star')
+                    ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->setDefaultDashboard($record))
+                    ->visible(fn (Dashboard $record) => !$record->is_default && auth()->user()->can('edit_preferences')),
+                Tables\Actions\Action::make('duplicate')
+                    ->label('Duplicate')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

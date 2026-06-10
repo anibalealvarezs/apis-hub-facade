@@ -46,10 +46,10 @@
         @endif
 
         {{-- Grid --}}
-        <div id="view-grid" class="gap-4">
+        <div id="view-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
             @foreach ($this->widgets as $widget)
                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden"
-                     style="grid-column: span {{ min($widget['grid_w'], 12) }};">
+                     style="grid-column: span min({{ min($widget['grid_w'] ?? 2, 12) }}, 1); grid-row: span {{ max(1, ($widget['grid_h'] ?? 2) / 2) }};">
                     @if ($widget['title'] || $widget['name'])
                         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
                             <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>

@@ -94,4 +94,20 @@ class DashboardService
             ->orderBy('updated_at', 'desc')
             ->get();
     }
+
+    public function setDefaultDashboard(Dashboard $dashboard): void
+    {
+        Dashboard::where('project_id', $dashboard->project_id)
+            ->where('id', '!=', $dashboard->id)
+            ->update(['is_default' => false]);
+
+        $dashboard->update(['is_default' => true]);
+    }
+
+    public function getDefaultDashboard(int $projectId): ?Dashboard
+    {
+        return Dashboard::where('project_id', $projectId)
+            ->where('is_default', true)
+            ->first();
+    }
 }

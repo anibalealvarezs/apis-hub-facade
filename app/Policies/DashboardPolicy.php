@@ -12,15 +12,11 @@ class DashboardPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_dashboard');
+        return true;
     }
 
     public function view(User $user, Dashboard $dashboard): bool
     {
-        if ($user->can('view_dashboard')) {
-            return true;
-        }
-
         if ($dashboard->is_public) {
             return $user->projects->contains($dashboard->project_id);
         }
@@ -29,26 +25,30 @@ class DashboardPolicy
             return true;
         }
 
-        return $dashboard->sharedUsers()->where('user_id', $user->id)->exists();
+        if ($dashboard->sharedUsers()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 
     public function create(User $user): bool
     {
-        return $user->can('create_dashboard');
+        return $user->can('edit_preferences') || $user->can('create_dashboard');
     }
 
     public function update(User $user, Dashboard $dashboard): bool
     {
-        return $user->can('update_dashboard');
+        return $user->can('edit_preferences') || $user->can('update_dashboard');
     }
 
     public function delete(User $user, Dashboard $dashboard): bool
     {
-        return $user->can('delete_dashboard');
+        return $user->can('edit_preferences') || $user->can('delete_dashboard');
     }
 
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_dashboard');
+        return $user->can('edit_preferences') || $user->can('delete_any_dashboard');
     }
 }
