@@ -29,7 +29,7 @@ class EditCustomKpi extends EditRecord
         $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
         
         $filters = $data['filters'] ?? [];
-        $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template']);
+        $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter']);
         $data['filters'] = $filters;
 
         $allowedColumns = ['name', 'description', 'calculation_type', 'is_active', 'template', 'ast', 'filters', 'project_id'];

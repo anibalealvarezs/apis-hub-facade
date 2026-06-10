@@ -32,14 +32,41 @@ class KpiFormBuilder
         return $active;
     }
 
-    public static function getTemplateOptions(): array
+    public static function getCategoryOptions(): array
+    {
+        return [
+            'performance' => __('Performance'),
+            'cost' => __('Cost'),
+            'results' => __('Results'),
+            'clicks' => __('Clicks'),
+            'impressions' => __('Impressions'),
+            'seasonality' => __('Seasonality'),
+            'trends' => __('Trends'),
+            'scalability' => __('Scalability'),
+            'cross-channel' => __('Cross-Channel'),
+            'alerts' => __('Alerts'),
+            'seo' => __('SEO'),
+            'organic' => __('Organic'),
+        ];
+    }
+
+    public static function getTemplateOptions(array $categoryFilter = []): array
     {
         $activeChannels = array_keys(self::getActiveChannels());
         $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
-        
+
         $options = [];
         foreach ($kpis as $key => $kpi) {
-            $options[$key] = $kpi['name'];
+            if (!empty($categoryFilter)) {
+                $kpiCats = $kpi['categories'] ?? [];
+                $intersection = array_intersect($categoryFilter, $kpiCats);
+                if (count($intersection) !== count($categoryFilter)) {
+                    continue;
+                }
+            }
+            $name = htmlspecialchars($kpi['name'], ENT_QUOTES, 'UTF-8');
+            $desc = htmlspecialchars($kpi['description'], ENT_QUOTES, 'UTF-8');
+            $options[$key] = "<strong>{$name}</strong><br><span class=\"text-xs text-gray-500\">{$desc}</span>";
         }
         return $options;
     }
@@ -116,9 +143,16 @@ class KpiFormBuilder
         return [
             Section::make('KPI Configuration')
                 ->schema([
+                    Select::make('category_filter')
+                        ->label('Filter by category')
+                        ->multiple()
+                        ->options(fn () => self::getCategoryOptions())
+                        ->live(),
+
                     Select::make('template')
                         ->label('Quick Start Template')
-                        ->options(fn () => self::getTemplateOptions())
+                        ->allowHtml()
+                        ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
                         ->live()
                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
                             if (!$state) return;
