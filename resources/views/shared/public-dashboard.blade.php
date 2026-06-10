@@ -99,20 +99,34 @@
 
                 init() {
                     this.$nextTick(() => {
-                        GridStack.init({
-                            staticGrid: true,
-                            column: 12,
-                            cellHeight: 100,
-                            margin: 12,
-                            minRow: 6
-                        }, '#view-grid-stack');
+                        const tryInit = () => {
+                            if (typeof GridStack !== 'undefined') {
+                                GridStack.init({
+                                    staticGrid: true,
+                                    column: 12,
+                                    cellHeight: 100,
+                                    margin: 12,
+                                    minRow: 6
+                                }, '#view-grid-stack');
+                            } else {
+                                setTimeout(tryInit, 50);
+                            }
+                        };
+                        tryInit();
                     });
                 },
 
                 renderWidget(widgetId, el, controls) {
-                    window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)
-                        .then(() => { this.loadedCount++; })
-                        .catch(() => { this.loadedCount++; });
+                    const tryRender = () => {
+                        if (window.dashboardRenderer) {
+                            window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)
+                                .then(() => { this.loadedCount++; })
+                                .catch(() => { this.loadedCount++; });
+                        } else {
+                            setTimeout(tryRender, 50);
+                        }
+                    };
+                    tryRender();
                 },
             };
         }
