@@ -93,6 +93,7 @@ class UserBillingProfilesTable extends BaseWidget
                         \Filament\Forms\Components\DatePicker::make('next_billing_date')
                             ->label('Next Billing Date / Grace Period End')
                             ->helperText('If set, will push the next Stripe invoice to this date. (PayPal date sync is limited and may require manual merchant dashboard adjustment).')
+                            ->minDate(now()->addDay())
                             ->nullable(),
                         \Filament\Forms\Components\Checkbox::make('cancel_subscription')
                             ->label('Cancel Active Provider Subscription')
