@@ -29,23 +29,41 @@ class SharedDashboardController extends Controller
 
         $service = app(WidgetDataService::class);
         foreach ($widgets as $widget) {
-            $widget->resolved_controls = $service->resolveControls($dashboard, $widget);
-        }
+            $resolved = $service->resolveControls($dashboard, $widget);
+            $widget->resolved_controls = $resolved;
+            $widget->series_assets_options = [];
 
-        $runtimeAssets = [];
-        $runtimeChannel = null;
-        $dashboardControls = $dashboard->controls ?? [];
-        if (!empty($dashboardControls['asset_mode']) && $dashboardControls['asset_mode'] === 'multiple' && !empty($dashboardControls['assets']) && !empty($dashboardControls['channel'])) {
-            $runtimeChannel = $dashboardControls['channel'];
-            $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($runtimeChannel);
-            
-            $configuredAssets = $dashboardControls['assets'];
-            
-            // For public dashboards, we just show all configured assets since there is no user
-            foreach ($configuredAssets as $assetId) {
-                if (isset($allAssets[$assetId])) {
-                    $runtimeAssets[$assetId] = $allAssets[$assetId];
+            $uiState = [];
+            if ($widget->source_type === 'kpi' && !empty($widget->source_config['custom_kpi_id'])) {
+                $kpi = \App\Models\CustomKpi::find($widget->source_config['custom_kpi_id']);
+                if ($kpi) {
+                    $uiState = $kpi->filters['_ui_state'] ?? [];
                 }
+            }
+
+            if (!empty($uiState['dependent_channel']) && empty($uiState['dependent_asset_filter'])) {
+                $widget->series_assets_options['dependent'] = [
+                    'label' => 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')',
+                    'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($uiState['dependent_channel'])
+                ];
+            }
+
+            if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                foreach ($uiState['independent_variables'] as $key => $var) {
+                    if (!empty($var['independent_channel']) && empty($var['independent_asset_filter'])) {
+                        $widget->series_assets_options['independent_' . $key] = [
+                            'label' => 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')',
+                            'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($var['independent_channel'])
+                        ];
+                    }
+                }
+            }
+
+            if (empty($widget->series_assets_options) && !empty($resolved['channel']) && empty($resolved['assets'])) {
+                $widget->series_assets_options['dependent'] = [
+                    'label' => \Illuminate\Support\Str::headline($resolved['channel']),
+                    'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($resolved['channel'])
+                ];
             }
         }
 
@@ -53,8 +71,6 @@ class SharedDashboardController extends Controller
             'dashboard' => $dashboard,
             'project' => $project,
             'widgets' => $widgets,
-            'runtimeAssets' => $runtimeAssets,
-            'runtimeChannel' => $runtimeChannel,
         ]);
     }
 }

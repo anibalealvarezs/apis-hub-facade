@@ -17,8 +17,7 @@ class DashboardView extends Page
 
     public array $resolvedControls = [];
 
-    public array $runtimeAssets = [];
-    public ?string $runtimeChannel = null;
+
 
     public function mount(Dashboard $record): void
     {
@@ -31,31 +30,59 @@ class DashboardView extends Page
             ->toArray();
 
         $service = app(\App\Services\WidgetDataService::class);
-        foreach ($this->widgets as &$widget) {
-            $widget['resolved_controls'] = $service->resolveControls(
-                $this->dashboard,
-                (new \App\Models\DashboardWidget())->forceFill($widget)
-            );
-        }
-
-        $dashboardControls = $this->dashboard->controls ?? [];
-        if (!empty($dashboardControls['asset_mode']) && $dashboardControls['asset_mode'] === 'multiple' && !empty($dashboardControls['assets']) && !empty($dashboardControls['channel'])) {
-            $this->runtimeChannel = $dashboardControls['channel'];
-            $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($this->runtimeChannel);
+        foreach ($this->widgets as &$widgetArray) {
+            $widgetModel = (new \App\Models\DashboardWidget())->forceFill($widgetArray);
+            $resolved = $service->resolveControls($this->dashboard, $widgetModel);
+            $widgetArray['resolved_controls'] = $resolved;
+            $widgetArray['series_assets_options'] = [];
             
-            $configuredAssets = $dashboardControls['assets'];
-            
-            // If the user has restricted access, intersect with their allowed assets
-            $user = auth()->user();
-            if ($user && $user->role !== 'admin' && $user->role !== 'owner') {
-                $service = app(\App\Services\WidgetDataService::class);
-                $configuredAssets = $service->filterAllowedAssets(\Filament\Facades\Filament::getTenant(), $user->id, $this->runtimeChannel, $configuredAssets);
+            $uiState = [];
+            if ($widgetModel->source_type === 'kpi' && !empty($widgetModel->source_config['custom_kpi_id'])) {
+                $kpi = \App\Models\CustomKpi::find($widgetModel->source_config['custom_kpi_id']);
+                if ($kpi) {
+                    $uiState = $kpi->filters['_ui_state'] ?? [];
+                }
             }
 
-            foreach ($configuredAssets as $assetId) {
-                if (isset($allAssets[$assetId])) {
-                    $this->runtimeAssets[$assetId] = $allAssets[$assetId];
+            $user = auth()->user();
+            $isAdmin = $user && ($user->role === 'admin' || $user->role === 'owner');
+
+            $getAssetsForChannel = function($channel) use ($isAdmin, $user, $service) {
+                if (empty($channel)) return [];
+                $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
+                if ($isAdmin) return $allAssets;
+                $allowed = $service->filterAllowedAssets(\Filament\Facades\Filament::getTenant(), $user->id, $channel, array_keys($allAssets));
+                $filtered = [];
+                foreach ($allowed as $id) {
+                    if (isset($allAssets[$id])) $filtered[$id] = $allAssets[$id];
                 }
+                return $filtered;
+            };
+
+            if (!empty($uiState['dependent_channel']) && empty($uiState['dependent_asset_filter'])) {
+                $widgetArray['series_assets_options']['dependent'] = [
+                    'label' => 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')',
+                    'options' => $getAssetsForChannel($uiState['dependent_channel'])
+                ];
+            }
+
+            if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                foreach ($uiState['independent_variables'] as $key => $var) {
+                    if (!empty($var['independent_channel']) && empty($var['independent_asset_filter'])) {
+                        $widgetArray['series_assets_options']['independent_' . $key] = [
+                            'label' => 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')',
+                            'options' => $getAssetsForChannel($var['independent_channel'])
+                        ];
+                    }
+                }
+            }
+
+            // Fallback for regular widgets or incomplete KPIs
+            if (empty($widgetArray['series_assets_options']) && !empty($resolved['channel']) && empty($resolved['assets'])) {
+                $widgetArray['series_assets_options']['dependent'] = [
+                    'label' => \Illuminate\Support\Str::headline($resolved['channel']),
+                    'options' => $getAssetsForChannel($resolved['channel'])
+                ];
             }
         }
     }

@@ -18,13 +18,17 @@ class WidgetDataService
 
         $resolved = [];
 
-        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'channel', 'asset', 'assets', 'granularity', 'metrics'];
+        $inheritableKeys = ['date_start', 'date_end', 'zero_handling'];
 
+        // Start with widget controls as the base
+        $resolved = $widgetControls;
+
+        // Inherit global defaults where explicitly requested or missing
         foreach ($inheritableKeys as $key) {
-            if (array_key_exists($key, $widgetControls) && $widgetControls[$key] !== '__inherit__') {
-                $resolved[$key] = $widgetControls[$key];
-            } elseif (array_key_exists($key, $dashboardControls)) {
-                $resolved[$key] = $dashboardControls[$key];
+            if (!isset($resolved[$key]) || $resolved[$key] === '__inherit__' || $resolved[$key] === '') {
+                if (array_key_exists($key, $dashboardControls)) {
+                    $resolved[$key] = $dashboardControls[$key];
+                }
             }
         }
 
@@ -33,12 +37,8 @@ class WidgetDataService
 
     public function getResolvedAssetList(DashboardWidget $widget, array $resolvedControls): array
     {
-        if (!empty($resolvedControls['assets'])) {
+        if (!empty($resolvedControls['assets']) && is_array($resolvedControls['assets'])) {
             return $resolvedControls['assets'];
-        }
-
-        if (!empty($resolvedControls['asset'])) {
-            return [$resolvedControls['asset']];
         }
 
         return [];

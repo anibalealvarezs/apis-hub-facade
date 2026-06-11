@@ -100,7 +100,8 @@ class DashboardWidgetDataController extends Controller
         \Illuminate\Support\Facades\Log::info('UI State:', $uiState);
         $controlsToMerge = [];
         if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
-        if (!empty($controls['asset'])) $controlsToMerge['dependent_asset_filter'] = $controls['asset'];
+        if (!empty($controls['assets'])) $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
+        if (!empty($controls['series_assets']['dependent'])) $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
         if (!empty($controls['date_start'])) $controlsToMerge['start_date'] = $controls['date_start'];
         if (!empty($controls['date_end'])) $controlsToMerge['end_date'] = $controls['date_end'];
         if (!empty($controls['granularity'])) $controlsToMerge['granularity'] = $controls['granularity'];
@@ -111,8 +112,11 @@ class DashboardWidgetDataController extends Controller
                 if (empty($var['independent_channel']) && !empty($controls['channel'])) {
                     $uiState['independent_variables'][$key]['independent_channel'] = $controls['channel'];
                 }
-                if (empty($var['independent_asset_filter']) && !empty($controls['asset'])) {
-                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['asset'];
+                if (empty($var['independent_asset_filter']) && !empty($controls['assets'])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
+                }
+                if (!empty($controls['series_assets']["independent_{$key}"])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                 }
             }
         }
