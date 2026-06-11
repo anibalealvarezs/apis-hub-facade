@@ -79,9 +79,13 @@ Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicControll
 Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth']);
 
+Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
+
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
 // Legal Documents
 Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos');
 Route::get('/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion');
+
+Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');
