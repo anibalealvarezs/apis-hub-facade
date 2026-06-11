@@ -80,6 +80,14 @@ class Project extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Relationship: Alias for user() used by Filament tables and other UI components.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 
 
     /**
