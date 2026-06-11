@@ -51,7 +51,8 @@ class UserResource extends Resource
                             ->helperText('Active users can log in to the portal.')
                             ->default(true)
                             ->required(),
-                    ])->columns(2),
+
+                    ])->columns(3),
             ]);
     }
 
@@ -65,6 +66,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
+
                 Tables\Columns\IconColumn::make('is_admin')
                     ->label('Admin')
                     ->boolean()

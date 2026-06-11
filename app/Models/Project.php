@@ -33,9 +33,11 @@ class Project extends Model
      */
     protected $fillable = [
         'name',
+        'timezone',
         'subdomain',
         'server_id',
         'user_id',
+        'billing_profile_id',
         'db_name',
         'db_user',
         'db_password',
@@ -43,14 +45,22 @@ class Project extends Model
         'remote_admin_api_key',
         'remote_app_api_key',
         'last_deployed_at',
+        'deploy_started_at',
+        'last_sync_started_at',
         'git_repo',
         'git_branch',
         'is_active',
         'health_status',
         'health_metrics',
+        'sync_config',
         'last_heartbeat_at',
         'error_count',
         'public_api_key',
+        'billing_status',
+        'past_due_at',
+        'apis_hub_release_id',
+        'google_profile_id',
+        'facebook_profile_id',
     ];
 
     /**
@@ -61,6 +71,16 @@ class Project extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Relationship: Alias for user() to explicitly denote the single true owner of the project.
+     */
+    public function trueOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+
 
     /**
      * Relationship: The deployment logs for this project.
@@ -91,7 +111,57 @@ class Project extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->using(ProjectUser::class);
+    }
+
+    /**
+     * Relationship: Billing profile paying for this project.
+     */
+    public function billingProfile(): BelongsTo
+    {
+        return $this->belongsTo(BillingProfile::class);
+    }
+
+    /**
+     * Check if a user has administrative control over this project.
+     * (Technical owner OR the owner of the assigned billing profile).
+     */
+    public function hasAdminAccess(User $user): bool
+    {
+        return $this->user_id === $user->id 
+            || $this->billingProfile?->user_id === $user->id;
+    }
+
+    /**
+     * Relationship: Invoices generated specifically for this project.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Relationship: Pending invitations for this project.
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class)->where('status', 'pending');
+    }
+
+    /**
+     * Relationship: Custom KPIs defined for this project.
+     */
+    public function customKpis(): HasMany
+    {
+        return $this->hasMany(CustomKpi::class);
+    }
+
+    /**
+     * Get the APIs Hub Release associated with the project.
+     */
+    public function apisHubRelease(): BelongsTo
+    {
+        return $this->belongsTo(ApisHubRelease::class);
     }
 
     /**
@@ -104,6 +174,17 @@ class Project extends Model
             $project->monitoring_token = \Illuminate\Support\Str::uuid();
             $project->public_api_key = bin2hex(random_bytes(32));
             $project->remote_admin_api_key = bin2hex(random_bytes(32));
+
+            // Auto-assign the user's default billing profile if not explicitly set
+            if (empty($project->billing_profile_id) && !empty($project->user_id)) {
+                $user = \App\Models\User::find($project->user_id);
+                $defaultProfile = $user?->billingProfiles()->where('is_default', true)->first();
+                if ($defaultProfile) {
+                    $project->billing_profile_id = $defaultProfile->id;
+                } else {
+                    $project->billing_profile_id = $user?->billingProfiles()->first()?->id;
+                }
+            }
         });
     }
 
@@ -115,7 +196,10 @@ class Project extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'last_deployed_at' => 'datetime',
+        'deploy_started_at' => 'datetime',
+        'last_sync_started_at' => 'datetime',
         'last_heartbeat_at' => 'datetime',
+        'past_due_at' => 'datetime',
         'health_metrics' => 'array',
         'sync_config' => 'array',
         'error_count' => 'integer',
@@ -135,51 +219,144 @@ class Project extends Model
     }
 
     /**
+     * Relationship: The Google Channel Profile associated with this project.
+     */
+    public function googleProfile(): BelongsTo
+    {
+        return $this->belongsTo(ChannelProfile::class, 'google_profile_id');
+    }
+
+    /**
+     * Relationship: The Facebook Channel Profile associated with this project.
+     */
+    public function facebookProfile(): BelongsTo
+    {
+        return $this->belongsTo(ChannelProfile::class, 'facebook_profile_id');
+    }
+
+    /**
      * Transparent proxy for provider credentials to ensure backward compatibility.
-     * Intercepts legacy column calls and redirects them to the project_credentials table.
      */
     public function getAttribute($key)
     {
         $proxies = [
-            'facebook_user_token' => ['facebook', 'token'],
-            'facebook_user_id' => ['facebook', 'external_user_id'],
-            'google_refresh_token' => ['google', 'refresh_token'],
-            'google_user_id' => ['google', 'external_user_id'],
+            'facebook_user_token' => ['facebookProfile', 'access_token'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token'],
+            'google_user_id' => ['googleProfile', 'provider_account_id'],
         ];
 
         if (array_key_exists($key, $proxies)) {
-            [$provider, $attribute] = $proxies[$key];
+            [$relation, $attribute] = $proxies[$key];
 
-            return $this->credentials()->where('provider', $provider)->first()?->{$attribute};
+            return $this->{$relation}?->{$attribute};
         }
 
         return parent::getAttribute($key);
     }
 
     /**
+     * Determine if a proxy attribute exists.
+     */
+    public function __isset($key)
+    {
+        $proxies = [
+            'facebook_user_token' => ['facebookProfile', 'access_token'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token'],
+            'google_user_id' => ['googleProfile', 'provider_account_id'],
+        ];
+
+        if (array_key_exists($key, $proxies)) {
+            [$relation, $attribute] = $proxies[$key];
+            return $this->{$relation} !== null && $this->{$relation}->{$attribute} !== null;
+        }
+
+        return parent::__isset($key);
+    }
+
+    /**
      * Transparent proxy for setting provider credentials.
+     * With the new ChannelProfile architecture, credentials should ideally be managed via the Profile entity.
+     * This maintains basic backwards compatibility.
      */
     public function setAttribute($key, $value)
     {
         $proxies = [
-            'facebook_user_token' => ['facebook', 'token'],
-            'facebook_user_id' => ['facebook', 'external_user_id'],
-            'google_refresh_token' => ['google', 'refresh_token'],
-            'google_user_id' => ['google', 'external_user_id'],
+            'facebook_user_token' => ['facebookProfile', 'access_token', 'facebook'],
+            'facebook_user_id' => ['facebookProfile', 'provider_account_id', 'facebook'],
+            'google_refresh_token' => ['googleProfile', 'refresh_token', 'google'],
+            'google_user_id' => ['googleProfile', 'provider_account_id', 'google'],
         ];
 
         if (array_key_exists($key, $proxies)) {
-            [$provider, $attribute] = $proxies[$key];
-            // We postpone actual database update to when the model is saved.
-            // For now, we'll ensure the relation exists.
-            $this->credentials()->updateOrCreate(
-                ['provider' => $provider],
-                [$attribute => $value]
-            );
+            [$relation, $attribute, $provider] = $proxies[$key];
+            
+            // If the profile already exists, just update the attribute
+            if ($this->{$relation}) {
+                $this->{$relation}->update([$attribute => $value]);
+            } else {
+                // For backwards compatibility, create a new ChannelProfile owned by the project's trueOwner
+                // This is a fallback. The UI should assign existing profiles.
+                $profile = ChannelProfile::create([
+                    'user_id' => $this->user_id,
+                    'provider' => $provider,
+                    $attribute => $value,
+                ]);
+                $foreignKey = "{$provider}_profile_id";
+                $this->attributes[$foreignKey] = $profile->id;
+                $this->setRelation($relation, $profile);
+            }
 
             return $this;
         }
 
         return parent::setAttribute($key, $value);
+    }
+
+    /**
+     * Check if the project has at least one channel asset enabled.
+     */
+    public function hasConfiguredAssets(): bool
+    {
+        $syncConfig = $this->sync_config ?? [];
+        if (!is_array($syncConfig) || empty($syncConfig)) {
+            return false;
+        }
+
+        foreach ($syncConfig as $channelKey => $channelConfig) {
+            if (!is_array($channelConfig) || empty($channelConfig['enabled'])) {
+                continue;
+            }
+
+            // We explicitly target the known asset list keys defined by the driver schemas
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+            // 1. Check direct asset lists (e.g., $channelConfig['pages'])
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
+                    foreach ($channelConfig[$assetKey] as $asset) {
+                        if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check nested asset lists under an 'assets' wrapper (e.g., $channelConfig['assets']['ad_accounts'])
+            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
+                foreach ($assetKeys as $assetKey) {
+                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
+                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
+                            if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }

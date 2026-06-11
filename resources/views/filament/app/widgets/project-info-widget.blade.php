@@ -43,9 +43,9 @@
                     {{ $statusLabel }}
                 </span>
 
-                {{-- Server Info --}}
+                {{-- Sync Engine Info --}}
                 <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-                    <x-heroicon-m-server class="h-4 w-4" />
+                    <x-heroicon-m-bolt class="h-4 w-4" />
                     <span>{{ $this->getServerName() }}</span>
                 </div>
             </div>

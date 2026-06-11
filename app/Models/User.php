@@ -14,6 +14,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use App\Enums\UserTier;
+use Spatie\Permission\Traits\HasRoles;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 
 class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
 {
@@ -21,6 +24,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     use HasFactory;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use HasRoles;
+    use HasPanelShield;
 
     /**
      * Filament Multi-tenancy: Return the projects owned by this user.
@@ -44,10 +49,10 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return $this->is_admin && $this->is_active;
+            return (bool) ($this->hasRole('super_admin') && $this->is_active);
         }
 
-        return $this->is_active;
+        return (bool) ($this->is_active ?? true);
     }
 
     protected $fillable = [
@@ -55,8 +60,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         'email',
         'password',
         'logout_at',
-        'is_admin',
         'is_active',
+        'locale',
+        'pending_email',
     ];
 
     /**
@@ -64,7 +70,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function projects(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(Project::class);
+        return $this->belongsToMany(Project::class)->using(ProjectUser::class);
     }
 
     /**
@@ -72,7 +78,41 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
      */
     public function ownedProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Project::class, 'owner_id');
+        return $this->hasMany(Project::class, 'user_id');
+    }
+
+    /**
+     * Relationship: A user can have multiple billing profiles.
+     */
+    public function billingProfiles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BillingProfile::class);
+    }
+
+    /**
+     * Relationship: Billing profiles shared with this user by other users.
+     */
+    public function sharedBillingProfiles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(BillingProfile::class, 'billing_profile_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * Helper: Get all billing profiles the user has access to (owned + shared).
+     */
+    public function getAvailableBillingProfiles()
+    {
+        return $this->billingProfiles->merge($this->sharedBillingProfiles);
+    }
+
+    /**
+     * Relationship: A user can have multiple channel profiles connected (e.g. Google, Meta).
+     */
+    public function channelProfiles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ChannelProfile::class);
     }
 
     /**
@@ -96,9 +136,50 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
             'email_verified_at' => 'datetime',
             'logout_at' => 'datetime',
             'password' => 'hashed',
-            'is_admin' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Check if the user's default billing profile can create more projects.
+     */
+    public function canCreateMoreProjects(): bool
+    {
+        $defaultProfile = $this->billingProfiles()->where('is_default', true)->first() 
+            ?? $this->billingProfiles()->first();
+
+        if (!$defaultProfile) {
+            return false;
+        }
+
+        // Count projects currently assigned to this profile
+        $projectCount = $defaultProfile->projects()->count();
+
+        // Get max projects allowed for the profile's tier
+        $maxProjects = app(\App\Services\BillingLifecycleService::class)
+            ->getMaxProjectsForTier($defaultProfile->tier);
+
+        return $projectCount < $maxProjects;
+    }
+
+    /**
+     * Check if the user only has FREE billing profiles (no paid profiles).
+     */
+    public function hasOnlyFreeProfiles(): bool
+    {
+        $profiles = $this->billingProfiles;
+        if ($profiles->isEmpty()) {
+            return true;
+        }
+        return $profiles->every(fn ($profile) => $profile->tier === \App\Enums\UserTier::FREE);
+    }
+
+    /**
+     * Count the total number of projects the user has active access to (owned or collaborated).
+     */
+    public function getTotalAccessibleProjectsCount(): int
+    {
+        return $this->projects()->count();
     }
 
     /**

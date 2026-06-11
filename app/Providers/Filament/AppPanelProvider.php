@@ -33,18 +33,43 @@ class AppPanelProvider extends PanelProvider
             ->registration()
             ->passwordReset()
             ->emailVerification()
+            
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::TOPBAR_START,
+                fn () => view('filament.hooks.topbar-logo'),
+            )
+
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
+                fn () => view('filament.hooks.sidebar-tier-badge'),
+            )
+
             ->profile()
-            ->brandLogo(asset('images/branding/apishub-trans-620.webp'))
-            ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-620.webp'))
-            ->brandLogoHeight('3rem')
+            ->sidebarCollapsibleOnDesktop()
+            ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
+                </div>
+            '))
+            ->darkModeBrandLogo(fn () => new \Illuminate\Support\HtmlString('
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
+                </div>
+            '))
             ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
                 'primary' => '#00a7f9',
             ])
+            ->spa()
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
                 fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}">')
+            )
+            ->renderHook(
+                'panels::scripts.after',
+                fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
                 'panels::head.start',
@@ -119,10 +144,30 @@ class AppPanelProvider extends PanelProvider
                 ")
             )
             ->darkMode()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('5s')
             ->tenant(Project::class, slugAttribute: 'subdomain')
             ->tenantRegistration(\App\Filament\App\Pages\RegisterProject::class)
+            ->tenantMiddleware([
+                \App\Http\Middleware\ApplyTenantScopes::class,
+            ], isPersistent: true)
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
+            ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
+            ->navigationGroups([
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Exploration & Telemetry'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Data & Integrations'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Google'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Meta'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Administration'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label('Knowledge Base'),
+            ])
             ->pages([
                 Pages\Dashboard::class,
             ])
@@ -141,22 +186,27 @@ class AppPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 VerifyReCaptcha::class,
+                \App\Http\Middleware\SetLocale::class,
             ])
             ->authMiddleware([
-                \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 Authenticate::class,
+                \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
+            ])
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('My Account')
+                    ->url('/account')
+                    ->icon('heroicon-o-user'),
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
                     ->myProfile(
-                        shouldRegisterUserMenu: true,
+                        shouldRegisterUserMenu: false, // Disable in app panel so it doesn't conflict with Account panel
                         shouldRegisterNavigation: false,
                         hasAvatars: false,
                     )
-                    ->enableTwoFactorAuthentication(
-                        force: false,
-                    )
-            );
+            )
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
     }
 }

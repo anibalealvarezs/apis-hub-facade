@@ -5,16 +5,30 @@ namespace App\Filament\App\Pages;
 use App\Services\RemoteEngineService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Pages\Page;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 
 class DataSync extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
-    protected static ?string $navigationLabel = 'Explorers Status';
-    protected static ?string $title = 'Explorers Monitoring';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Telemetry');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Exploration & Telemetry');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Data Telemetry');
+    }
+
     protected static string $view = 'filament.app.pages.data-sync';
-    protected static ?string $slug = 'data-sync';
+    protected static ?string $slug = 'telemetry';
 
     public array $syncData = [];
     public bool $isLoading = true;
@@ -25,23 +39,105 @@ class DataSync extends Page
     }
 
     /**
-     * Fetch real-time synchronization data from the remote node.
+     * Fetch real-time synchronization data from the remote node or from cache.
      */
-    public function refreshData(): void
+    public function refreshData(bool $force = false): void
     {
         $this->isLoading = true;
-        
+
         try {
             $service = app(RemoteEngineService::class);
             $tenant = Filament::getTenant();
-            
-            // Calling the GBS Monitoring API we just discovered
-            $response = $service->getMonitoringData($tenant);
-            
-            if ($response && ($response['success'] ?? false)) {
+
+            $cacheKey = "telemetry_data_{$tenant->id}";
+            if ($force) {
+                \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            }
+
+            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($service, $tenant) {
+                return $service->getSyncTelemetry($tenant);
+            });
+
+            \Illuminate\Support\Facades\Log::info("DataSync Telemetry Response:", ['response' => $response]);
+
+            if (is_array($response) && isset($response['completion_percentage'])) {
+                // Enrich with names from Project sync_config for channels like FB Organic/Marketing
+                try {
+                    $accountMap = [];
+                    $syncConfig = $tenant->sync_config ?? [];
+
+                    // Recursively search for any array that contains arrays with 'id' and 'name'
+                    $extractNames = function ($data) use (&$extractNames, &$accountMap) {
+                        if (! is_array($data)) {
+                            return;
+                        }
+
+                        // Check if current node represents an asset
+                        $assetName = $data['title'] ?? $data['name'] ?? null;
+                        if (isset($data['id']) && is_string($assetName) && !empty($assetName)) {
+                            // Some telemetry systems prefix FB ids with 'act_'
+                            $cleanId = str_replace('act_', '', (string)$data['id']);
+                            
+                            $accountMap[$cleanId] = [
+                                'name' => $assetName,
+                                'ig_username' => null,
+                            ];
+                            $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
+
+                            // Check for IG account inside FB page
+                            if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
+                                $ig = $data['instagram_business_account'];
+                                if (isset($ig['username'])) {
+                                    $accountMap[$cleanId]['ig_username'] = $ig['username'];
+                                    $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
+                                }
+                            }
+                        }
+
+                        // Keep digging deeper
+                        foreach ($data as $key => $val) {
+                            if (is_array($val)) {
+                                $extractNames($val);
+                            }
+                        }
+                    };
+
+                    $extractNames($syncConfig);
+
+                    // Apply to response and normalize assets to associative array
+                    if (isset($response['channels'])) {
+                        foreach ($response['channels'] as &$chanData) {
+                            if (isset($chanData['assets'])) {
+                                $newAssets = [];
+                                foreach ($chanData['assets'] as $key => $asset) {
+                                    $actualId = (is_array($asset) && isset($asset['id'])) ? (string)$asset['id'] : (string)$key;
+
+                                    // Set actual ID explicitly
+                                    if (is_array($asset)) {
+                                        $asset['id'] = $actualId;
+                                        if (empty($asset['name']) && isset($accountMap[$actualId])) {
+                                            $asset['name'] = $accountMap[$actualId]['name'];
+                                            if (! empty($accountMap[$actualId]['ig_username'])) {
+                                                $asset['ig_username'] = $accountMap[$actualId]['ig_username'];
+                                            }
+                                        }
+                                    }
+
+                                    $newAssets[$actualId] = $asset;
+                                }
+                                $chanData['assets'] = $newAssets;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("DataSync Name Enrichment failed: ".$e->getMessage());
+                }
+
                 $this->syncData = $response;
             } else {
                 $this->syncData = [];
+                // Temporarily disabled while the Explorer's Status page is being reworked.
+                /*
                 Notification::make()
                     ->title('Explorers status unavailable')
                     ->body(function() use ($response) {
@@ -50,8 +146,10 @@ class DataSync extends Page
                     })
                     ->warning()
                     ->send();
+                */
             }
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("DataSync refreshData Exception: ".$e->getMessage());
             $this->syncData = [];
         }
 
@@ -60,62 +158,75 @@ class DataSync extends Page
 
     protected function getHeaderActions(): array
     {
+        $tenant = Filament::getTenant();
+        $cooldownDays = 15;
+        $canResync = true;
+        $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
+
+        if ($tenant->last_historical_resync_at) {
+            $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
+            if ($daysSince < $cooldownDays) {
+                $canResync = false;
+                $resyncMessage = __('Available in :days days.', ['days' => ($cooldownDays - $daysSince)]);
+            }
+        }
+
         return [
             Action::make('refresh')
-                ->label('Refresh Status')
+                ->label(__('Refresh Data'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->action(fn() => $this->refreshData()),
+                ->action(fn () => $this->refreshData(true)),
 
-            Action::make('triggerSync')
-                ->label('Run All Explorers')
-                ->icon('heroicon-o-play')
-                ->color('success')
+            Action::make('resyncAll')
+                ->label(__('Nuclear Resync'))
+                ->icon('heroicon-o-fire')
+                ->color('danger')
+                ->visible(fn () => auth()->user()->can('edit_preferences'))
+                ->disabled(! $canResync)
+                ->tooltip($canResync ? __('Reset all jobs and force a historical resync') : $resyncMessage)
                 ->requiresConfirmation()
-                ->modalHeading('Start All Explorers?')
-                ->modalDescription('This will launch all resting explorers to fetch the latest data from your social platforms.')
-                ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $service->triggerSync($tenant);
-                    Notification::make()->title('Explorers are now working')->success()->send();
-                    $this->refreshData();
+                ->modalHeading(__('Historical Resync (Nuclear)'))
+                ->modalDescription($resyncMessage.' '.__('Please, type "RESYNC" to confirm.'))
+                ->form(function () {
+                    $channels = [];
+                    if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
+                        foreach (array_keys($this->syncData['channels']) as $c) {
+                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                        }
+                    }
+
+                    return [
+                        \Filament\Forms\Components\Select::make('channel')
+                            ->label(__('Target Channel'))
+                            ->options(array_merge(['all' => __('All Channels')], $channels))
+                            ->default('all')
+                            ->required()
+                            ->helperText(__('Select a specific channel to limit the reset, or all channels.')),
+                        \Filament\Forms\Components\TextInput::make('confirmation')
+                            ->label(__('Confirmation'))
+                            ->required()
+                            ->rules(['in:RESYNC'])
+                            ->placeholder(__('Type RESYNC'))
+                            ->validationMessages([
+                                'in' => __('You must type RESYNC exactly to continue.'),
+                            ]),
+                    ];
+                })
+                ->action(function (array $data, RemoteEngineService $service) use ($tenant) {
+                    if ($data['confirmation'] !== 'RESYNC') {
+                        return;
+                    }
+                    $response = $service->triggerHistoricalResync($tenant, $data['channel']);
+                    if (($response['status'] ?? '') === 'error') {
+                        Notification::make()->title(__('Error:').' '.($response['error'] ?? 'Unknown'))->danger()->send();
+                    } else {
+                        if ($data['channel'] === 'all') {
+                            $tenant->update(['last_historical_resync_at' => now()]);
+                        }
+                        Notification::make()->title(__('Historical resync initiated for ').($data['channel'] === 'all' ? __('all channels') : $data['channel']).__('... New jobs will be processed as soon as workers become available.'))->success()->send();
+                    }
                 }),
         ];
     }
-
-    /**
-     * Perform an infrastructure action on a specific container.
-     */
-    public function toggleContainer(string $name, string $action): void
-    {
-        try {
-            $service = app(RemoteEngineService::class);
-            $tenant = Filament::getTenant();
-            
-            $response = $service->containerAction($tenant, $name, $action);
-            
-            if ($response && ($response['success'] ?? false)) {
-                Notification::make()
-                    ->title("Container $action successful")
-                    ->body("$name has been $action" . "ed.")
-                    ->success()
-                    ->send();
-            } else {
-                 Notification::make()
-                    ->title("Failed to $action container")
-                    ->body($response['error'] ?? 'Unknown error.')
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Exception $e) {
-             Notification::make()
-                ->title("Error")
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-
-        $this->refreshData();
-    }
 }
-

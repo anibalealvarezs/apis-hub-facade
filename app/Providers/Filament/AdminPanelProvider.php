@@ -29,9 +29,24 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->emailVerification()
 
-            ->brandLogo(asset('images/branding/apishub-trans-620.webp'))
-            ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-620.webp'))
-            ->brandLogoHeight('3rem')
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::TOPBAR_START,
+                fn () => view('filament.hooks.topbar-logo'),
+            )
+
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+            ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
+                </div>
+            '))
+            ->darkModeBrandLogo(fn () => new \Illuminate\Support\HtmlString('
+                <div class="w-full flex items-center justify-center">
+                    <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
+                </div>
+            '))
+
             ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
                 'primary' => '#00a7f9',
@@ -79,6 +94,7 @@ class AdminPanelProvider extends PanelProvider
                     </div>
                 ")
             )
+            ->databaseNotifications()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -111,6 +127,11 @@ class AdminPanelProvider extends PanelProvider
                     ->enableTwoFactorAuthentication(
                         force: false,
                     )
+            )
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make())
+            ->plugin(
+                \Filament\SpatieLaravelTranslatablePlugin::make()
+                    ->defaultLocales(['en', 'es'])
             )
             ->authMiddleware([
                 Authenticate::class,

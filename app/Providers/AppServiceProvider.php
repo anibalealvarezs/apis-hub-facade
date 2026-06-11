@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +12,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class, function ($app) {
+            $registry = new \App\Domain\ChannelProfiles\ChannelProfileRegistry();
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\GoogleSearchConsoleProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookMarketingProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookOrganicProfile());
+            return $registry;
+        });
     }
 
     /**
@@ -19,6 +26,25 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
+            $switch
+                ->locales(['en', 'es'])
+                ->visible(outsidePanels: true);
+        });
+
+
+
+        \Livewire\Livewire::component('personal_info', \App\Livewire\CustomPersonalInfo::class);
+
+        \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\BillingProfile::class);
+        \Laravel\Cashier\Cashier::useSubscriptionModel(\App\Models\Subscription::class);
+        \Laravel\Cashier\Cashier::useSubscriptionItemModel(\App\Models\SubscriptionItem::class);
+
+        \App\Models\SubscriptionPlan::observe(\App\Observers\SubscriptionPlanObserver::class);
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
+        \App\Models\Project::observe(\App\Observers\ProjectObserver::class);
+        \App\Models\BillingProfile::observe(\App\Observers\BillingProfileObserver::class);
+
         if (str_starts_with(config('app.url'), 'https://')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
             \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
@@ -51,9 +77,17 @@ class AppServiceProvider extends ServiceProvider
                     'error' => $e->getMessage(),
                 ]);
             }
+
         });
 
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\SetSessionStartTime::class);
+
+        // Invitations
+        \Illuminate\Support\Facades\Event::listen(\Filament\Events\Auth\Registered::class, \App\Listeners\ProcessProjectInvitation::class);
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\ProcessProjectInvitation::class);
+        
+        // Stripe Webhooks
+        \Illuminate\Support\Facades\Event::listen(\Laravel\Cashier\Events\WebhookReceived::class, \App\Listeners\StripeWebhookListener::class);
 
         // ─── Notificación visual tras verificación de email ───
         // Se dispara cuando el usuario hace click en el link de verificación.
@@ -66,5 +100,6 @@ class AppServiceProvider extends ServiceProvider
                 ->persistent()
                 ->send();
         });
+
     }
 }

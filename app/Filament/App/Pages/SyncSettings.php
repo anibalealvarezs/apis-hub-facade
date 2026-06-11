@@ -2,15 +2,13 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Models\ProjectDeploymentLog;
 use App\Services\RemoteEngineService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\View;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -18,62 +16,90 @@ use Filament\Pages\Page;
 class SyncSettings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationLabel = 'Synchronization Settings';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Data & Integrations');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Synchronization Settings');
+    }
+
     protected static string $view = 'filament.app.pages.sync-settings';
     protected static ?string $slug = 'sync-settings';
 
     public ?array $data = [];
     public bool $isSyncable = false;
 
+    /**
+     * TTL for the "sync sequence in progress" banner (seconds).
+     * start-sync.sh should complete well within this window.
+     */
+    public const SYNC_SEQUENCE_TTL_SECONDS = 3600; // 1 hour
+
+    /**
+     * Re-hydrate the tenant from DB so wire:poll picks up health_status / last_sync_started_at changes.
+     * Also auto-clears last_sync_started_at if it has exceeded the TTL, preventing the banner
+     * from being stuck forever when start-sync.sh fails silently on the remote node.
+     */
+    public function refreshTenantStatus(): void
+    {
+        /** @var \App\Models\Project $tenant */
+        $tenant = Filament::getTenant()->fresh();
+        $this->isSyncable = $tenant->is_active && $tenant->health_status !== 'provisioning';
+
+        // Auto-clear a stale sync-in-progress marker
+        if (
+            $tenant->last_sync_started_at
+            && $tenant->last_sync_started_at->diffInSeconds(now()) > self::SYNC_SEQUENCE_TTL_SECONDS
+        ) {
+            $tenant->update(['last_sync_started_at' => null]);
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('viewLogs')
+                ->label(__('View Last Deployment Log'))
+                ->icon('heroicon-o-document-text')
+                ->color('gray')
+                ->visible(fn () => auth()->user()->can('edit_preferences'))
+                ->modalHeading(__('Deployment Log Output'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel(__('Close'))
+                ->modalContent(function () {
+                    $log = ProjectDeploymentLog::where('project_id', Filament::getTenant()->id)
+                        ->latest('id')
+                        ->first();
+                    
+                    return view('filament.app.components.deployment-log-modal', ['log' => $log]);
+                }),
             Action::make('triggerSync')
-                ->label('Run Sync Now')
+                ->label(__('Deploy Infrastructure Updates'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
+                ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
+                    || Filament::getTenant()->fresh()->billing_status === 'suspended'
+                    || in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing'])
+                    || ! auth()->user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $response = $service->triggerSync($tenant);
-                    
+                    $tenant = Filament::getTenant()->fresh();
+
+                    // Record that a sync sequence was requested (used for UI progress banner)
+                    $tenant->update(['last_sync_started_at' => now()]);
+
+                    $response = $service->startSync($tenant);
+
                     Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Sync Started' : 'Sync Failed')
-                        ->body($response['message'] ?? '')
+                        ->title(($response['status'] ?? '') === 'success' ? __('Synchronization Sequence Started') : __('Sync Deployment Failed'))
+                        ->body($response['message'] ?? __('Applying configuration, restarting workers, and scheduling initial jobs.'))
                         ->send();
                 }),
 
-            Action::make('checkStatus')
-                ->label('Verify Server Health')
-                ->icon('heroicon-o-shield-check')
-                ->color('info')
-                ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $response = $service->getStatus($tenant);
-                    
-                    $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
-
-                    Notification::make()
-                        ->title($isOnline ? 'Server is Online' : 'Server Unreachable')
-                        ->body($isOnline ? 'Your dedicated server is responding correctly and all services are up.' : 'Could not reach your dedicated server. Please try again in a few minutes.')
-                        ->status($isOnline ? 'success' : 'danger')
-                        ->send();
-                }),
-
-            Action::make('stopJobs')
-                ->label('Pause All Explorers')
-                ->icon('heroicon-o-stop-circle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->action(function (RemoteEngineService $service) {
-                    $tenant = Filament::getTenant();
-                    $response = $service->stopJobs($tenant);
-                    
-                    Notification::make()
-                        ->title(($response['status'] ?? '') === 'success' ? 'Explorers are resting' : 'Action Failed')
-                        ->body($response['message'] ?? '')
-                        ->send();
-                }),
         ];
     }
 
@@ -86,8 +112,8 @@ class SyncSettings extends Page
         if ($this->isSyncable) {
             $validation = $service->validateTokens($tenant, 'facebook');
             $fbData = $validation['results']['facebook'] ?? [];
-            
-            if (($fbData['status'] ?? '') === 'valid' && !empty($fbData['access_token'])) {
+
+            if (($fbData['status'] ?? '') === 'valid' && ! empty($fbData['access_token'])) {
                 if ($tenant->facebook_user_token !== $fbData['access_token']) {
                     // Update Facade silently with Node's truth
                     $tenant->facebook_user_token = $fbData['access_token'];
@@ -105,149 +131,88 @@ class SyncSettings extends Page
             'google_refresh_token' => $tenant->google_refresh_token,
             'google_user_id' => $tenant->google_user_id,
         ]);
+
+        $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+            ->where('status', 'locked')
+            ->whereNull('disabled_at')
+            ->where(function ($query) use ($tenant) {
+                if ($tenant->last_deployed_at) {
+                    $query->where('locked_at', '>', $tenant->last_deployed_at);
+                }
+            })
+            ->count();
+
+        if ($pendingAssets > 0) {
+            Notification::make()
+                ->title(__('Action Recommended'))
+                ->body(__('You have :count newly confirmed asset(s). We recommend clicking "Deploy Infrastructure Updates" above to start tracking their full history.', ['count' => $pendingAssets]))
+                ->warning()
+                ->persistent()
+                ->send();
+        }
     }
 
     public function form(Form $form): Form
     {
+        $tenant = Filament::getTenant();
+        $isSuspended = ! $tenant->is_active || $tenant->billing_status === 'suspended';
+
         return $form
             ->schema([
-                Section::make('Facebook Marketing & Organic')
-                    ->description('Automatically link your Facebook accounts to start syncing pages and ads.')
+                Section::make(__('Global Processing Settings'))
+                    ->description(__('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.'))
                     ->schema([
-                        Placeholder::make('facebook_oauth')
-                            ->label('')
-                            ->content(fn () => new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="facebook" />'))),
-
-                        Section::make('Advanced FB Configuration (Manual)')
-                            ->collapsed()
-                            ->schema([
-                                Toggle::make('fb_organic_enabled')
-                                    ->label('Enable FB Organic (Pages & Posts)')
-                                    ->default(true),
-                                Toggle::make('fb_marketing_enabled')
-                                    ->label('Enable FB Marketing (Ads & Campaigns)')
-                                    ->default(true),
-                                TextInput::make('facebook_user_token')
-                                    ->label('FB User Access Token (Manual Override)')
-                                    ->password()
-                                    ->revealable()
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
-                                    ->hintColor('warning')
-                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Once saved, APIs Hub will automatically exchange this for a long-lived platform token and update the connection status.'),
-                                TextInput::make('facebook_user_id')
-                                    ->label('FB User ID (Manual Override)')
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
-                                    ->hintColor('success')
-                                    ->helperText('The numerical ID of the Meta account owner. This is typically captured automatically during the connection flow.'),
-                                Select::make('fb_history_range')
-                                    ->options([
-                                        '6 months' => '6 Months',
-                                        '1 year' => '1 Year',
-                                        '2 years' => '2 Years',
-                                    ])
-                                    ->default('2 years'),
-                            ])->columns(2),
-                    ]),
-
-                Section::make('Google Search Console (GSC)')
-                    ->description('Authorize APIs Hub to fetch your GSC performance data.')
-                    ->schema([
-                        Placeholder::make('google_oauth')
-                            ->label('')
-                            ->content(fn () => new \Illuminate\Support\HtmlString(\Illuminate\Support\Facades\Blade::render('<x-oauth-buttons provider="google" />'))),
-
-                        Section::make('Advanced GSC Configuration (Manual)')
-                            ->collapsed()
-                            ->schema([
-                                Toggle::make('gsc_enabled')
-                                    ->label('Enable GSC Synchronization')
-                                    ->default(true),
-                                TextInput::make('google_refresh_token')
-                                    ->label('Google Refresh Token (Manual Override)')
-                                    ->password()
-                                    ->revealable()
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing token detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-exclamation-triangle' : null)
-                                    ->hintColor('warning')
-                                    ->helperText('Warning: Overriding this manually may disrupt active Explorers. Ensure the refresh token is valid and has long-term offline access.'),
-                                TextInput::make('google_user_id')
-                                    ->label('Google User ID (Manual Override)')
-                                    ->columnSpanFull()
-                                    ->hint(fn ($state) => $state ? 'Existing ID detected' : null)
-                                    ->hintIcon(fn ($state) => $state ? 'heroicon-m-check-badge' : null)
-                                    ->hintColor('success')
-                                    ->helperText('The numerical ID of the Google account owner.'),
-                                Select::make('gsc_history_range')
-                                    ->options([
-                                        '1 month' => '1 Month',
-                                        '3 months' => '3 Months',
-                                        '6 months' => '6 Months',
-                                        '16 months' => '16 Months (Max)',
-                                    ])
-                                    ->default('16 months'),
-                            ])->columns(2),
-                    ]),
-
-                Section::make('Advanced Filters')
-                    ->description(new \Illuminate\Support\HtmlString('Use patterns to include/exclude specific resources. Need help? Use <a href="https://regex101.com/?flavor=php" target="_blank" rel="nofollow noopener noreferrer" style="color: #00A7F9; text-decoration: underline;">Regex101 (PHP flavor)</a> to build your rules.'))
-                    ->schema([
-                        TextInput::make('campaign_filter')
-                            ->label('Campaign filter')
-                            ->placeholder('/^CAMP_/i')
-                            ->live(onBlur: true)
-                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Campaigns that match this pattern will be synced.'))
-                            ->afterStateUpdated(fn () => $this->validate()),
-                        TextInput::make('page_filter')
-                            ->label('Page filter')
-                            ->placeholder('/[0-9]{15}/')
-                            ->live(onBlur: true)
-                            ->helperText(fn ($state) => $this->humanizeRegex($state, 'Pages that match this pattern will be synced.'))
-                            ->afterStateUpdated(fn () => $this->validate()),
+                        Select::make('jobs_timeout_hours')
+                            ->label(__('Jobs Timeout (Hours)'))
+                            ->options([
+                                '1' => __('1 Hour (Recommended)'),
+                                '2' => __('2 Hours'),
+                                '6' => __('6 Hours'),
+                                '12' => __('12 Hours'),
+                            ])
+                            ->default('1')
+                            ->helperText(__('If a job takes longer than this duration, it will be automatically aborted to free up resources.')),
                     ])->collapsed(),
 
-                Section::make('API Access (External Integration)')
-                    ->description('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)')
+                Section::make(__('API Access (External Integration)'))
+                    ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->schema([
                         TextInput::make('api_url')
-                            ->label('API Endpoint')
+                            ->label(__('API Endpoint'))
                             ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud') . '/api')
                             ->disabled()
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
-                            ->label('Secret API Key')
+                            ->label(__('Secret API Key'))
                             ->password()
                             ->revealable()
                             ->disabled()
-                            ->helperText('Keep this key secure. It provides full access to your cached data.')
+                            ->helperText(__('Keep this key secure. It provides full access to your cached data.'))
                             ->hintAction(
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
+                                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || ! auth()->user()->can('edit_preferences'))
                                     ->requiresConfirmation()
-                                    ->modalHeading('Rotate API Key?')
-                                    ->modalDescription('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.')
-                                    ->modalSubmitActionLabel('Yes, rotate and push')
+                                    ->modalHeading(__('Rotate API Key?'))
+                                    ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.'))
+                                    ->modalSubmitActionLabel(__('Yes, rotate and push'))
                                     ->action(function (\App\Services\DeployerService $deployer) {
                                         $tenant = Filament::getTenant();
                                         $newKey = bin2hex(random_bytes(32));
-                                        
+
                                         // 1. Save locally
                                         $tenant->update(['public_api_key' => $newKey]);
-                                        
+
                                         // 2. Push to remote server via SSH
                                         $deployer->updateCredentials($tenant, [
-                                            'APP_API_KEY' => $newKey
+                                            'APP_API_KEY' => $newKey,
                                         ]);
 
                                         \Filament\Notifications\Notification::make()
-                                            ->title('API Key Rotated!')
+                                            ->title(__('API Key Rotated!'))
                                             ->success()
-                                            ->body('The new key has been generated and synchronized with your node.')
+                                            ->body(__('The new key has been generated and synchronized with your node.'))
                                             ->send();
 
                                         // 3. Update the form state
@@ -256,34 +221,53 @@ class SyncSettings extends Page
                             ),
                     ])->columns(2),
             ])
-            ->statePath('data');
+            ->statePath('data')
+            ->disabled($isSuspended || ! auth()->user()->can('edit_preferences'));
     }
 
     public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
     {
         $tenant = Filament::getTenant();
+        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
+            Notification::make()->title(__('Action Blocked'))->body(__('The project is suspended and is in read-only mode.'))->danger()->send();
+
+            return;
+        }
+
+        if (in_array($tenant->health_status, ['redeploying', 'syncing'])) {
+            Notification::make()->title(__('Action Blocked'))->body(__('A deployment or synchronization is currently running. Please wait for it to finish.'))->warning()->send();
+
+            return;
+        }
+
+        if (! auth()->user()->can('edit_preferences')) {
+            Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify sync preferences.'))->danger()->send();
+
+            return;
+        }
+
         $this->validate();
         $data = $this->form->getState();
-        
+
         $modelAttributes = [
-            'public_api_key' => $data['app_api_key'] ?? null,
-            'facebook_user_token' => $data['facebook_user_token'] ?? null,
-            'facebook_user_id' => $data['facebook_user_id'] ?? null,
-            'google_refresh_token' => $data['google_refresh_token'] ?? null,
-            'google_user_id' => $data['google_user_id'] ?? null,
+            'public_api_key' => $data['app_api_key'] ?? $tenant->public_api_key,
+            'facebook_user_token' => $data['facebook_user_token'] ?? $tenant->facebook_user_token,
+            'facebook_user_id' => $data['facebook_user_id'] ?? $tenant->facebook_user_id,
+            'google_refresh_token' => $data['google_refresh_token'] ?? $tenant->google_refresh_token,
+            'google_user_id' => $data['google_user_id'] ?? $tenant->google_user_id,
         ];
 
         $syncConfig = collect($data)->except(array_keys($modelAttributes))->except(['api_url', 'app_api_key'])->toArray();
+        $existingSyncConfig = is_array($tenant->sync_config) ? $tenant->sync_config : [];
 
         $tenant->update(array_merge($modelAttributes, [
-            'sync_config' => $syncConfig,
+            'sync_config' => array_merge($existingSyncConfig, $syncConfig),
         ]));
 
-        // 1. Push Social Tokens (Hot-reload)
-        $deployer->injectSocialTokens($tenant, [
-            'facebook_user_token' => $modelAttributes['facebook_user_token'],
-            'facebook_user_id' => $modelAttributes['facebook_user_id'],
-            'google_refresh_token' => $modelAttributes['google_refresh_token'],
+        // 1.5 Push global application logic configurations to the APIs Hub (Node)
+        $service->updateCredentials($tenant, [
+            'type' => 'global',
+            'jobs_timeout_hours' => $data['jobs_timeout_hours'] ?? 1,
         ]);
 
         // 2. Push fixed Infrastructure credentials (Requires restart)
@@ -297,51 +281,24 @@ class SyncSettings extends Page
             'MONITOR_TOKEN' => $tenant->monitoring_token,
             'MONITOR_FACADE_URL' => config('app.url') . '/api/heartbeat',
             'APP_API_KEY' => $tenant->public_api_key,
+            'TOKEN_AUTHORITY_ENABLED' => 'true',
+            'TOKEN_AUTHORITY_URL' => config('app.url') . '/api/token-authority/refresh',
+            'TOKEN_AUTHORITY_BEARER' => $tenant->public_api_key,
         ];
 
         $response = $deployer->updateCredentials($tenant, $pushData);
 
         if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
             Notification::make()
-                ->title('Secure Settings Saved & Synchronized!')
+                ->title(__('Secure Settings Saved & Synchronized!'))
                 ->success()
                 ->send();
         } else {
             Notification::make()
-                ->title('Settings Saved Locally')
+                ->title(__('Settings Saved Locally'))
                 ->warning()
-                ->body('Could not push credentials to your server. Please ensure the server is online.')
+                ->body(__('Could not push credentials to your server. Please ensure the server is online.'))
                 ->send();
         }
-    }
-    protected function humanizeRegex(?string $regex, string $default): string
-    {
-        if (!$regex) {
-            return $default;
-        }
-
-        // Basic humanizations for common patterns
-        if ($regex === '.*' || $regex === '/.*/') {
-            return "Sync all resources (No filtering).";
-        }
-
-        $clean = trim($regex, '/');
-        $isCaseInsensitive = str_ends_with($regex, 'i');
-        
-        if (str_starts_with($clean, '^')) {
-            $value = rtrim(substr($clean, 1), '$');
-            return "Sync only resources starting with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
-        }
-
-        if (str_ends_with($clean, '$')) {
-            $value = ltrim(substr($clean, 0, -1), '^');
-            return "Sync only resources ending with '" . $value . "'" . ($isCaseInsensitive ? " (case insensitive)." : ".");
-        }
-
-        if (!str_starts_with($regex, '/')) {
-            return "Simple match: Sync resources containing '" . $regex . "'.";
-        }
-
-        return "Active pattern: Matching against '" . $clean . "'.";
     }
 }

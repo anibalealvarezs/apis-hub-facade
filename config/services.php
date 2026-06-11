@@ -39,12 +39,12 @@ return [
         'client_id' => env('FACEBOOK_APP_ID'),
         'client_secret' => env('FACEBOOK_APP_SECRET'),
         'redirect' => env('FACEBOOK_REDIRECT_URI'),
-        'scopes' => [
-            'marketing' => [
+        'channel_scopes' => [
+            'facebook_marketing' => [
                 'ads_read',
                 'business_management',
             ],
-            'organic' => [
+            'facebook_organic' => [
                 'pages_show_list',
                 'pages_read_engagement',
                 'pages_read_user_content',
@@ -63,14 +63,14 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
-        'scopes' => [
-            'search_console' => [
+        'channel_scopes' => [
+            'google_search_console' => [
                 'https://www.googleapis.com/auth/webmasters.readonly',
             ],
-            'analytics' => [
+            'google_analytics' => [
                 'https://www.googleapis.com/auth/analytics.readonly',
             ],
-            'ads' => [
+            'google_ads' => [
                 'https://www.googleapis.com/auth/adwords',
             ],
             'default' => [

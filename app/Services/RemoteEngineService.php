@@ -25,7 +25,7 @@ class RemoteEngineService
         }
 
         $apiKey = $project->remote_admin_api_key;
-        if (!$apiKey) {
+        if (! $apiKey) {
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
@@ -33,10 +33,9 @@ class RemoteEngineService
         return new ApisHubApi(
             baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
-            debugMode: config('app.debug', false)
+            debugMode: false // NEVER couple this to config('app.debug'), otherwise the SDK intercepts and mocks all requests
         );
     }
-
 
     /**
      * Execute a task via the SDK with centralized error handling.
@@ -45,6 +44,7 @@ class RemoteEngineService
     {
         try {
             $client = $this->getClient($project);
+
             return $callback($client);
         } catch (Exception $e) {
             Log::error("Remote Engine Action Failed: {$project->name}", [
@@ -77,7 +77,7 @@ class RemoteEngineService
             if ($endpoint === 'sync/stop') {
                 return $client->stopJobs();
             }
-            
+
             // Fallback for others if needed, using a generic method if available
             // but for now, let's stick to the typed methods below.
             return ['status' => 'error', 'message' => "Endpoint '{$endpoint}' should be called via its SDK method."];
@@ -89,7 +89,24 @@ class RemoteEngineService
      */
     public function triggerSync(Project $project, string $channel = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerSync($channel));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->triggerSync($channel));
+    }
+
+    /**
+     * Trigger a nuclear historical resync via a tracked background job.
+     */
+    public function triggerHistoricalResync(Project $project, string $channel = 'all')
+    {
+        try {
+            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channel);
+
+            return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Nuclear Resync Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     /**
@@ -97,15 +114,41 @@ class RemoteEngineService
      */
     public function stopJobs(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->stopJobs());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->stopJobs());
     }
 
     /**
-     * Trigger a background redeployment via the Node's management API.
+     * Trigger a background redeployment via a tracked job.
      */
     public function triggerRedeploy(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->triggerRedeploy());
+        try {
+            \App\Jobs\DeployProjectJob::dispatch($project);
+
+            return ['status' => 'success', 'message' => 'Redeploy initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Redeploy Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Trigger a lightweight synchronization start via a tracked job.
+     */
+    public function startSync(Project $project)
+    {
+        try {
+            \App\Jobs\SyncProjectJob::dispatch($project);
+
+            return ['status' => 'success', 'message' => 'Synchronization initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Start Sync Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     /**
@@ -113,7 +156,7 @@ class RemoteEngineService
      */
     public function updateCredentials(Project $project, array $credentials)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->updateConfig($credentials));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->updateConfig($credentials));
     }
 
     /**
@@ -121,7 +164,7 @@ class RemoteEngineService
      */
     public function containerAction(Project $project, string $name, string $action)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->containerAction($name, $action));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->containerAction($name, $action));
     }
 
     /**
@@ -130,7 +173,7 @@ class RemoteEngineService
      */
     public function getHeartbeat(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getHeartbeat());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getHeartbeat());
     }
 
     /**
@@ -138,7 +181,7 @@ class RemoteEngineService
      */
     public function getStatus(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getStatus());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getStatus());
     }
 
     /**
@@ -146,7 +189,15 @@ class RemoteEngineService
      */
     public function getMonitoringData(Project $project)
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->getMonitoringData());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getMonitoringData());
+    }
+
+    /**
+     * Fetch sync telemetry payload.
+     */
+    public function getSyncTelemetry(Project $project)
+    {
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getSyncTelemetry());
     }
 
     /**
@@ -154,6 +205,69 @@ class RemoteEngineService
      */
     public function validateTokens(Project $project, string $type = 'all')
     {
-        return $this->execute($project, fn(ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+    }
+
+    /**
+     * Fetch live assets from the remote node.
+     */
+    public function fetchAssets(Project $project, string $channel, bool $refresh = false)
+    {
+        return $this->execute($project, fn (ApisHubApi $client) => $client->fetchAssets([
+            'type' => $channel,
+            'refresh' => $refresh ? 1 : 0,
+        ]));
+    }
+
+    /**
+     * Perform an aggregation query on channeled entities via the remote node.
+     */
+    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload)
+    {
+        return $this->execute($project, fn (ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload));
+    }
+
+    /**
+     * Compute a Custom KPI using an AST via the remote node.
+     */
+    public function computeKpi(Project $project, array $payload)
+    {
+        $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
+        $payload['analytics_engine_host'] = env('ANALYTICS_ENGINE_HOST', 'https://analytics.apis-hub.cloud/');
+        return $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+    }
+
+    /**
+     * Perform concurrent aggregation queries via the remote node.
+     */
+    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads)
+    {
+        $results = [];
+        $startTime = microtime(true);
+
+        foreach ($payloads as $key => $payload) {
+            $startReq = microtime(true);
+            $response = $this->aggregateChanneled($project, $channel, $entity, $payload);
+
+            // SDK returns the array directly, but handles errors by returning ['status' => 'error']
+            if (isset($response['status']) && $response['status'] === 'error') {
+                $results[$key] = $response;
+            } else {
+                $results[$key] = $response;
+            }
+        }
+
+        $totalDuration = round(microtime(true) - $startTime, 3);
+        \Illuminate\Support\Facades\Log::error("Finished aggregateChanneledPool in {$totalDuration}s");
+
+        return $results;
+    }
+
+    /**
+     * List channeled entities via the remote node.
+     */
+    public function listChanneled(Project $project, string $channel, string $entity, array $params = [])
+    {
+        return $this->execute($project, fn (ApisHubApi $client) => $client->listChanneled($channel, $entity, $params));
     }
 }

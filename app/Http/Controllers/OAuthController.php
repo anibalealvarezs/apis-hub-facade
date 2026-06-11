@@ -22,7 +22,7 @@ class OAuthController extends Controller
      */
     public function redirect(Request $request, string $provider)
     {
-        return $this->performRedirect($request, $provider, null, $request->query('type'));
+        return $this->performRedirect($request, $provider, null, $request->query('types'));
     }
 
     /**
@@ -30,13 +30,13 @@ class OAuthController extends Controller
      */
     public function connect(Request $request, $tenant, string $provider)
     {
-        return $this->performRedirect($request, $provider, $tenant, $request->query('type'));
+        return $this->performRedirect($request, $provider, $tenant, $request->query('types'));
     }
 
     /**
      * Internal redirection logic.
      */
-    protected function performRedirect(Request $request, string $provider, $tenantId = null, ?string $type = null)
+    protected function performRedirect(Request $request, string $provider, $tenantId = null, ?string $types = null)
     {
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver($provider);
@@ -44,27 +44,34 @@ class OAuthController extends Controller
         $tenantId = $tenantId ?: Filament::getTenant()?->id;
         $stateParts = ['tenant_' . (is_object($tenantId) ? $tenantId->id : $tenantId)];
         
-        if ($type) {
-            $stateParts[] = 'type_' . $type;
+        if ($types) {
+            $stateParts[] = 'types_' . $types;
         }
 
-        $driver->with(['state' => implode(':', $stateParts)]);
+        $customParameters = ['state' => implode(':', $stateParts)];
 
-        $config = config("services.{$provider}")['scopes'] ?? [];
+        $config = config("services.{$provider}")['channel_scopes'] ?? [];
         $scopes = $config['default'] ?? [];
 
-        if ($type && isset($config[$type])) {
-            $scopes = array_merge($scopes, $config[$type]);
+        if ($types) {
+            foreach (explode(',', $types) as $type) {
+                if (isset($config[$type])) {
+                    $scopes = array_merge($scopes, $config[$type]);
+                }
+            }
         }
 
         if (!empty($scopes)) {
-            $driver->scopes($scopes);
+            $driver->scopes(\Illuminate\Support\Arr::flatten($scopes));
         }
 
-        // For Google/GSC: ensure we get the refresh token
+        // For Google/GSC: ensure we get the refresh token and merge with custom state
         if ($provider === 'google') {
-            $driver->with(['access_type' => 'offline', 'prompt' => 'consent']);
+            $customParameters['access_type'] = 'offline';
+            $customParameters['prompt'] = 'consent';
         }
+
+        $driver->stateless()->with($customParameters);
 
         return $driver->redirect();
     }
@@ -72,14 +79,11 @@ class OAuthController extends Controller
     /**
      * Obtain the user information from the Provider.
      */
-    public function callback(Request $request, string $provider, $tenantId = null)
+    public function callback(Request $request, string $provider, DeployerService $deployer, $tenantId = null)
     {
         try {
             /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
             $driver = Socialite::driver($provider);
-            /** @var \Laravel\Socialite\Two\User $socialiteUser */
-            $socialiteUser = $driver->stateless()->user();
-            
             $state = $request->input('state', '');
             $stateData = [];
             foreach (explode(':', $state) as $part) {
@@ -90,7 +94,7 @@ class OAuthController extends Controller
             }
 
             $tenantId = $stateData['tenant'] ?? $tenantId;
-            $type = $stateData['type'] ?? null;
+            $types = $stateData['types'] ?? null;
             $tenant = Filament::getTenant();
 
             if (!$tenant && $tenantId) {
@@ -98,15 +102,25 @@ class OAuthController extends Controller
             }
 
             if (!$tenant) {
-                return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified.');
+                return redirect()->route('filament.app.auth.login')->with('error', 'Tenant not identified from state parameter.');
             }
+
+            /** @var \Laravel\Socialite\Two\User $socialiteUser */
+            $socialiteUser = $driver->stateless()->user();
 
             $token = $socialiteUser->token;
             $refreshToken = $socialiteUser->refreshToken;
 
             // Calculate scopes based on type
-            $config = config("services.{$provider}")['scopes'] ?? [];
-            $requestedScopes = array_merge($config['default'] ?? [], $type ? ($config[$type] ?? []) : []);
+            $config = config("services.{$provider}")['channel_scopes'] ?? [];
+            $requestedScopes = $config['default'] ?? [];
+            if ($types) {
+                foreach (explode(',', $types) as $type) {
+                    if (isset($config[$type])) {
+                        $requestedScopes = array_merge($requestedScopes, $config[$type]);
+                    }
+                }
+            }
 
             // --- Facebook Long-Lived Token Exchange ---
             if ($provider === 'facebook') {
@@ -128,38 +142,95 @@ class OAuthController extends Controller
                 }
             }
 
-            // Sync with Database (Merge scopes if already exists)
-            $credential = $tenant->credentials()->where('provider', $provider)->first();
-            $existingScopes = $credential?->scopes ?? [];
-            $newScopes = array_values(array_unique(array_merge($existingScopes, $requestedScopes)));
+            // Sync with ChannelProfile Architecture
+            $profile = \App\Models\ChannelProfile::where('user_id', $tenant->user_id)
+                ->where('provider', $provider)
+                ->where('provider_account_id', $socialiteUser->id)
+                ->first();
 
-            $credential = $tenant->credentials()->updateOrCreate(
-                ['provider' => $provider],
-                [
-                    'token' => $token,
-                    'refresh_token' => $refreshToken,
-                    'external_user_id' => $socialiteUser->id,
-                    'scopes' => $newScopes,
-                    'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
-                    'meta' => [
-                        'name' => $socialiteUser->name,
-                        'email' => $socialiteUser->email,
-                        'avatar' => $socialiteUser->avatar,
-                    ],
-                ]
-            );
+            $authorizedChannels = $types ? explode(',', $types) : [];
+
+            $updatePayload = [
+                'name' => $socialiteUser->name,
+                'email' => $socialiteUser->email,
+                'access_token' => $token,
+                'expires_at' => property_exists($socialiteUser, 'expiresIn') ? now()->addSeconds($socialiteUser->expiresIn) : null,
+                'authorized_channels' => $authorizedChannels,
+            ];
+
+            if (!empty($refreshToken)) {
+                $updatePayload['refresh_token'] = $refreshToken;
+            } elseif ($profile && $profile->refresh_token) {
+                $updatePayload['refresh_token'] = $profile->refresh_token;
+            } else {
+                // Try to recover from legacy ProjectCredential
+                $legacyCred = $tenant->credentials()->where('provider', $provider)->first();
+                if ($legacyCred && $legacyCred->refresh_token) {
+                    $updatePayload['refresh_token'] = $legacyCred->refresh_token;
+                }
+            }
+
+            if ($profile) {
+                $profile->update($updatePayload);
+            } else {
+                $profile = \App\Models\ChannelProfile::create(array_merge([
+                    'user_id' => $tenant->user_id,
+                    'provider' => $provider,
+                    'provider_account_id' => $socialiteUser->id,
+                ], $updatePayload));
+            }
+
+            // Link profile to tenant
+            $profileIdColumn = "{$provider}_profile_id";
+            $tenant->update([$profileIdColumn => $profile->id]);
 
             // Atomic Push to Remote Engine via SDK
             $nodeUrl = "https://{$tenant->subdomain}.apis-hub.cloud";
             $sdk = new ApisHubApi($nodeUrl, $tenant->remote_admin_api_key);
-            $sdk->importCredentials($provider, $token, [
-                'user_id' => $socialiteUser->id,
-                'email' => $socialiteUser->email,
-                'refresh_token' => $refreshToken,
-                'scopes' => $newScopes,
-            ]);
+            
+            $finalRefreshToken = $profile->refresh_token;
+            // Since ChannelProfile does not store scopes, we just pass the requested ones downstream
+            $newScopes = $requestedScopes;
 
-            return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+            try {
+                $sdk->importCredentials($provider, $token, [
+                    'user_id' => $socialiteUser->id,
+                    'email' => $socialiteUser->email,
+                    'refresh_token' => $finalRefreshToken,
+                    'scopes' => $newScopes,
+                ]);
+                Log::info("Successfully pushed {$provider} tokens to remote node for project {$tenant->id}");
+            } catch (\Exception $e) {
+                Log::warning("Failed to push {$provider} tokens to remote node for project {$tenant->id} (may not be deployed yet): " . $e->getMessage());
+            }
+
+            // Reschedule any jobs that failed due to permanent auth errors
+            try {
+                $sdk->rescheduleAuthFailedJobs($provider);
+                Log::info("Rescheduled auth-failed jobs for provider {$provider} on project {$tenant->id}");
+            } catch (\Exception $e) {
+                Log::warning("Failed to reschedule auth-failed jobs for provider {$provider} on project {$tenant->id}: " . $e->getMessage());
+            }
+
+            // Reactivate workers if they were paused for a safe update
+            if (in_array($tenant->health_status, ['stopping_workers', 'ready_for_auth'])) {
+                Log::info("Reactivating workers for project {$tenant->id} post OAuth update.");
+                
+                $deploymentName = "apis-hub-{$tenant->subdomain}";
+                $refreshCmd = "php bin/console app:refresh-instances";
+                $startCmd = "docker compose -p {$deploymentName} up -d --build --remove-orphans worker";
+                
+                try {
+                    $deployer->executeCommand($tenant, clone $tenant->server, $refreshCmd);
+                    $deployer->executeCommand($tenant, clone $tenant->server, $startCmd);
+                    $tenant->update(['health_status' => 'healthy']);
+                    Log::info("Workers reactivated successfully for project {$tenant->id}.");
+                } catch (\Exception $e) {
+                    Log::error("Failed to reactivate workers for project {$tenant->id}: " . $e->getMessage());
+                }
+            }
+
+            return redirect(url('/app/' . $tenant->subdomain . '/data-sources'))
                 ->with('status', ucfirst($provider) . ' account connected and synchronized successfully.');
 
         } catch (\Exception $e) {
@@ -168,13 +239,12 @@ class OAuthController extends Controller
                 'state_received' => $request->input('state'),
             ]);
             
-            // Si tenemos tenant, volvemos a su panel. Si no, al login general.
             if (isset($tenant) && $tenant) {
-                return redirect()->route('filament.app.pages.sync-settings', ['tenant' => $tenant->subdomain])
+                return redirect(url('/app/' . $tenant->subdomain . '/data-sources'))
                     ->with('error', 'Authentication failed: ' . $e->getMessage());
             }
 
-            return redirect()->route('filament.app.auth.login')->with('error', 'Authentication failed.');
+            return redirect()->route('filament.app.auth.login')->with('error', 'Authentication failed: ' . $e->getMessage());
         }
     }
 
@@ -206,8 +276,7 @@ class OAuthController extends Controller
                     
                     // ATOMICITY: Try to wipe remote via API FIRST
                     // If this fails, we catch and bail to keep consistency
-                    $response = $deployer->injectSocialTokens($project, [
-                        'facebook_user_token' => null,
+                    $response = $deployer->injectSocialTokens($project, "", "facebook", [
                         'facebook_user_id' => null,
                     ]);
 

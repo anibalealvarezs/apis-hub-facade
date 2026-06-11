@@ -16,4 +16,11 @@ class EditUser extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\UserResource\Widgets\UserBillingProfilesTable::class,
+        ];
+    }
 }

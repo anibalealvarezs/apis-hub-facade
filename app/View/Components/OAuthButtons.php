@@ -19,7 +19,7 @@ class OAuthButtons extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct(public string $provider)
+    public function __construct(public string $provider, public ?string $type = null)
     {
         $tenant = Filament::getTenant();
         $this->isGlobal = !$tenant;
@@ -32,12 +32,18 @@ class OAuthButtons extends Component
 
         $this->color = $this->isConnected ? 'success' : 'primary';
 
+        $params = ['provider' => $this->provider];
+        if ($this->type) {
+            $params['type'] = $this->type;
+        }
+
         if ($this->isGlobal) {
-            $this->url = route('app.social-login', ['provider' => $this->provider]);
+            $this->url = route('app.social-login', $params);
             $this->label = "Login with " . ucfirst($this->provider);
             $this->icon = 'heroicon-m-link';
         } else {
-            $this->url = route('app.connect', ['tenant' => $tenant->id, 'provider' => $this->provider]);
+            $params['tenant'] = $tenant->id;
+            $this->url = route('app.connect', $params);
             $this->label = $this->isConnected ? 'Account Connected' : 'Connect Account';
             $this->icon = $this->isConnected ? 'heroicon-m-check-circle' : 'heroicon-m-plus';
         }

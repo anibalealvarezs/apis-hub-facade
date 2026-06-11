@@ -18,8 +18,13 @@ class EnsureUserHasActiveProject
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 0. Si es logout, lo dejamos pasar sin preguntas
-        if ($request->is('*/logout')) {
+        // 0. Si es logout, validación de correo, o CREACIÓN de proyecto, lo dejamos pasar sin preguntas
+        if (
+            $request->is('*/logout') || 
+            $request->is('*/email-verification*') || 
+            $request->routeIs('filament.app.tenant.registration') ||
+            $request->routeIs('filament.app.tenant.profile')
+        ) {
             return $next($request);
         }
 
@@ -30,29 +35,65 @@ class EnsureUserHasActiveProject
 
         $user = Auth::user();
         
-        // 2. Obtenemos el slug de la URL (si existe)
+        // 2. Si el usuario está en el Account Panel, verificar si tiene proyectos
+        // Si no tiene, forzar la creación. Si tiene, dejarlo pasar.
+        if ($request->routeIs('filament.account.*') || $request->is('account*')) {
+            $hasProjects = $user->projects()->exists();
+            if (!$hasProjects) {
+                return redirect()->route('filament.app.tenant.registration');
+            }
+            return $next($request);
+        }
+
+        // 3. Obtenemos el slug de la URL (si existe) para el App Panel
         // En Filament, el parámetro del tenant suele llamarse 'tenant'
         $slugFromUrl = $request->route('tenant');
 
-        // 3. Verificamos si el slug actual es válido y activo para este usuario
+        // 4. Verificamos si el slug actual es válido para este usuario
         // Si ya estamos en un subdominio válido, dejamos pasar el request
         if ($slugFromUrl) {
             $currentProjectExists = $user->projects()
                 ->where('subdomain', $slugFromUrl)
-                ->where('is_active', true)
-                ->exists();
+                ->first();
 
             if ($currentProjectExists) {
+                // Prevent full functionality if there is no billing profile
+                if (empty($currentProjectExists->billing_profile_id) && !$request->routeIs('filament.app.pages.project-billing-settings')) {
+                    if ($currentProjectExists->user_id === $user->id) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Billing Profile Required')
+                            ->body('This project is missing a billing profile. Please assign one to continue.')
+                            ->warning()
+                            ->send();
+                        return redirect()->route('filament.app.pages.project-billing-settings', ['tenant' => $currentProjectExists->subdomain]);
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Project Inactive')
+                            ->body('This project is missing a billing profile. The project owner must configure billing to restore access.')
+                            ->danger()
+                            ->send();
+                        
+                        $alt = $user->projects()->whereNotNull('billing_profile_id')->first();
+                        if ($alt) {
+                            return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alt->subdomain]);
+                        }
+                        return redirect()->route('filament.account.pages.dashboard');
+                    }
+                }
+
+                // 4.1 Set Spatie Permissions Team ID globally for this request
+                if (function_exists('setPermissionsTeamId')) {
+                    setPermissionsTeamId($currentProjectExists->id);
+                }
+
                 return $next($request);
             }
         }
 
         // 4. Si llegamos aquí es porque: No hay slug, o el slug es de un proyecto archivado/inexistente.
         
-        // Buscamos el primer proyecto alternativo que esté activo
-        $alternativeProject = $user->projects()
-            ->where('is_active', true)
-            ->first();
+        // Buscamos el primer proyecto alternativo
+        $alternativeProject = $user->projects()->first();
 
         // 5. Si encontramos uno, lo mandamos allí
         if ($alternativeProject) {
@@ -64,12 +105,7 @@ class EnsureUserHasActiveProject
             return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alternativeProject->subdomain]);
         }
 
-        // 6. Si no tiene proyectos activos, lo mandamos a crear uno
-        $registrationRoute = 'filament.app.tenant.registration';
-        if ($request->routeIs($registrationRoute)) {
-            return $next($request);
-        }
-
-        return redirect()->route($registrationRoute);
+        // 6. Si no tiene proyectos, lo mandamos a crear uno
+        return redirect()->route('filament.app.tenant.registration');
     }
 }

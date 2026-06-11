@@ -5,7 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProjectResource\Pages\CreateProject as CreatePage;
 use App\Filament\Resources\ProjectResource\Pages\EditProject as EditPage;
 use App\Filament\Resources\ProjectResource\Pages\ListProjects as ListPage;
+use App\Models\BillingProfile;
 use App\Models\Project;
+use App\Models\User;
 use App\Services\DeployerService;
 use App\Services\RemoteEngineService;
 use Filament\Forms;
@@ -52,9 +54,37 @@ class ProjectResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
+                            ->rule(function () {
+                                return function (string $attribute, $value, \Closure $fail) {
+                                    if (config('app.env') === 'production' && str_ends_with($value, '-dev')) {
+                                        $fail('No se permiten subdominios terminados en "-dev" en producción.');
+                                    }
+                                    
+                                    $reservedFile = database_path('data/reserved_subdomains.json');
+                                    $reserved = file_exists($reservedFile) ? json_decode(file_get_contents($reservedFile), true) : [];
+                                    $cleanValue = strtolower(str_replace('-dev', '', $value));
+                                    
+                                    if (in_array($cleanValue, $reserved)) {
+                                        $fail('The subdomain "' . $cleanValue . '" is reserved for internal infrastructure and cannot be used.');
+                                    }
+                                };
+                            })
                             ->live(onBlur: true)
                             ->disabled(fn (?Project $record) => $record !== null)
+                            ->suffix(function () {
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
+                            })
+                            ->dehydrateStateUsing(function ($state) {
+                                if (config('app.env') !== 'production' && !str_ends_with($state, '-dev')) {
+                                    return $state . '-dev';
+                                }
+                                return $state;
+                            })
                             ->afterStateUpdated(function ($state, Forms\Set $set, $get) {
+                                if (config('app.env') !== 'production' && !str_ends_with($state, '-dev')) {
+                                    $state .= '-dev';
+                                }
                                 if (empty($get('db_name'))) {
                                     $set('db_name', 'apis_hub_' . str_replace('-', '_', $state));
                                 }
@@ -65,7 +95,14 @@ class ProjectResource extends Resource
                                     $set('db_password', \Illuminate\Support\Str::random(16));
                                 }
                             })
-                            ->helperText('Assign a subdomain (e.g. "client1") for the instance. Checked against DB. Full URL will be: subdomain.' . config('app.network_domain')),
+                            ->helperText(function () {
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                $msg = 'Assign a subdomain (e.g. "client1") for the instance. Checked against DB. Full URL will be: subdomain.' . $domain;
+                                if (config('app.env') !== 'production') {
+                                    $msg .= ' (Non-production Environment: "-dev" will be automatically appended to prevent SSL routing issues).';
+                                }
+                                return $msg;
+                            }),
                         Forms\Components\Toggle::make('is_active')
                             ->required()
                             ->default(true),
@@ -94,7 +131,14 @@ class ProjectResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
-                    ])->columns(3),
+                        Forms\Components\Select::make('apis_hub_release_id')
+                            ->relationship('apisHubRelease', 'version_tag')
+                            ->label('APIs Hub Release')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Auto (use active release)')
+                            ->helperText('Pin a specific release version. If empty, the active release is used as fallback.'),
+                    ])->columns(4),
 
                 Forms\Components\Section::make('Database Configuration')
                     ->description('Isolated DB settings for this project instance.')
@@ -159,6 +203,15 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Owner')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('user.email')
+                    ->label('Owner Email')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('subdomain')
                     ->badge()
                     ->color('gray')
@@ -169,6 +222,7 @@ class ProjectResource extends Resource
                         'online' => 'success',
                         'offline' => 'gray',
                         'error' => 'danger',
+                        'upgrading' => 'info',
                         default => 'warning',
                     })
                     ->sortable(),
@@ -189,6 +243,54 @@ class ProjectResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
+                Tables\Columns\TextColumn::make('billingProfile.name')
+                    ->label('Billing Profile')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('billingProfile.tier')
+                    ->label('Tier')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(query: fn ($query, $direction) => $query->orderBy(BillingProfile::select('tier')->whereColumn('billing_profiles.id', 'projects.billing_profile_id'), $direction)),
+                Tables\Columns\TextColumn::make('billingProfile.user.name')
+                    ->label('Billing Owner')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', function ($q) {
+                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
+                    }), $direction)),
+                Tables\Columns\TextColumn::make('billingProfile.user.email')
+                    ->label('Billing Email')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('email')->whereColumn('users.id', function ($q) {
+                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
+                    }), $direction)),
+                Tables\Columns\TextColumn::make('billing_status')
+                    ->label('Billing')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'past_due' => 'warning',
+                        'suspended' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('apisHubRelease.version_tag')
+                    ->label('Release')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('Auto (active)')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('users_count')
+                    ->label('Collaborators')
+                    ->counts('users')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('deployment_logs_count')
+                    ->label('Deploys')
+                    ->counts('deploymentLogs')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('last_deployed_at')
                     ->dateTime()
                     ->sortable()
@@ -248,7 +350,37 @@ class ProjectResource extends Resource
                 Tables\Actions\RestoreAction::make()
                     ->modalHeading('Restore Project & Resume Infra')
                     ->before(function (Project $record, DeployerService $deployer, Tables\Actions\RestoreAction $action) {
-                        // 1. Resume containers
+                        // 1. Quota Validation
+                        if (!$record->billing_profile_id) {
+                            Notification::make()
+                                ->title('Missing Billing Profile')
+                                ->body('This project has no billing profile assigned. Please assign one before restoring.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            $action->halt();
+                            return;
+                        }
+
+                        $billingService = app(\App\Services\BillingLifecycleService::class);
+                        $profile = $record->billingProfile;
+                        $maxProjects = $billingService->getMaxProjectsForTier($profile->tier);
+                        
+                        // We do not count the current project since it is currently soft-deleted
+                        $activeProjectsCount = $profile->projects()->where('billing_status', 'active')->count();
+
+                        if ($activeProjectsCount >= $maxProjects) {
+                            Notification::make()
+                                ->title('Quota Exceeded')
+                                ->body('The billing profile for this project has reached its maximum active projects limit (' . $maxProjects . '). Please upgrade the tier or suspend another project before restoring.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            $action->halt();
+                            return;
+                        }
+
+                        // 2. Resume containers
                         $result = $deployer->startContainers($record);
 
                         if ($result['status'] !== 'success') {
@@ -313,6 +445,46 @@ class ProjectResource extends Resource
                         Notification::make()
                             ->title('Deployment Job Queued')
                             ->body('You can check the logs inside the Project edit page to see the progress.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('upgradeRelease')
+                    ->label('Upgrade Release')
+                    ->icon('heroicon-o-arrow-up-circle')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->visible(fn (Project $record) => $record->apisHubRelease !== null)
+                    ->modalHeading(fn (Project $record) => "Upgrade {$record->name}")
+                    ->modalDescription(fn (Project $record) => sprintf(
+                        'Current: %s. Select a newer release to upgrade to.',
+                        $record->apisHubRelease->version_tag
+                    ))
+                    ->form(fn (Project $record) => [
+                        Forms\Components\Select::make('target_release_id')
+                            ->label('Target Release')
+                            ->options(
+                                \App\Models\ApisHubRelease::availableUpgradesFor($record->apisHubRelease->version_tag)
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->version_tag])
+                            )
+                            ->required()
+                            ->helperText('Newer releases only.'),
+                    ])
+                    ->action(function (Project $record, array $data) {
+                        $target = \App\Models\ApisHubRelease::find($data['target_release_id']);
+                        if (!$target) {
+                            Notification::make()
+                                ->title('Invalid Release')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
+
+                        Notification::make()
+                            ->title('Upgrade Queued')
+                            ->body("Upgrade to {$target->version_tag} has been dispatched.")
                             ->success()
                             ->send();
                     }),
@@ -422,6 +594,12 @@ class ProjectResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
+            ])
+            ->with([
+                'user',
+                'billingProfile.user',
+                'server',
+                'apisHubRelease',
             ]);
     }
 
