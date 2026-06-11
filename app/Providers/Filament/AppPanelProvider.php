@@ -206,6 +206,10 @@ class AppPanelProvider extends PanelProvider
                         shouldRegisterNavigation: false,
                         hasAvatars: false,
                     )
+                    ->enableTwoFactorAuthentication(
+                        condition: true,
+                        action: \Jeffgreco13\FilamentBreezy\Pages\TwoFactorPage::class
+                    )
             )
             ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
     }
