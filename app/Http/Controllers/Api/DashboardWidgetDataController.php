@@ -45,17 +45,26 @@ class DashboardWidgetDataController extends Controller
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
 
         if (!$dashboard->is_public && $user && !empty($resolvedControls['channel'])) {
-            $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
-            $allowedAssets = $this->widgetDataService->filterAllowedAssets(
-                $project, $user->id, $resolvedControls['channel'], $assetList
-            );
+            $isProjectUser = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                ->where('model_has_roles.model_id', $user->id)
+                ->where('model_has_roles.project_id', $project->id)
+                ->where('roles.name', 'project_user')
+                ->exists();
 
-            if (empty($allowedAssets)) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'access_restricted',
-                    'message' => 'You do not have access to the selected asset for this dashboard.',
-                ], 403);
+            if ($isProjectUser) {
+                $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
+                $allowedAssets = $this->widgetDataService->filterAllowedAssets(
+                    $project, $user->id, $resolvedControls['channel'], $assetList
+                );
+
+                if (empty($allowedAssets)) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'access_restricted',
+                        'message' => 'You do not have access to the selected asset for this dashboard.',
+                    ], 403);
+                }
             }
         }
 

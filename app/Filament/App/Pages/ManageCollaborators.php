@@ -173,7 +173,7 @@ class ManageCollaborators extends Page implements HasTable
                             ->where('roles.name', 'project_owner')
                             ->exists();
                     })
-                    ->mountUsing(function (Action $action, User $record) use ($project) {
+                    ->mountUsing(function (\Filament\Forms\Form $form, User $record) use ($project) {
                         $allowedAssets = ProjectUserAllowedAsset::where('project_id', $project->id)
                             ->where('user_id', $record->id)
                             ->get()
@@ -187,7 +187,7 @@ class ManageCollaborators extends Page implements HasTable
                                 ? $existing->allowed_assets
                                 : [];
                         }
-                        $action->fill($data);
+                        $form->fill($data);
                     })
                     ->form(fn (User $record) => $this->buildAssetScopeForm($record, $project))
                     ->action(function (array $data, User $record) use ($project) {
