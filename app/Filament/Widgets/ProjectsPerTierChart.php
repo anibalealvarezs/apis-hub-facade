@@ -11,7 +11,7 @@
 
         protected static ?int $sort = 4;
 
-        protected int|string|array $columnSpan = 1;
+        protected int|string|array $columnSpan = '1/4';
 
         protected static ?string $maxHeight = '200px';
 
