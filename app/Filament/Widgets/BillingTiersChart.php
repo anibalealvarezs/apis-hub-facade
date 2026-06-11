@@ -11,6 +11,10 @@ class BillingTiersChart extends ChartWidget
     
     protected static ?int $sort = 3;
 
+    protected int | string | array $columnSpan = 1;
+
+    protected static ?string $maxHeight = '150px';
+
     protected function getData(): array
     {
         $profiles = BillingProfile::selectRaw('tier, count(*) as count')

@@ -12,6 +12,8 @@ class UserGrowthChart extends ChartWidget
     
     protected static ?int $sort = 2;
 
+    protected int | string | array $columnSpan = '1/4';
+
     protected function getData(): array
     {
         $startDate = now()->subDays(30)->startOfDay();

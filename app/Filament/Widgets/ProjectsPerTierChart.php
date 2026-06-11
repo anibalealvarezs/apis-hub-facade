@@ -11,6 +11,10 @@ class ProjectsPerTierChart extends ChartWidget
     
     protected static ?int $sort = 4;
 
+    protected int | string | array $columnSpan = 1;
+
+    protected static ?string $maxHeight = '150px';
+
     protected function getData(): array
     {
         $projects = Project::with('billingProfile')
