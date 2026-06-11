@@ -54,9 +54,9 @@
                      gs-y="{{ $widget['grid_y'] }}"
                      gs-w="{{ $widget['grid_w'] }}"
                      gs-h="{{ $widget['grid_h'] }}">
-                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col !overflow-visible">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
                         @if ($widget['title'] || $widget['name'])
-                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative z-10"
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
                                  x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}')"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                                 <div>
