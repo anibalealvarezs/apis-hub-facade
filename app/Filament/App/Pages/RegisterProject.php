@@ -26,6 +26,7 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             redirect()->route('filament.account.resources.billing-profiles.create');
+            return;
         }
 
         if (!Auth::user()->canCreateMoreProjects()) {
@@ -37,6 +38,7 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             redirect()->route('filament.account.pages.account-subscription');
+            return;
         }
     }
 
