@@ -201,8 +201,6 @@
                         });
                     },
 
-                    },
-
                     reloadWidget(widgetId, controls) {
                         const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
                         if (!widgetItem) return;
