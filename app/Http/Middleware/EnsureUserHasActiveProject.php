@@ -38,6 +38,14 @@ class EnsureUserHasActiveProject
         // 2. Si el usuario está en el Account Panel, verificar si tiene proyectos
         // Si no tiene, forzar la creación. Si tiene, dejarlo pasar.
         if ($request->routeIs('filament.account.*') || $request->is('account*')) {
+            if (
+                $request->routeIs('filament.account.resources.billing-profiles.create') ||
+                $request->routeIs('filament.account.resources.billing-profiles.index') ||
+                $request->routeIs('filament.account.pages.account-subscription')
+            ) {
+                return $next($request);
+            }
+
             $hasProjects = $user->projects()->exists();
             if (!$hasProjects) {
                 return redirect()->route('filament.app.tenant.registration');
