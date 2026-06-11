@@ -60,16 +60,16 @@
                      gs-y="{{ $widget->grid_y }}"
                      gs-w="{{ $widget->grid_w }}"
                      gs-h="{{ $widget->grid_h }}">
-                    <div class="grid-stack-item-content rounded-xl border border-gray-200 bg-white shadow-sm relative flex flex-col">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col !overflow-visible">
                         @if ($widget->title || $widget->name)
-                            <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between flex-shrink-0"
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl"
                                  x-data="widgetHeader({{ $widget->id }}, '{{ addslashes(json_encode($widget->resolved_controls)) }}', '{{ addslashes(json_encode($widget->series_assets_options)) }}')"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget->id }}) controls = $event.detail.controls">
                                 <div>
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget->title ?? $widget->name }}</h3>
                                 <div class="flex flex-wrap gap-1 mt-1" x-show="getBadges().length > 0">
                                     <template x-for="(badge, index) in getBadges()" :key="index">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm" style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
                                             <span class="font-bold mr-1" x-text="badge.label + ':'"></span>
                                             <span x-text="badge.text"></span>
                                         </span>
@@ -127,7 +127,7 @@
                                 </div>
                             </div>
                         @endif
-                        <div class="widget-content flex-grow p-4 relative"
+                        <div class="widget-content flex-grow p-4 relative overflow-y-auto"
                              x-init="renderWidget({{ $widget->id }}, $el, {{ json_encode($widget->resolved_controls) }})">
                         </div>
                     </div>
