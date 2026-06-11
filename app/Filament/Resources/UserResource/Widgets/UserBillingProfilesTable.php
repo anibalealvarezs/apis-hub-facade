@@ -79,13 +79,17 @@ class UserBillingProfilesTable extends BaseWidget
                         Select::make('tier')
                             ->options(\App\Enums\UserTier::class)
                             ->required()
-                            ->default(fn (BillingProfile $record) => $record->tier)
-                            ->reactive(),
+                            ->default(fn (BillingProfile $record) => $record->tier instanceof \App\Enums\UserTier ? $record->tier->value : $record->tier)
+                            ->live(),
                         Select::make('billing_cycle')
                             ->label('Billing Cycle (If Syncing)')
                             ->options(['monthly' => 'Monthly', 'annual' => 'Annual'])
                             ->default('monthly')
-                            ->visible(fn (\Filament\Forms\Get $get) => $get('tier') !== \App\Enums\UserTier::FREE->value && $get('tier') !== \App\Enums\UserTier::SUSPENDED->value),
+                            ->visible(function (\Filament\Forms\Get $get) {
+                                $tier = $get('tier');
+                                $val = $tier instanceof \App\Enums\UserTier ? $tier->value : $tier;
+                                return $val !== \App\Enums\UserTier::FREE->value && $val !== \App\Enums\UserTier::SUSPENDED->value;
+                            }),
                         \Filament\Forms\Components\DatePicker::make('next_billing_date')
                             ->label('Next Billing Date / Grace Period End')
                             ->helperText('If set, will push the next Stripe invoice to this date. (PayPal date sync is limited and may require manual merchant dashboard adjustment).')
