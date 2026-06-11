@@ -12,7 +12,7 @@ class TopProjectsByAssetsTable extends BaseWidget
 {
     protected static ?int $sort = 6;
     
-    protected int | string | array $columnSpan = '1/4';
+    protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
     {

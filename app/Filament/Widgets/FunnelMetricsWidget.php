@@ -11,7 +11,7 @@ class FunnelMetricsWidget extends BaseWidget
 {
     protected static ?int $sort = 2; // Right below StatsOverview
 
-    protected int | string | array $columnSpan = '1/4';
+    protected int | string | array $columnSpan = 1;
 
     protected function getStats(): array
     {
