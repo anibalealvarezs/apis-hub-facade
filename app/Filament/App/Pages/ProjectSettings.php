@@ -148,19 +148,11 @@ class ProjectSettings extends Page
                     'timezone' => $data['timezone'],
                 ]);
 
-                // Mark as redeploying immediately (before the queued job picks up)
-                $project->update([
-                    'health_status'    => 'redeploying',
-                    'deploy_started_at' => now(),
-                ]);
-
-                // Dispatch deployment to apply the timezone to the remote container
-                \App\Jobs\DeployProjectJob::dispatch($project);
-
                 Notification::make()
-                    ->title(__('Preferences updated and Deployment initiated'))
-                    ->body(__('Changes will be applied to the server. A redeployment has been queued.'))
-                    ->success()
+                    ->title(__('Preferences Updated'))
+                    ->body(__('Your configuration has been saved. Please manually redeploy the project to apply these changes to the synchronization engine.'))
+                    ->warning()
+                    ->persistent()
                     ->send();
 
                 return redirect(request()->header('Referer'));

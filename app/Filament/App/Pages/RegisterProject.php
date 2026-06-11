@@ -207,6 +207,11 @@ class RegisterProject extends RegisterTenant
                 'model_id' => $user->id,
                 'project_id' => $project->id,
             ]);
+
+            // Clear caches so the new role is immediately recognized by Filament and Spatie
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            $user->unsetRelation('roles');
+            $user->unsetRelation('permissions');
         }
 
         \Filament\Notifications\Notification::make()

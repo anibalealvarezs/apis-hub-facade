@@ -100,8 +100,9 @@ class DeployerService
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
 
-        // Generate deterministic, unique host ports based on project ID to prevent Docker conflicts
-        $basePort = 11000 + ($project->id * 10);
+        // Generate deterministic, unique host ports based on project ID and environment offset to prevent Docker conflicts
+        $portOffset = env('DEPLOY_PORT_OFFSET', 11100);
+        $basePort = $portOffset + ($project->id * 10);
         $externalPort = $basePort;
         $mcpPort = $basePort + 1;
         $dbHostPort = $basePort + 2;
@@ -217,7 +218,7 @@ EOT;
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         $commands = [
             "cd {$path}",
-            "bash bin/start-sync.sh"
+            "bash bin/start-sync.sh",
         ];
 
         return $this->runSshCommands($project->server, $commands);
@@ -232,7 +233,7 @@ EOT;
         $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
         $commands = [
             "cd {$path}",
-            "bash bin/nuclear-sync.sh {$channelArg}"
+            "bash bin/nuclear-sync.sh {$channelArg}",
         ];
 
         return $this->runSshCommands($project->server, $commands);
