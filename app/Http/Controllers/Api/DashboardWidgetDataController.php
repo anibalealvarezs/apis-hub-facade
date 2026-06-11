@@ -117,10 +117,28 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        $mergedState = array_merge($uiState, $controlsToMerge);
+        // Hydrate missing metrics from runtime dashboard metrics array
+        $runtimeMetrics = $controls['metrics'] ?? [];
+        $metricIndex = 0;
+
+        if (empty($uiState['dependent_metric']) && isset($runtimeMetrics[$metricIndex])) {
+            $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
+            $metricIndex++;
+        }
+
+        if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+            foreach ($uiState['independent_variables'] as $key => $var) {
+                if (empty($var['independent_metric']) && isset($runtimeMetrics[$metricIndex])) {
+                    $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
+                    $metricIndex++;
+                }
+            }
+        }
+
+        $mergedState = array_merge($controlsToMerge, $uiState);
 
         if (empty($mergedState['dependent_metric'])) {
-            throw new \RuntimeException("This KPI is incomplete. You must select a 'Dependent Metric' in the Custom KPI configuration page.");
+            throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured and no runtime metric was provided by the dashboard.");
         }
 
         $payload = KpiPayloadBuilder::build(

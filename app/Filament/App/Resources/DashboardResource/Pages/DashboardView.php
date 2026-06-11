@@ -15,9 +15,10 @@ class DashboardView extends Page
 
     public Dashboard $dashboard;
 
-    public array $widgets = [];
-
     public array $resolvedControls = [];
+
+    public array $runtimeAssets = [];
+    public ?string $runtimeChannel = null;
 
     public function mount(Dashboard $record): void
     {
@@ -35,6 +36,27 @@ class DashboardView extends Page
                 $this->dashboard,
                 (new \App\Models\DashboardWidget())->forceFill($widget)
             );
+        }
+
+        $dashboardControls = $this->dashboard->controls ?? [];
+        if (!empty($dashboardControls['asset_mode']) && $dashboardControls['asset_mode'] === 'multiple' && !empty($dashboardControls['assets']) && !empty($dashboardControls['channel'])) {
+            $this->runtimeChannel = $dashboardControls['channel'];
+            $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($this->runtimeChannel);
+            
+            $configuredAssets = $dashboardControls['assets'];
+            
+            // If the user has restricted access, intersect with their allowed assets
+            $user = auth()->user();
+            if ($user && $user->role !== 'admin' && $user->role !== 'owner') {
+                $service = app(\App\Services\WidgetDataService::class);
+                $configuredAssets = $service->filterAllowedAssets(\Filament\Facades\Filament::getTenant(), $user->id, $this->runtimeChannel, $configuredAssets);
+            }
+
+            foreach ($configuredAssets as $assetId) {
+                if (isset($allAssets[$assetId])) {
+                    $this->runtimeAssets[$assetId] = $allAssets[$assetId];
+                }
+            }
         }
     }
 

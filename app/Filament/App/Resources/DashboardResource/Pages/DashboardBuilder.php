@@ -156,6 +156,11 @@ class DashboardBuilder extends Page
         return $assets;
     }
 
+    public function getMetricsForChannel(string $channel): array
+    {
+        return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel);
+    }
+
     public function getKpisForWidgetPicker(): array
     {
         $project = \Filament\Facades\Filament::getTenant();
@@ -163,6 +168,18 @@ class DashboardBuilder extends Page
             ->where('is_active', true)
             ->pluck('name', 'id')
             ->toArray();
+    }
+
+    public function getKpiConfiguration(int $kpiId): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        $kpi = CustomKpi::where('project_id', $project->id)
+            ->where('id', $kpiId)
+            ->first();
+
+        if (!$kpi) return [];
+
+        return $kpi->filters['_ui_state'] ?? [];
     }
 
     public function getAvailableSourceTypes(): array

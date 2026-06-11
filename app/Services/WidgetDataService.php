@@ -18,7 +18,7 @@ class WidgetDataService
 
         $resolved = [];
 
-        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'channel', 'asset', 'assets', 'granularity'];
+        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'channel', 'asset', 'assets', 'granularity', 'metrics'];
 
         foreach ($inheritableKeys as $key) {
             if (array_key_exists($key, $widgetControls) && $widgetControls[$key] !== '__inherit__') {

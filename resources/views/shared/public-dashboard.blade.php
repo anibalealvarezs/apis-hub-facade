@@ -34,7 +34,16 @@
                         <p class="text-sm text-gray-500 mt-1">{{ $dashboard->description }}</p>
                     @endif
                 </div>
-                <span class="text-xs text-gray-400">{{ $project->name }}</span>
+                <div class="flex items-center gap-3">
+                    <template x-if="Object.keys(runtimeAssets).length > 0">
+                        <select x-model="runtimeAsset" @change="onRuntimeAssetChange()" class="rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm py-1.5 pl-3 pr-8">
+                            <template x-for="(name, id) in runtimeAssets" :key="id">
+                                <option :value="id" x-text="name"></option>
+                            </template>
+                        </select>
+                    </template>
+                    <span class="text-xs text-gray-400">{{ $project->name }}</span>
+                </div>
             </div>
             @if ($dashboard->controls)
                 <div class="flex flex-wrap gap-2 mt-3">
@@ -96,8 +105,15 @@
                 loadedCount: 0,
                 totalCount: {{ $widgets->count() }},
                 tenant: '{{ $project->subdomain }}',
+                runtimeAssets: @json($runtimeAssets ?? []),
+                runtimeAsset: '',
 
                 init() {
+                    const assetKeys = Object.keys(this.runtimeAssets);
+                    if (assetKeys.length > 0) {
+                        this.runtimeAsset = assetKeys[0];
+                    }
+
                     this.$nextTick(() => {
                         const tryInit = () => {
                             if (typeof GridStack !== 'undefined') {
@@ -116,10 +132,31 @@
                     });
                 },
 
+                onRuntimeAssetChange() {
+                    const widgets = document.querySelectorAll('.grid-stack-item-content .widget-content');
+                    widgets.forEach(el => {
+                        const widgetId = el.closest('.grid-stack-item').getAttribute('gs-id');
+                        const rawControls = el.getAttribute('data-raw-controls');
+                        if (rawControls) {
+                            try {
+                                const controls = JSON.parse(rawControls);
+                                this.renderWidget(widgetId, el, controls);
+                            } catch (e) {}
+                        }
+                    });
+                },
+
                 renderWidget(widgetId, el, controls) {
+                    el.setAttribute('data-raw-controls', JSON.stringify(controls));
+                    
+                    let effectiveControls = { ...controls };
+                    if (this.runtimeAsset && Object.keys(this.runtimeAssets).length > 0) {
+                        effectiveControls.asset = this.runtimeAsset;
+                    }
+
                     const tryRender = () => {
                         if (window.dashboardRenderer) {
-                            window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)
+                            window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
                                 .then(() => { this.loadedCount++; })
                                 .catch(() => { this.loadedCount++; });
                         } else {

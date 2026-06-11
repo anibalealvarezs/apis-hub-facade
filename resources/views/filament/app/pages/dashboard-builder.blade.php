@@ -278,6 +278,36 @@
                                 <option value="monthly">Monthly</option>
                             </select>
                         </div>
+
+                        {{-- Metrics --}}
+                        <div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Time Series / Metrics</span>
+                            <div class="mt-1 space-y-2">
+                                <template x-for="(metric, index) in dashboardControls.metrics" :key="index">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
+                                        <select x-model="dashboardControls.metrics[index]"
+                                                class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                            <option value="">Select a metric...</option>
+                                            <template x-for="(label, key) in dashboardMetrics" :key="key">
+                                                <option :value="key" x-text="label"></option>
+                                            </template>
+                                        </select>
+                                        <button class="text-red-500 hover:text-red-700" x-on:click="dashboardControls.metrics.splice(index, 1)">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                                        x-on:click="dashboardControls.metrics.push('')">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Add Metric
+                                </button>
+                                <template x-if="Object.keys(dashboardMetrics).length === 0">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -411,12 +441,15 @@
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">Channel</span>
                                 <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
+                                        :disabled="widgetKpiConfig.dependent_channel"
+                                        :class="widgetKpiConfig.dependent_channel ? 'opacity-50 cursor-not-allowed' : ''"
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
                                     <option value="">Auto-detect</option>
                                     <template x-for="(label, key) in channels" :key="key">
                                         <option :value="key" x-text="label"></option>
                                     </template>
                                 </select>
+                                <p x-show="widgetKpiConfig.dependent_channel" class="text-xs text-primary-500 mt-1">Fixed by KPI template</p>
                             </div>
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">Asset Mode</span>
@@ -477,6 +510,40 @@
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
                                 </select>
+                            </div>
+
+                            {{-- Metrics --}}
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Time Series / Metrics</span>
+                                <div class="mt-1 space-y-2">
+                                    <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
+                                            <select x-model="widgetControlsForm.metrics[index]"
+                                                    :disabled="index === 0 && widgetKpiConfig.dependent_metric"
+                                                    :class="(index === 0 && widgetKpiConfig.dependent_metric) ? 'opacity-50 cursor-not-allowed' : ''"
+                                                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                                <option value="">Select a metric...</option>
+                                                <template x-for="(label, key) in widgetMetrics" :key="key">
+                                                    <option :value="key" x-text="label"></option>
+                                                </template>
+                                            </select>
+                                            <button class="text-red-500 hover:text-red-700" 
+                                                    :class="(index === 0 && widgetKpiConfig.dependent_metric) ? 'hidden' : ''"
+                                                    x-on:click="widgetControlsForm.metrics.splice(index, 1)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                                            x-on:click="widgetControlsForm.metrics.push('')">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                        Add Metric
+                                    </button>
+                                    <template x-if="Object.keys(widgetMetrics).length === 0">
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -688,7 +755,9 @@
                     // ─── Channels & Assets ───
                     channels: @json($this->getActiveChannels()),
                     allChannelAssets: {},
+                    allChannelMetrics: {},
                     dashboardAssets: {},
+                    dashboardMetrics: {},
 
                     // ─── Dashboard Controls ──
                     showDashboardControls: false,
@@ -709,8 +778,11 @@
                         asset: '',
                         assets: [],
                         granularity: 'daily',
+                        metrics: [],
                     },
+                    widgetKpiConfig: {},
                     widgetAssets: {},
+                    widgetMetrics: {},
 
                     // ─── Share ──
                     showShareDialog: false,
@@ -750,13 +822,18 @@
                     initAllAssets() {
                         const channelKeys = Object.keys(this.channels);
                         channelKeys.forEach(ch => {
-                        @this.getAssetsForChannel(ch).then(assets => {
-                            this.allChannelAssets[ch] = assets;
-                            if (ch === this.dashboardControls.channel) {
-                                this.dashboardAssets = assets;
-                            }
-                        })
-                            ;
+                            @this.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets[ch] = assets;
+                                if (ch === this.dashboardControls.channel) {
+                                    this.dashboardAssets = assets;
+                                }
+                            });
+                            @this.getMetricsForChannel(ch).then(metrics => {
+                                this.allChannelMetrics[ch] = metrics;
+                                if (ch === this.dashboardControls.channel) {
+                                    this.dashboardMetrics = metrics;
+                                }
+                            });
                         });
                     },
 
@@ -830,14 +907,19 @@
                         const ch = this.dashboardControls.channel;
                         if (ch && this.allChannelAssets[ch]) {
                             this.dashboardAssets = this.allChannelAssets[ch];
+                            this.dashboardMetrics = this.allChannelMetrics[ch] || {};
                         } else if (ch) {
-                        @this.getAssetsForChannel(ch).then(assets => {
-                            this.allChannelAssets[ch] = assets;
-                            this.dashboardAssets = assets;
-                        })
-                            ;
+                            @this.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets[ch] = assets;
+                                this.dashboardAssets = assets;
+                            });
+                            @this.getMetricsForChannel(ch).then(metrics => {
+                                this.allChannelMetrics[ch] = metrics;
+                                this.dashboardMetrics = metrics;
+                            });
                         } else {
                             this.dashboardAssets = {};
+                            this.dashboardMetrics = {};
                         }
                     },
 
@@ -852,9 +934,9 @@
                             asset: c.asset_mode === 'single' ? (c.asset || '') : '',
                             assets: c.asset_mode === 'multiple' ? (c.assets || []) : [],
                             granularity: c.granularity || 'daily',
+                            metrics: c.metrics || [],
                         };
-                    @this.saveDashboardControls(payload)
-                        ;
+                        @this.saveDashboardControls(payload);
                         this.showDashboardControls = false;
                     },
 
@@ -879,7 +961,20 @@
                             asset: wc.asset || '',
                             assets: wc.assets || [],
                             granularity: wc.granularity || 'daily',
+                            metrics: wc.metrics || [],
                         };
+
+                        this.widgetKpiConfig = {};
+                        if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id) {
+                            @this.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
+                                this.widgetKpiConfig = config || {};
+                                
+                                // Automatically sync widget controls if fixed by KPI
+                                if (this.widgetKpiConfig.dependent_channel && !this.widgetControlsForm.channel) {
+                                    this.widgetControlsForm.channel = this.widgetKpiConfig.dependent_channel;
+                                }
+                            });
+                        }
 
                         this.onWidgetChannelChange();
                         this.showWidgetControls = true;
@@ -889,14 +984,19 @@
                         const ch = this.widgetControlsForm.channel || this.dashboardControls.channel;
                         if (this.allChannelAssets[ch]) {
                             this.widgetAssets = this.allChannelAssets[ch];
+                            this.widgetMetrics = this.allChannelMetrics[ch] || {};
                         } else if (ch) {
-                        @this.getAssetsForChannel(ch).then(assets => {
-                            this.allChannelAssets[ch] = assets;
-                            this.widgetAssets = assets;
-                        })
-                            ;
+                            @this.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets[ch] = assets;
+                                this.widgetAssets = assets;
+                            });
+                            @this.getMetricsForChannel(ch).then(metrics => {
+                                this.allChannelMetrics[ch] = metrics;
+                                this.widgetMetrics = metrics;
+                            });
                         } else {
                             this.widgetAssets = {};
+                            this.widgetMetrics = {};
                         }
                     },
 
@@ -913,34 +1013,33 @@
                             asset: '',
                             assets: [],
                             granularity: 'daily',
+                            metrics: [],
                         };
                     },
 
                     confirmWidgetControls() {
-                        const f = this.widgetControlsForm;
+                        const c = this.widgetControlsForm;
                         const payload = {};
 
-                        if (!f.date_inherit) {
-                            payload.date_start = f.date_start || '';
-                            payload.date_end = f.date_end || '';
+                        if (!c.date_inherit) {
+                            payload.date_start = c.date_start;
+                            payload.date_end = c.date_end;
                         }
-                        if (!f.zero_inherit) {
-                            payload.zero_handling = f.zero_handling || 'remove';
+                        if (!c.zero_inherit) {
+                            payload.zero_handling = c.zero_handling;
                         }
-                        if (!f.series_inherit) {
-                            payload.channel = f.channel || '';
-                            payload.asset_mode = f.asset_mode || 'single';
-                            if (f.asset_mode === 'single') {
-                                payload.asset = f.asset || '';
-                            } else {
-                                payload.assets = f.assets || [];
-                            }
-                            payload.granularity = f.granularity || 'daily';
+                        if (!c.series_inherit) {
+                            payload.channel = c.channel;
+                            payload.asset_mode = c.asset_mode;
+                            payload.asset = c.asset_mode === 'single' ? c.asset : '';
+                            payload.assets = c.asset_mode === 'multiple' ? c.assets : [];
+                            payload.granularity = c.granularity;
+                            payload.metrics = c.metrics;
                         }
 
-                    @this.saveWidgetControls(this.widgetControlsTarget.id, payload)
-                        ;
+                        @this.saveWidgetControls(this.widgetControlsTarget.id, payload);
                         this.showWidgetControls = false;
+                        this.reloadGrid();
 
                         // Update local widget data
                         const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);

@@ -11,6 +11,13 @@
                 @endif
             </div>
             <div class="flex items-center gap-2">
+                <template x-if="Object.keys(runtimeAssets).length > 0">
+                    <select x-model="runtimeAsset" @change="onRuntimeAssetChange()" class="rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm py-1.5 pl-3 pr-8">
+                        <template x-for="(name, id) in runtimeAssets" :key="id">
+                            <option :value="id" x-text="name"></option>
+                        </template>
+                    </select>
+                </template>
                 <span class="text-xs text-gray-400 dark:text-gray-500">
                     <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
                     <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
@@ -89,8 +96,15 @@
                     loadedCount: 0,
                     totalCount: {{ count($this->widgets) }},
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
+                    runtimeAssets: @json($this->runtimeAssets ?? []),
+                    runtimeAsset: '',
 
                     init() {
+                        const assetKeys = Object.keys(this.runtimeAssets);
+                        if (assetKeys.length > 0) {
+                            this.runtimeAsset = assetKeys[0];
+                        }
+
                         this.$nextTick(() => {
                             const tryInit = () => {
                                 if (typeof GridStack !== 'undefined') {
@@ -110,9 +124,16 @@
                     },
 
                     renderWidget(widgetId, el, controls) {
+                        el.setAttribute('data-raw-controls', JSON.stringify(controls));
+                        
+                        let effectiveControls = { ...controls };
+                        if (this.runtimeAsset && Object.keys(this.runtimeAssets).length > 0) {
+                            effectiveControls.asset = this.runtimeAsset;
+                        }
+
                         const tryRender = () => {
                             if (window.dashboardRenderer) {
-                                window.dashboardRenderer.renderWidget(widgetId, el, controls, this.tenant)
+                                window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
                                     .then(() => { this.loadedCount++; })
                                     .catch(() => { this.loadedCount++; });
                             } else {
@@ -124,12 +145,25 @@
 
                     refreshAll() {
                         this.loadedCount = 0;
-                        document.querySelectorAll('.widget-content').forEach(el => {
-                            const widgetId = parseInt(el.getAttribute('x-init')?.match(/\d+/)?.[0] || '0');
-                            // Re-trigger by calling renderWidget. We'll just reload the page for simplicity
-                            location.reload();
+                        const widgets = document.querySelectorAll('.grid-stack-item-content .widget-content');
+                        widgets.forEach(el => {
+                            el.innerHTML = '';
+                            const widgetId = el.closest('.grid-stack-item').getAttribute('gs-id');
+                            const rawControls = el.getAttribute('data-raw-controls');
+                            if (rawControls) {
+                                try {
+                                    const controls = JSON.parse(rawControls);
+                                    this.renderWidget(widgetId, el, controls);
+                                } catch (e) {}
+                            } else {
+                                location.reload();
+                            }
                         });
                     },
+
+                    onRuntimeAssetChange() {
+                        this.refreshAll();
+                    }
                 };
             }
         </script>
