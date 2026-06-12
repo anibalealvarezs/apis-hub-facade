@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Pages\Tenancy\RegisterTenant;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -189,8 +190,8 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             // Redireccionar al dashboard principal de Filament
-            redirect()->to('/app');
-            return new Project(); // Retorno dummy
+            $this->redirect('/app');
+            throw new Halt();
         }
 
         // 2. Si no viene código, proceder a crear proyecto normal
