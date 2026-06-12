@@ -3,9 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupportTicketResource\Pages;
+use App\Models\BillingProfile;
+use App\Models\Project;
 use App\Models\SupportTicket;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -33,9 +37,12 @@ class SupportTicketResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('User')
-                            ->relationship('user', 'name')
-                            ->searchable(['name', 'email'])
-                            ->required(),
+                            ->searchable()
+                            ->required()
+                            ->getSearchResults(fn (string $search) => static::getUserSearchResults($search))
+                            ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
+                            ->live()
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('project_id', null) && $set('billing_profile_id', null)),
                         Forms\Components\Select::make('type')
                             ->options([
                                 'data_deletion' => 'Data Deletion',
@@ -53,15 +60,17 @@ class SupportTicketResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('project_id')
                             ->label('Associated Project')
-                            ->relationship('project', 'name')
-                            ->searchable(['name', 'subdomain'])
-                            ->preload()
+                            ->searchable()
+                            ->allowHtml()
+                            ->options(fn (Get $get) => static::getProjectOptionsForUser($get('user_id')))
+                            ->disabled(fn (Get $get) => blank($get('user_id')))
                             ->nullable(),
                         Forms\Components\Select::make('billing_profile_id')
                             ->label('Associated Billing Profile')
-                            ->relationship('billingProfile', 'name')
-                            ->searchable(['name'])
-                            ->preload()
+                            ->searchable()
+                            ->allowHtml()
+                            ->options(fn (Get $get) => static::getBillingProfileOptionsForUser($get('user_id')))
+                            ->disabled(fn (Get $get) => blank($get('user_id')))
                             ->nullable(),
                         Forms\Components\Textarea::make('description')
                             ->required()
@@ -80,20 +89,30 @@ class SupportTicketResource extends Resource
                         Forms\Components\Select::make('internalUsers')
                             ->label('Related Users')
                             ->multiple()
-                            ->relationship('internalUsers', 'name')
-                            ->searchable(['name', 'email'])
-                            ->preload(),
+                            ->searchable()
+                            ->getSearchResults(fn (string $search) => static::getUserSearchResults($search))
+                            ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
+                            ->live(),
                         Forms\Components\Select::make('internalProjects')
                             ->label('Related Projects')
                             ->multiple()
-                            ->options(fn () => \App\Models\Project::select('id', 'name')->withTrashed()->pluck('name', 'id'))
-                            ->searchable(),
+                            ->searchable()
+                            ->allowHtml()
+                            ->options(fn (Get $get) => static::getInternalProjectOptions(
+                                $get('internalUsers') ?? [],
+                                $get('internalProjects') ?? []
+                            ))
+                            ->disabled(fn (Get $get) => blank($get('internalUsers'))),
                         Forms\Components\Select::make('internalBillingProfiles')
                             ->label('Related Billing Profiles')
                             ->multiple()
-                            ->relationship('internalBillingProfiles', 'name')
-                            ->searchable(['name'])
-                            ->preload(),
+                            ->searchable()
+                            ->allowHtml()
+                            ->options(fn (Get $get) => static::getInternalBillingProfileOptions(
+                                $get('internalUsers') ?? [],
+                                $get('internalBillingProfiles') ?? []
+                            ))
+                            ->disabled(fn (Get $get) => blank($get('internalUsers'))),
                     ])
                     ->columns(3),
             ]);
@@ -174,7 +193,7 @@ class SupportTicketResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('internalUsers')
                     ->label('Internal User')
-                    ->options(fn () => \App\Models\User::select('id', 'name')
+                    ->options(fn () => User::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_users.user_id'))
                         ->pluck('name', 'id'))
                     ->searchable()
@@ -182,7 +201,7 @@ class SupportTicketResource extends Resource
                         $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalUsers', fn (Builder $sub) => $sub->where('users.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalProjects')
                     ->label('Internal Project')
-                    ->options(fn () => \App\Models\Project::select('id', 'name')
+                    ->options(fn () => Project::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_projects.project_id'))
                         ->withTrashed()
                         ->pluck('name', 'id'))
@@ -191,7 +210,7 @@ class SupportTicketResource extends Resource
                         $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalProjects', fn (Builder $sub) => $sub->where('projects.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalBillingProfiles')
                     ->label('Internal Billing Profile')
-                    ->options(fn () => \App\Models\BillingProfile::select('id', 'name')
+                    ->options(fn () => BillingProfile::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_billing_profiles.billing_profile_id'))
                         ->pluck('name', 'id'))
                     ->searchable()
@@ -221,5 +240,106 @@ class SupportTicketResource extends Resource
             'view' => Pages\ViewSupportTicket::route('/{record}'),
             'edit' => Pages\EditSupportTicket::route('/{record}/edit'),
         ];
+    }
+
+    private static function getUserSearchResults(string $search): array
+    {
+        if (strlen($search) < 3) {
+            return [];
+        }
+
+        return User::where('name', 'like', "%{$search}%")
+            ->orWhere('email', 'like', "%{$search}%")
+            ->limit(50)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private static function getUserOptionLabel($value): ?string
+    {
+        return User::find($value)?->name;
+    }
+
+    private static function getProjectOptionsForUser($userId): array
+    {
+        if (blank($userId)) {
+            return [];
+        }
+
+        $projects = Project::with('user:id,name')
+            ->where(function (Builder $q) use ($userId) {
+                $q->where('user_id', $userId)
+                  ->orWhereHas('users', fn (Builder $sub) => $sub->where('users.id', $userId));
+            })
+            ->get();
+
+        return static::formatOptionsWithOwner($projects);
+    }
+
+    private static function getBillingProfileOptionsForUser($userId): array
+    {
+        if (blank($userId)) {
+            return [];
+        }
+
+        $profiles = BillingProfile::with('user:id,name')
+            ->where(function (Builder $q) use ($userId) {
+                $q->where('user_id', $userId)
+                  ->orWhereHas('sharedWithUsers', fn (Builder $sub) => $sub->where('users.id', $userId));
+            })
+            ->get();
+
+        return static::formatOptionsWithOwner($profiles);
+    }
+
+    private static function getInternalProjectOptions(array $userIds, array $selectedIds): array
+    {
+        if (empty($userIds) && empty($selectedIds)) {
+            return [];
+        }
+
+        $projects = Project::with('user:id,name')
+            ->where(function (Builder $q) use ($userIds) {
+                if (!empty($userIds)) {
+                    $q->whereIn('user_id', $userIds)
+                      ->orWhereHas('users', fn (Builder $sub) => $sub->whereIn('users.id', $userIds));
+                }
+            })
+            ->when($selectedIds, fn (Builder $q) => $q->orWhereIn('id', $selectedIds))
+            ->get();
+
+        return static::formatOptionsWithOwner($projects);
+    }
+
+    private static function getInternalBillingProfileOptions(array $userIds, array $selectedIds): array
+    {
+        if (empty($userIds) && empty($selectedIds)) {
+            return [];
+        }
+
+        $profiles = BillingProfile::with('user:id,name')
+            ->where(function (Builder $q) use ($userIds) {
+                if (!empty($userIds)) {
+                    $q->whereIn('user_id', $userIds)
+                      ->orWhereHas('sharedWithUsers', fn (Builder $sub) => $sub->whereIn('users.id', $userIds));
+                }
+            })
+            ->when($selectedIds, fn (Builder $q) => $q->orWhereIn('id', $selectedIds))
+            ->get();
+
+        return static::formatOptionsWithOwner($profiles);
+    }
+
+    private static function formatOptionsWithOwner($models): array
+    {
+        $options = [];
+        foreach ($models as $model) {
+            $label = $model instanceof BillingProfile
+                ? e($model->display_name)
+                : e($model->name);
+            $owner = e($model->user?->name ?? 'No owner');
+            $options[$model->id] = "<span class=\"font-semibold\">{$label}</span> <span class=\"text-gray-400\">— {$owner}</span>";
+        }
+        return $options;
     }
 }
