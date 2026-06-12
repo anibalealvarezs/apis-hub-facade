@@ -43,11 +43,17 @@ class RegisterProject extends RegisterTenant
         }
     }
 
+    public static function getLabel(): string
+    {
+        return __('Create or Join a Project');
+    }
+
     public function getTitle(): string
     {
-        return ($this->data['mode'] ?? 'create') === 'join'
-            ? __('Join an Existing Project')
-            : __('Setup Your New Project');
+        if (property_exists($this, 'data') && isset($this->data['mode']) && $this->data['mode'] === 'join') {
+            return __('Join an Existing Project');
+        }
+        return __('Setup Your New Project');
     }
 
     protected function getSubmitFormAction(): \Filament\Actions\Action
