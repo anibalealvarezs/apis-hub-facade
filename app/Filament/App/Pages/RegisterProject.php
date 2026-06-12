@@ -43,14 +43,11 @@ class RegisterProject extends RegisterTenant
         }
     }
 
-    public static function getLabel(): string
-    {
-        return __('Create Your APIs Hub Project');
-    }
-
     public function getTitle(): string
     {
-        return __('Setup Your New Project');
+        return ($this->data['mode'] ?? 'create') === 'join'
+            ? __('Join an Existing Project')
+            : __('Setup Your New Project');
     }
 
     protected function getSubmitFormAction(): \Filament\Actions\Action
@@ -78,6 +75,7 @@ class RegisterProject extends RegisterTenant
                     ])
                     ->default('create')
                     ->inline()
+                    ->color('gray')
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set) {
                         if ($state === 'join') {
