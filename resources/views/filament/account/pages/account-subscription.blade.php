@@ -67,14 +67,14 @@
 
         <!-- Monthly Plans Grid -->
         <div x-show="billingCycle === 'monthly'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @foreach ($plans as $plan)
+            @foreach ($monthlyPlans as $plan)
             @include('filament.account.pages.plan-card', ['plan' => $plan, 'cycle' => 'monthly'])
             @endforeach
         </div>
 
         <!-- Annual Plans Grid -->
         <div x-show="billingCycle === 'annual'" style="display: none;" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @foreach ($plans as $plan)
+            @foreach ($annualPlans as $plan)
             @include('filament.account.pages.plan-card', ['plan' => $plan, 'cycle' => 'annual'])
             @endforeach
         </div>

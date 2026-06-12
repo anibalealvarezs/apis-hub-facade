@@ -25,12 +25,21 @@ class AccountSubscription extends Page
         return __('Manage Subscriptions');
     }
 
-    public $plans;
+    public $monthlyPlans;
+    public $annualPlans;
     public $selectedProfileId;
 
     public function mount()
     {
-        $this->plans = SubscriptionPlan::where('is_active', true)->orderBy('price', 'asc')->get();
+        $this->monthlyPlans = SubscriptionPlan::where('is_active', true)
+            ->whereIn('billing_cycle', ['monthly', 'both'])
+            ->orderBy('price', 'asc')
+            ->get();
+
+        $this->annualPlans = SubscriptionPlan::where('is_active', true)
+            ->whereIn('billing_cycle', ['annual', 'both'])
+            ->orderBy('price', 'asc')
+            ->get();
         
         // Select the default billing profile or the first available one
         $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
