@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class BillingProfileResource extends Resource
@@ -24,7 +25,12 @@ class BillingProfileResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()->where('user_id', auth()->id());
+        $userId = auth()->id();
+        return parent::getEloquentQuery()
+            ->where(function (Builder $query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->orWhereHas('sharedWithUsers', fn ($q) => $q->where('user_id', $userId));
+            });
     }
 
     public static function canCreate(): bool
@@ -35,6 +41,16 @@ class BillingProfileResource extends Resource
             ->exists();
             
         return !$hasFreeProfile;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return $record->user_id === auth()->id();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return $record->user_id === auth()->id();
     }
 
     public static function form(Form $form): Form
@@ -82,6 +98,17 @@ class BillingProfileResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('owner')
+                    ->label('Owner')
+                    ->getStateUsing(function (BillingProfile $record) {
+                        return $record->user_id === auth()->id() ? 'You' : ($record->user?->name ?? 'Unknown');
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                    })
+                    ->extraAttributes(fn (BillingProfile $record) => [
+                        'class' => $record->user_id !== auth()->id() ? 'italic text-gray-500 dark:text-gray-400' : 'font-medium',
+                    ]),
                 Tables\Columns\TextColumn::make('reference_name')
                     ->label('Referential Name')
                     ->searchable()
@@ -121,16 +148,32 @@ class BillingProfileResource extends Resource
                     ->html()
                     ->state(function (BillingProfile $record): string {
                         $service = app(BillingLifecycleService::class);
+                        $userId = auth()->id();
+                        $isOwner = $record->user_id === $userId;
+
                         $maxProjects = $service->getMaxProjectsForTier($record->tier);
                         $maxAccounts = $service->getMaxAccountsForTier($record->tier);
-                        $projectCount = $record->projects()->count();
+
+                        if ($isOwner) {
+                            $projectCount = $record->projects()->count();
+                            $projectsToScan = $record->projects;
+                        } else {
+                            $userProjectIds = auth()->user()->projects()
+                                ->where('billing_profile_id', $record->id)
+                                ->pluck('id');
+                            $projectCount = $userProjectIds->count();
+                            $projectsToScan = $record->projects()->whereIn('id', $userProjectIds)->get();
+
+                            $totalProjectCount = $record->projects()->count();
+                            $maxProjects = $projectCount + max(0, $maxProjects - $totalProjectCount);
+                        }
 
                         $assetCount = 0;
-                        foreach ($record->projects as $project) {
+                        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+                        foreach ($projectsToScan as $project) {
                             $syncConfig = $project->sync_config ?? [];
                             if (!is_array($syncConfig)) continue;
 
-                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
                             foreach ($syncConfig as $channelKey => $channelConfig) {
                                 if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
 
@@ -145,6 +188,27 @@ class BillingProfileResource extends Resource
                                     }
                                 }
                             }
+                        }
+
+                        if (!$isOwner) {
+                            $totalAssetCount = 0;
+                            foreach ($record->projects as $project) {
+                                $syncConfig = $project->sync_config ?? [];
+                                if (!is_array($syncConfig)) continue;
+                                foreach ($syncConfig as $channelKey => $channelConfig) {
+                                    if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+                                    foreach ($assetKeys as $assetKey) {
+                                        $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
+                                        if (!is_array($assets)) continue;
+                                        foreach ($assets as $asset) {
+                                            if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                                $totalAssetCount++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            $maxAccounts = $assetCount + max(0, $maxAccounts - $totalAssetCount);
                         }
 
                         $pct = fn ($used, $max) => $max > 0 ? round(($used / $max) * 100) : 0;
@@ -180,8 +244,10 @@ class BillingProfileResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (BillingProfile $record) => $record->user_id === auth()->id()),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(fn (BillingProfile $record) => $record->user_id === auth()->id())
                     ->modalHeading('Delete Billing Profile')
                     ->modalDescription(function (BillingProfile $record) {
                         $count = $record->projects()->count();
@@ -194,6 +260,7 @@ class BillingProfileResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->billingProfiles()->exists())
                         ->modalHeading('Delete Selected Billing Profiles')
                         ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $totalProjects = 0;
