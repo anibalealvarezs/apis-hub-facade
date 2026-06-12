@@ -30,7 +30,7 @@ class PayPalCheckoutController extends Controller
             abort(403, 'Unauthorized access to this billing profile.');
         }
         
-        $paypalPlanId = $request->billing_cycle === 'annual' ? $plan->paypal_annual_plan_id : $plan->paypal_plan_id;
+        $paypalPlanId = $plan->paypal_plan_id;
 
         if (!$paypalPlanId) {
             return back()->with('error', "This plan is not configured for PayPal {$request->billing_cycle} billing yet.");
