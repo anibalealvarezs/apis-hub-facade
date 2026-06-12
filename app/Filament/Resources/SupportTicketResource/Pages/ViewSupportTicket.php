@@ -104,7 +104,7 @@ class ViewSupportTicket extends ViewRecord
         ];
     }
 
-    public function getMessages()
+    public function getTicketMessages()
     {
         return $this->record->messages()->with('user')->orderBy('created_at')->get();
     }

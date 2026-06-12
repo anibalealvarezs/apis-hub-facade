@@ -90,7 +90,7 @@
         {{-- Messages --}}
         <x-filament::section heading="Conversation">
             <div class="space-y-4">
-                @forelse ($this->getMessages() as $msg)
+                @forelse ($this->getTicketMessages() as $msg)
                     <div class="flex gap-3 {{ $msg->user_id === auth()->id() ? 'justify-end' : '' }}">
                         <div class="max-w-[80%] rounded-lg px-4 py-3 {{ $msg->user_id === auth()->id() ? 'bg-primary-100 dark:bg-primary-900' : 'bg-gray-100 dark:bg-gray-800' }}">
                             <div class="flex items-center gap-2 mb-1">
