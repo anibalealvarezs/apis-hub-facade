@@ -27,7 +27,12 @@
           data-gtm-id="{{ $gtmId }}">
         
         <!-- Navigation Placeholder / Global Theme UI -->
-        <div class="theme-toggle" x-cloak>
+        <div class="theme-toggle flex items-center gap-4" x-cloak>
+            <div class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+                <a href="{{ route('landing.index') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
+                <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></span>
+                <a href="{{ route('landing.index', ['locale' => 'es']) }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'es' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">ES</a>
+            </div>
             <button @click="darkMode = !darkMode" class="p-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md glow-hover">
                 <template x-if="darkMode">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,11 +151,6 @@
 
         <!-- Dynamic Footer / Micro Branding: Robust Spacing -->
         <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
-            <div class="flex items-center justify-center opacity-70">
-                <a href="{{ route('landing.index') }}" class="mx-4 pointer-events-auto hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : '' }}">EN</a>
-                <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
-                <a href="{{ route('landing.index', ['locale' => 'es']) }}" class="mx-4 pointer-events-auto hover:text-brand-blue transition-colors {{ app()->getLocale() === 'es' ? 'text-brand-blue' : '' }}">ES</a>
-            </div>
             <div class="flex items-center justify-center opacity-70">
                 <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
                 <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
