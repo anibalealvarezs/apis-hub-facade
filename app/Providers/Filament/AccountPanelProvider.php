@@ -44,6 +44,7 @@ class AccountPanelProvider extends PanelProvider
             )
             ->darkMode()
             ->databaseNotifications()
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->discoverResources(in: app_path('Filament/Account/Resources'), for: 'App\\Filament\\Account\\Resources')
             ->discoverPages(in: app_path('Filament/Account/Pages'), for: 'App\\Filament\\Account\\Pages')
             ->pages([
