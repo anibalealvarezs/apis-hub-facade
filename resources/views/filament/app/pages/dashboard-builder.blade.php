@@ -41,7 +41,7 @@
                             x-on:click="openAddWidgetModal()">
                             <x-filament::icon name="heroicon-o-plus-circle"
                                               class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500"/>
-                            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">Add Widget</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Add Widget') }}</span>
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
@@ -144,7 +144,7 @@
                         <div class="flex flex-col items-center justify-center py-24 text-center">
                             <x-filament::icon name="heroicon-o-squares-2x2"
                                               class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"/>
-                            <p class="text-gray-500 dark:text-gray-400 text-lg">No widgets yet</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('No widgets yet') }}</p>
                             <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Click "Add Widget" in the palette
                                 to get started.</p>
                         </div>
@@ -160,21 +160,21 @@
             <div class="absolute inset-0 bg-black/50" x-on:click="showDashboardControls = false"></div>
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Dashboard Controls</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">These defaults apply to all widgets. Widgets can
                     override individually.</p>
 
                 {{-- Date Range --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Date Range') }}</label>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Start</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                             <input type="date" x-model="dashboardControls.date_start"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
                         <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">End</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
                             <input type="date" x-model="dashboardControls.date_end" max="{{ date('Y-m-d') }}"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
@@ -187,9 +187,9 @@
                         Data</label>
                     <select x-model="dashboardControls.zero_handling"
                             class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                        <option value="remove">Remove zeros from results</option>
-                        <option value="keep">Keep zeros in results</option>
-                        <option value="trim">Trim leading/trailing zeros</option>
+                        <option value="remove">{{ __('Remove zeros from results') }}</option>
+                        <option value="keep">{{ __('Keep zeros in results') }}</option>
+                        <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
                     </select>
                 </div>
 
@@ -232,7 +232,7 @@
 
                 {{-- Data Source Info (Read Only) --}}
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
-                    <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">Data Source</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
                          x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : (widgetControlsTarget.source_type === 'metric' ? 'Metric (Raw Aggregation)' : 'Entity (Channel Table)')"></div>
                     <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
@@ -244,7 +244,7 @@
                 {{-- Date Range --}}
                 <div class="control-group" :class="widgetControlsForm.date_inherit ? 'is-inherited' : 'has-custom'">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Date Range</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Date Range') }}</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" x-model="widgetControlsForm.date_inherit"/>
                             <span class="slider"></span>
@@ -259,12 +259,12 @@
                     <template x-if="!widgetControlsForm.date_inherit">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Start</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                                 <input type="date" x-model="widgetControlsForm.date_start"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                             <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">End</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
                                 <input type="date" x-model="widgetControlsForm.date_end" max="{{ date('Y-m-d') }}"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
@@ -275,7 +275,7 @@
                 {{-- Zero Handling --}}
                 <div class="control-group" :class="widgetControlsForm.zero_inherit ? 'is-inherited' : 'has-custom'">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Zero / Missing Data</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Zero / Missing Data') }}</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" x-model="widgetControlsForm.zero_inherit"/>
                             <span class="slider"></span>
@@ -290,9 +290,9 @@
                     <template x-if="!widgetControlsForm.zero_inherit">
                         <select x-model="widgetControlsForm.zero_handling"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="remove">Remove zeros from results</option>
-                            <option value="keep">Keep zeros in results</option>
-                            <option value="trim">Trim leading/trailing zeros</option>
+                            <option value="remove">{{ __('Remove zeros from results') }}</option>
+                            <option value="keep">{{ __('Keep zeros in results') }}</option>
+                            <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
                         </select>
                     </template>
                 </div>
@@ -394,11 +394,11 @@
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showAddWidgetModal = false"></div>
             <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add Widget</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Add Widget') }}</h2>
 
                 {{-- Step 1: Source Type --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data Source</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Source') }}</label>
                     <div class="grid grid-cols-3 gap-3">
                         <template x-for="(label, type) in sourceTypes" :key="type">
                             <button class="p-3 rounded-lg border text-center text-sm transition-colors"
@@ -419,7 +419,7 @@
                             KPI</label>
                         <select x-model="addWidgetForm.custom_kpi_id"
                                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-                            <option value="">Choose a KPI...</option>
+                            <option value="">{{ __('Choose a KPI...') }}</option>
                             <template x-for="(name, id) in kpis" :key="id">
                                 <option :value="id" x-text="name"></option>
                             </template>
@@ -448,7 +448,7 @@
 
                 {{-- Step 4: Name --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Name</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
                     <input type="text" x-model="addWidgetForm.name"
                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                            placeholder="My Widget"/>
@@ -474,13 +474,13 @@
         <div x-show="showShareDialog" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showShareDialog = false"></div>
             <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Share Dashboard</h2>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Share Dashboard') }}</h2>
 
                 {{-- Public Toggle --}}
                 <div
                     class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">Public access</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ __('Public access') }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Anyone with the link can view this
                             dashboard</p>
                     </div>
@@ -494,7 +494,7 @@
 
                 {{-- Shared Users --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Shared with</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Shared with') }}</label>
                     <div class="space-y-2 max-h-48 overflow-y-auto">
                         <template x-for="user in sharedUsers" :key="user.id">
                             <div
@@ -509,7 +509,7 @@
                             </div>
                         </template>
                         <template x-if="!sharedUsers.length">
-                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No users shared yet</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">{{ __('No users shared yet') }}</p>
                         </template>
                     </div>
                 </div>
@@ -521,7 +521,7 @@
                     <div class="flex gap-2">
                         <select x-model="shareUserId"
                                 class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="">Select a user...</option>
+                            <option value="">{{ __('Select a user...') }}</option>
                             <template x-for="user in collaborators" :key="user.id">
                                 <template x-if="!isShared(user.id)">
                                     <option :value="user.id" x-text="user.name + ' (' + user.email + ')'"></option>

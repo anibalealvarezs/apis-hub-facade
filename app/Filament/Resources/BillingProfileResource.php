@@ -31,7 +31,7 @@ class BillingProfileResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->disabled(),
                         Forms\Components\TextInput::make('reference_name')
-                            ->label('Reference Name')
+                            ->label(__('Reference Name'))
                             ->disabled(),
                         Forms\Components\TextInput::make('tier')
                             ->disabled()
@@ -45,21 +45,21 @@ class BillingProfileResource extends Resource
                 Forms\Components\Section::make('Owner')
                     ->schema([
                         Forms\Components\Placeholder::make('owner_name')
-                            ->label('Name')
+                            ->label(__('Name'))
                             ->content(fn (BillingProfile $record): ?string => $record->user?->name),
                         Forms\Components\Placeholder::make('owner_email')
-                            ->label('Email')
+                            ->label(__('Email'))
                             ->content(fn (BillingProfile $record): ?string => $record->user?->email),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Billing Cycle')
                     ->schema([
                         Forms\Components\TextInput::make('current_cycle_starts_at')
-                            ->label('Cycle Start')
+                            ->label(__('Cycle Start'))
                             ->disabled()
                             ->formatStateUsing(fn ($state): ?string => $state ? \Illuminate\Support\Carbon::parse($state)->format('Y-m-d H:i:s') : null),
                         Forms\Components\TextInput::make('current_cycle_ends_at')
-                            ->label('Cycle End')
+                            ->label(__('Cycle End'))
                             ->disabled()
                             ->formatStateUsing(fn ($state): ?string => $state ? \Illuminate\Support\Carbon::parse($state)->format('Y-m-d H:i:s') : null),
                     ])->columns(2),
@@ -67,7 +67,7 @@ class BillingProfileResource extends Resource
                 Forms\Components\Section::make('Payment Method')
                     ->schema([
                         Forms\Components\TextInput::make('payment_method')
-                            ->label('Card')
+                            ->label(__('Card'))
                             ->disabled()
                             ->formatStateUsing(function ($state, BillingProfile $record): string {
                                 if ($record->pm_type) {
@@ -87,11 +87,11 @@ class BillingProfileResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Owner')
+                    ->label(__('Owner'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.email')
-                    ->label('Owner Email')
+                    ->label(__('Owner Email'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
@@ -116,11 +116,11 @@ class BillingProfileResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('projects_count')
-                    ->label('Projects')
+                    ->label(__('Projects'))
                     ->counts('projects')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quota')
-                    ->label('Usage')
+                    ->label(__('Usage'))
                     ->html()
                     ->state(function (BillingProfile $record): string {
                         $service = app(BillingLifecycleService::class);
@@ -175,17 +175,17 @@ class BillingProfileResource extends Resource
                             </div>';
                     }),
                 Tables\Columns\TextColumn::make('current_cycle_starts_at')
-                    ->label('Cycle Start')
+                    ->label(__('Cycle Start'))
                     ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('current_cycle_ends_at')
-                    ->label('Cycle End')
+                    ->label(__('Cycle End'))
                     ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('pm_type')
-                    ->label('Payment')
+                    ->label(__('Payment'))
                     ->formatStateUsing(fn (?string $state, BillingProfile $record): string => $record->pm_type
                         ? ucfirst($record->pm_type) . ' (****' . ($record->pm_last_four ?? '') . ')'
                         : ($record->paypal_email ? 'PayPal' : '—'))

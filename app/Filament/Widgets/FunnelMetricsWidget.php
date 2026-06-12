@@ -37,27 +37,27 @@
 
             return [
                 Stat::make('1. Total Accounts', $totalUsers)
-                    ->description('All registered users')
+                    ->description(__('All registered users'))
                     ->descriptionIcon('heroicon-m-users')
                     ->color('primary'),
 
                 Stat::make('2. Unverified Emails', $unverifiedEmails)
-                    ->description('Drop-off at signup')
+                    ->description(__('Drop-off at signup'))
                     ->descriptionIcon('heroicon-m-envelope-open')
                     ->color('warning'),
 
                 Stat::make('3. Verified, No Project', $verifiedNoProject)
-                    ->description('Drop-off at onboarding')
+                    ->description(__('Drop-off at onboarding'))
                     ->descriptionIcon('heroicon-m-rectangle-stack')
                     ->color('danger'),
 
                 Stat::make('4. No Access to Any Project', $noProjectAny)
-                    ->description('Total inactive accounts')
+                    ->description(__('Total inactive accounts'))
                     ->descriptionIcon('heroicon-m-eye-slash')
                     ->color('gray'),
 
                 Stat::make('5. Only Free Tier', $onlyFreeTier)
-                    ->description('Accounts that haven\'t upgraded')
+                    ->description(__('Accounts that haven\'t upgraded'))
                     ->descriptionIcon('heroicon-m-banknotes')
                     ->color('info'),
             ];

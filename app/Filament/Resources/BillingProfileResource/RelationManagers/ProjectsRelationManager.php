@@ -41,7 +41,7 @@ class ProjectsRelationManager extends RelationManager
                         default => 'warning',
                     }),
                 Tables\Columns\TextColumn::make('billing_status')
-                    ->label('Billing')
+                    ->label(__('Billing'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',

@@ -28,16 +28,16 @@ class UserBillingProfilesTable extends BaseWidget
                         $query->where('users.id', $this->record->id);
                     })
             )
-            ->heading('Accessed Billing Profiles')
-            ->description('Billing profiles this user owns or has been invited to collaborate on.')
+            ->heading(__('Accessed Billing Profiles'))
+            ->description(__('Billing profiles this user owns or has been invited to collaborate on.'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Profile Name')
+                    ->label(__('Profile Name'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Relationship')
+                    ->label(__('Relationship'))
                     ->getStateUsing(function (BillingProfile $record): string {
                         return $record->user_id === $this->record->id ? 'Owner' : 'Shared';
                     })
@@ -48,7 +48,7 @@ class UserBillingProfilesTable extends BaseWidget
                     }),
 
                 Tables\Columns\TextColumn::make('owner.name')
-                    ->label('Owner')
+                    ->label(__('Owner'))
                     ->url(fn (BillingProfile $record) => \App\Filament\Resources\UserResource::getUrl('edit', ['record' => $record->user_id]))
                     ->searchable(),
 
@@ -70,11 +70,11 @@ class UserBillingProfilesTable extends BaseWidget
             ])
             ->actions([
                 Tables\Actions\Action::make('edit_tier')
-                    ->label('Change Tier')
+                    ->label(__('Change Tier'))
                     ->icon('heroicon-o-pencil')
                     ->color('warning')
-                    ->modalHeading('Change Tier & Sync with Provider')
-                    ->modalDescription('Changing the tier here will attempt to automatically sync with Stripe/PayPal if an active subscription exists. If no subscription exists, it will only update the local database.')
+                    ->modalHeading(__('Change Tier & Sync with Provider'))
+                    ->modalDescription(__('Changing the tier here will attempt to automatically sync with Stripe/PayPal if an active subscription exists. If no subscription exists, it will only update the local database.'))
                     ->form([
                         Select::make('tier')
                             ->options(\App\Enums\UserTier::class)
@@ -82,7 +82,7 @@ class UserBillingProfilesTable extends BaseWidget
                             ->default(fn (BillingProfile $record) => $record->tier instanceof \App\Enums\UserTier ? $record->tier->value : $record->tier)
                             ->live(),
                         Select::make('billing_cycle')
-                            ->label('Billing Cycle (If Syncing)')
+                            ->label(__('Billing Cycle (If Syncing)'))
                             ->options(['monthly' => 'Monthly', 'annual' => 'Annual'])
                             ->default('monthly')
                             ->visible(function (\Filament\Forms\Get $get) {
@@ -91,19 +91,19 @@ class UserBillingProfilesTable extends BaseWidget
                                 return $val !== \App\Enums\UserTier::FREE->value && $val !== \App\Enums\UserTier::SUSPENDED->value;
                             }),
                         \Filament\Forms\Components\DatePicker::make('next_billing_date')
-                            ->label('Next Billing Date / Grace Period End')
-                            ->helperText('If set, will push the next Stripe invoice to this date. (PayPal date sync is limited and may require manual merchant dashboard adjustment).')
+                            ->label(__('Next Billing Date / Grace Period End'))
+                            ->helperText(__('If set, will push the next Stripe invoice to this date. (PayPal date sync is limited and may require manual merchant dashboard adjustment).'))
                             ->minDate(now()->addDay())
                             ->nullable(),
                         \Filament\Forms\Components\Checkbox::make('cancel_subscription')
-                            ->label('Cancel Active Provider Subscription')
+                            ->label(__('Cancel Active Provider Subscription'))
                             ->default(true)
-                            ->helperText('If checked, the current Stripe/PayPal subscription will be permanently canceled (user loses auto-renew).'),
+                            ->helperText(__('If checked, the current Stripe/PayPal subscription will be permanently canceled (user loses auto-renew).')),
                         TextInput::make('confirmation')
-                            ->label('Type "CONFIRM" to proceed')
+                            ->label(__('Type "CONFIRM" to proceed'))
                             ->required()
                             ->rule('in:CONFIRM,confirm,Confirm')
-                            ->helperText('You must explicitly type confirm to apply this change.'),
+                            ->helperText(__('You must explicitly type confirm to apply this change.')),
                     ])
                     ->action(function (BillingProfile $record, array $data) {
                         $newTier = \App\Enums\UserTier::tryFrom($data['tier']);

@@ -36,7 +36,7 @@ class SupportTicketResource extends Resource
                 Forms\Components\Section::make('Ticket Details')
                     ->schema([
                         Forms\Components\Select::make('user_id')
-                            ->label('User')
+                            ->label(__('User'))
                             ->searchable()
                             ->allowHtml()
                             ->required()
@@ -61,7 +61,7 @@ class SupportTicketResource extends Resource
                             ])
                             ->required(),
                         Forms\Components\Select::make('project_id')
-                            ->label('Associated Project')
+                            ->label(__('Associated Project'))
                             ->searchable()
                             ->allowHtml()
                             ->options(fn (Get $get) => static::getProjectOptionsForUser($get('user_id')))
@@ -70,7 +70,7 @@ class SupportTicketResource extends Resource
                             ->live()
                             ->nullable(),
                         Forms\Components\Select::make('billing_profile_id')
-                            ->label('Associated Billing Profile')
+                            ->label(__('Associated Billing Profile'))
                             ->searchable()
                             ->allowHtml()
                             ->options(fn (Get $get) => static::getBillingProfileOptionsForUser($get('user_id')))
@@ -83,17 +83,17 @@ class SupportTicketResource extends Resource
                             ->maxLength(5000)
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('external_ref')
-                            ->label('External Reference')
+                            ->label(__('External Reference'))
                             ->nullable()
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
 
                 Forms\Components\Section::make('Internal Associations')
-                    ->description('These are visible only to admins. Use to tag related records for filtering and context.')
+                    ->description(__('These are visible only to admins. Use to tag related records for filtering and context.'))
                     ->schema([
                         Forms\Components\Select::make('internalUsers')
-                            ->label('Related Users')
+                            ->label(__('Related Users'))
                             ->multiple()
                             ->searchable()
                             ->allowHtml()
@@ -102,7 +102,7 @@ class SupportTicketResource extends Resource
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live(),
                         Forms\Components\Select::make('internalProjects')
-                            ->label('Related Projects')
+                            ->label(__('Related Projects'))
                             ->multiple()
                             ->searchable()
                             ->allowHtml()
@@ -112,7 +112,7 @@ class SupportTicketResource extends Resource
                             ))
                             ->disabled(fn (Get $get) => blank($get('internalUsers'))),
                         Forms\Components\Select::make('internalBillingProfiles')
-                            ->label('Related Billing Profiles')
+                            ->label(__('Related Billing Profiles'))
                             ->multiple()
                             ->searchable()
                             ->allowHtml()
@@ -131,18 +131,18 @@ class SupportTicketResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->label('#')
+                    ->label(__('#'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label(__('User'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('project.name')
-                    ->label('Project')
+                    ->label(__('Project'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('billingProfile.name')
-                    ->label('Billing Profile')
+                    ->label(__('Billing Profile'))
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('type')
@@ -169,11 +169,11 @@ class SupportTicketResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('internalUsers.name')
-                    ->label('Internal Users')
+                    ->label(__('Internal Users'))
                     ->badge()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('internalProjects.name')
-                    ->label('Internal Projects')
+                    ->label(__('Internal Projects'))
                     ->badge()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -181,7 +181,7 @@ class SupportTicketResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('closed_at')
                     ->dateTime()
-                    ->placeholder('—')
+                    ->placeholder(__('—'))
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
@@ -200,7 +200,7 @@ class SupportTicketResource extends Resource
                         'general' => 'General',
                     ]),
                 Tables\Filters\SelectFilter::make('internalUsers')
-                    ->label('Internal User')
+                    ->label(__('Internal User'))
                     ->options(fn () => User::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_users.user_id'))
                         ->pluck('name', 'id'))
@@ -208,7 +208,7 @@ class SupportTicketResource extends Resource
                     ->query(fn (Builder $query, array $data) =>
                         $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalUsers', fn (Builder $sub) => $sub->where('users.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalProjects')
-                    ->label('Internal Project')
+                    ->label(__('Internal Project'))
                     ->options(fn () => Project::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_projects.project_id'))
                         ->withTrashed()
@@ -217,7 +217,7 @@ class SupportTicketResource extends Resource
                     ->query(fn (Builder $query, array $data) =>
                         $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalProjects', fn (Builder $sub) => $sub->where('projects.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalBillingProfiles')
-                    ->label('Internal Billing Profile')
+                    ->label(__('Internal Billing Profile'))
                     ->options(fn () => BillingProfile::select('id', 'name')
                         ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_billing_profiles.billing_profile_id'))
                         ->pluck('name', 'id'))

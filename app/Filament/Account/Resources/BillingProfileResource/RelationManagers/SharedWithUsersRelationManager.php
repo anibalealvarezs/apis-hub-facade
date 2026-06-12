@@ -47,11 +47,11 @@ class SharedWithUsersRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name'),
+                    ->label(__('Name')),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email'),
+                    ->label(__('Email')),
                 Tables\Columns\TextColumn::make('role')
-                    ->label('Role')
+                    ->label(__('Role'))
                     ->badge(),
             ])
             ->filters([
@@ -59,13 +59,13 @@ class SharedWithUsersRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\Action::make('invite')
-                    ->label('Invite User')
+                    ->label(__('Invite User'))
                     ->icon('heroicon-o-envelope')
                     ->form([
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
-                            ->label('User Email'),
+                            ->label(__('User Email')),
                         Forms\Components\Select::make('role')
                             ->options([
                                 'member' => 'Member (Can use to pay)',
@@ -80,7 +80,7 @@ class SharedWithUsersRelationManager extends RelationManager
                         $alreadyShared = $profile->sharedWithUsers()->where('users.email', $data['email'])->exists();
                         if ($alreadyShared) {
                             Notification::make()
-                                ->title('User is already sharing this profile.')
+                                ->title(__('User is already sharing this profile.'))
                                 ->warning()
                                 ->send();
                             return;
@@ -94,7 +94,7 @@ class SharedWithUsersRelationManager extends RelationManager
                             
                         if ($alreadyInvited) {
                             Notification::make()
-                                ->title('User already has a pending invitation.')
+                                ->title(__('User already has a pending invitation.'))
                                 ->warning()
                                 ->send();
                             return;
@@ -111,18 +111,18 @@ class SharedWithUsersRelationManager extends RelationManager
                         Mail::to($data['email'])->send(new BillingInvitationMail($invitation));
 
                         Notification::make()
-                            ->title('Invitation Sent')
+                            ->title(__('Invitation Sent'))
                             ->success()
                             ->send();
                     }),
             ])
             ->actions([
                 Tables\Actions\Action::make('revokeAccess')
-                    ->label('Revoke Access')
+                    ->label(__('Revoke Access'))
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Revoke Billing Profile Access')
+                    ->modalHeading(__('Revoke Billing Profile Access'))
                     ->modalDescription(function (User $record): string {
                         $count = Project::where('user_id', $record->id)
                             ->where('billing_profile_id', $this->ownerRecord->id)
@@ -192,7 +192,7 @@ class SharedWithUsersRelationManager extends RelationManager
                         }
 
                         Notification::make()
-                            ->title('Access Revoked')
+                            ->title(__('Access Revoked'))
                             ->body("Access revoked for {$record->name}. " . count($reassigned) . ' project(s) reassigned, ' . count($suspended) . ' project(s) suspended.')
                             ->success()
                             ->send();
@@ -201,12 +201,12 @@ class SharedWithUsersRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('revokeAccessBulk')
-                        ->label('Revoke Access')
+                        ->label(__('Revoke Access'))
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Revoke Billing Profile Access')
-                        ->modalDescription('Are you sure you want to revoke access for the selected users? Their projects using this billing profile will be reassigned to their default profile, or suspended if quota is insufficient.')
+                        ->modalHeading(__('Revoke Billing Profile Access'))
+                        ->modalDescription(__('Are you sure you want to revoke access for the selected users? Their projects using this billing profile will be reassigned to their default profile, or suspended if quota is insufficient.'))
                         ->action(function (\Illuminate\Support\Collection $records) {
                             $profile = $this->ownerRecord;
 
@@ -268,7 +268,7 @@ class SharedWithUsersRelationManager extends RelationManager
                             }
 
                             Notification::make()
-                                ->title('Access Revoked')
+                                ->title(__('Access Revoked'))
                                 ->body('Access revoked for ' . $records->count() . ' user(s).')
                                 ->success()
                                 ->send();

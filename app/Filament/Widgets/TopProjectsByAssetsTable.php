@@ -46,18 +46,18 @@
 
             return $table
                 ->query($query)
-                ->heading('Projects with the Most Assets')
-                ->description('Top 10 active projects ranked by the number of enabled integration assets.')
+                ->heading(__('Projects with the Most Assets'))
+                ->description(__('Top 10 active projects ranked by the number of enabled integration assets.'))
                 ->columns([
                     Tables\Columns\TextColumn::make('name')
-                        ->label('Project')
+                        ->label(__('Project'))
                         ->searchable(),
 
                     Tables\Columns\TextColumn::make('owner.email')
-                        ->label('Owner'),
+                        ->label(__('Owner')),
 
                     Tables\Columns\TextColumn::make('billingProfile.tier')
-                        ->label('Tier')
+                        ->label(__('Tier'))
                         ->badge()
                         ->color(fn($state) => match ($state?->value ?? $state) {
                             'free' => 'gray',
@@ -70,14 +70,14 @@
                         ->formatStateUsing(fn($state) => ucfirst($state?->value ?? $state ?? 'None')),
 
                     Tables\Columns\TextColumn::make('asset_count')
-                        ->label('Total Assets')
+                        ->label(__('Total Assets'))
                         ->getStateUsing(fn(Project $record) => $projectAssetCounts[$record->id] ?? 0)
                         ->badge()
                         ->color('primary'),
                 ])
                 ->actions([
                     Tables\Actions\Action::make('view')
-                        ->label('View')
+                        ->label(__('View'))
                         ->url(fn(Project $record): string => \App\Filament\Resources\ProjectResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-m-eye'),
                 ])

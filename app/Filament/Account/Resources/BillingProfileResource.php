@@ -61,7 +61,7 @@ class BillingProfileResource extends Resource
                     Forms\Components\Hidden::make('user_id')
                         ->default(auth()->id()),
                     Forms\Components\Toggle::make('is_default')
-                        ->label('Make this my default billing profile')
+                        ->label(__('Make this my default billing profile'))
                         ->default(false),
                     Forms\Components\Select::make('type')
                         ->options([
@@ -76,9 +76,9 @@ class BillingProfileResource extends Resource
                         ->required()
                         ->maxLength(255),
                     Forms\Components\TextInput::make('reference_name')
-                        ->label('Referential Name (e.g. Personal Profile, Marketing Team Billing)')
+                        ->label(__('Referential Name (e.g. Personal Profile, Marketing Team Billing)'))
                         ->maxLength(255)
-                        ->helperText('A descriptive label to identify this profile in lists and selectors across the application.'),
+                        ->helperText(__('A descriptive label to identify this profile in lists and selectors across the application.')),
                     Forms\Components\TextInput::make('tax_id')
                         ->label(fn (Forms\Get $get) => $get('type') === 'company' ? 'Tax ID / VAT / EIN' : 'Personal ID / RUT')
                         ->maxLength(255),
@@ -89,7 +89,7 @@ class BillingProfileResource extends Resource
                     Forms\Components\TextInput::make('city')->maxLength(255),
                     Forms\Components\TextInput::make('state')->maxLength(255),
                     Forms\Components\TextInput::make('postal_code')->maxLength(255),
-                    Forms\Components\TextInput::make('country_code')->maxLength(2)->label('Country Code (ISO 2)'),
+                    Forms\Components\TextInput::make('country_code')->maxLength(2)->label(__('Country Code (ISO 2)')),
                 ])->columns(2),
             ]);
     }
@@ -99,7 +99,7 @@ class BillingProfileResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('owner')
-                    ->label('Owner')
+                    ->label(__('Owner'))
                     ->getStateUsing(function (BillingProfile $record) {
                         return $record->user_id === auth()->id() ? 'You' : ($record->user?->name ?? 'Unknown');
                     })
@@ -110,11 +110,11 @@ class BillingProfileResource extends Resource
                         'class' => $record->user_id !== auth()->id() ? 'italic text-gray-500 dark:text-gray-400' : 'font-medium',
                     ]),
                 Tables\Columns\TextColumn::make('reference_name')
-                    ->label('Referential Name')
+                    ->label(__('Referential Name'))
                     ->searchable()
-                    ->placeholder('N/A (Uses Legal Name)'),
+                    ->placeholder(__('N/A (Uses Legal Name)')),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Legal Name/Company')
+                    ->label(__('Legal Name/Company'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
@@ -137,14 +137,14 @@ class BillingProfileResource extends Resource
                     })
                     ->formatStateUsing(fn (\App\Enums\UserTier $state): string => ucfirst($state->value)),
                 Tables\Columns\TextColumn::make('projects_count')
-                    ->label('Projects')
+                    ->label(__('Projects'))
                     ->counts('projects')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('shared_users_count')
-                    ->label('Shared with')
+                    ->label(__('Shared with'))
                     ->counts('sharedWithUsers'),
                 Tables\Columns\TextColumn::make('quota')
-                    ->label('Usage')
+                    ->label(__('Usage'))
                     ->html()
                     ->state(function (BillingProfile $record): string {
                         $service = app(BillingLifecycleService::class);
@@ -248,7 +248,7 @@ class BillingProfileResource extends Resource
                     ->visible(fn (BillingProfile $record) => $record->user_id === auth()->id()),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn (BillingProfile $record) => $record->user_id === auth()->id())
-                    ->modalHeading('Delete Billing Profile')
+                    ->modalHeading(__('Delete Billing Profile'))
                     ->modalDescription(function (BillingProfile $record) {
                         $count = $record->projects()->count();
                         if ($count > 0) {
@@ -261,7 +261,7 @@ class BillingProfileResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => auth()->user()?->billingProfiles()->exists())
-                        ->modalHeading('Delete Selected Billing Profiles')
+                        ->modalHeading(__('Delete Selected Billing Profiles'))
                         ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $totalProjects = 0;
                             foreach ($records as $record) {

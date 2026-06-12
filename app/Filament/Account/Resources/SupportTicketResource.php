@@ -40,7 +40,7 @@ class SupportTicketResource extends Resource
                     ])
                     ->required(),
                 Forms\Components\Select::make('association_type')
-                    ->label('Associate with')
+                    ->label(__('Associate with'))
                     ->options([
                         'none' => 'Nothing (Account-level request)',
                         'project' => 'Project',
@@ -52,7 +52,7 @@ class SupportTicketResource extends Resource
                         $set('billing_profile_id', null);
                     }),
                 Forms\Components\Select::make('project_id')
-                    ->label('Project')
+                    ->label(__('Project'))
                     ->relationship('project', 'name', function (Builder $query) {
                         $user = auth()->user();
                         $query->where('user_id', $user->id)
@@ -62,7 +62,7 @@ class SupportTicketResource extends Resource
                     ->preload()
                     ->visible(fn (callable $get) => $get('association_type') === 'project'),
                 Forms\Components\Select::make('billing_profile_id')
-                    ->label('Billing Profile')
+                    ->label(__('Billing Profile'))
                     ->relationship('billingProfile', 'name', function (Builder $query) {
                         $query->where('user_id', auth()->id());
                     })
@@ -70,7 +70,7 @@ class SupportTicketResource extends Resource
                     ->preload()
                     ->visible(fn (callable $get) => $get('association_type') === 'billing_profile'),
                 Forms\Components\Textarea::make('description')
-                    ->label('Describe your request')
+                    ->label(__('Describe your request'))
                     ->required()
                     ->maxLength(5000)
                     ->columnSpanFull(),
@@ -82,13 +82,13 @@ class SupportTicketResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->label('#'),
+                    ->label(__('#')),
                 Tables\Columns\TextColumn::make('project.name')
-                    ->label('Project')
-                    ->placeholder('—'),
+                    ->label(__('Project'))
+                    ->placeholder(__('—')),
                 Tables\Columns\TextColumn::make('billingProfile.name')
-                    ->label('Billing Profile')
-                    ->placeholder('—'),
+                    ->label(__('Billing Profile'))
+                    ->placeholder(__('—')),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -117,7 +117,7 @@ class SupportTicketResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('closed_at')
                     ->dateTime()
-                    ->placeholder('Open')
+                    ->placeholder(__('Open'))
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')

@@ -30,12 +30,12 @@ class StatusLogsRelationManager extends RelationManager
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Log Date')
+                    ->label(__('Log Date'))
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->label('Active'),
+                    ->label(__('Active')),
                 Tables\Columns\TextColumn::make('event_type')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
@@ -45,8 +45,8 @@ class StatusLogsRelationManager extends RelationManager
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('creator.name')
-                    ->label('Admin')
-                    ->placeholder('System'),
+                    ->label(__('Admin'))
+                    ->placeholder(__('System')),
                 Tables\Columns\TextColumn::make('notes')
                     ->limit(50),
             ])

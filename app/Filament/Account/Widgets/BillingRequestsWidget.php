@@ -29,15 +29,15 @@ class BillingRequestsWidget extends BaseWidget
             ->query($query)
             ->columns([
                 Tables\Columns\TextColumn::make('billingProfile.name')
-                    ->label('Billing Profile'),
+                    ->label(__('Billing Profile')),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Project'),
+                    ->label(__('Project')),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Requested By')
+                    ->label(__('Requested By'))
                     ->description(fn (Project $record) => $record->user?->email),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
-                    ->label('Requested At'),
+                    ->label(__('Requested At')),
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
@@ -54,7 +54,7 @@ class BillingRequestsWidget extends BaseWidget
 
                             if ($currentProjectsCount >= $maxProjects) {
                                 \Filament\Notifications\Notification::make()
-                                    ->title('Capacity Limit Reached')
+                                    ->title(__('Capacity Limit Reached'))
                                     ->body("This billing profile ({$profile->name}) has reached its limit of {$maxProjects} projects. You cannot approve this request until you upgrade your plan or remove other projects.")
                                     ->danger()
                                     ->persistent()

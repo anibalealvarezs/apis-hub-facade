@@ -21,15 +21,15 @@ class ManagePaymentSettings extends SettingsPage
         return $form
             ->schema([
                 Forms\Components\Section::make('Pasarelas Habilitadas en Checkout')
-                    ->description('Activa o desactiva las opciones de pago que verán los usuarios al momento de suscribirse.')
+                    ->description(__('Activa o desactiva las opciones de pago que verán los usuarios al momento de suscribirse.'))
                     ->schema([
                         Forms\Components\Toggle::make('enable_stripe')
-                            ->label('Habilitar Stripe (Tarjetas de Crédito)')
-                            ->helperText('Permitir pagos con tarjeta de crédito/débito a través de Stripe.'),
+                            ->label(__('Habilitar Stripe (Tarjetas de Crédito)'))
+                            ->helperText(__('Permitir pagos con tarjeta de crédito/débito a través de Stripe.')),
                         
                         Forms\Components\Toggle::make('enable_paypal')
-                            ->label('Habilitar PayPal')
-                            ->helperText('Permitir pagos utilizando el balance de PayPal o cuentas asociadas.'),
+                            ->label(__('Habilitar PayPal'))
+                            ->helperText(__('Permitir pagos utilizando el balance de PayPal o cuentas asociadas.')),
                     ]),
             ]);
     }

@@ -38,7 +38,7 @@ class ViewSupportTicket extends ViewRecord
     {
         return [
             Actions\Action::make('changeStatus')
-                ->label('Change Status')
+                ->label(__('Change Status'))
                 ->icon('heroicon-o-arrow-path')
                 ->form([
                     Forms\Components\Select::make('status')
@@ -71,7 +71,7 @@ class ViewSupportTicket extends ViewRecord
                         }
 
                         Notification::make()
-                            ->title('Status Updated')
+                            ->title(__('Status Updated'))
                             ->success()
                             ->send();
                     } catch (\Throwable $e) {
@@ -86,7 +86,7 @@ class ViewSupportTicket extends ViewRecord
                         ]);
 
                         Notification::make()
-                            ->title('Status update failed, but changes may have been saved')
+                            ->title(__('Status update failed, but changes may have been saved'))
                             ->warning()
                             ->send();
                     }

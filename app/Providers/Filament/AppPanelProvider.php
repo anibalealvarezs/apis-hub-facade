@@ -156,17 +156,17 @@ class AppPanelProvider extends PanelProvider
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Exploration & Telemetry'),
+                    ->label(__('Exploration & Telemetry')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Data & Integrations'),
+                    ->label(__('Data & Integrations')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Google'),
+                    ->label(__('Google')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Meta'),
+                    ->label(__('Meta')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Administration'),
+                    ->label(__('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Knowledge Base'),
+                    ->label(__('Knowledge Base')),
             ])
             ->pages([
                 Pages\Dashboard::class,
@@ -195,11 +195,11 @@ class AppPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 'profile' => \Filament\Navigation\MenuItem::make()
-                    ->label('Profile')
+                    ->label(__('Profile'))
                     ->url('/app/my-profile')
                     ->icon('heroicon-o-user-circle'),
                 'my_account' => \Filament\Navigation\MenuItem::make()
-                    ->label('My Account')
+                    ->label(__('My Account'))
                     ->url('/account')
                     ->icon('heroicon-o-user'),
             ])

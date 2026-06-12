@@ -1324,7 +1324,7 @@
                     ->label(Str::headline($label))
                     ->hintActions([
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
-                            ->label('Select All')
+                            ->label(__('Select All'))
                             ->button()
                             ->color('success')
                             ->icon('heroicon-m-check')
@@ -1377,7 +1377,7 @@
                                 $component->state($newState);
                             }),
                         \Filament\Forms\Components\Actions\Action::make('deselectAll')
-                            ->label('Deselect All')
+                            ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
                             ->visible(fn() => auth()->user()->can('manage_channels'))

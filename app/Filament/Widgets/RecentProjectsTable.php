@@ -19,11 +19,11 @@
                 ->query(
                     Project::query()->with('owner')->latest('created_at')->limit(10)
                 )
-                ->heading('Recent Projects')
-                ->description('The 10 most recently created or deployed projects.')
+                ->heading(__('Recent Projects'))
+                ->description(__('The 10 most recently created or deployed projects.'))
                 ->columns([
                     Tables\Columns\TextColumn::make('name')
-                        ->label('Project')
+                        ->label(__('Project'))
                         ->searchable()
                         ->sortable(),
 
@@ -32,11 +32,11 @@
                         ->color('gray'),
 
                     Tables\Columns\TextColumn::make('owner.email')
-                        ->label('Owner')
+                        ->label(__('Owner'))
                         ->searchable(),
 
                     Tables\Columns\TextColumn::make('health_status')
-                        ->label('Health')
+                        ->label(__('Health'))
                         ->badge()
                         ->color(fn(string $state): string => match ($state) {
                             'healthy' => 'success',
@@ -47,17 +47,17 @@
                         }),
 
                     Tables\Columns\IconColumn::make('is_active')
-                        ->label('Active')
+                        ->label(__('Active'))
                         ->boolean(),
 
                     Tables\Columns\TextColumn::make('created_at')
-                        ->label('Created')
+                        ->label(__('Created'))
                         ->dateTime()
                         ->sortable(),
                 ])
                 ->actions([
                     Tables\Actions\Action::make('view')
-                        ->label('View')
+                        ->label(__('View'))
                         ->url(fn(Project $record): string => \App\Filament\Resources\ProjectResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-m-eye'),
                 ])

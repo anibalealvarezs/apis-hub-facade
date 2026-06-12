@@ -47,10 +47,10 @@ class DashboardResource extends Resource
                             ->maxLength(65535)
                             ->columnSpanFull(),
                         Forms\Components\Toggle::make('is_public')
-                            ->label('Public (accessible by any project collaborator and via shared link)')
+                            ->label(__('Public (accessible by any project collaborator and via shared link)'))
                             ->default(false),
                         Forms\Components\Toggle::make('is_default')
-                            ->label('Set as default dashboard')
+                            ->label(__('Set as default dashboard'))
                             ->default(false),
                     ])->columns(2),
             ]);
@@ -73,11 +73,11 @@ class DashboardResource extends Resource
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('widgets_count')
-                    ->label('Widgets')
+                    ->label(__('Widgets'))
                     ->counts('widgets')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Created by')
+                    ->label(__('Created by'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -94,21 +94,21 @@ class DashboardResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('open_builder')
-                    ->label('Open Builder')
+                    ->label(__('Open Builder'))
                     ->icon('heroicon-o-pencil-square')
                     ->url(fn (Dashboard $record): string => DashboardResource::getUrl('builder', ['record' => $record]))
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('open_view')
-                    ->label('View')
+                    ->label(__('View'))
                     ->icon('heroicon-o-eye')
                     ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record])),
                 Tables\Actions\Action::make('set_default')
-                    ->label('Set as default')
+                    ->label(__('Set as default'))
                     ->icon('heroicon-o-star')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->setDefaultDashboard($record))
                     ->visible(fn (Dashboard $record) => !$record->is_default && auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('duplicate')
-                    ->label('Duplicate')
+                    ->label(__('Duplicate'))
                     ->icon('heroicon-o-document-duplicate')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
                     ->visible(fn () => auth()->user()->can('edit_preferences')),

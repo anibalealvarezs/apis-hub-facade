@@ -89,7 +89,7 @@ class AccountPanelProvider extends PanelProvider
             )
             ->userMenuItems([
                 'app_dashboard' => MenuItem::make()
-                    ->label('App Dashboard')
+                    ->label(__('App Dashboard'))
                     ->url(fn (): string => '/app')
                     ->icon('heroicon-o-computer-desktop'),
             ]);

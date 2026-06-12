@@ -141,8 +141,8 @@ class ProjectBillingSettings extends Page
                 return $project?->billing_status === 'pending_approval';
             })
             ->requiresConfirmation()
-            ->modalHeading('Cancel Billing Profile Request')
-            ->modalDescription('Are you sure you want to cancel your request to use the shared billing profile? Your project will be reassigned to your default billing profile and reactivated.')
+            ->modalHeading(__('Cancel Billing Profile Request'))
+            ->modalDescription(__('Are you sure you want to cancel your request to use the shared billing profile? Your project will be reassigned to your default billing profile and reactivated.'))
             ->action(function () {
                 $project = filament()->getTenant();
                 $user = auth()->user();
@@ -180,7 +180,7 @@ class ProjectBillingSettings extends Page
                 }
 
                 \Filament\Notifications\Notification::make()
-                    ->title('Request Cancelled')
+                    ->title(__('Request Cancelled'))
                     ->body('Your request to use the shared billing profile has been cancelled. Your project has been reassigned.')
                     ->success()
                     ->send();

@@ -106,7 +106,7 @@ class RegisterProject extends RegisterTenant
                                 $domain = config('app.network_domain') ?: 'apis-hub.cloud';
                                 return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
                             })
-                            ->placeholder('acme')
+                            ->placeholder(__('acme'))
                             ->required()
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
@@ -139,7 +139,7 @@ class RegisterProject extends RegisterTenant
                     ->schema([
                         TextInput::make('share_code')
                             ->label(__('Share Code'))
-                            ->placeholder('APISHUB-XXXX-XXXX')
+                            ->placeholder(__('APISHUB-XXXX-XXXX'))
                             ->required()
                             ->helperText(__('Paste the code shared by the project owner. Your request will be sent for approval.')),
                     ]),

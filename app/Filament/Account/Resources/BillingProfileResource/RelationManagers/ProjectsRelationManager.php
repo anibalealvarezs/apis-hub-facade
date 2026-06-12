@@ -44,7 +44,7 @@ class ProjectsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Project')
+                    ->label(__('Project'))
                     ->searchable()
                     ->sortable()
                     ->html()
@@ -61,15 +61,15 @@ class ProjectsRelationManager extends RelationManager
                         return e($record->name);
                     }),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Owner')
+                    ->label(__('Owner'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('assets')
-                    ->label('Assets')
+                    ->label(__('Assets'))
                     ->state(fn (Project $record) => $countAssets($record))
                     ->sortable()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('share')
-                    ->label('Share')
+                    ->label(__('Share'))
                     ->html()
                     ->state(function (Project $record) use ($assetKeys, $countAssets): string {
                         $projectAssets = $countAssets($record);
@@ -95,7 +95,7 @@ class ProjectsRelationManager extends RelationManager
                     })
                     ->alignCenter(),
                 Tables\Columns\IconColumn::make('access')
-                    ->label('Access')
+                    ->label(__('Access'))
                     ->boolean()
                     ->state(function (Project $record): bool {
                         $userId = auth()->id();

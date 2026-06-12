@@ -64,7 +64,7 @@ class InvoiceResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('invoice_pdf_url')
-                    ->label('PDF')
+                    ->label(__('PDF'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->formatStateUsing(fn ($state) => $state ? 'Download' : '—')
                     ->url(fn ($state) => $state, true)

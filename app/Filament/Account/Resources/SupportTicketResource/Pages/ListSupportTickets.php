@@ -14,7 +14,7 @@ class ListSupportTickets extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('New Ticket'),
+                ->label(__('New Ticket')),
         ];
     }
 }

@@ -60,7 +60,7 @@ class EditCustomKpi extends EditRecord
     {
         return [
             Actions\Action::make('execute')
-                ->label('Execute KPI')
+                ->label(__('Execute KPI'))
                 ->icon('heroicon-o-play')
                 ->color('success')
                 ->action(function () {
@@ -76,14 +76,14 @@ class EditCustomKpi extends EditRecord
 
                     if (isset($result['success']) && $result['success']) {
                         Notification::make()
-                            ->title('Execution Successful')
+                            ->title(__('Execution Successful'))
                             ->success()
                             ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">' . json_encode($result['data'] ?? [], JSON_PRETTY_PRINT) . '</pre>')
                             ->persistent()
                             ->send();
                     } else {
                         Notification::make()
-                            ->title('Execution Failed')
+                            ->title(__('Execution Failed'))
                             ->danger()
                             ->body($result['message'] ?? 'An unknown error occurred.')
                             ->persistent()
@@ -91,11 +91,11 @@ class EditCustomKpi extends EditRecord
                     }
                 }),
             Actions\Action::make('debug')
-                ->label('Debug Payload')
+                ->label(__('Debug Payload'))
                 ->icon('heroicon-o-code-bracket')
                 ->color('gray')
                 ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
-                ->modalHeading('Payload Debugger')
+                ->modalHeading(__('Payload Debugger'))
                 ->modalContent(function () {
                     $state = $this->form->getState();
                     if (empty($state['calculation_type'])) {

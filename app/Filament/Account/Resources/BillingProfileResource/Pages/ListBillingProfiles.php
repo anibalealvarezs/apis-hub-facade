@@ -20,11 +20,11 @@ class ListBillingProfiles extends ListRecords
 
         if ($hasFreeProfile) {
             $actions[] = Actions\Action::make('free_tier_notice')
-                ->label('Limit: 1 Free Profile')
+                ->label(__('Limit: 1 Free Profile'))
                 ->icon('heroicon-o-information-circle')
                 ->color('warning')
-                ->modalHeading('Free Tier Limitation')
-                ->modalDescription('To prevent platform abuse, accounts are limited to a single Free Tier billing profile. You must either delete your existing free profile or upgrade it to a paid tier before you can create a new one.')
+                ->modalHeading(__('Free Tier Limitation'))
+                ->modalDescription(__('To prevent platform abuse, accounts are limited to a single Free Tier billing profile. You must either delete your existing free profile or upgrade it to a paid tier before you can create a new one.'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Understood');
         }

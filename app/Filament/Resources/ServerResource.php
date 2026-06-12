@@ -25,7 +25,7 @@ class ServerResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('General Information')
-                    ->description('Identify the server and its readiness status.')
+                    ->description(__('Identify the server and its readiness status.'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -36,12 +36,12 @@ class ServerResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\Section::make('SSH Configuration')
-                    ->description('These credentials are used by the orchestrator (DeployerService) to connect.')
+                    ->description(__('These credentials are used by the orchestrator (DeployerService) to connect.'))
                     ->schema([
                         Forms\Components\TextInput::make('ip_address')
                             ->required()
                             ->maxLength(255)
-                            ->label('IP Address / Hostname'),
+                            ->label(__('IP Address / Hostname')),
                         Forms\Components\TextInput::make('ssh_port')
                             ->required()
                             ->numeric()
@@ -66,13 +66,13 @@ class ServerResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP')
+                    ->label(__('IP'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('ssh_user')
-                    ->label('User'),
+                    ->label(__('User')),
                 Tables\Columns\IconColumn::make('is_ready')
                     ->boolean()
-                    ->label('Ready')
+                    ->label(__('Ready'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

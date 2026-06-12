@@ -29,15 +29,15 @@ class CouponResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->columnSpanFull()
-                            ->helperText('The code users will type during checkout (e.g., BLACKFRIDAY). Must be uppercase.'),
+                            ->helperText(__('The code users will type during checkout (e.g., BLACKFRIDAY). Must be uppercase.')),
                         Forms\Components\TextInput::make('stripe_promotion_code_id')
-                            ->label('Stripe Promotion Code ID')
+                            ->label(__('Stripe Promotion Code ID'))
                             ->maxLength(255)
-                            ->helperText('Optional. The promo code ID from your Stripe Dashboard (starts with promo_).'),
+                            ->helperText(__('Optional. The promo code ID from your Stripe Dashboard (starts with promo_).')),
                         Forms\Components\TextInput::make('trial_days')
-                            ->label('Trial Days')
+                            ->label(__('Trial Days'))
                             ->numeric()
-                            ->helperText('Optional. Inject this many free days into the subscription before the first charge.'),
+                            ->helperText(__('Optional. Inject this many free days into the subscription before the first charge.')),
                         Forms\Components\Toggle::make('is_active')
                             ->required()
                             ->default(true),
@@ -54,7 +54,7 @@ class CouponResource extends Resource
                     ->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('stripe_promotion_code_id')
-                    ->label('Stripe ID')
+                    ->label(__('Stripe ID'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('trial_days')
