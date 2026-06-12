@@ -99,15 +99,15 @@
                                 name="email" 
                                 required 
                                 placeholder="{{ __('name@agency.com') }}"
-                                class="flex-grow px-5 py-4 text-lg bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400"
+                                class="flex-grow px-4 py-3 text-base bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400"
                                 value="{{ old('email') }}"
                             >
                             <button 
                                 id="submit-button"
                                 type="submit"
-                                class="whitespace-nowrap px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
+                                class="whitespace-nowrap px-6 py-3 text-sm text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
                             >
-                                {{ __('Join Now') }}
+                                {{ __('Subscribe') }}
                             </button>
                         </div>
                         
@@ -133,7 +133,7 @@
                             <p class="mt-3 text-red-500 text-sm font-medium">{{ session('error') }}</p>
                         @endif
                         <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
-                            {{ __('Start analyzing your marketing performance instantly. No credit card required.') }}
+                            {{ __('Subscribe to receive the latest updates, new features, and exclusive promotions.') }}
                         </p>
                     </form>
                 @endif
