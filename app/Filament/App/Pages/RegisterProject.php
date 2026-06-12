@@ -175,7 +175,7 @@ class RegisterProject extends RegisterTenant
                 'email' => $user->email,
                 'role' => 'collaborator',
                 'token' => \Illuminate\Support\Str::random(32),
-                'status' => 'pending',
+                'expires_at' => now()->addDays(7),
             ]);
 
             // Marcar el token como usado
