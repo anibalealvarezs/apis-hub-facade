@@ -70,7 +70,7 @@
         {{-- Reply Form --}}
         @if ($record->status !== 'closed' && $canReply)
         <x-filament::section heading="Reply">
-            <form wire:submit="reply" class="space-y-3">
+            <div class="space-y-3">
                 <div>
                     <textarea
                         wire:model="newMessage"
@@ -80,10 +80,10 @@
                     ></textarea>
                     @error('newMessage') <p class="text-sm text-danger-600 mt-1">{{ $message }}</p> @enderror
                 </div>
-                <x-filament::button type="submit">
+                <x-filament::button wire:click="reply">
                     Send Reply
                 </x-filament::button>
-            </form>
+            </div>
         </x-filament::section>
         @elseif ($record->status === 'closed')
         <x-filament::section heading="Reply">
