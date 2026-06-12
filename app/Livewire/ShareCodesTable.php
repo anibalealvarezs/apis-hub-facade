@@ -4,13 +4,20 @@ namespace App\Livewire;
 
 use App\Models\OneTimeShareToken;
 use Filament\Facades\Filament;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
 class ShareCodesTable extends Component
 {
     public $codes = [];
+
+    public $showForm = false;
+
+    public $email = '';
+
+    protected $rules = [
+        'email' => 'nullable|email',
+    ];
 
     public function mount()
     {
@@ -30,6 +37,8 @@ class ShareCodesTable extends Component
 
     public function generate()
     {
+        $this->validate();
+
         $project = Filament::getTenant();
         if (!$project) {
             return;
@@ -40,13 +49,13 @@ class ShareCodesTable extends Component
         OneTimeShareToken::create([
             'project_id' => $project->id,
             'token' => $code,
+            'email' => $this->email ?: null,
             'created_by' => auth()->id(),
             'expires_at' => now()->addDays(30),
         ]);
 
+        $this->reset('email', 'showForm');
         $this->refreshCodes();
-
-        $this->dispatch('share-code-copied');
     }
 
     public function render()
