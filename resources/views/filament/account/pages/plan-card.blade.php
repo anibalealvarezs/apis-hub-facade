@@ -8,21 +8,10 @@
         </div>
         <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm leading-relaxed">{{ $plan->description }}</p>
         <div class="text-3xl font-black text-gray-900 dark:text-white mb-6">
-            @if($cycle === 'monthly')
-                @if($plan->price > 0)
-                    ${{ $plan->price }} <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ __('/ month') }}</span>
-                @else
-                    Free
-                @endif
+            @if($plan->price > 0)
+                ${{ $plan->price }} <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ $cycle === 'monthly' ? __('/ month') : __('/ year') }}</span>
             @else
-                @if($plan->annual_price > 0)
-                    ${{ $plan->annual_price }} <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ __('/ year') }}</span>
-                    @if($plan->annual_discount_percentage > 0)
-                        <div class="text-xs text-green-600 dark:text-green-400 mt-1 font-bold">{{ __('Save') }} {{ $plan->annual_discount_percentage }}%</div>
-                    @endif
-                @else
-                    Free
-                @endif
+                Free
             @endif
         </div>
     </div>
@@ -40,7 +29,7 @@
             <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Founder Exclusive Tier') }}
             </button>
-        @elseif(($cycle === 'monthly' && $plan->price > 0) || ($cycle === 'annual' && $plan->annual_price > 0))
+        @elseif($plan->price > 0)
             <div class="space-y-3">
                 @if(app(\App\Settings\PaymentSettings::class)->enable_paypal)
                     <form action="{{ route('paypal.checkout') }}" method="POST">
