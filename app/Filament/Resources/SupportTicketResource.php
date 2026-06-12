@@ -39,7 +39,7 @@ class SupportTicketResource extends Resource
                             ->label('User')
                             ->searchable()
                             ->required()
-                            ->getSearchResults(fn (string $search) => static::getUserSearchResults($search))
+                            ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live()
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('project_id', null) && $set('billing_profile_id', null)),
@@ -90,7 +90,7 @@ class SupportTicketResource extends Resource
                             ->label('Related Users')
                             ->multiple()
                             ->searchable()
-                            ->getSearchResults(fn (string $search) => static::getUserSearchResults($search))
+                            ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live(),
                         Forms\Components\Select::make('internalProjects')
