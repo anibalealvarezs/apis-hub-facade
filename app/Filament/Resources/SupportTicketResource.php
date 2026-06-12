@@ -65,6 +65,7 @@ class SupportTicketResource extends Resource
                             ->allowHtml()
                             ->options(fn (Get $get) => static::getProjectOptionsForUser($get('user_id')))
                             ->disabled(fn (Get $get) => blank($get('user_id')))
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('billing_profile_id', null))
                             ->nullable(),
                         Forms\Components\Select::make('billing_profile_id')
                             ->label('Associated Billing Profile')
@@ -72,6 +73,7 @@ class SupportTicketResource extends Resource
                             ->allowHtml()
                             ->options(fn (Get $get) => static::getBillingProfileOptionsForUser($get('user_id')))
                             ->disabled(fn (Get $get) => blank($get('user_id')))
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('project_id', null))
                             ->nullable(),
                         Forms\Components\Textarea::make('description')
                             ->required()
