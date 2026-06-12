@@ -213,6 +213,7 @@ class BillingProfileResource extends Resource
     {
         return [
             RelationManagers\SharedWithUsersRelationManager::class,
+            RelationManagers\ProjectsRelationManager::class,
         ];
     }
 
