@@ -17,8 +17,6 @@ class InvoiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static bool $shouldRegisterNavigation = false;
-
     protected static ?string $navigationGroup = 'Billing & Payments';
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
@@ -65,6 +63,12 @@ class InvoiceResource extends Resource
                         'failed' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('invoice_pdf_url')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->formatStateUsing(fn ($state) => $state ? 'Download' : '—')
+                    ->url(fn ($state) => $state, true)
+                    ->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime()
                     ->sortable(),
