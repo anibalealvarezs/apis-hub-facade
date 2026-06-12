@@ -37,6 +37,14 @@ class ViewSupportTicket extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('ping')
+                ->label('Ping')
+                ->form([
+                    Forms\Components\TextInput::make('test')->default('hello'),
+                ])
+                ->action(function (array $data) {
+                    Log::warning('Ping action called', $data);
+                }),
             Actions\Action::make('changeStatus')
                 ->label('Change Status')
                 ->icon('heroicon-o-arrow-path')

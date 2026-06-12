@@ -32,12 +32,15 @@ class AppServiceProvider extends ServiceProvider
         // Wrap Livewire update handler to log TypeErrors before Livewire swallows them
         \Livewire\Livewire::setUpdateRoute(function ($handle) {
             return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
-                \Illuminate\Support\Facades\Log::info('Livewire route wrapper invoked');
+                \Illuminate\Support\Facades\Log::warning('Livewire route wrapper invoked', ['url' => $request->fullUrl()]);
                 try {
                     [$class, $method] = $handle;
                     return app($class)->{$method}($request);
+                } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+                    // Re-throw HTTP exceptions (abort, redirect) without interference
+                    throw $e;
                 } catch (\TypeError $e) {
-                    \Illuminate\Support\Facades\Log::error('Livewire TypeError in update', [
+                    \Illuminate\Support\Facades\Log::error('Livewire TypeError in update (caught in wrapper before abort)', [
                         'message' => $e->getMessage(),
                         'file' => $e->getFile(),
                         'line' => $e->getLine(),
