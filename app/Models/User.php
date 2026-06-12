@@ -55,6 +55,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         return (bool) ($this->is_active ?? true);
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool) $this->hasRole('super_admin');
+    }
+
     protected $fillable = [
         'name',
         'email',
