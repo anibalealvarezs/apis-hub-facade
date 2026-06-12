@@ -74,6 +74,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     }
 
     /**
+     * Relationship: Support tickets where this user is tagged internally (admin-only associations).
+     */
+    public function supportTicketInternalAssociations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(SupportTicket::class, 'ticket_internal_users');
+    }
+
+    /**
      * Relationship: Legacy owner link (Optional but kept for safety).
      */
     public function ownedProjects(): \Illuminate\Database\Eloquent\Relations\HasMany

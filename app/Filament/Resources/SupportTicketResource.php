@@ -175,19 +175,29 @@ class SupportTicketResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('internalUsers')
                     ->label('Internal User')
-                    ->relationship('internalUsers', 'name')
+                    ->options(fn () => \App\Models\User::select('id', 'name')
+                        ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_users.user_id'))
+                        ->pluck('name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->query(fn (Builder $query, array $data) =>
+                        $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalUsers', fn (Builder $sub) => $sub->where('users.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalProjects')
                     ->label('Internal Project')
-                    ->relationship('internalProjects', 'name')
+                    ->options(fn () => \App\Models\Project::select('id', 'name')
+                        ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_projects.project_id'))
+                        ->withTrashed()
+                        ->pluck('name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->query(fn (Builder $query, array $data) =>
+                        $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalProjects', fn (Builder $sub) => $sub->where('projects.id', $val)))),
                 Tables\Filters\SelectFilter::make('internalBillingProfiles')
                     ->label('Internal Billing Profile')
-                    ->relationship('internalBillingProfiles', 'name')
+                    ->options(fn () => \App\Models\BillingProfile::select('id', 'name')
+                        ->whereHas('supportTicketInternalAssociations', fn (Builder $q) => $q->whereNotNull('ticket_internal_billing_profiles.billing_profile_id'))
+                        ->pluck('name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->query(fn (Builder $query, array $data) =>
+                        $query->when($data['value'] ?? null, fn (Builder $q, $val) => $q->whereHas('internalBillingProfiles', fn (Builder $sub) => $sub->where('billing_profiles.id', $val)))),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

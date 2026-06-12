@@ -91,6 +91,14 @@ class Project extends Model
 
 
     /**
+     * Relationship: Support tickets where this project is tagged internally (admin-only associations).
+     */
+    public function supportTicketInternalAssociations(): BelongsToMany
+    {
+        return $this->belongsToMany(SupportTicket::class, 'ticket_internal_projects');
+    }
+
+    /**
      * Relationship: The deployment logs for this project.
      */
     public function deploymentLogs(): HasMany

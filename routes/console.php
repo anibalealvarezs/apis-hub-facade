@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 
 \Illuminate\Support\Facades\Schedule::command('projects:cleanup-deleted')->daily();
 \Illuminate\Support\Facades\Schedule::command('billing:process-grace-periods')->everyFiveMinutes();
+\Illuminate\Support\Facades\Schedule::command('billing:expire-pending-assignments')->daily();
