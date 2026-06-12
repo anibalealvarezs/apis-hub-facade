@@ -81,7 +81,6 @@ class RegisterProject extends RegisterTenant
                     ])
                     ->default('create')
                     ->inline()
-                    ->color('gray')
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set) {
                         if ($state === 'join') {
