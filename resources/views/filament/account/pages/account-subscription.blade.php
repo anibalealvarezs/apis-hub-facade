@@ -65,95 +65,17 @@
             </div>
         </div>
 
-        <!-- Subscription Plan Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Monthly Plans Grid -->
+        <div x-show="billingCycle === 'monthly'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach ($plans as $plan)
-            <div x-show="billingCycle === '{{ $plan->billing_cycle }}' || '{{ $plan->billing_cycle }}' === 'both'" class="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
-                        @if($profile && $profile->tier?->value === $plan->tier)
-                            <span class="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-green-200 dark:border-green-800">{{ __('Current') }}</span>
-                        @endif
-                    </div>
-                    <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm leading-relaxed">{{ $plan->description }}</p>
-                    <div class="text-3xl font-black text-gray-900 dark:text-white mb-6">
-                        @if($plan->price > 0)
-                            <div x-show="billingCycle === 'monthly'">
-                                ${{ $plan->price }} <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ __('/ month') }}</span>
-                            </div>
-                            <div x-show="billingCycle === 'annual'" style="display: none;">
-                                ${{ $plan->annual_price }} <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ __('/ year') }}</span>
-                                @if($plan->annual_discount_percentage > 0)
-                                    <div class="text-xs text-green-600 dark:text-green-400 mt-1 font-bold">{{ __('Save') }} {{ $plan->annual_discount_percentage }}%</div>
-                                @endif
-                            </div>
-                        @else
-                            Free
-                        @endif
-                    </div>
-                </div>
+            @include('filament.account.pages.plan-card', ['plan' => $plan, 'cycle' => 'monthly'])
+            @endforeach
+        </div>
 
-                <div>
-                    @if($profile && $profile->tier?->value === $plan->tier)
-                        <button disabled class="w-full bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 font-bold py-2.5 px-4 rounded-lg border border-green-200 dark:border-green-900/50 text-center text-sm cursor-not-allowed">
-                            {{ __('✓ Currently Active Plan') }}
-                        </button>
-                    @elseif($profile && $profile->tier?->value === 'enterprise')
-                        <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
-                            {{ __('Locked (Enterprise Protected)') }}
-                        </button>
-                    @elseif($profile && $profile->tier?->value === 'founder')
-                        <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
-                            {{ __('Founder Exclusive Tier') }}
-                        </button>
-                    @elseif($plan->price > 0)
-                        <div class="space-y-3">
-                            @if(app(\App\Settings\PaymentSettings::class)->enable_paypal)
-                                <form action="{{ route('paypal.checkout') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                                    <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
-                                    <input type="hidden" name="billing_cycle" :value="billingCycle">
-                                    
-                                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
-                                        <x-heroicon-o-credit-card class="w-4 h-4"/>
-                                        {{ __('Subscribe via PayPal') }}
-                                    </button>
-                                </form>
-                            @endif
-                            
-                            @if(app(\App\Settings\PaymentSettings::class)->enable_stripe)
-                                <form action="{{ route('stripe.checkout') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                                    <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
-                                    <input type="hidden" name="billing_cycle" :value="billingCycle">
-                                    
-                                    <div class="mb-3">
-                                        <input type="text" name="coupon_code" class="w-full rounded-lg border-gray-300 dark:border-gray-800 dark:bg-gray-850 text-xs text-gray-900 dark:text-white" placeholder="{{ __('Promo Code (Optional)') }}">
-                                    </div>
-                                    
-                                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
-                                        <x-heroicon-o-credit-card class="w-4 h-4"/>
-                                        {{ __('Subscribe via Stripe') }}
-                                    </button>
-                                </form>
-                            @endif
-
-                            @if(!app(\App\Settings\PaymentSettings::class)->enable_paypal && !app(\App\Settings\PaymentSettings::class)->enable_stripe)
-                                <div class="p-3 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs text-center border border-yellow-200 dark:border-yellow-900/50">
-                                    {{ __('Subscriptions disabled') }}
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
-                            {{ __('Free Tier') }}
-                        </button>
-                    @endif
-                </div>
-            </div>
+        <!-- Annual Plans Grid -->
+        <div x-show="billingCycle === 'annual'" style="display: none;" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @foreach ($plans as $plan)
+            @include('filament.account.pages.plan-card', ['plan' => $plan, 'cycle' => 'annual'])
             @endforeach
         </div>
     </div>
