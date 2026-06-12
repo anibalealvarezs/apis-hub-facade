@@ -38,6 +38,7 @@ class SupportTicketResource extends Resource
                         Forms\Components\Select::make('user_id')
                             ->label('User')
                             ->searchable()
+                            ->allowHtml()
                             ->required()
                             ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
@@ -90,6 +91,7 @@ class SupportTicketResource extends Resource
                             ->label('Related Users')
                             ->multiple()
                             ->searchable()
+                            ->allowHtml()
                             ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live(),
@@ -252,13 +254,27 @@ class SupportTicketResource extends Resource
         return User::where('name', 'like', "%{$search}%")
             ->orWhere('email', 'like', "%{$search}%")
             ->limit(50)
-            ->pluck('name', 'id')
+            ->get()
+            ->mapWithKeys(fn (User $user) => [
+                $user->id => static::formatUserOptionHtml($user),
+            ])
             ->toArray();
     }
 
     private static function getUserOptionLabel($value): ?string
     {
-        return User::find($value)?->name;
+        $user = User::find($value);
+        if (!$user) {
+            return null;
+        }
+        return "{$user->name} ({$user->email})";
+    }
+
+    private static function formatUserOptionHtml(User $user): string
+    {
+        $name = e($user->name);
+        $email = e($user->email);
+        return "<span class=\"font-semibold\">{$name}</span> <span class=\"text-gray-400\">— {$email}</span>";
     }
 
     private static function getProjectOptionsForUser($userId): array
