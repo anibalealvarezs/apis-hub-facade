@@ -86,9 +86,8 @@ class SupportTicketResource extends Resource
                         Forms\Components\Select::make('internalProjects')
                             ->label('Related Projects')
                             ->multiple()
-                            ->relationship('internalProjects', 'name')
-                            ->searchable(['name', 'subdomain'])
-                            ->preload(),
+                            ->options(fn () => \App\Models\Project::select('id', 'name')->withTrashed()->pluck('name', 'id'))
+                            ->searchable(),
                         Forms\Components\Select::make('internalBillingProfiles')
                             ->label('Related Billing Profiles')
                             ->multiple()
