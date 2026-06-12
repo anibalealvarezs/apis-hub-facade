@@ -39,7 +39,7 @@ class UserBillingProfilesTable extends BaseWidget
                 Tables\Columns\TextColumn::make('type')
                     ->label(__('Relationship'))
                     ->getStateUsing(function (BillingProfile $record): string {
-                        return $record->user_id === $this->record->id ? 'Owner' : 'Shared';
+                        return $record->user_id === $this->record->id ? __('Owner') : __('Shared');
                     })
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -83,7 +83,7 @@ class UserBillingProfilesTable extends BaseWidget
                             ->live(),
                         Select::make('billing_cycle')
                             ->label(__('Billing Cycle (If Syncing)'))
-                            ->options(['monthly' => 'Monthly', 'annual' => 'Annual'])
+                            ->options(['monthly' => __('Monthly'), 'annual' => __('Annual')])
                             ->default('monthly')
                             ->visible(function (\Filament\Forms\Get $get) {
                                 $tier = $get('tier');
@@ -147,7 +147,7 @@ class UserBillingProfilesTable extends BaseWidget
                                     }
                                 } catch (\Exception $e) {
                                     \Illuminate\Support\Facades\Log::error('Stripe admin sync failed', ['error' => $e->getMessage()]);
-                                    Notification::make()->danger()->title('Stripe sync failed: ' . $e->getMessage())->send();
+                                    Notification::make()->danger()->title(__('Stripe sync failed: :error', ['error' => $e->getMessage()]))->send();
                                 }
                             } elseif ($sub->paypal_subscription_id) {
                                 try {
@@ -163,7 +163,7 @@ class UserBillingProfilesTable extends BaseWidget
                                     }
                                 } catch (\Exception $e) {
                                     \Illuminate\Support\Facades\Log::error('PayPal admin sync failed', ['error' => $e->getMessage()]);
-                                    Notification::make()->danger()->title('PayPal sync failed: ' . $e->getMessage())->send();
+                                    Notification::make()->danger()->title(__('PayPal sync failed: :error', ['error' => $e->getMessage()]))->send();
                                 }
                             }
                         }
@@ -175,11 +175,11 @@ class UserBillingProfilesTable extends BaseWidget
                         }
                         $record->save();
                         
-                        $msg = 'Tier updated locally.';
+                        $msg = __('Tier updated locally.');
                         if ($wasCanceled) {
-                            $msg = 'Tier updated and previous provider subscription was permanently canceled.';
+                            $msg = __('Tier updated and previous provider subscription was permanently canceled.');
                         } elseif ($syncSuccess) {
-                            $msg = 'Tier updated and synced with payment provider.';
+                            $msg = __('Tier updated and synced with payment provider.');
                         }
 
                         Notification::make()

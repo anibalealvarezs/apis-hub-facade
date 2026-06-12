@@ -257,9 +257,9 @@ class BillingProfileResource extends Resource
                     ->modalDescription(function (BillingProfile $record) {
                         $count = $record->projects()->count();
                         if ($count > 0) {
-                            return "WARNING: This profile is actively paying for {$count} project(s). If you delete it now, all attached projects will be IMMEDIATELY SUSPENDED and their infrastructure will be stopped. We highly recommend assigning them a different billing profile first. Are you absolutely sure?";
+                            return __('WARNING: This profile is actively paying for :count project(s). If you delete it now, all attached projects will be IMMEDIATELY SUSPENDED and their infrastructure will be stopped. We highly recommend assigning them a different billing profile first. Are you absolutely sure?', ['count' => $count]);
                         }
-                        return 'Are you sure you want to delete this billing profile? This action cannot be undone.';
+                        return __('Are you sure you want to delete this billing profile? This action cannot be undone.');
                     }),
             ])
             ->bulkActions([
@@ -273,9 +273,9 @@ class BillingProfileResource extends Resource
                                 $totalProjects += $record->projects()->count();
                             }
                             if ($totalProjects > 0) {
-                                return "WARNING: The selected profiles are actively paying for {$totalProjects} project(s) in total. If you delete them, ALL attached projects will be IMMEDIATELY SUSPENDED. We highly recommend assigning them a different billing profile first. Are you absolutely sure?";
+                                return __('WARNING: The selected profiles are actively paying for :count project(s) in total. If you delete them, ALL attached projects will be IMMEDIATELY SUSPENDED. We highly recommend assigning them a different billing profile first. Are you absolutely sure?', ['count' => $totalProjects]);
                             }
-                            return 'Are you sure you want to delete these billing profiles?';
+                            return __('Are you sure you want to delete the selected billing profiles? This action cannot be undone.');
                         }),
                 ]),
             ]);
