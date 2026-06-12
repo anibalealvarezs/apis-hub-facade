@@ -17,6 +17,8 @@ class InvoiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationGroup = 'Billing & Payments';
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder

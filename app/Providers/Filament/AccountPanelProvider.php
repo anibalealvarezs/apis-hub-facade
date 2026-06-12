@@ -72,10 +72,12 @@ class AccountPanelProvider extends PanelProvider
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
+                    ->customMyProfilePage(\App\Filament\Account\Pages\Profile::class)
                     ->myProfile(
                         shouldRegisterUserMenu: true,
-                        shouldRegisterNavigation: false,
+                        shouldRegisterNavigation: true,
                         hasAvatars: false,
+                        navigationGroup: 'Profile & Security',
                     )
                     ->myProfileComponents([
                         \App\Livewire\ArchivedProjectsTable::class,

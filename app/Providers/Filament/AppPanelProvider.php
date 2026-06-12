@@ -194,7 +194,11 @@ class AppPanelProvider extends PanelProvider
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->userMenuItems([
-                \Filament\Navigation\MenuItem::make()
+                'profile' => \Filament\Navigation\MenuItem::make()
+                    ->label('Profile')
+                    ->url('/app/my-profile')
+                    ->icon('heroicon-o-user-circle'),
+                'my_account' => \Filament\Navigation\MenuItem::make()
                     ->label('My Account')
                     ->url('/account')
                     ->icon('heroicon-o-user'),
