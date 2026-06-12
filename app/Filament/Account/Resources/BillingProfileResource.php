@@ -92,7 +92,8 @@ class BillingProfileResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'company' => 'info',
-                        'individual' => 'gray',
+                        'individual', 'personal' => 'gray',
+                        default => 'gray',
                     }),
                 Tables\Columns\IconColumn::make('is_default')
                     ->boolean(),

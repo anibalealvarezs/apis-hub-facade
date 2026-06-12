@@ -26,7 +26,7 @@ class UserObserver
         if (!$hasValidInvitation) {
             $user->billingProfiles()->create([
                 'name' => $user->name . ' Default Profile',
-                'type' => 'personal',
+                'type' => 'individual',
                 'tier' => UserTier::FREE,
                 'country_code' => 'ES',
                 'is_default' => true,
