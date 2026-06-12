@@ -62,8 +62,8 @@
 
             <!-- ... Hero Headline ... -->
             <div class="max-w-3xl mx-auto mb-10">
-                <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wider text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/30 rounded-full animate-bounce">
-                    {{ __('Early Access Open') }}
+                <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
+                    {{ __('Start for Free') }}
                 </span>
                 <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
                     {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
@@ -136,7 +136,6 @@
 
             <!-- Portals Link (Internal / Admin / Documentation) -->
             <div class="flex gap-4 sm:gap-8 justify-center items-center mt-4">
-                <span data-portal="{{ $portals['app'] }}" class="js-portal-link px-8 py-3 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">{{ __('Start for Free') }}</span>
                 {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
                 {{-- <span data-portal="{{ $portals['admin'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4 cursor-pointer">Admin Console</span> --}}
                 {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
