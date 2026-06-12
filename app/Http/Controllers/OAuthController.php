@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectCredential;
+use App\Models\SupportTicket;
+use App\Models\TicketMessage;
+use App\Models\User;
 use App\Services\DeployerService;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 use Anibalealvarezs\ApisHubApi\ApisHubApi;
 
@@ -295,6 +299,66 @@ class OAuthController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error("Facebook Deauthorize Failed: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Handle Facebook Data Deletion Request Callback.
+     * Facebook requires a JSON response with url and confirmation_code.
+     */
+    public function handleDataDeletion(Request $request, DeployerService $deployer)
+    {
+        $signedRequest = $request->input('signed_request');
+        if (!$signedRequest) {
+            return response()->json(['error' => 'Missing signed_request'], 400);
+        }
+
+        try {
+            $data = $this->parseSignedRequest($signedRequest);
+            $fbUserId = $data['user_id'] ?? null;
+            $confirmationCode = (string) Str::uuid();
+
+            if ($fbUserId) {
+                $credentials = ProjectCredential::where('provider', 'facebook')
+                    ->where('external_user_id', $fbUserId)
+                    ->with('project')
+                    ->get();
+
+                $affectedUserIds = $credentials->pluck('project.user_id')->unique();
+
+                foreach ($affectedUserIds as $userId) {
+                    $user = User::find($userId);
+                    if (!$user) continue;
+
+                    $userProjects = $credentials->filter(fn ($c) => $c->project->user_id === $userId)
+                        ->pluck('project.name')
+                        ->implode(', ');
+
+                    $ticket = SupportTicket::create([
+                        'user_id' => $userId,
+                        'type' => 'data_deletion',
+                        'status' => 'started',
+                        'description' => "Facebook data deletion requested via Meta callback (FB user: {$fbUserId}). Affected projects: {$userProjects}.",
+                        'external_ref' => $confirmationCode,
+                    ]);
+
+                    TicketMessage::create([
+                        'support_ticket_id' => $ticket->id,
+                        'user_id' => null,
+                        'message' => "Automated ticket created from Meta data deletion callback. Confirmation code: {$confirmationCode}. Our team will review and process this request.",
+                    ]);
+                }
+
+                Log::info("Facebook data deletion callback processed for user {$fbUserId}, confirmation_code: {$confirmationCode}, tickets created for " . $affectedUserIds->count() . " user(s).");
+            }
+
+            return response()->json([
+                'url' => url('/account/support-tickets'),
+                'confirmation_code' => $confirmationCode,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Facebook Data Deletion Failed: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
