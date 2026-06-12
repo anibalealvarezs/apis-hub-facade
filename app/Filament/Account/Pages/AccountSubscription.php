@@ -37,7 +37,7 @@ class AccountSubscription extends Page
             ->get();
 
         $this->annualPlans = SubscriptionPlan::where('is_active', true)
-            ->whereIn('billing_cycle', ['annual', 'both'])
+            ->whereIn('billing_cycle', ['yearly', 'both'])
             ->orderBy('price', 'asc')
             ->get();
         
