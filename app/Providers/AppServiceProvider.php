@@ -29,6 +29,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Wrap Livewire update handler to log TypeErrors before Livewire swallows them
+        \Livewire\Livewire::setUpdateRoute(function ($handle) {
+            return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
+                try {
+                    return $handle($request);
+                } catch (\TypeError $e) {
+                    \Illuminate\Support\Facades\Log::error('Livewire TypeError in update', [
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    throw $e;
+                }
+            })->middleware('web');
+        });
+
         Gate::policy(Dashboard::class, DashboardPolicy::class);
 
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
