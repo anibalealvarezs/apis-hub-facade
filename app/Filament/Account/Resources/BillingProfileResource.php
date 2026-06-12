@@ -99,7 +99,7 @@ class BillingProfileResource extends Resource
                     ->boolean(),
                 Tables\Columns\TextColumn::make('tier')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (\App\Enums\UserTier $state): string => match ($state->value) {
                         'free' => 'gray',
                         'starter' => 'success',
                         'growth' => 'warning',
@@ -107,7 +107,7 @@ class BillingProfileResource extends Resource
                         'enterprise' => 'info',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                    ->formatStateUsing(fn (\App\Enums\UserTier $state): string => ucfirst($state->value)),
                 Tables\Columns\TextColumn::make('projects_count')
                     ->label('Projects')
                     ->counts('projects')
