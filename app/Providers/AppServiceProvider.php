@@ -29,41 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Diagnostic: verify boot() runs
-        error_log('[LIVEWIRE_DEBUG] AppServiceProvider::boot() started');
-        \Illuminate\Support\Facades\Log::warning('[LIVEWIRE_DEBUG] AppServiceProvider::boot() logging test');
-
-        // Wrap Livewire update handler to log TypeErrors before Livewire swallows them
-        \Livewire\Livewire::setUpdateRoute(function ($handle) {
-            return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
-                // Temporarily enable debug so Livewire re-throws the TypeError instead of
-                // silently calling abort(419). We catch it, log the full details, then
-                // restore the 419 ourselves.
-                $originalDebug = config('app.debug');
-                config(['app.debug' => true]);
-                try {
-                    [$class, $method] = $handle;
-                    return app($class)->{$method}($request);
-                } catch (\TypeError $e) {
-                    \Illuminate\Support\Facades\Log::error('Livewire TypeError in update', [
-                        'message' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                        'trace' => $e->getTraceAsString(),
-                    ]);
-                    abort(419);
-                } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
-                    // If we got an HttpException despite debug mode, log it and re-throw
-                    \Illuminate\Support\Facades\Log::warning('Livewire HttpException despite debug mode', [
-                        'status' => $e->getStatusCode(),
-                    ]);
-                    throw $e;
-                } finally {
-                    config(['app.debug' => $originalDebug]);
-                }
-            })->middleware('web');
-        });
-
         Gate::policy(Dashboard::class, DashboardPolicy::class);
 
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
