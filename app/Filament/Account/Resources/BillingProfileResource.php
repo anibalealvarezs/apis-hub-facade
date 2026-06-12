@@ -97,6 +97,21 @@ class BillingProfileResource extends Resource
                     }),
                 Tables\Columns\IconColumn::make('is_default')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('tier')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'free' => 'gray',
+                        'starter' => 'success',
+                        'growth' => 'warning',
+                        'premium' => 'danger',
+                        'enterprise' => 'info',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                Tables\Columns\TextColumn::make('projects_count')
+                    ->label('Projects')
+                    ->counts('projects')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
