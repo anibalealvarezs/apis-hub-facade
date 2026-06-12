@@ -15,5 +15,8 @@
 
         <!-- Tabla de Invitaciones Pendientes -->
         @livewire('pending-invitations-table')
+
+        <!-- Tabla de Códigos Compartidos -->
+        @livewire('share-codes-table')
     </div>
 </x-filament-panels::page>
