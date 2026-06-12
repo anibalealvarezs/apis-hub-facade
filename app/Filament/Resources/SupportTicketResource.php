@@ -303,7 +303,7 @@ class SupportTicketResource extends Resource
             return [];
         }
 
-        $projects = Project::with('user:id,name')
+        $projects = Project::with('user:id,name,email')
             ->where(function (Builder $q) use ($userId) {
                 $q->where('user_id', $userId)
                   ->orWhereHas('users', fn (Builder $sub) => $sub->where('users.id', $userId));
@@ -319,7 +319,7 @@ class SupportTicketResource extends Resource
             return [];
         }
 
-        $profiles = BillingProfile::with('user:id,name')
+        $profiles = BillingProfile::with('user:id,name,email')
             ->where(function (Builder $q) use ($userId) {
                 $q->where('user_id', $userId)
                   ->orWhereHas('sharedWithUsers', fn (Builder $sub) => $sub->where('users.id', $userId));
@@ -335,7 +335,7 @@ class SupportTicketResource extends Resource
             return [];
         }
 
-        $projects = Project::with('user:id,name')
+        $projects = Project::with('user:id,name,email')
             ->where(function (Builder $q) use ($userIds) {
                 if (!empty($userIds)) {
                     $q->whereIn('user_id', $userIds)
@@ -354,7 +354,7 @@ class SupportTicketResource extends Resource
             return [];
         }
 
-        $profiles = BillingProfile::with('user:id,name')
+        $profiles = BillingProfile::with('user:id,name,email')
             ->where(function (Builder $q) use ($userIds) {
                 if (!empty($userIds)) {
                     $q->whereIn('user_id', $userIds)
@@ -375,7 +375,11 @@ class SupportTicketResource extends Resource
                 ? e($model->display_name)
                 : e($model->name);
             $owner = e($model->user?->name ?? 'No owner');
-            $options[$model->id] = "<span class=\"font-semibold\">{$label}</span> <span class=\"text-gray-400\">— {$owner}</span>";
+            $ownerEmail = $model->user?->email ? e($model->user->email) : null;
+            $description = $ownerEmail
+                ? "{$owner} ({$ownerEmail})"
+                : $owner;
+            $options[$model->id] = "<span class=\"font-semibold\">{$label}</span> <span class=\"text-gray-400\">— {$description}</span>";
         }
         return $options;
     }
