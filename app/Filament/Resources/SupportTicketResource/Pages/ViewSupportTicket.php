@@ -37,14 +37,6 @@ class ViewSupportTicket extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('ping')
-                ->label('Ping')
-                ->form([
-                    Forms\Components\TextInput::make('test')->default('hello'),
-                ])
-                ->action(function (array $data) {
-                    Log::warning('Ping action called', $data);
-                }),
             Actions\Action::make('changeStatus')
                 ->label('Change Status')
                 ->icon('heroicon-o-arrow-path')
@@ -74,10 +66,9 @@ class ViewSupportTicket extends ViewRecord
                             'message' => "Status changed to: {$data['status']}",
                         ]);
 
-                        // Temporarily disabled to diagnose 419
-                        //if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
-                        //    $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
-                        //}
+                        if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
+                            $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
+                        }
 
                         Notification::make()
                             ->title('Status Updated')
