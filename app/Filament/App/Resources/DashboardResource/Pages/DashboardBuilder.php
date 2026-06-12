@@ -284,13 +284,13 @@ class DashboardBuilder extends Page
         }
 
         $this->dashboard->sharedUsers()->attach($userId);
-        Notification::make()->title(__('Dashboard shared with ' . $user->name)->success()->send();
+        Notification::make()->title(__('Dashboard shared with :name', ['name' => $user->name]))->success()->send();
     }
 
     public function unshareUser(int $userId): void
     {
         $this->dashboard->sharedUsers()->detach($userId);
-        Notification::make()->title('User removed from shared list'))->success()->send();
+        Notification::make()->title(__('User removed from shared list'))->success()->send();
     }
 
     public function togglePublic(): void
@@ -298,7 +298,7 @@ class DashboardBuilder extends Page
         $this->dashboard->update(['is_public' => !$this->dashboard->is_public]);
         $this->dashboard->refresh();
         Notification::make()
-            ->title($this->dashboard->is_public ? 'Dashboard is now public' : 'Dashboard is now private')
+            ->title($this->dashboard->is_public ? __('Dashboard is now public') : __('Dashboard is now private'))
             ->success()
             ->send();
     }
