@@ -43,7 +43,12 @@ class PendingInvitationsTable extends Component implements HasForms, HasTable
                     ->icon('heroicon-o-arrow-path')
                     ->action(function (ProjectInvitation $record) {
                         Mail::to($record->email)->send(new ProjectInvitationMail($record));
-                        Notification::make()->success()->title('Invitación reenviada.')->send();
+                        $inviteUrl = url("/app/invitations/{$record->token}/accept");
+                        Notification::make()
+                            ->success()
+                            ->title('Invitación reenviada.')
+                            ->body("Link de invitación: {$inviteUrl}")
+                            ->send();
                     }),
                 Action::make('revoke')
                     ->label('Revocar')

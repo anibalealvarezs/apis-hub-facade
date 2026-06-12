@@ -42,7 +42,7 @@ class ProcessProjectInvitation
 
         // Validar límite de 1 proyecto para plan gratuito
         if ($user->hasOnlyFreeProfiles() && $user->getTotalAccessibleProjectsCount() >= 1) {
-            session()->flash('warning', 'Para colaborar en este proyecto en tu plan gratuito, primero debes eliminar tu proyecto de pruebas propio para desmontar su infraestructura y liberar recursos.');
+            session()->flash('error', 'Your free tier plan only allows access to one project. To accept this invitation, you must either upgrade your current billing profile to any paid tier, or delete the project associated with your free tier billing profile.');
             return;
         }
 

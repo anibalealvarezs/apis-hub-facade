@@ -289,7 +289,13 @@ class ManageCollaborators extends Page implements HasTable
                             $notifyUser->notify(new \App\Notifications\InvitationSent($project, $data['email'], $data['role']));
                         }
 
-                        Notification::make()->success()->title(__('Invitation sent via email.'))->send();
+                        $inviteUrl = url("/app/invitations/{$invitation->token}/accept");
+
+                        Notification::make()
+                            ->success()
+                            ->title(__('Invitation sent via email.'))
+                            ->body(__('Share this link with the collaborator if they don\'t receive the email:') . ' ' . $inviteUrl)
+                            ->send();
                     }),
             ]);
     }
