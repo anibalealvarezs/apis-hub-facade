@@ -1,6 +1,5 @@
 <x-filament-panels::page
     x-data="{}"
-    @ticket-reply-added.window="$wire.$refresh()"
 >
     <div class="space-y-6">
         {{-- Ticket Info --}}

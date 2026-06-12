@@ -9,6 +9,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\Log;
 
 class ViewSupportTicket extends ViewRecord
 {
@@ -19,6 +20,18 @@ class ViewSupportTicket extends ViewRecord
     public function getTitle(): string
     {
         return "Ticket #{$this->record->id} — {$this->record->type}";
+    }
+
+    protected function getListeners(): array
+    {
+        return [
+            'ticket-reply-added' => 'refreshRecord',
+        ];
+    }
+
+    public function refreshRecord(): void
+    {
+        $this->record->refresh();
     }
 
     protected function getHeaderActions(): array
@@ -55,7 +68,11 @@ class ViewSupportTicket extends ViewRecord
                     $this->refreshFormData(['status']);
 
                     if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
-                        $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
+                        try {
+                            $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to send status change notification: ' . $e->getMessage());
+                        }
                     }
 
                     Notification::make()

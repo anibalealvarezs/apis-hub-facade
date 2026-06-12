@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChannelProfile;
 use App\Models\Project;
 use App\Models\ProjectCredential;
 use App\Models\SupportTicket;
@@ -320,20 +321,59 @@ class OAuthController extends Controller
             $confirmationCode = (string) Str::uuid();
 
             if ($fbUserId) {
+                // ── Match via ChannelProfile (newer architecture) ──
+                $profiles = ChannelProfile::where('provider', 'facebook')
+                    ->where('provider_account_id', $fbUserId)
+                    ->get();
+
+                // ── Match via ProjectCredential (legacy architecture) ──
                 $credentials = ProjectCredential::where('provider', 'facebook')
                     ->where('external_user_id', $fbUserId)
                     ->with('project')
                     ->get();
 
-                $affectedUserIds = $credentials->pluck('project.user_id')->unique();
+                // ── Collect affected users and their projects ──
+                $userProjectsMap = []; // [userId => [projectId => projectName]]
 
-                foreach ($affectedUserIds as $userId) {
+                // From ChannelProfile: profile owner + projects referencing that profile
+                foreach ($profiles as $profile) {
+                    $userId = $profile->user_id;
+                    if (!isset($userProjectsMap[$userId])) {
+                        $userProjectsMap[$userId] = [];
+                    }
+
+                    $projects = Project::where('facebook_profile_id', $profile->id)->get();
+
+                    foreach ($projects as $project) {
+                        $userProjectsMap[$userId][$project->id] = $project->name;
+                    }
+                }
+
+                // From ProjectCredential: project owners
+                foreach ($credentials as $credential) {
+                    $project = $credential->project;
+                    if (!$project) continue;
+
+                    $userId = $project->user_id;
+                    if (!isset($userProjectsMap[$userId])) {
+                        $userProjectsMap[$userId] = [];
+                    }
+
+                    $userProjectsMap[$userId][$project->id] = $project->name;
+                }
+
+                // ── Create tickets ──
+                $ticketCount = 0;
+
+                foreach ($userProjectsMap as $userId => $projects) {
                     $user = User::find($userId);
-                    if (!$user) continue;
+                    if (!$user) {
+                        Log::warning("Facebook data deletion: user {$userId} not found, skipping.");
+                        continue;
+                    }
 
-                    $userProjects = $credentials->filter(fn ($c) => $c->project->user_id === $userId);
-                    $userProjectNames = $userProjects->pluck('project.name')->implode(', ');
-                    $userProjectIds = $userProjects->pluck('project.id')->toArray();
+                    $userProjectIds = array_keys($projects);
+                    $userProjectNames = implode(', ', $projects);
 
                     $ticket = SupportTicket::create([
                         'user_id' => $userId,
@@ -353,9 +393,11 @@ class OAuthController extends Controller
                         'user_id' => null,
                         'message' => "Automated ticket created from Meta data deletion callback. Confirmation code: {$confirmationCode}. Our team will review and process this request.",
                     ]);
+
+                    $ticketCount++;
                 }
 
-                Log::info("Facebook data deletion callback processed for user {$fbUserId}, confirmation_code: {$confirmationCode}, tickets created for " . $affectedUserIds->count() . " user(s).");
+                Log::info("Facebook data deletion processed for FB user {$fbUserId}, confirmation_code: {$confirmationCode}. Found via ChannelProfile: {$profiles->count()}, via ProjectCredential: {$credentials->count()}. Tickets created for {$ticketCount} user(s) across " . count($userProjectsMap) . " affected user(s).");
             }
 
             return response()->json([

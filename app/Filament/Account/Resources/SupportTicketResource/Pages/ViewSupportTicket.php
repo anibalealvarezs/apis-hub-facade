@@ -16,6 +16,18 @@ class ViewSupportTicket extends ViewRecord
         return "Ticket #{$this->record->id}";
     }
 
+    protected function getListeners(): array
+    {
+        return [
+            'ticket-reply-added' => 'refreshRecord',
+        ];
+    }
+
+    public function refreshRecord(): void
+    {
+        $this->record->refresh();
+    }
+
     public function getMessages()
     {
         return $this->record->messages()->with('user')->orderBy('created_at')->get();

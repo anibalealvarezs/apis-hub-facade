@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\TicketStatusChangedNotification;
 use App\Notifications\TicketUserReplyNotification;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class TicketReplyForm extends Component
@@ -59,17 +60,29 @@ class TicketReplyForm extends Component
                 ]);
 
                 if ($this->ticket->user) {
-                    $this->ticket->user->notify(new TicketStatusChangedNotification($this->ticket, $oldStatus));
+                    try {
+                        $this->ticket->user->notify(new TicketStatusChangedNotification($this->ticket, $oldStatus));
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to send status change notification: ' . $e->getMessage());
+                    }
                 }
             }
 
             if ($this->ticket->user) {
-                $this->ticket->user->notify(new TicketUserReplyNotification($message));
+                try {
+                    $this->ticket->user->notify(new TicketUserReplyNotification($message));
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send admin reply notification: ' . $e->getMessage());
+                }
             }
         } else {
             $admins = User::role('super_admin')->get();
             foreach ($admins as $admin) {
-                $admin->notify(new TicketUserReplyNotification($message));
+                try {
+                    $admin->notify(new TicketUserReplyNotification($message));
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to send user reply notification to admin: ' . $e->getMessage());
+                }
             }
         }
 
