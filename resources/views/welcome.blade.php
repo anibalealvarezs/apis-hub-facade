@@ -3,9 +3,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
-        <title>APIs Hub | Elite Data & Caching Infrastructure</title>
-        <meta name="description" content="The headless data engine for elite marketing agencies. Standardize multi-platform data into high-speed, analytics-ready pipelines with intelligent formulas and gap-filling.">
-        <meta name="keywords" content="marketing data infrastructure, api caching, ecommerce etl, standardized marketing metrics, data gap filling, headless data engine">
+        <title>APIs Hub | Unified Marketing Analytics & Dashboards</title>
+        <meta name="description" content="Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.">
+        <meta name="keywords" content="marketing analytics, unified dashboards, social media metrics, ecommerce data, data aggregation, custom KPIs, apis hub">
         <meta name="robots" content="index, follow">
         <meta name="author" content="APIs Hub Network">
 
@@ -59,13 +59,13 @@
             <!-- ... Hero Headline ... -->
             <div class="max-w-3xl mx-auto mb-10">
                 <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wider text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/30 rounded-full animate-bounce">
-                    Alpha Access Open
+                    Early Access Open
                 </span>
                 <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
-                    Unified Data.<br>Correct Formulas.
+                    All Your Data.<br>One Unified Dashboard.
                 </h1>
                 <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
-                    The headless data engine for elite analytics teams. Standardize your multi-platform source data into a high-speed infrastructure with automatic gap-filling and weighted-average mathematical validation.
+                    Connect Meta, Google, Shopify, Klaviyo and more in seconds. Automatically aggregate your advertising, social, and ecommerce metrics into lightning-fast, pre-built analytics dashboards with custom KPI support.
                 </p>
             </div>
 
@@ -98,7 +98,7 @@
                                 type="submit"
                                 class="px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
                             >
-                                Join Alpha
+                                Join Now
                             </button>
                         </div>
                         
@@ -124,7 +124,7 @@
                             <p class="mt-3 text-red-500 text-sm font-medium">{{ session('error') }}</p>
                         @endif
                         <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
-                            Guaranteed early access for agencies and data teams. No credit card required.
+                            Start analyzing your marketing performance instantly. No credit card required.
                         </p>
                     </form>
                 @endif
@@ -151,7 +151,7 @@
                 <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
             </div>
             <div class="opacity-80">
-                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
+                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub (v1.0)
             </div>
         </div>
         
