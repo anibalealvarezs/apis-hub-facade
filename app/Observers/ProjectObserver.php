@@ -30,9 +30,16 @@ class ProjectObserver
         }
         
         if ($project->wasChanged('billing_profile_id')) {
-            // Need to sync the quantity of the old profile if it changed, 
-            // but the Project model doesn't load the old relation easily here.
-            // For now, we sync the new profile's quantity.
+            $oldProfileId = $project->getOriginal('billing_profile_id');
+            if ($oldProfileId) {
+                $oldProfile = BillingProfile::find($oldProfileId);
+                $this->syncSubscriptionQuantity($oldProfile);
+            }
+
+            $this->syncSubscriptionQuantity($project->billingProfile);
+        }
+
+        if ($project->wasChanged('billing_status') && !$project->wasChanged('billing_profile_id')) {
             $this->syncSubscriptionQuantity($project->billingProfile);
         }
     }
@@ -65,8 +72,9 @@ class ProjectObserver
             return;
         }
 
-        // Count all projects assigned to this billing profile
-        $count = $profile->projects()->count();
+        // Count only active projects assigned to this billing profile
+        // (pending/rejected/suspended projects should not affect billing)
+        $count = $profile->projects()->where('billing_status', 'active')->count();
         
         // Payment providers usually require a minimum quantity of 1
         $quantity = max(1, $count);
