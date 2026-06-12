@@ -22,6 +22,14 @@ class ViewSupportTicket extends ViewRecord
 
     public function reply()
     {
+        if (!$this->record->isReplyAllowed(auth()->user())) {
+            Notification::make()
+                ->title('You do not have permission to reply to this ticket.')
+                ->danger()
+                ->send();
+            return;
+        }
+
         if ($this->record->status === 'closed') {
             Notification::make()
                 ->title('This ticket is closed.')

@@ -331,17 +331,22 @@ class OAuthController extends Controller
                     $user = User::find($userId);
                     if (!$user) continue;
 
-                    $userProjects = $credentials->filter(fn ($c) => $c->project->user_id === $userId)
-                        ->pluck('project.name')
-                        ->implode(', ');
+                    $userProjects = $credentials->filter(fn ($c) => $c->project->user_id === $userId);
+                    $userProjectNames = $userProjects->pluck('project.name')->implode(', ');
+                    $userProjectIds = $userProjects->pluck('project.id')->toArray();
 
                     $ticket = SupportTicket::create([
                         'user_id' => $userId,
+                        'project_id' => count($userProjectIds) === 1 ? $userProjectIds[0] : null,
                         'type' => 'data_deletion',
                         'status' => 'started',
-                        'description' => "Facebook data deletion requested via Meta callback (FB user: {$fbUserId}). Affected projects: {$userProjects}.",
+                        'description' => "Facebook data deletion requested via Meta callback (FB user: {$fbUserId}). Affected projects: {$userProjectNames}.",
                         'external_ref' => $confirmationCode,
                     ]);
+
+                    if (count($userProjectIds) > 1) {
+                        $ticket->internalProjects()->sync($userProjectIds);
+                    }
 
                     TicketMessage::create([
                         'support_ticket_id' => $ticket->id,

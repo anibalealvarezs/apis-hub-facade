@@ -16,29 +16,31 @@
                     <dd class="text-sm font-medium">{{ $record->user?->name ?? '—' }} ({{ $record->user?->email ?? '—' }})</dd>
                 </div>
                 <div>
-                    <dt class="text-sm text-gray-500 dark:text-gray-400">Project</dt>
-                    <dd class="text-sm font-medium">{{ $record->project?->name ?? '—' }}</dd>
-                </div>
-                <div>
                     <dt class="text-sm text-gray-500 dark:text-gray-400">Status</dt>
                     <dd>
                         <x-filament::badge>{{ ucfirst(str_replace('_', ' ', $record->status)) }}</x-filament::badge>
                     </dd>
                 </div>
                 <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Project</dt>
+                    <dd class="text-sm font-medium">{{ $record->project?->name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Billing Profile</dt>
+                    <dd class="text-sm font-medium">{{ $record->billingProfile?->name ?? '—' }}</dd>
+                </div>
+                <div>
                     <dt class="text-sm text-gray-500 dark:text-gray-400">Created</dt>
                     <dd class="text-sm font-medium">{{ $record->created_at->format('M j, Y H:i') }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Closed At</dt>
+                    <dd class="text-sm font-medium">{{ $record->closed_at?->format('M j, Y H:i') ?? '—' }}</dd>
                 </div>
                 @if ($record->external_ref)
                 <div class="col-span-2">
                     <dt class="text-sm text-gray-500 dark:text-gray-400">External Reference</dt>
                     <dd class="text-sm font-mono">{{ $record->external_ref }}</dd>
-                </div>
-                @endif
-                @if ($record->closed_at)
-                <div>
-                    <dt class="text-sm text-gray-500 dark:text-gray-400">Closed At</dt>
-                    <dd class="text-sm font-medium">{{ $record->closed_at->format('M j, Y H:i') }}</dd>
                 </div>
                 @endif
             </dl>
@@ -48,6 +50,44 @@
                 <dd class="mt-1 text-sm whitespace-pre-wrap">{{ $record->description }}</dd>
             </div>
         </x-filament::section>
+
+        {{-- Internal Associations --}}
+        @if ($record->internalUsers->isNotEmpty() || $record->internalProjects->isNotEmpty() || $record->internalBillingProfiles->isNotEmpty())
+        <x-filament::section heading="Internal Associations">
+            <div class="grid grid-cols-3 gap-4">
+                @if ($record->internalUsers->isNotEmpty())
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400 mb-2">Related Users</dt>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach ($record->internalUsers as $u)
+                            <x-filament::badge>{{ $u->name }}</x-filament::badge>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+                @if ($record->internalProjects->isNotEmpty())
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400 mb-2">Related Projects</dt>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach ($record->internalProjects as $p)
+                            <x-filament::badge>{{ $p->name }}</x-filament::badge>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+                @if ($record->internalBillingProfiles->isNotEmpty())
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400 mb-2">Related Billing Profiles</dt>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach ($record->internalBillingProfiles as $bp)
+                            <x-filament::badge>{{ $bp->name }}</x-filament::badge>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+        </x-filament::section>
+        @endif
 
         {{-- Messages --}}
         <x-filament::section heading="Conversation">
@@ -73,7 +113,6 @@
         {{-- Reply Form --}}
         <x-filament::section heading="Reply">
             <form wire:submit="reply" class="space-y-3">
-                {{ $this->form }}
                 <div>
                     <textarea
                         wire:model="newMessage"

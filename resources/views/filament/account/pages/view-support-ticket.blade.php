@@ -1,5 +1,6 @@
 @php
     $messages = $this->getMessages();
+    $canReply = $this->record->isReplyAllowed(auth()->user());
 @endphp
 
 <x-filament-panels::page>
@@ -18,8 +19,16 @@
                     </dd>
                 </div>
                 <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Type</dt>
+                    <dd class="text-sm font-medium">{{ ucfirst(str_replace('_', ' ', $record->type)) }}</dd>
+                </div>
+                <div>
                     <dt class="text-sm text-gray-500 dark:text-gray-400">Project</dt>
                     <dd class="text-sm font-medium">{{ $record->project?->name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500 dark:text-gray-400">Billing Profile</dt>
+                    <dd class="text-sm font-medium">{{ $record->billingProfile?->name ?? '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-sm text-gray-500 dark:text-gray-400">Created</dt>
@@ -29,12 +38,6 @@
                     <dt class="text-sm text-gray-500 dark:text-gray-400">Closed At</dt>
                     <dd class="text-sm font-medium">{{ $record->closed_at?->format('M j, Y H:i') ?? '—' }}</dd>
                 </div>
-                @if ($record->external_ref)
-                <div class="col-span-2">
-                    <dt class="text-sm text-gray-500 dark:text-gray-400">External Reference</dt>
-                    <dd class="text-sm font-mono">{{ $record->external_ref }}</dd>
-                </div>
-                @endif
             </dl>
 
             <div class="mt-4">
@@ -65,7 +68,7 @@
         </x-filament::section>
 
         {{-- Reply Form --}}
-        @if ($record->status !== 'closed')
+        @if ($record->status !== 'closed' && $canReply)
         <x-filament::section heading="Reply">
             <form wire:submit="reply" class="space-y-3">
                 <div>
@@ -82,9 +85,9 @@
                 </x-filament::button>
             </form>
         </x-filament::section>
-        @else
+        @elseif ($record->status === 'closed')
         <x-filament::section heading="Reply">
-            <p class="text-sm text-gray-500 dark:text-gray-400">This ticket is closed. No further replies are accepted.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">This ticket is closed.</p>
         </x-filament::section>
         @endif
     </div>

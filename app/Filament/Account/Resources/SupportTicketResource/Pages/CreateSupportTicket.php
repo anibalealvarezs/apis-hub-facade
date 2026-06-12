@@ -14,6 +14,7 @@ class CreateSupportTicket extends CreateRecord
     {
         $data['user_id'] = auth()->id();
         $data['status'] = 'started';
+        unset($data['association_type']);
         return $data;
     }
 

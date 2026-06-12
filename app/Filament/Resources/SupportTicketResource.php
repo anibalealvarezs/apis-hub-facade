@@ -21,24 +21,82 @@ class SupportTicketResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['user', 'project']);
+        return parent::getEloquentQuery()
+            ->with(['user', 'project', 'billingProfile', 'internalUsers', 'internalProjects', 'internalBillingProfiles']);
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'started' => 'Started',
-                        'in_progress' => 'In Progress',
-                        'waiting_on_user' => 'Waiting on User',
-                        'closed' => 'Closed',
+                Forms\Components\Section::make('Ticket Details')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('User')
+                            ->relationship('user', 'name')
+                            ->searchable(['name', 'email'])
+                            ->required(),
+                        Forms\Components\Select::make('type')
+                            ->options([
+                                'data_deletion' => 'Data Deletion',
+                                'data_download' => 'Data Download',
+                                'general' => 'General Support',
+                            ])
+                            ->required(),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'started' => 'Started',
+                                'in_progress' => 'In Progress',
+                                'waiting_on_user' => 'Waiting on User',
+                                'closed' => 'Closed',
+                            ])
+                            ->required(),
+                        Forms\Components\Select::make('project_id')
+                            ->label('Associated Project')
+                            ->relationship('project', 'name')
+                            ->searchable(['name', 'subdomain'])
+                            ->preload()
+                            ->nullable(),
+                        Forms\Components\Select::make('billing_profile_id')
+                            ->label('Associated Billing Profile')
+                            ->relationship('billingProfile', 'name')
+                            ->searchable(['name'])
+                            ->preload()
+                            ->nullable(),
+                        Forms\Components\Textarea::make('description')
+                            ->required()
+                            ->maxLength(5000)
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('external_ref')
+                            ->label('External Reference')
+                            ->nullable()
+                            ->columnSpanFull(),
                     ])
-                    ->required(),
-                Forms\Components\Textarea::make('description')
-                    ->disabled()
-                    ->columnSpanFull(),
+                    ->columns(2),
+
+                Forms\Components\Section::make('Internal Associations')
+                    ->description('These are visible only to admins. Use to tag related records for filtering and context.')
+                    ->schema([
+                        Forms\Components\Select::make('internalUsers')
+                            ->label('Related Users')
+                            ->multiple()
+                            ->relationship('internalUsers', 'name')
+                            ->searchable(['name', 'email'])
+                            ->preload(),
+                        Forms\Components\Select::make('internalProjects')
+                            ->label('Related Projects')
+                            ->multiple()
+                            ->relationship('internalProjects', 'name')
+                            ->searchable(['name', 'subdomain'])
+                            ->preload(),
+                        Forms\Components\Select::make('internalBillingProfiles')
+                            ->label('Related Billing Profiles')
+                            ->multiple()
+                            ->relationship('internalBillingProfiles', 'name')
+                            ->searchable(['name'])
+                            ->preload(),
+                    ])
+                    ->columns(3),
             ]);
     }
 
@@ -57,6 +115,10 @@ class SupportTicketResource extends Resource
                     ->label('Project')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('billingProfile.name')
+                    ->label('Billing Profile')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -80,9 +142,14 @@ class SupportTicketResource extends Resource
                         'closed' => 'success',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('external_ref')
-                    ->label('External Ref')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('internalUsers.name')
+                    ->label('Internal Users')
+                    ->badge()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('internalProjects.name')
+                    ->label('Internal Projects')
+                    ->badge()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -106,6 +173,21 @@ class SupportTicketResource extends Resource
                         'data_download' => 'Data Download',
                         'general' => 'General',
                     ]),
+                Tables\Filters\SelectFilter::make('internalUsers')
+                    ->label('Internal User')
+                    ->relationship('internalUsers', 'name')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('internalProjects')
+                    ->label('Internal Project')
+                    ->relationship('internalProjects', 'name')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('internalBillingProfiles')
+                    ->label('Internal Billing Profile')
+                    ->relationship('internalBillingProfiles', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -120,9 +202,7 @@ class SupportTicketResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

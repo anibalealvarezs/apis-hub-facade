@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('project_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('billing_profile_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type');
             $table->string('status')->default('started');
             $table->text('description');

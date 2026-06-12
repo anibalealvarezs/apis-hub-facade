@@ -6,7 +6,6 @@ use App\Filament\Resources\SupportTicketResource;
 use App\Models\TicketMessage;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -43,7 +42,7 @@ class ViewSupportTicket extends ViewRecord
                 ->action(function (array $data) {
                     $this->record->update([
                         'status' => $data['status'],
-                        'closed_at' => $data['status'] === 'closed' ? now() : ($data['status'] !== 'closed' ? null : $this->record->closed_at),
+                        'closed_at' => $data['status'] === 'closed' ? now() : null,
                     ]);
 
                     TicketMessage::create([

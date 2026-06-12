@@ -24,8 +24,8 @@ class SupportTicketResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id())
-            ->with(['project', 'user']);
+            ->accessibleBy(auth()->user())
+            ->with(['project', 'billingProfile', 'user']);
     }
 
     public static function form(Form $form): Form
@@ -39,11 +39,36 @@ class SupportTicketResource extends Resource
                         'general' => 'General Support',
                     ])
                     ->required(),
+                Forms\Components\Select::make('association_type')
+                    ->label('Associate with')
+                    ->options([
+                        'none' => 'Nothing (Account-level request)',
+                        'project' => 'Project',
+                        'billing_profile' => 'Billing Profile',
+                    ])
+                    ->live()
+                    ->afterStateUpdated(function (callable $set) {
+                        $set('project_id', null);
+                        $set('billing_profile_id', null);
+                    }),
                 Forms\Components\Select::make('project_id')
-                    ->label('Project (optional)')
-                    ->relationship('project', 'name', fn (Builder $query) => $query->whereIn('id', auth()->user()->projects()->pluck('project_id')))
+                    ->label('Project')
+                    ->relationship('project', 'name', function (Builder $query) {
+                        $user = auth()->user();
+                        $query->where('user_id', $user->id)
+                            ->orWhereHas('users', fn (Builder $q) => $q->where('users.id', $user->id));
+                    })
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn (callable $get) => $get('association_type') === 'project'),
+                Forms\Components\Select::make('billing_profile_id')
+                    ->label('Billing Profile')
+                    ->relationship('billingProfile', 'name', function (Builder $query) {
+                        $query->where('user_id', auth()->id());
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn (callable $get) => $get('association_type') === 'billing_profile'),
                 Forms\Components\Textarea::make('description')
                     ->label('Describe your request')
                     ->required()
@@ -60,6 +85,9 @@ class SupportTicketResource extends Resource
                     ->label('#'),
                 Tables\Columns\TextColumn::make('project.name')
                     ->label('Project')
+                    ->placeholder('—'),
+                Tables\Columns\TextColumn::make('billingProfile.name')
+                    ->label('Billing Profile')
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
