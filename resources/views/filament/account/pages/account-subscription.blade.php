@@ -68,7 +68,7 @@
         <!-- Subscription Plan Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach ($plans as $plan)
-            <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
+            <div x-show="billingCycle === '{{ $plan->billing_cycle }}' || '{{ $plan->billing_cycle }}' === 'both'" class="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
