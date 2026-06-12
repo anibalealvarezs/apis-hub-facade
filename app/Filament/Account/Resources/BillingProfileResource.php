@@ -5,6 +5,7 @@ namespace App\Filament\Account\Resources;
 use App\Filament\Account\Resources\BillingProfileResource\Pages;
 use App\Filament\Account\Resources\BillingProfileResource\RelationManagers;
 use App\Models\BillingProfile;
+use App\Services\BillingLifecycleService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -112,6 +113,38 @@ class BillingProfileResource extends Resource
                     ->label('Projects')
                     ->counts('projects')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('quota')
+                    ->label('Quota')
+                    ->state(function (BillingProfile $record): string {
+                        $service = app(BillingLifecycleService::class);
+                        $maxProjects = $service->getMaxProjectsForTier($record->tier);
+                        $maxAccounts = $service->getMaxAccountsForTier($record->tier);
+                        $projectCount = $record->projects()->count();
+
+                        $assetCount = 0;
+                        foreach ($record->projects as $project) {
+                            $syncConfig = $project->sync_config ?? [];
+                            if (!is_array($syncConfig)) continue;
+
+                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+                            foreach ($syncConfig as $channelKey => $channelConfig) {
+                                if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+
+                                foreach ($assetKeys as $assetKey) {
+                                    $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
+                                    if (!is_array($assets)) continue;
+
+                                    foreach ($assets as $asset) {
+                                        if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                            $assetCount++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        return "P:{$projectCount}/{$maxProjects} A:{$assetCount}/{$maxAccounts}";
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
