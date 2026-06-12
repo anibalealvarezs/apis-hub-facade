@@ -47,7 +47,7 @@ class ProjectTransferMail extends Mailable
         return new Content(
             markdown: 'emails.project_transfer',
             with: [
-                'acceptUrl' => url('/app/transfers/' . $this->transfer->token . '/accept'),
+                'acceptUrl' => url('/app/transfers/' . $this->transfer->token . '/review'),
                 'fromUser' => $this->transfer->fromUser->name,
             ],
         );
