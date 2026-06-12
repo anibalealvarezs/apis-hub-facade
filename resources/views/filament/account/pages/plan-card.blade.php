@@ -38,7 +38,7 @@
                         <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
                         <input type="hidden" name="billing_cycle" value="{{ $cycle }}">
                         
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
                             <x-heroicon-o-credit-card class="w-4 h-4"/>
                             {{ __('Subscribe via PayPal') }}
                         </button>
@@ -53,10 +53,10 @@
                         <input type="hidden" name="billing_cycle" value="{{ $cycle }}">
                         
                         <div class="mb-3">
-                            <input type="text" name="coupon_code" class="w-full rounded-lg border-gray-300 dark:border-gray-800 dark:bg-gray-850 text-xs text-gray-900 dark:text-white" placeholder="{{ __('Promo Code (Optional)') }}">
+                            <input type="text" name="coupon_code" class="w-full rounded-lg border-gray-300 dark:border-gray-800 dark:bg-gray-800 text-xs text-gray-900 dark:text-white" placeholder="{{ __('Promo Code (Optional)') }}">
                         </div>
                         
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
                             <x-heroicon-o-credit-card class="w-4 h-4"/>
                             {{ __('Subscribe via Stripe') }}
                         </button>
