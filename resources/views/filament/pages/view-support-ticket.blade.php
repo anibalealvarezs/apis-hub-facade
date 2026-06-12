@@ -109,10 +109,8 @@
         </x-filament::section>
 
         {{-- Reply Form --}}
-        {{-- Temporarily removed to test if child component causes parent 419
         <x-filament::section heading="Reply">
             @livewire('ticket-reply-form', ['ticket' => $record, 'showStatusPrompt' => true], key('ticket-reply-' . $record->id))
         </x-filament::section>
-        --}}
     </div>
 </x-filament-panels::page>
