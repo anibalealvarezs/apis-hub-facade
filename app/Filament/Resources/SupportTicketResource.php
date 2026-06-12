@@ -40,6 +40,7 @@ class SupportTicketResource extends Resource
                             ->searchable()
                             ->allowHtml()
                             ->required()
+                            ->options(fn (Get $get) => static::getUserOptionsByIds($get('user_id') ? [$get('user_id')] : []))
                             ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live()
@@ -66,6 +67,7 @@ class SupportTicketResource extends Resource
                             ->options(fn (Get $get) => static::getProjectOptionsForUser($get('user_id')))
                             ->disabled(fn (Get $get) => blank($get('user_id')))
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('billing_profile_id', null))
+                            ->live()
                             ->nullable(),
                         Forms\Components\Select::make('billing_profile_id')
                             ->label('Associated Billing Profile')
@@ -74,6 +76,7 @@ class SupportTicketResource extends Resource
                             ->options(fn (Get $get) => static::getBillingProfileOptionsForUser($get('user_id')))
                             ->disabled(fn (Get $get) => blank($get('user_id')))
                             ->afterStateUpdated(fn (Forms\Set $set) => $set('project_id', null))
+                            ->live()
                             ->nullable(),
                         Forms\Components\Textarea::make('description')
                             ->required()
@@ -94,6 +97,7 @@ class SupportTicketResource extends Resource
                             ->multiple()
                             ->searchable()
                             ->allowHtml()
+                            ->options(fn (Get $get) => static::getUserOptionsByIds($get('internalUsers') ?? []))
                             ->getSearchResultsUsing(fn (string $search) => static::getUserSearchResults($search))
                             ->getOptionLabelUsing(fn ($value): ?string => static::getUserOptionLabel($value))
                             ->live(),
@@ -270,6 +274,20 @@ class SupportTicketResource extends Resource
             return null;
         }
         return "{$user->name} ({$user->email})";
+    }
+
+    private static function getUserOptionsByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        return User::whereIn('id', $ids)
+            ->get()
+            ->mapWithKeys(fn (User $user) => [
+                $user->id => static::formatUserOptionHtml($user),
+            ])
+            ->toArray();
     }
 
     private static function formatUserOptionHtml(User $user): string
