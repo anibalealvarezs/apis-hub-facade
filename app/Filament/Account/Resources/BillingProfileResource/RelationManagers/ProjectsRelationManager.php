@@ -10,7 +10,7 @@ use App\Models\Project;
 class ProjectsRelationManager extends RelationManager
 {
     protected static string $relationship = 'projects';
-    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
     {
         return __('Associated Projects');
     }

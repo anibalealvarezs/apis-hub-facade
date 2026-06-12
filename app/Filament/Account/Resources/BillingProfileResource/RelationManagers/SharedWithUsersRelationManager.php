@@ -14,8 +14,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -23,14 +21,12 @@ class SharedWithUsersRelationManager extends RelationManager
 {
     protected static string $relationship = 'sharedWithUsers';
 
-    
-    
     protected static ?string $recordTitleAttribute = 'email';
-    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+
+    public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
     {
         return __('Shared Users');
     }
-
 
     public function form(Form $form): Form
     {
@@ -80,7 +76,7 @@ class SharedWithUsersRelationManager extends RelationManager
                     ])
                     ->action(function (array $data, $livewire) {
                         $profile = $livewire->ownerRecord;
-                        
+
                         // Check if already shared
                         $alreadyShared = $profile->sharedWithUsers()->where('users.email', $data['email'])->exists();
                         if ($alreadyShared) {
@@ -88,6 +84,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                 ->title(__('User is already sharing this profile.'))
                                 ->warning()
                                 ->send();
+
                             return;
                         }
 
@@ -96,12 +93,13 @@ class SharedWithUsersRelationManager extends RelationManager
                             ->where('email', $data['email'])
                             ->where('status', 'pending')
                             ->exists();
-                            
+
                         if ($alreadyInvited) {
                             Notification::make()
                                 ->title(__('User already has a pending invitation.'))
                                 ->warning()
                                 ->send();
+
                             return;
                         }
 
@@ -154,7 +152,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                 ->where('id', '!=', $profile->id)
                                 ->first();
 
-                            if (!$targetProfile) {
+                            if (! $targetProfile) {
                                 $targetProfile = $record->billingProfiles()
                                     ->where('id', '!=', $profile->id)
                                     ->first();
@@ -174,6 +172,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                         'is_active' => true,
                                     ]);
                                     $reassigned[] = ['id' => $project->id, 'name' => $project->name];
+
                                     continue;
                                 }
                             }
@@ -188,7 +187,7 @@ class SharedWithUsersRelationManager extends RelationManager
 
                         $profile->sharedWithUsers()->detach($record->id);
 
-                        if (!empty($reassigned) || !empty($suspended)) {
+                        if (! empty($reassigned) || ! empty($suspended)) {
                             $record->notify(new BillingAccessRevokedNotification(
                                 billingProfileName: $profile->name,
                                 reassignedProjects: $reassigned,
@@ -229,7 +228,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                         ->where('id', '!=', $profile->id)
                                         ->first();
 
-                                    if (!$targetProfile) {
+                                    if (! $targetProfile) {
                                         $targetProfile = $user->billingProfiles()
                                             ->where('id', '!=', $profile->id)
                                             ->first();
@@ -249,6 +248,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                                 'is_active' => true,
                                             ]);
                                             $reassigned[] = ['id' => $project->id, 'name' => $project->name];
+
                                             continue;
                                         }
                                     }
@@ -261,7 +261,7 @@ class SharedWithUsersRelationManager extends RelationManager
                                     $suspended[] = ['id' => $project->id, 'name' => $project->name];
                                 }
 
-                                if (!empty($reassigned) || !empty($suspended)) {
+                                if (! empty($reassigned) || ! empty($suspended)) {
                                     $user->notify(new BillingAccessRevokedNotification(
                                         billingProfileName: $profile->name,
                                         reassignedProjects: $reassigned,
