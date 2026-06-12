@@ -47,7 +47,7 @@
             </button>
         </div>
 
-        <main class="relative flex flex-col items-center justify-center min-h-screen px-6 py-12 text-center lg:px-8">
+        <main class="relative flex flex-col items-center justify-center min-h-screen px-6 py-12 pb-32 text-center lg:px-8">
             
             <!-- Branding Header -->
             <div class="mb-10">
@@ -66,11 +66,11 @@
             </div>
 
             <!-- ... Hero Headline ... -->
-            <div class="max-w-3xl mx-auto mb-10">
+            <div class="max-w-4xl mx-auto mb-10">
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
                     {{ __('Start for Free') }}
                 </span>
-                <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
+                <h1 id="main-headline" class="text-5xl font-extrabold sm:text-6xl lg:text-7xl xl:text-8xl unicorn-title mb-6">
                     {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
                 </h1>
                 <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
@@ -150,7 +150,7 @@
         </main>
 
         <!-- Dynamic Footer / Micro Branding: Robust Spacing -->
-        <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
+        <div class="absolute bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
             <div class="flex items-center justify-center opacity-70">
                 <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
                 <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
