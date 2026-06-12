@@ -77,6 +77,8 @@ class PendingInvitationsTable extends Component implements HasForms, HasTable
                             ->success()
                             ->title("{$user->name} has been approved and added to the project.")
                             ->send();
+
+                        $this->dispatch('member-approved');
                     }),
                 Action::make('resend')
                     ->label('Resend')
