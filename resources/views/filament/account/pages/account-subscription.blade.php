@@ -12,7 +12,7 @@
 
     <!-- Profile Selector Header -->
     <div
-        class="mb-6 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        class="mb-6 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row md:items-center gap-4">
         <div>
             <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Billing & Subscription Manager') }}</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Select a billing profile to manage its subscription tier and payments.') }}</p>
@@ -36,7 +36,7 @@
     @if($profile)
         <!-- Current Profile Status Card -->
         <div
-            class="mb-8 p-6 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            class="mb-8 p-6 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <span
                     class="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 dark:bg-white/10 text-white px-2.5 py-1 rounded-full">{{ __('Active Profile') }}</span>
