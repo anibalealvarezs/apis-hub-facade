@@ -33,7 +33,9 @@ class AppServiceProvider extends ServiceProvider
         \Livewire\Livewire::setUpdateRoute(function ($handle) {
             return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
                 try {
-                    return $handle($request);
+                    // Resolve from container so non-static handleUpdate() is called on the instance
+                    [$class, $method] = $handle;
+                    return app($class)->{$method}($request);
                 } catch (\TypeError $e) {
                     \Illuminate\Support\Facades\Log::error('Livewire TypeError in update', [
                         'message' => $e->getMessage(),
