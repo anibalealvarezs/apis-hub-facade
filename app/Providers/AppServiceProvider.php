@@ -29,18 +29,29 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Diagnostic: verify boot() runs
+        error_log('[LIVEWIRE_DEBUG] AppServiceProvider::boot() started');
+        \Illuminate\Support\Facades\Log::warning('[LIVEWIRE_DEBUG] AppServiceProvider::boot() logging test');
+
         // Wrap Livewire update handler to log TypeErrors before Livewire swallows them
         \Livewire\Livewire::setUpdateRoute(function ($handle) {
+            error_log('[LIVEWIRE_DEBUG] setUpdateRoute callback invoked');
             return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
-                \Illuminate\Support\Facades\Log::warning('Livewire route wrapper invoked', ['url' => $request->fullUrl()]);
+                error_log('[LIVEWIRE_DEBUG] Route handler invoked: ' . $request->fullUrl());
                 try {
                     [$class, $method] = $handle;
                     return app($class)->{$method}($request);
-                } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
-                    // Re-throw HTTP exceptions (abort, redirect) without interference
+                } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                    // Log the 419 and include the previous exception (if any)
+                    \Illuminate\Support\Facades\Log::warning('Livewire returned 419 from handler', [
+                        'status' => $e->getStatusCode(),
+                        'previous' => $e->getPrevious() ? get_class($e->getPrevious()) . ': ' . $e->getPrevious()->getMessage() : null,
+                    ]);
                     throw $e;
-                } catch (\TypeError $e) {
-                    \Illuminate\Support\Facades\Log::error('Livewire TypeError in update (caught in wrapper before abort)', [
+                } catch (\Throwable $e) {
+                    error_log('[LIVEWIRE_DEBUG] Unhandled exception: ' . get_class($e) . ': ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Livewire unhandled exception', [
+                        'class' => get_class($e),
                         'message' => $e->getMessage(),
                         'file' => $e->getFile(),
                         'line' => $e->getLine(),
