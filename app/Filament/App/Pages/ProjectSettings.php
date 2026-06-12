@@ -5,11 +5,11 @@ namespace App\Filament\App\Pages;
 use App\Models\ProjectTransfer;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Facades\Filament;
 use Illuminate\Support\Str;
 
 class ProjectSettings extends Page
@@ -36,40 +36,42 @@ class ProjectSettings extends Page
 
     /**
      * Asegura que solo el propietario (trueOwner) pueda ver esta página.
-     * Aunque los administradores también podrían ver configuraciones, 
+     * Aunque los administradores también podrían ver configuraciones,
      * por ahora la restringiremos o limitaremos sus acciones.
      */
     public static function canAccess(): bool
     {
         $project = Filament::getTenant();
+
         // Permitimos acceso, pero restringiremos las acciones internamente
-        return true; 
+        return true;
     }
 
     private function getProject(): ?\App\Models\Project
     {
         $project = Filament::getTenant();
-        if (!$project) {
+        if (! $project) {
             $subdomain = request()->route('tenant') ?? request()->tenant;
             if ($subdomain) {
                 $project = \App\Models\Project::where('subdomain', $subdomain)->first();
             }
-            if (!$project) {
+            if (! $project) {
                 $project = \App\Models\Project::first();
             }
         }
+
         return $project;
     }
 
     protected function getHeaderActions(): array
     {
         $project = $this->getProject();
-        if (!$project) {
+        if (! $project) {
             return [];
         }
         $user = auth()->user();
 
-        $isSuspended = !$project->is_active || $project->billing_status === 'suspended';
+        $isSuspended = ! $project->is_active || $project->billing_status === 'suspended';
         $actions = [];
 
         $actions[] = Action::make('unsuspend')
@@ -81,20 +83,21 @@ class ProjectSettings extends Page
             ->modalHeading(__('Attempt to Reactivate Project'))
             ->modalDescription(__('The system will verify if your current billing plan has available quota to reactivate this project.'))
             ->action(function () use ($project) {
-                if (!$project->billing_profile_id) {
+                if (! $project->billing_profile_id) {
                     Notification::make()
                         ->title(__('No Billing Profile'))
                         ->body(__('This project has no assigned billing profile. Please assign one in the billing settings.'))
                         ->danger()
                         ->persistent()
                         ->send();
+
                     return;
                 }
 
                 $billingService = app(\App\Services\BillingLifecycleService::class);
                 $profile = $project->billingProfile;
                 $maxProjects = $billingService->getMaxProjectsForTier($profile->tier);
-                
+
                 $activeCount = $profile->projects()->where('billing_status', 'active')->count();
 
                 if ($activeCount >= $maxProjects) {
@@ -104,6 +107,7 @@ class ProjectSettings extends Page
                         ->danger()
                         ->persistent()
                         ->send();
+
                     return;
                 }
 
@@ -122,7 +126,7 @@ class ProjectSettings extends Page
                     ->body(__('The project has been reactivated. Infrastructure is booting up in the background.'))
                     ->success()
                     ->send();
-                
+
                 return redirect(request()->header('Referer'));
             });
 
@@ -168,18 +172,19 @@ class ProjectSettings extends Page
             ->modalHeading(__('Deploy Infrastructure'))
             ->modalDescription(__('This will provision the container and database on the remote server. Are you sure you want to continue?'))
             ->action(function () use ($project) {
-                if (!$project->hasConfiguredAssets()) {
+                if (! $project->hasConfiguredAssets()) {
                     Notification::make()
                         ->title(__('Cannot deploy'))
                         ->body(__('You cannot deploy infrastructure without configuring at least one asset to sync in Data Sources.'))
                         ->danger()
                         ->persistent()
                         ->send();
+
                     return redirect(request()->header('Referer'));
                 }
 
                 \App\Jobs\DeployProjectJob::dispatch($project);
-                
+
                 Notification::make()
                     ->title(__('Deployment Initiated'))
                     ->body(__('Infrastructure is being provisioned in the background. This may take a couple of minutes.'))
@@ -194,24 +199,25 @@ class ProjectSettings extends Page
             ->color('success')
             ->icon('heroicon-o-cloud-arrow-up')
             ->disabled($isSuspended)
-            ->visible(fn () => $user->can('deploy_project') && !is_null($project->last_deployed_at))
+            ->visible(fn () => $user->can('deploy_project') && ! is_null($project->last_deployed_at))
             ->requiresConfirmation()
             ->modalHeading(__('Redeploy Infrastructure'))
             ->modalDescription(__('This will rebuild the remote containers to apply any environment changes. Continue?'))
             ->action(function () use ($project) {
-                if (!$project->hasConfiguredAssets()) {
+                if (! $project->hasConfiguredAssets()) {
                     Notification::make()
                         ->title(__('Cannot deploy'))
                         ->body(__('You cannot deploy infrastructure without configuring at least one asset to sync in Data Sources.'))
                         ->danger()
                         ->persistent()
                         ->send();
+
                     return redirect(request()->header('Referer'));
                 }
 
                 // Mark as redeploying immediately (before the queued job picks up)
                 $project->update([
-                    'health_status'    => 'redeploying',
+                    'health_status' => 'redeploying',
                     'deploy_started_at' => now(),
                 ]);
 
@@ -232,18 +238,21 @@ class ProjectSettings extends Page
                 ->icon('heroicon-o-arrows-right-left')
                 ->disabled($isSuspended)
                 ->visible(function () use ($user, $project) {
-                    if (!$user->can('transfer_project')) return false;
+                    if (! $user->can('transfer_project')) {
+                        return false;
+                    }
                     $hasPending = \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
                         ->exists();
-                    return !$hasPending;
+
+                    return ! $hasPending;
                 })
                 ->requiresConfirmation()
                 ->modalHeading(__('Transfer Project'))
                 ->modalDescription(__('Select an active collaborator of this project to transfer absolute ownership.'))
                 ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($project) {
                     $hasCollaborators = $project->users()->where('users.id', '!=', auth()->id())->count() > 0;
-                    if (!$hasCollaborators) {
+                    if (! $hasCollaborators) {
                         $action->hidden();
                     }
                 })
@@ -281,12 +290,12 @@ class ProjectSettings extends Page
                         ->required()
                         ->options(function (\Filament\Forms\Get $get) use ($project) {
                             $bp = $project->billingProfile;
-                            if (!$bp) {
+                            if (! $bp) {
                                 return ['keep_bp' => __('No billing profile (Project is already inactive)')];
                             }
-                            
+
                             $toUserId = $get('to_user_id');
-                            if (!$toUserId) {
+                            if (! $toUserId) {
                                 return [];
                             }
 
@@ -297,7 +306,7 @@ class ProjectSettings extends Page
                                     'remove_bp' => __('Unlink my billing profile (Recommended)'),
                                 ];
                             }
-                            
+
                             // If Receiver owns the BP
                             if ($bp->user_id == $toUserId) {
                                 return [
@@ -319,14 +328,17 @@ class ProjectSettings extends Page
                         })
                         ->afterStateHydrated(function (\Filament\Forms\Components\Radio $component, \Filament\Forms\Get $get) use ($project) {
                             $bp = $project->billingProfile;
-                            if (!$bp) {
+                            if (! $bp) {
                                 $component->state('keep_bp');
                                 $component->disabled();
+
                                 return;
                             }
                             $toUserId = $get('to_user_id');
-                            if (!$toUserId) return;
-                            
+                            if (! $toUserId) {
+                                return;
+                            }
+
                             if ($bp->user_id == $toUserId) {
                                 $component->state('keep_bp');
                                 $component->disabled();
@@ -344,9 +356,10 @@ class ProjectSettings extends Page
                 ])
                 ->action(function (array $data) use ($project) {
                     $toUser = User::find($data['to_user_id']);
-                    
-                    if (!$toUser) {
+
+                    if (! $toUser) {
                         Notification::make()->title(__('User not found'))->danger()->send();
+
                         return;
                     }
 
@@ -383,7 +396,10 @@ class ProjectSettings extends Page
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->visible(function () use ($user, $project) {
-                    if (!$user->can('transfer_project')) return false;
+                    if (! $user->can('transfer_project')) {
+                        return false;
+                    }
+
                     return \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
                         ->exists();
@@ -395,7 +411,7 @@ class ProjectSettings extends Page
                     $transfer = \App\Models\ProjectTransfer::where('project_id', $project->id)
                         ->where('status', 'pending')
                         ->first();
-                        
+
                     if ($transfer) {
                         $transfer->update(['status' => 'cancelled']);
                         // TODO: Enviar correo al destinatario notificando la cancelación
@@ -459,12 +475,12 @@ class ProjectSettings extends Page
     protected function getViewData(): array
     {
         $project = $this->getProject();
-        if (!$project) {
+        if (! $project) {
             return [
                 'logs' => collect(),
             ];
         }
-        
+
         return [
             'logs' => $project->deploymentLogs()->latest()->take(5)->get(),
         ];

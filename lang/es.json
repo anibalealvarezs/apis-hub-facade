@@ -935,5 +935,7 @@
     "My Account": "Mi Cuenta",
     "Logout": "Cerrar Sesión",
     "No projects found matching your criteria.": "No se encontraron proyectos que coincidan con sus criterios.",
-    "Search by name, ID, or integration status...": "Busque por nombre, ID o estado de integración..."
+    "Search by name, ID, or integration status...": "Busque por nombre, ID o estado de integración...",
+    "Project Owner": "Propietario del Proyecto",
+    "Project owner": "Propietario del proyecto"
 }
