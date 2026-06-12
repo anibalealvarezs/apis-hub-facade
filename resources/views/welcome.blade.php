@@ -66,11 +66,11 @@
             </div>
 
             <!-- ... Hero Headline ... -->
-            <div class="max-w-4xl mx-auto mb-10">
+            <div class="max-w-5xl mx-auto mb-10">
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
                     {{ __('Start for Free') }}
                 </span>
-                <h1 id="main-headline" class="text-5xl font-extrabold sm:text-6xl lg:text-7xl xl:text-8xl unicorn-title mb-6">
+                <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
                     {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
                 </h1>
                 <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
@@ -105,7 +105,7 @@
                             <button 
                                 id="submit-button"
                                 type="submit"
-                                class="px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
+                                class="whitespace-nowrap px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
                             >
                                 {{ __('Join Now') }}
                             </button>
