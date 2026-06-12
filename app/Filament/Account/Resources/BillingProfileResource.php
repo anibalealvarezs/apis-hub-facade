@@ -117,7 +117,8 @@ class BillingProfileResource extends Resource
                     ->label('Shared with')
                     ->counts('sharedWithUsers'),
                 Tables\Columns\TextColumn::make('quota')
-                    ->label('Quota')
+                    ->label('Usage')
+                    ->html()
                     ->state(function (BillingProfile $record): string {
                         $service = app(BillingLifecycleService::class);
                         $maxProjects = $service->getMaxProjectsForTier($record->tier);
@@ -146,7 +147,29 @@ class BillingProfileResource extends Resource
                             }
                         }
 
-                        return "P:{$projectCount}/{$maxProjects} A:{$assetCount}/{$maxAccounts}";
+                        $pct = fn ($used, $max) => $max > 0 ? round(($used / $max) * 100) : 0;
+                        $color = fn ($p) => $p >= 90 ? '#ef4444' : ($p >= 70 ? '#f59e0b' : '#22c55e');
+
+                        $pPct = $pct($projectCount, $maxProjects);
+                        $aPct = $pct($assetCount, $maxAccounts);
+
+                        return '
+                            <div class="text-xs leading-relaxed whitespace-nowrap">
+                                <div class="flex items-center gap-1.5 mb-0.5">
+                                    <span class="font-semibold w-16">Projects</span>
+                                    <span class="text-gray-500 dark:text-gray-400">' . $projectCount . '/' . $maxProjects . '</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                    <div style="width:' . $pPct . '%;height:100%;background:' . $color($pPct) . ';border-radius:9999px;transition:width .3s"></div>
+                                </div>
+                                <div class="flex items-center gap-1.5 mt-1.5 mb-0.5">
+                                    <span class="font-semibold w-16">Accounts</span>
+                                    <span class="text-gray-500 dark:text-gray-400">' . $assetCount . '/' . $maxAccounts . '</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                    <div style="width:' . $aPct . '%;height:100%;background:' . $color($aPct) . ';border-radius:9999px;transition:width .3s"></div>
+                                </div>
+                            </div>';
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
