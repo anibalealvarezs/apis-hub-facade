@@ -13,7 +13,7 @@ class LandingController extends Controller
     /**
      * Show the landing page with obfuscated portal links.
      */
-    public function index(Request $request)
+    public function index(Request $request, $locale = null)
     {
         $host = $request->getHost();
         $mainDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? config('app.network_domain', 'apis-hub.cloud');
@@ -25,10 +25,20 @@ class LandingController extends Controller
             // 2. Verificamos si es un proyecto válido en la DB
             $projectExists = \App\Models\Project::where('subdomain', $subdomain)->exists();
 
-            // 3. Si el proyecto NO existe (fue borrado/archivado), lo mandamos a la home principal
             if (!$projectExists) {
                 return redirect()->away("https://{$mainDomain}");
             }
+        }
+
+        // Enforce locale based on route for SEO purposes
+        if ($locale === 'es') {
+            app()->setLocale('es');
+            session()->put('locale', 'es');
+        } else {
+            app()->setLocale('en');
+            // We do not overwrite session if it's en, or we can, 
+            // but for SEO strictness / is always en
+            session()->put('locale', 'en');
         }
 
         $gtmId = config('services.gtm.id');

@@ -3,11 +3,15 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
-        <title>APIs Hub | Unified Marketing Analytics & Dashboards</title>
+        <title>APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}</title>
         <meta name="description" content="Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.">
         <meta name="keywords" content="marketing analytics, unified dashboards, social media metrics, ecommerce data, data aggregation, custom KPIs, apis hub">
         <meta name="robots" content="index, follow">
         <meta name="author" content="APIs Hub Network">
+
+        <link rel="alternate" hreflang="en" href="{{ url('/') }}" />
+        <link rel="alternate" hreflang="es" href="{{ url('/es') }}" />
+        <link rel="alternate" hreflang="x-default" href="{{ url('/') }}" />
 
         <!-- Use Vite for Assets (CSS, Global JS, Theme Init) -->
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
@@ -59,13 +63,13 @@
             <!-- ... Hero Headline ... -->
             <div class="max-w-3xl mx-auto mb-10">
                 <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold tracking-wider text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/30 rounded-full animate-bounce">
-                    Early Access Open
+                    {{ __('Early Access Open') }}
                 </span>
                 <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
-                    All Your Data.<br>One Unified Dashboard.
+                    {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
                 </h1>
                 <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
-                    Connect Meta, Google, Shopify, Klaviyo and more in seconds. Automatically aggregate your advertising, social, and ecommerce metrics into lightning-fast, pre-built analytics dashboards with custom KPI support.
+                    {{ __('Connect Meta, Google, Shopify, Klaviyo and more in seconds. Automatically aggregate your advertising, social, and ecommerce metrics into lightning-fast, pre-built analytics dashboards with custom KPI support.') }}
                 </p>
             </div>
 
@@ -89,7 +93,7 @@
                                 type="email" 
                                 name="email" 
                                 required 
-                                placeholder="name@agency.com"
+                                placeholder="{{ __('name@agency.com') }}"
                                 class="flex-grow px-5 py-4 text-lg bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400"
                                 value="{{ old('email') }}"
                             >
@@ -98,7 +102,7 @@
                                 type="submit"
                                 class="px-8 py-4 text-white font-bold bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense"
                             >
-                                Join Now
+                                {{ __('Join Now') }}
                             </button>
                         </div>
                         
@@ -124,7 +128,7 @@
                             <p class="mt-3 text-red-500 text-sm font-medium">{{ session('error') }}</p>
                         @endif
                         <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
-                            Start analyzing your marketing performance instantly. No credit card required.
+                            {{ __('Start analyzing your marketing performance instantly. No credit card required.') }}
                         </p>
                     </form>
                 @endif
@@ -132,7 +136,7 @@
 
             <!-- Portals Link (Internal / Admin / Documentation) -->
             <div class="flex gap-4 sm:gap-8 justify-center items-center mt-4">
-                <span data-portal="{{ $portals['app'] }}" class="js-portal-link px-8 py-3 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">Start for Free</span>
+                <span data-portal="{{ $portals['app'] }}" class="js-portal-link px-8 py-3 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">{{ __('Start for Free') }}</span>
                 {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
                 {{-- <span data-portal="{{ $portals['admin'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4 cursor-pointer">Admin Console</span> --}}
                 {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
@@ -144,14 +148,19 @@
         <!-- Dynamic Footer / Micro Branding: Robust Spacing -->
         <div class="fixed bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
             <div class="flex items-center justify-center opacity-70">
-                <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Privacy</a>
+                <a href="{{ route('landing.index') }}" class="mx-4 pointer-events-auto hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : '' }}">EN</a>
+                <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span>
+                <a href="{{ route('landing.index', ['locale' => 'es']) }}" class="mx-4 pointer-events-auto hover:text-brand-blue transition-colors {{ app()->getLocale() === 'es' ? 'text-brand-blue' : '' }}">ES</a>
+            </div>
+            <div class="flex items-center justify-center opacity-70">
+                <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
                 <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
-                <a href="/tos" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Terms</a>
+                <a href="/tos" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
                 <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full"></span>
-                <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">Data Deletion</a>
+                <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
             </div>
             <div class="opacity-80">
-                Engineered by <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub (v1.0)
+                {{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub (v1.0)
             </div>
         </div>
         

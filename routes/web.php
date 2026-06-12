@@ -6,7 +6,9 @@ Route::get('/debug-saas', function () {
     return 'Server is responding!';
 });
 
-Route::get('/', [\App\Http\Controllers\LandingController::class, 'index']);
+Route::get('/{locale?}', [\App\Http\Controllers\LandingController::class, 'index'])
+    ->where('locale', 'es')
+    ->name('landing.index');
 
 Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subscribe'])
     ->middleware(\App\Http\Middleware\VerifyReCaptcha::class)
