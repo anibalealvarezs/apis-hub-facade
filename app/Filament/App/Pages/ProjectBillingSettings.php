@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\BillingProfile;
+use App\Notifications\BillingProfileAssignmentRequestedNotification;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Pages\Page;
@@ -116,6 +117,12 @@ class ProjectBillingSettings extends Page
                         ->body(__('The billing profile owner must approve this request before it can be activated.'))
                         ->warning()
                         ->send();
+
+                    $profile->user->notify(new BillingProfileAssignmentRequestedNotification(
+                        billingProfile: $profile,
+                        project: $project,
+                        requesterName: auth()->user()->name,
+                    ));
                 }
             });
     }

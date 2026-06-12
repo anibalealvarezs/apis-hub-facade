@@ -2,6 +2,7 @@
 
 namespace App\Filament\Account\Widgets;
 
+use App\Notifications\BillingProfileAssignmentProcessedNotification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -66,19 +67,33 @@ class BillingRequestsWidget extends BaseWidget
                             'billing_status' => 'active',
                             'is_active' => true,
                         ]);
+
+                        $record->user->notify(new BillingProfileAssignmentProcessedNotification(
+                            billingProfile: $profile ?? $record->billingProfile,
+                            project: $record,
+                            status: 'approved',
+                        ));
                     }),
                 Tables\Actions\Action::make('reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->requiresConfirmation()
                     ->action(function (Project $record) {
-                        // Reset the project billing profile to recipient's default FREE profile
+                        $originalProfile = $record->billingProfile;
                         $defaultProfile = $record->user->billingProfiles()->where('is_default', true)->first();
                         $record->update([
                             'billing_profile_id' => $defaultProfile?->id,
                             'billing_status' => 'suspended',
                             'is_active' => false,
                         ]);
+
+                        if ($originalProfile) {
+                            $record->user->notify(new BillingProfileAssignmentProcessedNotification(
+                                billingProfile: $originalProfile,
+                                project: $record,
+                                status: 'rejected',
+                            ));
+                        }
                     }),
             ])
             ->emptyStateHeading('No pending requests')
