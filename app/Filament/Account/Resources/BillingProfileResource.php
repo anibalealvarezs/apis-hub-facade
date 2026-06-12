@@ -20,8 +20,13 @@ class BillingProfileResource extends Resource
     protected static ?string $model = BillingProfile::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Payments');
+    }
+
     
-    protected static ?string $navigationGroup = 'Billing & Payments';
+    
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {

@@ -23,9 +23,14 @@ class SharedWithUsersRelationManager extends RelationManager
 {
     protected static string $relationship = 'sharedWithUsers';
 
-    protected static ?string $title = 'Shared Users';
+    
     
     protected static ?string $recordTitleAttribute = 'email';
+    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Shared Users');
+    }
+
 
     public function form(Form $form): Form
     {

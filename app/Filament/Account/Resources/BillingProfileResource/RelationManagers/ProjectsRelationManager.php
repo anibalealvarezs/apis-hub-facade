@@ -10,8 +10,13 @@ use App\Models\Project;
 class ProjectsRelationManager extends RelationManager
 {
     protected static string $relationship = 'projects';
+    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Associated Projects');
+    }
 
-    protected static ?string $title = 'Associated Projects';
+
+    
 
     public function table(Table $table): Table
     {

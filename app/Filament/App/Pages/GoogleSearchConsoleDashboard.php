@@ -11,8 +11,18 @@ class GoogleSearchConsoleDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?string $navigationGroup = 'Google';
-    protected static ?string $navigationLabel = 'Google Search Console';
+    public static function getNavigationLabel(): string
+    {
+        return __('Google Search Console');
+    }
+
+    
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Google');
+    }
+
     public function getTitle(): string
     {
         return __('Performance on Google Search results');

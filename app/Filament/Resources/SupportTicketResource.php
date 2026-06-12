@@ -20,8 +20,13 @@ class SupportTicketResource extends Resource
     protected static ?string $model = SupportTicket::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Support');
+    }
 
-    protected static ?string $navigationGroup = 'Support';
+
+    
 
     public static function getEloquentQuery(): Builder
     {

@@ -10,8 +10,18 @@ class FacebookOrganicDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?string $navigationGroup = 'Meta';
-    protected static ?string $navigationLabel = 'Facebook Organic';
+    public static function getNavigationLabel(): string
+    {
+        return __('Facebook Organic');
+    }
+
+    
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Meta');
+    }
+
 
     public function getTitle(): string
     {

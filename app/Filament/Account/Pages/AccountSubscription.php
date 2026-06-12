@@ -12,8 +12,13 @@ class AccountSubscription extends Page
     protected static ?string $navigationIcon = 'heroicon-o-star';
 
     protected static string $view = 'filament.account.pages.account-subscription';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Payments');
+    }
 
-    protected static ?string $navigationGroup = 'Billing & Payments';
+
+    
 
     public function getTitle(): string
     {

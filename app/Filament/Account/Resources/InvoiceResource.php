@@ -16,8 +16,13 @@ class InvoiceResource extends Resource
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Payments');
+    }
 
-    protected static ?string $navigationGroup = 'Billing & Payments';
+
+    
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {

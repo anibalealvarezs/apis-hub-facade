@@ -18,8 +18,13 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('SaaS Management');
+    }
 
-    protected static ?string $navigationGroup = 'SaaS Management';
+
+    
 
     public static function form(Form $form): Form
     {

@@ -816,5 +816,15 @@
     "Servers available for deployment": "Servidores disponibles para despliegue",
     "Instances requiring attention": "Instancias que requieren atención",
     "Projects with the Most Assets": "Proyectos con Más Activos",
-    "Top 10 active projects ranked by the number of enabled integration assets.": "Los 10 proyectos activos principales clasificados por el número de activos de integración habilitados."
+    "Top 10 active projects ranked by the number of enabled integration assets.": "Los 10 proyectos activos principales clasificados por el número de activos de integración habilitados.",
+    "SaaS Management": "Gestión SaaS",
+    "Support": "Soporte",
+    "Infrastructure": "Infraestructura",
+    "Billing & Payments": "Facturación y Pagos",
+    "Account": "Cuenta",
+    "System Configuration": "Configuración del Sistema",
+    "Meta": "Meta",
+    "Google": "Google",
+    "Payment Methods": "Métodos de Pago",
+    "Configure Payment Methods": "Configurar Métodos de Pago"
 }

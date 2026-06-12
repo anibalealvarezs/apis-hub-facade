@@ -10,11 +10,26 @@ use Filament\Pages\SettingsPage;
 class ManagePaymentSettings extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
-    protected static ?string $navigationGroup = 'Configuración del Sistema';
-    protected static ?string $navigationLabel = 'Métodos de Pago';
-    protected static ?string $title = 'Configurar Métodos de Pago';
+    
+    
+    
 
     protected static string $settings = PaymentSettings::class;
+    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Configure Payment Methods');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Payment Methods');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('System Configuration');
+    }
+
 
     public function form(Form $form): Form
     {

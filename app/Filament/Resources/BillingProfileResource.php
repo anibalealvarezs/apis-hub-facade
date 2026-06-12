@@ -17,10 +17,20 @@ class BillingProfileResource extends Resource
     protected static ?string $model = BillingProfile::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    public static function getNavigationLabel(): string
+    {
+        return __('Billing Profiles');
+    }
 
-    protected static ?string $navigationGroup = 'Infrastructure';
 
-    protected static ?string $navigationLabel = 'Billing Profiles';
+    
+
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Infrastructure');
+    }
+
 
     public static function form(Form $form): Form
     {

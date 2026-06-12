@@ -17,10 +17,20 @@ class ApisHubReleaseResource extends Resource
     protected static ?string $model = ApisHubRelease::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
+    public static function getNavigationLabel(): string
+    {
+        return __('APIs Hub Releases');
+    }
 
-    protected static ?string $navigationGroup = 'Infrastructure';
 
-    protected static ?string $navigationLabel = 'APIs Hub Releases';
+    
+
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Infrastructure');
+    }
+
 
     public static function form(Form $form): Form
     {
