@@ -113,6 +113,9 @@ class BillingProfileResource extends Resource
                     ->label('Projects')
                     ->counts('projects')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('shared_users_count')
+                    ->label('Shared with')
+                    ->counts('sharedWithUsers'),
                 Tables\Columns\TextColumn::make('quota')
                     ->label('Quota')
                     ->state(function (BillingProfile $record): string {
