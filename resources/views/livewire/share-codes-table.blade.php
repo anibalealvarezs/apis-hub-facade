@@ -11,7 +11,7 @@
 
     @if(count($codes) > 0)
         <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Code</th>
@@ -21,9 +21,9 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @foreach($codes as $code)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <tr class="bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800">
                             <td class="px-4 py-3 font-mono text-sm text-gray-900 dark:text-gray-100">
                                 <span x-data="{ copied: false }" class="inline-flex items-center gap-2">
                                     <span>{{ $code['token'] }}</span>
