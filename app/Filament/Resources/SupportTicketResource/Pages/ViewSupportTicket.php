@@ -52,33 +52,44 @@ class ViewSupportTicket extends ViewRecord
                         ->required(),
                 ])
                 ->action(function (array $data) {
-                    $oldStatus = $this->record->status;
+                    try {
+                        $oldStatus = $this->record->status;
 
-                    $this->record->update([
-                        'status' => $data['status'],
-                        'closed_at' => $data['status'] === 'closed' ? now() : null,
-                    ]);
+                        $this->record->update([
+                            'status' => $data['status'],
+                            'closed_at' => $data['status'] === 'closed' ? now() : null,
+                        ]);
 
-                    TicketMessage::create([
-                        'support_ticket_id' => $this->record->id,
-                        'user_id' => auth()->id(),
-                        'message' => "Status changed to: {$data['status']}",
-                    ]);
+                        TicketMessage::create([
+                            'support_ticket_id' => $this->record->id,
+                            'user_id' => auth()->id(),
+                            'message' => "Status changed to: {$data['status']}",
+                        ]);
 
-                    $this->refreshFormData(['status']);
-
-                    if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
-                        try {
+                        if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
                             $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
-                        } catch (\Throwable $e) {
-                            Log::warning('Failed to send status change notification: ' . $e->getMessage());
                         }
-                    }
 
-                    Notification::make()
-                        ->title('Status Updated')
-                        ->success()
-                        ->send();
+                        Notification::make()
+                            ->title('Status Updated')
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Log::error('Ticket status change action failed', [
+                            'ticket_id' => $this->record->id,
+                            'new_status' => $data['status'],
+                            'error_class' => get_class($e),
+                            'error_message' => $e->getMessage(),
+                            'error_file' => $e->getFile(),
+                            'error_line' => $e->getLine(),
+                            'trace' => $e->getTraceAsString(),
+                        ]);
+
+                        Notification::make()
+                            ->title('Status update failed, but changes may have been saved')
+                            ->warning()
+                            ->send();
+                    }
                 }),
             Actions\EditAction::make(),
         ];
