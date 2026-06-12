@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SupportTicketResource\Pages;
 
 use App\Filament\Resources\SupportTicketResource;
 use App\Models\TicketMessage;
+use App\Notifications\TicketStatusChangedNotification;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -14,8 +15,6 @@ class ViewSupportTicket extends ViewRecord
     protected static string $resource = SupportTicketResource::class;
 
     protected static string $view = 'filament.pages.view-support-ticket';
-
-    public $newMessage = '';
 
     public function getTitle(): string
     {
@@ -40,6 +39,8 @@ class ViewSupportTicket extends ViewRecord
                         ->required(),
                 ])
                 ->action(function (array $data) {
+                    $oldStatus = $this->record->status;
+
                     $this->record->update([
                         'status' => $data['status'],
                         'closed_at' => $data['status'] === 'closed' ? now() : null,
@@ -53,6 +54,10 @@ class ViewSupportTicket extends ViewRecord
 
                     $this->refreshFormData(['status']);
 
+                    if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
+                        $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
+                    }
+
                     Notification::make()
                         ->title('Status Updated')
                         ->success()
@@ -60,22 +65,6 @@ class ViewSupportTicket extends ViewRecord
                 }),
             Actions\EditAction::make(),
         ];
-    }
-
-    public function reply()
-    {
-        $this->validate([
-            'newMessage' => 'required|string|max:5000',
-        ]);
-
-        TicketMessage::create([
-            'support_ticket_id' => $this->record->id,
-            'user_id' => auth()->id(),
-            'message' => $this->newMessage,
-        ]);
-
-        $this->newMessage = '';
-        $this->record->refresh();
     }
 
     public function getMessages()

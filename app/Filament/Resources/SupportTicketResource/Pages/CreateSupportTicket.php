@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SupportTicketResource\Pages;
 
 use App\Filament\Resources\SupportTicketResource;
 use App\Models\TicketMessage;
+use App\Notifications\TicketCreatedForUserNotification;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateSupportTicket extends CreateRecord
@@ -17,5 +18,9 @@ class CreateSupportTicket extends CreateRecord
             'user_id' => $this->record->user_id,
             'message' => $this->record->description,
         ]);
+
+        if ($this->record->user) {
+            $this->record->user->notify(new TicketCreatedForUserNotification($this->record));
+        }
     }
 }

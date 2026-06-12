@@ -1,9 +1,7 @@
-@php
-    $messages = $this->getMessages();
-    $canReply = $this->record->isReplyAllowed(auth()->user());
-@endphp
-
-<x-filament-panels::page>
+<x-filament-panels::page
+    x-data="{}"
+    @ticket-reply-added.window="$wire.$refresh()"
+>
     <div class="space-y-6">
         {{-- Ticket Info --}}
         <x-filament::section>
@@ -49,7 +47,7 @@
         {{-- Messages --}}
         <x-filament::section heading="Conversation">
             <div class="space-y-4">
-                @forelse ($messages as $msg)
+                @forelse ($this->getMessages() as $msg)
                     <div class="flex gap-3 {{ $msg->user_id === auth()->id() ? 'justify-end' : '' }}">
                         <div class="max-w-[80%] rounded-lg px-4 py-3 {{ $msg->user_id === auth()->id() ? 'bg-primary-100 dark:bg-primary-900' : 'bg-gray-100 dark:bg-gray-800' }}">
                             <div class="flex items-center gap-2 mb-1">
@@ -68,22 +66,9 @@
         </x-filament::section>
 
         {{-- Reply Form --}}
-        @if ($record->status !== 'closed' && $canReply)
+        @if ($record->status !== 'closed' && $record->isReplyAllowed(auth()->user()))
         <x-filament::section heading="Reply">
-            <div class="space-y-3">
-                <div>
-                    <textarea
-                        wire:model="newMessage"
-                        placeholder="Type your reply..."
-                        rows="3"
-                        class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                    ></textarea>
-                    @error('newMessage') <p class="text-sm text-danger-600 mt-1">{{ $message }}</p> @enderror
-                </div>
-                <x-filament::button wire:click="reply">
-                    Send Reply
-                </x-filament::button>
-            </div>
+            @livewire('ticket-reply-form', ['ticket' => $record], key('ticket-reply-' . $record->id))
         </x-filament::section>
         @elseif ($record->status === 'closed')
         <x-filament::section heading="Reply">
