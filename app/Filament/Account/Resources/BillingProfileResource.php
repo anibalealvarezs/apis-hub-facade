@@ -160,7 +160,7 @@ class BillingProfileResource extends Resource
                         } else {
                             $userProjectIds = auth()->user()->projects()
                                 ->where('billing_profile_id', $record->id)
-                                ->pluck('id');
+                                ->pluck('projects.id');
                             $projectCount = $userProjectIds->count();
                             $projectsToScan = $record->projects()->whereIn('id', $userProjectIds)->get();
 
