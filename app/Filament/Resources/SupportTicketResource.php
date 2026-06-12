@@ -237,6 +237,7 @@ class SupportTicketResource extends Resource
     {
         return [
             'index' => Pages\ListSupportTickets::route('/'),
+            'create' => Pages\CreateSupportTicket::route('/create'),
             'view' => Pages\ViewSupportTicket::route('/{record}'),
             'edit' => Pages\EditSupportTicket::route('/{record}/edit'),
         ];
