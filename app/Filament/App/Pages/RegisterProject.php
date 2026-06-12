@@ -6,6 +6,7 @@ use App\Models\Project;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Pages\Tenancy\RegisterTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +30,7 @@ class RegisterProject extends RegisterTenant
             return;
         }
 
-        if (!Auth::user()->canCreateMoreProjects()) {
+        if (!Auth::user()->canCreateMoreProjects() && $this->data['mode'] !== 'join') {
             \Filament\Notifications\Notification::make()
                 ->title(__('Project Limit Reached'))
                 ->body(__('You have reached the maximum number of projects for your current tier. Please upgrade your subscription to create more projects.'))
@@ -55,7 +56,7 @@ class RegisterProject extends RegisterTenant
     protected function getSubmitFormAction(): \Filament\Actions\Action
     {
         return parent::getSubmitFormAction()
-            ->label(__('Create Project & Deploy'));
+            ->label(fn ($get) => $get('mode') === 'join' ? __('Join Project') : __('Create Project & Deploy'));
     }
 
     protected function getRedirectUrl(): string
@@ -69,13 +70,31 @@ class RegisterProject extends RegisterTenant
     {
         return $form
             ->schema([
+                ToggleButtons::make('mode')
+                    ->label(__('What would you like to do?'))
+                    ->options([
+                        'create' => __('Create a new project'),
+                        'join' => __('Join an existing project'),
+                    ])
+                    ->default('create')
+                    ->inline()
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state === 'join') {
+                            $set('name', null);
+                            $set('subdomain', null);
+                        } else {
+                            $set('share_code', null);
+                        }
+                    }),
                 Section::make(__('Project Setup'))
                     ->description(__('Define your project identity. This will create a dedicated workspace on our high-performance cloud infrastructure.'))
+                    ->visible(fn ($get) => $get('mode') === 'create')
                     ->schema([
                         TextInput::make('name')
                             ->label(__('Project / Business Name'))
                             ->placeholder(__('e.g. Acme Marketing'))
-                            ->required(fn ($get) => empty($get('share_code'))),
+                            ->required(),
                         TextInput::make('subdomain')
                             ->label(__('Subdomain / Unique Identifier'))
                             ->prefix('https://')
@@ -84,7 +103,7 @@ class RegisterProject extends RegisterTenant
                                 return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
                             })
                             ->placeholder('acme')
-                            ->required(fn ($get) => empty($get('share_code')))
+                            ->required()
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
                             ->rule(function () {
@@ -109,10 +128,16 @@ class RegisterProject extends RegisterTenant
                                 }
                                 return $msg;
                             }),
+                    ]),
+                Section::make(__('Join Existing Project'))
+                    ->description(__('Enter the share code provided by the project owner to join their project as a collaborator.'))
+                    ->visible(fn ($get) => $get('mode') === 'join')
+                    ->schema([
                         TextInput::make('share_code')
-                            ->label(__('Invitation / Share Code (Optional)'))
+                            ->label(__('Share Code'))
                             ->placeholder('APISHUB-XXXX-XXXX')
-                            ->helperText(__('If you have a code to join an existing project, enter it here instead of creating a new project.')),
+                            ->required()
+                            ->helperText(__('Paste the code shared by the project owner. Your request will be sent for approval.')),
                     ]),
             ]);
     }
@@ -121,8 +146,8 @@ class RegisterProject extends RegisterTenant
     {
         $user = Auth::user();
 
-        // 1. Interceptar si viene un código de invitación/compartición
-        if (!empty($data['share_code'])) {
+        // Join an existing project via share code
+        if (($data['mode'] ?? '') === 'join') {
             $token = \App\Models\OneTimeShareToken::where('token', $data['share_code'])
                 ->whereNull('used_at')
                 ->first();
