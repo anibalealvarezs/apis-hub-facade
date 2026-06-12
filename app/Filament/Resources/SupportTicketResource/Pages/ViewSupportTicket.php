@@ -66,9 +66,10 @@ class ViewSupportTicket extends ViewRecord
                             'message' => "Status changed to: {$data['status']}",
                         ]);
 
-                        if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
-                            $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
-                        }
+                        // Temporarily disabled to diagnose 419
+                        //if (in_array($data['status'], ['waiting_on_user', 'closed']) && $this->record->user) {
+                        //    $this->record->user->notify(new TicketStatusChangedNotification($this->record, $oldStatus));
+                        //}
 
                         Notification::make()
                             ->title('Status Updated')

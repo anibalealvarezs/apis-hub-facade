@@ -32,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
         // Wrap Livewire update handler to log TypeErrors before Livewire swallows them
         \Livewire\Livewire::setUpdateRoute(function ($handle) {
             return \Illuminate\Support\Facades\Route::post('/livewire/update', function (\Illuminate\Http\Request $request) use ($handle) {
+                \Illuminate\Support\Facades\Log::info('Livewire route wrapper invoked');
                 try {
-                    // Resolve from container so non-static handleUpdate() is called on the instance
                     [$class, $method] = $handle;
                     return app($class)->{$method}($request);
                 } catch (\TypeError $e) {
