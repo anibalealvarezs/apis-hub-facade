@@ -195,12 +195,16 @@
             $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
             $defaultRange = $isFreeTier ? '6 months' : '1 year';
 
-            foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
+            foreach (['google_search_console' => 'gsc', 'facebook_organic' => 'pages', 'facebook_marketing' => 'ad_accounts'] as $chan => $assetKey) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
                 if (!isset($config[$chan]['cache_history_range'])) {
                     $config[$chan]['cache_history_range'] = $defaultRange;
+                }
+                // Explicitly set enabled to true if the channel has connected assets and hasn't been explicitly disabled
+                if (!isset($config[$chan]['enabled']) && !empty($config[$chan][$assetKey])) {
+                    $config[$chan]['enabled'] = true;
                 }
             }
 
