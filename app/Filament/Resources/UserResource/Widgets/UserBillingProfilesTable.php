@@ -43,8 +43,9 @@ class UserBillingProfilesTable extends BaseWidget
                     })
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Owner' => 'success',
-                        'Shared' => 'info',
+                        __('Owner'), 'Owner' => 'success',
+                        __('Shared'), 'Shared' => 'info',
+                        default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('owner.name')
