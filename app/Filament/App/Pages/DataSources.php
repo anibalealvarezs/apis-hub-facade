@@ -199,6 +199,9 @@
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
+                if (!isset($config[$chan]['enabled'])) {
+                    $config[$chan]['enabled'] = true;
+                }
                 if (!isset($config[$chan]['cache_history_range'])) {
                     $config[$chan]['cache_history_range'] = $defaultRange;
                 }
