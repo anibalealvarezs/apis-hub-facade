@@ -21,12 +21,12 @@
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
+      "@@context": "https://schema.org",
+      "@@type": "WebPage",
       "name": "@yield('title') | APIs Hub",
       "url": "{{ url()->current() }}",
       "publisher": {
-        "@type": "Organization",
+        "@@type": "Organization",
         "name": "APIs Hub Network"
       }
     }

@@ -32,42 +32,42 @@
         <!-- JSON-LD Structured Data -->
         <script type="application/ld+json">
         {
-          "@context": "https://schema.org",
-          "@graph": [
+          "@@context": "https://schema.org",
+          "@@graph": [
             {
-              "@type": "WebSite",
-              "@id": "{{ url('/') }}/#website",
+              "@@type": "WebSite",
+              "@@id": "{{ url('/') }}/#website",
               "url": "{{ url('/') }}/",
               "name": "APIs Hub",
               "description": "Unified marketing analytics and high-performance dashboards for advertising, social, and ecommerce data.",
               "publisher": {
-                "@id": "{{ url('/') }}/#organization"
+                "@@id": "{{ url('/') }}/#organization"
               }
             },
             {
-              "@type": "Organization",
-              "@id": "{{ url('/') }}/#organization",
+              "@@type": "Organization",
+              "@@id": "{{ url('/') }}/#organization",
               "name": "APIs Hub Network",
               "url": "{{ url('/') }}/",
               "logo": {
-                "@type": "ImageObject",
+                "@@type": "ImageObject",
                 "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
               }
             },
             {
-              "@type": "SoftwareApplication",
-              "@id": "{{ url('/') }}/#software",
+              "@@type": "SoftwareApplication",
+              "@@id": "{{ url('/') }}/#software",
               "name": "APIs Hub",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "WebBrowser",
               "offers": {
-                "@type": "Offer",
+                "@@type": "Offer",
                 "price": "0",
                 "priceCurrency": "USD",
                 "description": "Free during Beta"
               },
               "provider": {
-                "@id": "{{ url('/') }}/#organization"
+                "@@id": "{{ url('/') }}/#organization"
               }
             }
           ]
