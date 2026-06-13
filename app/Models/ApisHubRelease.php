@@ -13,6 +13,7 @@ class ApisHubRelease extends Model
     protected $fillable = [
         'version_tag',
         'is_active',
+        'is_default',
         'description',
         'changelog',
         'supported_channels',
@@ -22,6 +23,7 @@ class ApisHubRelease extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
         'supported_channels' => 'array',
         'config_schemas' => 'array',
         'upgrade_commands' => 'array',

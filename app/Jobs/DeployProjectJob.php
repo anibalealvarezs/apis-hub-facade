@@ -101,6 +101,23 @@ class DeployProjectJob implements ShouldQueue
                                 }
                             }
                         }
+
+                        // 7. Regenerate instances and job queues now that config exists
+                        $path = "/var/www/apis-hub/tenants/{$this->project->subdomain}";
+                        $rebuildCommands = [
+                            "cd {$path}",
+                            "docker compose exec -T master php bin/cli.php app:refresh-instances",
+                            "docker compose up -d --remove-orphans",
+                            "docker compose exec -T master php bin/cli.php app:schedule-initial-jobs",
+                            "docker compose exec -T master php bin/setup-cron.php"
+                        ];
+
+                        try {
+                            $deployer->runSshCommands($this->project->server, $rebuildCommands);
+                            Log::info("Regenerated instances and jobs for newly deployed project {$this->project->id}");
+                        } catch (\Exception $e) {
+                            Log::error("Failed to regenerate instances and jobs for project {$this->project->id}: " . $e->getMessage());
+                        }
                     }
                 }
             } else {

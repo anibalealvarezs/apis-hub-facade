@@ -45,11 +45,15 @@ class DeployerService
             "cd {$path} && if [ ! -d .git ]; then git clone {$project->git_repo} .; fi",
         ];
 
-        // 1.5 Version Pinning (Checkout specific Release if assigned)
+        // 1.5 Version Pinning & Patch-Level Updates (Checkout latest patch of assigned release)
         if ($project->apis_hub_release_id && $project->apisHubRelease) {
             $versionTag = escapeshellarg($project->apisHubRelease->version_tag);
-            Log::info("Deploying pinned release {$versionTag} for project {$project->name}");
-            $commands[] = "cd {$path} && git fetch --tags && git checkout {$versionTag}";
+            Log::info("Deploying pinned release series {$versionTag} (latest patch) for project {$project->name}");
+            
+            $commands[] = "cd {$path} && git fetch --tags";
+            // Extract the major.minor prefix (e.g. 'v1.13') and resolve the highest patch tag.
+            // If the repo doesn't contain the tags or resolution fails, fallback to the exact versionTag.
+            $commands[] = "cd {$path} && PREFIX=\$(echo {$versionTag} | cut -d. -f1,2) && LATEST_PATCH=\$(git tag -l \"\${PREFIX}.*\" | sort -V | tail -n 1) && if [ -z \"\$LATEST_PATCH\" ]; then LATEST_PATCH={$versionTag}; fi && git checkout \$LATEST_PATCH";
         } else {
             $branch = escapeshellarg($project->git_branch);
             Log::info("Deploying branch {$branch} for project {$project->name}");

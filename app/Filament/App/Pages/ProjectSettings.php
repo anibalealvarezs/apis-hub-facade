@@ -172,6 +172,19 @@ class ProjectSettings extends Page
             ->modalHeading(__('Deploy Infrastructure'))
             ->modalDescription(__('This will provision the container and database on the remote server. Are you sure you want to continue?'))
             ->action(function () use ($project) {
+                if (is_null($project->apis_hub_release_id)) {
+                    $activeReleases = \App\Models\ApisHubRelease::where('is_active', true)->get();
+                    if ($activeReleases->isNotEmpty()) {
+                        $latestRelease = $activeReleases->sort(function ($a, $b) {
+                            return version_compare(ltrim($b->version_tag, 'v'), ltrim($a->version_tag, 'v'));
+                        })->first();
+
+                        if ($latestRelease) {
+                            $project->update(['apis_hub_release_id' => $latestRelease->id]);
+                        }
+                    }
+                }
+
                 if (! $project->hasConfiguredAssets()) {
                     Notification::make()
                         ->title(__('Cannot deploy'))
@@ -204,6 +217,19 @@ class ProjectSettings extends Page
             ->modalHeading(__('Redeploy Infrastructure'))
             ->modalDescription(__('This will rebuild the remote containers to apply any environment changes. Continue?'))
             ->action(function () use ($project) {
+                if (is_null($project->apis_hub_release_id)) {
+                    $activeReleases = \App\Models\ApisHubRelease::where('is_active', true)->get();
+                    if ($activeReleases->isNotEmpty()) {
+                        $latestRelease = $activeReleases->sort(function ($a, $b) {
+                            return version_compare(ltrim($b->version_tag, 'v'), ltrim($a->version_tag, 'v'));
+                        })->first();
+
+                        if ($latestRelease) {
+                            $project->update(['apis_hub_release_id' => $latestRelease->id]);
+                        }
+                    }
+                }
+
                 if (! $project->hasConfiguredAssets()) {
                     Notification::make()
                         ->title(__('Cannot deploy'))

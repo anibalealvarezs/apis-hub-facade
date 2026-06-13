@@ -193,7 +193,9 @@
             // Now fill the form, which will generate the schema based on the correctly selected activeChannel
             foreach ($config as $channelKey => $channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $config[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    $config[$channelKey . '_enabled'] = $boolVal;
+                    $config[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
                 }
             }
             $this->form->fill($config);
@@ -1452,12 +1454,24 @@
                     $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                 }
             }
+            
+            // Explicitly force enabled state from active channel if present in root state
+            if (isset($uiState[$this->activeChannel . '_enabled'])) {
+                if (!isset($uiState[$this->activeChannel])) {
+                    $uiState[$this->activeChannel] = [];
+                }
+                $uiState[$this->activeChannel]['enabled'] = filter_var($uiState[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
 
             // Build the proposed full configuration state by merging the UI state into the DB state
             $proposedState = $dbState;
             foreach ($uiState as $channel => $channelConfig) {
                 if (is_array($channelConfig)) {
                     $proposedState[$channel] = array_merge($proposedState[$channel] ?? [], $channelConfig);
+                    // Ensure the enabled flag is explicitly carried over from UI state
+                    if (isset($channelConfig['enabled'])) {
+                        $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    }
                 }
             }
 
@@ -1642,7 +1656,9 @@
             // Refresh UI state seamlessly via Livewire so the user sees the actual final state
             foreach ($dbState as $channelKey => $channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $dbState[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    $dbState[$channelKey.'_enabled'] = $boolVal;
+                    $dbState[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
                 }
             }
             $this->form->fill($dbState);

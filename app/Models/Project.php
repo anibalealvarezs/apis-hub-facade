@@ -209,6 +209,14 @@ class Project extends Model
                     $project->billing_profile_id = $user?->billingProfiles()->first()?->id;
                 }
             }
+
+            // Auto-assign the default APIs Hub Release
+            if (empty($project->apis_hub_release_id)) {
+                $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->first();
+                if ($defaultRelease) {
+                    $project->apis_hub_release_id = $defaultRelease->id;
+                }
+            }
         });
     }
 

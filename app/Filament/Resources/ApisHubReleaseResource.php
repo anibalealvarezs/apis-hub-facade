@@ -46,10 +46,14 @@ class ApisHubReleaseResource extends Resource
                             ->placeholder(__('e.g. v1.14.0'))
                             ->helperText(__('Must match an existing Git tag on the remote repository.')),
                         Forms\Components\Toggle::make('is_active')
-                            ->label(__('Active (default fallback)'))
+                            ->label(__('Active'))
                             ->default(false)
-                            ->helperText(__('Projects without a pinned release will use the active release.')),
-                    ])->columns(2),
+                            ->helperText(__('Whether this release is available for projects to use.')),
+                        Forms\Components\Toggle::make('is_default')
+                            ->label(__('Default (Base fallback)'))
+                            ->default(false)
+                            ->helperText(__('New projects will automatically be assigned this release.')),
+                    ])->columns(3),
 
                 Forms\Components\Section::make('Description')
                     ->schema([
@@ -104,6 +108,10 @@ class ApisHubReleaseResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
                     ->label(__('Active'))
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_default')
+                    ->boolean()
+                    ->label(__('Default'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('supported_channels')
                     ->label(__('Channels'))
