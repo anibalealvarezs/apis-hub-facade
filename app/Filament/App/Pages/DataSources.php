@@ -719,10 +719,10 @@
                         \Filament\Forms\Components\Select::make($this->activeChannel.'.entity_sync_depth')
                             ->label(__('Entity Depth'))
                             ->options([
-                                'ACCOUNT'  => __('Level 1: Account'),
-                                'CAMPAIGN' => __('Level 2: Campaigns'),
-                                'ADSET'    => __('Level 3: Adsets'),
-                                'AD'       => __('Level 4: Ads'),
+                                'ACCOUNT'  => __('Account Level'),
+                                'CAMPAIGN' => __('Campaign level'),
+                                'ADSET'    => __('Adset level'),
+                                'AD'       => __('Ad level'),
                             ])
                             ->default('AD')
                             ->live()
@@ -733,10 +733,10 @@
                             ->options(function (\Filament\Forms\Get $get) {
                                 $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
                                 $allOptions = [
-                                    'ACCOUNT'  => __('L1 Metrics'),
-                                    'CAMPAIGN' => __('L2 Metrics'),
-                                    'ADSET'    => __('L3 Metrics'),
-                                    'AD'       => __('L4 Metrics'),
+                                    'ACCOUNT'  => __('Account Level'),
+                                    'CAMPAIGN' => __('Campaign level'),
+                                    'ADSET'    => __('Adset level'),
+                                    'AD'       => __('Ad level'),
                                 ];
 
                                 $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
@@ -1045,16 +1045,22 @@
                         $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
                     }
 
-                    if ($key === 'cache_history_range' && $isFreeTier) {
-                        $options = array_filter($options, function ($k) {
-                            return in_array($k, ['1 month', '3 months', '6 months']);
-                        }, ARRAY_FILTER_USE_KEY);
+                    $defaultValue = $definition['default'] ?? null;
+                    if ($key === 'cache_history_range') {
+                        if ($isFreeTier) {
+                            $options = array_filter($options, function ($k) {
+                                return in_array($k, ['1 month', '3 months', '6 months']);
+                            }, ARRAY_FILTER_USE_KEY);
+                            $defaultValue = '6 months';
+                        } else {
+                            $defaultValue = '1 year';
+                        }
                     }
 
                     $advanced[] = Select::make($fieldKey)
                         ->label(Str::headline($key))
                         ->options($options)
-                        ->default($definition['default'] ?? null);
+                        ->default($defaultValue);
                 } elseif ($type === 'string') {
                     $advanced[] = TextInput::make($fieldKey)
                         ->label(Str::headline($key))
