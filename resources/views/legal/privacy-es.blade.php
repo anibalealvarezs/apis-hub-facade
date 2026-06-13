@@ -86,11 +86,15 @@
     <h2 id="cookies">5. COOKIES</h2>
     <p><strong>En resumen:</strong> <em>Podemos utilizar cookies y otras tecnologías de seguimiento para recopilar y almacenar su información.</em></p>
 
-    <h2 id="social">6. REDES SOCIALES</h2>
-    <p>Nuestros Servicios le ofrecen la posibilidad de registrarse e iniciar sesión utilizando los detalles de su cuenta de redes sociales de terceros. Cuando elija hacer esto, recibiremos cierta información de perfil sobre usted.</p>
+    <h2 id="social">6. REDES SOCIALES E INTEGRACIONES DE TERCEROS</h2>
+    <p>Nuestros Servicios le ofrecen la posibilidad de conectar plataformas de terceros (como Google, Meta, Shopify, Klaviyo, LinkedIn, Pinterest, TikTok, Amazon, BigCommerce, NetSuite, ShipStation, Triple Whale y X) para agregar sus datos analíticos y de marketing.</p>
+    <p>Cuando elija hacer esto, solicitamos acceso de <strong>Solo Lectura</strong> a sus datos analíticos. No utilizamos este acceso para modificar sus datos en dichas plataformas.</p>
+    <p><strong>Política de Datos del Usuario de Servicios API de Google:</strong> El uso y la transferencia a cualquier otra aplicación de la información recibida de las API de Google se ajustarán a la <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" class="text-brand-blue hover:underline">Política de Datos de Usuario de Servicios API de Google</a>, incluidos los requisitos de Uso Limitado.</p>
 
     <h2 id="retention">7. RETENCIÓN</h2>
     <p>Solo conservamos su información personal durante el tiempo que sea necesario para los fines establecidos en este aviso de privacidad, a menos que la ley exija un período de retención más prolongado.</p>
+    <p><strong>Datos Analíticos en Caché:</strong> Las métricas analíticas de terceros (de plataformas como Meta o Google) se almacenan temporalmente en caché para proporcionar paneles de alto rendimiento. Estas cachés se rotan y eliminan automáticamente de acuerdo con los límites de su nivel de suscripción activo.</p>
+    <p><strong>Tokens OAuth:</strong> Los tokens de autenticación utilizados para conectarse a plataformas de terceros están encriptados en reposo y se destruyen permanentemente de forma inmediata al desconectar el proveedor o eliminar su cuenta.</p>
 
     <h2 id="safety">8. SEGURIDAD</h2>
     <p>Hemos implementado medidas de seguridad técnicas y organizativas adecuadas diseñadas para proteger la seguridad de cualquier información personal que procesemos.</p>
@@ -98,8 +102,11 @@
     <h2 id="minors">9. MENORES</h2>
     <p>No recopilamos ni comercializamos intencionalmente datos de niños menores de 18 años.</p>
 
-    <h2 id="rights">10. DERECHOS</h2>
+    <h2 id="rights">10. DERECHOS Y ELIMINACIÓN DE DATOS</h2>
     <p>En algunas regiones (como el EEE, Reino Unido y Canadá), tiene ciertos derechos en virtud de las leyes de protección de datos aplicables. Estos pueden incluir el derecho a solicitar acceso, rectificación, borrado o restricción del procesamiento.</p>
+    
+    <h3>Borrado de Datos y Desautorización</h3>
+    <p>Tiene derecho a solicitar el borrado completo de su cuenta y la desautorización de todas las plataformas de terceros conectadas. Para automatizar este proceso, hemos implementado un <a href="{{ route('legal.data-deletion.es') }}" class="text-brand-blue hover:underline">Flujo de Eliminación de Datos</a> dedicado. Puede enviar una solicitud de eliminación directamente, lo que generará un ticket de soporte rastreable para garantizar que todos los datos en caché, tokens e información personal se destruyan permanentemente.</p>
     
     <h3>Portabilidad de Datos</h3>
     <p>Como usuario de APIs Hub, usted tiene el <strong>Derecho a la Portabilidad de Datos</strong>. Esto significa que puede solicitar una copia estructurada de toda la información asociada con su cuenta, incluyendo:</p>
