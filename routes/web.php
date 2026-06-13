@@ -85,9 +85,14 @@ Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\Da
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
-// Legal Documents
-Route::get('/{locale?}/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->where('locale', 'es')->name('legal.privacy');
-Route::get('/{locale?}/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->where('locale', 'es')->name('legal.tos');
-Route::get('/{locale?}/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->where('locale', 'es')->name('legal.data-deletion');
+// English Legal Documents
+Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
+Route::get('/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos');
+Route::get('/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion');
+
+// Spanish Legal Documents
+Route::get('/es/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy.es');
+Route::get('/es/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos.es');
+Route::get('/es/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion.es');
 
 Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');
