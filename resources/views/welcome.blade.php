@@ -68,7 +68,7 @@
             <!-- ... Hero Headline ... -->
             <div class="max-w-5xl mx-auto mb-10">
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
-                    {{ __('Start for Free') }}
+                    {{ __('Try beta for free') }}
                 </span>
                 <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
                     {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
@@ -158,8 +158,9 @@
                 <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full"></span>
                 <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
             </div>
-            <div class="opacity-80">
-                {{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub (v1.0)
+            <div class="opacity-80 flex items-center justify-center gap-2">
+                <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
+                <span class="px-1.5 py-0.5 text-[8px] font-black text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded uppercase tracking-widest">Beta</span>
             </div>
         </div>
         
