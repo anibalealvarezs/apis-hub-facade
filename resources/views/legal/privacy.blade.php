@@ -87,7 +87,7 @@
     <p><strong>In Short:</strong> <em>We may use cookies and other tracking technologies to collect and store your information.</em></p>
 
     <h2 id="social">6. SOCIAL & THIRD-PARTY INTEGRATIONS</h2>
-    <p>Our Services offer you the ability to connect third-party platforms (such as Google, Meta, Shopify, Klaviyo, LinkedIn, Pinterest, TikTok, Amazon, BigCommerce, NetSuite, ShipStation, Triple Whale, and X) to aggregate your analytical and marketing data.</p>
+    <p>Our Services offer you the ability to connect third-party platforms (such as Meta, Google, and Klaviyo) to aggregate your analytical and marketing data.</p>
     <p>Where you choose to do this, we request <strong>Read-Only</strong> access to your analytical data. We do not use this access to modify your data on those platforms.</p>
     <p><strong>Google API Services User Data Policy:</strong> Our use and transfer to any other app of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" class="text-brand-blue hover:underline">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
 

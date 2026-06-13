@@ -87,7 +87,7 @@
     <p><strong>En resumen:</strong> <em>Podemos utilizar cookies y otras tecnologías de seguimiento para recopilar y almacenar su información.</em></p>
 
     <h2 id="social">6. REDES SOCIALES E INTEGRACIONES DE TERCEROS</h2>
-    <p>Nuestros Servicios le ofrecen la posibilidad de conectar plataformas de terceros (como Google, Meta, Shopify, Klaviyo, LinkedIn, Pinterest, TikTok, Amazon, BigCommerce, NetSuite, ShipStation, Triple Whale y X) para agregar sus datos analíticos y de marketing.</p>
+    <p>Nuestros Servicios le ofrecen la posibilidad de conectar plataformas de terceros (como Meta, Google y Klaviyo) para agregar sus datos analíticos y de marketing.</p>
     <p>Cuando elija hacer esto, solicitamos acceso de <strong>Solo Lectura</strong> a sus datos analíticos. No utilizamos este acceso para modificar sus datos en dichas plataformas.</p>
     <p><strong>Política de Datos del Usuario de Servicios API de Google:</strong> El uso y la transferencia a cualquier otra aplicación de la información recibida de las API de Google se ajustarán a la <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" class="text-brand-blue hover:underline">Política de Datos de Usuario de Servicios API de Google</a>, incluidos los requisitos de Uso Limitado.</p>
 
