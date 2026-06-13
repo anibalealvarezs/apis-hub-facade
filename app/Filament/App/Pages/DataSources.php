@@ -1165,9 +1165,13 @@
             $rowSchema = $headerComponents;
             if (!empty($itemComponents)) {
                 $rowSchema[] = \Filament\Forms\Components\Group::make()->schema($itemComponents)
-                    ->extraAttributes(['class' => 'flex flex-row flex-wrap gap-4 items-center'])
-                    ->columnSpan(8)
-                    ->visible(fn(callable $get) => $get('enabled'));
+                    ->extraAttributes([
+                        'class' => 'flex flex-row flex-wrap gap-4 items-center',
+                        'x-data' => '{ extractionEnabled: true }',
+                        'x-init' => 'extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; }).observe($el.closest(\'li\').querySelector(\'button[role="switch"]\'), { attributes: true, attributeFilter: [\'aria-checked\'] })',
+                        'x-show' => 'extractionEnabled',
+                    ])
+                    ->columnSpan(8);
             }
 
             return \Filament\Forms\Components\Group::make([
@@ -1284,51 +1288,57 @@
                 ->live()
                 ->columnSpan(4);
 
-            $headerComponents[] = \Filament\Forms\Components\Grid::make(2)->schema([
-                // Facebook Extraction Column
-                \Filament\Forms\Components\Group::make()->schema([
-                    Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
-                    Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)->live()
-                        ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.'))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('post_metrics', false);
-                            }
-                        }),
-                    Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('posts'))->dehydrated(),
-                ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+            $headerComponents[] = \Filament\Forms\Components\Group::make([
+                \Filament\Forms\Components\Grid::make(2)->schema([
+                    // Facebook Extraction Column
+                    \Filament\Forms\Components\Group::make()->schema([
+                        Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
+                        Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)->live()
+                            ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.'))
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!(bool)$state) {
+                                    $set('post_metrics', false);
+                                }
+                            }),
+                        Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('posts'))->dehydrated(),
+                    ])->extraAttributes(['class' => 'flex flex-col gap-2']),
 
-                // Instagram Extraction Column
-                \Filament\Forms\Components\Group::make()->schema([
-                    Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)->live()
-                        ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('ig_account_metrics', false);
-                                $set('ig_account_media', false);
-                                $set('ig_account_media_metrics', false);
-                            }
-                        }),
-                    Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
-                    Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('ig_account_media_metrics', false);
-                            }
-                        })->dehydrated(),
-                    Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
-                        ->extraAttributes(['class' => 'ml-12'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && (bool)$get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
-                ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+                    // Instagram Extraction Column
+                    \Filament\Forms\Components\Group::make()->schema([
+                        Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)->live()
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!(bool)$state) {
+                                    $set('ig_account_metrics', false);
+                                    $set('ig_account_media', false);
+                                    $set('ig_account_media_metrics', false);
+                                }
+                            }),
+                        Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
+                        Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
+                            ->extraAttributes(['class' => 'ml-8'])
+                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))
+                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
+                                if (!(bool)$state) {
+                                    $set('ig_account_media_metrics', false);
+                                }
+                            })->dehydrated(),
+                        Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
+                            ->extraAttributes(['class' => 'ml-12'])
+                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && (bool)$get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
+                    ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+                ]),
             ])
                 ->columnSpan(8)
-                ->visible(fn(callable $get) => $get('enabled'));
+                ->extraAttributes([
+                    'x-data' => '{ extractionEnabled: true }',
+                    'x-init' => 'extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; }).observe($el.closest(\'li\').querySelector(\'button[role="switch"]\'), { attributes: true, attributeFilter: [\'aria-checked\'] })',
+                    'x-show' => 'extractionEnabled',
+                ]);
 
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
