@@ -190,7 +190,27 @@
                 }
             }
 
-            // Now fill the form, which will generate the schema based on the correctly selected activeChannel
+            $tenant = Filament::getTenant();
+            $tier = $tenant->billingProfile?->tier ?? 'free';
+            $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
+            $defaultRange = $isFreeTier ? '6 months' : '1 year';
+
+            foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
+                if (!isset($config[$chan])) {
+                    $config[$chan] = [];
+                }
+                if (!isset($config[$chan]['cache_history_range'])) {
+                    $config[$chan]['cache_history_range'] = $defaultRange;
+                }
+            }
+
+            if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
+                $config['facebook_marketing']['entity_sync_depth'] = 'AD';
+            }
+            if (!isset($config['facebook_marketing']['metrics_level'])) {
+                $config['facebook_marketing']['metrics_level'] = 'AD';
+            }
+
             foreach ($config as $channelKey => $channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
                     $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
@@ -198,6 +218,7 @@
                     $config[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
                 }
             }
+            
             $this->form->fill($config);
 
             $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
