@@ -1475,6 +1475,16 @@
                 }
             }
 
+            // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag
+            // entirely (e.g. unmodified form), and the DB state doesn't have it either, force it to true
+            // since the visual UI default is true.
+            if (!isset($proposedState[$this->activeChannel]['enabled'])) {
+                if (!isset($proposedState[$this->activeChannel])) {
+                    $proposedState[$this->activeChannel] = [];
+                }
+                $proposedState[$this->activeChannel]['enabled'] = true;
+            }
+
             // Collect all enabled asset IDs in the proposed state for this project
             $proposedProjectAssets = [];
 
