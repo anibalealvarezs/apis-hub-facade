@@ -103,7 +103,7 @@ class UserBillingProfilesTable extends BaseWidget
                         TextInput::make('confirmation')
                             ->label(__('Type "CONFIRM" to proceed'))
                             ->required()
-                            ->rule('in:CONFIRM,confirm,Confirm')
+                            ->rule('in:CONFIRM,confirm,Confirm,CONFIRMAR,confirmar,Confirmar')
                             ->helperText(__('You must explicitly type confirm to apply this change.')),
                     ])
                     ->action(function (BillingProfile $record, array $data) {
