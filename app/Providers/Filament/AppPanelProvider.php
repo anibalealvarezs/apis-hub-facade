@@ -60,7 +60,7 @@ class AppPanelProvider extends PanelProvider
                     <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
                 </div>
             '))
-            ->brandUrl(fn () => request()->routeIs('filament.app.auth.*') ? url('/') : url('/app'))
+            ->homeUrl(fn () => request()->routeIs('filament.app.auth.*') ? url('/') : url('/app'))
             ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
                 'primary' => '#00a7f9',
