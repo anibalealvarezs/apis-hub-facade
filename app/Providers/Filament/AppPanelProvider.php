@@ -43,6 +43,10 @@ class AppPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
                 fn () => view('filament.hooks.sidebar-tier-badge'),
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn () => view('filament.hooks.beta-badge'),
+            )
 
             ->profile()
             ->sidebarCollapsibleOnDesktop()
