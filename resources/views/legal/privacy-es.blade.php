@@ -80,8 +80,8 @@
     </ul>
 
     <h2 id="share">4. COMPARTIR</h2>
-    <p><strong>En resumen:</strong> <em>Podemos compartir información en situaciones específicas descritas en esta sección.</em></p>
-    <p>Podemos compartir su información personal en relación con transferencias comerciales, con afiliados o con socios comerciales.</p>
+    <p><strong>En resumen:</strong> <em>Podemos compartir información en situaciones específicas descritas en esta sección. No vendemos sus datos.</em></p>
+    <p>Podemos compartir su información personal en relación con transferencias comerciales, con afiliados o con socios comerciales. <strong>No vendemos su información personal ni datos analíticos de terceros a corredores de datos ni redes publicitarias.</strong></p>
 
     <h2 id="cookies">5. COOKIES</h2>
     <p><strong>En resumen:</strong> <em>Podemos utilizar cookies y otras tecnologías de seguimiento para recopilar y almacenar su información.</em></p>

@@ -80,8 +80,8 @@
     </ul>
 
     <h2 id="share">4. SHARE</h2>
-    <p><strong>In Short:</strong> <em>We may share information in specific situations described in this section.</em></p>
-    <p>We may share your personal information in connection with business transfers, with affiliates, or with business partners.</p>
+    <p><strong>In Short:</strong> <em>We may share information in specific situations described in this section. We do not sell your data.</em></p>
+    <p>We may share your personal information in connection with business transfers, with affiliates, or with business partners. <strong>We do not sell your personal information or third-party analytical data to data brokers or advertising networks.</strong></p>
 
     <h2 id="cookies">5. COOKIES</h2>
     <p><strong>In Short:</strong> <em>We may use cookies and other tracking technologies to collect and store your information.</em></p>
