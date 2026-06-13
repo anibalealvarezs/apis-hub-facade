@@ -1,13 +1,78 @@
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
+        <link rel="preconnect" href="https://www.googletagmanager.com">
+        <link rel="preconnect" href="https://www.google.com">
+        <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
         <title>APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}</title>
         <meta name="description" content="Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.">
         <meta name="keywords" content="marketing analytics, unified dashboards, social media metrics, ecommerce data, data aggregation, custom KPIs, apis hub">
         <meta name="robots" content="index, follow">
         <meta name="author" content="APIs Hub Network">
+
+        <!-- Canonical URL -->
+        <link rel="canonical" href="{{ url()->current() }}" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:title" content="APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}">
+        <meta property="og:description" content="{{ __('Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.') }}">
+        <meta property="og:image" content="{{ asset('images/branding/apishub-social-share.webp') }}">
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="{{ url()->current() }}">
+        <meta property="twitter:title" content="APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}">
+        <meta property="twitter:description" content="{{ __('Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.') }}">
+        <meta property="twitter:image" content="{{ asset('images/branding/apishub-social-share.webp') }}">
+
+        <!-- JSON-LD Structured Data -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": "{{ url('/') }}/#website",
+              "url": "{{ url('/') }}/",
+              "name": "APIs Hub",
+              "description": "Unified marketing analytics and high-performance dashboards for advertising, social, and ecommerce data.",
+              "publisher": {
+                "@id": "{{ url('/') }}/#organization"
+              }
+            },
+            {
+              "@type": "Organization",
+              "@id": "{{ url('/') }}/#organization",
+              "name": "APIs Hub Network",
+              "url": "{{ url('/') }}/",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+              }
+            },
+            {
+              "@type": "SoftwareApplication",
+              "@id": "{{ url('/') }}/#software",
+              "name": "APIs Hub",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "WebBrowser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "description": "Free during Beta"
+              },
+              "provider": {
+                "@id": "{{ url('/') }}/#organization"
+              }
+            }
+          ]
+        }
+        </script>
 
         <link rel="alternate" hreflang="en" href="{{ url('/') }}" />
         <link rel="alternate" hreflang="es" href="{{ url('/es') }}" />
@@ -33,7 +98,7 @@
                 <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full"></span>
                 <a href="{{ route('landing.index', ['locale' => 'es']) }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'es' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">ES</a>
             </div>
-            <button @click="darkMode = !darkMode" class="p-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md glow-hover">
+            <button @click="darkMode = !darkMode" aria-label="Toggle Dark Mode" class="p-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md glow-hover">
                 <template x-if="darkMode">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -99,6 +164,7 @@
                                 name="email" 
                                 required 
                                 placeholder="{{ __('name@agency.com') }}"
+                                aria-label="{{ __('Email Address') }}"
                                 class="flex-grow px-4 py-3 text-base bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400"
                                 value="{{ old('email') }}"
                             >
@@ -152,11 +218,11 @@
         <!-- Dynamic Footer / Micro Branding: Robust Spacing -->
         <div class="absolute bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
             <div class="flex items-center justify-center opacity-70">
-                <a href="/privacy" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
+                <a href="{{ route('legal.privacy', ['locale' => app()->getLocale() === 'es' ? 'es' : null]) }}" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
                 <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
-                <a href="/tos" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
+                <a href="{{ route('legal.tos', ['locale' => app()->getLocale() === 'es' ? 'es' : null]) }}" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
                 <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full"></span>
-                <a href="/data-deletion" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
+                <a href="{{ route('legal.data-deletion', ['locale' => app()->getLocale() === 'es' ? 'es' : null]) }}" class="mx-6 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
             </div>
             <div class="opacity-80 flex items-center justify-center gap-2">
                 <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>

@@ -29,8 +29,8 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
-            ->login()
-            ->registration()
+            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
+            ->registration(\App\Filament\Pages\Auth\CustomRegister::class)
             ->passwordReset()
             ->emailVerification()
             
@@ -73,17 +73,28 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::scripts.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
+                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
                 'panels::head.start',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">')
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link rel="preconnect" href="https://www.googletagmanager.com">
+                    <link rel="preconnect" href="https://www.google.com">
+                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+                    @vite([\'resources/js/gtm.js\'])
+                ')
+            )
+            ->renderHook(
+                'panels::head.end',
+                fn () => view('filament.hooks.seo-auth')
             )
             ->renderHook(
                 'panels::auth.login.form.after',
                 fn () => \Illuminate\Support\Facades\Blade::render("
                     <div id='recaptcha-script-container-login'>
-                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}'></script>
+                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
                             function injectLoginReCaptcha() {
                                 if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
@@ -117,7 +128,7 @@ class AppPanelProvider extends PanelProvider
                 'panels::auth.register.form.after',
                 fn () => \Illuminate\Support\Facades\Blade::render("
                     <div id='recaptcha-script-container-register'>
-                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}'></script>
+                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
                             function injectRegisterReCaptcha() {
                                 if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
