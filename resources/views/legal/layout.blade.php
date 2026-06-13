@@ -11,6 +11,23 @@
     <link rel="preconnect" href="https://www.google.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
+    <meta name="description" content="Legal and compliance documentation for the APIs Hub platform.">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ url()->current() }}" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('title') | APIs Hub">
+    <meta property="og:description" content="Legal and compliance documentation for the APIs Hub platform.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="{{ url()->current() }}">
+    <meta property="twitter:title" content="@yield('title') | APIs Hub">
+    <meta property="twitter:description" content="Legal and compliance documentation for the APIs Hub platform.">
+
     @if(request()->route() && request()->route()->getName())
         <!-- Localization -->
         <link rel="alternate" hreflang="en" href="{{ route(request()->route()->getName(), ['locale' => null]) }}" />

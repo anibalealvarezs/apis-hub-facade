@@ -5,7 +5,7 @@ This document serves as the standard operating procedure (SOP) for launching new
 ## 1. Document Structure & Meta Tags
 - [ ] **HTML Doctype**: The document begins exactly with `<!DOCTYPE html>`.
 - [ ] **Language Attribute**: The `<html>` tag contains the correct locale (e.g., `<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">`).
-- [ ] **Canonical URL**: `<link rel="canonical" href="{{ url()->current() }}" />` is present to prevent duplicate content indexing.
+- [ ] **Canonical URL**: `<link rel="canonical" href="{{ url()->current() }}" />` is present to prevent duplicate content indexing (Indicar versión canónica de la página).
 - [ ] **SEO Meta Tags**: `<title>` and `<meta name="description">` are defined and optimized.
 - [ ] **Social Meta Tags**: Open Graph (`og:title`, `og:description`, `og:image`, `og:url`) and Twitter Cards (`twitter:card`, `twitter:title`) are present.
 - [ ] **Content Hierarchy**: The page uses exactly one `<h1>` tag representing the main topic, with semantic `<h2>` and `<h3>` tags structuring the rest of the document.
