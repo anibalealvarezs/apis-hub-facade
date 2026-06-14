@@ -1,21 +1,4 @@
 <x-filament-panels::page>
-    <style>
-        .fi-fo-repeater-item {
-            position: relative !important;
-        }
-        .asset-badge-dot {
-            position: absolute !important;
-            top: 0.75rem !important;
-            right: 0.75rem !important;
-            width: 0.625rem !important;
-            height: 0.625rem !important;
-            border-radius: 9999px !important;
-            box-shadow: 0 0 0 2px white !important;
-        }
-        .dark .asset-badge-dot {
-            box-shadow: 0 0 0 2px #1f2937 !important;
-        }
-    </style>
     <div class="flex flex-col gap-6"
          x-data="{
             activeTab: @entangle('activeChannel'),
@@ -34,14 +17,9 @@
                     this.currentTime = new Date().getTime();
                 }, 60000);
 
-                this.$nextTick(() => {
-                    if (!document.getElementById('badge-styles')) {
-                        let s = document.createElement('style');
-                        s.id = 'badge-styles';
-                        s.textContent = '.fi-fo-repeater-item{position:relative!important}.asset-badge-dot{position:absolute!important;top:.75rem!important;right:.75rem!important;width:.625rem!important;height:.625rem!important;border-radius:9999px!important;box-shadow:0 0 0 2px #fff!important}.dark .asset-badge-dot{box-shadow:0 0 0 2px #1f2937!important}';
-                        document.head.appendChild(s);
-                    }
-                });
+                let apply = () => document.querySelectorAll('.fi-fo-repeater-item').forEach(el => { if (el.style.position !== 'relative') el.style.position = 'relative'; });
+                this.$nextTick(apply);
+                new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
             },
 
             quotaLockedLabel: '{{ __('Quota Locked') }}',
