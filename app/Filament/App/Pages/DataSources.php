@@ -1318,7 +1318,7 @@
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
                             ->extraAttributes([
-                                'x-on:click.prevent' => 'sortAssets($root.querySelector(\'ul\'))'
+                                'x-on:click.prevent' => 'sortAssets()'
                             ])
                             ->action(function () {}),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
@@ -1376,7 +1376,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets(ul) { if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1415,44 +1415,37 @@
                     // Facebook Extraction Column
                     \Filament\Forms\Components\Group::make()->schema([
                         Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
-                        Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)->live()
-                            ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.'))
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool)$state) {
-                                    $set('post_metrics', false);
-                                }
-                            }),
+                        Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)
+                            ->extraAttributes(['class' => 'toggle-posts'])
+                            ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.')),
                         Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('posts'))->dehydrated(),
-                    ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+                            ->extraAttributes(['class' => 'ml-8 toggle-post-metrics', 'x-show' => 'postsEnabled'])
+                            ->dehydrated(),
+                    ])->extraAttributes([
+                        'class' => 'flex flex-col gap-2',
+                        'x-data' => '{ postsEnabled: false }',
+                        'x-init' => 'setTimeout(() => { let btn = $el.querySelector(\'.toggle-posts button[role="switch"]\'); if(btn){ postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; if(!postsEnabled){ let childBtn = $el.querySelector(\'.toggle-post-metrics button[role="switch"]\'); if(childBtn && childBtn.getAttribute(\'aria-checked\') === \'true\') { childBtn.click(); } } }).observe(btn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                    ]),
 
                     // Instagram Extraction Column
                     \Filament\Forms\Components\Group::make()->schema([
-                        Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)->live()
-                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool)$state) {
-                                    $set('ig_account_metrics', false);
-                                    $set('ig_account_media', false);
-                                    $set('ig_account_media_metrics', false);
-                                }
-                            }),
+                        Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)
+                            ->extraAttributes(['class' => 'toggle-ig-accounts'])
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account'))),
                         Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
-                        Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
-                            ->extraAttributes(['class' => 'ml-8'])
-                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))
-                            ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                                if (!(bool)$state) {
-                                    $set('ig_account_media_metrics', false);
-                                }
-                            })->dehydrated(),
+                            ->extraAttributes(['class' => 'ml-8 toggle-ig-metrics', 'x-show' => 'igAccountsEnabled'])
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)
+                            ->extraAttributes(['class' => 'ml-8 toggle-ig-media', 'x-show' => 'igAccountsEnabled'])
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
                         Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
-                            ->extraAttributes(['class' => 'ml-12'])
-                            ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && (bool)$get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
-                    ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+                            ->extraAttributes(['class' => 'ml-12 toggle-ig-media-metrics', 'x-show' => 'igAccountsEnabled && igMediaEnabled'])
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                    ])->extraAttributes([
+                        'class' => 'flex flex-col gap-2',
+                        'x-data' => '{ igAccountsEnabled: true, igMediaEnabled: true }',
+                        'x-init' => 'setTimeout(() => { let accBtn = $el.querySelector(\'.toggle-ig-accounts button[role="switch"]\'); if(accBtn){ igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igAccountsEnabled){ let c1 = $el.querySelector(\'.toggle-ig-metrics button[role="switch"]\'); if(c1 && c1.getAttribute(\'aria-checked\') === \'true\') c1.click(); let c2 = $el.querySelector(\'.toggle-ig-media button[role="switch"]\'); if(c2 && c2.getAttribute(\'aria-checked\') === \'true\') c2.click(); let c3 = $el.querySelector(\'.toggle-ig-media-metrics button[role="switch"]\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(accBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } let medBtn = $el.querySelector(\'.toggle-ig-media button[role="switch"]\'); if(medBtn){ igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igMediaEnabled){ let c3 = $el.querySelector(\'.toggle-ig-media-metrics button[role="switch"]\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(medBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                    ]),
                 ]),
             ])
                 ->columnSpan(8)
@@ -1502,7 +1495,7 @@
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
                             ->extraAttributes([
-                                'x-on:click.prevent' => 'sortAssets($root.querySelector(\'ul\'))'
+                                'x-on:click.prevent' => 'sortAssets()'
                             ])
                             ->action(function () {}),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
@@ -1597,7 +1590,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets(ul) { if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
