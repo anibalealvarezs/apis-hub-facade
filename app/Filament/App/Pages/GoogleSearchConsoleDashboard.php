@@ -70,7 +70,7 @@ class GoogleSearchConsoleDashboard extends Page
             foreach ($config as $site) {
                 $siteUrl = $site['url'] ?? $site['id'] ?? null;
                 if (!empty($site['enabled']) && !empty($siteUrl)) {
-                    $enabledIds[] = rtrim($siteUrl, '/');
+                    $enabledIds[] = md5(rtrim($siteUrl, '/'));
                 }
             }
 
