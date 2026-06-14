@@ -126,7 +126,12 @@ class FacebookOrganicDashboard extends Page
                     }
                 }
 
-                $label = $fbAcc['name'] ?? 'Facebook Page';
+                if ($igAcc) {
+                    $igName = $igAcc['name'] ?? $igAcc['username'] ?? 'Instagram';
+                    $label = $igName . ' (via ' . ($fbAcc['name'] ?? 'Facebook Page') . ')';
+                } else {
+                    $label = $fbAcc['name'] ?? 'Facebook Page';
+                }
 
                 $fbPageId = (string) ($fbAcc['pageId'] ?? $fbAcc['page_id'] ?? 'NONE');
                 $fbPlatformId = $cleanFbId !== '' ? $cleanFbId : 'NONE';

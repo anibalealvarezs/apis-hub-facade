@@ -638,7 +638,7 @@
                         accounts: @json($selectedAccounts),
                         dateStart: '{{ $dateStart }}',
                         dateEnd: '{{ $dateEnd }}',
-                        activeTab: 'facebook',
+                        activeTab: 'instagram',
                         activeBreakdownTab: 'reaction_type',
 
                         isSummaryLoading: false,
