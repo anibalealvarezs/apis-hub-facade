@@ -32,11 +32,11 @@
                 if (!id || !this.lockStates[id]) return null;
                 let lock = this.lockStates[id];
 
-                if (lock.status === 'locked') return 'bg-success-500';
-                if (lock.status === 'pending_release') return 'bg-danger-500';
+                if (lock.status === 'locked') return '#22c55e';
+                if (lock.status === 'pending_release') return '#ef4444';
                 if (lock.status === 'staged') {
-                    if (!this.projectDeploymentTime) return 'bg-gray-400';
-                    return 'bg-warning-500';
+                    if (!this.projectDeploymentTime) return '#9ca3af';
+                    return '#f59e0b';
                 }
                 return null;
             },

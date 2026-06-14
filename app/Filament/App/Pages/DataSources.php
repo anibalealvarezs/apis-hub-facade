@@ -1176,9 +1176,8 @@
                         <div class="flex items-center gap-2">
                             <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
                             <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
-                                  style="position: absolute; top: 0.75rem; right: 0.75rem; width: 0.625rem; height: 0.625rem; border-radius: 9999px; box-shadow: 0 0 0 2px white;"
-                                  :class="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
-                                  :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"></span>
+                                  :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
+                                  :style="\'position:absolute;top:0.75rem;right:0.75rem;width:0.625rem;height:0.625rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
                         </div>
                     '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
@@ -1314,9 +1313,8 @@
                 <div class="flex items-center gap-2">
                     <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
                     <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
-                          style="position: absolute; top: 0.75rem; right: 0.75rem; width: 0.625rem; height: 0.625rem; border-radius: 9999px; box-shadow: 0 0 0 2px white;"
-                          :class="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
-                          :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"></span>
+                          :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
+                          :style="\'position:absolute;top:0.75rem;right:0.75rem;width:0.625rem;height:0.625rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
                 </div>
             '))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
