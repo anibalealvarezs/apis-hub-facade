@@ -1177,7 +1177,7 @@
                             <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
                             <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
                                   :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
-                                  :style="\'position:absolute;top:0.75rem;right:0.75rem;width:0.625rem;height:0.625rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
+                                  :style="\'position:absolute;top:0.75rem;right:0.75rem;width:1rem;height:1rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
                         </div>
                     '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
@@ -1314,9 +1314,9 @@
                     <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
                     <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
                           :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
-                          :style="\'position:absolute;top:0.75rem;right:0.75rem;width:0.625rem;height:0.625rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
+:style="\'position:absolute;top:0.75rem;right:0.75rem;width:1rem;height:1rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:\' + getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"></span>
                 </div>
-            '))
+            \'))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                     'ID: <a href="'.$get('link').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.$get('id').'</a>'.
                     (!empty($get('ig_account_name')) ? '<br><span class="text-xs text-gray-500 mt-0.5 inline-block">IG: <a href="https://instagram.com/'.$get('ig_account_name').'" target="_blank" class="text-pink-500 hover:underline">@'.$get('ig_account_name').'</a></span>' : '')
