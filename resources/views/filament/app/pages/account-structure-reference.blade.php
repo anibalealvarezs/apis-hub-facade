@@ -67,15 +67,26 @@
             <x-slot name="heading">
                 <div class="flex items-center gap-2">
                     <x-filament::icon icon="heroicon-o-shield-check" class="h-5 w-5 text-warning-500" />
-                    <span>{{ __('Project Ownership') }}</span>
+                    <span>{{ __('Project Ownership vs. Billing Ownership') }}</span>
                 </div>
             </x-slot>
 
             <div class="prose dark:prose-invert max-w-none text-sm">
                 <p>
-                    {{ __('Projects are completely independent from Billing Profiles. The user who creates a project is its absolute Owner.') }}
+                    {{ __('APIs Hub is built upon a fundamental duality of perspectives to facilitate modern agency-client relationships:') }}
                 </p>
                 <ul>
+                    <li>{!! __(':strong_start Technical Perspective (Project Ownership): :strong_end Dictates who controls the data, integrations, and infrastructure.', ['strong_start' => '<strong>', 'strong_end' => '</strong>']) !!}</li>
+                    <li>{!! __(':strong_start Administrative Perspective (Billing Profile): :strong_end Dictates who controls the payments, subscriptions, and quota scaling.', ['strong_start' => '<strong>', 'strong_end' => '</strong>']) !!}</li>
+                </ul>
+                <p>
+                    {{ __('This separation is by design. It allows agencies to seamlessly onboard clients and manage their technical execution, while giving clients the option to handle the billing directly. Conversely, it empowers brands to start their own projects and later delegate the technical management to third-party agencies without risking their payment methods.') }}
+                </p>
+                <p>
+                    {{ __('Crucially, this architecture resolves common conflicts of interest in the digital marketing industry regarding data ownership. When a collaboration contract ends, Project Ownership can be smoothly transferred between parties with absolute ease, ensuring that credentials, historical data, and infrastructure remain intact while cleanly severing the administrative billing ties.') }}
+                </p>
+                <ul>
+                    <li>{{ __('Projects are completely independent from Billing Profiles. The user who creates a project is its absolute Owner.') }}</li>
                     <li>{{ __('Only the Project Owner can delete the project, transfer its ownership, or manage its infrastructure.') }}</li>
                     <li>{{ __('A project can be transferred to a different user. When transferred, the new owner can choose to keep it on the current Billing Profile (if shared) or attach it to their own Billing Profile.') }}</li>
                     <li>{!! __('Even if a project uses a Billing Profile owned by someone else, :strong_start the Project Owner retains full data sovereignty :strong_end. The billing owner cannot access the project\'s data unless explicitly invited as a collaborator.', ['strong_start' => '<strong>', 'strong_end' => '</strong>']) !!}</li>
