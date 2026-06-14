@@ -1238,14 +1238,14 @@
 
                 if ($key === 'enabled') {
                     $headerComponents[] = Toggle::make($key)
-                        ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
-                        <div class="flex items-center gap-2">
-                            <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
-                            <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                            <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
-                                  :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                        </div>
-                    '))
+                        ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset'))
+                        ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
+                            <div class="flex items-center gap-2">
+                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                            </div>
+                        '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                             $get('lost_access') ? __('⚠️ Lost Access') : (
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
@@ -1316,15 +1316,10 @@
                             ->button()
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
-                            ->action(function (\Filament\Forms\Components\Repeater $component) {
-                                $state = $component->getState();
-                                uasort($state, function($a, $b) {
-                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
-                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
-                                    return strcasecmp((string)$nameA, (string)$nameB);
-                                });
-                                $component->state($state);
-                            }),
+                            ->extraAttributes([
+                                'x-on:click.prevent' => "let ul = \$el.closest('.compact-repeater').querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); }"
+                            ])
+                            ->action(function () {}),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1369,7 +1364,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } else if (assetGraceFilter === 'locked') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && (lock.status === 'locked' || lock.status === 'pending_release')); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { matchesGrace = false; } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1397,14 +1392,14 @@
 
             // Header View: Name, ID as Link
             $headerComponents[] = Toggle::make('enabled')
-                ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
-                <div class="flex items-center gap-2">
-                    <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
-                    <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                    <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
-                          :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                </div>
-            '))
+                ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? __('Unknown Asset')))
+                ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
+                    <div class="flex items-center gap-2">
+                        <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                        <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                              :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                    </div>
+                '))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                     'ID: <a href="'.$get('link').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.$get('id').'</a>'.
                     (!empty($get('ig_account_name')) ? '<br><span class="text-xs text-gray-500 mt-0.5 inline-block">IG: <a href="https://instagram.com/'.$get('ig_account_name').'" target="_blank" class="text-pink-500 hover:underline">@'.$get('ig_account_name').'</a></span>' : '')
@@ -1504,15 +1499,10 @@
                             ->button()
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
-                            ->action(function (\Filament\Forms\Components\Repeater $component) {
-                                $state = $component->getState();
-                                usort($state, function($a, $b) {
-                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
-                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
-                                    return strcasecmp((string)$nameA, (string)$nameB);
-                                });
-                                $component->state($state);
-                            }),
+                            ->extraAttributes([
+                                'x-on:click.prevent' => "let ul = \$el.closest('.compact-repeater').querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); }"
+                            ])
+                            ->action(function () {}),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1594,7 +1584,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } else if (assetGraceFilter === 'locked') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && (lock.status === 'locked' || lock.status === 'pending_release')); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { matchesGrace = false; } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
