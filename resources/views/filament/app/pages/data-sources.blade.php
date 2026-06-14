@@ -1,10 +1,28 @@
 <x-filament-panels::page>
     @php
-        $iconLock = '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>';
-        $iconClock = '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>';
-        $iconWarning = '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
-        $iconPause = '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
+        $gracePeriodEndedLabel = __('Grace Period (Ended)');
+        $lockedUntilCycleEndLabel = __('Locked until cycle end');
+        $gracePeriodPausedLabel = __('Grace Period paused (Waiting for deployment)');
+        $quotaLockedLabel = __('Quota Locked');
+        $gracePeriodLabel = __('Grace Period (Ends in');
     @endphp
+    <style>
+        .compact-repeater .asset-badge-dot {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 0.625rem;
+            height: 0.625rem;
+            border-radius: 9999px;
+            box-shadow: 0 0 0 2px white;
+        }
+        .dark .compact-repeater .asset-badge-dot {
+            box-shadow: 0 0 0 2px #1f2937;
+        }
+        .compact-repeater li {
+            position: relative;
+        }
+    </style>
     <div class="flex flex-col gap-6"
          x-data="{
             activeTab: @entangle('activeChannel'),
@@ -17,68 +35,59 @@
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
             currentTime: new Date().getTime(),
             cycleLabel: '{{ __('Cycle') }}',
-            quotaLockedLabel: '{{ __('Quota Locked') }}',
-            lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
-            gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
-            quotaLockedRefreshNeededLabel: '{{ __('Grace Period (Ended)') }}',
-            gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
-            savingThisConfigurationLabel: '{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}',
-            areYouSureLabel: '{{ __('Are you sure you want to proceed?') }}',
-            currentProjectUsageLabel: '{{ __('Current Project Usage') }}',
-            newlyStagedLabel: '{{ __('Newly Staged') }}',
-            currentLedgerUsageLabel: '{{ __('Current Ledger Usage') }}',
-            availableGlobalQuotaLabel: '{{ __('Available Global Quota') }}',
-            maxAssetsLabel: '{{ __('Max Assets') }}',
-            selectedCountLabel: '{{ __('Selected Count') }}',
 
             init() {
                 setInterval(() => {
                     this.currentTime = new Date().getTime();
-                }, 60000); // Update every minute
+                }, 60000);
             },
 
-            iconLock: @js($iconLock),
-            iconClock: @js($iconClock),
-            iconWarning: @js($iconWarning),
-            iconPause: @js($iconPause),
+            quotaLockedLabel: @js($quotaLockedLabel),
+            lockedUntilCycleEndLabel: @js($lockedUntilCycleEndLabel),
+            gracePeriodPausedLabel: @js($gracePeriodPausedLabel),
+            gracePeriodEndedLabel: @js($gracePeriodEndedLabel),
+            gracePeriodLabel: @js($gracePeriodLabel),
 
             getAssetBadge(id) {
                 if (!id || !this.lockStates[id]) return '';
 
                 let lock = this.lockStates[id];
+                let color = '';
+                let label = '';
 
                 if (lock.status === 'locked') {
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.iconLock}${this.quotaLockedLabel}</span>`;
-                }
-
-                if (lock.status === 'pending_release') {
+                    color = 'bg-success-500';
+                    label = this.quotaLockedLabel;
+                } else if (lock.status === 'pending_release') {
+                    color = 'bg-danger-500';
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>${this.iconWarning}${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})</span>`;
-                }
-
-                if (lock.status === 'staged') {
+                    label = `${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})`;
+                } else if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconPause}${this.gracePeriodPausedLabel}</span>`;
+                        color = 'bg-gray-400';
+                        label = this.gracePeriodPausedLabel;
+                    } else {
+                        let stagedAt = new Date(lock.staged_at).getTime();
+                        let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+
+                        let remainingMs = endsAt - this.currentTime;
+
+                        if (remainingMs <= 0) {
+                            color = 'bg-warning-500';
+                            label = this.gracePeriodEndedLabel;
+                        } else {
+                            color = 'bg-warning-500';
+                            let remainingMins = Math.floor(remainingMs / 60000);
+                            let h = Math.floor(remainingMins / 60);
+                            let m = remainingMins % 60;
+                            let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                            label = `${this.gracePeriodLabel} ${timeStr})`;
+                        }
                     }
-
-                    let stagedAt = new Date(lock.staged_at).getTime();
-                    let endsAt = stagedAt + (2 * 60 * 60 * 1000); // +2 hours
-
-                    let remainingMs = endsAt - this.currentTime;
-
-                    if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconClock}${this.quotaLockedRefreshNeededLabel}</span>`;
-                    }
-
-                    let remainingMins = Math.floor(remainingMs / 60000);
-                    let h = Math.floor(remainingMins / 60);
-                    let m = remainingMins % 60;
-                    let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
-
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconClock}${this.gracePeriodLabel} ${timeStr})</span>`;
                 }
 
-                return '';
+                if (!color) return '';
+                return `<span class="asset-badge-dot ${color}" title="${label.replace(/"/g, '&quot;')}"></span>`;
             },
 
             get formAssets() {
