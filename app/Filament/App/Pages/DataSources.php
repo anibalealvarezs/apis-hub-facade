@@ -190,7 +190,78 @@
                 }
             }
 
+            $this->hydrateFormFromDb($config);
+
+            $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
+                ->where('status', 'locked')
+                ->whereNull('disabled_at')
+                ->where(function ($query) use ($tenant) {
+                    if ($tenant->last_deployed_at) {
+                        $query->where('locked_at', '>', $tenant->last_deployed_at);
+                    }
+                })
+                ->count();
+
+            if ($pendingAssets > 0) {
+                Notification::make()
+                    ->title(__('Action Recommended'))
+                    ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
+                    ->warning()
+                    ->persistent()
+                    ->actions([
+                        \Filament\Notifications\Actions\Action::make('deploy')
+                            ->label(__('Deploy Updates'))
+                            ->button()
+                            ->url(SyncSettings::getUrl()),
+                    ])
+                    ->send();
+            }
+        }
+
+        /**
+         * Livewire lifecycle hook: re-fill the form from in-memory state on channel switch.
+         *
+         * Without this, switching channels rebuilds the form schema via getDynamicSchema()
+         * but never calls form->fill(), so the new components aren't properly hydrated.
+         * This causes getState() to return incomplete data and the global channel config
+         * (enabled, cache_history_range, etc.) is lost on save.
+         *
+         * We fill from $this->data (in-memory) rather than DB so that:
+         * - Unsaved edits on other channels are preserved across switches.
+         * - First-config scenarios (no DB data yet) retain the mount()-seeded defaults.
+         */
+        public function updatedActiveChannel($newChannel): void
+        {
+            $this->hydrateFormFromDb($this->data);
+        }
+
+        /**
+         * Seed channel-level defaults, flatten enabled toggles, and fill the form.
+         *
+         * Single source of truth for form hydration, used by:
+         * - mount()                  → initial page load (passes raw DB config)
+         * - updatedActiveChannel()   → channel switch (passes $this->data)
+         * - mergeDiscoveredAssets()   → after asset discovery (passes merged state)
+         * - save()                   → after DB persist (passes final dbState)
+         */
+        private function hydrateFormFromDb(?array $overrides = null): void
+        {
             $tenant = Filament::getTenant();
+            $config = $overrides ?? ($tenant->sync_config ?? []);
+
+            // Seed default true values for facebook_organic to ensure Livewire hydration has strict booleans
+            if (isset($config['facebook_organic']['pages']) && is_array($config['facebook_organic']['pages'])) {
+                foreach ($config['facebook_organic']['pages'] as &$page) {
+                    $page['page_metrics'] = $page['page_metrics'] ?? true;
+                    $page['posts'] = $page['posts'] ?? true;
+                    $page['post_metrics'] = $page['post_metrics'] ?? true;
+                    $page['ig_accounts'] = $page['ig_accounts'] ?? true;
+                    $page['ig_account_metrics'] = $page['ig_account_metrics'] ?? true;
+                    $page['ig_account_media'] = $page['ig_account_media'] ?? true;
+                    $page['ig_account_media_metrics'] = $page['ig_account_media_metrics'] ?? true;
+                }
+            }
+
             $tier = $tenant->billingProfile?->tier ?? 'free';
             $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
             $defaultRange = $isFreeTier ? '6 months' : '1 year';
@@ -225,33 +296,9 @@
                     $config[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
                 }
             }
-            
+
+            $this->data = $config;
             $this->form->fill($config);
-
-            $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-                ->where('status', 'locked')
-                ->whereNull('disabled_at')
-                ->where(function ($query) use ($tenant) {
-                    if ($tenant->last_deployed_at) {
-                        $query->where('locked_at', '>', $tenant->last_deployed_at);
-                    }
-                })
-                ->count();
-
-            if ($pendingAssets > 0) {
-                Notification::make()
-                    ->title(__('Action Recommended'))
-                    ->body(__('You have :count newly confirmed asset(s). We recommend deploying infrastructure updates to start tracking their full history.', ['count' => $pendingAssets]))
-                    ->warning()
-                    ->persistent()
-                    ->actions([
-                        \Filament\Notifications\Actions\Action::make('deploy')
-                            ->label(__('Deploy Updates'))
-                            ->button()
-                            ->url(SyncSettings::getUrl()),
-                    ])
-                    ->send();
-            }
         }
 
         public function getChannelAssetCount(string $channelKey): int
@@ -724,13 +771,8 @@
 
             $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
 
-            foreach ($fullDbState as $channelKey => $channelConfig) {
-                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $fullDbState[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
-                }
-            }
             // Fill the form with the updated active channel data
-            $this->form->fill($fullDbState);
+            $this->hydrateFormFromDb($fullDbState);
         }
 
         public function form(Form $form): Form
@@ -1753,14 +1795,7 @@
             app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);
 
             // Refresh UI state seamlessly via Livewire so the user sees the actual final state
-            foreach ($dbState as $channelKey => $channelConfig) {
-                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
-                    $dbState[$channelKey.'_enabled'] = $boolVal;
-                    $dbState[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
-                }
-            }
-            $this->form->fill($dbState);
+            $this->hydrateFormFromDb($dbState);
 
             if (count($rejectedAssets) > 0) {
                 $rejectedList = implode(', ', array_slice($rejectedAssets, 0, 5));
