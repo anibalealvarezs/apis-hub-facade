@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <style>
-        .compact-repeater li {
+        .fi-fo-repeater-item {
             position: relative;
         }
     </style>
