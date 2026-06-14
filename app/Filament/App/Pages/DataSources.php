@@ -80,15 +80,30 @@
                 return [
                     'starts_at' => 'N/A',
                     'ends_at'   => 'N/A',
+                    'next_quota_reset' => 'N/A',
                 ];
             }
 
             $starts = $billingProfile->current_cycle_starts_at ?? $billingProfile->created_at ?? now()->startOfMonth();
             $ends = $billingProfile->current_cycle_ends_at ?? $starts->copy()->addMonth();
 
+            // Calculate next quota reset based on the day of the month the cycle started
+            $resetDay = $starts->day;
+            $now = now();
+            
+            // Handle end-of-month clipping (e.g. 31st in February)
+            $nextReset = $now->copy()->setDay(min($resetDay, $now->daysInMonth))->startOfDay();
+            
+            if ($nextReset->isPast() && !$nextReset->isToday()) {
+                // If the reset date for this month has passed, it will be next month
+                $nextMonth = $now->copy()->addMonth();
+                $nextReset = $nextMonth->setDay(min($resetDay, $nextMonth->daysInMonth))->startOfDay();
+            }
+
             return [
                 'starts_at' => $starts->format('M j, Y'),
                 'ends_at'   => $ends->format('M j, Y'),
+                'next_quota_reset' => $nextReset->format('M j, Y'),
             ];
         }
 
