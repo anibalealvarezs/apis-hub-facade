@@ -1175,9 +1175,10 @@
                         ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
                         <div class="flex items-center gap-2">
                             <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
-                            <template x-if="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')">
-                                <span x-html="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')"></span>
-                            </template>
+                            <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
+                                  class="asset-badge-dot"
+                                  :class="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
+                                  :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"></span>
                         </div>
                     '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
@@ -1312,9 +1313,10 @@
                 ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
                 <div class="flex items-center gap-2">
                     <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
-                    <template x-if="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')">
-                        <span x-html="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')"></span>
-                    </template>
+                    <span x-show="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
+                          class="asset-badge-dot"
+                          :class="getAssetBadgeColor(\''.e($get('id') ?? $get('url')).'\')"
+                          :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"></span>
                 </div>
             '))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
