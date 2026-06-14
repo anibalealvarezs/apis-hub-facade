@@ -1300,8 +1300,10 @@
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Grace States').'</option>
+                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option value="all">'.__('All States').'</option>
                                 <option value="grace">'.__('In Grace Period').'</option>
+                                <option value="locked">'.__('Asset Locked').'</option>
                             </select>
                         </div>
                     </div>
@@ -1316,7 +1318,7 @@
                             ->icon('heroicon-m-bars-arrow-down')
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
-                                usort($state, function($a, $b) {
+                                uasort($state, function($a, $b) {
                                     $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
                                     $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
                                     return strcasecmp((string)$nameA, (string)$nameB);
@@ -1367,7 +1369,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } else if (assetGraceFilter === 'locked') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && (lock.status === 'locked' || lock.status === 'pending_release')); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1378,7 +1380,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1486,8 +1488,10 @@
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Grace States').'</option>
+                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option value="all">'.__('All States').'</option>
                                 <option value="grace">'.__('In Grace Period').'</option>
+                                <option value="locked">'.__('Asset Locked').'</option>
                             </select>
                         </div>
                     </div>
@@ -1590,7 +1594,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } else if (assetGraceFilter === 'locked') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && (lock.status === 'locked' || lock.status === 'pending_release')); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1601,7 +1605,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
