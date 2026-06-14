@@ -192,9 +192,15 @@
          }">
 
         <template x-teleport="#tier-usage-header-target">
-            <div class="flex items-center gap-3 text-sm transition-colors"
+            <div class="flex items-center gap-4 text-sm transition-colors"
                  :class="selectedCount >= (maxAssets * 0.8) ? 'text-danger-600 dark:text-danger-500' : (selectedCount < (maxAssets * 0.5) ? 'text-success-600 dark:text-success-500' : 'text-gray-700 dark:text-gray-300')">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`${cycleLabel}: ${cycleBounds.starts_at} - ${cycleBounds.ends_at} | {{ __('Quota Resets:') }} ${cycleBounds.next_quota_reset}`"></span>
+                <span class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-white/5 shadow-sm">
+                    <span class="text-gray-500 dark:text-gray-400 font-normal mr-1" x-text="cycleLabel + ':'"></span>
+                    <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="`${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                    <span class="mx-4 text-gray-300 dark:text-gray-600">|</span>
+                    <span class="text-gray-500 dark:text-gray-400 font-normal mr-1">{{ __('Quota Resets:') }}</span>
+                    <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="cycleBounds.next_quota_reset"></span>
+                </span>
                 <div class="flex items-center gap-2">
                     <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ __('Tier Usage') }}</span>
                     <div class="font-bold text-base">

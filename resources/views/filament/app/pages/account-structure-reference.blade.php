@@ -4,11 +4,33 @@
             {{ __('Understand the relationship between your user account, billing profiles, projects, and team collaboration.') }}
         </div>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('User Accounts vs. Billing Profiles'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-user" class="h-5 w-5 text-primary-500" />
-                    <span>{{ __('User Accounts vs. Billing Profiles') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('User Accounts vs. Billing Profiles') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 
@@ -23,11 +45,33 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('Billing Profiles & Tiers'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-credit-card" class="h-5 w-5 text-success-500" />
-                    <span>{{ __('Billing Profiles & Tiers') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('Billing Profiles & Tiers') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 
@@ -43,11 +87,33 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('Sharing Billing Profiles'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-share" class="h-5 w-5 text-indigo-500" />
-                    <span>{{ __('Sharing Billing Profiles') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('Sharing Billing Profiles') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 
@@ -63,11 +129,33 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('Project Ownership vs. Billing Ownership'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-shield-check" class="h-5 w-5 text-warning-500" />
-                    <span>{{ __('Project Ownership vs. Billing Ownership') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('Project Ownership vs. Billing Ownership') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 
@@ -94,11 +182,33 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('Project Collaboration Dynamics'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-users" class="h-5 w-5 text-blue-500" />
-                    <span>{{ __('Project Collaboration Dynamics') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('Project Collaboration Dynamics') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 
@@ -114,11 +224,33 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section>
+                @php
+            $id = \Illuminate\Support\Str::slug(__('Free Tier Collaboration Limitations'));
+        @endphp
+        <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                     <x-filament::icon icon="heroicon-o-information-circle" class="h-5 w-5 text-gray-500" />
-                    <span>{{ __('Free Tier Collaboration Limitations') }}</span>
+                    <a href="#{{ $id }}"
+                       class="flex items-center gap-2 hover:underline text-inherit"
+                       @click.prevent="
+                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
+                           copied = true;
+                           setTimeout(() => copied = false, 2000);
+                       ">
+                        <span>{{ __('Free Tier Collaboration Limitations') }}</span>
+                        <x-filament::icon 
+                            icon="heroicon-o-link" 
+                            class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                            x-show="!copied"
+                        />
+                        <x-filament::icon 
+                            icon="heroicon-o-check" 
+                            class="h-4 w-4 text-success-500" 
+                            x-show="copied"
+                            style="display: none;"
+                        />
+                    </a>
                 </div>
             </x-slot>
 

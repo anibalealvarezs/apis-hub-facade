@@ -523,16 +523,24 @@
                     ->view('filament.app.actions.tier-usage-target'),
             ];
 
-            if ($tenant->redeploy_pending) {
-                $actions[] = \Filament\Actions\Action::make('redeployInfrastructure')
+            return $actions;
+        }
+
+        protected function getFormActions(): array
+        {
+            return [
+                $this->getSaveFormAction(),
+                \Filament\Actions\Action::make('redeployInfrastructure')
                     ->label(__('Apply Infrastructure Changes'))
                     ->color('warning')
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                    ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
                     ->requiresConfirmation()
                     ->modalHeading(__('Redeploy Infrastructure'))
                     ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
-                    ->action(function () use ($tenant) {
+                    ->action(function () {
+                        $tenant = Filament::getTenant();
                         $tenant->update([
                             'health_status' => 'redeploying',
                             'deploy_started_at' => now(),
@@ -544,10 +552,8 @@
                             ->title(__('Redeployment Initiated'))
                             ->success()
                             ->send();
-                    });
-            }
-
-            return $actions;
+                    }),
+            ];
         }
 
         public function discoverAssetsAction(): Action
