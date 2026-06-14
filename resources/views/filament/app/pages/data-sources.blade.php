@@ -63,7 +63,7 @@
                 }
 
                 if (!color) return '';
-                return `<span class='inline-block w-2.5 h-2.5 rounded-full ${color} flex-shrink-0' title='${label.replace(/'/g, '&#039;')}'></span>`;
+                return `<span class="inline-block w-2.5 h-2.5 rounded-full ${color} flex-shrink-0" title="${label.replace(/"/g, '&quot;')}"></span>`;
             },
 
             get formAssets() {
