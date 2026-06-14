@@ -35,7 +35,7 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                 'max_workers' => $this->systemField('integer', 4),
                 'granular_sync' => $this->systemField('boolean', true),
                 
-                'calculate_synthetics' => $this->configurableField('boolean', true),
+                'calculate_synthetics' => $this->systemField('boolean', true),
                 
                 'feature_toggles' => $this->systemField('object', [
                     'cache_aggregations' => true,

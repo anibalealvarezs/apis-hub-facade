@@ -31,23 +31,28 @@
                 }, 60000); // Update every minute
             },
 
+            iconLock: '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>',
+            iconClock: '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>',
+            iconWarning: '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+            iconPause: '<svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+
             getAssetBadge(id) {
                 if (!id || !this.lockStates[id]) return '';
 
                 let lock = this.lockStates[id];
 
                 if (lock.status === 'locked') {
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedLabel}</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.iconLock}${this.quotaLockedLabel}</span>`;
                 }
 
                 if (lock.status === 'pending_release') {
                     let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>${this.iconWarning}${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})</span>`;
                 }
 
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodPausedLabel}</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconPause}${this.gracePeriodPausedLabel}</span>`;
                     }
 
                     let stagedAt = new Date(lock.staged_at).getTime();
@@ -58,7 +63,7 @@
                     let remainingMs = endsAt - this.currentTime;
 
                     if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.quotaLockedRefreshNeededLabel}</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconClock}${this.quotaLockedRefreshNeededLabel}</span>`;
                     }
 
                     let remainingMins = Math.floor(remainingMs / 60000);
@@ -66,7 +71,7 @@
                     let m = remainingMins % 60;
                     let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodLabel} ${timeStr})</span>`;
+                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.iconClock}${this.gracePeriodLabel} ${timeStr})</span>`;
                 }
 
                 return '';

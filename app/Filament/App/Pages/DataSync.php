@@ -35,7 +35,7 @@ class DataSync extends Page
 
     public function mount(): void
     {
-        $this->refreshData();
+        $this->refreshData(true);
     }
 
     /**

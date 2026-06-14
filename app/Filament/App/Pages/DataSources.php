@@ -210,6 +210,10 @@
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
                 $config['facebook_marketing']['entity_sync_depth'] = 'AD';
             }
+
+            if (!isset($config['google_search_console']['calculate_synthetics'])) {
+                $config['google_search_console']['calculate_synthetics'] = true;
+            }
             if (!isset($config['facebook_marketing']['metrics_level'])) {
                 $config['facebook_marketing']['metrics_level'] = 'AD';
             }

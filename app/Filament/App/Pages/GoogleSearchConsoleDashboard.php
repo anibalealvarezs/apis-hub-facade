@@ -70,13 +70,13 @@ class GoogleSearchConsoleDashboard extends Page
             foreach ($config as $site) {
                 $siteUrl = $site['url'] ?? $site['id'] ?? null;
                 if (!empty($site['enabled']) && !empty($siteUrl)) {
-                    $enabledIds[] = md5(rtrim($siteUrl, '/'));
+                    $enabledIds[] = rtrim($siteUrl, '/');
                 }
             }
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
-                    $platformId = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']);
+                    $platformId = rtrim((string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']), '/');
                     
                     if (in_array($platformId, $enabledIds)) {
                         $this->accounts[$page['id']] = $page['name'] ?? $platformId;
