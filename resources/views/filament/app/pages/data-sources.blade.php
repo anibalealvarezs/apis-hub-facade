@@ -14,7 +14,7 @@
             quotaLockedLabel: '{{ __('Quota Locked') }}',
             lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
             gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
-            quotaLockedRefreshNeededLabel: '{{ __('Quota Locked (Refresh needed)') }}',
+            quotaLockedRefreshNeededLabel: '{{ __('Grace Period (Ended)') }}',
             gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
             savingThisConfigurationLabel: '{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}',
             areYouSureLabel: '{{ __('Are you sure you want to proceed?') }}',
@@ -58,7 +58,7 @@
                     let remainingMs = endsAt - this.currentTime;
 
                     if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedRefreshNeededLabel}</span>`;
+                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.quotaLockedRefreshNeededLabel}</span>`;
                     }
 
                     let remainingMins = Math.floor(remainingMs / 60000);

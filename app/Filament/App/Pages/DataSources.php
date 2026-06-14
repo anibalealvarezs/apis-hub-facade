@@ -425,11 +425,39 @@
 
         protected function getHeaderActions(): array
         {
-            return [
+            $tenant = Filament::getTenant();
+
+            $actions = [
                 \Filament\Actions\Action::make('tierUsageTarget')
                     ->label('')
                     ->view('filament.app.actions.tier-usage-target'),
             ];
+
+            if ($tenant->redeploy_pending && $tenant->last_deployed_at) {
+                $actions[] = \Filament\Actions\Action::make('redeployInfrastructure')
+                    ->label(__('Apply Infrastructure Changes'))
+                    ->color('warning')
+                    ->icon('heroicon-o-cloud-arrow-up')
+                    ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Redeploy Infrastructure'))
+                    ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
+                    ->action(function () use ($tenant) {
+                        $tenant->update([
+                            'health_status' => 'redeploying',
+                            'deploy_started_at' => now(),
+                        ]);
+
+                        \App\Jobs\DeployProjectJob::dispatch($tenant);
+
+                        Notification::make()
+                            ->title(__('Redeployment Initiated'))
+                            ->success()
+                            ->send();
+                    });
+            }
+
+            return $actions;
         }
 
         public function discoverAssetsAction(): Action
@@ -1525,6 +1553,20 @@
                 $proposedState[$this->activeChannel]['enabled'] = true;
             }
 
+            // Detect if any channel's enabled state changed
+            $hasChannelToggle = false;
+            if ($tenant->last_deployed_at) {
+                foreach ($proposedState as $channel => $config) {
+                    if (!is_array($config)) continue;
+                    $oldEnabled = $dbState[$channel]['enabled'] ?? null;
+                    $newEnabled = $config['enabled'] ?? null;
+                    if ($oldEnabled !== $newEnabled) {
+                        $hasChannelToggle = true;
+                        break;
+                    }
+                }
+            }
+
             // Collect all enabled asset IDs in the proposed state for this project
             $proposedProjectAssets = [];
 
@@ -1606,6 +1648,9 @@
             $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
             $rejectedAssets = [];
 
+            $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
+            $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
+
             foreach ($proposedState as $channel => $channelConfig) {
                 if (!is_array($channelConfig)) {
                     continue;
@@ -1626,10 +1671,6 @@
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
                 }
-
-                // Determine if the project is brand new (never deployed)
-                $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
-                $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
 
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
@@ -1725,11 +1766,35 @@
                     ->warning()
                     ->persistent()
                     ->send();
-            } else {
+            } elseif ($isFirstDeployment) {
                 \Filament\Notifications\Notification::make()
                     ->title(__('Configuration Saved'))
                     ->success()
                     ->send();
+            } elseif ($hasChannelToggle) {
+                $tenant->update(['redeploy_pending' => true]);
+
+                \Filament\Notifications\Notification::make()
+                    ->title(__('Configuration Saved'))
+                    ->body(__('A full infrastructure redeploy is required for channel changes to take effect.'))
+                    ->warning()
+                    ->send();
+            } else {
+                try {
+                    app(\App\Services\RemoteEngineService::class)->startSync($tenant);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved and Synced'))
+                        ->body(__('Workers reloaded. Assets will begin syncing shortly.'))
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->body(__('Workers could not be reloaded automatically. Please visit Sync Settings to trigger the update manually.'))
+                        ->warning()
+                        ->send();
+                }
             }
         }
     }

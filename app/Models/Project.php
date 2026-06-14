@@ -47,6 +47,7 @@ class Project extends Model
         'last_deployed_at',
         'deploy_started_at',
         'last_sync_started_at',
+        'redeploy_pending',
         'git_repo',
         'git_branch',
         'is_active',
@@ -227,6 +228,7 @@ class Project extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'redeploy_pending' => 'boolean',
         'last_deployed_at' => 'datetime',
         'deploy_started_at' => 'datetime',
         'last_sync_started_at' => 'datetime',

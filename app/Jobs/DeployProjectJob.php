@@ -53,10 +53,11 @@ class DeployProjectJob implements ShouldQueue
             // 4. If success, update project active status
             if ($result['status'] === 'success') {
                 $this->project->update([
-                    'is_active'         => true,
-                    'health_status'     => 'online',
-                    'last_deployed_at'  => now(),
-                    'deploy_started_at' => null, // clear the in-progress marker
+                    'is_active'          => true,
+                    'health_status'      => 'online',
+                    'last_deployed_at'   => now(),
+                    'deploy_started_at'  => null, // clear the in-progress marker
+                    'redeploy_pending'   => false,
                 ]);
 
                 // 5. Hydrate remote API Hub with existing social tokens if present
