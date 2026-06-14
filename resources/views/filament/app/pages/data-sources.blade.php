@@ -36,6 +36,9 @@
                 if (lock.status === 'pending_release') return '#ef4444';
                 if (lock.status === 'staged') {
                     if (!this.projectDeploymentTime) return '#9ca3af';
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    if (endsAt - this.currentTime <= 0) return '#ef4444';
                     return '#f59e0b';
                 }
                 return null;
