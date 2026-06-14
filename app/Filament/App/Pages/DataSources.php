@@ -199,7 +199,10 @@
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
-                if (!isset($config[$chan]['enabled'])) {
+                // Only hydrate 'enabled' default for the active channel the user is viewing.
+                // Other channels keep whatever the DB has (or no key at all) to avoid
+                // phantom enables when the user hasn't explicitly configured them.
+                if ($chan === $this->activeChannel && !isset($config[$chan]['enabled'])) {
                     $config[$chan]['enabled'] = true;
                 }
                 if (!isset($config[$chan]['cache_history_range'])) {
@@ -207,15 +210,20 @@
                 }
             }
 
-            if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
-                $config['facebook_marketing']['entity_sync_depth'] = 'AD';
+            // Hydrate channel-specific operational defaults only for the active channel
+            if ($this->activeChannel === 'facebook_marketing') {
+                if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
+                    $config['facebook_marketing']['entity_sync_depth'] = 'AD';
+                }
+                if (!isset($config['facebook_marketing']['metrics_level'])) {
+                    $config['facebook_marketing']['metrics_level'] = 'AD';
+                }
             }
 
-            if (!isset($config['google_search_console']['calculate_synthetics'])) {
-                $config['google_search_console']['calculate_synthetics'] = true;
-            }
-            if (!isset($config['facebook_marketing']['metrics_level'])) {
-                $config['facebook_marketing']['metrics_level'] = 'AD';
+            if ($this->activeChannel === 'google_search_console') {
+                if (!isset($config['google_search_console']['calculate_synthetics'])) {
+                    $config['google_search_console']['calculate_synthetics'] = true;
+                }
             }
 
             foreach ($config as $channelKey => $channelConfig) {
@@ -1561,17 +1569,13 @@
                 $proposedState[$this->activeChannel]['enabled'] = true;
             }
 
-            // Detect if any channel's enabled state changed
+            // Detect if the active channel's enabled state changed
             $hasChannelToggle = false;
             if ($tenant->last_deployed_at) {
-                foreach ($proposedState as $channel => $config) {
-                    if (!is_array($config)) continue;
-                    $oldEnabled = $dbState[$channel]['enabled'] ?? null;
-                    $newEnabled = $config['enabled'] ?? null;
-                    if ($oldEnabled !== $newEnabled) {
-                        $hasChannelToggle = true;
-                        break;
-                    }
+                $oldEnabled = $dbState[$this->activeChannel]['enabled'] ?? null;
+                $newEnabled = $proposedState[$this->activeChannel]['enabled'] ?? null;
+                if ($oldEnabled !== $newEnabled) {
+                    $hasChannelToggle = true;
                 }
             }
 
@@ -1659,93 +1663,93 @@
             $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
             $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
 
-            foreach ($proposedState as $channel => $channelConfig) {
-                if (!is_array($channelConfig)) {
-                    continue;
-                }
+            // Only build and push the payload for the active channel.
+            // The form only holds reliable hydrated state for the channel the user is editing;
+            // pushing stale/partial dbState for other channels would send incomplete config.
+            $channel = $this->activeChannel;
+            $channelConfig = $proposedState[$channel] ?? null;
 
+            if (is_array($channelConfig)) {
                 $configPayloadService = app(\App\Services\ConfigPayloadService::class);
                 $payloadData = $configPayloadService->buildPayload($tenant, $release, $channel, $channelConfig, $dbState[$channel] ?? []);
 
-                if (!$payloadData) {
-                    continue; // No assets array found for this channel or invalid schema
-                }
+                if ($payloadData) {
+                    $payload = $payloadData['payload'];
+                    $assetListKey = $payloadData['assetListKey'];
+                    $remoteAssetKey = $payloadData['remoteAssetKey'];
+                    $assetsListDb = $payloadData['assetsListDb'];
 
-                $payload = $payloadData['payload'];
-                $assetListKey = $payloadData['assetListKey'];
-                $remoteAssetKey = $payloadData['remoteAssetKey'];
-                $assetsListDb = $payloadData['assetsListDb'];
+                    if (!isset($dbState[$channel])) {
+                        $dbState[$channel] = [];
+                    }
 
-                if (!isset($dbState[$channel])) {
-                    $dbState[$channel] = [];
-                }
+                    // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
+                    if (!$isFirstDeployment) {
+                        try {
+                            $response = $service->updateCredentials($tenant, $payload);
 
-                // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
-                if (!$isFirstDeployment) {
-                    try {
-                        $response = $service->updateCredentials($tenant, $payload);
-
-                        // Sync status back from Remote Node
-                        $remoteListKey = last(explode('.', $assetListKey));
-                        if (isset($response['config'][$channel][$remoteListKey])) {
-                            $remoteAssets = $response['config'][$channel][$remoteListKey];
-                            $remoteMap = [];
-                            foreach ($remoteAssets as $ra) {
-                                $id = $ra['url'] ?? $ra['id'] ?? null;
-                                if ($id) {
-                                    $remoteMap[$id] = $ra;
-                                }
-                            }
-
-                            // Update local db state with remote status
-                            foreach ($assetsListDb as $index => &$dbAsset) {
-                                $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
-                                if ($id && isset($remoteMap[$id])) {
-                                    $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                                    $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
-
-                                    $dbAsset['enabled'] = $remoteEnabled;
-
-                                    if ($intendedEnabled && !$remoteEnabled) {
-                                        $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
-                                        $rejectedAssets[] = $assetName;
-                                    }
-
-                                    if (isset($remoteMap[$id]['lost_access'])) {
-                                        $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                            // Sync status back from Remote Node
+                            $remoteListKey = last(explode('.', $assetListKey));
+                            if (isset($response['config'][$channel][$remoteListKey])) {
+                                $remoteAssets = $response['config'][$channel][$remoteListKey];
+                                $remoteMap = [];
+                                foreach ($remoteAssets as $ra) {
+                                    $id = $ra['url'] ?? $ra['id'] ?? null;
+                                    if ($id) {
+                                        $remoteMap[$id] = $ra;
                                     }
                                 }
+
+                                // Update local db state with remote status
+                                foreach ($assetsListDb as $index => &$dbAsset) {
+                                    $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
+                                    if ($id && isset($remoteMap[$id])) {
+                                        $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                                        $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+                                        $dbAsset['enabled'] = $remoteEnabled;
+
+                                        if ($intendedEnabled && !$remoteEnabled) {
+                                            $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
+                                            $rejectedAssets[] = $assetName;
+                                        }
+
+                                        if (isset($remoteMap[$id]['lost_access'])) {
+                                            $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                                        }
+                                    }
+                                }
+                                unset($dbAsset);
                             }
-                            unset($dbAsset);
+                        } catch (\Exception $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+
+                            // ABORT: Prevent local DB update because the server couldn't confirm the changes
+                            return;
                         }
-                    } catch (\Exception $e) {
-                        \Filament\Notifications\Notification::make()
-                            ->title(__('Failed to sync :channel to remote engine', ['channel' => $channel]))
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-
-                        // ABORT: Prevent local DB update because the server couldn't confirm the changes
-                        return;
                     }
-                }
 
-                // If we reached here, either it's a first deployment (safe to save offline)
-                // or the remote validation succeeded. We now persist the UI configuration locally.
-                foreach ($payload as $k => $v) {
-                    if (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
-                        $dbState[$channel][$k] = $v;
+                    // If we reached here, either it's a first deployment (safe to save offline)
+                    // or the remote validation succeeded. We now persist the UI configuration locally.
+                    foreach ($payload as $k => $v) {
+                        if (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                            $dbState[$channel][$k] = $v;
+                        }
                     }
-                }
 
-                // Ensure unmapped keys from original channelConfig are also preserved
-                foreach ($channelConfig as $k => $v) {
-                    if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
-                        $dbState[$channel][$k] = $v;
+                    // Ensure unmapped keys from original channelConfig are also preserved
+                    foreach ($channelConfig as $k => $v) {
+                        if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                            $dbState[$channel][$k] = $v;
+                        }
                     }
-                }
 
-                \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
+                    \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
+                }
             }
             $tenant->update(['sync_config' => $dbState]);
 
