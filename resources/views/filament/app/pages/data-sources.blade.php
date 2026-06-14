@@ -15,7 +15,7 @@
             init() {
                 setInterval(() => {
                     this.currentTime = new Date().getTime();
-                }, 60000);
+                }, 1000);
 
                 let apply = () => document.querySelectorAll('.fi-fo-repeater-item').forEach(el => { if (el.style.position !== 'relative') el.style.position = 'relative'; });
                 this.$nextTick(apply);
@@ -39,7 +39,7 @@
                     let stagedAt = new Date(lock.staged_at).getTime();
                     let endsAt = stagedAt + (2 * 60 * 60 * 1000);
                     if (endsAt - this.currentTime <= 0) return '#ef4444';
-                    return '#f59e0b';
+                    return '#f97316'; // orange (warning-500)
                 }
                 return null;
             },
@@ -62,11 +62,40 @@
                     let endsAt = stagedAt + (2 * 60 * 60 * 1000);
                     let remainingMs = endsAt - this.currentTime;
                     if (remainingMs <= 0) return this.gracePeriodEndedLabel;
-                    let remainingMins = Math.floor(remainingMs / 60000);
-                    let h = Math.floor(remainingMins / 60);
-                    let m = remainingMins % 60;
-                    let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    let totalSec = Math.floor(remainingMs / 1000);
+                    let h = Math.floor(totalSec / 3600);
+                    let m = Math.floor((totalSec % 3600) / 60);
+                    let s = totalSec % 60;
+                    let timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
                     return `${this.gracePeriodLabel} ${timeStr})`;
+                }
+                return '';
+            },
+
+            getAssetBadgeText(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+                if (lock.status === 'staged' && this.projectDeploymentTime) {
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    let remainingMs = endsAt - this.currentTime;
+                    if (remainingMs > 0) {
+                        let totalSec = Math.floor(remainingMs / 1000);
+                        let h = Math.floor(totalSec / 3600);
+                        let m = Math.floor((totalSec % 3600) / 60);
+                        let s = totalSec % 60;
+                        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    }
+                }
+                return '';
+            },
+            getAssetBadgeTextColor(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+                if (lock.status === 'staged' && this.projectDeploymentTime) {
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    if (endsAt - this.currentTime > 0) return 'text-orange-500 dark:text-orange-400';
                 }
                 return '';
             },
@@ -164,7 +193,7 @@
 
         <template x-teleport="#tier-usage-header-target">
             <div class="flex items-center gap-3 text-sm transition-colors"
-                 :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
+                 :class="selectedCount >= (maxAssets * 0.8) ? 'text-danger-600 dark:text-danger-500' : (selectedCount < (maxAssets * 0.5) ? 'text-success-600 dark:text-success-500' : 'text-gray-700 dark:text-gray-300')">
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`${cycleLabel}: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
                 <div class="flex items-center gap-2">
                     <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ __('Tier Usage') }}</span>

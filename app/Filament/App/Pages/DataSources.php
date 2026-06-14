@@ -289,11 +289,35 @@
                 $config['facebook_marketing']['metrics_level'] = 'AD';
             }
 
-            foreach ($config as $channelKey => $channelConfig) {
+            foreach ($config as $channelKey => &$channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
                     $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     $config[$channelKey . '_enabled'] = $boolVal;
-                    $config[$channelKey]['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
+                    $channelConfig['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
+                }
+                
+                if (is_array($channelConfig)) {
+                    foreach ($channelConfig as $key => &$value) {
+                        if (($key === 'assets' || $key === 'pages') && is_array($value)) {
+                            if ($key === 'pages') {
+                                usort($value, function($a, $b) {
+                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                    return strcasecmp((string)$nameA, (string)$nameB);
+                                });
+                            } else if ($key === 'assets') {
+                                foreach ($value as $assetType => &$assetsList) {
+                                    if (is_array($assetsList)) {
+                                        usort($assetsList, function($a, $b) {
+                                            $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                            $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                            return strcasecmp((string)$nameA, (string)$nameB);
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1217,8 +1241,9 @@
                         ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
                         <div class="flex items-center gap-2">
                             <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
-                            <span :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
-                                  :style="getBadgeStyle(\''.e($get('id') ?? $get('url')).'\')"></span>
+                            <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                            <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                                  :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
                         </div>
                     '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
@@ -1266,11 +1291,17 @@
                             </div>
                             <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <div class="w-48">
+                        <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
                                 <option value="all">'.__('All Statuses').'</option>
                                 <option value="enabled">'.__('Enabled Only').'</option>
                                 <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Grace States').'</option>
+                                <option value="grace">'.__('In Grace Period').'</option>
                             </select>
                         </div>
                     </div>
@@ -1278,6 +1309,20 @@
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
+                        \Filament\Forms\Components\Actions\Action::make('sortByName')
+                            ->label(__('Sort by Name'))
+                            ->button()
+                            ->color('gray')
+                            ->icon('heroicon-m-bars-arrow-down')
+                            ->action(function (\Filament\Forms\Components\Repeater $component) {
+                                $state = $component->getState();
+                                usort($state, function($a, $b) {
+                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                    return strcasecmp((string)$nameA, (string)$nameB);
+                                });
+                                $component->state($state);
+                            }),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1322,7 +1367,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1333,7 +1378,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1353,8 +1398,9 @@
                 ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
                 <div class="flex items-center gap-2">
                     <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
-                    <span :title="getAssetBadgeLabel(\''.e($get('id') ?? $get('url')).'\')"
-                          :style="getBadgeStyle(\''.e($get('id') ?? $get('url')).'\')"></span>
+                    <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                    <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                          :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
                 </div>
             '))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
@@ -1431,11 +1477,17 @@
                             </div>
                             <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <div class="w-48">
+                        <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
                                 <option value="all">'.__('All Statuses').'</option>
                                 <option value="enabled">'.__('Enabled Only').'</option>
                                 <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Grace States').'</option>
+                                <option value="grace">'.__('In Grace Period').'</option>
                             </select>
                         </div>
                     </div>
@@ -1443,6 +1495,20 @@
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
+                        \Filament\Forms\Components\Actions\Action::make('sortByName')
+                            ->label(__('Sort by Name'))
+                            ->button()
+                            ->color('gray')
+                            ->icon('heroicon-m-bars-arrow-down')
+                            ->action(function (\Filament\Forms\Components\Repeater $component) {
+                                $state = $component->getState();
+                                usort($state, function($a, $b) {
+                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                    return strcasecmp((string)$nameA, (string)$nameB);
+                                });
+                                $component->state($state);
+                            }),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1524,7 +1590,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter === 'grace') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; matchesGrace = (lock && lock.status === 'staged'); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1535,7 +1601,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
