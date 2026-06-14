@@ -526,34 +526,31 @@
             return $actions;
         }
 
-        protected function getFormActions(): array
+        public function redeployInfrastructureAction(): Action
         {
-            return [
-                $this->getSaveFormAction(),
-                \Filament\Actions\Action::make('redeployInfrastructure')
-                    ->label(__('Apply Infrastructure Changes'))
-                    ->color('warning')
-                    ->icon('heroicon-o-cloud-arrow-up')
-                    ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
-                    ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
-                    ->requiresConfirmation()
-                    ->modalHeading(__('Redeploy Infrastructure'))
-                    ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
-                    ->action(function () {
-                        $tenant = Filament::getTenant();
-                        $tenant->update([
-                            'health_status' => 'redeploying',
-                            'deploy_started_at' => now(),
-                        ]);
+            return Action::make('redeployInfrastructure')
+                ->label(__('Apply Infrastructure Changes'))
+                ->color('warning')
+                ->icon('heroicon-o-cloud-arrow-up')
+                ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
+                ->requiresConfirmation()
+                ->modalHeading(__('Redeploy Infrastructure'))
+                ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
+                ->action(function () {
+                    $tenant = Filament::getTenant();
+                    $tenant->update([
+                        'health_status' => 'redeploying',
+                        'deploy_started_at' => now(),
+                    ]);
 
-                        \App\Jobs\DeployProjectJob::dispatch($tenant);
+                    \App\Jobs\DeployProjectJob::dispatch($tenant);
 
-                        Notification::make()
-                            ->title(__('Redeployment Initiated'))
-                            ->success()
-                            ->send();
-                    }),
-            ];
+                    Notification::make()
+                        ->title(__('Redeployment Initiated'))
+                        ->success()
+                        ->send();
+                });
         }
 
         public function discoverAssetsAction(): Action

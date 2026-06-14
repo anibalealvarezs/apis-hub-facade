@@ -368,14 +368,18 @@
                 <form wire:submit="save">
                     {{ $this->form }}
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
-                        <x-filament::button type="submit" color="primary" size="lg"
-                            :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels')"
-                            wire:loading.attr="disabled"
-                            wire:target="save"
-                            wire:confirm="{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}<br>{{ __('Are you sure you want to proceed?') }}">
-                            <span wire:loading.remove wire:target="save">{{ __('Save Configuration') }}</span>
-                            <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                        </x-filament::button>
+                        <div class="flex items-center gap-3">
+                            {{ $this->getAction('redeployInfrastructure') }}
+                            
+                            <x-filament::button type="submit" color="primary" size="lg"
+                                :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels')"
+                                wire:loading.attr="disabled"
+                                wire:target="save"
+                                wire:confirm="{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}<br>{{ __('Are you sure you want to proceed?') }}">
+                                <span wire:loading.remove wire:target="save">{{ __('Save Configuration') }}</span>
+                                <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
+                            </x-filament::button>
+                        </div>
                     </div>
                 </form>
             @endif
