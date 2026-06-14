@@ -1318,6 +1318,7 @@
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
                             ->livewireClickHandlerEnabled(false)
+                            ->visible(false)
                             ->extraAttributes([
                                 'x-on:click.prevent' => 'sortAssets()'
                             ]),
@@ -1503,6 +1504,7 @@
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
                             ->livewireClickHandlerEnabled(false)
+                            ->visible(false)
                             ->extraAttributes([
                                 'x-on:click.prevent' => 'sortAssets()'
                             ]),

@@ -54,7 +54,7 @@ class DataSync extends Page
                 \Illuminate\Support\Facades\Cache::forget($cacheKey);
             }
 
-            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($service, $tenant) {
+            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addSeconds(30), function () use ($service, $tenant) {
                 return $service->getSyncTelemetry($tenant);
             });
 
