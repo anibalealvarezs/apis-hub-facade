@@ -1,28 +1,4 @@
 <x-filament-panels::page>
-    @php
-        $gracePeriodEndedLabel = __('Grace Period (Ended)');
-        $lockedUntilCycleEndLabel = __('Locked until cycle end');
-        $gracePeriodPausedLabel = __('Grace Period paused (Waiting for deployment)');
-        $quotaLockedLabel = __('Quota Locked');
-        $gracePeriodLabel = __('Grace Period (Ends in');
-    @endphp
-    <style>
-        .compact-repeater .asset-badge-dot {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            width: 0.625rem;
-            height: 0.625rem;
-            border-radius: 9999px;
-            box-shadow: 0 0 0 2px white;
-        }
-        .dark .compact-repeater .asset-badge-dot {
-            box-shadow: 0 0 0 2px #1f2937;
-        }
-        .compact-repeater li {
-            position: relative;
-        }
-    </style>
     <div class="flex flex-col gap-6"
          x-data="{
             activeTab: @entangle('activeChannel'),
@@ -42,11 +18,11 @@
                 }, 60000);
             },
 
-            quotaLockedLabel: '{{ $quotaLockedLabel }}',
-            lockedUntilCycleEndLabel: '{{ $lockedUntilCycleEndLabel }}',
-            gracePeriodPausedLabel: '{{ $gracePeriodPausedLabel }}',
-            gracePeriodEndedLabel: '{{ $gracePeriodEndedLabel }}',
-            gracePeriodLabel: '{{ $gracePeriodLabel }}',
+            quotaLockedLabel: '{{ __('Quota Locked') }}',
+            lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
+            gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
+            gracePeriodEndedLabel: '{{ __('Grace Period (Ended)') }}',
+            gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
 
             getAssetBadge(id) {
                 if (!id || !this.lockStates[id]) return '';
@@ -87,7 +63,7 @@
                 }
 
                 if (!color) return '';
-                return `<span class="asset-badge-dot ${color}" title="${label.replace(/"/g, '&quot;')}"></span>`;
+                return `<span class="inline-block w-2.5 h-2.5 rounded-full ${color} flex-shrink-0" title="${label.replace(/"/g, '&quot;')}"></span>`;
             },
 
             get formAssets() {
