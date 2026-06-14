@@ -165,7 +165,9 @@ class AssetQuotaService
 
             if (!$isActive) {
                 if ($lock->status === 'staged') {
-                    $lock->delete();
+                    if (!$lock->disabled_at) {
+                        $lock->update(['disabled_at' => now()]);
+                    }
                 } elseif ($lock->status === 'locked') {
                     $lock->update([
                         'status' => 'pending_release',
