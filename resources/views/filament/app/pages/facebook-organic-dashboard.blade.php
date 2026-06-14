@@ -364,9 +364,7 @@
                     </thead>
                     <tbody>
                     <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
-                        <tr @click="toggleFilter(activeBreakdownTab, row.id)"
-                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150"
-                            :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                             <td class="font-medium">
                                 <div class="flex items-center gap-2">
                                     <span x-text="row.name"></span>
