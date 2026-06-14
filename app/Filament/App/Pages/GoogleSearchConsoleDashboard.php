@@ -74,7 +74,11 @@ class GoogleSearchConsoleDashboard extends Page
                 }
             }
 
+            \Illuminate\Support\Facades\Log::info("GSC Dashboard - config sites", ['config_sites' => $config, 'enabledIds' => $enabledIds]);
+
             if (isset($response['data']) && is_array($response['data'])) {
+                \Illuminate\Support\Facades\Log::info("GSC Dashboard - remote channeled_accounts", ['count' => count($response['data']), 'sample' => array_slice($response['data'], 0, 3)]);
+
                 foreach ($response['data'] as $page) {
                     $platformId = rtrim((string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']), '/');
                     
@@ -86,6 +90,8 @@ class GoogleSearchConsoleDashboard extends Page
                 if (!empty($this->accounts) && !$this->selectedAccount) {
                     $this->selectedAccount = array_key_first($this->accounts);
                 }
+            } else {
+                \Illuminate\Support\Facades\Log::info("GSC Dashboard - no data in response", ['response_keys' => is_array($response) ? array_keys($response) : gettype($response)]);
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Accounts Error: " . $e->getMessage());

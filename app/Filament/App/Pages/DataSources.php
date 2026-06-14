@@ -758,6 +758,12 @@
             }
 
             $fields = $release->config_schemas[$this->activeChannel]['fields'];
+
+            // Remove fields rendered manually in secondary sections (not from schema)
+            if ($this->activeChannel === 'google_search_console') {
+                unset($fields['calculate_synthetics']);
+            }
+
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
 
             $secondarySections = [];
