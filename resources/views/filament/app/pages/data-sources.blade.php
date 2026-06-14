@@ -1,4 +1,9 @@
 <x-filament-panels::page>
+    <style>
+        .compact-repeater li {
+            position: relative;
+        }
+    </style>
     <div class="flex flex-col gap-6"
          x-data="{
             activeTab: @entangle('activeChannel'),
@@ -63,7 +68,7 @@
                 }
 
                 if (!color) return '';
-                return `<span class='inline-block w-2.5 h-2.5 rounded-full ${color} flex-shrink-0' title='${label}'></span>`;
+                return `<span class='absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${color} flex-shrink-0 ring-2 ring-white dark:ring-gray-800' title='${label}'></span>`;
             },
 
             get formAssets() {
