@@ -62,9 +62,7 @@
                     }
 
                     let stagedAt = new Date(lock.staged_at).getTime();
-                    let deployedAt = new Date(this.projectDeploymentTime).getTime();
-                    let startTime = Math.max(stagedAt, deployedAt);
-                    let endsAt = startTime + (2 * 60 * 60 * 1000); // +2 hours
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000); // +2 hours
 
                     let remainingMs = endsAt - this.currentTime;
 

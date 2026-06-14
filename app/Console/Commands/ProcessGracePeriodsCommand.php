@@ -47,11 +47,9 @@ class ProcessGracePeriodsCommand extends Command
                 continue;
             }
 
-            // The countdown begins at the LATER of the staged_at time or the last_deployed_at time.
-            $startTime = max($lock->staged_at, $project->last_deployed_at);
-            
-            // 2-hour hardcoded grace period
-            $gracePeriodEndsAt = $startTime->copy()->addHours(2);
+            // The countdown begins at staged_at. Do NOT use last_deployed_at here —
+            // that would reset the grace period on every redeploy.
+            $gracePeriodEndsAt = $lock->staged_at->copy()->addHours(2);
             
             if (now()->greaterThanOrEqualTo($gracePeriodEndsAt)) {
                 $lock->update([
