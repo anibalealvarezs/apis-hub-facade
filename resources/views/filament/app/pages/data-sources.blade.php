@@ -42,11 +42,11 @@
                 }, 60000);
             },
 
-            quotaLockedLabel: @js($quotaLockedLabel),
-            lockedUntilCycleEndLabel: @js($lockedUntilCycleEndLabel),
-            gracePeriodPausedLabel: @js($gracePeriodPausedLabel),
-            gracePeriodEndedLabel: @js($gracePeriodEndedLabel),
-            gracePeriodLabel: @js($gracePeriodLabel),
+            quotaLockedLabel: '{{ $quotaLockedLabel }}',
+            lockedUntilCycleEndLabel: '{{ $lockedUntilCycleEndLabel }}',
+            gracePeriodPausedLabel: '{{ $gracePeriodPausedLabel }}',
+            gracePeriodEndedLabel: '{{ $gracePeriodEndedLabel }}',
+            gracePeriodLabel: '{{ $gracePeriodLabel }}',
 
             getAssetBadge(id) {
                 if (!id || !this.lockStates[id]) return '';
