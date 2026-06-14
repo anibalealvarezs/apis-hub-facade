@@ -1418,13 +1418,15 @@
                         Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)
                             ->extraAttributes(['class' => 'toggle-posts'])
                             ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.')),
-                        Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
-                            ->extraAttributes(['class' => 'ml-8 toggle-post-metrics', 'x-show' => 'postsEnabled'])
-                            ->dehydrated(),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
+                                ->extraAttributes(['class' => 'toggle-post-metrics'])
+                                ->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'postsEnabled', 'class' => 'ml-8']),
                     ])->extraAttributes([
                         'class' => 'flex flex-col gap-2',
                         'x-data' => '{ postsEnabled: false }',
-                        'x-init' => 'setTimeout(() => { let btn = $el.querySelector(\'.toggle-posts button[role="switch"]\'); if(btn){ postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; if(!postsEnabled){ let childBtn = $el.querySelector(\'.toggle-post-metrics button[role="switch"]\'); if(childBtn && childBtn.getAttribute(\'aria-checked\') === \'true\') { childBtn.click(); } } }).observe(btn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                        'x-init' => 'setTimeout(() => { let btn = $el.querySelector(\'button.toggle-posts\'); if(btn){ postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; if(!postsEnabled){ let childBtn = $el.querySelector(\'button.toggle-post-metrics\'); if(childBtn && childBtn.getAttribute(\'aria-checked\') === \'true\') { childBtn.click(); } } }).observe(btn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
                     ]),
 
                     // Instagram Extraction Column
@@ -1432,19 +1434,25 @@
                         Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)
                             ->extraAttributes(['class' => 'toggle-ig-accounts'])
                             ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account'))),
-                        Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
-                            ->extraAttributes(['class' => 'ml-8 toggle-ig-metrics', 'x-show' => 'igAccountsEnabled'])
-                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
-                        Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)
-                            ->extraAttributes(['class' => 'ml-8 toggle-ig-media', 'x-show' => 'igAccountsEnabled'])
-                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
-                        Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
-                            ->extraAttributes(['class' => 'ml-12 toggle-ig-media-metrics', 'x-show' => 'igAccountsEnabled && igMediaEnabled'])
-                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-metrics'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled', 'class' => 'ml-8']),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-media'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled', 'class' => 'ml-8']),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-media-metrics'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled && igMediaEnabled', 'class' => 'ml-12']),
                     ])->extraAttributes([
                         'class' => 'flex flex-col gap-2',
                         'x-data' => '{ igAccountsEnabled: true, igMediaEnabled: true }',
-                        'x-init' => 'setTimeout(() => { let accBtn = $el.querySelector(\'.toggle-ig-accounts button[role="switch"]\'); if(accBtn){ igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igAccountsEnabled){ let c1 = $el.querySelector(\'.toggle-ig-metrics button[role="switch"]\'); if(c1 && c1.getAttribute(\'aria-checked\') === \'true\') c1.click(); let c2 = $el.querySelector(\'.toggle-ig-media button[role="switch"]\'); if(c2 && c2.getAttribute(\'aria-checked\') === \'true\') c2.click(); let c3 = $el.querySelector(\'.toggle-ig-media-metrics button[role="switch"]\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(accBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } let medBtn = $el.querySelector(\'.toggle-ig-media button[role="switch"]\'); if(medBtn){ igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igMediaEnabled){ let c3 = $el.querySelector(\'.toggle-ig-media-metrics button[role="switch"]\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(medBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                        'x-init' => 'setTimeout(() => { let accBtn = $el.querySelector(\'button.toggle-ig-accounts\'); if(accBtn){ igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igAccountsEnabled){ let c1 = $el.querySelector(\'button.toggle-ig-metrics\'); if(c1 && c1.getAttribute(\'aria-checked\') === \'true\') c1.click(); let c2 = $el.querySelector(\'button.toggle-ig-media\'); if(c2 && c2.getAttribute(\'aria-checked\') === \'true\') c2.click(); let c3 = $el.querySelector(\'button.toggle-ig-media-metrics\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(accBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } let medBtn = $el.querySelector(\'button.toggle-ig-media\'); if(medBtn){ igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igMediaEnabled){ let c3 = $el.querySelector(\'button.toggle-ig-media-metrics\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(medBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
                     ]),
                 ]),
             ])
