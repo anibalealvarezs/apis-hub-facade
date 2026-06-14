@@ -437,7 +437,7 @@
                     ->view('filament.app.actions.tier-usage-target'),
             ];
 
-            if ($tenant->redeploy_pending && $tenant->last_deployed_at) {
+            if ($tenant->redeploy_pending) {
                 $actions[] = \Filament\Actions\Action::make('redeployInfrastructure')
                     ->label(__('Apply Infrastructure Changes'))
                     ->color('warning')
@@ -1775,10 +1775,20 @@
                     ->persistent()
                     ->send();
             } elseif ($isFirstDeployment) {
-                \Filament\Notifications\Notification::make()
-                    ->title(__('Configuration Saved'))
-                    ->success()
-                    ->send();
+                if ($hasChannelToggle) {
+                    $tenant->update(['redeploy_pending' => true]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->body(__('A full infrastructure deployment is required for channel changes to take effect.'))
+                        ->warning()
+                        ->send();
+                } else {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->success()
+                        ->send();
+                }
             } elseif ($hasChannelToggle) {
                 $tenant->update(['redeploy_pending' => true]);
 
