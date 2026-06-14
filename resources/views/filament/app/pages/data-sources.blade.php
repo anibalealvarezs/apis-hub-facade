@@ -44,6 +44,12 @@
                 return null;
             },
 
+            getBadgeStyle(id) {
+                let color = this.getAssetBadgeColor(id);
+                if (!color) return 'display:none';
+                return `position:absolute;top:0.75rem;right:0.75rem;width:1rem;height:1rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:${color}`;
+            },
+
             getAssetBadgeLabel(id) {
                 if (!id || !this.lockStates[id]) return '';
                 let lock = this.lockStates[id];
