@@ -1317,10 +1317,10 @@
                             ->button()
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
+                            ->livewireClickHandlerEnabled(false)
                             ->extraAttributes([
                                 'x-on:click.prevent' => 'sortAssets()'
-                            ])
-                            ->action(function () {}),
+                            ]),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1502,10 +1502,10 @@
                             ->button()
                             ->color('gray')
                             ->icon('heroicon-m-bars-arrow-down')
+                            ->livewireClickHandlerEnabled(false)
                             ->extraAttributes([
                                 'x-on:click.prevent' => 'sortAssets()'
-                            ])
-                            ->action(function () {}),
+                            ]),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
