@@ -3,6 +3,18 @@
         .fi-fo-repeater-item {
             position: relative;
         }
+        .asset-badge-dot {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 0.625rem;
+            height: 0.625rem;
+            border-radius: 9999px;
+            box-shadow: 0 0 0 2px white;
+        }
+        .dark .asset-badge-dot {
+            box-shadow: 0 0 0 2px #1f2937;
+        }
     </style>
     <div class="flex flex-col gap-6"
          x-data="{
@@ -29,46 +41,40 @@
             gracePeriodEndedLabel: '{{ __('Grace Period (Ended)') }}',
             gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
 
-            getAssetBadge(id) {
-                if (!id || !this.lockStates[id]) return '';
-
+            getAssetBadgeColor(id) {
+                if (!id || !this.lockStates[id]) return null;
                 let lock = this.lockStates[id];
-                let color = '';
-                let label = '';
 
-                if (lock.status === 'locked') {
-                    color = 'bg-success-500';
-                    label = this.quotaLockedLabel;
-                } else if (lock.status === 'pending_release') {
-                    color = 'bg-danger-500';
-                    let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    label = `${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})`;
-                } else if (lock.status === 'staged') {
-                    if (!this.projectDeploymentTime) {
-                        color = 'bg-gray-400';
-                        label = this.gracePeriodPausedLabel;
-                    } else {
-                        let stagedAt = new Date(lock.staged_at).getTime();
-                        let endsAt = stagedAt + (2 * 60 * 60 * 1000);
-
-                        let remainingMs = endsAt - this.currentTime;
-
-                        if (remainingMs <= 0) {
-                            color = 'bg-warning-500';
-                            label = this.gracePeriodEndedLabel;
-                        } else {
-                            color = 'bg-warning-500';
-                            let remainingMins = Math.floor(remainingMs / 60000);
-                            let h = Math.floor(remainingMins / 60);
-                            let m = remainingMins % 60;
-                            let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
-                            label = `${this.gracePeriodLabel} ${timeStr})`;
-                        }
-                    }
+                if (lock.status === 'locked') return 'bg-success-500';
+                if (lock.status === 'pending_release') return 'bg-danger-500';
+                if (lock.status === 'staged') {
+                    if (!this.projectDeploymentTime) return 'bg-gray-400';
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    return remainingMs <= 0 ? 'bg-warning-500' : 'bg-warning-500';
                 }
+                return null;
+            },
 
-                if (!color) return '';
-                return `<span class='absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${color} flex-shrink-0 ring-2 ring-white dark:ring-gray-800' title='${label}'></span>`;
+            getAssetBadgeLabel(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+
+                if (lock.status === 'locked') return this.quotaLockedLabel;
+                if (lock.status === 'pending_release') return `${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})`;
+                if (lock.status === 'staged') {
+                    if (!this.projectDeploymentTime) return this.gracePeriodPausedLabel;
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    let remainingMs = endsAt - this.currentTime;
+                    if (remainingMs <= 0) return this.gracePeriodEndedLabel;
+                    let remainingMins = Math.floor(remainingMs / 60000);
+                    let h = Math.floor(remainingMins / 60);
+                    let m = remainingMins % 60;
+                    let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    return `${this.gracePeriodLabel} ${timeStr})`;
+                }
+                return '';
             },
 
             get formAssets() {
