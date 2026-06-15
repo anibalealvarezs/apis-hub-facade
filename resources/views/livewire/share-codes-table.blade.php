@@ -4,9 +4,15 @@
             <h3 class="text-lg font-medium">{{ __('Share Codes') }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Use these codes so that any user can join this project from the registration form. Each code can only be used once.') }}</p>
         </div>
-        <x-filament::button wire:click="$set('showForm', true)" icon="heroicon-o-link">
-            {{ __('Generate Share Code') }}
-        </x-filament::button>
+        @if($canInvite)
+            <x-filament::button wire:click="$set('showForm', true)" icon="heroicon-o-link">
+                {{ __('Generate Share Code') }}
+            </x-filament::button>
+        @else
+            <x-filament::button disabled icon="heroicon-o-link" title="{{ __('Upgrade to Ultra or Enterprise plan to invite collaborators.') }}">
+                {{ __('Generate Share Code') }}
+            </x-filament::button>
+        @endif
     </div>
 
     @if(count($codes) > 0)

@@ -44,6 +44,18 @@ class ShareCodesTable extends Component
             return;
         }
 
+        $canInvite = app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators(
+            $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE
+        );
+
+        if (!$canInvite) {
+            \Filament\Notifications\Notification::make()
+                ->danger()
+                ->title(__('Upgrade to Ultra or Enterprise plan to invite collaborators.'))
+                ->send();
+            return;
+        }
+
         $code = 'APISHUB-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
 
         OneTimeShareToken::create([
@@ -60,6 +72,16 @@ class ShareCodesTable extends Component
 
     public function render()
     {
-        return view('livewire.share-codes-table');
+        $project = Filament::getTenant();
+        $canInvite = false;
+        if ($project) {
+            $canInvite = app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators(
+                $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE
+            );
+        }
+
+        return view('livewire.share-codes-table', [
+            'canInvite' => $canInvite,
+        ]);
     }
 }
