@@ -183,4 +183,64 @@ class BillingLifecycleService
             default => 5,
         };
     }
+
+    public function getMaxCustomKpisForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 5,
+            UserTier::PRO => 20,
+            UserTier::ULTRA, UserTier::FOUNDER => 30,
+            UserTier::ENTERPRISE => 999999,
+            UserTier::SUSPENDED => 0,
+            default => 5,
+        };
+    }
+
+    public function getMaxPrivateDashboardsForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 1,
+            UserTier::PRO => 5,
+            UserTier::ULTRA, UserTier::FOUNDER => 15,
+            UserTier::ENTERPRISE => 999999,
+            UserTier::SUSPENDED => 0,
+            default => 1,
+        };
+    }
+
+    public function getMaxPublicDashboardsForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 0,
+            UserTier::PRO => 5,
+            UserTier::ULTRA, UserTier::FOUNDER => 15,
+            UserTier::ENTERPRISE => 999999,
+            UserTier::SUSPENDED => 0,
+            default => 0,
+        };
+    }
+
+    public function canInviteCollaborators(UserTier $tier): bool
+    {
+        return match ($tier) {
+            UserTier::ULTRA, UserTier::FOUNDER, UserTier::ENTERPRISE => true,
+            default => false,
+        };
+    }
+
+    public function canShareBillingProfile(UserTier $tier): bool
+    {
+        return match ($tier) {
+            UserTier::ENTERPRISE => true,
+            default => false,
+        };
+    }
+
+    public function canAccessApi(UserTier $tier): bool
+    {
+        return match ($tier) {
+            UserTier::ULTRA, UserTier::FOUNDER, UserTier::ENTERPRISE => true,
+            default => false,
+        };
+    }
 }

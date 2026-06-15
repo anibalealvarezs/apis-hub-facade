@@ -219,14 +219,20 @@ class ManageCollaborators extends Page implements HasTable
                     ->label(__('Invite Collaborator'))
                     ->icon('heroicon-o-envelope')
                     ->hidden(fn () => ! auth()->user()->can('manage_collaborators'))
-                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
+                    ->disabled(function () {
+                        $tenant = Filament::getTenant();
+                        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
+                            return true;
+                        }
+                        return !app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE);
+                    })
                     ->tooltip(function () {
                         $tenant = Filament::getTenant();
                         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
                             return __('Project is inactive or suspended.');
                         }
-                        if ($tenant->billingProfile?->tier === \App\Enums\UserTier::FREE) {
-                            return __('Upgrade to a paid plan to invite collaborators.');
+                        if (!app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE)) {
+                            return __('Upgrade to Ultra or Enterprise plan to invite collaborators.');
                         }
 
                         return null;

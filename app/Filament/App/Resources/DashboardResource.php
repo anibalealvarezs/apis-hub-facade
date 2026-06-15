@@ -19,6 +19,20 @@ class DashboardResource extends Resource
 
     protected static ?string $cluster = \App\Filament\App\Clusters\Dashboards::class;
 
+    public static function canCreate(): bool
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project || !$project->billingProfile) {
+            return false;
+        }
+
+        $currentCount = Dashboard::where('project_id', $project->id)->count();
+        $maxDashboards = app(\App\Services\BillingLifecycleService::class)
+            ->getMaxPrivateDashboardsForTier($project->billingProfile->tier);
+
+        return $currentCount < $maxDashboards;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('All Dashboards');
@@ -48,7 +62,42 @@ class DashboardResource extends Resource
                             ->columnSpanFull(),
                         Forms\Components\Toggle::make('is_public')
                             ->label(__('Public (accessible by any project collaborator and via shared link)'))
-                            ->default(false),
+                            ->default(false)
+                            ->disabled(function (?\Illuminate\Database\Eloquent\Model $record) {
+                                $project = \Filament\Facades\Filament::getTenant();
+                                $tier = $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
+                                $maxPublic = app(\App\Services\BillingLifecycleService::class)->getMaxPublicDashboardsForTier($tier);
+                                
+                                if ($maxPublic === 0) {
+                                    return true;
+                                }
+                                
+                                if ($record && $record->is_public) {
+                                    return false;
+                                }
+
+                                $currentPublic = Dashboard::where('project_id', $project->id)->where('is_public', true)->count();
+                                return $currentPublic >= $maxPublic;
+                            })
+                            ->helperText(function (?\Illuminate\Database\Eloquent\Model $record) {
+                                $project = \Filament\Facades\Filament::getTenant();
+                                $tier = $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
+                                $maxPublic = app(\App\Services\BillingLifecycleService::class)->getMaxPublicDashboardsForTier($tier);
+                                
+                                if ($maxPublic === 0) {
+                                    return __('Public dashboards are not available on your current plan.');
+                                }
+                                
+                                if ($record && $record->is_public) {
+                                    return null;
+                                }
+                                
+                                $currentPublic = Dashboard::where('project_id', $project->id)->where('is_public', true)->count();
+                                if ($currentPublic >= $maxPublic) {
+                                    return __('You have reached the limit of public dashboards for your plan.');
+                                }
+                                return null;
+                            }),
                         Forms\Components\Toggle::make('is_default')
                             ->label(__('Set as default dashboard'))
                             ->default(false),

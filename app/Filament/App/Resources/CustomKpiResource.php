@@ -24,6 +24,20 @@
 
         protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
+        public static function canCreate(): bool
+        {
+            $project = \Filament\Facades\Filament::getTenant();
+            if (!$project || !$project->billingProfile) {
+                return false;
+            }
+
+            $currentCount = CustomKpi::where('project_id', $project->id)->count();
+            $maxKpis = app(\App\Services\BillingLifecycleService::class)
+                ->getMaxCustomKpisForTier($project->billingProfile->tier);
+
+            return $currentCount < $maxKpis;
+        }
+
         public static function getNavigationGroup(): ?string
         {
             return __('Exploration & Telemetry');

@@ -62,6 +62,8 @@ class SharedWithUsersRelationManager extends RelationManager
                 Tables\Actions\Action::make('invite')
                     ->label(__('Invite User'))
                     ->icon('heroicon-o-envelope')
+                    ->disabled(fn () => !app(\App\Services\BillingLifecycleService::class)->canShareBillingProfile($this->ownerRecord->tier))
+                    ->tooltip(fn () => !app(\App\Services\BillingLifecycleService::class)->canShareBillingProfile($this->ownerRecord->tier) ? __('Only Enterprise tier can share billing profiles.') : null)
                     ->form([
                         Forms\Components\TextInput::make('email')
                             ->email()
