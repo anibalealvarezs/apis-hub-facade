@@ -26,7 +26,7 @@
 
         public static function getNavigationGroup(): ?string
         {
-            return 'Exploration & Telemetry';
+            return __('Exploration & Telemetry');
         }
 
         public static function form(Form $form): Form

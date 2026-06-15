@@ -171,18 +171,18 @@ class AppPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
-                \Filament\Navigation\NavigationGroup::make('Exploration & Telemetry')
-                    ->label(__('Exploration & Telemetry')),
-                \Filament\Navigation\NavigationGroup::make('Data & Integrations')
-                    ->label(__('Data & Integrations')),
-                \Filament\Navigation\NavigationGroup::make('Administration')
-                    ->label(__('Administration')),
-                \Filament\Navigation\NavigationGroup::make('Knowledge Base')
-                    ->label(__('Knowledge Base')),
-                \Filament\Navigation\NavigationGroup::make('Google')
-                    ->label(__('Google')),
-                \Filament\Navigation\NavigationGroup::make('Meta')
-                    ->label(__('Meta')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Exploration & Telemetry')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Data & Integrations')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Administration')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Knowledge Base')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Google')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Meta')),
             ])
             ->pages([
                 Pages\Dashboard::class,

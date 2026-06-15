@@ -21,7 +21,7 @@ class ProjectBillingSettings extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Administration';
+        return __('Administration');
     }
 
     public static function getNavigationLabel(): string

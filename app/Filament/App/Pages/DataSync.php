@@ -19,7 +19,7 @@ class DataSync extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Exploration & Telemetry';
+        return __('Exploration & Telemetry');
     }
 
     public function getTitle(): string

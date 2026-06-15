@@ -20,7 +20,7 @@ class GoogleSearchConsoleDashboard extends Page
     
     public static function getNavigationGroup(): ?string
     {
-        return 'Google';
+        return __('Google');
     }
 
     public function getTitle(): string

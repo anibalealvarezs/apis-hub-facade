@@ -16,7 +16,7 @@ class SyncingProcessReference extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Knowledge Base';
+        return __('Knowledge Base');
     }
 
     public function getTitle(): string

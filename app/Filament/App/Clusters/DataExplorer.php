@@ -16,6 +16,6 @@ class DataExplorer extends Cluster
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Exploration & Telemetry';
+        return __('Exploration & Telemetry');
     }
 }

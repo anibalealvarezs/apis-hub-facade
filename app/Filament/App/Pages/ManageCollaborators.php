@@ -36,7 +36,7 @@ class ManageCollaborators extends Page implements HasTable
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Administration';
+        return __('Administration');
     }
 
     public function getTitle(): string
