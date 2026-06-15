@@ -243,9 +243,15 @@ class SyncSettings extends Page
                                         <h3 class="font-bold">' . __('Upgrade Required') . '</h3>
                                     </div>
                                     <p class="text-sm mb-3">' . __('API Access is exclusively available on Ultra and Enterprise tiers. Please upgrade your associated billing profile to one of these tiers to unlock external integration capabilities.') . '</p>
-                                    <a href="/account/account-subscription" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
+                                    ' . (Filament::getTenant()->billingProfile?->user_id === auth()->id() ? '
+                                    <a href="/account/account-subscription?profile=' . Filament::getTenant()->billingProfile?->id . '" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
                                         ' . __('Manage Subscription') . '
                                     </a>
+                                    ' : '
+                                    <span class="inline-block px-3 py-1.5 text-sm font-medium text-warning-700 bg-warning-100 dark:bg-warning-500/20 dark:text-warning-300 rounded-lg">
+                                        ' . __('Please contact the billing profile owner to upgrade the subscription.') . '
+                                    </span>
+                                    ') . '
                                 </div>
                             '))
                     ]),

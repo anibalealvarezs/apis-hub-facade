@@ -59,9 +59,15 @@ class SharedWithUsersRelationManager extends RelationManager
                                 </div>
                                 <p class="text-sm">' . __('Sharing billing profiles is exclusively available on the Enterprise tier. Please upgrade this profile to Enterprise to invite other members to use it.') . '</p>
                             </div>
-                            <a href="/account/account-subscription" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
+                            ' . ($this->ownerRecord->user_id === auth()->id() ? '
+                            <a href="/account/account-subscription?profile=' . $this->ownerRecord->id . '" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
                                 ' . __('Manage Subscription') . '
                             </a>
+                            ' : '
+                            <span class="shrink-0 inline-block px-3 py-1.5 text-sm font-medium text-warning-700 bg-warning-100 dark:bg-warning-500/20 dark:text-warning-300 rounded-lg">
+                                ' . __('Please contact the billing profile owner to upgrade the subscription.') . '
+                            </span>
+                            ') . '
                         </div>
                     ');
                 }
