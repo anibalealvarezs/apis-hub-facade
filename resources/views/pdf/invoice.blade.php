@@ -77,46 +77,42 @@
                     <td class="text-right">${{ number_format($invoice->subtotal ?? $invoice->amount, 2) }}</td>
                     <td class="text-right">${{ number_format($invoice->subtotal ?? $invoice->amount, 2) }}</td>
                 </tr>
-                <tr>
-                    <td colspan="2"></td>
-                    <td class="text-right" style="padding-top: 20px;">Subtotal (USD):</td>
-                    <td class="text-right" style="padding-top: 20px;">${{ number_format($invoice->subtotal ?? $invoice->amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td colspan="2"></td>
-                    <td class="text-right">IVA ({{ number_format($invoice->tax_rate ?? 0, 0) }}%):</td>
-                    <td class="text-right">${{ number_format($invoice->tax_amount ?? 0, 2) }}</td>
-                </tr>
-                <tr class="total">
-                    <td colspan="2"></td>
-                    <td class="text-right">Total (USD):</td>
-                    <td class="text-right">${{ number_format($invoice->amount, 2) }}</td>
-                </tr>
             </tbody>
         </table>
 
-        @if($invoice->local_currency === 'VES' || $isVe)
         <div style="margin-top: 30px; border: 1px solid #ddd; padding: 15px; background: #f9f9f9;">
-            <div class="section-title" style="margin-top:0;">Equivalente Legal en Bolívares (VES)</div>
-            <p style="font-size: 12px; margin-bottom: 10px;">
+            <div class="section-title" style="margin-top:0;">Resumen y Equivalente Legal en Bolívares (VES)</div>
+            <p style="font-size: 12px; margin-bottom: 15px;">
                 Tasa de cambio de referencia según el Banco Central de Venezuela (BCV) de fecha {{ $invoice->paid_at ? $invoice->paid_at->format('d/m/Y') : $invoice->created_at->format('d/m/Y') }}: <strong>{{ $invoice->exchange_rate ? number_format($invoice->exchange_rate, 4, ',', '.') . ' Bs./USD' : '[Tasa Pendiente]' }}</strong>.
             </p>
-            <table cellpadding="0" cellspacing="0" style="width: 100%; font-size: 13px;">
-                <tr>
-                    <td style="width: 50%;"></td>
-                    <td class="text-right"><strong>Subtotal:</strong> {{ $invoice->local_subtotal ? number_format($invoice->local_subtotal, 2, ',', '.') . ' Bs' : '[Pendiente]' }}</td>
+            <table cellpadding="5" cellspacing="0" style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <th style="text-align: left; width: 40%;">Concepto</th>
+                    <th style="text-align: right; width: 30%;">Monto (USD)</th>
+                    <th style="text-align: right; width: 30%;">Monto (VES)</th>
                 </tr>
                 <tr>
-                    <td style="width: 50%;"></td>
-                    <td class="text-right"><strong>IVA ({{ number_format($invoice->tax_rate ?? 0, 0) }}%):</strong> {{ $invoice->local_tax_amount ? number_format($invoice->local_tax_amount, 2, ',', '.') . ' Bs' : '[Pendiente]' }}</td>
+                    <td style="padding-top: 10px;"><strong>Subtotal (Base Imponible)</strong></td>
+                    <td style="text-align: right; padding-top: 10px;">${{ number_format($invoice->subtotal ?? $invoice->amount, 2) }}</td>
+                    <td style="text-align: right; padding-top: 10px;">{{ $invoice->local_subtotal ? number_format($invoice->local_subtotal, 2, ',', '.') . ' Bs.' : '[Pendiente]' }}</td>
                 </tr>
                 <tr>
-                    <td style="width: 50%;"></td>
-                    <td class="text-right" style="font-size: 15px;"><strong>Total:</strong> {{ $invoice->local_total ? number_format($invoice->local_total, 2, ',', '.') . ' Bs' : '[Pendiente]' }}</td>
+                    <td><strong>Alícuota IVA</strong></td>
+                    <td style="text-align: right;">{{ number_format($invoice->tax_rate ?? 0, 0) }}%</td>
+                    <td style="text-align: right;">{{ number_format($invoice->tax_rate ?? 0, 0) }}%</td>
+                </tr>
+                <tr>
+                    <td><strong>Monto IVA</strong></td>
+                    <td style="text-align: right;">${{ number_format($invoice->tax_amount ?? 0, 2) }}</td>
+                    <td style="text-align: right;">{{ $invoice->local_tax_amount !== null ? number_format($invoice->local_tax_amount, 2, ',', '.') . ' Bs.' : '[Pendiente]' }}</td>
+                </tr>
+                <tr style="border-top: 1px solid #ccc;">
+                    <td style="padding-top: 10px; font-size: 15px;"><strong>TOTAL A PAGAR</strong></td>
+                    <td style="text-align: right; padding-top: 10px; font-size: 15px;"><strong>${{ number_format($invoice->amount, 2) }}</strong></td>
+                    <td style="text-align: right; padding-top: 10px; font-size: 15px;"><strong>{{ $invoice->local_total ? number_format($invoice->local_total, 2, ',', '.') . ' Bs.' : '[Pendiente]' }}</strong></td>
                 </tr>
             </table>
         </div>
-        @endif
 
         <div class="footer" style="text-align: justify; border: none;">
             @if($isVe)
