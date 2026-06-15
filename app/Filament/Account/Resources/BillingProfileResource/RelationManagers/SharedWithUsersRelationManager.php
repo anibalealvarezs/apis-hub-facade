@@ -46,6 +46,27 @@ class SharedWithUsersRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->description(function () {
+                if (!app(\App\Services\BillingLifecycleService::class)->canShareBillingProfile($this->ownerRecord->tier)) {
+                    return new \Illuminate\Support\HtmlString('
+                        <div class="p-4 mt-2 bg-warning-50 dark:bg-warning-500/10 rounded-xl text-warning-600 dark:text-warning-400 border border-warning-200 dark:border-warning-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-3 mb-1">
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                    </svg>
+                                    <h3 class="font-bold">' . __('Upgrade Required to Share Profile') . '</h3>
+                                </div>
+                                <p class="text-sm">' . __('Sharing billing profiles is exclusively available on the Enterprise tier. Please upgrade this profile to Enterprise to invite other members to use it.') . '</p>
+                            </div>
+                            <a href="/account/account-subscription" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
+                                ' . __('Manage Subscription') . '
+                            </a>
+                        </div>
+                    ');
+                }
+                return null;
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('Name')),

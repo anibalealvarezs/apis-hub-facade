@@ -178,7 +178,7 @@ class SyncSettings extends Page
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
                         $tier = Filament::getTenant()->billingProfile?->tier?->value;
-                        return !in_array($tier, ['free', 'starter']);
+                        return !in_array($tier, ['free', 'pro']);
                     })
                     ->schema([
                         TextInput::make('api_url')
@@ -224,6 +224,31 @@ class SyncSettings extends Page
                                     })
                             ),
                     ])->columns(2),
+
+                Section::make(__('API Access (External Integration)'))
+                    ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
+                    ->visible(function () {
+                        $tier = Filament::getTenant()->billingProfile?->tier?->value;
+                        return in_array($tier, ['free', 'pro']);
+                    })
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('upgrade_required')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="p-4 bg-warning-50 dark:bg-warning-500/10 rounded-xl text-warning-600 dark:text-warning-400 border border-warning-200 dark:border-warning-500/20">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                        </svg>
+                                        <h3 class="font-bold">' . __('Upgrade Required') . '</h3>
+                                    </div>
+                                    <p class="text-sm mb-3">' . __('API Access is exclusively available on Ultra and Enterprise tiers. Please upgrade your associated billing profile to one of these tiers to unlock external integration capabilities.') . '</p>
+                                    <a href="/account/account-subscription" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
+                                        ' . __('Manage Subscription') . '
+                                    </a>
+                                </div>
+                            '))
+                    ]),
             ])
             ->statePath('data')
             ->disabled($isSuspended || ! auth()->user()->can('edit_preferences'));
