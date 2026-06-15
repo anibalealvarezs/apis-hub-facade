@@ -171,12 +171,18 @@ class AppPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
-                __('Exploration & Telemetry'),
-                __('Data & Integrations'),
-                __('Administration'),
-                __('Knowledge Base'),
-                __('Google'),
-                __('Meta'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Exploration & Telemetry')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Data & Integrations')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Google')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Meta')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Administration')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(__('Knowledge Base')),
             ])
             ->pages([
                 Pages\Dashboard::class,
