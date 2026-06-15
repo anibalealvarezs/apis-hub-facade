@@ -15,7 +15,16 @@ class Invoice extends Model
         'gateway',
         'gateway_invoice_id',
         'amount',
+        'subtotal',
+        'tax_rate',
+        'tax_amount',
         'currency',
+        'local_currency',
+        'exchange_rate',
+        'exchange_rate_id',
+        'local_subtotal',
+        'local_tax_amount',
+        'local_total',
         'status',
         'invoice_pdf_url',
         'paid_at',
@@ -23,6 +32,13 @@ class Invoice extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
+        'local_subtotal' => 'decimal:2',
+        'local_tax_amount' => 'decimal:2',
+        'local_total' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
 
@@ -40,5 +56,10 @@ class Invoice extends Model
     public function subscription()
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    public function exchangeRate()
+    {
+        return $this->belongsTo(ExchangeRate::class);
     }
 }

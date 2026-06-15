@@ -89,17 +89,20 @@ class PayPalWebhookController extends Controller
         $subscription = Subscription::where('paypal_subscription_id', $billingAgreementId)->first();
 
         if ($subscription) {
+            $totalAmount = (float) ($resource['amount']['total'] ?? 0);
+            $taxData = app(\App\Services\TaxCalculationService::class)->calculateTaxes($subscription->billingProfile, $totalAmount);
+
             Invoice::updateOrCreate(
                 ['gateway_invoice_id' => $resource['id']],
-                [
+                array_merge([
                     'billing_profile_id' => $subscription->billing_profile_id,
                     'subscription_id' => $subscription->id,
                     'gateway' => 'paypal',
-                    'amount' => $resource['amount']['total'] ?? 0,
+                    'amount' => $totalAmount,
                     'currency' => $resource['amount']['currency'] ?? 'USD',
                     'status' => 'paid',
                     'paid_at' => now(),
-                ]
+                ], $taxData)
             );
         }
     }
