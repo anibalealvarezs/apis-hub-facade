@@ -35,8 +35,7 @@
 
     @if($profile)
         <!-- Current Profile Status Card -->
-        <div
-            class="mb-8 p-6 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-800 dark:to-indigo-900 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="mb-8 p-6 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center justify-between gap-4" style="background: linear-gradient(90deg, #2563eb, #4338ca);">
             <div>
                 <span
                     class="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 dark:bg-white/10 text-white px-2.5 py-1 rounded-full">{{ __('Active Profile') }}</span>
