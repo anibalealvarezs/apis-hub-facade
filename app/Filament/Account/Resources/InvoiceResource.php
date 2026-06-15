@@ -68,12 +68,7 @@ class InvoiceResource extends Resource
                         'failed' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('invoice_pdf_url')
-                    ->label(__('PDF'))
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->formatStateUsing(fn ($state) => $state ? 'Download' : '—')
-                    ->url(fn ($state) => $state, true)
-                    ->visibleFrom('md'),
+
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime()
                     ->sortable(),
@@ -87,6 +82,12 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('download')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->url(fn (Invoice $record) => route('invoices.download', $record))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 // No bulk delete for invoices

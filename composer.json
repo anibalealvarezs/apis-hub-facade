@@ -9,9 +9,11 @@
     ],
     "license": "MIT",
     "require": {
+        "php": ">=8.3",
         "anibalealvarezs/apis-hub-api": "^0.1.1",
         "anibalealvarezs/facebook-graph-api": "1.0.0",
         "anibalealvarezs/google-api": "1.0.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-language-switch": "^3.1",
         "bezhansalleh/filament-shield": "^3.2",
         "filament/filament": "^3.2",
@@ -27,8 +29,7 @@
         "predis/predis": "^3.4",
         "spatie/laravel-settings": "^3.0",
         "spatie/laravel-translatable": "^6.14",
-        "srmklive/paypal": "^3.1",
-        "php": ">=8.3"
+        "srmklive/paypal": "^3.1"
     },
     "require-dev": {
         "pestphp/pest": "^3.8",

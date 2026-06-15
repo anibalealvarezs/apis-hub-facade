@@ -32,7 +32,7 @@ class BillingProfileAssignmentRequestedNotification extends Notification impleme
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line("{$this->requesterName} has requested to assign your billing profile \"{$this->billingProfile->name}\" to the project \"{$this->project->name}\".")
             ->line('Please review and approve or reject this request in your Account panel.')
-            ->action('Review Request', url('/account'))
+            ->action('Review Request', url('/account/billing-profiles'))
             ->line('If you have any questions, please contact our support team.');
     }
 
@@ -44,7 +44,7 @@ class BillingProfileAssignmentRequestedNotification extends Notification impleme
             ->actions([
                 \Filament\Notifications\Actions\Action::make('view')
                     ->button()
-                    ->url(url('/account'))
+                    ->url(url('/account/billing-profiles'))
                     ->label('Review Request'),
             ])
             ->getDatabaseMessage();

@@ -15,6 +15,13 @@ class BillingRequestsWidget extends BaseWidget
     protected static ?string $heading = 'Pending Billing Assignments';
     protected int | string | array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return BillingProfile::where('user_id', auth()->id())
+            ->where('tier', 'enterprise')
+            ->exists();
+    }
+
     public function table(Table $table): Table
     {
         // Find all pending assignments for billing profiles owned by this user

@@ -28,6 +28,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Stripe Checkout Routes
     Route::post('stripe/checkout', [App\Http\Controllers\StripeCheckoutController::class, 'checkout'])->name('stripe.checkout');
     Route::get('stripe/return', [App\Http\Controllers\StripeCheckoutController::class, 'return'])->name('stripe.return');
+    
+    // Invoices
+    Route::get('account/invoices/{invoice}/download', \App\Http\Controllers\InvoiceDownloadController::class)->name('invoices.download');
 });
 
 // Webhooks

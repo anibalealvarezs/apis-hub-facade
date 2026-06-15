@@ -34,4 +34,10 @@ class ListBillingProfiles extends ListRecords
 
         return $actions;
     }
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Account\Widgets\BillingRequestsWidget::class,
+        ];
+    }
 }
