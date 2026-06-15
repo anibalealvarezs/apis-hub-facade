@@ -146,7 +146,7 @@
                 </ul>
             </x-filament::section>
 
-            <!-- ULTRA TIER -->
+            <!-- ULTRA/FOUNDER TIER -->
                     @php
             $id = \Illuminate\Support\Str::slug('Ultra');
         @endphp
@@ -161,7 +161,7 @@
                            copied = true;
                            setTimeout(() => copied = false, 2000);
                        ">
-                        <span>Ultra</span>
+                        <span>Ultra / Founder</span>
                         <x-filament::icon 
                             icon="heroicon-o-link" 
                             class="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" 
