@@ -19,7 +19,7 @@ class FacebookOrganicDashboard extends Page
     
     public static function getNavigationGroup(): ?string
     {
-        return __('Meta');
+        return 'Meta';
     }
 
 

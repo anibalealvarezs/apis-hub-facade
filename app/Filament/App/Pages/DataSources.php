@@ -29,7 +29,7 @@
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Data & Integrations');
+            return 'Data & Integrations';
         }
 
         public function getTitle(): string

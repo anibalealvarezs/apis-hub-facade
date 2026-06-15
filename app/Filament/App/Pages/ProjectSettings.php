@@ -23,7 +23,7 @@ class ProjectSettings extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Administration');
+        return 'Administration';
     }
 
     public function getTitle(): string

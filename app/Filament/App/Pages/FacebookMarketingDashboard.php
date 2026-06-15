@@ -19,7 +19,7 @@ class FacebookMarketingDashboard extends Page
     
     public static function getNavigationGroup(): ?string
     {
-        return __('Meta');
+        return 'Meta';
     }
 
     public function getTitle(): string

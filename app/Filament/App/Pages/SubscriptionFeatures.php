@@ -16,7 +16,7 @@ class SubscriptionFeatures extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Knowledge Base');
+        return 'Knowledge Base';
     }
 
     public function getTitle(): string
