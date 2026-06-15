@@ -502,6 +502,7 @@ class ProjectResource extends Resource
                     ->label(__('Check Auth'))
                     ->icon('heroicon-o-shield-check')
                     ->color('info')
+                    ->visible(fn (Project $record) => $record->health_status === 'online')
                     ->requiresConfirmation()
                     ->modalHeading(__('Validate Channel Tokens'))
                     ->modalDescription(__('This will query the remote node to validate the tokens for all configured channels. This might take a few seconds.'))
