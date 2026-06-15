@@ -82,6 +82,7 @@ class BillingProfileResource extends Resource
                         ->maxLength(255),
                     Forms\Components\TextInput::make('reference_name')
                         ->label(__('Referential Name (e.g. Personal Profile, Marketing Team Billing)'))
+                        ->required()
                         ->maxLength(255)
                         ->helperText(__('A descriptive label to identify this profile in lists and selectors across the application.')),
                     Forms\Components\TextInput::make('tax_id')
