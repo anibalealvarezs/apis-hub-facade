@@ -105,7 +105,7 @@
                 </div>
             </x-slot>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    {{ __('Ideal for enthusiasts and freelancers.') }}
+                    {{ __('Ideal for enthusiasts and freelancers. Includes client-focused features.') }}
                 </p>
                 <div class="space-y-2 mb-4">
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
