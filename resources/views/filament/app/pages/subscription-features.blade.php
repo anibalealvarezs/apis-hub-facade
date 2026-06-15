@@ -342,7 +342,7 @@
                     </a>
                 </div>
             </x-slot>
-            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p class="text-sm text-gray-600 dark:text-gray-500 leading-relaxed">
                 {!! __('api_credentials_notice', [
                     'ultra' => '<strong>Ultra</strong>',
                     'enterprise' => '<strong>Enterprise</strong>',
