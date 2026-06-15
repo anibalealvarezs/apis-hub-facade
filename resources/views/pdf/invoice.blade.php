@@ -21,8 +21,8 @@
 <body>
     <div class="invoice-box">
         @php
-            $numeroFactura = str_pad($invoice->id ?? 1, 8, '0', STR_PAD_LEFT);
-            $numeroControl = '00-' . $numeroFactura;
+            $numeroFactura = $invoice->invoice_number ?? str_pad($invoice->id ?? 1, 8, '0', STR_PAD_LEFT);
+            $numeroControl = $invoice->control_number ?? '00-' . $numeroFactura;
             $isVe = ($invoice->tax_rate > 0 || strtoupper($profile->country_code) === 'VE');
         @endphp
         <table cellpadding="0" cellspacing="0">
@@ -35,11 +35,12 @@
                     <strong>Fecha de Pago:</strong> {{ $invoice->paid_at ? $invoice->paid_at->format('d/m/Y') : 'Pendiente' }}
                 </td>
                 <td class="company-details">
-                    <strong>[Tu Nombre - Persona Natural]</strong><br>
-                    <strong>RIF:</strong> V-XXXXXXXX-X<br>
-                    [Domicilio Fiscal Completo]<br>
-                    Venezuela<br>
-                    support@apishub.com
+                    <strong>ANIBAL ENRIQUE ALVAREZ SIFONTES</strong><br>
+                    <strong>RIF:</strong> V-16224613-1<br>
+                    CALLE 14 EDIF LOMA NORTE PISO 3 APT 36<br>
+                    URB LOMAS DEL AVILA CARACAS (PETARE)<br>
+                    MIRANDA ZONA POSTAL 1073<br>
+                    support@apis-hub.cloud
                 </td>
             </tr>
         </table>

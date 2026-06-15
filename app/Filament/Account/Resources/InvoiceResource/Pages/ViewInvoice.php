@@ -18,7 +18,8 @@ class ViewInvoice extends ViewRecord
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success')
                 ->url(fn (\App\Models\Invoice $record) => route('invoices.download', $record))
-                ->openUrlInNewTab(),
+                ->openUrlInNewTab()
+                ->visible(fn (\App\Models\Invoice $record) => $record->fiscal_status === 'reconciled'),
         ];
     }
 }

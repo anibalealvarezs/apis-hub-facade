@@ -35,6 +35,10 @@ class InvoiceResource extends Resource
         return $form
             ->schema([
                 // Read-only view
+                Forms\Components\TextInput::make('invoice_number')
+                    ->label('Invoice Number')
+                    ->disabled()
+                    ->formatStateUsing(fn ($state, $record) => $record->fiscal_status === 'reconciled' ? $state : 'Pending Reconciliation'),
                 Forms\Components\TextInput::make('gateway')
                     ->disabled(),
                 Forms\Components\TextInput::make('gateway_invoice_id')
@@ -50,6 +54,12 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Invoice #')
+                    ->formatStateUsing(fn ($state, $record) => $record->fiscal_status === 'reconciled' ? $state : 'Pending')
+                    ->badge()
+                    ->color(fn ($record) => $record->fiscal_status === 'reconciled' ? 'success' : 'warning')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('gateway')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -87,7 +97,8 @@ class InvoiceResource extends Resource
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->url(fn (Invoice $record) => route('invoices.download', $record))
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->visible(fn (Invoice $record) => $record->fiscal_status === 'reconciled'),
             ])
             ->bulkActions([
                 // No bulk delete for invoices

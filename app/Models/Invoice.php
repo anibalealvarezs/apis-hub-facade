@@ -10,6 +10,9 @@ class Invoice extends Model
     use HasFactory;
 
     protected $fillable = [
+        'invoice_number',
+        'control_number',
+        'fiscal_status',
         'billing_profile_id',
         'subscription_id',
         'gateway',
@@ -41,6 +44,34 @@ class Invoice extends Model
         'local_total' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($invoice) {
+            if (empty($invoice->invoice_number)) {
+                $lastInvoice = self::orderBy('id', 'desc')->first();
+                $nextId = $lastInvoice ? $lastInvoice->id + 1 : 1;
+                $invoice->invoice_number = str_pad($nextId, 8, '0', STR_PAD_LEFT);
+            }
+            
+            if (empty($invoice->control_number)) {
+                $invoice->control_number = 'TEMP-' . $invoice->invoice_number;
+            }
+
+            if (empty($invoice->fiscal_status)) {
+                $invoice->fiscal_status = 'pending';
+            }
+        });
+
+        static::saving(function ($invoice) {
+            // If the control number has been changed and doesn't start with TEMP-, and it was pending, mark it as reconciled.
+            if ($invoice->isDirty('control_number') && !str_starts_with($invoice->control_number, 'TEMP-')) {
+                $invoice->fiscal_status = 'reconciled';
+            }
+        });
+    }
 
     /**
      * Get the billing profile that owns this invoice.
