@@ -52,8 +52,8 @@ class FetchBcvRate extends Command
 
             $html = $response->body();
 
-            // The BCV rate for USD is typically in an element: <div id="dolar">... <strong> 36,50123 </strong>
-            if (preg_match('/<div id="dolar".*?<strong>\s*([0-9,]+)\s*<\/strong>/is', $html, $matches)) {
+            // The BCV rate for USD is typically in an element: <div id="dolar">... <strong class="strong-tb"> 36,50123 </strong>
+            if (preg_match('/<div[^>]*id="dolar"[^>]*>.*?<strong[^>]*>\s*([0-9,]+)\s*<\/strong>/is', $html, $matches)) {
                 $rateString = trim($matches[1]);
                 $rateValue = (float) str_replace(',', '.', $rateString);
 

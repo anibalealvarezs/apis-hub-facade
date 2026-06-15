@@ -32,7 +32,7 @@ class FetchBcvRateTest extends TestCase
 
     public function test_it_fetches_and_saves_new_rate()
     {
-        $htmlContent = '<html><body><div id="dolar"><strong> 36,12345 </strong></div></body></html>';
+        $htmlContent = '<html><body><div id="dolar"><strong class="strong-tb"> 36,12345 </strong></div></body></html>';
         
         Http::fake([
             'bcv.org.ve/*' => Http::response($htmlContent, 200)
@@ -57,7 +57,7 @@ class FetchBcvRateTest extends TestCase
             'source' => 'scraper',
         ]);
 
-        $htmlContent = '<html><body><div id="dolar"><strong> 36,12345 </strong></div></body></html>';
+        $htmlContent = '<html><body><div id="dolar"><strong class="strong-tb"> 36,12345 </strong></div></body></html>';
         
         Http::fake([
             'bcv.org.ve/*' => Http::response($htmlContent, 200)
@@ -85,7 +85,7 @@ class FetchBcvRateTest extends TestCase
 
     public function test_it_handles_regex_failure()
     {
-        $htmlContent = '<html><body><div id="something_else"><strong> 36,12345 </strong></div></body></html>';
+        $htmlContent = '<html><body><div id="something_else"><strong class="strong-tb"> 36,12345 </strong></div></body></html>';
         
         Http::fake([
             'bcv.org.ve/*' => Http::response($htmlContent, 200)
