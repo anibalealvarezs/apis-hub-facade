@@ -43,12 +43,12 @@
                 </p>
                 <div class="space-y-2 mb-4">
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Projects') }}</span>
+                        <span class="text-sm font-medium">{{ __('Projects') }}</span>
                         <x-filament::badge color="gray">{{ __('1 maximum') }}</x-filament::badge>
                     </div>
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
                         <span
-                            class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Accounts to Sync') }}</span>
+                            class="text-sm font-medium">{{ __('Accounts to Sync') }}</span>
                         <x-filament::badge color="gray">{{ __('5 maximum') }}</x-filament::badge>
                     </div>
                 </div>
@@ -111,12 +111,12 @@
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
                         <span
                             class="text-sm font-medium">{{ __('Projects') }}</span>
-                        <x-filament::badge>{{ __('5 maximum') }}</x-filament::badge>
+                        <x-filament::badge color="white">{{ __('5 maximum') }}</x-filament::badge>
                     </div>
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
                         <span
                             class="text-sm font-medium">{{ __('Accounts to Sync') }}</span>
-                        <x-filament::badge>{{ __('100 maximum') }}</x-filament::badge>
+                        <x-filament::badge color="white">{{ __('100 maximum') }}</x-filament::badge>
                     </div>
                 </div>
                 <ul class="space-y-3 pt-2">
