@@ -38,15 +38,25 @@ class AccountSubscription extends Page
 
     public function mount()
     {
+        $tierOrder = ['pro' => 1, 'founder' => 2, 'ultra' => 3, 'enterprise' => 4];
+
         $this->monthlyPlans = SubscriptionPlan::where('is_active', true)
             ->whereIn('billing_cycle', ['monthly', 'both'])
-            ->orderBy('price', 'asc')
-            ->get();
+            ->get()
+            ->sortBy(function($plan) use ($tierOrder) {
+                $tierValue = $plan->tier instanceof \UnitEnum ? $plan->tier->value : $plan->tier;
+                return $tierOrder[strtolower($tierValue)] ?? 99;
+            })
+            ->values();
 
         $this->annualPlans = SubscriptionPlan::where('is_active', true)
             ->whereIn('billing_cycle', ['yearly', 'both'])
-            ->orderBy('price', 'asc')
-            ->get();
+            ->get()
+            ->sortBy(function($plan) use ($tierOrder) {
+                $tierValue = $plan->tier instanceof \UnitEnum ? $plan->tier->value : $plan->tier;
+                return $tierOrder[strtolower($tierValue)] ?? 99;
+            })
+            ->values();
         
         $availableProfiles = auth()->user()->getAvailableBillingProfiles();
 

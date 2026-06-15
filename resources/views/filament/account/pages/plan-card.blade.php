@@ -1,4 +1,10 @@
-<div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
+@php
+    $isFounder = $plan->tier === 'founder';
+@endphp
+<div class="{{ $isFounder ? 'bg-gradient-to-b from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-900 border-primary-500 dark:border-primary-500 shadow-lg shadow-primary-500/10 ring-1 ring-primary-500/50 relative overflow-hidden' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800' }} rounded-xl p-6 border flex flex-col justify-between">
+    @if($isFounder)
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 to-indigo-500"></div>
+    @endif
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
@@ -22,11 +28,11 @@
                 {{ __('✓ Currently Active Plan') }}
             </button>
         @elseif($profile && $profile->tier?->value === 'enterprise')
-            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
+            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Locked (Enterprise Protected)') }}
             </button>
         @elseif($profile && $profile->tier?->value === 'founder')
-            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
+            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Founder Exclusive Tier') }}
             </button>
         @elseif($plan->price > 0)
@@ -70,7 +76,7 @@
                 @endif
             </div>
         @else
-            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
+            <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Free Tier') }}
             </button>
         @endif
