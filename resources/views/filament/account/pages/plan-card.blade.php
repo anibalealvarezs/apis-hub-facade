@@ -44,7 +44,7 @@
                         <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
                         <input type="hidden" name="billing_cycle" value="{{ $cycle }}">
                         
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
+                        <button type="submit" class="w-full bg-[#0070ba] hover:bg-[#005ea6] dark:bg-[#005ea6] dark:hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
                             <x-heroicon-o-credit-card class="w-4 h-4"/>
                             {{ __('Subscribe via PayPal') }}
                         </button>
