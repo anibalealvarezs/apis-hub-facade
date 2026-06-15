@@ -82,11 +82,21 @@ class AccountSubscription extends Page
     {
         return [
             \Filament\Actions\Action::make('downgradeToFree')
-                ->label(__('Cancel & Downgrade to Free'))
+                ->label(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Cancel Subscription') 
+                        : __('Cancel & Downgrade to Free');
+                })
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->requiresConfirmation()
-                ->modalHeading(__('Confirm Downgrade'))
+                ->modalHeading(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Confirm Cancellation') 
+                        : __('Confirm Downgrade');
+                })
                 ->modalDescription(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {
@@ -112,7 +122,12 @@ class AccountSubscription extends Page
                     
                     return __('Are you sure you want to cancel the subscription for :name? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.', ['name' => $profile->name]);
                 })
-                ->modalSubmitActionLabel(__('Yes, Cancel Subscription'))
+                ->modalSubmitActionLabel(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Yes, Cancel Subscription') 
+                        : __('Yes, Cancel & Downgrade');
+                })
                 ->action(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {
