@@ -32,6 +32,8 @@ class AccountSubscription extends Page
 
     public $monthlyPlans;
     public $annualPlans;
+    
+    #[\Livewire\Attributes\Url(as: 'profile', history: true)]
     public $selectedProfileId;
 
     public function mount()
@@ -46,12 +48,18 @@ class AccountSubscription extends Page
             ->orderBy('price', 'asc')
             ->get();
         
-        // Select the default billing profile or the first available one
-        $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
-        if ($defaultProfile) {
-            $this->selectedProfileId = $defaultProfile->id;
+        $availableProfiles = auth()->user()->getAvailableBillingProfiles();
+
+        if ($this->selectedProfileId && $availableProfiles->contains($this->selectedProfileId)) {
+            // Valid profile provided via URL
         } else {
-            $this->selectedProfileId = auth()->user()->getAvailableBillingProfiles()->first()?->id;
+            // Select the default billing profile or the first available one
+            $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
+            if ($defaultProfile) {
+                $this->selectedProfileId = $defaultProfile->id;
+            } else {
+                $this->selectedProfileId = $availableProfiles->first()?->id;
+            }
         }
     }
 
