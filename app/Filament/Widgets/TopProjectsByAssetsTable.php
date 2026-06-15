@@ -35,10 +35,15 @@
             // 4. Create an Eloquent query for just these IDs
             $query = Project::query()->whereIn('id', $topProjectIds);
 
-            // Fix for sqlite vs mysql ordering by specific IDs
+            // Fix for PostgreSQL/MySQL agnostic ordering by specific IDs
             if (!empty($topProjectIds)) {
-                $idsString = implode(',', $topProjectIds);
-                $query->orderByRaw(\DB::raw("FIELD(id, $idsString)"));
+                $caseSql = "CASE id ";
+                foreach (array_values($topProjectIds) as $index => $id) {
+                    $caseSql .= "WHEN " . (int)$id . " THEN $index ";
+                }
+                $caseSql .= "ELSE " . count($topProjectIds) . " END";
+                
+                $query->orderByRaw($caseSql);
             } else {
                 // Fallback if empty to avoid SQL errors
                 $query->where('id', 0);
