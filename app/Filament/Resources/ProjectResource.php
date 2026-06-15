@@ -530,32 +530,35 @@ class ProjectResource extends Resource
                         $details = [];
                         
                         foreach ($results as $channel => $data) {
+                            $name = ucfirst($channel);
                             if (($data['status'] ?? '') === 'valid') {
                                 $validCount++;
+                                $details[] = "✅ <strong>{$name}</strong>";
                             } else {
                                 $invalidCount++;
-                                $details[] = ucfirst($channel) . ': ' . ($data['message'] ?? 'Invalid token');
+                                $details[] = "❌ <strong>{$name}</strong>";
                             }
                         }
                         
-                        if ($invalidCount > 0) {
-                            Notification::make()
-                                ->warning()
-                                ->title(__("Validation Complete: $validCount valid, $invalidCount invalid"))
-                                ->body(implode('<br>', $details))
-                                ->persistent()
-                                ->send();
-                        } elseif ($validCount > 0) {
-                            Notification::make()
-                                ->success()
-                                ->title(__("All tokens valid ($validCount channels)"))
-                                ->send();
-                        } else {
+                        if (empty($details)) {
                             Notification::make()
                                 ->info()
                                 ->title(__('No channels to validate'))
                                 ->send();
+                            return;
                         }
+
+                        $notification = Notification::make()
+                            ->title(__("Validation Complete: $validCount valid, $invalidCount invalid"))
+                            ->body(implode('<br>', $details));
+
+                        if ($invalidCount > 0) {
+                            $notification->warning()->persistent();
+                        } else {
+                            $notification->success();
+                        }
+                        
+                        $notification->send();
                     }),
                 Tables\Actions\Action::make('toggleActive')
                     ->label(fn (Project $record) => $record->is_active ? 'Suspend' : 'Activate')
