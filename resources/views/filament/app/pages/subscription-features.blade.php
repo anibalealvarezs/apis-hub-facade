@@ -58,7 +58,7 @@
                         <span class="text-sm">{{ __('Basic data synchronization') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm">{{ __('Exclusive use by the owner') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
@@ -125,7 +125,7 @@
                         <span class="text-sm">{{ __('Basic data synchronization') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm">{{ __('Exclusive use by the owner') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
@@ -211,7 +211,7 @@
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 15)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Public dashboards') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 15)</span></span>
                     </li>
