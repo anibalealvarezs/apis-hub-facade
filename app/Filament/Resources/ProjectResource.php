@@ -209,7 +209,7 @@ class ProjectResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('billing_profile_name')
                             ->label(__('Profile Name'))
-                            ->content(fn (?Project $record) => $record?->billingProfile?->name ?? 'None'),
+                            ->content(fn (?Project $record) => $record?->billingProfile?->reference_name ?? 'None'),
                         Forms\Components\Placeholder::make('billing_tier')
                             ->label(__('Tier'))
                             ->content(fn (?Project $record) => $record?->billingProfile?->tier instanceof \App\Enums\UserTier ? $record->billingProfile->tier->value : ($record?->billingProfile?->tier ?? 'None')),
@@ -401,9 +401,10 @@ class ProjectResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
-                Tables\Columns\TextColumn::make('billingProfile.name')
+                Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))

@@ -93,7 +93,8 @@ class BillingProfileResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('reference_name')
+                    ->label(__('Reference Name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')

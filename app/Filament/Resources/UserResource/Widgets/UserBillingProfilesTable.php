@@ -31,8 +31,8 @@ class UserBillingProfilesTable extends BaseWidget
             ->heading(__('Accessed Billing Profiles'))
             ->description(__('Billing profiles this user owns or has been invited to collaborate on.'))
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label(__('Profile Name'))
+                Tables\Columns\TextColumn::make('reference_name')
+                    ->label(__('Reference Name'))
                     ->searchable()
                     ->sortable(),
 
