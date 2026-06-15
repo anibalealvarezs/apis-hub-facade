@@ -62,12 +62,12 @@
                         <span class="text-sm">{{ __('Exclusive use by the owner') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-400 shrink-0"/>
                         <span class="text-sm">{{ __('Custom KPIs') }}  <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 5)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-400 shrink-0"/>
                         <span class="text-sm">{{ __('Private dashboards') }}  <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 1)</span></span>
                     </li>
@@ -105,7 +105,7 @@
                 </div>
             </x-slot>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    {{ __('Ideal for agencies and small teams. Expanded capacity for collaboration.') }}
+                    {{ __('Ideal for enthusiasts and freelancers.') }}
                 </p>
                 <div class="space-y-2 mb-4">
                     <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-white/10">
@@ -121,7 +121,7 @@
                 </div>
                 <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2 opacity-75">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
                         <span class="text-sm">{{ __('Basic data synchronization') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
@@ -196,9 +196,9 @@
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0"/>
                         <span class="text-sm">{{ __('Basic data synchronization') }}</span>
                     </li>
-                    <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
-                        <span class="text-sm">{{ __('Exclusive use by the owner') }}</span>
+                    <li class="flex items-start gap-2 opacity-75">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-400 shrink-0"/>
+                        <span class="text-sm">{{ __('Invite users to collaborate') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
@@ -211,12 +211,12 @@
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 15)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Public dashboards') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('up to') }} 15)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Full Access to APIs Hub API') }}</span>
                     </li>
                 </ul>
@@ -269,11 +269,11 @@
                 </div>
                 <ul class="space-y-3 pt-2">
                     <li class="flex items-start gap-2 opacity-75">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
                         <span class="text-sm">{{ __('Basic data synchronization') }}</span>
                     </li>
                     <li class="flex items-start gap-2 opacity-75">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-400 shrink-0"/>
                         <span class="text-sm">{{ __('Invite users to collaborate') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
@@ -287,25 +287,25 @@
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('unlimited') }})</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Public dashboards') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('unlimited') }})</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Full Access to APIs Hub API') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-warning-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Share Billing Profiles') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-warning-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Cross-project Analytics and Dashboards') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-400 italic font-normal">({{ __('coming soon') }})</span></span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-warning-500 shrink-0"/>
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium">{{ __('Guaranteed SLA') }}</span>
                     </li>
                 </ul>
