@@ -33,6 +33,7 @@ class UserBillingProfilesTable extends BaseWidget
             ->columns([
                 Tables\Columns\TextColumn::make('reference_name')
                     ->label(__('Reference Name'))
+                    ->formatStateUsing(fn (?string $state, \App\Models\BillingProfile $record) => $state . ' ( Legal Name: ' . $record->name . ' )')
                     ->searchable()
                     ->sortable(),
 

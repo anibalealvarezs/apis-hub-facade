@@ -95,6 +95,7 @@ class BillingProfileResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('reference_name')
                     ->label(__('Reference Name'))
+                    ->formatStateUsing(fn (?string $state, \App\Models\BillingProfile $record) => $state . ' ( Legal Name: ' . $record->name . ' )')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')

@@ -403,6 +403,7 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
                 Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
+                    ->formatStateUsing(fn (?string $state, Project $record) => $state ? $state . ' ( Legal Name: ' . $record->billingProfile?->name . ' )' : null)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable()
                     ->sortable(),
