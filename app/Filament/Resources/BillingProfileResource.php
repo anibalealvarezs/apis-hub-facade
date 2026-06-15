@@ -213,6 +213,28 @@ class BillingProfileResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('change_status')
+                    ->label(__('Change Status'))
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\Select::make('status')
+                            ->label(__('Status'))
+                            ->options([
+                                'active' => __('Active'),
+                                'past_due' => __('Past Due'),
+                                'suspended' => __('Suspended'),
+                            ])
+                            ->default(fn (BillingProfile $record) => $record->status)
+                            ->required(),
+                    ])
+                    ->action(function (BillingProfile $record, array $data) {
+                        $record->update(['status' => $data['status']]);
+                        \Filament\Notifications\Notification::make()
+                            ->success()
+                            ->title(__('Status updated successfully.'))
+                            ->send();
+                    }),
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([]);

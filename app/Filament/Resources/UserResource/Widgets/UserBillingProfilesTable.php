@@ -105,9 +105,19 @@ class UserBillingProfilesTable extends BaseWidget
                             ->required()
                             ->rule('in:CONFIRM,confirm,Confirm,CONFIRMAR,confirmar,Confirmar')
                             ->helperText(__('You must explicitly type confirm to apply this change.')),
+                        Select::make('status')
+                            ->label(__('Status'))
+                            ->options([
+                                'active' => __('Active'),
+                                'past_due' => __('Past Due'),
+                                'suspended' => __('Suspended'),
+                            ])
+                            ->default(fn (BillingProfile $record) => $record->status)
+                            ->required(),
                     ])
                     ->action(function (BillingProfile $record, array $data) {
                         $newTier = \App\Enums\UserTier::tryFrom($data['tier']);
+                        $newStatus = $data['status'] ?? $record->status;
                         $cycle = $data['billing_cycle'] ?? 'monthly';
                         
                         $sub = $record->subscriptions()->active()->first();
@@ -171,12 +181,13 @@ class UserBillingProfilesTable extends BaseWidget
 
                         // Local update
                         $record->tier = $newTier;
+                        $record->status = $newStatus;
                         if (!empty($data['next_billing_date'])) {
                             $record->current_cycle_ends_at = \Carbon\Carbon::parse($data['next_billing_date']);
                         }
                         $record->save();
                         
-                        $msg = __('Tier updated locally.');
+                        $msg = __('Tier and status updated locally.');
                         if ($wasCanceled) {
                             $msg = __('Tier updated and previous provider subscription was permanently canceled.');
                         } elseif ($syncSuccess) {
@@ -186,6 +197,28 @@ class UserBillingProfilesTable extends BaseWidget
                         Notification::make()
                             ->success()
                             ->title($msg)
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('change_status')
+                    ->label(__('Change Status'))
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->form([
+                        Select::make('status')
+                            ->label(__('Status'))
+                            ->options([
+                                'active' => __('Active'),
+                                'past_due' => __('Past Due'),
+                                'suspended' => __('Suspended'),
+                            ])
+                            ->default(fn (BillingProfile $record) => $record->status)
+                            ->required(),
+                    ])
+                    ->action(function (BillingProfile $record, array $data) {
+                        $record->update(['status' => $data['status']]);
+                        Notification::make()
+                            ->success()
+                            ->title(__('Status updated successfully.'))
                             ->send();
                     }),
             ]);

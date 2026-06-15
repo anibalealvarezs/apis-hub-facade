@@ -96,6 +96,18 @@ class ProjectSettings extends Page
 
                 $billingService = app(\App\Services\BillingLifecycleService::class);
                 $profile = $project->billingProfile;
+
+                if ($profile->status === 'suspended') {
+                    Notification::make()
+                        ->title(__('Billing Profile Suspended'))
+                        ->body(__('The assigned billing profile is suspended. You must resolve the billing issue before reactivating this project.'))
+                        ->danger()
+                        ->persistent()
+                        ->send();
+
+                    return;
+                }
+
                 $maxProjects = $billingService->getMaxProjectsForTier($profile->tier);
 
                 $activeCount = $profile->projects()->where('billing_status', 'active')->count();
@@ -119,11 +131,17 @@ class ProjectSettings extends Page
 
                 // Dispatch jobs
                 \App\Jobs\RestoreProjectDomainJob::dispatch($project);
-                \App\Jobs\DeployProjectJob::dispatch($project);
+
+                if (!is_null($project->last_deployed_at)) {
+                    \App\Jobs\DeployProjectJob::dispatch($project);
+                    $msgBody = __('The project has been reactivated. Infrastructure is booting up in the background.');
+                } else {
+                    $msgBody = __('The project has been reactivated. You can now deploy the infrastructure.');
+                }
 
                 Notification::make()
                     ->title(__('Project Reactivating'))
-                    ->body(__('The project has been reactivated. Infrastructure is booting up in the background.'))
+                    ->body($msgBody)
                     ->success()
                     ->send();
 
