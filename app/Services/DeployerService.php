@@ -103,6 +103,8 @@ class DeployerService
         $tokenAuthorityEnabled = 'true';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
+        $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
+            ->getApiRateLimitForTier($project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE);
 
         // Generate deterministic, unique host ports based on project ID and environment offset to prevent Docker conflicts
         $portOffset = env('DEPLOY_PORT_OFFSET', 11100);
@@ -147,6 +149,7 @@ REDIS_HOST_PORT={$redisHostPort}
 # Security & API
 APP_API_KEY={$project->public_api_key}
 ADMIN_API_KEY={$project->remote_admin_api_key}
+API_RATE_LIMIT_PER_MINUTE={$apiRateLimit}
 
 # Channel Master Credentials (Apps)
 FACEBOOK_APP_ID={$fbAppId}

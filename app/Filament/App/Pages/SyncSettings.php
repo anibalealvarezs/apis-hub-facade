@@ -176,6 +176,10 @@ class SyncSettings extends Page
 
                 Section::make(__('API Access (External Integration)'))
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
+                    ->visible(function () {
+                        $tier = Filament::getTenant()->billingProfile?->tier?->value;
+                        return !in_array($tier, ['free', 'starter']);
+                    })
                     ->schema([
                         TextInput::make('api_url')
                             ->label(__('API Endpoint'))

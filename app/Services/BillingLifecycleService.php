@@ -133,6 +133,22 @@ class BillingLifecycleService
             }
         }
 
+        // 3. Update Rate Limits for all active projects
+        $deployer = app(\App\Services\DeployerService::class);
+        $rateLimit = $this->getApiRateLimitForTier($enforcementTier);
+
+        foreach ($profile->projects as $project) {
+            if ($project->is_active && $project->billing_status === 'active') {
+                try {
+                    $deployer->updateCredentials($project, [
+                        'API_RATE_LIMIT_PER_MINUTE' => $rateLimit,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Failed to update rate limit for project {$project->id}: " . $e->getMessage());
+                }
+            }
+        }
+
         return $modifiedProjects;
     }
 
@@ -241,6 +257,15 @@ class BillingLifecycleService
         return match ($tier) {
             UserTier::ULTRA, UserTier::FOUNDER, UserTier::ENTERPRISE => true,
             default => false,
+        };
+    }
+
+    public function getApiRateLimitForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE, UserTier::PRO, UserTier::SUSPENDED => 0,
+            UserTier::ULTRA, UserTier::FOUNDER => 500,
+            UserTier::ENTERPRISE => 1000,
         };
     }
 }
