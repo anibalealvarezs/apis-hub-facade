@@ -1,10 +1,7 @@
 @php
     $isFounder = $plan->tier === 'founder';
 @endphp
-<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'border-2 shadow-lg relative overflow-hidden' : 'border border-gray-200 dark:border-gray-800' }}" @if($isFounder) style="border-color: #00a7f9;" @endif>
-    @if($isFounder)
-        <div class="absolute top-0 left-0 w-full h-1.5" style="background-color: #00a7f9;"></div>
-    @endif
+<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'shadow-lg relative' : 'border border-gray-200 dark:border-gray-800' }}" @if($isFounder) style="border-style: solid; border-color: #00a7f9; border-width: 6px 2px 2px 2px;" @endif>
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
