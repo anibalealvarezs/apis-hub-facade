@@ -22,7 +22,7 @@
                     <p class="text-sm">{{ __('Team collaboration is exclusively available on Ultra and Enterprise tiers. Please upgrade your associated billing profile to one of these tiers to add members to this project.') }}</p>
                 </div>
                 @if(filament()->getTenant()->billingProfile?->user_id === auth()->id())
-                    <a href="/account/account-subscription?profile={{ filament()->getTenant()->billingProfile?->id }}" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 border border-transparent rounded-lg shadow-sm hover:bg-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500">
+                    <a href="/account/account-subscription?profile={{ filament()->getTenant()->billingProfile?->id }}" class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400">
                         {{ __('Manage Subscription') }}
                     </a>
                 @else
