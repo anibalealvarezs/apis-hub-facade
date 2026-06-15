@@ -1,9 +1,9 @@
 @php
     $isFounder = $plan->tier === 'founder';
 @endphp
-<div class="{{ $isFounder ? 'bg-gradient-to-b from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-900 border-primary-500 dark:border-primary-500 shadow-lg shadow-primary-500/10 ring-1 ring-primary-500/50 relative overflow-hidden' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800' }} rounded-xl p-6 border flex flex-col justify-between">
+<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'border-2 shadow-lg relative overflow-hidden' : 'border border-gray-200 dark:border-gray-800' }}" @if($isFounder) style="border-color: #00a7f9;" @endif>
     @if($isFounder)
-        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 to-indigo-500"></div>
+        <div class="absolute top-0 left-0 w-full h-1.5" style="background-color: #00a7f9;"></div>
     @endif
     <div>
         <div class="flex items-center justify-between mb-2">
@@ -44,7 +44,7 @@
                         <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
                         <input type="hidden" name="billing_cycle" value="{{ $cycle }}">
                         
-                        <button type="submit" class="w-full bg-[#0070ba] hover:bg-[#005ea6] dark:bg-[#005ea6] dark:hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all">
+                        <button type="submit" class="w-full font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all hover:opacity-90" style="background-color: #FFC439; color: #003087;">
                             <x-heroicon-o-credit-card class="w-4 h-4"/>
                             {{ __('Subscribe via PayPal') }}
                         </button>

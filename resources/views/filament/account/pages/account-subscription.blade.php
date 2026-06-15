@@ -35,19 +35,19 @@
 
     @if($profile)
         <!-- Current Profile Status Card -->
-        <div class="mb-8 p-6 rounded-xl shadow-md text-white flex flex-col md:flex-row md:items-center justify-between gap-4" style="background: linear-gradient(90deg, #2563eb, #4338ca);">
+        <div class="mb-8 p-6 rounded-xl shadow-md bg-gray-900 dark:bg-gray-800 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <span
                     class="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 dark:bg-white/10 text-white px-2.5 py-1 rounded-full">{{ __('Active Profile') }}</span>
                 <h3 class="text-2xl font-bold mt-2">{{ $profile->display_name }}</h3>
-                <p class="text-xs text-white/80 mt-1">{{ __('Billing Status:') }} <span
-                        class="font-bold uppercase tracking-wider {{ $profile->status === 'active' ? 'text-green-300' : 'text-yellow-300' }}">{{ $profile->status ?? 'Active' }}</span>
+                <p class="text-xs text-gray-400 mt-1">{{ __('Billing Status:') }} <span
+                        class="font-bold uppercase tracking-wider {{ $profile->status === 'active' ? 'text-green-400' : 'text-yellow-400' }}">{{ $profile->status ?? 'Active' }}</span>
                 </p>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-xs font-bold uppercase tracking-wider opacity-90">{{ __('Current Plan:') }}</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ __('Current Plan:') }}</span>
                 <span
-                    class="bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 font-black px-4 py-2 rounded-lg shadow text-xs uppercase tracking-widest">
+                    class="bg-white text-gray-900 font-black px-4 py-2 rounded-lg shadow text-xs uppercase tracking-widest">
                     {{ $profile->tier->value ?? $profile->tier }}
                 </span>
             </div>
