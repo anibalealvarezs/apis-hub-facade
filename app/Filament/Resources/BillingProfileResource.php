@@ -98,6 +98,7 @@ class BillingProfileResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Owner'))
+                    ->description(fn (BillingProfile $record): string => $record->user->email ?? '')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.email')
