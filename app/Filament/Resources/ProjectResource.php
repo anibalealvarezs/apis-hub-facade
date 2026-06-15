@@ -441,6 +441,43 @@ class ProjectResource extends Resource
                     ->color('info')
                     ->placeholder(__('Auto (active)'))
                     ->sortable(),
+                Tables\Columns\TextColumn::make('channels_count')
+                    ->label(__('Channels'))
+                    ->getStateUsing(fn (Project $record) => $record->countEnabledChannels())
+                    ->badge()
+                    ->color('info')
+                    ->sortable(false),
+                Tables\Columns\TextColumn::make('assets_count')
+                    ->label(__('Total Assets'))
+                    ->getStateUsing(fn (Project $record) => $record->countEnabledAssets(false))
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(false),
+                Tables\Columns\TextColumn::make('active_assets_count')
+                    ->label(__('Active Assets'))
+                    ->tooltip(__('Assets in currently enabled channels'))
+                    ->getStateUsing(fn (Project $record) => $record->countEnabledAssets(true))
+                    ->badge()
+                    ->color('primary')
+                    ->sortable(false),
+                Tables\Columns\TextColumn::make('locked_assets_count')
+                    ->label(__('Locked'))
+                    ->tooltip(__('Assets locked due to exceeding limits'))
+                    ->getStateUsing(fn (Project $record) => $record->countLockedAssets())
+                    ->badge()
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'gray')
+                    ->sortable(false),
+                Tables\Columns\TextColumn::make('grace_period_assets_count')
+                    ->label(__('Grace Period'))
+                    ->tooltip(__('Assets in grace period prior to locking'))
+                    ->getStateUsing(fn (Project $record) => $record->countGracePeriodAssets())
+                    ->badge()
+                    ->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
+                    ->sortable(false),
+                Tables\Columns\IconColumn::make('redeploy_pending')
+                    ->label(__('Pending Deploy'))
+                    ->boolean()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('users_count')
                     ->label(__('Collaborators'))
                     ->counts('users')
@@ -461,6 +498,64 @@ class ProjectResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('checkAuth')
+                    ->label(__('Check Auth'))
+                    ->icon('heroicon-o-shield-check')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Validate Channel Tokens'))
+                    ->modalDescription(__('This will query the remote node to validate the tokens for all configured channels. This might take a few seconds.'))
+                    ->action(function (Project $record, RemoteEngineService $service) {
+                        if (!$record->is_active) {
+                            Notification::make()->warning()->title(__('Project is suspended'))->send();
+                            return;
+                        }
+                        
+                        $validation = $service->validateTokens($record, 'all');
+                        
+                        if (($validation['status'] ?? '') === 'error') {
+                            Notification::make()
+                                ->danger()
+                                ->title(__('Validation Failed'))
+                                ->body($validation['message'] ?? 'Unknown error connecting to remote engine.')
+                                ->persistent()
+                                ->send();
+                            return;
+                        }
+                        
+                        $results = $validation['results'] ?? [];
+                        $validCount = 0;
+                        $invalidCount = 0;
+                        $details = [];
+                        
+                        foreach ($results as $channel => $data) {
+                            if (($data['status'] ?? '') === 'valid') {
+                                $validCount++;
+                            } else {
+                                $invalidCount++;
+                                $details[] = ucfirst($channel) . ': ' . ($data['message'] ?? 'Invalid token');
+                            }
+                        }
+                        
+                        if ($invalidCount > 0) {
+                            Notification::make()
+                                ->warning()
+                                ->title(__("Validation Complete: $validCount valid, $invalidCount invalid"))
+                                ->body(implode('<br>', $details))
+                                ->persistent()
+                                ->send();
+                        } elseif ($validCount > 0) {
+                            Notification::make()
+                                ->success()
+                                ->title(__("All tokens valid ($validCount channels)"))
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->info()
+                                ->title(__('No channels to validate'))
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\Action::make('toggleActive')
                     ->label(fn (Project $record) => $record->is_active ? 'Suspend' : 'Activate')
                     ->icon(fn (Project $record) => $record->is_active ? 'heroicon-o-pause-circle' : 'heroicon-o-play-circle')

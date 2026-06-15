@@ -393,4 +393,92 @@ class Project extends Model
 
         return false;
     }
+
+    /**
+     * Count the number of enabled channels.
+     */
+    public function countEnabledChannels(): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channelConfig) {
+            if (is_array($channelConfig) && !empty($channelConfig['enabled'])) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Count the number of enabled assets.
+     * @param bool $onlyInEnabledChannels If true, ignores assets in disabled channels.
+     */
+    public function countEnabledAssets(bool $onlyInEnabledChannels = false): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['enabled']) && empty($asset['lost_access']);
+        }, $onlyInEnabledChannels);
+    }
+
+    /**
+     * Count the number of locked assets.
+     */
+    public function countLockedAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['locked']);
+        }, false);
+    }
+
+    /**
+     * Count the number of assets in grace period.
+     */
+    public function countGracePeriodAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['in_grace_period']);
+        }, false);
+    }
+
+    /**
+     * Helper to count assets based on a condition closure.
+     */
+    protected function countAssetsByCondition(\Closure $condition, bool $onlyInEnabledChannels = false): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channelConfig) {
+            if (!is_array($channelConfig)) {
+                continue;
+            }
+            if ($onlyInEnabledChannels && empty($channelConfig['enabled'])) {
+                continue;
+            }
+
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+            // 1. Check direct asset lists
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
+                    foreach ($channelConfig[$assetKey] as $asset) {
+                        if (is_array($asset) && $condition($asset)) {
+                            $count++;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check nested asset lists
+            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
+                foreach ($assetKeys as $assetKey) {
+                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
+                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
+                            if (is_array($asset) && $condition($asset)) {
+                                $count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $count;
+    }
 }
