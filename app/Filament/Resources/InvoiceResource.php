@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Blade;
 
 class InvoiceResource extends Resource
 {
@@ -86,6 +88,18 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('preview_pdf')
+                    ->label('Preview PDF')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->action(function (Invoice $record) {
+                        $pdf = Pdf::loadView('pdf.invoice', [
+                            'invoice' => $record,
+                            'profile' => $record->billingProfile,
+                            'subscription' => $record->subscription,
+                        ]);
+                        return response()->streamDownload(fn () => print($pdf->output()), "preview-invoice-{$record->id}.pdf");
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
