@@ -308,13 +308,11 @@
     "For automated, massive operations and full programmatic access.": "Para operaciones automatizadas, masivas y acceso programático total.",
     "15 maximum": "15 máximo",
     "500 maximum": "500 máximo",
-    "Full Access to APIs Hub API": "Acceso Completo a la API de APIs Hub",
+    "API access": "Acceso a la API",
     "Internal integrations capacity": "Capacidad de integraciones internas",
     "Corporate-grade solution with dedicated infrastructure and support.": "Solución de grado corporativo e infraestructura y soporte dedicados.",
     "Custom (Base 15)": "A medida (Base 15)",
     "Custom (Base 500)": "A medida (Base 500)",
-    "Data sync + Collaborators": "Sincronización de datos + Colaboradores",
-    "Public views + Full API access": "Vistas públicas + Acceso total a API",
     "Share Billing Profiles": "Compartir Billing Profiles",
     "Support and Guaranteed SLA Stability": "Soporte y Estabilidad SLA garantizada",
     "Important Note on API Access": "Nota Importante sobre Acceso a la API",
@@ -1096,5 +1094,6 @@
     "unlimited": "ilimitados",
     "Cross-project Analytics and Dashboards": "Análisis y paneles multiproyecto",
     "coming soon": "próximamente",
-    "Guaranteed SLA": "SLA Garantizado"
+    "Guaranteed SLA": "SLA Garantizado",
+    "higher rate limits": "mayores límites de tasa"
 }
