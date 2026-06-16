@@ -245,7 +245,8 @@
                     <select
                         x-model="accounts[0]"
                         @change="accounts = $event.target.value ? [$event.target.value] : []"
-                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full max-w-[250px] px-4 py-2.5 h-[42px]"
+                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full px-4 py-2.5 h-[42px]"
+                        style="max-width:250px;"
                     >
                         @if(count($accounts) === 0)
                             <option value="" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ __('No pages available.') }}</option>
