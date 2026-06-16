@@ -18,9 +18,6 @@ class PerformanceCorrelationsReference extends Page
     {
         return __('Knowledge Base');
     }
-    {
-        return __('Performance Correlations Guide');
-    }
 
     public function getTitle(): string
     {
