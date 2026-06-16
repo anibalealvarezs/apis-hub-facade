@@ -58,7 +58,7 @@
             <div>
                 <h1 class="joint-header-title">
                     <x-heroicon-o-arrows-right-left class="w-8 h-8 text-[#00a7f9]"/>
-                    {{ __('Cross-Metric Joint Dashboard') }}
+                    {{ __('Performance Correlations') }}
                 </h1>
             </div>
             <div class="joint-header-controls">
@@ -77,6 +77,40 @@
         </div>
 
         <div class="joint-card">
+            <!-- Playbook Section -->
+            <div class="mb-6 pb-6 border-b border-gray-200 dark:border-white/10" x-show="getAvailablePlays().length > 0">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                    <x-heroicon-o-book-open class="w-5 h-5 text-primary-500" />
+                    {{ __('Analysis Playbook') }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    {{ __('Select a predefined marketing theory scenario to auto-configure the dashboard. You will only need to select your specific assets.') }}
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <template x-for="play in getAvailablePlays()" :key="play.id">
+                        <button type="button" @click="applyPlay(play)" 
+                                class="text-left px-4 py-3 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                :class="selectedPlay?.id === play.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-primary-300 dark:hover:border-primary-500/50'">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate" x-text="play.short_desc"></div>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Active Play Info -->
+                <div x-show="selectedPlay" x-collapse class="mt-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay?.name"></h4>
+                        <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                            <p><strong>Theory:</strong> <span x-text="selectedPlay?.theory"></span></p>
+                            <p><strong>Expected Results:</strong> <span x-text="selectedPlay?.expected"></span></p>
+                            <p class="text-xs italic mt-2 opacity-80">{{ __('Note: Please select your specific assets below to complete the configuration.') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="joint-form-grid">
                 <!-- Curve A -->
                 <div class="joint-curve-section curve-a">
@@ -233,6 +267,9 @@
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Comparison View') }}</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" x-text="subtitle"></p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-2xl">
+                        {{ __('Displays both metrics mapped over time. Z-Score (default) scales both metrics by their standard deviations, allowing you to perfectly compare relative volatility regardless of their raw numbers.') }}
+                    </p>
                 </div>
                 
                 <!-- Correlation Display -->
@@ -245,19 +282,25 @@
                 </div>
             </div>
 
-            <div class="chart-container-joint">
+            <div class="chart-container-joint pb-8">
                 <canvas id="jointChart"></canvas>
             </div>
             
-            <div class="mt-8 border-t border-gray-200 dark:border-white/10 pt-8">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rolling Correlation (7-Day Window)</h3>
-                <div class="chart-container-joint" style="height: 250px;">
+            <div class="mt-12 border-t border-gray-200 dark:border-white/10 pt-10 pb-4">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Rolling Correlation (7-Day Window)</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 max-w-3xl">
+                    {{ __('Shows how the Pearson correlation between the two metrics evolves day by day. A drop to zero indicates the day a relationship broke (e.g., ad fatigue or an algorithm update).') }}
+                </p>
+                <div class="chart-container-joint pb-8" style="height: 250px;">
                     <canvas id="rollingChart"></canvas>
                 </div>
             </div>
 
-            <div class="mt-8 border-t border-gray-200 dark:border-white/10 pt-8">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Scatter Plot (Correlation Distribution)</h3>
+            <div class="mt-12 border-t border-gray-200 dark:border-white/10 pt-10 pb-4">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Scatter Plot (Correlation Distribution)</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 max-w-3xl">
+                    {{ __('Removes the element of time. Helps identify non-linear relationships, data clustering, or points of diminishing returns (where higher values on the X axis stop producing higher values on the Y axis).') }}
+                </p>
                 <div class="chart-container-joint" style="height: 350px;">
                     <canvas id="scatterChart"></canvas>
                 </div>
@@ -277,13 +320,120 @@
                     channels: @json($channels),
                     metricsDict: @json($metricsDict),
                     availableAccounts: @json($availableAccounts),
-                    curveA: { channel: '', asset: '', metric: '', level: 'level', lag: '0' },
-                    curveB: { channel: '', asset: '', metric: '', level: 'level', lag: '0' },
+                    curveA: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
+                    curveB: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
                     chartData: null,
                     correlation: null,
                     subtitle: '',
                     scatterChartInstance: null,
                     rollingChartInstance: null,
+                    selectedPlay: null,
+
+                    allPlays: [
+                        {
+                            id: 'brand_search_synergy',
+                            name: 'Brand Search Synergy',
+                            short_desc: 'FB Ads vs GSC',
+                            theory: 'Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.',
+                            expected: 'Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.',
+                            requires: ['facebook_marketing', 'google_search_console'],
+                            config: {
+                                curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '3' }
+                            }
+                        },
+                        {
+                            id: 'organic_lift_paid',
+                            name: 'Organic Lift via Paid',
+                            short_desc: 'FB Ads vs FB Organic',
+                            theory: 'Aggressive paid spending can create a halo effect on your organic profile visits and reach.',
+                            expected: 'Positive correlation. When spend spikes, organic reach should spike proportionally.',
+                            requires: ['facebook_marketing', 'facebook_organic'],
+                            config: {
+                                curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '0' }
+                            }
+                        },
+                        {
+                            id: 'ad_fatigue',
+                            name: 'Ad Fatigue & Efficiency',
+                            short_desc: 'FB CTR vs FB Cost',
+                            theory: 'As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.',
+                            expected: 'Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.',
+                            requires: ['facebook_marketing'],
+                            config: {
+                                curveA: { channel: 'facebook_marketing', metric: 'ctr', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'facebook_marketing', metric: 'cost_per_result', level: 'zscore', lag: '0' }
+                            }
+                        },
+                        {
+                            id: 'google_evaluation_cycle',
+                            name: 'SEO Evaluation Cycle',
+                            short_desc: 'GSC Impressions vs Position',
+                            theory: 'When Google gives you an impression spike, it takes the algorithm a few days to process the user-behavior signals (CTR, Bounce Rate) from that traffic before adjusting your ranking.',
+                            expected: 'Positive correlation with Lag +4. A spike in impressions 4 days ago often correlates with a temporary drop in ranking (higher position number) today as Google processes the broad, low-engagement traffic test.',
+                            requires: ['google_search_console'],
+                            config: {
+                                curveA: { channel: 'google_search_console', metric: 'impressions', level: 'zscore', lag: '4' },
+                                curveB: { channel: 'google_search_console', metric: 'position', level: 'zscore', lag: '0' }
+                            }
+                        },
+                        {
+                            id: 'empty_traffic',
+                            name: 'Empty Traffic Check',
+                            short_desc: 'FB Clicks vs Conversions',
+                            theory: 'More clicks should theoretically mean more conversions. If they don\'t, you might have a "clickbait" ad or a broken landing page.',
+                            expected: 'Should be a strong positive correlation. If the correlation drops to zero or goes negative, your ads are driving low-intent traffic that doesn\'t convert.',
+                            requires: ['facebook_marketing'],
+                            config: {
+                                curveA: { channel: 'facebook_marketing', metric: 'clicks', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'facebook_marketing', metric: 'results', level: 'zscore', lag: '0' }
+                            }
+                        },
+                        {
+                            id: 'cpm_vs_roas',
+                            name: 'Auction Competition vs ROAS',
+                            short_desc: 'FB CPM vs ROAS',
+                            theory: 'When market competition drives up the cost of impressions (CPM), does your return on ad spend (ROAS) immediately drop, or does the higher quality of expensive traffic maintain the ROAS?',
+                            expected: 'Typically a negative correlation. As CPMs rise, ROAS drops unless the more expensive audience is converting at a proportionally higher rate.',
+                            requires: ['facebook_marketing'],
+                            config: {
+                                curveA: { channel: 'facebook_marketing', metric: 'cpm', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'facebook_marketing', metric: 'purchase_roas', level: 'zscore', lag: '0' }
+                            }
+                        },
+                        {
+                            id: 'organic_algorithm_reward',
+                            name: 'Algorithm Reward',
+                            short_desc: 'FB Engagements vs Reach',
+                            theory: 'Social algorithms reward high engagement (likes/comments) today with broader reach tomorrow.',
+                            expected: 'Positive correlation with a 1 to 2 day lag. A spike in interactions today should cause a delayed spike in reach as the algorithm pushes the content.',
+                            requires: ['facebook_organic'],
+                            config: {
+                                curveA: { channel: 'facebook_organic', metric: 'total_interactions', level: 'zscore', lag: '0' },
+                                curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '2' }
+                            }
+                        }
+                    ],
+
+                    getAvailablePlays() {
+                        let availableKeys = Object.keys(this.channels);
+                        return this.allPlays.filter(play => {
+                            return play.requires.every(req => availableKeys.includes(req) && Object.keys(this.availableAccounts[req] || {}).length > 0);
+                        });
+                    },
+
+                    applyPlay(play) {
+                        this.selectedPlay = play;
+                        
+                        // Set Curve A (preserve asset if channel matches)
+                        let assetA = this.curveA.channel === play.config.curveA.channel ? this.curveA.asset : '';
+                        this.curveA = { ...play.config.curveA, asset: assetA };
+                        
+                        // Set Curve B (preserve asset if channel matches)
+                        let assetB = this.curveB.channel === play.config.curveB.channel ? this.curveB.asset : '';
+                        this.curveB = { ...play.config.curveB, asset: assetB };
+                    },
 
                     transformData(dates, values, level, lag, targetStart, targetEnd) {
                         let resDates = [...dates];

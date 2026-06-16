@@ -11,10 +11,11 @@ class JointDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
+    protected static ?int $navigationSort = -1;
     
     public static function getNavigationLabel(): string
     {
-        return __('Joint Dashboard');
+        return __('Performance Correlations');
     }
 
     public static function getNavigationGroup(): ?string
@@ -24,7 +25,7 @@ class JointDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Joint Dashboard (Correlation)');
+        return __('Performance Correlations');
     }
 
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
