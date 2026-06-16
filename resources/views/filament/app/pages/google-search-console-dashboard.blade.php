@@ -663,11 +663,18 @@
                             if (!this.showTrends || !this.chartDataRaw || this.chartDataRaw.length === 0) return;
                             
                             const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+                            const allowedMetrics = ['impressions', 'clicks'];
+                            const validMetrics = activeKeys.filter(m => allowedMetrics.includes(m));
+                            
+                            if (validMetrics.length === 0) {
+                                this.updateChart();
+                                return;
+                            }
                             
                             this.isChartLoading = true;
                             
                             try {
-                                const promises = activeKeys.map(async (metric) => {
+                                const promises = validMetrics.map(async (metric) => {
                                     const seriesDates = this.chartDataRaw.map(r => r.daily || r.date || r.metric_date).filter(Boolean);
                                     const seriesValues = this.chartDataRaw.map(r => r[metric] || 0);
                                     
