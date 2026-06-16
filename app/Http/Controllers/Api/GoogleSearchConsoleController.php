@@ -220,10 +220,10 @@ class GoogleSearchConsoleController extends Controller
             ];
 
             // For GSC we need Linear regression + 28-day SMA
-            $linearResult = $service->calculateTrend($tenant, 'linear', $payload);
+            $linearResult = $service->getTrend('linear', $payload);
             
-            $smaPayload = array_merge($payload, ['period' => 28]);
-            $smaResult = $service->calculateTrend($tenant, 'sma', $smaPayload);
+            $smaPayload = array_merge($payload, ['window' => 28]);
+            $smaResult = $service->getTrend('sma', $smaPayload);
 
             $trendData = [];
             
