@@ -83,7 +83,7 @@ class SyncSettings extends Page
                 ->color('success')
                 ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
                     || Filament::getTenant()->fresh()->billing_status === 'suspended'
-                    || in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing'])
+                    || Filament::getTenant()->fresh()->health_status !== 'online'
                     || ! auth()->user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {

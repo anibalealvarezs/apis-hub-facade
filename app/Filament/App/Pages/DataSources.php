@@ -1925,20 +1925,28 @@
                     ->warning()
                     ->send();
             } else {
-                try {
-                    app(\App\Services\RemoteEngineService::class)->startSync($tenant);
-
-                    \Filament\Notifications\Notification::make()
-                        ->title(__('Configuration Saved and Synced'))
-                        ->body(__('Workers reloaded. Assets will begin syncing shortly.'))
-                        ->success()
-                        ->send();
-                } catch (\Exception $e) {
+                if ($tenant->fresh()->health_status !== 'online') {
                     \Filament\Notifications\Notification::make()
                         ->title(__('Configuration Saved'))
-                        ->body(__('Workers could not be reloaded automatically. Please visit Sync Settings to trigger the update manually.'))
+                        ->body(__('Your configuration was saved locally, but the lightweight sync could not be started because the node is currently offline or busy.'))
                         ->warning()
                         ->send();
+                } else {
+                    try {
+                        app(\App\Services\RemoteEngineService::class)->startSync($tenant);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Configuration Saved and Synced'))
+                            ->body(__('Workers reloaded. Assets will begin syncing shortly.'))
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Configuration Saved but Sync Failed'))
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
                 }
             }
         }

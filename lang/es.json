@@ -1097,5 +1097,7 @@
     "Guaranteed SLA": "SLA Garantizado",
     "higher rate limits": "mayores límites de tasa",
     "Up to 6 months of historical data": "Hasta 6 meses de datos históricos",
-    "Full historical data retention": "Retención completa de datos históricos"
+    "Full historical data retention": "Retención completa de datos históricos",
+    "Your configuration was saved locally, but the lightweight sync could not be started because the node is currently offline or busy.": "Tu configuración se guardó localmente, pero la sincronización ligera no pudo iniciarse porque el nodo está actualmente inactivo u ocupado.",
+    "Configuration Saved but Sync Failed": "Configuración guardada pero la sincronización falló"
 }
