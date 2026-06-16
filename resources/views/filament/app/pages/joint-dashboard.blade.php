@@ -113,6 +113,36 @@
                                 </template>
                             </select>
                         </div>
+                        <div x-show="curveA.channel" class="grid grid-cols-2 gap-3 mt-3">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Analysis Level</label>
+                                <select x-model="curveA.level" @change="chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                                    <option value="level">Level (Original)</option>
+                                    <option value="diff1">1st Difference (Δ)</option>
+                                    <option value="diff2">2nd Difference (ΔΔ)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Lag (Shift)</label>
+                                <select x-model="curveA.lag" @change="curveB.lag = '0'; chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                                    <option value="0">No Lag</option>
+                                    <option value="1">+1 Day</option>
+                                    <option value="2">+2 Days</option>
+                                    <option value="3">+3 Days</option>
+                                    <option value="4">+4 Days</option>
+                                    <option value="5">+5 Days</option>
+                                    <option value="6">+6 Days</option>
+                                    <option value="7">+7 Days</option>
+                                    <option value="-1">-1 Day</option>
+                                    <option value="-2">-2 Days</option>
+                                    <option value="-3">-3 Days</option>
+                                    <option value="-4">-4 Days</option>
+                                    <option value="-5">-5 Days</option>
+                                    <option value="-6">-6 Days</option>
+                                    <option value="-7">-7 Days</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -151,6 +181,36 @@
                                 </template>
                             </select>
                         </div>
+                        <div x-show="curveB.channel" class="grid grid-cols-2 gap-3 mt-3">
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Analysis Level</label>
+                                <select x-model="curveB.level" @change="chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                                    <option value="level">Level (Original)</option>
+                                    <option value="diff1">1st Difference (Δ)</option>
+                                    <option value="diff2">2nd Difference (ΔΔ)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Lag (Shift)</label>
+                                <select x-model="curveB.lag" @change="curveA.lag = '0'; chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                                    <option value="0">No Lag</option>
+                                    <option value="1">+1 Day</option>
+                                    <option value="2">+2 Days</option>
+                                    <option value="3">+3 Days</option>
+                                    <option value="4">+4 Days</option>
+                                    <option value="5">+5 Days</option>
+                                    <option value="6">+6 Days</option>
+                                    <option value="7">+7 Days</option>
+                                    <option value="-1">-1 Day</option>
+                                    <option value="-2">-2 Days</option>
+                                    <option value="-3">-3 Days</option>
+                                    <option value="-4">-4 Days</option>
+                                    <option value="-5">-5 Days</option>
+                                    <option value="-6">-6 Days</option>
+                                    <option value="-7">-7 Days</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -186,6 +246,13 @@
             <div class="chart-container-joint">
                 <canvas id="jointChart"></canvas>
             </div>
+            
+            <div class="mt-8 border-t border-gray-200 dark:border-white/10 pt-8">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Scatter Plot (Correlation Distribution)</h3>
+                <div class="chart-container-joint" style="height: 350px;">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -201,11 +268,102 @@
                     channels: @json($channels),
                     metricsDict: @json($metricsDict),
                     availableAccounts: @json($availableAccounts),
-                    curveA: { channel: '', asset: '', metric: '' },
-                    curveB: { channel: '', asset: '', metric: '' },
+                    curveA: { channel: '', asset: '', metric: '', level: 'level', lag: '0' },
+                    curveB: { channel: '', asset: '', metric: '', level: 'level', lag: '0' },
                     chartData: null,
                     correlation: null,
                     subtitle: '',
+                    scatterChartInstance: null,
+
+                    transformData(dates, values, level, lag, targetStart, targetEnd) {
+                        let resDates = [...dates];
+                        let resValues = [...values];
+
+                        // Apply differencing
+                        if (level === 'diff1' || level === 'diff2') {
+                            let newDates = [];
+                            let newVals = [];
+                            for (let i = 1; i < resValues.length; i++) {
+                                newDates.push(resDates[i]);
+                                if (resValues[i] === null || resValues[i-1] === null) {
+                                    newVals.push(null);
+                                } else {
+                                    newVals.push(resValues[i] - resValues[i-1]);
+                                }
+                            }
+                            resDates = newDates;
+                            resValues = newVals;
+                        }
+                        if (level === 'diff2') {
+                            let newDates = [];
+                            let newVals = [];
+                            for (let i = 1; i < resValues.length; i++) {
+                                newDates.push(resDates[i]);
+                                if (resValues[i] === null || resValues[i-1] === null) {
+                                    newVals.push(null);
+                                } else {
+                                    newVals.push(resValues[i] - resValues[i-1]);
+                                }
+                            }
+                            resDates = newDates;
+                            resValues = newVals;
+                        }
+
+                        // Apply Lag (Shift)
+                        // A positive lag of +2 means today's value is what happened 2 days ago.
+                        // So we shift the values array to the right relative to the dates array.
+                        let l = parseInt(lag, 10);
+                        if (l !== 0) {
+                            let shiftedVals = [];
+                            for (let i = 0; i < resDates.length; i++) {
+                                let sourceIdx = i - l;
+                                if (sourceIdx >= 0 && sourceIdx < resValues.length) {
+                                    shiftedVals.push(resValues[sourceIdx]);
+                                } else {
+                                    shiftedVals.push(null);
+                                }
+                            }
+                            resValues = shiftedVals;
+                        }
+
+                        // Truncate to target start and end dates
+                        let finalDates = [];
+                        let finalValues = [];
+                        for (let i = 0; i < resDates.length; i++) {
+                            if (resDates[i] >= targetStart && resDates[i] <= targetEnd) {
+                                finalDates.push(resDates[i]);
+                                finalValues.push(resValues[i]);
+                            }
+                        }
+
+                        return { dates: finalDates, values: finalValues };
+                    },
+
+                    calculatePearson(arr1, arr2) {
+                        let valid1 = [];
+                        let valid2 = [];
+                        for (let i = 0; i < arr1.length; i++) {
+                            if (arr1[i] !== null && arr2[i] !== null) {
+                                valid1.push(arr1[i]);
+                                valid2.push(arr2[i]);
+                            }
+                        }
+
+                        if (valid1.length < 3) return null;
+
+                        const n = valid1.length;
+                        const sum1 = valid1.reduce((a, b) => a + b, 0);
+                        const sum2 = valid2.reduce((a, b) => a + b, 0);
+                        const sum1Sq = valid1.reduce((a, b) => a + b * b, 0);
+                        const sum2Sq = valid2.reduce((a, b) => a + b * b, 0);
+                        const pSum = valid1.reduce((acc, val, i) => acc + val * valid2[i], 0);
+
+                        const num = pSum - (sum1 * sum2 / n);
+                        const den = Math.sqrt((sum1Sq - sum1 * sum1 / n) * (sum2Sq - sum2 * sum2 / n));
+
+                        if (den === 0) return 0;
+                        return num / den;
+                    },
 
                     initDashboard() {
                         window.addEventListener('joint-data-loaded', (e) => {
@@ -215,7 +373,6 @@
                             if (payload && payload.data) payload = payload.data;
                             
                             this.chartData = payload;
-                            this.correlation = this.chartData?.correlation || null;
                             if (this.chartData && this.chartData.curveA && this.chartData.curveB) {
                                 this.renderChart();
                             } else {
@@ -242,7 +399,7 @@
 
                     getCorrelationClass() {
                         if (!this.correlation) return 'corr-weak';
-                        const coef = this.correlation.correlation_coefficient;
+                        const coef = this.correlation;
                         if (coef > 0.4) return 'corr-strong-pos';
                         if (coef < -0.4) return 'corr-strong-neg';
                         return 'corr-weak';
@@ -250,7 +407,7 @@
 
                     getCorrelationIcon() {
                         if (!this.correlation) return '≈';
-                        const coef = this.correlation.correlation_coefficient;
+                        const coef = this.correlation;
                         if (coef > 0.4) return '↗';
                         if (coef < -0.4) return '↘';
                         return '≈';
@@ -268,11 +425,33 @@
                         if (this.chartInstance) {
                             this.chartInstance.destroy();
                         }
+                        if (this.scatterChartInstance) {
+                            this.scatterChartInstance.destroy();
+                        }
 
-                        const dataA = this.chartData.curveA;
-                        const dataB = this.chartData.curveB;
+                        const targetStart = this.chartData.originalStartDate;
+                        const targetEnd = this.chartData.originalEndDate;
 
-                        this.subtitle = `${dataA.name} vs ${dataB.name}`;
+                        const rawA = this.chartData.curveA;
+                        const rawB = this.chartData.curveB;
+
+                        const dataA = this.transformData(rawA.dates, rawA.values, this.curveA.level, this.curveA.lag, targetStart, targetEnd);
+                        const dataB = this.transformData(rawB.dates, rawB.values, this.curveB.level, this.curveB.lag, targetStart, targetEnd);
+
+                        const pearson = this.calculatePearson(dataA.values, dataB.values);
+                        this.correlation = pearson;
+
+                        let titleA = rawA.name;
+                        if (this.curveA.level === 'diff1') titleA = 'Δ ' + titleA;
+                        if (this.curveA.level === 'diff2') titleA = 'ΔΔ ' + titleA;
+                        if (parseInt(this.curveA.lag) !== 0) titleA += ` (Lag ${this.curveA.lag})`;
+
+                        let titleB = rawB.name;
+                        if (this.curveB.level === 'diff1') titleB = 'Δ ' + titleB;
+                        if (this.curveB.level === 'diff2') titleB = 'ΔΔ ' + titleB;
+                        if (parseInt(this.curveB.lag) !== 0) titleB += ` (Lag ${this.curveB.lag})`;
+
+                        this.subtitle = `${titleA} vs ${titleB}`;
 
                         const isDarkMode = document.documentElement.classList.contains('dark');
                         const textColor = isDarkMode ? '#9ca3af' : '#6b7280';
@@ -285,7 +464,7 @@
                                 labels: dataA.dates,
                                 datasets: [
                                     {
-                                        label: dataA.name,
+                                        label: titleA,
                                         data: dataA.values,
                                         borderColor: '#00a7f9',
                                         backgroundColor: 'rgba(0, 167, 249, 0.1)',
@@ -297,7 +476,7 @@
                                         fill: true
                                     },
                                     {
-                                        label: dataB.name,
+                                        label: titleB,
                                         data: dataB.values,
                                         borderColor: '#f43f5e',
                                         backgroundColor: 'rgba(244, 63, 94, 0.1)',
@@ -335,7 +514,7 @@
                                         ticks: { color: '#00a7f9' },
                                         title: {
                                             display: true,
-                                            text: dataA.name,
+                                            text: titleA,
                                             color: '#00a7f9',
                                             font: { weight: 'bold' }
                                         }
@@ -348,9 +527,65 @@
                                         ticks: { color: '#f43f5e' },
                                         title: {
                                             display: true,
-                                            text: dataB.name,
+                                            text: titleB,
                                             color: '#f43f5e',
                                             font: { weight: 'bold' }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        // Render Scatter Plot
+                        const scatterData = [];
+                        for(let i=0; i<dataA.values.length; i++) {
+                            if (dataA.values[i] !== null && dataB.values[i] !== null) {
+                                scatterData.push({ x: dataA.values[i], y: dataB.values[i] });
+                            }
+                        }
+
+                        const scatterCtx = document.getElementById("scatterChart").getContext('2d');
+                        this.scatterChartInstance = new Chart(scatterCtx, {
+                            type: 'scatter',
+                            data: {
+                                datasets: [{
+                                    label: 'Distribution',
+                                    data: scatterData,
+                                    backgroundColor: '#8b5cf6',
+                                    pointRadius: 6,
+                                    pointHoverRadius: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return `(${context.parsed.x}, ${context.parsed.y})`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { color: gridColor },
+                                        ticks: { color: textColor },
+                                        title: {
+                                            display: true,
+                                            text: titleA,
+                                            color: textColor
+                                        }
+                                    },
+                                    y: {
+                                        grid: { color: gridColor },
+                                        ticks: { color: textColor },
+                                        title: {
+                                            display: true,
+                                            text: titleB,
+                                            color: textColor
                                         }
                                     }
                                 }

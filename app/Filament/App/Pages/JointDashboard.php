@@ -122,31 +122,17 @@ class JointDashboard extends Page
         $tenant = Filament::getTenant();
         $service = app(RemoteEngineService::class);
 
-        $seriesA = $this->fetchSeries($tenant, $service, $a, $dStart, $dEnd);
-        $seriesB = $this->fetchSeries($tenant, $service, $b, $dStart, $dEnd);
+        // Pad start date backwards by 10 days to allow for accurate diff/lag calculations on the frontend
+        $paddedDateStart = Carbon::parse($dStart)->subDays(10)->format('Y-m-d');
 
-        $correlation = null;
-        if (!empty($seriesA['dates']) && !empty($seriesB['dates'])) {
-            $correlationResponse = $service->getCorrelation([
-                'series_x' => [
-                    'dates' => $seriesA['dates'],
-                    'values' => $seriesA['values']
-                ],
-                'series_y' => [
-                    'dates' => $seriesB['dates'],
-                    'values' => $seriesB['values']
-                ]
-            ]);
-
-            if (isset($correlationResponse['correlation_coefficient'])) {
-                $correlation = $correlationResponse;
-            }
-        }
+        $seriesA = $this->fetchSeries($tenant, $service, $a, $paddedDateStart, $dEnd);
+        $seriesB = $this->fetchSeries($tenant, $service, $b, $paddedDateStart, $dEnd);
 
         $this->chartData = [
             'curveA' => $seriesA,
             'curveB' => $seriesB,
-            'correlation' => $correlation
+            'originalStartDate' => $dStart,
+            'originalEndDate' => $dEnd
         ];
 
         $this->dispatch('joint-data-loaded', $this->chartData);
