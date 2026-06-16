@@ -137,10 +137,22 @@
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]"/>
-                    {{ __('Performance on Google Search results') }}
+                    {{ __('Google Search Console Insights') }}
                 </h1>
             </div>
             <div class="gsc-header-controls">
+                <div class="flex items-center mr-2">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
+                            @click="showTrends = !showTrends; handleTrendToggle()" 
+                            role="switch" 
+                            :aria-checked="showTrends.toString()">
+                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                </div>
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
@@ -160,19 +172,6 @@
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
                 <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
-                
-                <div class="flex items-center ml-2">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
-                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
-                            @click="showTrends = !showTrends; handleTrendToggle()" 
-                            role="switch" 
-                            :aria-checked="showTrends.toString()">
-                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
-                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
-                    </button>
-                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
-                </div>
             </div>
         </div>
 
