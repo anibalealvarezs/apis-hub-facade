@@ -149,7 +149,7 @@ class JointDashboard extends Page
             'correlation' => $correlation
         ];
 
-        $this->dispatch('joint-data-loaded', data: $this->chartData);
+        $this->dispatch('joint-data-loaded', $this->chartData);
     }
 
     protected function fetchSeries($tenant, RemoteEngineService $service, array $config, string $dateStart, string $dateEnd)

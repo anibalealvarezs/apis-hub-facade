@@ -31,21 +31,7 @@
         .curve-a { border-top: 4px solid #00a7f9; }
         .curve-b { border-top: 4px solid #f43f5e; }
 
-        .joint-select {
-            background: transparent;
-            border: 1px solid rgba(0,0,0,0.1);
-            color: #111827;
-            border-radius: 8px;
-            padding: 8px;
-            width: 100%;
-            margin-top: 4px;
-        }
-        .dark .joint-select {
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-        }
-        .joint-select option { background: #fff; color: #000; }
-        .dark .joint-select option { background: #1f2937; color: #fff; }
+        /* Selector CSS replaced by Tailwind form classes */
 
         .chart-container-joint { height: 450px; position: relative; }
 
@@ -100,16 +86,18 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
-                            <select x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''" class="joint-select">
+                            <select x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Channel...</option>
                                 <template x-for="(label, key) in channels" :key="key">
-                                    <option :value="key" x-text="label"></option>
+                                    <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
+                                        <option :value="key" x-text="label"></option>
+                                    </template>
                                 </template>
                             </select>
                         </div>
                         <div x-show="curveA.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
-                            <select x-model="curveA.asset" class="joint-select">
+                            <select x-model="curveA.asset" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Asset...</option>
                                 <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
                                     <option :value="id" x-text="name"></option>
@@ -118,7 +106,7 @@
                         </div>
                         <div x-show="curveA.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Metric</label>
-                            <select x-model="curveA.metric" class="joint-select">
+                            <select x-model="curveA.metric" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Metric...</option>
                                 <template x-for="(label, key) in metricsDict[curveA.channel] || {}" :key="key">
                                     <option :value="key" x-text="label"></option>
@@ -136,16 +124,18 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
-                            <select x-model="curveB.channel" @change="curveB.asset = ''; curveB.metric = ''" class="joint-select">
+                            <select x-model="curveB.channel" @change="curveB.asset = ''; curveB.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Channel...</option>
                                 <template x-for="(label, key) in channels" :key="key">
-                                    <option :value="key" x-text="label"></option>
+                                    <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
+                                        <option :value="key" x-text="label"></option>
+                                    </template>
                                 </template>
                             </select>
                         </div>
                         <div x-show="curveB.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
-                            <select x-model="curveB.asset" class="joint-select">
+                            <select x-model="curveB.asset" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Asset...</option>
                                 <template x-for="(name, id) in availableAccounts[curveB.channel] || {}" :key="id">
                                     <option :value="id" x-text="name"></option>
@@ -154,7 +144,7 @@
                         </div>
                         <div x-show="curveB.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Metric</label>
-                            <select x-model="curveB.metric" class="joint-select">
+                            <select x-model="curveB.metric" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Metric...</option>
                                 <template x-for="(label, key) in metricsDict[curveB.channel] || {}" :key="key">
                                     <option :value="key" x-text="label"></option>
@@ -217,9 +207,18 @@
 
                     initDashboard() {
                         window.addEventListener('joint-data-loaded', (e) => {
-                            this.chartData = e.detail[0] || e.detail;
-                            this.correlation = this.chartData.correlation;
-                            this.renderChart();
+                            // Livewire 3 sometimes passes named params inside e.detail.data, or unnamed as e.detail[0]
+                            let payload = e.detail;
+                            if (payload && payload[0]) payload = payload[0];
+                            if (payload && payload.data) payload = payload.data;
+                            
+                            this.chartData = payload;
+                            this.correlation = this.chartData?.correlation || null;
+                            if (this.chartData && this.chartData.curveA && this.chartData.curveB) {
+                                this.renderChart();
+                            } else {
+                                console.error("Invalid chart data payload received:", e.detail);
+                            }
                             this.isLoading = false;
                             this.chartRendered = true;
                         });
