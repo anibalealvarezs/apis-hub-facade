@@ -257,6 +257,14 @@
                     },
 
                     renderChart() {
+                        if (typeof Chart === 'undefined' && window.importChartJs) {
+                            window.importChartJs().then(module => {
+                                window.Chart = module.default;
+                                this.renderChart();
+                            }).catch(err => console.error("Failed to load Chart.js", err));
+                            return;
+                        }
+
                         if (this.chartInstance) {
                             this.chartInstance.destroy();
                         }
