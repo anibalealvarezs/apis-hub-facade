@@ -144,6 +144,11 @@
                 </h1>
             </div>
             <div class="fb-header-controls">
+                <label class="inline-flex items-center cursor-pointer mr-4">
+                    <input type="checkbox" x-model="showTrends" @change="handleTrendToggle()" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Show Trends') }}</span>
+                </label>
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
@@ -562,6 +567,9 @@
                         },
                         chartDataRaw: [],
                         tableDataRaw: [],
+                        
+                        showTrends: false,
+                        trendData: {},
 
                         activeMetrics: {
                             spend: true,
@@ -900,6 +908,59 @@
                             }
                         },
 
+                        async fetchTrends() {
+                            if (!this.showTrends || !this.chartDataRaw || this.chartDataRaw.length === 0) return;
+                            
+                            const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+                            
+                            this.isChartLoading = true;
+                            
+                            try {
+                                const promises = activeKeys.map(async (metric) => {
+                                    const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
+                                    const seriesValues = this.chartDataRaw.map(r => r[metric] || r['trend_total_' + metric] || r['trend_average_' + metric] || 0);
+                                    
+                                    const payload = {
+                                        tenant: this.tenantId,
+                                        metric: metric,
+                                        series: {
+                                            dates: seriesDates,
+                                            values: seriesValues
+                                        },
+                                        activeTab: this.activeTab
+                                    };
+                                    
+                                    const response = await fetch('/api/fbm/trend', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    const data = await response.json();
+                                    if(data.trend) {
+                                        this.trendData[metric] = data.trend;
+                                    }
+                                });
+                                
+                                await Promise.all(promises);
+                                this.updateChart();
+                            } catch (error) {
+                                console.error('Error fetching trends:', error);
+                            } finally {
+                                this.isChartLoading = false;
+                            }
+                        },
+
+                        handleTrendToggle() {
+                            if (this.showTrends) {
+                                this.fetchTrends();
+                            } else {
+                                this.updateChart();
+                            }
+                        },
+                        
                         async fetchChart() {
                             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                             const cacheKey = this.getCacheKey('chart');
@@ -1338,6 +1399,65 @@
                                     fill: false,
                                     yAxisID: 'yRr',
                                     tension: 0.4
+                                });
+                            }
+
+                            if (this.showTrends) {
+                                const metricConfig = {
+                                    spend: { label: 'Amount Spent', color: '#10B981', yAxis: 'ySpend', mult: 1 },
+                                    impressions: { label: 'Impressions', color: '#6366F1', yAxis: 'yImpressions', mult: 1 },
+                                    reach: { label: 'Reach', color: '#3B82F6', yAxis: 'yReach', mult: 1 },
+                                    frequency: { label: 'Frequency', color: '#F43F5E', yAxis: 'yFrequency', mult: 1 },
+                                    cpm: { label: 'CPM', color: '#EAB308', yAxis: 'yCpm', mult: 1 },
+                                    clicks: { label: 'Clicks', color: '#0EA5E9', yAxis: 'yClicks', mult: 1 },
+                                    ctr: { label: 'CTR', color: '#8B5CF6', yAxis: 'yCtr', mult: 100 },
+                                    cpc: { label: 'CPC', color: '#F59E0B', yAxis: 'yCpc', mult: 1 },
+                                    results: { label: 'Purchases', color: '#14B8A6', yAxis: 'yResults', mult: 1 },
+                                    purchase_roas: { label: 'ROAS', color: '#EC4899', yAxis: 'yRoas', mult: 1 },
+                                    cost_per_result: { label: 'Cost per Result', color: '#A855F7', yAxis: 'yCpr', mult: 1 },
+                                    result_rate: { label: 'Result Rate', color: '#EF4444', yAxis: 'yRr', mult: 100 }
+                                };
+
+                                Object.keys(this.activeMetrics).forEach(metric => {
+                                    if (this.activeMetrics[metric] && this.trendData[metric]) {
+                                        const config = metricConfig[metric];
+                                        const trendLong = this.trendData[metric].trend_long || this.trendData[metric].trend || [];
+                                        const trendShort = this.trendData[metric].trend_short || [];
+
+                                        if (trendShort.length) {
+                                            datasets.push({
+                                                label: config.label + ' (EMA 7)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendShort.find(t => t.date === d);
+                                                    return point ? point.value * config.mult : null;
+                                                }),
+                                                borderColor: config.color,
+                                                borderDash: [5, 5],
+                                                borderWidth: 2,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: config.yAxis,
+                                                tension: 0.4
+                                            });
+                                        }
+
+                                        if (trendLong.length) {
+                                            datasets.push({
+                                                label: config.label + (trendShort.length ? ' (EMA 14)' : ' (Trend)'),
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendLong.find(t => t.date === d);
+                                                    return point ? point.value * config.mult : null;
+                                                }),
+                                                borderColor: config.color,
+                                                borderDash: [2, 2],
+                                                borderWidth: 1,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: config.yAxis,
+                                                tension: 0.4
+                                            });
+                                        }
+                                    }
                                 });
                             }
 

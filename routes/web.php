@@ -74,6 +74,7 @@ Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorit
 Route::post('/api/gsc/summary', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/chart', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/table', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'table'])->middleware(['web', 'auth']);
+Route::post('/api/gsc/trend', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'trend'])->middleware(['web', 'auth']);
 
 Route::post('/api/fbm/summary', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/fbm/chart', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'chart'])->middleware(['web', 'auth']);

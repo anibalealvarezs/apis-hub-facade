@@ -217,6 +217,38 @@ class FacebookMarketingController extends Controller
         }
     }
 
+    public function trend(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tenant' => 'required|string',
+                'series' => 'required|array',
+                'series.dates' => 'required|array',
+                'series.values' => 'required|array',
+                'metric' => 'required|string'
+            ]);
+
+            $service = app(RemoteEngineService::class);
+            
+            // For Paid Media, we use EMA 7 vs 14 as per specs
+            $payload = [
+                'series' => $validated['series'],
+                'short_window' => 7,
+                'long_window' => 14
+            ];
+
+            $result = $service->getTrend('ema', $payload);
+
+            return response()->json([
+                'trend' => $result,
+                'metric' => $validated['metric']
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("FBM Trend Error: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function table(Request $request)
     {
         try {

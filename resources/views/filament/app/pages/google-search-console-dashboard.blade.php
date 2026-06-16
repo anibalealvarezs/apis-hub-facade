@@ -160,6 +160,12 @@
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
                 <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
+                
+                <label class="inline-flex items-center cursor-pointer ml-2">
+                    <input type="checkbox" x-model="showTrends" @change="handleTrendToggle()" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Show Trends') }}</span>
+                </label>
             </div>
         </div>
 
@@ -384,6 +390,8 @@
                         previous: {clicks: 0, impressions: 0, ctr: 0, position: 0},
                         chartDataRaw: [],
                         tableDataRaw: [],
+                        trendData: {},
+                        showTrends: false,
 
                         activeMetrics: {clicks: true, impressions: true, ctr: false, position: false},
 
@@ -629,6 +637,58 @@
                                 console.error('Error fetching chart:', error);
                             } finally {
                                 this.isChartLoading = false;
+                            }
+                        },
+
+                        async fetchTrends() {
+                            if (!this.showTrends || !this.chartDataRaw || this.chartDataRaw.length === 0) return;
+                            
+                            const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+                            
+                            this.isChartLoading = true;
+                            
+                            try {
+                                const promises = activeKeys.map(async (metric) => {
+                                    const seriesDates = this.chartDataRaw.map(r => r.daily || r.date || r.metric_date).filter(Boolean);
+                                    const seriesValues = this.chartDataRaw.map(r => r[metric] || 0);
+                                    
+                                    const payload = {
+                                        tenant: this.tenantId,
+                                        metric: metric,
+                                        series: {
+                                            dates: seriesDates,
+                                            values: seriesValues
+                                        }
+                                    };
+                                    
+                                    const response = await fetch('/api/gsc/trend', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    const data = await response.json();
+                                    if(data.trend) {
+                                        this.trendData[metric] = data.trend;
+                                    }
+                                });
+                                
+                                await Promise.all(promises);
+                                this.updateChart();
+                            } catch (error) {
+                                console.error('Error fetching trends:', error);
+                            } finally {
+                                this.isChartLoading = false;
+                            }
+                        },
+
+                        handleTrendToggle() {
+                            if (this.showTrends) {
+                                this.fetchTrends();
+                            } else {
+                                this.updateChart();
                             }
                         },
 
@@ -894,6 +954,64 @@
                                     fill: false,
                                     yAxisID: 'yPosition',
                                     tension: 0.4
+                                });
+                            }
+
+                            if (this.showTrends) {
+                                const metricsColors = {
+                                    clicks: '#4285F4',
+                                    impressions: '#7E57C2',
+                                    ctr: '#0097A7',
+                                    position: '#F4511E'
+                                };
+                                
+                                const metricsLabels = {
+                                    clicks: 'Clicks',
+                                    impressions: 'Impressions',
+                                    ctr: 'CTR',
+                                    position: 'Position'
+                                };
+
+                                ['clicks', 'impressions', 'ctr', 'position'].forEach(key => {
+                                    if (this.activeMetrics[key] && this.trendData[key]) {
+                                        const trendLinear = this.trendData[key].trend_linear || [];
+                                        const trendSma = this.trendData[key].trend_sma || [];
+                                        const scaleId = 'y' + key.charAt(0).toUpperCase() + key.slice(1);
+
+                                        if (trendLinear.length) {
+                                            datasets.push({
+                                                label: metricsLabels[key] + ' (Trend)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendLinear.find(t => t.date === d);
+                                                    return point ? (key === 'ctr' ? point.value * 100 : point.value) : null;
+                                                }),
+                                                borderColor: metricsColors[key],
+                                                borderDash: [5, 5],
+                                                borderWidth: 2,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: scaleId,
+                                                tension: 0.4
+                                            });
+                                        }
+
+                                        if (trendSma.length) {
+                                            datasets.push({
+                                                label: metricsLabels[key] + ' (SMA 28)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendSma.find(t => t.date === d);
+                                                    return point ? (key === 'ctr' ? point.value * 100 : point.value) : null;
+                                                }),
+                                                borderColor: metricsColors[key],
+                                                borderDash: [2, 2],
+                                                borderWidth: 1,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: scaleId,
+                                                tension: 0.4
+                                            });
+                                        }
+                                    }
                                 });
                             }
 

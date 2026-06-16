@@ -665,6 +665,44 @@
             }
         }
 
+        public function trend(Request $request)
+        {
+            try {
+                $validated = $request->validate([
+                    'tenant' => 'required|string',
+                    'series' => 'required|array',
+                    'series.dates' => 'required|array',
+                    'series.values' => 'required|array',
+                    'metric' => 'required|string',
+                    'activeTab' => 'required|string|in:facebook,instagram'
+                ]);
+
+                $service = app(RemoteEngineService::class);
+                
+                $payload = [
+                    'series' => $validated['series']
+                ];
+
+                $type = 'holt-winters';
+                if ($validated['activeTab'] === 'instagram') {
+                    $type = 'sma';
+                    $payload['window'] = 7;
+                } else {
+                    $payload['seasonal_periods'] = 7;
+                }
+
+                $result = $service->getTrend($type, $payload);
+
+                return response()->json([
+                    'trend' => $result,
+                    'metric' => $validated['metric']
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("FBO Trend Error: " . $e->getMessage());
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+        }
+
         public function table(Request $request)
         {
             try {
