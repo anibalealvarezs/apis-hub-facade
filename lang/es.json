@@ -1099,5 +1099,19 @@
     "Up to 6 months of historical data": "Hasta 6 meses de datos históricos",
     "Full historical data retention": "Retención completa de datos históricos",
     "Your configuration was saved locally, but the lightweight sync could not be started because the node is currently offline or busy.": "Tu configuración se guardó localmente, pero la sincronización ligera no pudo iniciarse porque el nodo está actualmente inactivo u ocupado.",
-    "Configuration Saved but Sync Failed": "Configuración guardada pero la sincronización falló"
+    "Configuration Saved but Sync Failed": "Configuración guardada pero la sincronización falló",
+    "Deployment completed successfully. Infrastructure is live.": "Despliegue completado con éxito. La infraestructura está activa.",
+    "A critical internal error interrupted the deployment process.": "Un error interno crítico interrumpió el proceso de despliegue.",
+    "Infrastructure ready and proxy configured.": "Infraestructura lista y proxy configurado.",
+    "Provisioning initial repository...": "Aprovisionando repositorio inicial...",
+    "Target container not found or stopped.": "Contenedor destino no encontrado o detenido.",
+    "Authentication failed: Server denied access.": "Falló la autenticación: El servidor denegó el acceso.",
+    "Server out of storage space.": "Servidor sin espacio de almacenamiento disponible.",
+    "Infrastructure is already running the latest version.": "La infraestructura ya está ejecutando la versión más reciente.",
+    "Containers are being rebuilt or restarted.": "Los contenedores se están reconstruyendo o reiniciando.",
+    "Network error: Unable to reach the remote node.": "Error de red: No se puede alcanzar el nodo remoto.",
+    "Deployment failed due to an unknown issue. (:summary)": "El despliegue falló por un problema desconocido. (:summary)",
+    "Process is initializing or running in the background...": "El proceso se está inicializando o ejecutando en segundo plano...",
+    "Recent deployment and synchronization history.": "Historial reciente de despliegue y sincronización.",
+    "Deployment Result:": "Resultado del Despliegue:"
 }

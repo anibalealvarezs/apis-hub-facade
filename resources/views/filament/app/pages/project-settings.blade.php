@@ -133,28 +133,48 @@
                 {{ __('Activity Logs') }}
             </x-slot>
             <x-slot name="description">
-                {{ __('Live sync engine activity logs.') }}
+                {{ __('Recent deployment and synchronization history.') }}
             </x-slot>
  
             <div wire:poll.10s>
-                <div class="bg-gray-950 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto max-h-96 overflow-y-auto">
-                    @foreach($logs as $log)
-                        <div class="mb-4 pb-4 border-b border-gray-800 last:border-0 last:pb-0 last:mb-0">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-500">{{ $log->created_at->format('Y-m-d H:i:s') }}</span>
-                                <span @class([
-                                    'px-2 py-0.5 rounded text-xs font-medium',
-                                    'bg-green-500/10 text-green-400' => $log->status === 'completed' || $log->status === 'success',
-                                    'bg-red-500/10 text-red-400' => $log->status === 'failed',
-                                    'bg-amber-500/10 text-amber-400' => $log->status === 'running',
-                                    'bg-blue-500/10 text-blue-400' => $log->status === 'pending',
-                                ])>
-                                    {{ strtoupper($log->status) }}
-                                </span>
-                            </div>
-                            <pre class="whitespace-pre-wrap font-inherit">{{ $log->output ?? __('Starting sync engine provisioning...') }}</pre>
-                        </div>
-                    @endforeach
+                <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg">
+                    <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-white/5">
+                        <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 font-medium whitespace-nowrap">{{ __('Date') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium">{{ __('Status') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium w-full">{{ __('Summary') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-gray-900">
+                            @foreach($logs as $log)
+                                @php
+                                    $summary = $log->getSummaryMessage();
+                                @endphp
+                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                    <td class="px-4 py-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                        {{ $log->created_at->format('Y-m-d H:i:s') }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span @class([
+                                            'px-2 py-0.5 rounded text-xs font-medium',
+                                            'bg-success-500/10 text-success-600 dark:text-success-400' => $log->status === 'completed' || $log->status === 'success',
+                                            'bg-danger-500/10 text-danger-600 dark:text-danger-400' => $log->status === 'failed',
+                                            'bg-warning-500/10 text-warning-600 dark:text-warning-400' => $log->status === 'running',
+                                            'bg-gray-500/10 text-gray-600 dark:text-gray-400' => $log->status === 'pending',
+                                        ])>
+                                            {{ strtoupper($log->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                        <div class="truncate max-w-lg" title="{{ $summary }}">
+                                            {{ $summary }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </x-filament::section>
