@@ -183,7 +183,9 @@
                 </div>
             </div>
 
-            <div id="jointChart" class="chart-container-joint"></div>
+            <div class="chart-container-joint">
+                <canvas id="jointChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -268,45 +270,72 @@
                         const textColor = isDarkMode ? '#9ca3af' : '#6b7280';
                         const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
-                        const options = {
-                            series: [
-                                { name: dataA.name, data: dataA.values },
-                                { name: dataB.name, data: dataB.values }
-                            ],
-                            chart: {
-                                type: 'line',
-                                height: 450,
-                                toolbar: { show: true },
-                                fontFamily: 'Outfit, sans-serif',
-                                background: 'transparent',
-                                animations: { enabled: true }
+                        const ctx = document.getElementById("jointChart").getContext('2d');
+                        this.chartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: dataA.dates,
+                                datasets: [
+                                    {
+                                        label: dataA.name,
+                                        data: dataA.values,
+                                        borderColor: '#00a7f9',
+                                        backgroundColor: 'rgba(0, 167, 249, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 0,
+                                        pointHoverRadius: 6,
+                                        yAxisID: 'yA',
+                                        tension: 0.4,
+                                        fill: true
+                                    },
+                                    {
+                                        label: dataB.name,
+                                        data: dataB.values,
+                                        borderColor: '#f43f5e',
+                                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 0,
+                                        pointHoverRadius: 6,
+                                        yAxisID: 'yB',
+                                        tension: 0.4,
+                                        fill: true
+                                    }
+                                ]
                             },
-                            colors: ['#00a7f9', '#f43f5e'],
-                            stroke: { width: [3, 3], curve: 'smooth' },
-                            xaxis: {
-                                categories: dataA.dates,
-                                labels: { style: { colors: textColor } },
-                                tooltip: { enabled: false }
-                            },
-                            yaxis: [
-                                {
-                                    title: { text: dataA.name, style: { color: '#00a7f9' } },
-                                    labels: { style: { colors: '#00a7f9' }, formatter: (value) => value ? value.toFixed(2) : 0 }
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
                                 },
-                                {
-                                    opposite: true,
-                                    title: { text: dataB.name, style: { color: '#f43f5e' } },
-                                    labels: { style: { colors: '#f43f5e' }, formatter: (value) => value ? value.toFixed(2) : 0 }
+                                plugins: {
+                                    legend: {
+                                        labels: { color: textColor }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { color: gridColor },
+                                        ticks: { color: textColor }
+                                    },
+                                    yA: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'left',
+                                        grid: { color: gridColor },
+                                        ticks: { color: '#00a7f9' }
+                                    },
+                                    yB: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'right',
+                                        grid: { drawOnChartArea: false },
+                                        ticks: { color: '#f43f5e' }
+                                    }
                                 }
-                            ],
-                            grid: { borderColor: gridColor, strokeDashArray: 4 },
-                            theme: { mode: isDarkMode ? 'dark' : 'light' },
-                            legend: { position: 'top', horizontalAlign: 'left' },
-                            dataLabels: { enabled: false }
-                        };
-
-                        this.chartInstance = new ApexCharts(document.querySelector("#jointChart"), options);
-                        this.chartInstance.render();
+                            }
+                        });
                     }
                 }));
             };
