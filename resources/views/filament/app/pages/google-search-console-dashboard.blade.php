@@ -141,7 +141,7 @@
                 </h1>
             </div>
             <div class="gsc-header-controls">
-                <div class="flex items-center mr-2">
+                <div class="flex items-center mr-2 gap-2">
                     <button type="button" 
                             class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
                             :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
@@ -162,7 +162,7 @@
                     <span>{{ __('Update') }}</span>
                 </button>
                 <select wire:model.live="selectedAccount"
-                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm">
+                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full max-w-[250px] p-2.5 transition duration-75 shadow-sm">
                     <option value="" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ __('Select Property...') }}</option>
                     @foreach($accounts as $id => $url)
                         <option value="{{ $id }}" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ $url }}</option>
