@@ -62,6 +62,10 @@
                         <span class="text-sm text-purple-400">{{ __('Exclusive use by the owner') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0"/>
+                        <span class="text-sm text-purple-400">{{ __('Up to 6 months of historical data') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm text-purple-400">{{ __('Custom KPIs') }}  <span
                                 class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 5)</span></span>
@@ -127,6 +131,10 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-purple-400 shrink-0"/>
                         <span class="text-sm text-purple-400">{{ __('Exclusive use by the owner') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('Full historical data retention') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
@@ -199,6 +207,10 @@
                     <li class="flex items-start gap-2 opacity-75">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm text-purple-400">{{ __('Invite users to collaborate') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2 opacity-75">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm text-purple-400">{{ __('Full historical data retention') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
@@ -275,6 +287,10 @@
                     <li class="flex items-start gap-2 opacity-75">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm text-gray-500">{{ __('Invite users to collaborate') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2 opacity-75">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm text-purple-400">{{ __('Full historical data retention') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
