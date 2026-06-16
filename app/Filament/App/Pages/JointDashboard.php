@@ -165,27 +165,25 @@ class JointDashboard extends Page
             'groupBy' => ['daily'],
             'startDate' => Carbon::parse($dateStart)->format('Y-m-d'),
             'endDate' => Carbon::parse($dateEnd)->format('Y-m-d'),
-            'filters' => []
+            'filters' => [
+                'channel' => $channel,
+                'channeledAccount' => $asset
+            ]
         ];
 
-        $entity = 'channeled_account';
+        $entity = 'metric';
+
         if ($channel === 'facebook_marketing') {
-            $payload['filters']['channeledAccount'] = $asset;
-            $entity = 'metric'; 
-            
-            // FBM uses trend_total_ or trend_average_ prefixes usually, but the driver supports raw names if configured correctly, or we can fallback to trend_total_
             if (in_array($metric, ['spend', 'impressions', 'clicks', 'reach', 'results'])) {
                 $payload['aggregations'] = ['trend_total_' . $metric => $metric];
             } else {
                 $payload['aggregations'] = ['trend_average_' . $metric => $metric];
             }
         } else if ($channel === 'facebook_organic') {
-            $payload['filters']['channeledAccount'] = $asset;
-            $payload['filters']['period'] = 'daily'; // Try to get daily snapshots
-            $entity = 'social_organic_account_metrics_snapshot'; 
+            $payload['filters']['period'] = 'daily';
+            $payload['filters']['account_type'] = ['operator' => 'in', 'value' => ['facebook_page', 'instagram_account']];
         } else if ($channel === 'google_search_console') {
-            $payload['filters']['channeledAccount'] = $asset;
-            $entity = 'search_console_site_performance';
+            $payload['filters']['dimensions.searchAppearance'] = 'standard';
         }
 
         $response = $service->aggregateChanneled($tenant, $channel, $entity, $payload);
