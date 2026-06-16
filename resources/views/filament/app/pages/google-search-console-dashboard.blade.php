@@ -184,7 +184,7 @@
 
             <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                  style="--color: #4285f4;">
-                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="gsc-label">{{ __('Total Clicks') }}</div>
@@ -196,7 +196,7 @@
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''"
                  @click="toggleMetric('impressions')" style="--color: #7e57c2;">
-                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="gsc-label">{{ __('Total Impressions') }}</div>

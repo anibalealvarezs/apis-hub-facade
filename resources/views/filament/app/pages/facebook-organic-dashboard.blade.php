@@ -280,7 +280,7 @@
             <template x-for="metric in dynamicMetrics" :key="metric.key">
                 <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
                      @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
-                    <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
+                    <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
                          x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
                         <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                     </div>

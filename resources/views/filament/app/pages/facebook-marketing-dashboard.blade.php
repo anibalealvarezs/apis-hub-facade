@@ -326,7 +326,7 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
                  @click="toggleMetric('cost_per_result')" style="--color: var(--fb-cpr);">
-                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="fb-label">{{ __('Cost per Result') }}</div>
@@ -347,7 +347,7 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
                  @click="toggleMetric('purchase_roas')" style="--color: var(--fb-roas);">
-                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="fb-label">{{ __('ROAS') }}</div>
