@@ -208,6 +208,7 @@ class JointDashboard extends Page
                 if (isset($row['date_start'])) $d = substr($row['date_start'], 0, 10);
                 elseif (isset($row['date'])) $d = substr($row['date'], 0, 10);
                 elseif (isset($row['snapshot_date'])) $d = substr($row['snapshot_date'], 0, 10);
+                elseif (isset($row['daily'])) $d = substr($row['daily'], 0, 10);
 
                 if ($d) {
                     $val = floatval($row[$metric] ?? $row['trend_total_'.$metric] ?? $row['trend_average_'.$metric] ?? 0);
