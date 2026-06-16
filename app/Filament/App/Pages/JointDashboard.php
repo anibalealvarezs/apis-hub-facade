@@ -165,24 +165,26 @@ class JointDashboard extends Page
             'groupBy' => ['daily'],
             'startDate' => Carbon::parse($dateStart)->format('Y-m-d'),
             'endDate' => Carbon::parse($dateEnd)->format('Y-m-d'),
-            'filters' => [
-                'channel' => $channel,
-                'channeledAccount' => $asset
-            ]
+            'filters' => []
         ];
 
         $entity = 'metric';
 
         if ($channel === 'facebook_marketing') {
+            $payload['filters']['channel'] = $channel;
+            $payload['filters']['channeledAccount'] = $asset;
             if (in_array($metric, ['spend', 'impressions', 'clicks', 'reach', 'results'])) {
                 $payload['aggregations'] = ['trend_total_' . $metric => $metric];
             } else {
                 $payload['aggregations'] = ['trend_average_' . $metric => $metric];
             }
         } else if ($channel === 'facebook_organic') {
+            $payload['filters']['channel'] = $channel;
+            $payload['filters']['channeledAccount'] = $asset;
             $payload['filters']['period'] = 'daily';
             $payload['filters']['account_type'] = ['operator' => 'in', 'value' => ['facebook_page', 'instagram_account']];
         } else if ($channel === 'google_search_console') {
+            $payload['filters']['channeledAccount'] = (string)$asset;
             $payload['filters']['dimensions.searchAppearance'] = 'standard';
         }
 
