@@ -3,6 +3,9 @@
         :root {
             --fb-spend: #10b981;
             --fb-impr: #6366f1;
+            --fb-reach: #3b82f6;
+            --fb-freq: #f43f5e;
+            --fb-cpm: #eab308;
             --fb-clicks: #0ea5e9;
             --fb-ctr: #8b5cf6;
             --fb-cpc: #f59e0b;
@@ -40,7 +43,7 @@
 
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
 
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-fb {
             background: var(--fb-bg-card);
@@ -247,6 +250,33 @@
                     <span x-text="formatVariance(variance.impressions)"></span>
                 </div>
             </div>
+            <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''"
+                 @click="toggleMetric('reach')" style="--color: var(--fb-reach);">
+                <div class="fb-label">{{ __('Reach') }}</div>
+                <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
+                    <span x-text="getVarianceIcon(variance.reach)"></span>
+                    <span x-text="formatVariance(variance.reach)"></span>
+                </div>
+            </div>
+            <div class="card-stat-fb" :class="activeMetrics.frequency ? 'active' : ''"
+                 @click="toggleMetric('frequency')" style="--color: var(--fb-freq);">
+                <div class="fb-label">{{ __('Frequency') }}</div>
+                <div class="card-metric-value" x-text="formatDecimal(summary.frequency)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.frequency, true)">
+                    <span x-text="getVarianceIcon(variance.frequency, true)"></span>
+                    <span x-text="formatVariance(variance.frequency)"></span>
+                </div>
+            </div>
+            <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''"
+                 @click="toggleMetric('cpm')" style="--color: var(--fb-cpm);">
+                <div class="fb-label">{{ __('CPM') }}</div>
+                <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
+                    <span x-text="getVarianceIcon(variance.cpm, true)"></span>
+                    <span x-text="formatVariance(variance.cpm)"></span>
+                </div>
+            </div>
             <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                  style="--color: var(--fb-clicks);">
                 <div class="fb-label">{{ __('Link Clicks') }}</div>
@@ -394,6 +424,15 @@
                         <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }}
                             <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
                         </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('reach')">{{ __('Reach') }}
+                            <span x-show="sortCol === 'reach'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('frequency')">{{ __('Freq.') }}
+                            <span x-show="sortCol === 'frequency'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('cpm')">{{ __('CPM') }}
+                            <span x-show="sortCol === 'cpm'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
                         <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Link Clicks') }} <span
                                 x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                         <th class="metric-cell cursor-pointer" @click="sortBy('results')">{{ __('Purchases') }} <span
@@ -431,6 +470,9 @@
                             </td>
                             <td class="metric-cell" x-text="formatCurrency(row.spend)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
+                            <td class="metric-cell" x-text="formatNumber(row.reach)"></td>
+                            <td class="metric-cell" x-text="formatDecimal(row.frequency)"></td>
+                            <td class="metric-cell" x-text="formatCurrency(row.cpm)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.clicks)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.results)"></td>
                             <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
@@ -494,6 +536,9 @@
                             spend: 0,
                             clicks: 0,
                             impressions: 0,
+                            reach: 0,
+                            frequency: 0,
+                            cpm: 0,
                             ctr: 0,
                             cpc: 0,
                             results: 0,
@@ -505,6 +550,9 @@
                             spend: 0,
                             clicks: 0,
                             impressions: 0,
+                            reach: 0,
+                            frequency: 0,
+                            cpm: 0,
                             ctr: 0,
                             cpc: 0,
                             results: 0,
@@ -519,6 +567,9 @@
                             spend: true,
                             clicks: true,
                             impressions: true,
+                            reach: false,
+                            frequency: false,
+                            cpm: false,
                             ctr: false,
                             cpc: false,
                             results: false,
@@ -780,6 +831,9 @@
                                     spend: 0,
                                     clicks: 0,
                                     impressions: 0,
+                                    reach: 0,
+                                    frequency: 0,
+                                    cpm: 0,
                                     ctr: 0,
                                     cpc: 0,
                                     results: 0,
@@ -791,6 +845,9 @@
                                     spend: 0,
                                     clicks: 0,
                                     impressions: 0,
+                                    reach: 0,
+                                    frequency: 0,
+                                    cpm: 0,
                                     ctr: 0,
                                     cpc: 0,
                                     results: 0,
@@ -811,6 +868,9 @@
                                         spend: 0,
                                         clicks: 0,
                                         impressions: 0,
+                                        reach: 0,
+                                        frequency: 0,
+                                        cpm: 0,
                                         ctr: 0,
                                         cpc: 0,
                                         results: 0,
@@ -822,6 +882,9 @@
                                         spend: 0,
                                         clicks: 0,
                                         impressions: 0,
+                                        reach: 0,
+                                        frequency: 0,
+                                        cpm: 0,
                                         ctr: 0,
                                         cpc: 0,
                                         results: 0,
@@ -941,6 +1004,9 @@
                                 spend: calc(this.summary.spend, this.previous.spend),
                                 clicks: calc(this.summary.clicks, this.previous.clicks),
                                 impressions: calc(this.summary.impressions, this.previous.impressions),
+                                reach: calc(this.summary.reach, this.previous.reach),
+                                frequency: calc(this.summary.frequency, this.previous.frequency),
+                                cpm: calc(this.summary.cpm, this.previous.cpm),
                                 ctr: calc(this.summary.ctr, this.previous.ctr),
                                 cpc: calc(this.summary.cpc, this.previous.cpc),
                                 results: calc(this.summary.results, this.previous.results),
@@ -1000,11 +1066,14 @@
                                                 label: function(context) {
                                                     var label = context.dataset.label || '';
                                                     var value = context.parsed.y;
-                                                    if (['Amount Spent', 'CPC', 'Cost per Result'].includes(label)) {
+                                                    if (['Amount Spent', 'CPC', 'Cost per Result', 'CPM'].includes(label)) {
                                                         return label + ': $' + Number(value).toFixed(2);
                                                     }
                                                     if (['CTR', 'Result Rate'].includes(label)) {
                                                         return label + ': ' + Number(value).toFixed(2) + '%';
+                                                    }
+                                                    if (['Frequency'].includes(label)) {
+                                                        return label + ': ' + Number(value).toFixed(2);
                                                     }
                                                     if (label === 'ROAS') {
                                                         return label + ': ' + Number(value).toFixed(2) + 'x';
@@ -1074,6 +1143,9 @@
                                     daily: dateStr,
                                     spend: 0, trend_total_spend: 0,
                                     impressions: 0, trend_total_impressions: 0,
+                                    reach: 0, trend_total_reach: 0,
+                                    frequency: 0, trend_average_frequency: 0,
+                                    cpm: 0, trend_average_cpm: 0,
                                     clicks: 0, trend_total_clicks: 0,
                                     ctr: 0, trend_average_ctr: 0,
                                     cpc: 0, trend_average_cpc: 0,
@@ -1115,6 +1187,51 @@
                                     pointHoverRadius: 6,
                                     fill: true,
                                     yAxisID: 'yImpressions',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.reach) {
+                                datasets.push({
+                                    label: 'Reach',
+                                    data: chartData.map(r => r.reach || r.trend_total_reach || 0),
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: true,
+                                    yAxisID: 'yReach',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.frequency) {
+                                datasets.push({
+                                    label: 'Frequency',
+                                    data: chartData.map(r => r.frequency || r.trend_average_frequency || 0),
+                                    borderColor: '#F43F5E',
+                                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yFrequency',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.cpm) {
+                                datasets.push({
+                                    label: 'CPM',
+                                    data: chartData.map(r => r.cpm || r.trend_average_cpm || 0),
+                                    borderColor: '#EAB308',
+                                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yCpm',
                                     tension: 0.4
                                 });
                             }
@@ -1232,7 +1349,7 @@
                             chart.options.scales.x.grid.color = cssGridColor;
                             chart.options.scales.x.ticks.color = cssTicksColor;
 
-                            ['spend', 'impressions', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
+                            ['spend', 'impressions', 'reach', 'frequency', 'cpm', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
                                 let scaleId;
                                 if (m === 'purchase_roas') scaleId = 'yRoas';
                                 else if (m === 'cost_per_result') scaleId = 'yCpr';
@@ -1319,6 +1436,11 @@
                         formatNumber(num) {
                             if (num === undefined || num === null) return '0';
                             return new Intl.NumberFormat('en-US').format(num);
+                        },
+
+                        formatDecimal(num) {
+                            if (num === undefined || num === null) return '0.00';
+                            return new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(num);
                         },
 
                         formatCurrency(num) {
