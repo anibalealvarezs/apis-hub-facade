@@ -234,11 +234,11 @@
                 </div>
                 
                 <!-- Correlation Display -->
-                <div x-show="correlation" class="text-right">
+                <div x-show="correlation !== null" class="text-right">
                     <div class="text-xs font-semibold text-gray-500 uppercase tracking-widest">{{ __('Pearson Correlation') }}</div>
                     <div class="correlation-badge" :class="getCorrelationClass()">
                         <span x-text="getCorrelationIcon()" class="text-xl"></span>
-                        <span x-text="correlation ? correlation.correlation_coefficient.toFixed(3) : ''"></span>
+                        <span x-text="correlation !== null ? correlation.toFixed(3) : ''"></span>
                     </div>
                 </div>
             </div>
