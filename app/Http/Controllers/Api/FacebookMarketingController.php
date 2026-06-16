@@ -233,6 +233,7 @@ class FacebookMarketingController extends Controller
             // For Paid Media, we use EMA 7 vs 14 as per specs
             $payload = [
                 'series' => $validated['series'],
+                'metric' => $validated['metric'],
                 'short_window' => 7,
                 'long_window' => 14
             ];

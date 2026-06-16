@@ -680,7 +680,8 @@
                 $service = app(RemoteEngineService::class);
                 
                 $payload = [
-                    'series' => $validated['series']
+                    'series' => $validated['series'],
+                    'metric' => $validated['metric']
                 ];
 
                 $type = 'holt-winters';
