@@ -1115,7 +1115,7 @@
     "Recent deployment and synchronization history.": "Historial reciente de despliegue y sincronización.",
     "Deployment Result:": "Resultado del Despliegue:",
     "To ensure maximum data fidelity and flexibility, we unconditionally cache your historical data at the Ad level (Level 4). Metrics for upper levels (Adset, Campaign, Account) are built dynamically via aggregations.": "Para garantizar la máxima fidelidad y flexibilidad de los datos, almacenamos en caché de forma incondicional tu historial de datos a nivel de Anuncio (Nivel 4). Las métricas para los niveles superiores (Conjunto de anuncios, Campaña, Cuenta) se construyen dinámicamente mediante agregaciones.",
-    "Meta Ads Insights": "Estadísticas de Meta Ads",
-    "FB & IG Insights": "Estadísticas de FB e IG",
-    "GSC Insights": "Estadísticas de GSC"
+    "Meta Ads Insights": "Métricas de Meta Ads",
+    "FB & IG Insights": "Métricas de FB e IG",
+    "GSC Insights": "Métricas de GSC"
 }
