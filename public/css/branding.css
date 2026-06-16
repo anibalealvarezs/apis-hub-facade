@@ -121,3 +121,17 @@ body.fi-body {
 .fi-no-notification-icon {
     color: var(--brand-blue) !important;
 }
+
+/* Sidebar Sticky Tenant Menu & Tier Badge */
+.fi-sidebar-nav {
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.fi-sidebar-nav > .fi-sidebar-nav-groups {
+    overflow-y: auto !important;
+    flex: 1 !important;
+    scrollbar-width: thin;
+}
+
