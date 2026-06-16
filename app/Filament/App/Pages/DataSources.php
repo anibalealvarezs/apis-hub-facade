@@ -281,6 +281,12 @@
             $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
             $defaultRange = $isFreeTier ? '6 months' : '1 year';
 
+            $maxRanges = [
+                'google_search_console' => '16 months',
+                'facebook_marketing' => '2 years',
+                'facebook_organic' => '2 years',
+            ];
+
             foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
@@ -288,9 +294,8 @@
                 if (!isset($config[$chan]['enabled'])) {
                     $config[$chan]['enabled'] = true;
                 }
-                if (!isset($config[$chan]['cache_history_range'])) {
-                    $config[$chan]['cache_history_range'] = $defaultRange;
-                }
+                // Always force max range, overriding previous values
+                $config[$chan]['cache_history_range'] = $maxRanges[$chan] ?? '1 year';
             }
 
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
@@ -1174,6 +1179,10 @@
                         ->columnSpanFull();
 
                     continue;
+                }
+
+                if ($key === 'cache_history_range') {
+                    continue; // Feature removed: we always send the max range
                 }
 
                 if ($type === 'boolean') {

@@ -120,6 +120,14 @@ class ConfigPayloadService
             unset($payload['metrics_level']);
         }
 
+        // FORCE CACHE HISTORY RANGE UNCONDITIONALLY
+        $maxRanges = [
+            'google_search_console' => '16 months',
+            'facebook_marketing'    => '2 years',
+            'facebook_organic'      => '2 years',
+        ];
+        $payload['cache_history_range'] = $maxRanges[$channel] ?? '1 year';
+
         // ENFORCE FREE TIER CONSTRAINT RULES:
         $isFree = $tenant->billingProfile?->tier === \App\Enums\UserTier::FREE;
         if ($isFree) {
@@ -133,19 +141,7 @@ class ConfigPayloadService
             }
 
             // 3. Capping historical sync range to a maximum of 6 months
-            $requestedRange = $payload['cache_history_range'] ?? '16 months';
-            $months = match ($requestedRange) {
-                '1 month' => 1,
-                '3 months' => 3,
-                '6 months' => 6,
-                '1 year' => 12,
-                '16 months' => 16,
-                '2 years' => 24,
-                default => 16,
-            };
-            if ($months > 6) {
-                $payload['cache_history_range'] = '6 months';
-            }
+            $payload['cache_history_range'] = '6 months';
         }
 
         // Merge UI boolean toggles back into the pristine DB state to preserve unmapped keys (id, url, data)
