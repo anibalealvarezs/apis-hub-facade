@@ -159,26 +159,33 @@ class JointDashboard extends Page
         $metric = $config['metric'];
 
         $payload = [
-            'type' => 'timeseries',
-            'period' => 'daily',
-            'dateRange' => [
-                'start' => Carbon::parse($dateStart)->startOfDay()->toIso8601String(),
-                'end' => Carbon::parse($dateEnd)->endOfDay()->toIso8601String()
+            'aggregations' => [
+                $metric => $metric
             ],
-            'metrics' => [$metric],
+            'groupBy' => ['daily'],
+            'startDate' => Carbon::parse($dateStart)->format('Y-m-d'),
+            'endDate' => Carbon::parse($dateEnd)->format('Y-m-d'),
             'filters' => []
         ];
 
         $entity = 'channeled_account';
         if ($channel === 'facebook_marketing') {
-            $payload['filters'][] = ['field' => 'account_id', 'operator' => '=', 'value' => $asset];
-            $entity = 'campaign'; 
+            $payload['filters']['channeledAccount'] = $asset;
+            $entity = 'metric'; 
+            
+            // FBM uses trend_total_ or trend_average_ prefixes usually, but the driver supports raw names if configured correctly, or we can fallback to trend_total_
+            if (in_array($metric, ['spend', 'impressions', 'clicks', 'reach', 'results'])) {
+                $payload['aggregations'] = ['trend_total_' . $metric => $metric];
+            } else {
+                $payload['aggregations'] = ['trend_average_' . $metric => $metric];
+            }
         } else if ($channel === 'facebook_organic') {
-            $payload['filters'][] = ['field' => 'channeledAccount', 'operator' => '=', 'value' => $asset];
-            $entity = 'social_organic_post_snapshot'; 
+            $payload['filters']['channeledAccount'] = $asset;
+            $payload['filters']['period'] = 'daily'; // Try to get daily snapshots
+            $entity = 'social_organic_account_metrics_snapshot'; 
         } else if ($channel === 'google_search_console') {
-            $payload['filters'][] = ['field' => 'channeledAccount', 'operator' => '=', 'value' => $asset];
-            $entity = 'search_console_page_performance';
+            $payload['filters']['channeledAccount'] = $asset;
+            $entity = 'search_console_site_performance';
         }
 
         $response = $service->aggregateChanneled($tenant, $channel, $entity, $payload);
@@ -202,7 +209,7 @@ class JointDashboard extends Page
                 elseif (isset($row['snapshot_date'])) $d = substr($row['snapshot_date'], 0, 10);
 
                 if ($d) {
-                    $val = floatval($row[$metric] ?? 0);
+                    $val = floatval($row[$metric] ?? $row['trend_total_'.$metric] ?? $row['trend_average_'.$metric] ?? 0);
                     if (!isset($dataMap[$d])) {
                         $dataMap[$d] = $val;
                     } else {

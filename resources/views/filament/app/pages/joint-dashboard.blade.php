@@ -332,14 +332,26 @@
                                         display: true,
                                         position: 'left',
                                         grid: { color: gridColor },
-                                        ticks: { color: '#00a7f9' }
+                                        ticks: { color: '#00a7f9' },
+                                        title: {
+                                            display: true,
+                                            text: dataA.name,
+                                            color: '#00a7f9',
+                                            font: { weight: 'bold' }
+                                        }
                                     },
                                     yB: {
                                         type: 'linear',
                                         display: true,
                                         position: 'right',
                                         grid: { drawOnChartArea: false },
-                                        ticks: { color: '#f43f5e' }
+                                        ticks: { color: '#f43f5e' },
+                                        title: {
+                                            display: true,
+                                            text: dataB.name,
+                                            color: '#f43f5e',
+                                            font: { weight: 'bold' }
+                                        }
                                     }
                                 }
                             }
