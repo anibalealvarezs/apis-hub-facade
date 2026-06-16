@@ -120,7 +120,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
-                            <select x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                            <select x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''; if (curveA.channel === curveB.channel) curveB.asset = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Channel...</option>
                                 <template x-for="(label, key) in channels" :key="key">
                                     <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
@@ -131,7 +131,13 @@
                         </div>
                         <div x-show="curveA.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
-                            <select x-model="curveA.asset" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                            <select x-model="curveA.asset" @change="if (curveA.channel === curveB.channel) curveB.asset = curveA.asset" 
+                                    class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
+                                    :class="{
+                                        'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': !selectedPlay || selectedPlay.id === 'custom_analysis',
+                                        'ring-2 ring-amber-500 border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
+                                        'ring-2 ring-green-500 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
+                                    }">
                                 <option value="">Select Asset...</option>
                                 <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
                                     <option :value="id" x-text="name"></option>
@@ -189,7 +195,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
-                            <select x-model="curveB.channel" @change="curveB.asset = ''; curveB.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                            <select x-model="curveB.channel" @change="curveB.asset = (curveB.channel === curveA.channel) ? curveA.asset : ''; curveB.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
                                 <option value="">Select Channel...</option>
                                 <template x-for="(label, key) in channels" :key="key">
                                     <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
@@ -200,8 +206,20 @@
                         </div>
                         <div x-show="curveB.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
-                            <select x-model="curveB.asset" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
+                            <select x-model="curveB.asset" 
+                                    :disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel" 
+                                    class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
+                                    :class="{
+                                        'opacity-50 cursor-not-allowed': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
+                                        'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': (!selectedPlay || selectedPlay.id === 'custom_analysis') && !(curveA.channel && curveB.channel && curveA.channel === curveB.channel),
+                                        'ring-2 ring-amber-500 border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
+                                        'ring-2 ring-green-500 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel,
+                                        'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600': curveA.channel && curveB.channel && curveA.channel === curveB.channel
+                                    }">
                                 <option value="">Select Asset...</option>
+                                <template x-if="curveA.channel && curveB.channel && curveA.channel === curveB.channel">
+                                    <option value="" disabled>{{ __('Locked to Curve A Asset') }}</option>
+                                </template>
                                 <template x-for="(name, id) in availableAccounts[curveB.channel] || {}" :key="id">
                                     <option :value="id" x-text="name"></option>
                                 </template>
@@ -330,6 +348,18 @@
                     selectedPlay: null,
 
                     allPlays: [
+                        {
+                            id: 'custom_analysis',
+                            name: 'Custom Analysis',
+                            short_desc: 'Free Exploration',
+                            theory: 'Start with a blank canvas to explore your own hypotheses across any channels and metrics.',
+                            expected: 'No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.',
+                            requires: [],
+                            config: {
+                                curveA: { channel: '', metric: '', level: 'zscore', lag: '0' },
+                                curveB: { channel: '', metric: '', level: 'zscore', lag: '0' }
+                            }
+                        },
                         {
                             id: 'brand_search_synergy',
                             name: 'Brand Search Synergy',
@@ -688,6 +718,9 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                layout: {
+                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
+                                },
                                 interaction: {
                                     mode: 'index',
                                     intersect: false,
@@ -755,6 +788,9 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                layout: {
+                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
+                                },
                                 plugins: {
                                     legend: { display: false },
                                     tooltip: {
@@ -810,6 +846,9 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                layout: {
+                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
+                                },
                                 interaction: {
                                     mode: 'index',
                                     intersect: false,
