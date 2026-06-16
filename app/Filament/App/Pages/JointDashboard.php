@@ -1,0 +1,235 @@
+<?php
+
+namespace App\Filament\App\Pages;
+
+use Filament\Facades\Filament;
+use Filament\Pages\Page;
+use Illuminate\Support\Carbon;
+use App\Services\RemoteEngineService;
+
+class JointDashboard extends Page
+{
+    protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
+    
+    public static function getNavigationLabel(): string
+    {
+        return __('Joint Dashboard');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Exploration & Telemetry');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Joint Dashboard (Correlation)');
+    }
+
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
+
+    protected static string $view = 'filament.app.pages.joint-dashboard';
+    protected static ?string $slug = 'joint-dashboard';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_data');
+    }
+
+    public ?string $dateStart = null;
+    public ?string $dateEnd = null;
+
+    public array $curveA = ['channel' => '', 'asset' => '', 'metric' => ''];
+    public array $curveB = ['channel' => '', 'asset' => '', 'metric' => ''];
+
+    // Data for dropdowns
+    public array $channels = [
+        'facebook_marketing' => 'Meta Ads',
+        'facebook_organic' => 'FB & IG Organic',
+        'google_search_console' => 'Google Search Console'
+    ];
+
+    public array $metricsDict = [
+        'facebook_marketing' => [
+            'spend' => 'Spend',
+            'impressions' => 'Impressions',
+            'clicks' => 'Clicks',
+            'cpc' => 'CPC',
+            'cpm' => 'CPM',
+            'ctr' => 'CTR',
+            'results' => 'Conversions',
+            'cost_per_result' => 'CPA',
+            'purchase_roas' => 'ROAS'
+        ],
+        'facebook_organic' => [
+            'reach' => 'Reach',
+            'impressions' => 'Impressions',
+            'profile_views' => 'Profile Views',
+            'total_interactions' => 'Engagements'
+        ],
+        'google_search_console' => [
+            'clicks' => 'Clicks',
+            'impressions' => 'Impressions',
+            'ctr' => 'CTR',
+            'position' => 'Position'
+        ]
+    ];
+
+    // Data to pass to frontend
+    public array $chartData = [];
+    public array $availableAccounts = [
+        'facebook_marketing' => [],
+        'facebook_organic' => [],
+        'google_search_console' => []
+    ];
+
+    public function mount(): void
+    {
+        $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
+        $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
+
+        $this->availableAccounts['facebook_marketing'] = $this->fetchAccounts('facebook_marketing');
+        $this->availableAccounts['facebook_organic'] = $this->fetchAccounts('facebook_organic');
+        $this->availableAccounts['google_search_console'] = $this->fetchAccounts('google_search_console');
+    }
+
+    public function fetchAccounts(string $channel)
+    {
+        $accounts = [];
+        try {
+            $service = app(RemoteEngineService::class);
+            $tenant = Filament::getTenant();
+            $response = $service->listChanneled($tenant, $channel, 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+
+            if (isset($response['data']) && is_array($response['data'])) {
+                foreach ($response['data'] as $account) {
+                    $accountId = (string) $account['id'];
+                    $accounts[$accountId] = $account['name'] ?? $accountId;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Joint Dashboard Accounts Error: " . $e->getMessage());
+        }
+        return $accounts;
+    }
+
+    public function fetchJointData(array $a, array $b, string $dStart, string $dEnd)
+    {
+        $tenant = Filament::getTenant();
+        $service = app(RemoteEngineService::class);
+
+        $seriesA = $this->fetchSeries($tenant, $service, $a, $dStart, $dEnd);
+        $seriesB = $this->fetchSeries($tenant, $service, $b, $dStart, $dEnd);
+
+        $correlation = null;
+        if (!empty($seriesA['dates']) && !empty($seriesB['dates'])) {
+            $correlationResponse = $service->getCorrelation([
+                'series_x' => [
+                    'dates' => $seriesA['dates'],
+                    'values' => $seriesA['values']
+                ],
+                'series_y' => [
+                    'dates' => $seriesB['dates'],
+                    'values' => $seriesB['values']
+                ]
+            ]);
+
+            if (isset($correlationResponse['correlation_coefficient'])) {
+                $correlation = $correlationResponse;
+            }
+        }
+
+        $this->chartData = [
+            'curveA' => $seriesA,
+            'curveB' => $seriesB,
+            'correlation' => $correlation
+        ];
+
+        $this->dispatch('joint-data-loaded', data: $this->chartData);
+    }
+
+    protected function fetchSeries($tenant, RemoteEngineService $service, array $config, string $dateStart, string $dateEnd)
+    {
+        $channel = $config['channel'];
+        $asset = $config['asset'];
+        $metric = $config['metric'];
+
+        $payload = [
+            'type' => 'timeseries',
+            'period' => 'daily',
+            'dateRange' => [
+                'start' => Carbon::parse($dateStart)->startOfDay()->toIso8601String(),
+                'end' => Carbon::parse($dateEnd)->endOfDay()->toIso8601String()
+            ],
+            'metrics' => [$metric],
+            'filters' => []
+        ];
+
+        $entity = 'channeled_account';
+        if ($channel === 'facebook_marketing') {
+            $payload['filters'][] = ['field' => 'account_id', 'operator' => '=', 'value' => $asset];
+            $entity = 'campaign'; 
+        } else if ($channel === 'facebook_organic') {
+            $payload['filters'][] = ['field' => 'channeledAccount', 'operator' => '=', 'value' => $asset];
+            $entity = 'social_organic_post_snapshot'; 
+        } else if ($channel === 'google_search_console') {
+            $payload['filters'][] = ['field' => 'channeledAccount', 'operator' => '=', 'value' => $asset];
+            $entity = 'search_console_page_performance';
+        }
+
+        $response = $service->aggregateChanneled($tenant, $channel, $entity, $payload);
+
+        $dates = [];
+        $values = [];
+
+        $periodStart = Carbon::parse($dateStart);
+        $periodEnd = Carbon::parse($dateEnd);
+        $periodDates = [];
+        for ($date = $periodStart->copy(); $date->lte($periodEnd); $date->addDay()) {
+            $periodDates[] = $date->format('Y-m-d');
+        }
+
+        if (isset($response['data']) && is_array($response['data'])) {
+            $dataMap = [];
+            foreach ($response['data'] as $row) {
+                $d = null;
+                if (isset($row['date_start'])) $d = substr($row['date_start'], 0, 10);
+                elseif (isset($row['date'])) $d = substr($row['date'], 0, 10);
+                elseif (isset($row['snapshot_date'])) $d = substr($row['snapshot_date'], 0, 10);
+
+                if ($d) {
+                    $val = floatval($row[$metric] ?? 0);
+                    if (!isset($dataMap[$d])) {
+                        $dataMap[$d] = $val;
+                    } else {
+                        $dataMap[$d] += $val;
+                    }
+                }
+            }
+
+            foreach ($periodDates as $d) {
+                $dates[] = $d;
+                $values[] = $dataMap[$d] ?? null;
+            }
+        } else {
+            foreach ($periodDates as $d) {
+                $dates[] = $d;
+                $values[] = null;
+            }
+        }
+
+        $channelName = $this->channels[$channel] ?? $channel;
+        $metricName = $this->metricsDict[$channel][$metric] ?? $metric;
+
+        return [
+            'name' => "{$channelName} - {$metricName}",
+            'metric' => $metric,
+            'dates' => $dates,
+            'values' => $values
+        ];
+    }
+}

@@ -306,4 +306,41 @@ class RemoteEngineService
             ];
         }
     }
+
+    /**
+     * Get cross-metric correlation from Analytics Engine directly.
+     */
+    public function getCorrelation(array $payload)
+    {
+        $host = env('ANALYTICS_ENGINE_HOST', 'http://analytics-engine:8050/');
+        $apiKey = env('ANALYTICS_API_KEY', 'dev_secret_key');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'X-Admin-API-Key' => $apiKey,
+                'Content-Type' => 'application/json'
+            ])->post(rtrim($host, '/') . "/api/v1/stats/correlation", $payload);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            \Illuminate\Support\Facades\Log::error("Analytics Engine Correlation Failed", [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to calculate correlation.'
+            ];
+            
+        } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Analytics Engine Connection Error: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Analytics Engine unreachable.'
+            ];
+        }
+    }
 }
