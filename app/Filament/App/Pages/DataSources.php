@@ -867,36 +867,13 @@
                 // Insert custom extraction granularity UI in the secondary column
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
                     ->schema([
-                        \Filament\Forms\Components\Select::make($this->activeChannel.'.entity_sync_depth')
-                            ->label(__('Entity Depth'))
-                            ->options([
-                                'ACCOUNT'  => __('Account Level'),
-                                'CAMPAIGN' => __('Campaign level'),
-                                'ADSET'    => __('Adset level'),
-                                'AD'       => __('Ad level'),
-                            ])
-                            ->default('AD')
-                            ->live()
-                            ->helperText(__('Deepest level of entities to sync.')),
-
-                        \Filament\Forms\Components\Select::make($this->activeChannel.'.metrics_level')
-                            ->label(__('Metrics Level'))
-                            ->options(function (\Filament\Forms\Get $get) {
-                                $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
-                                $allOptions = [
-                                    'ACCOUNT'  => __('Account Level'),
-                                    'CAMPAIGN' => __('Campaign level'),
-                                    'ADSET'    => __('Adset level'),
-                                    'AD'       => __('Ad level'),
-                                ];
-
-                                $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
-                                $maxLevel = $levels[$entityDepth] ?? 4;
-
-                                return array_filter($allOptions, fn($k) => $levels[$k] <= $maxLevel, ARRAY_FILTER_USE_KEY);
-                            })
-                            ->default('AD')
-                            ->helperText(__('Cannot exceed entity sync depth.')),
+                        \Filament\Forms\Components\Placeholder::make('granularity_note')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    ' . __('To ensure maximum data fidelity and flexibility, we unconditionally cache your historical data at the Ad level (Level 4). Metrics for upper levels (Adset, Campaign, Account) are built dynamically via aggregations.') . '
+                                </div>
+                            ')),
                     ])->columns(1);
 
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Asset Name Filters'))

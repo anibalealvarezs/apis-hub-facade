@@ -82,28 +82,21 @@ class ConfigPayloadService
         } elseif ($channel === 'facebook_marketing') {
             $payload['max_workers'] = 2;
 
-            // Map Custom UI to APIs Hub Payload schema
-            $entLevel = strtolower($channelConfig['entity_sync_depth'] ?? 'ad');
-            $metLevel = strtolower($channelConfig['metrics_level'] ?? 'ad');
-
-            if ($entLevel === 'account') {
-                $entLevel = 'ad_account';
-            }
-            if ($metLevel === 'account') {
-                $metLevel = 'ad_account';
-            }
+            // Force extraction granularity to Ad Level (Level 4)
+            $entLevel = 'ad';
+            $metLevel = 'ad';
 
             $payload['feature_toggles'] = [
                 'campaigns' => true, // API always expects this
-                'adsets' => in_array($entLevel, ['adset', 'ad', 'creative']),
-                'ads' => in_array($entLevel, ['ad', 'creative']),
-                'creatives' => ($entLevel === 'creative'),
+                'adsets' => true,
+                'ads' => true,
+                'creatives' => false,
 
-                'ad_account_metrics' => ($metLevel === 'ad_account'),
-                'campaign_metrics' => ($metLevel === 'campaign'),
-                'adset_metrics' => ($metLevel === 'adset'),
-                'ad_metrics' => ($metLevel === 'ad'),
-                'creative_metrics' => ($metLevel === 'creative'),
+                'ad_account_metrics' => false,
+                'campaign_metrics' => false,
+                'adset_metrics' => false,
+                'ad_metrics' => true,
+                'creative_metrics' => false,
             ];
 
             $payload['metrics_strategy'] = 'default';

@@ -1113,5 +1113,6 @@
     "Deployment failed due to an unknown issue. (:summary)": "El despliegue falló por un problema desconocido. (:summary)",
     "Process is initializing or running in the background...": "El proceso se está inicializando o ejecutando en segundo plano...",
     "Recent deployment and synchronization history.": "Historial reciente de despliegue y sincronización.",
-    "Deployment Result:": "Resultado del Despliegue:"
+    "Deployment Result:": "Resultado del Despliegue:",
+    "To ensure maximum data fidelity and flexibility, we unconditionally cache your historical data at the Ad level (Level 4). Metrics for upper levels (Adset, Campaign, Account) are built dynamically via aggregations.": "Para garantizar la máxima fidelidad y flexibilidad de los datos, almacenamos en caché de forma incondicional tu historial de datos a nivel de Anuncio (Nivel 4). Las métricas para los niveles superiores (Conjunto de anuncios, Campaña, Cuenta) se construyen dinámicamente mediante agregaciones."
 }
