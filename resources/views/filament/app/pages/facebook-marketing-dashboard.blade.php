@@ -140,7 +140,7 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('Meta Ads Manager Insights') }}
+                    {{ __('Meta Ads Insights') }}
                 </h1>
             </div>
             <div class="fb-header-controls">

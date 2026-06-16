@@ -217,7 +217,7 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('Meta Pages & Instagram Accounts') }}
+                    {{ __('FB & IG Insights') }}
                 </h1>
             </div>
             <div class="fb-header-controls">

@@ -137,7 +137,7 @@
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]"/>
-                    {{ __('Google Search Console Insights') }}
+                    {{ __('GSC Insights') }}
                 </h1>
             </div>
             <div class="gsc-header-controls">
