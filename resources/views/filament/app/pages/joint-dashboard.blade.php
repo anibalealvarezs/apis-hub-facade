@@ -120,6 +120,7 @@
                                     <option value="level">Level (Original)</option>
                                     <option value="diff1">1st Difference (Δ)</option>
                                     <option value="diff2">2nd Difference (ΔΔ)</option>
+                                    <option value="zscore">Z-Score (Normalized)</option>
                                 </select>
                             </div>
                             <div>
@@ -188,6 +189,7 @@
                                     <option value="level">Level (Original)</option>
                                     <option value="diff1">1st Difference (Δ)</option>
                                     <option value="diff2">2nd Difference (ΔΔ)</option>
+                                    <option value="zscore">Z-Score (Normalized)</option>
                                 </select>
                             </div>
                             <div>
@@ -248,6 +250,13 @@
             </div>
             
             <div class="mt-8 border-t border-gray-200 dark:border-white/10 pt-8">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rolling Correlation (7-Day Window)</h3>
+                <div class="chart-container-joint" style="height: 250px;">
+                    <canvas id="rollingChart"></canvas>
+                </div>
+            </div>
+
+            <div class="mt-8 border-t border-gray-200 dark:border-white/10 pt-8">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Scatter Plot (Correlation Distribution)</h3>
                 <div class="chart-container-joint" style="height: 350px;">
                     <canvas id="scatterChart"></canvas>
@@ -274,6 +283,7 @@
                     correlation: null,
                     subtitle: '',
                     scatterChartInstance: null,
+                    rollingChartInstance: null,
 
                     transformData(dates, values, level, lag, targetStart, targetEnd) {
                         let resDates = [...dates];
@@ -336,6 +346,23 @@
                             }
                         }
 
+                        // Apply Z-Score normalization over the truncated window
+                        if (level === 'zscore') {
+                            let validVals = finalValues.filter(v => v !== null);
+                            if (validVals.length > 1) {
+                                let mean = validVals.reduce((a, b) => a + b, 0) / validVals.length;
+                                let variance = validVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / validVals.length;
+                                let stdDev = Math.sqrt(variance);
+                                if (stdDev === 0) stdDev = 1; // avoid division by zero
+
+                                for (let i = 0; i < finalValues.length; i++) {
+                                    if (finalValues[i] !== null) {
+                                        finalValues[i] = (finalValues[i] - mean) / stdDev;
+                                    }
+                                }
+                            }
+                        }
+
                         return { dates: finalDates, values: finalValues };
                     },
 
@@ -363,6 +390,20 @@
 
                         if (den === 0) return 0;
                         return num / den;
+                    },
+
+                    calculateRollingPearson(arr1, arr2, windowSize) {
+                        let rolling = [];
+                        for (let i = 0; i < arr1.length; i++) {
+                            if (i < windowSize - 1) {
+                                rolling.push(null);
+                            } else {
+                                let slice1 = arr1.slice(i - windowSize + 1, i + 1);
+                                let slice2 = arr2.slice(i - windowSize + 1, i + 1);
+                                rolling.push(this.calculatePearson(slice1, slice2));
+                            }
+                        }
+                        return rolling;
                     },
 
                     initDashboard() {
@@ -428,6 +469,9 @@
                         if (this.scatterChartInstance) {
                             this.scatterChartInstance.destroy();
                         }
+                        if (this.rollingChartInstance) {
+                            this.rollingChartInstance.destroy();
+                        }
 
                         const targetStart = this.chartData.originalStartDate;
                         const targetEnd = this.chartData.originalEndDate;
@@ -444,11 +488,13 @@
                         let titleA = rawA.name;
                         if (this.curveA.level === 'diff1') titleA = 'Δ ' + titleA;
                         if (this.curveA.level === 'diff2') titleA = 'ΔΔ ' + titleA;
+                        if (this.curveA.level === 'zscore') titleA = 'Z-Score ' + titleA;
                         if (parseInt(this.curveA.lag) !== 0) titleA += ` (Lag ${this.curveA.lag})`;
 
                         let titleB = rawB.name;
                         if (this.curveB.level === 'diff1') titleB = 'Δ ' + titleB;
                         if (this.curveB.level === 'diff2') titleB = 'ΔΔ ' + titleB;
+                        if (this.curveB.level === 'zscore') titleB = 'Z-Score ' + titleB;
                         if (parseInt(this.curveB.lag) !== 0) titleB += ` (Lag ${this.curveB.lag})`;
 
                         this.subtitle = `${titleA} vs ${titleB}`;
@@ -591,6 +637,51 @@
                                 }
                             }
                         });
+
+                        // Render Rolling Correlation Chart
+                        const rollingData = this.calculateRollingPearson(dataA.values, dataB.values, 7);
+                        const rollingCtx = document.getElementById("rollingChart").getContext('2d');
+                        this.rollingChartInstance = new Chart(rollingCtx, {
+                            type: 'line',
+                            data: {
+                                labels: dataA.dates,
+                                datasets: [{
+                                    label: '7-Day Rolling Pearson Correlation',
+                                    data: rollingData,
+                                    borderColor: '#10b981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5,
+                                    tension: 0.3,
+                                    fill: true
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                plugins: {
+                                    legend: { labels: { color: textColor } }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { color: gridColor },
+                                        ticks: { color: textColor }
+                                    },
+                                    y: {
+                                        min: -1,
+                                        max: 1,
+                                        grid: { color: gridColor },
+                                        ticks: { color: textColor }
+                                    }
+                                }
+                            }
+                        });
+
                     }
                 }));
             };
