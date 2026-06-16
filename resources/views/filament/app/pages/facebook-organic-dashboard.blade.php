@@ -221,11 +221,18 @@
                 </h1>
             </div>
             <div class="fb-header-controls">
-                <label class="inline-flex items-center cursor-pointer mr-4">
-                    <input type="checkbox" x-model="showTrends" @change="handleTrendToggle()" class="sr-only peer">
-                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ __('Show Trends') }}</span>
-                </label>
+                <div class="flex items-center mr-4">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
+                            @click="showTrends = !showTrends; handleTrendToggle()" 
+                            role="switch" 
+                            :aria-checked="showTrends.toString()">
+                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                </div>
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
@@ -744,9 +751,23 @@
                             const boot = () => {
                                 this.initChart();
 
-                                this.$watch('accounts', () => { this.syncToUrl(); this.fetchAll(); });
-                                this.$watch('dateStart', () => { this.syncToUrl(); this.fetchAll(); });
-                                this.$watch('dateEnd', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('accounts', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
+
+                                this.$watch('dateStart', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
+
+                                this.$watch('dateEnd', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
                                 this.$watch('pageSize', () => {
                                     this.currentPage = 1;
                                 });
@@ -877,6 +898,7 @@
 
                         forceRefresh() {
                             this.clearCache();
+                            this.trendData = {};
                             this.fetchAll();
                         },
 
