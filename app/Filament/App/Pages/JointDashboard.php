@@ -187,6 +187,7 @@ class JointDashboard extends Page
         }
 
         $response = $service->aggregateChanneled($tenant, $channel, $entity, $payload);
+        \Illuminate\Support\Facades\Log::info("JointDashboard Fetch {$channel} / {$metric}:", ['payload' => $payload, 'response' => $response]);
 
         $dates = [];
         $values = [];
