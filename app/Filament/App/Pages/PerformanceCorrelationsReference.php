@@ -7,11 +7,17 @@ use Filament\Pages\Page;
 class PerformanceCorrelationsReference extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $cluster = \App\Filament\App\Clusters\KnowledgeBase::class;
-    protected static ?string $navigationGroup = 'Data Analysis';
     protected static ?int $navigationSort = 4;
 
     public static function getNavigationLabel(): string
+    {
+        return __('Performance Correlations Guide');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Knowledge Base');
+    }
     {
         return __('Performance Correlations Guide');
     }
