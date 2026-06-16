@@ -326,6 +326,9 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
                  @click="toggleMetric('cost_per_result')" style="--color: var(--fb-cpr);">
+                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="fb-label">{{ __('Cost per Result') }}</div>
                 <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_result)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_result, true)">
@@ -344,6 +347,9 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
                  @click="toggleMetric('purchase_roas')" style="--color: var(--fb-roas);">
+                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="fb-label">{{ __('ROAS') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.purchase_roas) + 'x'"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.purchase_roas)">
@@ -932,7 +938,10 @@
                             try {
                                 const promises = validMetrics.map(async (metric) => {
                                     const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
-                                    const seriesValues = this.chartDataRaw.map(r => r[metric] || r['trend_total_' + metric] || r['trend_average_' + metric] || 0);
+                                    const seriesValues = this.chartDataRaw.map(r => {
+                                        let v = r[metric] ?? r['trend_total_' + metric] ?? r['trend_average_' + metric];
+                                        return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
+                                    });
                                     
                                     const payload = {
                                         tenant: this.tenantId,
@@ -982,7 +991,11 @@
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                                 this.chartDataRaw = data.chart || [];
-                                this.updateChart();
+                                if (this.showTrends) {
+                                    this.fetchTrends();
+                                } else {
+                                    this.updateChart();
+                                }
                                 return;
                             }
 
@@ -993,7 +1006,11 @@
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
-                                    this.updateChart();
+                                    if (this.showTrends) {
+                                        this.fetchTrends();
+                                    } else {
+                                        this.updateChart();
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error fetching chart:', error);

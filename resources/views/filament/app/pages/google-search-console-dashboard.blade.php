@@ -184,6 +184,9 @@
 
             <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                  style="--color: #4285f4;">
+                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="gsc-label">{{ __('Total Clicks') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
@@ -193,6 +196,9 @@
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''"
                  @click="toggleMetric('impressions')" style="--color: #7e57c2;">
+                <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="gsc-label">{{ __('Total Impressions') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
@@ -639,7 +645,11 @@
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                                 this.chartDataRaw = data.chart || [];
-                                this.updateChart();
+                                if (this.showTrends) {
+                                    this.fetchTrends();
+                                } else {
+                                    this.updateChart();
+                                }
                                 return;
                             }
 
@@ -650,7 +660,11 @@
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
-                                    this.updateChart();
+                                    if (this.showTrends) {
+                                        this.fetchTrends();
+                                    } else {
+                                        this.updateChart();
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error fetching chart:', error);
@@ -676,7 +690,10 @@
                             try {
                                 const promises = validMetrics.map(async (metric) => {
                                     const seriesDates = this.chartDataRaw.map(r => r.daily || r.date || r.metric_date).filter(Boolean);
-                                    const seriesValues = this.chartDataRaw.map(r => r[metric] || 0);
+                                    const seriesValues = this.chartDataRaw.map(r => {
+                                        let v = r[metric];
+                                        return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
+                                    });
                                     
                                     const payload = {
                                         tenant: this.tenantId,

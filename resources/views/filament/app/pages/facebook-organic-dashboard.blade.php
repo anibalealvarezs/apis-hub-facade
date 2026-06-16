@@ -280,6 +280,10 @@
             <template x-for="metric in dynamicMetrics" :key="metric.key">
                 <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
                      @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
+                    <div class="absolute top-3 right-3 text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
+                         x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
                     <div class="fb-label" x-text="metric.label"></div>
                     <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
@@ -1264,7 +1268,10 @@
                             try {
                                 const promises = validMetrics.map(async (metric) => {
                                     const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
-                                    const seriesValues = this.chartDataRaw.map(r => r[metric] || r['trend_total_' + metric] || r['trend_average_' + metric] || 0);
+                                    const seriesValues = this.chartDataRaw.map(r => {
+                                        let v = r[metric] ?? r['trend_total_' + metric] ?? r['trend_average_' + metric];
+                                        return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
+                                    });
                                     
                                     const payload = {
                                         tenant: this.tenantId,
@@ -1315,7 +1322,11 @@
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                                 this.chartDataRaw = data.chart || [];
                                 this.syncActiveMetricsFromChart();
-                                this.updateChart();
+                                if (this.showTrends) {
+                                    this.fetchTrends();
+                                } else {
+                                    this.updateChart();
+                                }
                                 return;
                             }
 
@@ -1327,7 +1338,11 @@
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
                                     this.syncActiveMetricsFromChart();
-                                    this.updateChart();
+                                    if (this.showTrends) {
+                                        this.fetchTrends();
+                                    } else {
+                                        this.updateChart();
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error fetching chart:', error);
