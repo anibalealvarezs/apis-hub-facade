@@ -198,117 +198,125 @@
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('jointDashboard', () => ({
-                isLoading: false,
-                chartRendered: false,
-                chartInstance: null,
-                dateStart: @entangle('dateStart'),
-                dateEnd: @entangle('dateEnd'),
-                channels: @json($channels),
-                metricsDict: @json($metricsDict),
-                availableAccounts: @json($availableAccounts),
-                curveA: { channel: '', asset: '', metric: '' },
-                curveB: { channel: '', asset: '', metric: '' },
-                chartData: null,
-                correlation: null,
-                subtitle: '',
+        (() => {
+            const registerJointDashboard = () => {
+                Alpine.data('jointDashboard', () => ({
+                    isLoading: false,
+                    chartRendered: false,
+                    chartInstance: null,
+                    dateStart: @entangle('dateStart'),
+                    dateEnd: @entangle('dateEnd'),
+                    channels: @json($channels),
+                    metricsDict: @json($metricsDict),
+                    availableAccounts: @json($availableAccounts),
+                    curveA: { channel: '', asset: '', metric: '' },
+                    curveB: { channel: '', asset: '', metric: '' },
+                    chartData: null,
+                    correlation: null,
+                    subtitle: '',
 
-                initDashboard() {
-                    window.addEventListener('joint-data-loaded', (e) => {
-                        this.chartData = e.detail[0] || e.detail;
-                        this.correlation = this.chartData.correlation;
-                        this.renderChart();
-                        this.isLoading = false;
-                        this.chartRendered = true;
-                    });
-                },
+                    initDashboard() {
+                        window.addEventListener('joint-data-loaded', (e) => {
+                            this.chartData = e.detail[0] || e.detail;
+                            this.correlation = this.chartData.correlation;
+                            this.renderChart();
+                            this.isLoading = false;
+                            this.chartRendered = true;
+                        });
+                    },
 
-                isReadyToFetch() {
-                    return this.curveA.channel && this.curveA.asset && this.curveA.metric &&
-                           this.curveB.channel && this.curveB.asset && this.curveB.metric &&
-                           this.dateStart && this.dateEnd;
-                },
+                    isReadyToFetch() {
+                        return this.curveA.channel && this.curveA.asset && this.curveA.metric &&
+                               this.curveB.channel && this.curveB.asset && this.curveB.metric &&
+                               this.dateStart && this.dateEnd;
+                    },
 
-                fetchData() {
-                    if (!this.isReadyToFetch()) return;
-                    this.isLoading = true;
-                    if (this.chartRendered) this.chartRendered = true;
-                    
-                    @this.fetchJointData(this.curveA, this.curveB, this.dateStart, this.dateEnd);
-                },
+                    fetchData() {
+                        if (!this.isReadyToFetch()) return;
+                        this.isLoading = true;
+                        if (this.chartRendered) this.chartRendered = true;
+                        
+                        @this.fetchJointData(this.curveA, this.curveB, this.dateStart, this.dateEnd);
+                    },
 
-                getCorrelationClass() {
-                    if (!this.correlation) return 'corr-weak';
-                    const coef = this.correlation.correlation_coefficient;
-                    if (coef > 0.4) return 'corr-strong-pos';
-                    if (coef < -0.4) return 'corr-strong-neg';
-                    return 'corr-weak';
-                },
+                    getCorrelationClass() {
+                        if (!this.correlation) return 'corr-weak';
+                        const coef = this.correlation.correlation_coefficient;
+                        if (coef > 0.4) return 'corr-strong-pos';
+                        if (coef < -0.4) return 'corr-strong-neg';
+                        return 'corr-weak';
+                    },
 
-                getCorrelationIcon() {
-                    if (!this.correlation) return '≈';
-                    const coef = this.correlation.correlation_coefficient;
-                    if (coef > 0.4) return '↗';
-                    if (coef < -0.4) return '↘';
-                    return '≈';
-                },
+                    getCorrelationIcon() {
+                        if (!this.correlation) return '≈';
+                        const coef = this.correlation.correlation_coefficient;
+                        if (coef > 0.4) return '↗';
+                        if (coef < -0.4) return '↘';
+                        return '≈';
+                    },
 
-                renderChart() {
-                    if (this.chartInstance) {
-                        this.chartInstance.destroy();
-                    }
+                    renderChart() {
+                        if (this.chartInstance) {
+                            this.chartInstance.destroy();
+                        }
 
-                    const dataA = this.chartData.curveA;
-                    const dataB = this.chartData.curveB;
+                        const dataA = this.chartData.curveA;
+                        const dataB = this.chartData.curveB;
 
-                    this.subtitle = `${dataA.name} vs ${dataB.name}`;
+                        this.subtitle = `${dataA.name} vs ${dataB.name}`;
 
-                    const isDarkMode = document.documentElement.classList.contains('dark');
-                    const textColor = isDarkMode ? '#9ca3af' : '#6b7280';
-                    const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+                        const isDarkMode = document.documentElement.classList.contains('dark');
+                        const textColor = isDarkMode ? '#9ca3af' : '#6b7280';
+                        const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
-                    const options = {
-                        series: [
-                            { name: dataA.name, data: dataA.values },
-                            { name: dataB.name, data: dataB.values }
-                        ],
-                        chart: {
-                            type: 'line',
-                            height: 450,
-                            toolbar: { show: true },
-                            fontFamily: 'Outfit, sans-serif',
-                            background: 'transparent',
-                            animations: { enabled: true }
-                        },
-                        colors: ['#00a7f9', '#f43f5e'],
-                        stroke: { width: [3, 3], curve: 'smooth' },
-                        xaxis: {
-                            categories: dataA.dates,
-                            labels: { style: { colors: textColor } },
-                            tooltip: { enabled: false }
-                        },
-                        yaxis: [
-                            {
-                                title: { text: dataA.name, style: { color: '#00a7f9' } },
-                                labels: { style: { colors: '#00a7f9' }, formatter: (value) => value ? value.toFixed(2) : 0 }
+                        const options = {
+                            series: [
+                                { name: dataA.name, data: dataA.values },
+                                { name: dataB.name, data: dataB.values }
+                            ],
+                            chart: {
+                                type: 'line',
+                                height: 450,
+                                toolbar: { show: true },
+                                fontFamily: 'Outfit, sans-serif',
+                                background: 'transparent',
+                                animations: { enabled: true }
                             },
-                            {
-                                opposite: true,
-                                title: { text: dataB.name, style: { color: '#f43f5e' } },
-                                labels: { style: { colors: '#f43f5e' }, formatter: (value) => value ? value.toFixed(2) : 0 }
-                            }
-                        ],
-                        grid: { borderColor: gridColor, strokeDashArray: 4 },
-                        theme: { mode: isDarkMode ? 'dark' : 'light' },
-                        legend: { position: 'top', horizontalAlign: 'left' },
-                        dataLabels: { enabled: false }
-                    };
+                            colors: ['#00a7f9', '#f43f5e'],
+                            stroke: { width: [3, 3], curve: 'smooth' },
+                            xaxis: {
+                                categories: dataA.dates,
+                                labels: { style: { colors: textColor } },
+                                tooltip: { enabled: false }
+                            },
+                            yaxis: [
+                                {
+                                    title: { text: dataA.name, style: { color: '#00a7f9' } },
+                                    labels: { style: { colors: '#00a7f9' }, formatter: (value) => value ? value.toFixed(2) : 0 }
+                                },
+                                {
+                                    opposite: true,
+                                    title: { text: dataB.name, style: { color: '#f43f5e' } },
+                                    labels: { style: { colors: '#f43f5e' }, formatter: (value) => value ? value.toFixed(2) : 0 }
+                                }
+                            ],
+                            grid: { borderColor: gridColor, strokeDashArray: 4 },
+                            theme: { mode: isDarkMode ? 'dark' : 'light' },
+                            legend: { position: 'top', horizontalAlign: 'left' },
+                            dataLabels: { enabled: false }
+                        };
 
-                    this.chartInstance = new ApexCharts(document.querySelector("#jointChart"), options);
-                    this.chartInstance.render();
-                }
-            }));
-        });
+                        this.chartInstance = new ApexCharts(document.querySelector("#jointChart"), options);
+                        this.chartInstance.render();
+                    }
+                }));
+            };
+
+            if (window.Alpine) {
+                registerJointDashboard();
+            } else {
+                document.addEventListener('alpine:init', registerJointDashboard);
+            }
+        })();
     </script>
 </x-filament-panels::page>
