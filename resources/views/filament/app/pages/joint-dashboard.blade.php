@@ -181,8 +181,8 @@
                                     class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
                                     :class="{
                                         'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': !selectedPlay || selectedPlay.id === 'custom_analysis',
-                                        'ring-2 ring-amber-500 border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
-                                        'ring-2 ring-green-500 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
+                                        'ring-2 ring-[#f59e0b] border-[#f59e0b] bg-[#fffbeb] dark:bg-[#78350f33] text-[#78350F] dark:text-[#FEF3C7]': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
+                                        'ring-2 ring-[#22c55e] border-[#22c55e] bg-[#f0fdf4] dark:bg-[#064e3b] text-[#065f46] dark:text-[#d1fae5]': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
                                     }">
                                 <option value="">Select Asset...</option>
                                 <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
@@ -258,8 +258,8 @@
                                     :class="{
                                         'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
                                         'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': (!selectedPlay || selectedPlay.id === 'custom_analysis') && !(curveA.channel && curveB.channel && curveA.channel === curveB.channel),
-                                        'ring-2 ring-amber-500 border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
-                                        'ring-2 ring-green-500 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel,
+                                        'ring-2 ring-[#f59e0b] border-[#f59e0b] bg-[#fffbeb] dark:bg-[#78350f33] text-[#78350F] dark:text-[#FEF3C7]': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
+                                        'ring-2 ring-[#22c55e] border-[#22c55e] bg-[#f0fdf4] dark:bg-[#064e3b] text-[#065f46] dark:text-[#d1fae5]': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel,
                                         'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600': curveA.channel && curveB.channel && curveA.channel === curveB.channel
                                     }">
                                 <option value="">Select Asset...</option>
