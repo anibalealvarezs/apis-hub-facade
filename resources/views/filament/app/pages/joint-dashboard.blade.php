@@ -70,6 +70,28 @@
         .dark .export-btn { background-color: #374151; border: 1px solid rgba(255,255,255,0.1); }
         .dark .export-btn:hover { background-color: #4b5563; }
 
+        .select-warning {
+            box-shadow: 0 0 0 2px #f59e0b;
+            border-color: #f59e0b !important;
+            background-color: #fffbeb !important;
+            color: #78350f !important;
+        }
+        .dark .select-warning {
+            background-color: rgba(120, 53, 15, 0.2) !important;
+            color: #fef3c7 !important;
+        }
+
+        .select-success {
+            box-shadow: 0 0 0 2px #22c55e;
+            border-color: #22c55e !important;
+            background-color: #f0fdf4 !important;
+            color: #065f46 !important;
+        }
+        .dark .select-success {
+            background-color: rgba(6, 78, 59, 0.2) !important;
+            color: #d1fae5 !important;
+        }
+
         @media print {
             .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
                 display: none !important;
@@ -181,8 +203,8 @@
                                     class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
                                     :class="{
                                         'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': !selectedPlay || selectedPlay.id === 'custom_analysis',
-                                        'ring-2 ring-[#f59e0b] border-[#f59e0b] bg-[#fffbeb] dark:bg-[#78350f33] text-[#78350F] dark:text-[#FEF3C7]': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
-                                        'ring-2 ring-[#22c55e] border-[#22c55e] bg-[#f0fdf4] dark:bg-[#064e3b] text-[#065f46] dark:text-[#d1fae5]': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
+                                        'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
+                                        'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
                                     }">
                                 <option value="">Select Asset...</option>
                                 <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
@@ -258,9 +280,8 @@
                                     :class="{
                                         'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
                                         'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': (!selectedPlay || selectedPlay.id === 'custom_analysis') && !(curveA.channel && curveB.channel && curveA.channel === curveB.channel),
-                                        'ring-2 ring-[#f59e0b] border-[#f59e0b] bg-[#fffbeb] dark:bg-[#78350f33] text-[#78350F] dark:text-[#FEF3C7]': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
-                                        'ring-2 ring-[#22c55e] border-[#22c55e] bg-[#f0fdf4] dark:bg-[#064e3b] text-[#065f46] dark:text-[#d1fae5]': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel,
-                                        'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600': curveA.channel && curveB.channel && curveA.channel === curveB.channel
+                                        'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
+                                        'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel
                                     }">
                                 <option value="">Select Asset...</option>
                                 <template x-if="curveA.channel && curveB.channel && curveA.channel === curveB.channel">
