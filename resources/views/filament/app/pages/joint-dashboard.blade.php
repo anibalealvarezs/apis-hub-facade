@@ -52,17 +52,41 @@
         .corr-weak { background: rgba(156,163,175,0.1); color: #4b5563; border: 1px solid rgba(156,163,175,0.2); }
         .dark .corr-weak { color: #9ca3af; }
 
+        .export-btn {
+            background-color: #4b5563;
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            margin-right: 0.5rem;
+        }
+        .export-btn:hover { background-color: #374151; }
+        .dark .export-btn { background-color: #374151; border: 1px solid rgba(255,255,255,0.1); }
+        .dark .export-btn:hover { background-color: #4b5563; }
+
         @media print {
-            .fi-sidebar, .fi-topbar, .fi-header {
+            .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
                 display: none !important;
             }
-            .fi-main {
+            html, body, .fi-layout, .fi-main, .fi-main-content {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                position: static !important;
                 padding: 0 !important;
                 margin: 0 !important;
+            }
+            .fi-main {
                 width: 100% !important;
                 max-width: 100% !important;
             }
-            .joint-card, .chart-container-joint {
+            .joint-card, .chart-container-joint, .mt-16 {
                 page-break-inside: avoid;
             }
             body { background: white !important; }
@@ -77,18 +101,19 @@
                     {{ __('Performance Correlations') }}
                 </h1>
             </div>
-            <div class="joint-header-controls print:hidden">
-                <button type="button" @click="window.print()"
-                        class="flex items-center justify-center bg-gray-500 hover:bg-gray-400 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition shadow-sm mr-2">
-                    <x-heroicon-o-printer class="w-5 h-5 mr-2" />
+            <div class="joint-header-controls">
+                <button type="button" @click="window.print()" class="export-btn">
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+                    </svg>
                     <span>{{ __('Export PDF') }}</span>
                 </button>
                 <input type="date" x-model.lazy="dateStart"
-                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
+                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
-                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
+                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <button type="button" @click="fetchData()"
-                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-6 py-2.5 transition shadow-sm"
+                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 text-white text-sm font-medium rounded-lg px-6 py-2.5 transition shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                         :disabled="isLoading || !isReadyToFetch()">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2" x-bind:class="{ 'animate-spin': isLoading }"/>
@@ -231,7 +256,7 @@
                                     :disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel" 
                                     class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
                                     :class="{
-                                        'opacity-50 cursor-not-allowed': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
+                                        'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
                                         'bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white focus:ring-primary-500 focus:border-primary-500': (!selectedPlay || selectedPlay.id === 'custom_analysis') && !(curveA.channel && curveB.channel && curveA.channel === curveB.channel),
                                         'ring-2 ring-amber-500 border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
                                         'ring-2 ring-green-500 border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel,
