@@ -2,6 +2,7 @@
 
 namespace App\Filament\Account\Widgets;
 
+use App\Notifications\BillingProfileAssignmentProcessedNotification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -13,6 +14,13 @@ class BillingRequestsWidget extends BaseWidget
 {
     protected static ?string $heading = 'Pending Billing Assignments';
     protected int | string | array $columnSpan = 'full';
+
+    public static function canView(): bool
+    {
+        return BillingProfile::where('user_id', auth()->id())
+            ->where('tier', 'enterprise')
+            ->exists();
+    }
 
     public function table(Table $table): Table
     {
@@ -28,15 +36,15 @@ class BillingRequestsWidget extends BaseWidget
             ->query($query)
             ->columns([
                 Tables\Columns\TextColumn::make('billingProfile.name')
-                    ->label('Billing Profile'),
+                    ->label(__('Billing Profile')),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Project'),
+                    ->label(__('Project')),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Requested By')
+                    ->label(__('Requested By'))
                     ->description(fn (Project $record) => $record->user?->email),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
-                    ->label('Requested At'),
+                    ->label(__('Requested At')),
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
@@ -53,7 +61,7 @@ class BillingRequestsWidget extends BaseWidget
 
                             if ($currentProjectsCount >= $maxProjects) {
                                 \Filament\Notifications\Notification::make()
-                                    ->title('Capacity Limit Reached')
+                                    ->title(__('Capacity Limit Reached'))
                                     ->body("This billing profile ({$profile->name}) has reached its limit of {$maxProjects} projects. You cannot approve this request until you upgrade your plan or remove other projects.")
                                     ->danger()
                                     ->persistent()
@@ -66,19 +74,33 @@ class BillingRequestsWidget extends BaseWidget
                             'billing_status' => 'active',
                             'is_active' => true,
                         ]);
+
+                        $record->user->notify(new BillingProfileAssignmentProcessedNotification(
+                            billingProfile: $profile ?? $record->billingProfile,
+                            project: $record,
+                            status: 'approved',
+                        ));
                     }),
                 Tables\Actions\Action::make('reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->requiresConfirmation()
                     ->action(function (Project $record) {
-                        // Reset the project billing profile to recipient's default FREE profile
+                        $originalProfile = $record->billingProfile;
                         $defaultProfile = $record->user->billingProfiles()->where('is_default', true)->first();
                         $record->update([
                             'billing_profile_id' => $defaultProfile?->id,
                             'billing_status' => 'suspended',
                             'is_active' => false,
                         ]);
+
+                        if ($originalProfile) {
+                            $record->user->notify(new BillingProfileAssignmentProcessedNotification(
+                                billingProfile: $originalProfile,
+                                project: $record,
+                                status: 'rejected',
+                            ));
+                        }
                     }),
             ])
             ->emptyStateHeading('No pending requests')

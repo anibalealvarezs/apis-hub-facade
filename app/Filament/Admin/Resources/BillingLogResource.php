@@ -15,8 +15,13 @@ class BillingLogResource extends Resource
     protected static ?string $model = BillingLog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing');
+    }
+
     
-    protected static ?string $navigationGroup = 'Billing';
+    
 
     public static function canCreate(): bool
     {
@@ -59,7 +64,7 @@ class BillingLogResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->label('Date'),
+                    ->label(__('Date')),
                 Tables\Columns\TextColumn::make('event_type')
                     ->searchable()
                     ->sortable()
@@ -76,15 +81,15 @@ class BillingLogResource extends Resource
                     ->badge()
                     ->color('info'),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label(__('User'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('billingProfile.name')
-                    ->label('Billing Profile')
+                    ->label(__('Billing Profile'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('project.name')
-                    ->label('Project')
+                    ->label(__('Project'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
@@ -94,15 +99,15 @@ class BillingLogResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
                     ->relationship('user', 'name')
-                    ->label('Filter by User')
+                    ->label(__('Filter by User'))
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('billing_profile_id')
                     ->relationship('billingProfile', 'name')
-                    ->label('Filter by Billing Profile')
+                    ->label(__('Filter by Billing Profile'))
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('project_id')
                     ->relationship('project', 'name')
-                    ->label('Filter by Project')
+                    ->label(__('Filter by Project'))
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('event_type')
                     ->options([

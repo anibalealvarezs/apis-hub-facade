@@ -50,11 +50,21 @@
 
         <x-filament::grid default="1" md="2" class="gap-6">
             <template x-for="kpi in filteredKpis" :key="kpi.key">
-                <x-filament::section>
+                <x-filament::section x-bind:id="kpi.key">
                     <x-slot name="heading">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 group" x-data="{ copied: false }">
                             <x-filament::icon icon="heroicon-o-chart-bar" class="h-5 w-5 text-primary-500" />
-                            <span x-text="kpi.name"></span>
+                            <a x-bind:href="'#' + kpi.key"
+                               class="flex items-center gap-2 hover:underline text-inherit"
+                               @click.prevent="
+                                   navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + kpi.key);
+                                   copied = true;
+                                   setTimeout(() => copied = false, 2000);
+                               ">
+                                <span x-text="kpi.name"></span>
+                                <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
+                                <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                            </a>
                         </div>
                     </x-slot>
 

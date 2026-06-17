@@ -91,12 +91,12 @@ class DashboardView extends Page
     {
         return [
             Actions\Action::make('edit')
-                ->label('Edit Dashboard')
+                ->label(__('Edit Dashboard'))
                 ->icon('heroicon-o-pencil-square')
                 ->url(DashboardResource::getUrl('builder', ['record' => $this->dashboard]))
                 ->visible(fn () => auth()->user()->can('edit_preferences')),
             Actions\Action::make('back')
-                ->label('Back to Dashboards')
+                ->label(__('Back to Dashboards'))
                 ->icon('heroicon-o-arrow-left')
                 ->url(DashboardResource::getUrl('index')),
         ];

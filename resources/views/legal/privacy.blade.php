@@ -80,17 +80,21 @@
     </ul>
 
     <h2 id="share">4. SHARE</h2>
-    <p><strong>In Short:</strong> <em>We may share information in specific situations described in this section.</em></p>
-    <p>We may share your personal information in connection with business transfers, with affiliates, or with business partners.</p>
+    <p><strong>In Short:</strong> <em>We may share information in specific situations described in this section. We do not sell your data.</em></p>
+    <p>We may share your personal information in connection with business transfers, with affiliates, or with business partners. <strong>We do not sell your personal information or third-party analytical data to data brokers or advertising networks.</strong></p>
 
     <h2 id="cookies">5. COOKIES</h2>
     <p><strong>In Short:</strong> <em>We may use cookies and other tracking technologies to collect and store your information.</em></p>
 
-    <h2 id="social">6. SOCIAL</h2>
-    <p>Our Services offer you the ability to register and log in using your third-party social media account details. Where you choose to do this, we will receive certain profile information about you.</p>
+    <h2 id="social">6. SOCIAL & THIRD-PARTY INTEGRATIONS</h2>
+    <p>Our Services offer you the ability to connect third-party platforms (such as Meta, Google, and Klaviyo) to aggregate your analytical and marketing data.</p>
+    <p>Where you choose to do this, we request <strong>Read-Only</strong> access to your analytical data. We do not use this access to modify your data on those platforms.</p>
+    <p><strong>Google API Services User Data Policy:</strong> Our use and transfer to any other app of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" class="text-brand-blue hover:underline">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
 
     <h2 id="retention">7. RETENTION</h2>
     <p>We only keep your personal information for as long as it is necessary for the purposes set out in this privacy notice, unless a longer retention period is required by law.</p>
+    <p><strong>Cached Analytical Data:</strong> Third-party analytical metrics (from platforms like Meta or Google) are temporarily cached to provide high-performance dashboards. These caches are automatically rotated and purged according to your active subscription tier limits.</p>
+    <p><strong>OAuth Tokens:</strong> Authentication tokens used to connect to third-party platforms are encrypted at rest and are permanently destroyed immediately upon disconnecting the provider or deleting your account.</p>
 
     <h2 id="safety">8. SAFETY</h2>
     <p>We have implemented appropriate technical and organizational security measures designed to protect the security of any personal information we process.</p>
@@ -98,8 +102,11 @@
     <h2 id="minors">9. MINORS</h2>
     <p>We do not knowingly collect data from or market to children under 18 years of age.</p>
 
-    <h2 id="rights">10. RIGHTS</h2>
+    <h2 id="rights">10. RIGHTS & DATA DELETION</h2>
     <p>In some regions (like the EEA, UK, and Canada), you have certain rights under applicable data protection laws. These may include the right to request access, rectification, erasure, or restriction of processing.</p>
+    
+    <h3>Data Erasure & Deauthorization</h3>
+    <p>You have the right to request the complete erasure of your account and the deauthorization of all connected third-party platforms. To automate this process, we have implemented a dedicated <a href="{{ route('legal.data-deletion') }}" class="text-brand-blue hover:underline">Data Deletion Workflow</a>. You can submit a deletion request directly, which will generate a traceable support ticket to ensure all cached data, tokens, and personal information are permanently destroyed.</p>
     
     <h3>Data Portability</h3>
     <p>As an APIs Hub user, you have the <strong>Right to Data Portability</strong>. This means you can request a structured copy of all information associated with your account, including:</p>

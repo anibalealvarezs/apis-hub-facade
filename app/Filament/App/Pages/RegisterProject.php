@@ -6,8 +6,10 @@ use App\Models\Project;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Pages\Tenancy\RegisterTenant;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,9 +28,10 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             redirect()->route('filament.account.resources.billing-profiles.create');
+            return;
         }
 
-        if (!Auth::user()->canCreateMoreProjects()) {
+        if (!Auth::user()->canCreateMoreProjects() && $this->data['mode'] !== 'join') {
             \Filament\Notifications\Notification::make()
                 ->title(__('Project Limit Reached'))
                 ->body(__('You have reached the maximum number of projects for your current tier. Please upgrade your subscription to create more projects.'))
@@ -37,23 +40,27 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             redirect()->route('filament.account.pages.account-subscription');
+            return;
         }
     }
 
     public static function getLabel(): string
     {
-        return __('Create Your APIs Hub Project');
+        return __('Create or Join a Project');
     }
 
     public function getTitle(): string
     {
+        if (property_exists($this, 'data') && isset($this->data['mode']) && $this->data['mode'] === 'join') {
+            return __('Join an Existing Project');
+        }
         return __('Setup Your New Project');
     }
 
     protected function getSubmitFormAction(): \Filament\Actions\Action
     {
         return parent::getSubmitFormAction()
-            ->label(__('Create Project & Deploy'));
+            ->label(fn ($get) => $get('mode') === 'join' ? __('Join Project') : __('Create Project & Deploy'));
     }
 
     protected function getRedirectUrl(): string
@@ -67,13 +74,31 @@ class RegisterProject extends RegisterTenant
     {
         return $form
             ->schema([
+                ToggleButtons::make('mode')
+                    ->label(__('What would you like to do?'))
+                    ->options([
+                        'create' => __('Create a new project'),
+                        'join' => __('Join an existing project'),
+                    ])
+                    ->default('create')
+                    ->inline()
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state === 'join') {
+                            $set('name', null);
+                            $set('subdomain', null);
+                        } else {
+                            $set('share_code', null);
+                        }
+                    }),
                 Section::make(__('Project Setup'))
                     ->description(__('Define your project identity. This will create a dedicated workspace on our high-performance cloud infrastructure.'))
+                    ->visible(fn ($get) => $get('mode') === 'create')
                     ->schema([
                         TextInput::make('name')
                             ->label(__('Project / Business Name'))
                             ->placeholder(__('e.g. Acme Marketing'))
-                            ->required(fn ($get) => empty($get('share_code'))),
+                            ->required(),
                         TextInput::make('subdomain')
                             ->label(__('Subdomain / Unique Identifier'))
                             ->prefix('https://')
@@ -81,8 +106,8 @@ class RegisterProject extends RegisterTenant
                                 $domain = config('app.network_domain') ?: 'apis-hub.cloud';
                                 return (config('app.env') !== 'production') ? "-dev.{$domain}" : ".{$domain}";
                             })
-                            ->placeholder('acme')
-                            ->required(fn ($get) => empty($get('share_code')))
+                            ->placeholder(__('acme'))
+                            ->required()
                             ->unique('projects', 'subdomain')
                             ->alphaDash()
                             ->rule(function () {
@@ -107,10 +132,16 @@ class RegisterProject extends RegisterTenant
                                 }
                                 return $msg;
                             }),
+                    ]),
+                Section::make(__('Join Existing Project'))
+                    ->description(__('Enter the share code provided by the project owner to join their project as a collaborator.'))
+                    ->visible(fn ($get) => $get('mode') === 'join')
+                    ->schema([
                         TextInput::make('share_code')
-                            ->label(__('Invitation / Share Code (Optional)'))
-                            ->placeholder('APISHUB-XXXX-XXXX')
-                            ->helperText(__('If you have a code to join an existing project, enter it here instead of creating a new project.')),
+                            ->label(__('Share Code'))
+                            ->placeholder(__('APISHUB-XXXX-XXXX'))
+                            ->required()
+                            ->helperText(__('Paste the code shared by the project owner. Your request will be sent for approval.')),
                     ]),
             ]);
     }
@@ -119,8 +150,8 @@ class RegisterProject extends RegisterTenant
     {
         $user = Auth::user();
 
-        // 1. Interceptar si viene un código de invitación/compartición
-        if (!empty($data['share_code'])) {
+        // Join an existing project via share code
+        if (($data['mode'] ?? '') === 'join') {
             $token = \App\Models\OneTimeShareToken::where('token', $data['share_code'])
                 ->whereNull('used_at')
                 ->first();
@@ -145,7 +176,7 @@ class RegisterProject extends RegisterTenant
                 'email' => $user->email,
                 'role' => 'collaborator',
                 'token' => \Illuminate\Support\Str::random(32),
-                'status' => 'pending',
+                'expires_at' => now()->addDays(7),
             ]);
 
             // Marcar el token como usado
@@ -159,8 +190,8 @@ class RegisterProject extends RegisterTenant
                 ->send();
 
             // Redireccionar al dashboard principal de Filament
-            redirect()->to('/app');
-            return new Project(); // Retorno dummy
+            $this->redirect('/app');
+            throw new Halt();
         }
 
         // 2. Si no viene código, proceder a crear proyecto normal

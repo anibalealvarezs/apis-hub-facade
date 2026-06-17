@@ -16,8 +16,13 @@ class InvoiceResource extends Resource
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Payments');
+    }
 
-    protected static ?string $navigationGroup = 'Billing & Payments';
+
+    
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -30,6 +35,10 @@ class InvoiceResource extends Resource
         return $form
             ->schema([
                 // Read-only view
+                Forms\Components\TextInput::make('invoice_number')
+                    ->label('Invoice Number')
+                    ->disabled()
+                    ->formatStateUsing(fn ($state, $record) => $record->fiscal_status === 'reconciled' ? $state : 'Pending Reconciliation'),
                 Forms\Components\TextInput::make('gateway')
                     ->disabled(),
                 Forms\Components\TextInput::make('gateway_invoice_id')
@@ -45,6 +54,12 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Invoice #')
+                    ->formatStateUsing(fn ($state, $record) => $record->fiscal_status === 'reconciled' ? $state : 'Pending')
+                    ->badge()
+                    ->color(fn ($record) => $record->fiscal_status === 'reconciled' ? 'success' : 'warning')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('gateway')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -63,6 +78,7 @@ class InvoiceResource extends Resource
                         'failed' => 'danger',
                         default => 'gray',
                     }),
+
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime()
                     ->sortable(),
@@ -76,6 +92,13 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('download')
+                    ->label('Download PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->url(fn (Invoice $record) => route('invoices.download', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Invoice $record) => $record->fiscal_status === 'reconciled'),
             ])
             ->bulkActions([
                 // No bulk delete for invoices

@@ -11,64 +11,92 @@
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
             currentTime: new Date().getTime(),
             cycleLabel: '{{ __('Cycle') }}',
-            quotaLockedLabel: '{{ __('Quota Locked') }}',
-            lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
-            gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
-            quotaLockedRefreshNeededLabel: '{{ __('Quota Locked (Refresh needed)') }}',
-            gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
-            savingThisConfigurationLabel: '{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}',
-            areYouSureLabel: '{{ __('Are you sure you want to proceed?') }}',
-            currentProjectUsageLabel: '{{ __('Current Project Usage') }}',
-            newlyStagedLabel: '{{ __('Newly Staged') }}',
-            currentLedgerUsageLabel: '{{ __('Current Ledger Usage') }}',
-            availableGlobalQuotaLabel: '{{ __('Available Global Quota') }}',
-            maxAssetsLabel: '{{ __('Max Assets') }}',
-            selectedCountLabel: '{{ __('Selected Count') }}',
 
             init() {
                 setInterval(() => {
                     this.currentTime = new Date().getTime();
-                }, 60000); // Update every minute
+                }, 1000);
+
+                let apply = () => document.querySelectorAll('.fi-fo-repeater-item').forEach(el => { if (el.style.position !== 'relative') el.style.position = 'relative'; });
+                this.$nextTick(apply);
+                new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
             },
 
-            getAssetBadge(id) {
-                if (!id || !this.lockStates[id]) return '';
+            quotaLockedLabel: '{{ __('Quota Locked') }}',
+            lockedUntilCycleEndLabel: '{{ __('Locked until cycle end') }}',
+            gracePeriodPausedLabel: '{{ __('Grace Period paused (Waiting for deployment)') }}',
+            gracePeriodEndedLabel: '{{ __('Grace Period (Ended)') }}',
+            gracePeriodLabel: '{{ __('Grace Period (Ends in') }}',
 
+            getAssetBadgeColor(id) {
+                if (!id || !this.lockStates[id]) return null;
                 let lock = this.lockStates[id];
 
-                if (lock.status === 'locked') {
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedLabel}</span>`;
-                }
-
-                if (lock.status === 'pending_release') {
-                    let dDate = lock.disabled_at ? new Date(lock.disabled_at).toLocaleDateString() : 'recently';
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400' title='Disabled at ${dDate}'>${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})</span>`;
-                }
-
+                if (lock.status === 'locked') return '#22c55e';
+                if (lock.status === 'pending_release') return '#ef4444';
                 if (lock.status === 'staged') {
-                    if (!this.projectDeploymentTime) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodPausedLabel}</span>`;
-                    }
-
+                    if (!this.projectDeploymentTime) return '#9ca3af';
                     let stagedAt = new Date(lock.staged_at).getTime();
-                    let deployedAt = new Date(this.projectDeploymentTime).getTime();
-                    let startTime = Math.max(stagedAt, deployedAt);
-                    let endsAt = startTime + (2 * 60 * 60 * 1000); // +2 hours
-
-                    let remainingMs = endsAt - this.currentTime;
-
-                    if (remainingMs <= 0) {
-                        return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'>${this.quotaLockedRefreshNeededLabel}</span>`;
-                    }
-
-                    let remainingMins = Math.floor(remainingMs / 60000);
-                    let h = Math.floor(remainingMins / 60);
-                    let m = remainingMins % 60;
-                    let timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
-
-                    return `<span class='inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400'>${this.gracePeriodLabel} ${timeStr})</span>`;
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    if (endsAt - this.currentTime <= 0) return '#ef4444';
+                    return '#f97316'; // orange (warning-500)
                 }
+                return null;
+            },
 
+            getBadgeStyle(id) {
+                let color = this.getAssetBadgeColor(id);
+                if (!color) return 'display:none';
+                return `position:absolute;top:0.75rem;right:0.75rem;width:1rem;height:1rem;border-radius:9999px;box-shadow:0 0 0 2px white;background-color:${color}`;
+            },
+
+            getAssetBadgeLabel(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+
+                if (lock.status === 'locked') return this.quotaLockedLabel;
+                if (lock.status === 'pending_release') return `${this.lockedUntilCycleEndLabel} (${this.cycleBounds.ends_at})`;
+                if (lock.status === 'staged') {
+                    if (!this.projectDeploymentTime) return this.gracePeriodPausedLabel;
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    let remainingMs = endsAt - this.currentTime;
+                    if (remainingMs <= 0) return this.gracePeriodEndedLabel;
+                    let totalSec = Math.floor(remainingMs / 1000);
+                    let h = Math.floor(totalSec / 3600);
+                    let m = Math.floor((totalSec % 3600) / 60);
+                    let s = totalSec % 60;
+                    let timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+                    return `${this.gracePeriodLabel} ${timeStr})`;
+                }
+                return '';
+            },
+
+            getAssetBadgeText(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+                if (lock.status === 'staged' && this.projectDeploymentTime) {
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    let remainingMs = endsAt - this.currentTime;
+                    if (remainingMs > 0) {
+                        let totalSec = Math.floor(remainingMs / 1000);
+                        let h = Math.floor(totalSec / 3600);
+                        let m = Math.floor((totalSec % 3600) / 60);
+                        let s = totalSec % 60;
+                        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    }
+                }
+                return '';
+            },
+            getAssetBadgeTextColor(id) {
+                if (!id || !this.lockStates[id]) return '';
+                let lock = this.lockStates[id];
+                if (lock.status === 'staged' && this.projectDeploymentTime) {
+                    let stagedAt = new Date(lock.staged_at).getTime();
+                    let endsAt = stagedAt + (2 * 60 * 60 * 1000);
+                    if (endsAt - this.currentTime > 0) return 'text-orange-500 dark:text-orange-400';
+                }
                 return '';
             },
 
@@ -164,9 +192,19 @@
          }">
 
         <template x-teleport="#tier-usage-header-target">
-            <div class="flex items-center gap-3 text-sm transition-colors"
-                 :class="selectedCount > maxAssets ? 'text-danger-600 dark:text-danger-500' : 'text-gray-700 dark:text-gray-300'">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" x-text="`${cycleLabel}: ${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+            <div class="flex items-center gap-4 text-sm transition-colors"
+                 :class="selectedCount >= (maxAssets * 0.8) ? 'text-danger-600 dark:text-danger-500' : (selectedCount < (maxAssets * 0.5) ? 'text-success-600 dark:text-success-500' : 'text-gray-700 dark:text-gray-300')">
+                <span class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-white/5 shadow-sm">
+                    <a href="{{ App\Filament\App\Pages\AssetBillingReference::getUrl() }}#{{ \Illuminate\Support\Str::slug(__('Annual vs. Monthly Subscriptions')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how billing cycles work.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
+                        <span x-text="cycleLabel + ':'"></span>
+                    </a>
+                    <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="`${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
+                    <span class="text-gray-300 dark:text-gray-600 px-3">|</span>
+                    <a href="{{ App\Filament\App\Pages\AssetBillingReference::getUrl() }}#{{ \Illuminate\Support\Str::slug(__('Releasing Quota & Billing Rollover')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how the quota is released and rolled over.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
+                        {{ __('Quota Resets:') }}
+                    </a>
+                    <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="cycleBounds.next_quota_reset"></span>
+                </span>
                 <div class="flex items-center gap-2">
                     <span class="text-xs uppercase font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ __('Tier Usage') }}</span>
                     <div class="font-bold text-base">
@@ -333,15 +371,19 @@
 
                 <form wire:submit="save">
                     {{ $this->form }}
-                    <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-white/10 flex justify-end shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-xl">
-                        <x-filament::button type="submit" color="primary" size="lg"
-                            :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels')"
-                            wire:loading.attr="disabled"
-                            wire:target="save"
-                            wire:confirm="{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}<br>{{ __('Are you sure you want to proceed?') }}">
-                            <span wire:loading.remove wire:target="save">{{ __('Save Configuration') }}</span>
-                            <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                        </x-filament::button>
+                    <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 flex justify-end pointer-events-none">
+                        <div class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+                            {{ $this->getAction('redeployInfrastructure') }}
+                            
+                            <x-filament::button type="submit" color="primary" size="lg"
+                                :disabled="!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels')"
+                                wire:loading.attr="disabled"
+                                wire:target="save"
+                                wire:confirm="{{ __('Saving this configuration will update your tracked assets and may impact your monthly billing quota.') }}<br>{{ __('Are you sure you want to proceed?') }}">
+                                <span wire:loading.remove wire:target="save">{{ __('Save Configuration') }}</span>
+                                <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
+                            </x-filament::button>
+                        </div>
                     </div>
                 </form>
             @endif

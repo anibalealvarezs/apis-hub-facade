@@ -6,7 +6,9 @@ Route::get('/debug-saas', function () {
     return 'Server is responding!';
 });
 
-Route::get('/', [\App\Http\Controllers\LandingController::class, 'index']);
+Route::get('/{locale?}', [\App\Http\Controllers\LandingController::class, 'index'])
+    ->where('locale', 'es')
+    ->name('landing.index');
 
 Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subscribe'])
     ->middleware(\App\Http\Middleware\VerifyReCaptcha::class)
@@ -26,6 +28,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Stripe Checkout Routes
     Route::post('stripe/checkout', [App\Http\Controllers\StripeCheckoutController::class, 'checkout'])->name('stripe.checkout');
     Route::get('stripe/return', [App\Http\Controllers\StripeCheckoutController::class, 'return'])->name('stripe.return');
+    
+    // Invoices
+    Route::get('account/invoices/{invoice}/download', \App\Http\Controllers\InvoiceDownloadController::class)->name('invoices.download');
 });
 
 // Webhooks
@@ -69,23 +74,31 @@ Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorit
 Route::post('/api/gsc/summary', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/chart', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/table', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'table'])->middleware(['web', 'auth']);
+Route::post('/api/gsc/trend', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'trend'])->middleware(['web', 'auth']);
 
 Route::post('/api/fbm/summary', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/fbm/chart', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/fbm/table', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'table'])->middleware(['web', 'auth']);
+Route::post('/api/fbm/trend', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'trend'])->middleware(['web', 'auth']);
 
 Route::post('/api/fbo/summary', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth']);
+Route::post('/api/fbo/trend', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'trend'])->middleware(['web', 'auth']);
 
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
-// Legal Documents
+// English Legal Documents
 Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos');
 Route::get('/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion');
+
+// Spanish Legal Documents
+Route::get('/es/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy.es');
+Route::get('/es/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->name('legal.tos.es');
+Route::get('/es/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion.es');
 
 Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');

@@ -6,6 +6,7 @@ use Laravel\Cashier\Events\WebhookReceived;
 use App\Models\SubscriptionPlan;
 use App\Models\BillingProfile;
 use App\Models\BillingLog;
+use App\Models\Invoice;
 use Illuminate\Support\Facades\Log;
 
 class StripeWebhookListener
@@ -30,6 +31,10 @@ class StripeWebhookListener
             ]
         ]);
 
+        if ($type === 'invoice.payment_succeeded') {
+            $this->handleInvoicePaymentSucceeded($payload);
+        }
+
         if (in_array($type, [
             'customer.subscription.updated',
             'customer.subscription.deleted',
@@ -38,6 +43,44 @@ class StripeWebhookListener
         ])) {
             $this->processSubscriptionStateChange($payload);
         }
+    }
+
+    protected function handleInvoicePaymentSucceeded($payload)
+    {
+        $data = $payload['data']['object'];
+        $stripeCustomerId = $data['customer'] ?? null;
+
+        if (!$stripeCustomerId) return;
+
+        $profile = BillingProfile::where('stripe_id', $stripeCustomerId)->first();
+        if (!$profile) return;
+
+        $subscription = null;
+        $stripeSubscriptionId = $data['subscription'] ?? null;
+        if ($stripeSubscriptionId) {
+            $subscription = $profile->subscriptions()->where('stripe_id', $stripeSubscriptionId)->first();
+        }
+
+        $amount = $data['amount_paid'] ?? 0;
+        if ($amount > 0) {
+            $amount = $amount / 100;
+        }
+
+        Invoice::updateOrCreate(
+            ['gateway_invoice_id' => $data['id']],
+            [
+                'billing_profile_id' => $profile->id,
+                'subscription_id' => $subscription?->id,
+                'gateway' => 'stripe',
+                'amount' => $amount,
+                'currency' => strtoupper($data['currency'] ?? 'usd'),
+                'status' => $data['status'] ?? 'paid',
+                'invoice_pdf_url' => $data['invoice_pdf'] ?? null,
+                'paid_at' => isset($data['paid_at']) ? now()->createFromTimestamp($data['paid_at']) : now(),
+            ]
+        );
+
+        Log::info('Stripe Invoice record created/updated', ['invoice_id' => $data['id']]);
     }
 
     protected function processSubscriptionStateChange($payload)

@@ -47,6 +47,7 @@ class Project extends Model
         'last_deployed_at',
         'deploy_started_at',
         'last_sync_started_at',
+        'redeploy_pending',
         'git_repo',
         'git_branch',
         'is_active',
@@ -80,7 +81,23 @@ class Project extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Relationship: Alias for user() used by Filament tables and other UI components.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
+
+
+    /**
+     * Relationship: Support tickets where this project is tagged internally (admin-only associations).
+     */
+    public function supportTicketInternalAssociations(): BelongsToMany
+    {
+        return $this->belongsToMany(SupportTicket::class, 'ticket_internal_projects');
+    }
 
     /**
      * Relationship: The deployment logs for this project.
@@ -193,6 +210,14 @@ class Project extends Model
                     $project->billing_profile_id = $user?->billingProfiles()->first()?->id;
                 }
             }
+
+            // Auto-assign the default APIs Hub Release
+            if (empty($project->apis_hub_release_id)) {
+                $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->first();
+                if ($defaultRelease) {
+                    $project->apis_hub_release_id = $defaultRelease->id;
+                }
+            }
         });
     }
 
@@ -203,6 +228,7 @@ class Project extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'redeploy_pending' => 'boolean',
         'last_deployed_at' => 'datetime',
         'deploy_started_at' => 'datetime',
         'last_sync_started_at' => 'datetime',
@@ -366,5 +392,93 @@ class Project extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Count the number of enabled channels.
+     */
+    public function countEnabledChannels(): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channelConfig) {
+            if (is_array($channelConfig) && !empty($channelConfig['enabled'])) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Count the number of enabled assets.
+     * @param bool $onlyInEnabledChannels If true, ignores assets in disabled channels.
+     */
+    public function countEnabledAssets(bool $onlyInEnabledChannels = false): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['enabled']) && empty($asset['lost_access']);
+        }, $onlyInEnabledChannels);
+    }
+
+    /**
+     * Count the number of locked assets.
+     */
+    public function countLockedAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['locked']);
+        }, false);
+    }
+
+    /**
+     * Count the number of assets in grace period.
+     */
+    public function countGracePeriodAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['in_grace_period']);
+        }, false);
+    }
+
+    /**
+     * Helper to count assets based on a condition closure.
+     */
+    protected function countAssetsByCondition(\Closure $condition, bool $onlyInEnabledChannels = false): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channelConfig) {
+            if (!is_array($channelConfig)) {
+                continue;
+            }
+            if ($onlyInEnabledChannels && empty($channelConfig['enabled'])) {
+                continue;
+            }
+
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+
+            // 1. Check direct asset lists
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
+                    foreach ($channelConfig[$assetKey] as $asset) {
+                        if (is_array($asset) && $condition($asset)) {
+                            $count++;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check nested asset lists
+            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
+                foreach ($assetKeys as $assetKey) {
+                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
+                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
+                            if (is_array($asset) && $condition($asset)) {
+                                $count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $count;
     }
 }

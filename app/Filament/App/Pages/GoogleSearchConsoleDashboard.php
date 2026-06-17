@@ -11,8 +11,18 @@ class GoogleSearchConsoleDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?string $navigationGroup = 'Google';
-    protected static ?string $navigationLabel = 'Google Search Console';
+    public static function getNavigationLabel(): string
+    {
+        return __('Google Search Console');
+    }
+
+    
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Google');
+    }
+
     public function getTitle(): string
     {
         return __('Performance on Google Search results');
@@ -60,13 +70,17 @@ class GoogleSearchConsoleDashboard extends Page
             foreach ($config as $site) {
                 $siteUrl = $site['url'] ?? $site['id'] ?? null;
                 if (!empty($site['enabled']) && !empty($siteUrl)) {
-                    $enabledIds[] = md5(rtrim($siteUrl, '/'));
+                    $enabledIds[] = md5($siteUrl);
                 }
             }
 
+            \Illuminate\Support\Facades\Log::info("GSC Dashboard - config sites", ['config_sites' => $config, 'enabledIds' => $enabledIds]);
+
             if (isset($response['data']) && is_array($response['data'])) {
+                \Illuminate\Support\Facades\Log::info("GSC Dashboard - remote channeled_accounts", ['count' => count($response['data']), 'sample' => array_slice($response['data'], 0, 3)]);
+
                 foreach ($response['data'] as $page) {
-                    $platformId = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']);
+                    $platformId = rtrim((string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id']), '/');
                     
                     if (in_array($platformId, $enabledIds)) {
                         $this->accounts[$page['id']] = $page['name'] ?? $platformId;
@@ -76,6 +90,8 @@ class GoogleSearchConsoleDashboard extends Page
                 if (!empty($this->accounts) && !$this->selectedAccount) {
                     $this->selectedAccount = array_key_first($this->accounts);
                 }
+            } else {
+                \Illuminate\Support\Facades\Log::info("GSC Dashboard - no data in response", ['response_keys' => is_array($response) ? array_keys($response) : gettype($response)]);
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Accounts Error: " . $e->getMessage());

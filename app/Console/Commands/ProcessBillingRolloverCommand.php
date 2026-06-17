@@ -64,23 +64,35 @@ class ProcessBillingRolloverCommand extends Command
             $syncConfig = $project->sync_config ?? [];
             $activeAssetIdentifiers = [];
 
-            // Parse the current sync_config to find what is CURRENTLY enabled
+            $collectAsset = function (array $asset) use (&$activeAssetIdentifiers) {
+                if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
+                    $id = $asset['id'] ?? $asset['url'] ?? null;
+                    if ($id) {
+                        $activeAssetIdentifiers[] = $id;
+                    }
+                }
+            };
+
+            $scanner = function ($obj) use (&$scanner, $collectAsset) {
+                if (!is_array($obj)) return;
+
+                if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
+                    $collectAsset($obj);
+                    return;
+                }
+
+                foreach ($obj as $child) {
+                    if (is_array($child)) {
+                        $scanner($child);
+                    }
+                }
+            };
+
             foreach ($syncConfig as $channelKey => $channelConfig) {
                 if (!is_array($channelConfig)) continue;
                 if (empty($channelConfig['enabled'])) continue;
 
-                foreach ($channelConfig as $key => $value) {
-                    if (is_array($value)) {
-                        foreach ($value as $asset) {
-                            if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
-                                $id = $asset['id'] ?? $asset['url'] ?? null;
-                                if ($id) {
-                                    $activeAssetIdentifiers[] = $id;
-                                }
-                            }
-                        }
-                    }
-                }
+                $scanner($channelConfig);
             }
 
             // Cross-reference locks with currently active assets

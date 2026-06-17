@@ -35,7 +35,7 @@ class DataSync extends Page
 
     public function mount(): void
     {
-        $this->refreshData();
+        $this->refreshData(true);
     }
 
     /**
@@ -54,7 +54,7 @@ class DataSync extends Page
                 \Illuminate\Support\Facades\Cache::forget($cacheKey);
             }
 
-            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($service, $tenant) {
+            $response = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addSeconds(30), function () use ($service, $tenant) {
                 return $service->getSyncTelemetry($tenant);
             });
 
@@ -139,7 +139,7 @@ class DataSync extends Page
                 // Temporarily disabled while the Explorer's Status page is being reworked.
                 /*
                 Notification::make()
-                    ->title('Explorers status unavailable')
+                    ->title(__('Explorers status unavailable'))
                     ->body(function() use ($response) {
                         if (empty($response)) return 'The remote server returned an empty response.';
                         return $response['message'] ?? $response['error'] ?? 'Node responded with success: false. Data might not be ready yet.';

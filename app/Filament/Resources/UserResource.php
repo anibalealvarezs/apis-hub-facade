@@ -18,8 +18,13 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('SaaS Management');
+    }
 
-    protected static ?string $navigationGroup = 'SaaS Management';
+
+    
 
     public static function form(Form $form): Form
     {
@@ -45,10 +50,10 @@ class UserResource extends Resource
                 Forms\Components\Section::make('Access Control')
                     ->schema([
                         Forms\Components\Toggle::make('is_admin')
-                            ->helperText('Grant full access to this admin panel.')
+                            ->helperText(__('Grant full access to this admin panel.'))
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
-                            ->helperText('Active users can log in to the portal.')
+                            ->helperText(__('Active users can log in to the portal.'))
                             ->default(true)
                             ->required(),
 
@@ -68,16 +73,16 @@ class UserResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_admin')
-                    ->label('Admin')
+                    ->label(__('Admin'))
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('Active'))
                     ->boolean()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_online')
-                    ->label('Online')
+                    ->label(__('Online'))
                     ->boolean()
                     ->state(function (User $record) {
                         return DB::table('sessions')
@@ -87,7 +92,7 @@ class UserResource extends Resource
                     })
                     ->sortable(false),
                 Tables\Columns\IconColumn::make('email_verified_at')
-                    ->label('Verified')
+                    ->label(__('Verified'))
                     ->boolean()
                     ->state(fn (User $record) => $record->email_verified_at !== null)
                     ->sortable(),
@@ -102,7 +107,7 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('logoutOtherDevices')
-                    ->label('Force Logout')
+                    ->label(__('Force Logout'))
                     ->icon('heroicon-o-lock-closed')
                     ->color('warning')
                     ->requiresConfirmation()
@@ -131,13 +136,13 @@ class UserResource extends Resource
                             ->delete();
 
                         Notification::make()
-                            ->title('User sessions invalidated and cleared across all platforms.')
+                            ->title(__('User sessions invalidated and cleared across all platforms.'))
                             ->success()
                             ->send();
                     }),
 
                 Tables\Actions\Action::make('impersonate')
-                    ->label('Log in as')
+                    ->label(__('Log in as'))
                     ->icon('heroicon-o-finger-print')
                     ->color('info')
                     ->requiresConfirmation()

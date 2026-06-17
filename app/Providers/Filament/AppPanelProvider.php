@@ -29,8 +29,8 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
-            ->login()
-            ->registration()
+            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
+            ->registration(\App\Filament\Pages\Auth\CustomRegister::class)
             ->passwordReset()
             ->emailVerification()
             
@@ -42,6 +42,10 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::TENANT_MENU_AFTER,
                 fn () => view('filament.hooks.sidebar-tier-badge'),
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn () => view('filament.hooks.beta-badge'),
             )
 
             ->profile()
@@ -56,6 +60,7 @@ class AppPanelProvider extends PanelProvider
                     <img src="' . asset('images/branding/apishub-trans-light-620.webp') . '" class="h-10 w-auto" />
                 </div>
             '))
+            ->homeUrl(fn () => request()->routeIs('filament.app.auth.*') ? url('/') : url('/app'))
             ->favicon(asset('images/branding/apishub-favicon.webp'))
             ->colors([
                 'primary' => '#00a7f9',
@@ -69,17 +74,28 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::scripts.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
+                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
                 'panels::head.start',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">')
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link rel="preconnect" href="https://www.googletagmanager.com">
+                    <link rel="preconnect" href="https://www.google.com">
+                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+                    @vite([\'resources/js/gtm.js\'])
+                ')
+            )
+            ->renderHook(
+                'panels::head.end',
+                fn () => view('filament.hooks.seo-auth')
             )
             ->renderHook(
                 'panels::auth.login.form.after',
                 fn () => \Illuminate\Support\Facades\Blade::render("
                     <div id='recaptcha-script-container-login'>
-                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}'></script>
+                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
                             function injectLoginReCaptcha() {
                                 if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
@@ -113,7 +129,7 @@ class AppPanelProvider extends PanelProvider
                 'panels::auth.register.form.after',
                 fn () => \Illuminate\Support\Facades\Blade::render("
                     <div id='recaptcha-script-container-register'>
-                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}'></script>
+                        <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
                             function injectRegisterReCaptcha() {
                                 if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
@@ -156,17 +172,17 @@ class AppPanelProvider extends PanelProvider
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Exploration & Telemetry'),
+                    ->label(fn () => __('Exploration & Telemetry')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Data & Integrations'),
+                    ->label(fn () => __('Data & Integrations')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Google'),
+                    ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Meta'),
+                    ->label(fn () => __('Knowledge Base')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Administration'),
+                    ->label(fn () => __('Google')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label('Knowledge Base'),
+                    ->label(fn () => __('Meta')),
             ])
             ->pages([
                 Pages\Dashboard::class,
@@ -194,8 +210,12 @@ class AppPanelProvider extends PanelProvider
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->userMenuItems([
-                \Filament\Navigation\MenuItem::make()
-                    ->label('My Account')
+                'profile' => \Filament\Navigation\MenuItem::make()
+                    ->label(__('Profile'))
+                    ->url('/app/my-profile')
+                    ->icon('heroicon-o-user-circle'),
+                'my_account' => \Filament\Navigation\MenuItem::make()
+                    ->label(__('My Account'))
                     ->url('/account')
                     ->icon('heroicon-o-user'),
             ])
@@ -205,6 +225,10 @@ class AppPanelProvider extends PanelProvider
                         shouldRegisterUserMenu: false, // Disable in app panel so it doesn't conflict with Account panel
                         shouldRegisterNavigation: false,
                         hasAvatars: false,
+                    )
+                    ->enableTwoFactorAuthentication(
+                        condition: true,
+                        action: \Jeffgreco13\FilamentBreezy\Pages\TwoFactorPage::class
                     )
             )
             ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());

@@ -217,10 +217,22 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('Meta Pages & Instagram Accounts') }}
+                    {{ __('FB & IG Insights') }}
                 </h1>
             </div>
             <div class="fb-header-controls">
+                <div class="flex items-center mr-4 gap-2">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
+                            @click="showTrends = !showTrends; handleTrendToggle()" 
+                            role="switch" 
+                            :aria-checked="showTrends.toString()">
+                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                </div>
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
@@ -233,7 +245,8 @@
                     <select
                         x-model="accounts[0]"
                         @change="accounts = $event.target.value ? [$event.target.value] : []"
-                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]"
+                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full px-4 py-2.5 h-[42px]"
+                        style="max-width:250px;"
                     >
                         @if(count($accounts) === 0)
                             <option value="" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ __('No pages available.') }}</option>
@@ -268,6 +281,10 @@
             <template x-for="metric in dynamicMetrics" :key="metric.key">
                 <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
                      @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
+                    <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
+                         x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
                     <div class="fb-label" x-text="metric.label"></div>
                     <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
@@ -364,9 +381,7 @@
                     </thead>
                     <tbody>
                     <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
-                        <tr @click="toggleFilter(activeBreakdownTab, row.id)"
-                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150"
-                            :class="isFilterActive(activeBreakdownTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                             <td class="font-medium">
                                 <div class="flex items-center gap-2">
                                     <span x-text="row.name"></span>
@@ -638,7 +653,7 @@
                         accounts: @json($selectedAccounts),
                         dateStart: '{{ $dateStart }}',
                         dateEnd: '{{ $dateEnd }}',
-                        activeTab: 'facebook',
+                        activeTab: 'instagram',
                         activeBreakdownTab: 'reaction_type',
 
                         isSummaryLoading: false,
@@ -655,8 +670,10 @@
                         selectedPost: null,
                         isPostChartLoading: false,
                         postChartDataRaw: [],
-                        selectedPostData: null,
                         isPostDetailsLoading: false,
+
+                        showTrends: false,
+                        trendData: {},
 
                         metricDictionary: {
                             'reach': {label: '{{ __('Reach') }}', color: 'var(--fb-reach)'},
@@ -739,9 +756,23 @@
                             const boot = () => {
                                 this.initChart();
 
-                                this.$watch('accounts', () => { this.syncToUrl(); this.fetchAll(); });
-                                this.$watch('dateStart', () => { this.syncToUrl(); this.fetchAll(); });
-                                this.$watch('dateEnd', () => { this.syncToUrl(); this.fetchAll(); });
+                                this.$watch('accounts', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
+
+                                this.$watch('dateStart', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
+
+                                this.$watch('dateEnd', () => {
+                                    this.syncToUrl();
+                                    this.trendData = {};
+                                    this.fetchAll();
+                                });
                                 this.$watch('pageSize', () => {
                                     this.currentPage = 1;
                                 });
@@ -872,6 +903,7 @@
 
                         forceRefresh() {
                             this.clearCache();
+                            this.trendData = {};
                             this.fetchAll();
                         },
 
@@ -1215,6 +1247,74 @@
                             }
                         },
 
+                        async fetchTrends() {
+                            if (!this.showTrends || !this.chartDataRaw || this.chartDataRaw.length === 0) return;
+                            
+                            const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+                            
+                            const allowedTrendMetrics = {
+                                'facebook': ['reach', 'interactions'],
+                                'instagram': ['reach', 'saves', 'shares']
+                            };
+                            
+                            const validMetrics = activeKeys.filter(m => (allowedTrendMetrics[this.activeTab] || []).includes(m));
+                            
+                            if (validMetrics.length === 0) {
+                                this.updateChart();
+                                return;
+                            }
+                            
+                            this.isChartLoading = true;
+                            
+                            try {
+                                const promises = validMetrics.map(async (metric) => {
+                                    const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
+                                    const seriesValues = this.chartDataRaw.map(r => {
+                                        let v = r[metric] ?? r['trend_total_' + metric] ?? r['trend_average_' + metric];
+                                        return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
+                                    });
+                                    
+                                    const payload = {
+                                        tenant: this.tenantId,
+                                        metric: metric,
+                                        series: {
+                                            dates: seriesDates,
+                                            values: seriesValues
+                                        },
+                                        activeTab: this.activeTab
+                                    };
+                                    
+                                    const response = await fetch('/api/fbo/trend', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    const data = await response.json();
+                                    if(data.trend) {
+                                        this.trendData[metric] = data.trend;
+                                    }
+                                });
+                                
+                                await Promise.all(promises);
+                                this.updateChart();
+                            } catch (error) {
+                                console.error('Error fetching trends:', error);
+                            } finally {
+                                this.isChartLoading = false;
+                            }
+                        },
+
+                        handleTrendToggle() {
+                            if (this.showTrends) {
+                                this.fetchTrends();
+                            } else {
+                                this.updateChart();
+                            }
+                        },
+
                         async fetchChart() {
                             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                             const cacheKey = this.getCacheKey('chart');
@@ -1223,7 +1323,11 @@
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                                 this.chartDataRaw = data.chart || [];
                                 this.syncActiveMetricsFromChart();
-                                this.updateChart();
+                                if (this.showTrends) {
+                                    this.fetchTrends();
+                                } else {
+                                    this.updateChart();
+                                }
                                 return;
                             }
 
@@ -1235,7 +1339,11 @@
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
                                     this.syncActiveMetricsFromChart();
-                                    this.updateChart();
+                                    if (this.showTrends) {
+                                        this.fetchTrends();
+                                    } else {
+                                        this.updateChart();
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error fetching chart:', error);
@@ -1512,6 +1620,51 @@
                                     });
                                 }
                             });
+
+                            if (this.showTrends) {
+                                activeKeys.forEach(key => {
+                                    if (this.trendData[key]) {
+                                        const info = this.getMetricInfo(key);
+                                        const resolvedColor = this.getComputedColor(info.color);
+                                        const trendLong = this.trendData[key].trend_long || this.trendData[key].trend || [];
+                                        const trendShort = this.trendData[key].trend_short || [];
+
+                                        if (trendShort.length) {
+                                            datasets.push({
+                                                label: info.label + ' (Trend Short)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendShort.find(t => t.date === d);
+                                                    return point ? point.value : null;
+                                                }),
+                                                borderColor: resolvedColor,
+                                                borderDash: [5, 5],
+                                                borderWidth: 2,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: 'y' + key,
+                                                tension: 0.4
+                                            });
+                                        }
+
+                                        if (trendLong.length) {
+                                            datasets.push({
+                                                label: info.label + ' (Trend Long)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendLong.find(t => t.date === d);
+                                                    return point ? point.value : null;
+                                                }),
+                                                borderColor: resolvedColor,
+                                                borderDash: [2, 2],
+                                                borderWidth: 1,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: 'y' + key,
+                                                tension: 0.4
+                                            });
+                                        }
+                                    }
+                                });
+                            }
 
                             let gridDrawn = false;
                             const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim() || 'rgba(0,0,0,0.05)';

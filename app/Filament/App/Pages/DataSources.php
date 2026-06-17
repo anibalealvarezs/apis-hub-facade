@@ -80,15 +80,30 @@
                 return [
                     'starts_at' => 'N/A',
                     'ends_at'   => 'N/A',
+                    'next_quota_reset' => 'N/A',
                 ];
             }
 
             $starts = $billingProfile->current_cycle_starts_at ?? $billingProfile->created_at ?? now()->startOfMonth();
             $ends = $billingProfile->current_cycle_ends_at ?? $starts->copy()->addMonth();
 
+            // Calculate next quota reset based on the day of the month the cycle started
+            $resetDay = $starts->day;
+            $now = now();
+            
+            // Handle end-of-month clipping (e.g. 31st in February)
+            $nextReset = $now->copy()->setDay(min($resetDay, $now->daysInMonth))->startOfDay();
+            
+            if ($nextReset->isPast() && !$nextReset->isToday()) {
+                // If the reset date for this month has passed, it will be next month
+                $nextMonth = $now->copy()->addMonth();
+                $nextReset = $nextMonth->setDay(min($resetDay, $nextMonth->daysInMonth))->startOfDay();
+            }
+
             return [
                 'starts_at' => $starts->format('M j, Y'),
                 'ends_at'   => $ends->format('M j, Y'),
+                'next_quota_reset' => $nextReset->format('M j, Y'),
             ];
         }
 
@@ -190,13 +205,7 @@
                 }
             }
 
-            // Now fill the form, which will generate the schema based on the correctly selected activeChannel
-            foreach ($config as $channelKey => $channelConfig) {
-                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $config[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
-                }
-            }
-            $this->form->fill($config);
+            $this->hydrateFormFromDb($config);
 
             $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
                 ->where('status', 'locked')
@@ -222,6 +231,118 @@
                     ])
                     ->send();
             }
+        }
+
+        /**
+         * Livewire lifecycle hook: re-fill the form from in-memory state on channel switch.
+         *
+         * Without this, switching channels rebuilds the form schema via getDynamicSchema()
+         * but never calls form->fill(), so the new components aren't properly hydrated.
+         * This causes getState() to return incomplete data and the global channel config
+         * (enabled, cache_history_range, etc.) is lost on save.
+         *
+         * We fill from $this->data (in-memory) rather than DB so that:
+         * - Unsaved edits on other channels are preserved across switches.
+         * - First-config scenarios (no DB data yet) retain the mount()-seeded defaults.
+         */
+        public function updatedActiveChannel($newChannel): void
+        {
+            $this->hydrateFormFromDb($this->data);
+        }
+
+        /**
+         * Seed channel-level defaults, flatten enabled toggles, and fill the form.
+         *
+         * Single source of truth for form hydration, used by:
+         * - mount()                  → initial page load (passes raw DB config)
+         * - updatedActiveChannel()   → channel switch (passes $this->data)
+         * - mergeDiscoveredAssets()   → after asset discovery (passes merged state)
+         * - save()                   → after DB persist (passes final dbState)
+         */
+        private function hydrateFormFromDb(?array $overrides = null): void
+        {
+            $tenant = Filament::getTenant();
+            $config = $overrides ?? ($tenant->sync_config ?? []);
+
+            // Seed default true values for facebook_organic to ensure Livewire hydration has strict booleans
+            if (isset($config['facebook_organic']['pages']) && is_array($config['facebook_organic']['pages'])) {
+                foreach ($config['facebook_organic']['pages'] as &$page) {
+                    $page['page_metrics'] = $page['page_metrics'] ?? true;
+                    $page['posts'] = $page['posts'] ?? true;
+                    $page['post_metrics'] = $page['post_metrics'] ?? true;
+                    $page['ig_accounts'] = $page['ig_accounts'] ?? true;
+                    $page['ig_account_metrics'] = $page['ig_account_metrics'] ?? true;
+                    $page['ig_account_media'] = $page['ig_account_media'] ?? true;
+                    $page['ig_account_media_metrics'] = $page['ig_account_media_metrics'] ?? true;
+                }
+            }
+
+            $tier = $tenant->billingProfile?->tier ?? 'free';
+            $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
+            $defaultRange = $isFreeTier ? '6 months' : '1 year';
+
+            $maxRanges = [
+                'google_search_console' => '16 months',
+                'facebook_marketing' => '2 years',
+                'facebook_organic' => '2 years',
+            ];
+
+            foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
+                if (!isset($config[$chan])) {
+                    $config[$chan] = [];
+                }
+                if (!isset($config[$chan]['enabled'])) {
+                    $config[$chan]['enabled'] = true;
+                }
+                // Always force max range, overriding previous values
+                $config[$chan]['cache_history_range'] = $maxRanges[$chan] ?? '1 year';
+            }
+
+            if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
+                $config['facebook_marketing']['entity_sync_depth'] = 'AD';
+            }
+
+            if (!isset($config['google_search_console']['calculate_synthetics'])) {
+                $config['google_search_console']['calculate_synthetics'] = true;
+            }
+            if (!isset($config['facebook_marketing']['metrics_level'])) {
+                $config['facebook_marketing']['metrics_level'] = 'AD';
+            }
+
+            foreach ($config as $channelKey => &$channelConfig) {
+                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
+                    $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    $config[$channelKey . '_enabled'] = $boolVal;
+                    $channelConfig['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
+                }
+                
+                if (is_array($channelConfig)) {
+                    foreach ($channelConfig as $key => &$value) {
+                        if (($key === 'assets' || $key === 'pages') && is_array($value)) {
+                            if ($key === 'pages') {
+                                usort($value, function($a, $b) {
+                                    $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                    $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                    return strcasecmp((string)$nameA, (string)$nameB);
+                                });
+                            } else if ($key === 'assets') {
+                                foreach ($value as $assetType => &$assetsList) {
+                                    if (is_array($assetsList)) {
+                                        usort($assetsList, function($a, $b) {
+                                            $nameA = $a['title'] ?? $a['name'] ?? $a['url'] ?? $a['id'] ?? '';
+                                            $nameB = $b['title'] ?? $b['name'] ?? $b['url'] ?? $b['id'] ?? '';
+                                            return strcasecmp((string)$nameA, (string)$nameB);
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $this->data = $config;
+            $this->form->fill($config);
         }
 
         public function getChannelAssetCount(string $channelKey): int
@@ -399,11 +520,42 @@
 
         protected function getHeaderActions(): array
         {
-            return [
+            $tenant = Filament::getTenant();
+
+            $actions = [
                 \Filament\Actions\Action::make('tierUsageTarget')
                     ->label('')
                     ->view('filament.app.actions.tier-usage-target'),
             ];
+
+            return $actions;
+        }
+
+        public function redeployInfrastructureAction(): Action
+        {
+            return Action::make('redeployInfrastructure')
+                ->label(__('Apply Infrastructure Changes'))
+                ->color('warning')
+                ->icon('heroicon-o-cloud-arrow-up')
+                ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
+                ->requiresConfirmation()
+                ->modalHeading(__('Redeploy Infrastructure'))
+                ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
+                ->action(function () {
+                    $tenant = Filament::getTenant();
+                    $tenant->update([
+                        'health_status' => 'redeploying',
+                        'deploy_started_at' => now(),
+                    ]);
+
+                    \App\Jobs\DeployProjectJob::dispatch($tenant);
+
+                    Notification::make()
+                        ->title(__('Redeployment Initiated'))
+                        ->success()
+                        ->send();
+                });
         }
 
         public function discoverAssetsAction(): Action
@@ -666,13 +818,8 @@
 
             $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
 
-            foreach ($fullDbState as $channelKey => $channelConfig) {
-                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $fullDbState[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
-                }
-            }
             // Fill the form with the updated active channel data
-            $this->form->fill($fullDbState);
+            $this->hydrateFormFromDb($fullDbState);
         }
 
         public function form(Form $form): Form
@@ -700,6 +847,12 @@
             }
 
             $fields = $release->config_schemas[$this->activeChannel]['fields'];
+
+            // Remove fields rendered manually in secondary sections (not from schema)
+            if ($this->activeChannel === 'google_search_console') {
+                unset($fields['calculate_synthetics']);
+            }
+
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
 
             $secondarySections = [];
@@ -714,36 +867,13 @@
                 // Insert custom extraction granularity UI in the secondary column
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
                     ->schema([
-                        \Filament\Forms\Components\Select::make($this->activeChannel.'.entity_sync_depth')
-                            ->label(__('Entity Depth'))
-                            ->options([
-                                'ACCOUNT'  => __('Level 1: Account'),
-                                'CAMPAIGN' => __('Level 2: Campaigns'),
-                                'ADSET'    => __('Level 3: Adsets'),
-                                'AD'       => __('Level 4: Ads'),
-                            ])
-                            ->default('AD')
-                            ->live()
-                            ->helperText(__('Deepest level of entities to sync.')),
-
-                        \Filament\Forms\Components\Select::make($this->activeChannel.'.metrics_level')
-                            ->label(__('Metrics Level'))
-                            ->options(function (\Filament\Forms\Get $get) {
-                                $entityDepth = $get('facebook_marketing.entity_sync_depth') ?? 'AD';
-                                $allOptions = [
-                                    'ACCOUNT'  => __('L1 Metrics'),
-                                    'CAMPAIGN' => __('L2 Metrics'),
-                                    'ADSET'    => __('L3 Metrics'),
-                                    'AD'       => __('L4 Metrics'),
-                                ];
-
-                                $levels = ['ACCOUNT' => 1, 'CAMPAIGN' => 2, 'ADSET' => 3, 'AD' => 4];
-                                $maxLevel = $levels[$entityDepth] ?? 4;
-
-                                return array_filter($allOptions, fn($k) => $levels[$k] <= $maxLevel, ARRAY_FILTER_USE_KEY);
-                            })
-                            ->default('AD')
-                            ->helperText(__('Cannot exceed entity sync depth.')),
+                        \Filament\Forms\Components\Placeholder::make('granularity_note')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    ' . __('To ensure maximum data fidelity and flexibility, we unconditionally cache your historical data at the Ad level (Level 4). Metrics for upper levels (Adset, Campaign, Account) are built dynamically via aggregations.') . '
+                                </div>
+                            ')),
                     ])->columns(1);
 
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Asset Name Filters'))
@@ -1028,6 +1158,10 @@
                     continue;
                 }
 
+                if ($key === 'cache_history_range') {
+                    continue; // Feature removed: we always send the max range
+                }
+
                 if ($type === 'boolean') {
                     $advanced[] = Toggle::make($fieldKey)
                         ->label(Str::headline($key))
@@ -1043,16 +1177,22 @@
                         $isFreeTier = ($tier === \App\Enums\UserTier::FREE || (is_string($tier) && $tier === 'free') || (is_object($tier) && $tier->value === 'free'));
                     }
 
-                    if ($key === 'cache_history_range' && $isFreeTier) {
-                        $options = array_filter($options, function ($k) {
-                            return in_array($k, ['1 month', '3 months', '6 months']);
-                        }, ARRAY_FILTER_USE_KEY);
+                    $defaultValue = $definition['default'] ?? null;
+                    if ($key === 'cache_history_range') {
+                        if ($isFreeTier) {
+                            $options = array_filter($options, function ($k) {
+                                return in_array($k, ['1 month', '3 months', '6 months']);
+                            }, ARRAY_FILTER_USE_KEY);
+                            $defaultValue = '6 months';
+                        } else {
+                            $defaultValue = '1 year';
+                        }
                     }
 
                     $advanced[] = Select::make($fieldKey)
                         ->label(Str::headline($key))
                         ->options($options)
-                        ->default($definition['default'] ?? null);
+                        ->default($defaultValue);
                 } elseif ($type === 'string') {
                     $advanced[] = TextInput::make($fieldKey)
                         ->label(Str::headline($key))
@@ -1102,14 +1242,14 @@
 
                 if ($key === 'enabled') {
                     $headerComponents[] = Toggle::make($key)
-                        ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
-                        <div class="flex items-center gap-2">
-                            <span>'.e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset').'</span>
-                            <template x-if="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')">
-                                <span x-html="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')"></span>
-                            </template>
-                        </div>
-                    '))
+                        ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset'))
+                        ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
+                            <div class="flex items-center gap-2">
+                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                            </div>
+                        '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                             $get('lost_access') ? __('⚠️ Lost Access') : (
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
@@ -1133,9 +1273,13 @@
             $rowSchema = $headerComponents;
             if (!empty($itemComponents)) {
                 $rowSchema[] = \Filament\Forms\Components\Group::make()->schema($itemComponents)
-                    ->extraAttributes(['class' => 'flex flex-row flex-wrap gap-4 items-center'])
-                    ->columnSpan(8)
-                    ->visible(fn(callable $get) => $get('enabled'));
+                    ->extraAttributes([
+                        'class' => 'flex flex-row flex-wrap gap-4 items-center',
+                        'x-data' => '{ extractionEnabled: true }',
+                        'x-init' => 'extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; }).observe($el.closest(\'li\').querySelector(\'button[role="switch"]\'), { attributes: true, attributeFilter: [\'aria-checked\'] })',
+                        'x-show' => 'extractionEnabled',
+                    ])
+                    ->columnSpan(8);
             }
 
             return \Filament\Forms\Components\Group::make([
@@ -1151,11 +1295,20 @@
                             </div>
                             <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <div class="w-48">
+                        <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
                                 <option value="all">'.__('All Statuses').'</option>
                                 <option value="enabled">'.__('Enabled Only').'</option>
                                 <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option value="all">'.__('All States').'</option>
+                                <option value="grace">'.__('In Grace Period').'</option>
+                                <option value="locked">'.__('Asset Locked').'</option>
+                                <option value="none">'.__('No Grace Period status').'</option>
                             </select>
                         </div>
                     </div>
@@ -1163,6 +1316,16 @@
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
+                        \Filament\Forms\Components\Actions\Action::make('sortByName')
+                            ->label(__('Sort by Name'))
+                            ->button()
+                            ->color('gray')
+                            ->icon('heroicon-m-bars-arrow-down')
+                            ->livewireClickHandlerEnabled(false)
+                            ->visible(false)
+                            ->extraAttributes([
+                                'x-on:click.prevent' => 'sortAssets()'
+                            ]),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
                             ->label(__('Select All'))
                             ->button()
@@ -1204,10 +1367,10 @@
                                 $get('url') ?? '',
                                 $get('id') ?? '',
                             ]));
-                            $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
+                            $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1218,7 +1381,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1235,14 +1398,14 @@
 
             // Header View: Name, ID as Link
             $headerComponents[] = Toggle::make('enabled')
-                ->label(fn(callable $get) => new \Illuminate\Support\HtmlString('
-                <div class="flex items-center gap-2">
-                    <span>'.e($get('title') ?? $get('name') ?? __('Unknown Asset')).'</span>
-                    <template x-if="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')">
-                        <span x-html="getAssetBadge(\''.e($get('id') ?? $get('url')).'\')"></span>
-                    </template>
-                </div>
-            '))
+                ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? __('Unknown Asset')))
+                ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
+                    <div class="flex items-center gap-2">
+                        <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                        <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
+                              :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                    </div>
+                '))
                 ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                     'ID: <a href="'.$get('link').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.$get('id').'</a>'.
                     (!empty($get('ig_account_name')) ? '<br><span class="text-xs text-gray-500 mt-0.5 inline-block">IG: <a href="https://instagram.com/'.$get('ig_account_name').'" target="_blank" class="text-pink-500 hover:underline">@'.$get('ig_account_name').'</a></span>' : '')
@@ -1252,51 +1415,58 @@
                 ->live()
                 ->columnSpan(4);
 
-            $headerComponents[] = \Filament\Forms\Components\Grid::make(2)->schema([
-                // Facebook Extraction Column
-                \Filament\Forms\Components\Group::make()->schema([
-                    Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
-                    Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)->live()
-                        ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.'))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('post_metrics', false);
-                            }
-                        }),
-                    Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('posts'))->dehydrated(),
-                ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+            $headerComponents[] = \Filament\Forms\Components\Group::make([
+                \Filament\Forms\Components\Grid::make(2)->schema([
+                    // Facebook Extraction Column
+                    \Filament\Forms\Components\Group::make()->schema([
+                        Toggle::make('page_metrics')->label(__('Page Metrics'))->inline(true)->default(true),
+                        Toggle::make('posts')->label(__('Posts Content'))->inline(true)->default(false)
+                            ->extraAttributes(['class' => 'toggle-posts'])
+                            ->hintIcon('heroicon-o-information-circle', __('Pages with low engagement face stricter API rate limits. Only enable for actively engaged pages to avoid sync interruptions.')),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('post_metrics')->label(__('Post Insights'))->inline(true)->default(false)
+                                ->extraAttributes(['class' => 'toggle-post-metrics'])
+                                ->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'postsEnabled', 'class' => 'ml-8']),
+                    ])->extraAttributes([
+                        'class' => 'flex flex-col gap-2',
+                        'x-data' => '{ postsEnabled: false }',
+                        'x-init' => 'setTimeout(() => { let btn = $el.querySelector(\'button.toggle-posts\'); if(btn){ postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { postsEnabled = btn.getAttribute(\'aria-checked\') === \'true\'; if(!postsEnabled){ let childBtn = $el.querySelector(\'button.toggle-post-metrics\'); if(childBtn && childBtn.getAttribute(\'aria-checked\') === \'true\') { childBtn.click(); } } }).observe(btn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                    ]),
 
-                // Instagram Extraction Column
-                \Filament\Forms\Components\Group::make()->schema([
-                    Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)->live()
-                        ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('ig_account_metrics', false);
-                                $set('ig_account_media', false);
-                                $set('ig_account_media_metrics', false);
-                            }
-                        }),
-                    Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))->dehydrated(),
-                    Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)->live()
-                        ->extraAttributes(['class' => 'ml-8'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && !empty($get('ig_account')))
-                        ->afterStateUpdated(function (\Filament\Forms\Get $get, \Filament\Forms\Set $set, $state) {
-                            if (!(bool)$state) {
-                                $set('ig_account_media_metrics', false);
-                            }
-                        })->dehydrated(),
-                    Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
-                        ->extraAttributes(['class' => 'ml-12'])
-                        ->visible(fn(\Filament\Forms\Get $get): bool => (bool)$get('ig_accounts') && (bool)$get('ig_account_media') && !empty($get('ig_account')))->dehydrated(),
-                ])->extraAttributes(['class' => 'flex flex-col gap-2']),
+                    // Instagram Extraction Column
+                    \Filament\Forms\Components\Group::make()->schema([
+                        Toggle::make('ig_accounts')->label(__('Sync Instagram'))->inline(true)->default(true)
+                            ->extraAttributes(['class' => 'toggle-ig-accounts'])
+                            ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account'))),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_metrics')->label(__('Account Metrics'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-metrics'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled', 'class' => 'ml-8']),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_media')->label(__('Media Content'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-media'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled', 'class' => 'ml-8']),
+                        \Filament\Forms\Components\Group::make([
+                            Toggle::make('ig_account_media_metrics')->label(__('Media Insights'))->inline(true)->default(true)
+                                ->extraAttributes(['class' => 'toggle-ig-media-metrics'])
+                                ->visible(fn(\Filament\Forms\Get $get) => !empty($get('ig_account')))->dehydrated(),
+                        ])->extraAttributes(['x-show' => 'igAccountsEnabled && igMediaEnabled', 'class' => 'ml-12']),
+                    ])->extraAttributes([
+                        'class' => 'flex flex-col gap-2',
+                        'x-data' => '{ igAccountsEnabled: true, igMediaEnabled: true }',
+                        'x-init' => 'setTimeout(() => { let accBtn = $el.querySelector(\'button.toggle-ig-accounts\'); if(accBtn){ igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igAccountsEnabled = accBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igAccountsEnabled){ let c1 = $el.querySelector(\'button.toggle-ig-metrics\'); if(c1 && c1.getAttribute(\'aria-checked\') === \'true\') c1.click(); let c2 = $el.querySelector(\'button.toggle-ig-media\'); if(c2 && c2.getAttribute(\'aria-checked\') === \'true\') c2.click(); let c3 = $el.querySelector(\'button.toggle-ig-media-metrics\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(accBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } let medBtn = $el.querySelector(\'button.toggle-ig-media\'); if(medBtn){ igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { igMediaEnabled = medBtn.getAttribute(\'aria-checked\') === \'true\'; if(!igMediaEnabled){ let c3 = $el.querySelector(\'button.toggle-ig-media-metrics\'); if(c3 && c3.getAttribute(\'aria-checked\') === \'true\') c3.click(); } }).observe(medBtn, { attributes: true, attributeFilter: [\'aria-checked\'] }); } }, 100)',
+                    ]),
+                ]),
             ])
                 ->columnSpan(8)
-                ->visible(fn(callable $get) => $get('enabled'));
+                ->extraAttributes([
+                    'x-data' => '{ extractionEnabled: true }',
+                    'x-init' => 'extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; }).observe($el.closest(\'li\').querySelector(\'button[role="switch"]\'), { attributes: true, attributeFilter: [\'aria-checked\'] })',
+                    'x-show' => 'extractionEnabled',
+                ]);
 
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
@@ -1311,11 +1481,20 @@
                             </div>
                             <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
                         </div>
-                        <div class="w-48">
+                        <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
                                 <option value="all">'.__('All Statuses').'</option>
                                 <option value="enabled">'.__('Enabled Only').'</option>
                                 <option value="disabled">'.__('Disabled Only').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option value="all">'.__('All States').'</option>
+                                <option value="grace">'.__('In Grace Period').'</option>
+                                <option value="locked">'.__('Asset Locked').'</option>
+                                <option value="none">'.__('No Grace Period status').'</option>
                             </select>
                         </div>
                     </div>
@@ -1323,8 +1502,18 @@
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
+                        \Filament\Forms\Components\Actions\Action::make('sortByName')
+                            ->label(__('Sort by Name'))
+                            ->button()
+                            ->color('gray')
+                            ->icon('heroicon-m-bars-arrow-down')
+                            ->livewireClickHandlerEnabled(false)
+                            ->visible(false)
+                            ->extraAttributes([
+                                'x-on:click.prevent' => 'sortAssets()'
+                            ]),
                         \Filament\Forms\Components\Actions\Action::make('selectAll')
-                            ->label('Select All')
+                            ->label(__('Select All'))
                             ->button()
                             ->color('success')
                             ->icon('heroicon-m-check')
@@ -1377,7 +1566,7 @@
                                 $component->state($newState);
                             }),
                         \Filament\Forms\Components\Actions\Action::make('deselectAll')
-                            ->label('Deselect All')
+                            ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
                             ->visible(fn() => auth()->user()->can('manage_channels'))
@@ -1401,10 +1590,10 @@
                                 $get('url') ?? '',
                                 $get('id') ?? '',
                             ]));
-                            $searchableText = str_replace(["'", "\\", "\n", "\r"], ["\'", "\\\\", " ", " "], $searchableText);
+                            $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } \$el.closest('li').style.display = (matchesText && matchesStatus) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1415,7 +1604,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
@@ -1452,12 +1641,48 @@
                     $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                 }
             }
+            
+            // Explicitly force enabled state from active channel if present in root state
+            if (isset($uiState[$this->activeChannel . '_enabled'])) {
+                if (!isset($uiState[$this->activeChannel])) {
+                    $uiState[$this->activeChannel] = [];
+                }
+                $uiState[$this->activeChannel]['enabled'] = filter_var($uiState[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
 
             // Build the proposed full configuration state by merging the UI state into the DB state
             $proposedState = $dbState;
             foreach ($uiState as $channel => $channelConfig) {
                 if (is_array($channelConfig)) {
                     $proposedState[$channel] = array_merge($proposedState[$channel] ?? [], $channelConfig);
+                    // Ensure the enabled flag is explicitly carried over from UI state
+                    if (isset($channelConfig['enabled'])) {
+                        $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+            }
+
+            // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag
+            // entirely (e.g. unmodified form), and the DB state doesn't have it either, force it to true
+            // since the visual UI default is true.
+            if (!isset($proposedState[$this->activeChannel]['enabled'])) {
+                if (!isset($proposedState[$this->activeChannel])) {
+                    $proposedState[$this->activeChannel] = [];
+                }
+                $proposedState[$this->activeChannel]['enabled'] = true;
+            }
+
+            // Detect if any channel's enabled state changed
+            $hasChannelToggle = false;
+            if ($tenant->last_deployed_at) {
+                foreach ($proposedState as $channel => $config) {
+                    if (!is_array($config)) continue;
+                    $oldEnabled = $dbState[$channel]['enabled'] ?? null;
+                    $newEnabled = $config['enabled'] ?? null;
+                    if ($oldEnabled !== $newEnabled) {
+                        $hasChannelToggle = true;
+                        break;
+                    }
                 }
             }
 
@@ -1542,6 +1767,9 @@
             $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
             $rejectedAssets = [];
 
+            $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
+            $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
+
             foreach ($proposedState as $channel => $channelConfig) {
                 if (!is_array($channelConfig)) {
                     continue;
@@ -1562,10 +1790,6 @@
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
                 }
-
-                // Determine if the project is brand new (never deployed)
-                $hasRemoteNode = $tenant->deploymentLogs()->where('status', 'success')->exists();
-                $isFirstDeployment = empty($tenant->last_deployed_at) && !$hasRemoteNode;
 
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
@@ -1640,12 +1864,7 @@
             app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);
 
             // Refresh UI state seamlessly via Livewire so the user sees the actual final state
-            foreach ($dbState as $channelKey => $channelConfig) {
-                if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
-                    $dbState[$channelKey.'_enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
-                }
-            }
-            $this->form->fill($dbState);
+            $this->hydrateFormFromDb($dbState);
 
             if (count($rejectedAssets) > 0) {
                 $rejectedList = implode(', ', array_slice($rejectedAssets, 0, 5));
@@ -1659,11 +1878,53 @@
                     ->warning()
                     ->persistent()
                     ->send();
-            } else {
+            } elseif ($isFirstDeployment) {
+                if ($hasChannelToggle) {
+                    $tenant->update(['redeploy_pending' => true]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->body(__('A full infrastructure deployment is required for channel changes to take effect.'))
+                        ->warning()
+                        ->send();
+                } else {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->success()
+                        ->send();
+                }
+            } elseif ($hasChannelToggle) {
+                $tenant->update(['redeploy_pending' => true]);
+
                 \Filament\Notifications\Notification::make()
                     ->title(__('Configuration Saved'))
-                    ->success()
+                    ->body(__('A full infrastructure redeploy is required for channel changes to take effect.'))
+                    ->warning()
                     ->send();
+            } else {
+                if ($tenant->fresh()->health_status !== 'online') {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved'))
+                        ->body(__('Your configuration was saved locally, but the lightweight sync could not be started because the node is currently offline or busy.'))
+                        ->warning()
+                        ->send();
+                } else {
+                    try {
+                        app(\App\Services\RemoteEngineService::class)->startSync($tenant);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Configuration Saved and Synced'))
+                            ->body(__('Workers reloaded. Assets will begin syncing shortly.'))
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Configuration Saved but Sync Failed'))
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }
             }
         }
     }
