@@ -18,10 +18,6 @@ class JointDashboard extends Page
         return __('Performance Correlations');
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return __('Exploration & Telemetry');
-    }
 
     public function getTitle(): string
     {
