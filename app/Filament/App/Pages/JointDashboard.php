@@ -102,15 +102,70 @@ class JointDashboard extends Page
             $tenant = Filament::getTenant();
             $response = $service->listChanneled($tenant, $channel, 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
+            $config = $tenant->sync_config[$channel] ?? [];
+            $enabledIds = [];
+            $enabledIgIds = []; // Specific for FB organic
+
+            if ($channel === 'facebook_marketing') {
+                $assets = $config['assets']['ad_accounts'] ?? $config['ad_accounts'] ?? [];
+                foreach ($assets as $asset) {
+                    if (!empty($asset['enabled']) && !empty($asset['id'])) {
+                        $enabledIds[] = str_replace('act_', '', (string) $asset['id']);
+                    }
+                }
+            } elseif ($channel === 'google_search_console') {
+                $assets = $config['assets']['sites'] ?? $config['sites'] ?? [];
+                foreach ($assets as $asset) {
+                    $url = $asset['url'] ?? $asset['id'] ?? null;
+                    if (!empty($asset['enabled']) && !empty($url)) {
+                        $enabledIds[] = md5($url);
+                    }
+                }
+            } elseif ($channel === 'facebook_organic') {
+                $assets = $config['pages'] ?? [];
+                foreach ($assets as $asset) {
+                    if (!empty($asset['enabled']) && !empty($asset['id'])) {
+                        $enabledIds[] = (string) $asset['id'];
+                        if (!empty($asset['ig_account'])) {
+                            $enabledIgIds[] = (string) $asset['ig_account'];
+                        }
+                    }
+                }
+            }
+
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $account) {
                     $accountId = (string) $account['id'];
-                    $accounts[$accountId] = $account['name'] ?? $accountId;
+                    $platformId = (string) ($account['platformId'] ?? $account['platform_id'] ?? $account['id']);
+                    
+                    if ($channel === 'facebook_marketing') {
+                        $cleanId = str_replace('act_', '', $platformId);
+                        if (in_array($cleanId, $enabledIds)) {
+                            $accounts[$accountId] = $account['name'] ?? $cleanId;
+                        }
+                    } elseif ($channel === 'google_search_console') {
+                        $cleanId = rtrim($platformId, '/');
+                        if (in_array($cleanId, $enabledIds)) {
+                            $accounts[$accountId] = $account['name'] ?? $cleanId;
+                        }
+                    } elseif ($channel === 'facebook_organic') {
+                        $cleanId = str_replace('act_', '', $platformId);
+                        $type = $account['type'] ?? $account['account_type'] ?? '';
+                        if ($type === 'facebook_page' && in_array($cleanId, $enabledIds)) {
+                            $accounts[$accountId] = ($account['name'] ?? $cleanId) . ' (Facebook)';
+                        } elseif ($type === 'instagram_account' && in_array($cleanId, $enabledIgIds)) {
+                            $accounts[$accountId] = ($account['name'] ?? $account['username'] ?? $cleanId) . ' (Instagram)';
+                        }
+                    } else {
+                        $accounts[$accountId] = $account['name'] ?? $accountId;
+                    }
                 }
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Joint Dashboard Accounts Error: " . $e->getMessage());
         }
+        
+        uasort($accounts, fn($a, $b) => strcasecmp($a, $b));
         return $accounts;
     }
 
