@@ -145,7 +145,7 @@
                 </div>
 
                 <!-- Active Play Info -->
-                <div x-show="selectedPlay" x-collapse class="mt-4">
+                <div x-show="selectedPlay" x-collapse class="mt-3">
                     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay?.name"></h4>
                         <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
@@ -350,8 +350,8 @@
                 <canvas id="jointChart"></canvas>
             </div>
             
-            <div class="mt-16 border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Rolling Correlation (7-Day Window)</h3>
+            <div class="border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">Rolling Correlation (7-Day Window)</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Shows how the Pearson correlation between the two metrics evolves day by day. A drop to zero indicates the day a relationship broke (e.g., ad fatigue or an algorithm update).') }}
                 </p>
@@ -360,8 +360,8 @@
                 </div>
             </div>
 
-            <div class="mt-16 border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Scatter Plot (Correlation Distribution)</h3>
+            <div class="border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">Scatter Plot (Correlation Distribution)</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Removes the element of time. Helps identify non-linear relationships, data clustering, or points of diminishing returns (where higher values on the X axis stop producing higher values on the Y axis).') }}
                 </p>
