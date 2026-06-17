@@ -183,13 +183,13 @@
                 <!-- Curve A -->
                 <div class="joint-curve-section curve-a">
                     <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #00a7f9;">
-                        <span class="w-3 h-3 rounded-full bg-[#00a7f9]"></span> Curve A (Blue)
+                        <span class="w-3 h-3 rounded-full bg-[#00a7f9]"></span> {{ __('Curve A (Blue)') }}
                     </h3>
                     <div class="space-y-3">
                         <div>
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Channel') }}</label>
                             <select x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''; if (curveA.channel === curveB.channel) curveB.asset = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                <option value="">Select Channel...</option>
+                                <option value="">{{ __('Select Channel...') }}</option>
                                 <template x-for="(label, key) in channels" :key="key">
                                     <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
                                         <option :value="key" x-text="label"></option>
@@ -198,7 +198,7 @@
                             </select>
                         </div>
                         <div x-show="curveA.channel">
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Asset / Property') }}</label>
                             <select x-model="curveA.asset" @change="if (curveA.channel === curveB.channel) curveB.asset = curveA.asset" 
                                     class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
                                     :class="{
@@ -206,16 +206,16 @@
                                         'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
                                         'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
                                     }">
-                                <option value="">Select Asset...</option>
+                                <option value="">{{ __('Select Asset...') }}</option>
                                 <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
                                     <option :value="id" x-text="name"></option>
                                 </template>
                             </select>
                         </div>
                         <div x-show="curveA.channel">
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Metric</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Metric') }}</label>
                             <select x-model="curveA.metric" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                <option value="">Select Metric...</option>
+                                <option value="">{{ __('Select Metric...') }}</option>
                                 <template x-for="(label, key) in metricsDict[curveA.channel] || {}" :key="key">
                                     <option :value="key" x-text="label"></option>
                                 </template>
@@ -223,32 +223,32 @@
                         </div>
                         <div x-show="curveA.channel" class="grid grid-cols-2 gap-3 mt-3">
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Analysis Level</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Analysis Level') }}</label>
                                 <select x-model="curveA.level" @change="chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                    <option value="level">Level (Original)</option>
-                                    <option value="diff1">1st Difference (Δ)</option>
-                                    <option value="diff2">2nd Difference (ΔΔ)</option>
-                                    <option value="zscore">Z-Score (Normalized)</option>
+                                    <option value="level">{{ __('Level (Original)') }}</option>
+                                    <option value="diff1">{{ __('1st Difference (Δ)') }}</option>
+                                    <option value="diff2">{{ __('2nd Difference (ΔΔ)') }}</option>
+                                    <option value="zscore">{{ __('Z-Score (Normalized)') }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Lag (Shift)</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Lag (Shift)') }}</label>
                                 <select x-model="curveA.lag" @change="curveB.lag = '0'; chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                    <option value="0">No Lag</option>
-                                    <option value="1">+1 Day</option>
-                                    <option value="2">+2 Days</option>
-                                    <option value="3">+3 Days</option>
-                                    <option value="4">+4 Days</option>
-                                    <option value="5">+5 Days</option>
-                                    <option value="6">+6 Days</option>
-                                    <option value="7">+7 Days</option>
-                                    <option value="-1">-1 Day</option>
-                                    <option value="-2">-2 Days</option>
-                                    <option value="-3">-3 Days</option>
-                                    <option value="-4">-4 Days</option>
-                                    <option value="-5">-5 Days</option>
-                                    <option value="-6">-6 Days</option>
-                                    <option value="-7">-7 Days</option>
+                                    <option value="0">{{ __('No Lag') }}</option>
+                                    <option value="1">{{ __('+1 Day') }}</option>
+                                    <option value="2">{{ __('+2 Days') }}</option>
+                                    <option value="3">{{ __('+3 Days') }}</option>
+                                    <option value="4">{{ __('+4 Days') }}</option>
+                                    <option value="5">{{ __('+5 Days') }}</option>
+                                    <option value="6">{{ __('+6 Days') }}</option>
+                                    <option value="7">{{ __('+7 Days') }}</option>
+                                    <option value="-1">{{ __('-1 Day') }}</option>
+                                    <option value="-2">{{ __('-2 Days') }}</option>
+                                    <option value="-3">{{ __('-3 Days') }}</option>
+                                    <option value="-4">{{ __('-4 Days') }}</option>
+                                    <option value="-5">{{ __('-5 Days') }}</option>
+                                    <option value="-6">{{ __('-6 Days') }}</option>
+                                    <option value="-7">{{ __('-7 Days') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -258,13 +258,13 @@
                 <!-- Curve B -->
                 <div class="joint-curve-section curve-b">
                     <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #f43f5e;">
-                        <span class="w-3 h-3 rounded-full bg-[#f43f5e]"></span> Curve B (Red)
+                        <span class="w-3 h-3 rounded-full bg-[#f43f5e]"></span> {{ __('Curve B (Red)') }}
                     </h3>
                     <div class="space-y-3">
                         <div>
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Channel</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Channel') }}</label>
                             <select x-model="curveB.channel" @change="curveB.asset = (curveB.channel === curveA.channel) ? curveA.asset : ''; curveB.metric = ''" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                <option value="">Select Channel...</option>
+                                <option value="">{{ __('Select Channel...') }}</option>
                                 <template x-for="(label, key) in channels" :key="key">
                                     <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
                                         <option :value="key" x-text="label"></option>
@@ -273,7 +273,7 @@
                             </select>
                         </div>
                         <div x-show="curveB.channel">
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Asset / Property</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Asset / Property') }}</label>
                             <select x-model="curveB.asset" 
                                     :disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel" 
                                     class="text-sm rounded-lg block w-full p-2.5 mt-1 transition-colors duration-300"
@@ -283,7 +283,7 @@
                                         'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
                                         'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel
                                     }">
-                                <option value="">Select Asset...</option>
+                                <option value="">{{ __('Select Asset...') }}</option>
                                 <template x-if="curveA.channel && curveB.channel && curveA.channel === curveB.channel">
                                     <option value="" disabled>{{ __('Locked to Curve A Asset') }}</option>
                                 </template>
@@ -293,9 +293,9 @@
                             </select>
                         </div>
                         <div x-show="curveB.channel">
-                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Metric</label>
+                            <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Metric') }}</label>
                             <select x-model="curveB.metric" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                <option value="">Select Metric...</option>
+                                <option value="">{{ __('Select Metric...') }}</option>
                                 <template x-for="(label, key) in metricsDict[curveB.channel] || {}" :key="key">
                                     <option :value="key" x-text="label"></option>
                                 </template>
@@ -303,32 +303,32 @@
                         </div>
                         <div x-show="curveB.channel" class="grid grid-cols-2 gap-3 mt-3">
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Analysis Level</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Analysis Level') }}</label>
                                 <select x-model="curveB.level" @change="chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                    <option value="level">Level (Original)</option>
-                                    <option value="diff1">1st Difference (Δ)</option>
-                                    <option value="diff2">2nd Difference (ΔΔ)</option>
-                                    <option value="zscore">Z-Score (Normalized)</option>
+                                    <option value="level">{{ __('Level (Original)') }}</option>
+                                    <option value="diff1">{{ __('1st Difference (Δ)') }}</option>
+                                    <option value="diff2">{{ __('2nd Difference (ΔΔ)') }}</option>
+                                    <option value="zscore">{{ __('Z-Score (Normalized)') }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">Lag (Shift)</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Lag (Shift)') }}</label>
                                 <select x-model="curveB.lag" @change="curveA.lag = '0'; chartRendered && renderChart()" class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 mt-1">
-                                    <option value="0">No Lag</option>
-                                    <option value="1">+1 Day</option>
-                                    <option value="2">+2 Days</option>
-                                    <option value="3">+3 Days</option>
-                                    <option value="4">+4 Days</option>
-                                    <option value="5">+5 Days</option>
-                                    <option value="6">+6 Days</option>
-                                    <option value="7">+7 Days</option>
-                                    <option value="-1">-1 Day</option>
-                                    <option value="-2">-2 Days</option>
-                                    <option value="-3">-3 Days</option>
-                                    <option value="-4">-4 Days</option>
-                                    <option value="-5">-5 Days</option>
-                                    <option value="-6">-6 Days</option>
-                                    <option value="-7">-7 Days</option>
+                                    <option value="0">{{ __('No Lag') }}</option>
+                                    <option value="1">{{ __('+1 Day') }}</option>
+                                    <option value="2">{{ __('+2 Days') }}</option>
+                                    <option value="3">{{ __('+3 Days') }}</option>
+                                    <option value="4">{{ __('+4 Days') }}</option>
+                                    <option value="5">{{ __('+5 Days') }}</option>
+                                    <option value="6">{{ __('+6 Days') }}</option>
+                                    <option value="7">{{ __('+7 Days') }}</option>
+                                    <option value="-1">{{ __('-1 Day') }}</option>
+                                    <option value="-2">{{ __('-2 Days') }}</option>
+                                    <option value="-3">{{ __('-3 Days') }}</option>
+                                    <option value="-4">{{ __('-4 Days') }}</option>
+                                    <option value="-5">{{ __('-5 Days') }}</option>
+                                    <option value="-6">{{ __('-6 Days') }}</option>
+                                    <option value="-7">{{ __('-7 Days') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -372,7 +372,7 @@
             </div>
             
             <div class="border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">Rolling Correlation (7-Day Window)</h3>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">{{ __('Rolling Correlation (7-Day Window)') }}</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Shows how the Pearson correlation between the two metrics evolves day by day. A drop to zero indicates the day a relationship broke (e.g., ad fatigue or an algorithm update).') }}
                 </p>
@@ -382,7 +382,7 @@
             </div>
 
             <div class="border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">Scatter Plot (Correlation Distribution)</h3>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 mt-6">{{ __('Scatter Plot (Correlation Distribution)') }}</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Removes the element of time. Helps identify non-linear relationships, data clustering, or points of diminishing returns (where higher values on the X axis stop producing higher values on the Y axis).') }}
                 </p>
