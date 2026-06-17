@@ -350,10 +350,10 @@
                     allPlays: [
                         {
                             id: 'custom_analysis',
-                            name: 'Custom Analysis',
-                            short_desc: 'Free Exploration',
-                            theory: 'Start with a blank canvas to explore your own hypotheses across any channels and metrics.',
-                            expected: 'No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.',
+                            name: @json(__('Custom Analysis')),
+                            short_desc: @json(__('Free Exploration')),
+                            theory: @json(__('Start with a blank canvas to explore your own hypotheses across any channels and metrics.')),
+                            expected: @json(__('No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.')),
                             requires: [],
                             config: {
                                 curveA: { channel: '', metric: '', level: 'zscore', lag: '0' },
@@ -362,10 +362,10 @@
                         },
                         {
                             id: 'brand_search_synergy',
-                            name: 'Brand Search Synergy',
-                            short_desc: 'FB Ads vs GSC',
-                            theory: 'Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.',
-                            expected: 'Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.',
+                            name: @json(__('Brand Search Synergy')),
+                            short_desc: @json(__('FB Ads vs GSC')),
+                            theory: @json(__('Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.')),
+                            expected: @json(__('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.')),
                             requires: ['facebook_marketing', 'google_search_console'],
                             config: {
                                 curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
@@ -374,10 +374,10 @@
                         },
                         {
                             id: 'organic_lift_paid',
-                            name: 'Organic Lift via Paid',
-                            short_desc: 'FB Ads vs FB Organic',
-                            theory: 'Aggressive paid spending can create a halo effect on your organic profile visits and reach.',
-                            expected: 'Positive correlation. When spend spikes, organic reach should spike proportionally.',
+                            name: @json(__('Organic Lift via Paid')),
+                            short_desc: @json(__('FB Ads vs FB Organic')),
+                            theory: @json(__('Aggressive paid spending can create a halo effect on your organic profile visits and reach.')),
+                            expected: @json(__('Positive correlation. When spend spikes, organic reach should spike proportionally.')),
                             requires: ['facebook_marketing', 'facebook_organic'],
                             config: {
                                 curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
@@ -386,10 +386,10 @@
                         },
                         {
                             id: 'ad_fatigue',
-                            name: 'Ad Fatigue & Efficiency',
-                            short_desc: 'FB CTR vs FB Cost',
-                            theory: 'As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.',
-                            expected: 'Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.',
+                            name: @json(__('Ad Fatigue & Efficiency')),
+                            short_desc: @json(__('FB CTR vs FB Cost')),
+                            theory: @json(__('As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.')),
+                            expected: @json(__('Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.')),
                             requires: ['facebook_marketing'],
                             config: {
                                 curveA: { channel: 'facebook_marketing', metric: 'ctr', level: 'zscore', lag: '0' },
@@ -398,10 +398,10 @@
                         },
                         {
                             id: 'google_evaluation_cycle',
-                            name: 'SEO Evaluation Cycle',
-                            short_desc: 'GSC Impressions vs Position',
-                            theory: 'When Google gives you an impression spike, it takes the algorithm a few days to process the user-behavior signals (CTR, Bounce Rate) from that traffic before adjusting your ranking.',
-                            expected: 'Positive correlation with Lag +4. A spike in impressions 4 days ago often correlates with a temporary drop in ranking (higher position number) today as Google processes the broad, low-engagement traffic test.',
+                            name: @json(__('SEO Evaluation Cycle')),
+                            short_desc: @json(__('GSC Impressions vs Position')),
+                            theory: @json(__('When Google gives you an impression spike, it takes the algorithm a few days to process the user-behavior signals (CTR, Bounce Rate) from that traffic before adjusting your ranking.')),
+                            expected: @json(__('Positive correlation with Lag +4. A spike in impressions 4 days ago often correlates with a temporary drop in ranking (higher position number) today as Google processes the broad, low-engagement traffic test.')),
                             requires: ['google_search_console'],
                             config: {
                                 curveA: { channel: 'google_search_console', metric: 'impressions', level: 'zscore', lag: '4' },
@@ -410,10 +410,10 @@
                         },
                         {
                             id: 'empty_traffic',
-                            name: 'Empty Traffic Check',
-                            short_desc: 'FB Clicks vs Conversions',
-                            theory: 'More clicks should theoretically mean more conversions. If they don\'t, you might have a "clickbait" ad or a broken landing page.',
-                            expected: 'Should be a strong positive correlation. If the correlation drops to zero or goes negative, your ads are driving low-intent traffic that doesn\'t convert.',
+                            name: @json(__('Empty Traffic Check')),
+                            short_desc: @json(__('FB Clicks vs Conversions')),
+                            theory: @json(__('More clicks should theoretically mean more conversions. If they don\'t, you might have a "clickbait" ad or a broken landing page.')),
+                            expected: @json(__('Should be a strong positive correlation. If the correlation drops to zero or goes negative, your ads are driving low-intent traffic that doesn\'t convert.')),
                             requires: ['facebook_marketing'],
                             config: {
                                 curveA: { channel: 'facebook_marketing', metric: 'clicks', level: 'zscore', lag: '0' },
@@ -422,10 +422,10 @@
                         },
                         {
                             id: 'cpm_vs_roas',
-                            name: 'Auction Competition vs ROAS',
-                            short_desc: 'FB CPM vs ROAS',
-                            theory: 'When market competition drives up the cost of impressions (CPM), does your return on ad spend (ROAS) immediately drop, or does the higher quality of expensive traffic maintain the ROAS?',
-                            expected: 'Typically a negative correlation. As CPMs rise, ROAS drops unless the more expensive audience is converting at a proportionally higher rate.',
+                            name: @json(__('Auction Competition vs ROAS')),
+                            short_desc: @json(__('FB CPM vs ROAS')),
+                            theory: @json(__('When market competition drives up the cost of impressions (CPM), does your return on ad spend (ROAS) immediately drop, or does the higher quality of expensive traffic maintain the ROAS?')),
+                            expected: @json(__('Typically a negative correlation. As CPMs rise, ROAS drops unless the more expensive audience is converting at a proportionally higher rate.')),
                             requires: ['facebook_marketing'],
                             config: {
                                 curveA: { channel: 'facebook_marketing', metric: 'cpm', level: 'zscore', lag: '0' },
@@ -434,10 +434,10 @@
                         },
                         {
                             id: 'organic_algorithm_reward',
-                            name: 'Algorithm Reward',
-                            short_desc: 'FB Engagements vs Reach',
-                            theory: 'Social algorithms reward high engagement (likes/comments) today with broader reach tomorrow.',
-                            expected: 'Positive correlation with a 1 to 2 day lag. A spike in interactions today should cause a delayed spike in reach as the algorithm pushes the content.',
+                            name: @json(__('Algorithm Reward')),
+                            short_desc: @json(__('FB Engagements vs Reach')),
+                            theory: @json(__('Social algorithms reward high engagement (likes/comments) today with broader reach tomorrow.')),
+                            expected: @json(__('Positive correlation with a 1 to 2 day lag. A spike in interactions today should cause a delayed spike in reach as the algorithm pushes the content.')),
                             requires: ['facebook_organic'],
                             config: {
                                 curveA: { channel: 'facebook_organic', metric: 'total_interactions', level: 'zscore', lag: '0' },
