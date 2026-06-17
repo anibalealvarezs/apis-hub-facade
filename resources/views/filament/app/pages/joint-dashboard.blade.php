@@ -281,11 +281,11 @@
                 </div>
             </div>
             
-            <div class="flex justify-between items-start mb-6">
+            <div class="flex justify-between items-start mb-10">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Comparison View') }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" x-text="subtitle"></p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 max-w-2xl">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Comparison View') }}</h2>
+                    <p class="text-md font-semibold text-gray-600 dark:text-gray-300 mb-4" x-text="subtitle"></p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-3xl">
                         {{ __('Displays both metrics mapped over time. Z-Score (default) scales both metrics by their standard deviations, allowing you to perfectly compare relative volatility regardless of their raw numbers.') }}
                     </p>
                 </div>
@@ -304,9 +304,9 @@
                 <canvas id="jointChart"></canvas>
             </div>
             
-            <div class="mt-12 border-t border-gray-200 dark:border-white/10 pt-10 pb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Rolling Correlation (7-Day Window)</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 max-w-3xl">
+            <div class="mt-16 border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Rolling Correlation (7-Day Window)</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Shows how the Pearson correlation between the two metrics evolves day by day. A drop to zero indicates the day a relationship broke (e.g., ad fatigue or an algorithm update).') }}
                 </p>
                 <div class="chart-container-joint pb-8" style="height: 250px;">
@@ -314,9 +314,9 @@
                 </div>
             </div>
 
-            <div class="mt-12 border-t border-gray-200 dark:border-white/10 pt-10 pb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Scatter Plot (Correlation Distribution)</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 max-w-3xl">
+            <div class="mt-16 border-t border-gray-200 dark:border-white/10 pt-12 pb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Scatter Plot (Correlation Distribution)</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Removes the element of time. Helps identify non-linear relationships, data clustering, or points of diminishing returns (where higher values on the X axis stop producing higher values on the Y axis).') }}
                 </p>
                 <div class="chart-container-joint" style="height: 350px;">
