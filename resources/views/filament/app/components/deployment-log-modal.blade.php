@@ -8,8 +8,9 @@
             <span class="text-sm text-gray-500 ml-2">{{ $log->created_at->diffForHumans() }}</span>
         </div>
         
-        <div class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto max-h-96 font-mono text-xs whitespace-pre-wrap">
-            {{ $log->output ?: __('No output recorded.') }}
+        <div class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-4 rounded-lg text-sm border border-gray-200 dark:border-gray-700">
+            <div class="font-semibold mb-2">{{ __('Deployment Result:') }}</div>
+            <p>{{ $log->getSummaryMessage() }}</p>
         </div>
     @else
         <div class="text-gray-500 italic">

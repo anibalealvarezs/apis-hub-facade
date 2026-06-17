@@ -44,6 +44,7 @@ class AccountPanelProvider extends PanelProvider
             )
             ->darkMode()
             ->databaseNotifications()
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->discoverResources(in: app_path('Filament/Account/Resources'), for: 'App\\Filament\\Account\\Resources')
             ->discoverPages(in: app_path('Filament/Account/Pages'), for: 'App\\Filament\\Account\\Pages')
             ->pages([
@@ -51,7 +52,7 @@ class AccountPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Account/Widgets'), for: 'App\\Filament\\Account\\Widgets')
             ->widgets([
-                \App\Filament\Account\Widgets\BillingRequestsWidget::class,
+                // \App\Filament\Account\Widgets\BillingRequestsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -72,10 +73,12 @@ class AccountPanelProvider extends PanelProvider
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
+                    ->customMyProfilePage(\App\Filament\Account\Pages\Profile::class)
                     ->myProfile(
                         shouldRegisterUserMenu: true,
-                        shouldRegisterNavigation: false,
+                        shouldRegisterNavigation: true,
                         hasAvatars: false,
+                        navigationGroup: 'Profile & Security',
                     )
                     ->myProfileComponents([
                         \App\Livewire\ArchivedProjectsTable::class,
@@ -86,7 +89,7 @@ class AccountPanelProvider extends PanelProvider
             )
             ->userMenuItems([
                 'app_dashboard' => MenuItem::make()
-                    ->label('App Dashboard')
+                    ->label(__('App Dashboard'))
                     ->url(fn (): string => '/app')
                     ->icon('heroicon-o-computer-desktop'),
             ]);

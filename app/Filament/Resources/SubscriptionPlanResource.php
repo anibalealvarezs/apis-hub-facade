@@ -65,10 +65,10 @@ class SubscriptionPlanResource extends Resource
                         ->default('monthly'),
                     Forms\Components\TextInput::make('stripe_price_id')
                         ->maxLength(255)
-                        ->label('Stripe Price ID'),
+                        ->label(__('Stripe Price ID')),
                     Forms\Components\TextInput::make('paypal_plan_id')
                         ->maxLength(255)
-                        ->label('PayPal Plan ID'),
+                        ->label(__('PayPal Plan ID')),
                 ])->columns(2),
             ]);
     }

@@ -53,7 +53,7 @@ class DashboardBuilder extends Page
         $service->saveLayout($this->dashboard, $gridItems);
 
         Notification::make()
-            ->title('Layout saved')
+            ->title(__('Layout saved'))
             ->success()
             ->send();
     }
@@ -65,7 +65,7 @@ class DashboardBuilder extends Page
         $this->dashboard->update(['controls' => $controls]);
 
         Notification::make()
-            ->title('Dashboard controls saved')
+            ->title(__('Dashboard controls saved'))
             ->success()
             ->send();
     }
@@ -80,7 +80,7 @@ class DashboardBuilder extends Page
         $widget->update(['controls' => $controls]);
 
         Notification::make()
-            ->title('Widget controls saved')
+            ->title(__('Widget controls saved'))
             ->success()
             ->send();
     }
@@ -207,7 +207,7 @@ class DashboardBuilder extends Page
         $this->loadWidgets();
 
         Notification::make()
-            ->title('Widget added')
+            ->title(__('Widget added'))
             ->success()
             ->send();
 
@@ -227,7 +227,7 @@ class DashboardBuilder extends Page
         $this->loadWidgets();
 
         Notification::make()
-            ->title('Widget removed')
+            ->title(__('Widget removed'))
             ->success()
             ->send();
     }
@@ -245,7 +245,7 @@ class DashboardBuilder extends Page
         $this->loadWidgets();
 
         Notification::make()
-            ->title('Widget duplicated')
+            ->title(__('Widget duplicated'))
             ->success()
             ->send();
 
@@ -274,23 +274,23 @@ class DashboardBuilder extends Page
         $user = \App\Models\User::findOrFail($userId);
 
         if (!$project->users()->where('user_id', $userId)->exists()) {
-            Notification::make()->title('User is not a collaborator on this project')->danger()->send();
+            Notification::make()->title(__('User is not a collaborator on this project'))->danger()->send();
             return;
         }
 
         if ($this->dashboard->sharedUsers()->where('user_id', $userId)->exists()) {
-            Notification::make()->title('Already shared with this user')->warning()->send();
+            Notification::make()->title(__('Already shared with this user'))->warning()->send();
             return;
         }
 
         $this->dashboard->sharedUsers()->attach($userId);
-        Notification::make()->title('Dashboard shared with ' . $user->name)->success()->send();
+        Notification::make()->title(__('Dashboard shared with :name', ['name' => $user->name]))->success()->send();
     }
 
     public function unshareUser(int $userId): void
     {
         $this->dashboard->sharedUsers()->detach($userId);
-        Notification::make()->title('User removed from shared list')->success()->send();
+        Notification::make()->title(__('User removed from shared list'))->success()->send();
     }
 
     public function togglePublic(): void
@@ -298,7 +298,7 @@ class DashboardBuilder extends Page
         $this->dashboard->update(['is_public' => !$this->dashboard->is_public]);
         $this->dashboard->refresh();
         Notification::make()
-            ->title($this->dashboard->is_public ? 'Dashboard is now public' : 'Dashboard is now private')
+            ->title($this->dashboard->is_public ? __('Dashboard is now public') : __('Dashboard is now private'))
             ->success()
             ->send();
     }
@@ -307,15 +307,15 @@ class DashboardBuilder extends Page
     {
         return [
             Actions\Action::make('settings')
-                ->label('Dashboard Settings')
+                ->label(__('Dashboard Settings'))
                 ->icon('heroicon-o-cog-6-tooth')
                 ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard])),
             Actions\Action::make('view')
-                ->label('View Dashboard')
+                ->label(__('View Dashboard'))
                 ->icon('heroicon-o-eye')
                 ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard])),
             Actions\Action::make('back')
-                ->label('Back to Dashboards')
+                ->label(__('Back to Dashboards'))
                 ->icon('heroicon-o-arrow-left')
                 ->url(DashboardResource::getUrl('index')),
         ];

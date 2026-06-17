@@ -57,7 +57,7 @@ class PayPalWebhookController extends Controller
     protected function handleSubscriptionActivated(array $resource)
     {
         $subscriptionId = $resource['id'];
-        Subscription::where('paypal_id', $subscriptionId)->update([
+        Subscription::where('paypal_subscription_id', $subscriptionId)->update([
             'paypal_status' => 'ACTIVE',
         ]);
     }
@@ -72,9 +72,9 @@ class PayPalWebhookController extends Controller
             'BILLING.SUBSCRIPTION.EXPIRED' => 'EXPIRED',
         ];
 
-        Subscription::where('paypal_id', $subscriptionId)->update([
+        Subscription::where('paypal_subscription_id', $subscriptionId)->update([
             'paypal_status' => $statusMap[$eventType] ?? 'INACTIVE',
-            'ends_at' => now(), // Or parse from resource if available
+            'ends_at' => now(),
         ]);
     }
 
@@ -83,22 +83,26 @@ class PayPalWebhookController extends Controller
         $billingAgreementId = $resource['billing_agreement_id'] ?? null;
         
         if (!$billingAgreementId) {
-            return; // Not a subscription payment
+            return;
         }
 
-        $subscription = Subscription::where('paypal_id', $billingAgreementId)->first();
+        $subscription = Subscription::where('paypal_subscription_id', $billingAgreementId)->first();
 
         if ($subscription) {
+            $totalAmount = (float) ($resource['amount']['total'] ?? 0);
+            $taxData = app(\App\Services\TaxCalculationService::class)->calculateTaxes($subscription->billingProfile, $totalAmount);
+
             Invoice::updateOrCreate(
                 ['gateway_invoice_id' => $resource['id']],
-                [
+                array_merge([
                     'billing_profile_id' => $subscription->billing_profile_id,
+                    'subscription_id' => $subscription->id,
                     'gateway' => 'paypal',
-                    'amount' => $resource['amount']['total'] ?? 0,
+                    'amount' => $totalAmount,
                     'currency' => $resource['amount']['currency'] ?? 'USD',
                     'status' => 'paid',
-                    'paid_at' => now(), // You might want to parse $resource['create_time']
-                ]
+                    'paid_at' => now(),
+                ], $taxData)
             );
         }
     }
@@ -132,26 +136,65 @@ class PayPalWebhookController extends Controller
 
     protected function handleDisputeCreated(array $resource)
     {
-        // PayPal Disputes usually link to transaction IDs. We need to find the related invoice/subscription.
-        // For simplicity in this webhook structure, assuming we can derive the billing profile:
-        // In a real scenario, you'd fetch the transaction to get the subscription.
-        Log::warning("PayPal Webhook: Dispute created. Manual inspection required.", ['resource' => $resource]);
-        
-        // Pseudo-logic assuming we found the billing profile ID from the transaction:
-        /*
-        $billingProfile = BillingProfile::find($id);
-        $billingProfile->update(['health_status' => 'disputed']);
-        
-        $projects = $billingProfile->authorizedProjects;
-        foreach ($projects as $project) {
-            $project->update(['billing_status' => 'suspended']);
+        $saleId = $resource['disputed_transactions'][0]['seller_transaction_id'] ?? null;
+        if (!$saleId) {
+            Log::warning('PayPal Dispute: No seller_transaction_id found', ['resource' => $resource]);
+            return;
         }
-        */
+
+        $invoice = Invoice::where('gateway_invoice_id', $saleId)->first();
+        if (!$invoice) {
+            Log::warning('PayPal Dispute: No local invoice found for sale', ['sale_id' => $saleId]);
+            return;
+        }
+
+        $invoice->update(['status' => 'disputed']);
+
+        $profile = $invoice->billingProfile;
+        if ($profile) {
+            $projects = $profile->authorizedProjects()->where('billing_status', 'active')->get();
+            foreach ($projects as $project) {
+                $project->update(['billing_status' => 'suspended']);
+            }
+
+            if ($profile->user) {
+                $profile->user->notify(new \App\Notifications\PaymentFailedNotification());
+            }
+        }
+
+        Log::info("PayPal Webhook: Dispute created for invoice {$invoice->id}");
     }
 
     protected function handleDisputeResolved(array $resource)
     {
-        Log::info("PayPal Webhook: Dispute resolved.", ['resource' => $resource]);
+        $saleId = $resource['disputed_transactions'][0]['seller_transaction_id'] ?? null;
+        if (!$saleId) {
+            Log::warning('PayPal Dispute resolved: No seller_transaction_id found');
+            return;
+        }
+
+        $invoice = Invoice::where('gateway_invoice_id', $saleId)->first();
+        if (!$invoice) {
+            Log::warning('PayPal Dispute resolved: No local invoice found', ['sale_id' => $saleId]);
+            return;
+        }
+
+        $outcome = $resource['dispute_outcome']['outcome_code'] ?? '';
+        $newStatus = in_array($outcome, ['RESOLVED_SELLER_FAVOUR', 'RESOLVED_BUYER_FAVOUR_WITH_GUARANTEE'])
+            ? 'paid'
+            : 'refunded';
+
+        $invoice->update(['status' => $newStatus]);
+
+        $profile = $invoice->billingProfile;
+        if ($profile && $newStatus === 'paid') {
+            $projects = $profile->authorizedProjects()->where('billing_status', 'suspended')->get();
+            foreach ($projects as $project) {
+                $project->update(['billing_status' => 'active']);
+            }
+        }
+
+        Log::info("PayPal Webhook: Dispute resolved for invoice {$invoice->id}, status set to {$newStatus}");
     }
 
     protected function handlePaymentRefunded(array $resource)

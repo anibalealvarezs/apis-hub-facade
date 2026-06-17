@@ -156,10 +156,10 @@ class ManageCollaborators extends Page implements HasTable
                         Notification::make()->success()->title(__('User removed from project'))->send();
                     }),
                 Action::make('manage_assets')
-                    ->label('Manage Assets')
+                    ->label(__('Manage Assets'))
                     ->icon('heroicon-o-shield-check')
-                    ->modalHeading(fn (User $record) => "Asset scoping: {$record->name}")
-                    ->modalDescription('Restrict which assets this user can see in dashboards. When "Allow all" is on, the user sees every enabled asset for that channel.')
+                    ->modalHeading(fn (User $record) => __('Asset scoping:') . " {$record->name}")
+                    ->modalDescription(__('Restrict which assets this user can see in dashboards. When "Allow all" is on, the user sees every enabled asset for that channel.'))
                     ->modalWidth('2xl')
                     ->hidden(function (User $record) use ($project) {
                         if (!auth()->user()->can('manage_collaborators')) {
@@ -210,7 +210,7 @@ class ManageCollaborators extends Page implements HasTable
 
                         Notification::make()
                             ->success()
-                            ->title("Asset scoping updated for {$record->name}")
+                            ->title(__('Asset scoping updated for :name', ['name' => $record->name]))
                             ->send();
                     }),
             ])
@@ -219,14 +219,20 @@ class ManageCollaborators extends Page implements HasTable
                     ->label(__('Invite Collaborator'))
                     ->icon('heroicon-o-envelope')
                     ->hidden(fn () => ! auth()->user()->can('manage_collaborators'))
-                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || Filament::getTenant()->billingProfile?->tier === \App\Enums\UserTier::FREE)
+                    ->disabled(function () {
+                        $tenant = Filament::getTenant();
+                        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
+                            return true;
+                        }
+                        return !app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE);
+                    })
                     ->tooltip(function () {
                         $tenant = Filament::getTenant();
                         if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
                             return __('Project is inactive or suspended.');
                         }
-                        if ($tenant->billingProfile?->tier === \App\Enums\UserTier::FREE) {
-                            return __('Upgrade to a paid plan to invite collaborators.');
+                        if (!app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE)) {
+                            return __('Upgrade to Ultra or Enterprise plan to invite collaborators.');
                         }
 
                         return null;
@@ -289,7 +295,13 @@ class ManageCollaborators extends Page implements HasTable
                             $notifyUser->notify(new \App\Notifications\InvitationSent($project, $data['email'], $data['role']));
                         }
 
-                        Notification::make()->success()->title(__('Invitation sent via email.'))->send();
+                        $inviteUrl = url("/app/invitations/{$invitation->token}/accept");
+
+                        Notification::make()
+                            ->success()
+                            ->title(__('Invitation sent via email.'))
+                            ->body(__('Share this link with the collaborator if they don\'t receive the email:') . ' ' . $inviteUrl)
+                            ->send();
                     }),
             ]);
     }
@@ -362,14 +374,14 @@ class ManageCollaborators extends Page implements HasTable
             }
 
             $schema[] = Section::make($label)
-                ->description('Restrict which ' . $label . ' assets this user can access')
+                ->description(__('Restrict which :label assets this user can access', ['label' => $label]))
                 ->schema([
                     Toggle::make("allow_all_{$channel}")
-                        ->label("Allow all {$label} assets")
+                        ->label(__('Allow all :label assets', ['label' => $label]))
                         ->default(true)
                         ->reactive(),
                     Select::make("assets_{$channel}")
-                        ->label("Select specific assets")
+                        ->label(__('Select specific assets'))
                         ->options($assets)
                         ->multiple()
                         ->visible(fn (callable $get) => !$get("allow_all_{$channel}")),

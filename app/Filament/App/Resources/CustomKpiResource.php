@@ -24,6 +24,20 @@
 
         protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
+        public static function canCreate(): bool
+        {
+            $project = \Filament\Facades\Filament::getTenant();
+            if (!$project || !$project->billingProfile) {
+                return false;
+            }
+
+            $currentCount = CustomKpi::where('project_id', $project->id)->count();
+            $maxKpis = app(\App\Services\BillingLifecycleService::class)
+                ->getMaxCustomKpisForTier($project->billingProfile->tier);
+
+            return $currentCount < $maxKpis;
+        }
+
         public static function getNavigationGroup(): ?string
         {
             return __('Exploration & Telemetry');
@@ -42,7 +56,7 @@
                                 ->maxLength(65535)
                                 ->columnSpanFull(),
                             Forms\Components\Toggle::make('is_active')
-                                ->label('Active')
+                                ->label(__('Active'))
                                 ->default(true),
                         ])->columns(2),
 
@@ -74,7 +88,7 @@
                 ])
                 ->actions([
                 Tables\Actions\Action::make('execute')
-                    ->label('Execute KPI')
+                    ->label(__('Execute KPI'))
                     ->icon('heroicon-o-play')
                     ->color('success')
                     ->form(function (CustomKpi $record) {
@@ -83,15 +97,15 @@
 
                         if (empty($uiState['start_date'])) {
                             $fields[] = Forms\Components\DatePicker::make('start_date')
-                                ->label('Start Date');
+                                ->label(__('Start Date'));
                         }
                         if (empty($uiState['end_date'])) {
                             $fields[] = Forms\Components\DatePicker::make('end_date')
-                                ->label('End Date');
+                                ->label(__('End Date'));
                         }
                         if (empty($uiState['granularity'])) {
                             $fields[] = Forms\Components\Select::make('granularity')
-                                ->label('Granularity')
+                                ->label(__('Granularity'))
                                 ->options([
                                     'daily' => 'Daily',
                                     'weekly' => 'Weekly',
@@ -101,7 +115,7 @@
 
                         if (empty($uiState['dependent_channel'])) {
                             $fields[] = Forms\Components\Select::make('runtime_dependent_channel')
-                                ->label('Dependent Channel')
+                                ->label(__('Dependent Channel'))
                                 ->options(fn () => KpiFormBuilder::getActiveChannels())
                                 ->live()
                                 ->afterStateUpdated(fn (Forms\Set $set) => $set('runtime_dependent_metric', null));
@@ -109,7 +123,7 @@
 
                         if (empty($uiState['dependent_metric'])) {
                             $fields[] = Forms\Components\Select::make('runtime_dependent_metric')
-                                ->label('Dependent Metric')
+                                ->label(__('Dependent Metric'))
                                 ->options(function (Get $get) use ($uiState) {
                                     $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
                                     return KpiFormBuilder::getMetricOptionsForChannel($channel);
@@ -119,7 +133,7 @@
 
                         if (empty($uiState['dependent_asset_filter'])) {
                             $fields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
-                                ->label('Dependent Asset Filter')
+                                ->label(__('Dependent Asset Filter'))
                                 ->options(function (Get $get) use ($uiState) {
                                     $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
                                     return KpiFormBuilder::getAssetOptionsForChannel($channel);
@@ -133,7 +147,7 @@
 
                             if (empty($var['independent_channel'])) {
                                 $fields[] = Forms\Components\Select::make("{$prefix}_channel")
-                                    ->label('Variable ' . ($idx + 1) . ' - Channel')
+                                    ->label(__('Variable ' . ($idx + 1) . ' - Channel'))
                                     ->options(fn () => KpiFormBuilder::getActiveChannels())
                                     ->live()
                                     ->afterStateUpdated(fn (Forms\Set $set) => $set("{$prefix}_metric", null));
@@ -141,7 +155,7 @@
 
                             if (empty($var['independent_metric'])) {
                                 $fields[] = Forms\Components\Select::make("{$prefix}_metric")
-                                    ->label('Variable ' . ($idx + 1) . ' - Metric')
+                                    ->label(__('Variable ' . ($idx + 1) . ' - Metric'))
                                         ->options(function (Get $get) use ($var, $idx) {
                                         $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
                                         return KpiFormBuilder::getMetricOptionsForChannel($channel);
@@ -151,7 +165,7 @@
 
                             if (empty($var['independent_asset_filter'])) {
                                 $fields[] = Forms\Components\Select::make("{$prefix}_asset_filter")
-                                    ->label('Variable ' . ($idx + 1) . ' - Asset Filter')
+                                    ->label(__('Variable ' . ($idx + 1) . ' - Asset Filter'))
                                     ->options(function (Get $get) use ($var, $idx) {
                                         $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
                                         return KpiFormBuilder::getAssetOptionsForChannel($channel);
@@ -163,22 +177,22 @@
 
                         if (empty($uiState['zero_handling'])) {
                             $fields[] = Forms\Components\Select::make('zero_handling')
-                                ->label('Zero Handling')
+                                ->label(__('Zero Handling'))
                                 ->options([
                                     'remove' => 'Remove Zeroes',
                                     'trim' => 'Trim Leading/Trailing Zeroes',
                                     'keep' => 'Keep Zeroes',
                                 ])
                                 ->default('remove')
-                                ->helperText('How to treat zero values in the time series before analysis.');
+                                ->helperText(__('How to treat zero values in the time series before analysis.'));
                         }
 
                         $fields[] = Forms\Components\Actions::make([
                             Forms\Components\Actions\Action::make('previewPayload')
-                                ->label('Preview Payload')
+                                ->label(__('Preview Payload'))
                                 ->icon('heroicon-o-code-bracket')
                                 ->color('gray')
-                                ->modalHeading('Payload Preview')
+                                ->modalHeading(__('Payload Preview'))
                                 ->modalContent(function (Get $get, CustomKpi $record) {
                                     $uiState = $record->filters['_ui_state'] ?? [];
 
@@ -281,14 +295,14 @@
 
                         if (isset($result['success']) && $result['success']) {
                             \Filament\Notifications\Notification::make()
-                                ->title('Execution Successful')
+                                ->title(__('Execution Successful'))
                                 ->success()
                                 ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">'.json_encode($result['data'] ?? [], JSON_PRETTY_PRINT).'</pre>')
                                 ->persistent()
                                 ->send();
                         } else {
                             \Filament\Notifications\Notification::make()
-                                ->title('Execution Failed')
+                                ->title(__('Execution Failed'))
                                 ->danger()
                                 ->body($result['message'] ?? 'An unknown error occurred.')
                                 ->persistent()
@@ -296,11 +310,11 @@
                         }
                     }),
                     Tables\Actions\Action::make('debugPayload')
-                        ->label('Debug Payload')
+                        ->label(__('Debug Payload'))
                         ->icon('heroicon-o-code-bracket')
                         ->color('gray')
                         ->visible(fn() => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
-                        ->modalHeading('Payload Debugger')
+                        ->modalHeading(__('Payload Debugger'))
                         ->modalContent(function (CustomKpi $record) {
                             $uiState = $record->filters['_ui_state'] ?? [];
                             $payload = KpiPayloadBuilder::build(

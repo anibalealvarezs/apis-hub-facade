@@ -55,6 +55,17 @@ class ArchivedProjectsTable extends Component implements HasForms, HasTable
                     ->modalHeading('Restaurar Proyecto')
                     ->modalDescription('¿Estás seguro de que quieres restaurar este proyecto? Esto rehabilitará el tráfico al dominio y restaurará el acceso.')
                     ->action(function (Project $record) {
+                        $user = auth()->user();
+
+                        if ($user->hasOnlyFreeProfiles() && $user->getTotalAccessibleProjectsCount() >= 1) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Restore blocked')
+                                ->body('Your free tier plan only allows one active project. To restore this project, you must delete your other project or upgrade your billing profile.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
                         $record->restore();
                         // Despachar Job para rehabilitar el Caddy config
                         \App\Jobs\RestoreProjectDomainJob::dispatch($record);

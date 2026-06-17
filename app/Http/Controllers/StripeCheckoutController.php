@@ -21,7 +21,7 @@ class StripeCheckoutController extends Controller
 
         $plan = SubscriptionPlan::findOrFail($request->plan_id);
         
-        $priceId = $request->billing_cycle === 'annual' ? $plan->stripe_annual_price_id : $plan->stripe_price_id;
+        $priceId = $plan->stripe_price_id;
 
         if (empty($priceId)) {
             return back()->with('error', "This plan is not configured for Stripe {$request->billing_cycle} billing yet.");

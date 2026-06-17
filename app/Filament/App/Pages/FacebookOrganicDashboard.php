@@ -10,8 +10,18 @@ class FacebookOrganicDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?string $navigationGroup = 'Meta';
-    protected static ?string $navigationLabel = 'Facebook Organic';
+    public static function getNavigationLabel(): string
+    {
+        return __('Facebook Organic');
+    }
+
+    
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Meta');
+    }
+
 
     public function getTitle(): string
     {
@@ -116,7 +126,12 @@ class FacebookOrganicDashboard extends Page
                     }
                 }
 
-                $label = $fbAcc['name'] ?? 'Facebook Page';
+                if ($igAcc) {
+                    $igName = $igAcc['name'] ?? $igAcc['username'] ?? 'Instagram';
+                    $label = $igName . ' (via ' . ($fbAcc['name'] ?? 'Facebook Page') . ')';
+                } else {
+                    $label = $fbAcc['name'] ?? 'Facebook Page';
+                }
 
                 $fbPageId = (string) ($fbAcc['pageId'] ?? $fbAcc['page_id'] ?? 'NONE');
                 $fbPlatformId = $cleanFbId !== '' ? $cleanFbId : 'NONE';

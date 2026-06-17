@@ -79,6 +79,9 @@ class FacebookMarketingController extends Controller
                 'total_spend' => 'spend',
                 'total_clicks' => 'clicks',
                 'total_impressions' => 'impressions',
+                'total_reach' => 'reach',
+                'average_frequency' => 'frequency',
+                'average_cpm' => 'cpm',
                 'average_ctr' => 'ctr',
                 'average_cpc' => 'cpc',
                 'average_purchase_roas' => 'purchase_roas',
@@ -122,6 +125,9 @@ class FacebookMarketingController extends Controller
                     'total_spend' => 'spend',
                     'total_clicks' => 'clicks',
                     'total_impressions' => 'impressions',
+                    'total_reach' => 'reach',
+                    'average_frequency' => 'frequency',
+                    'average_cpm' => 'cpm',
                     'average_ctr' => 'ctr',
                     'average_cpc' => 'cpc',
                     'average_purchase_roas' => 'purchase_roas',
@@ -173,6 +179,9 @@ class FacebookMarketingController extends Controller
                 'trend_total_spend' => 'spend',
                 'trend_total_clicks' => 'clicks',
                 'trend_total_impressions' => 'impressions',
+                'trend_total_reach' => 'reach',
+                'trend_average_frequency' => 'frequency',
+                'trend_average_cpm' => 'cpm',
                 'trend_average_ctr' => 'ctr',
                 'trend_average_cpc' => 'cpc',
                 'trend_total_results' => 'results',
@@ -208,6 +217,39 @@ class FacebookMarketingController extends Controller
         }
     }
 
+    public function trend(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tenant' => 'required|string',
+                'series' => 'required|array',
+                'series.dates' => 'required|array',
+                'series.values' => 'required|array',
+                'metric' => 'required|string'
+            ]);
+
+            $service = app(RemoteEngineService::class);
+            
+            // For Paid Media, we use EMA 7 vs 14 as per specs
+            $payload = [
+                'series' => $validated['series'],
+                'metric' => $validated['metric'],
+                'short_window' => 7,
+                'long_window' => 14
+            ];
+
+            $result = $service->getTrend('ema', $payload);
+
+            return response()->json([
+                'trend' => $result,
+                'metric' => $validated['metric']
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("FBM Trend Error: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function table(Request $request)
     {
         try {
@@ -219,6 +261,9 @@ class FacebookMarketingController extends Controller
                 'total_spend' => 'spend',
                 'total_clicks' => 'clicks',
                 'total_impressions' => 'impressions',
+                'total_reach' => 'reach',
+                'average_frequency' => 'frequency',
+                'average_cpm' => 'cpm',
                 'average_ctr' => 'ctr',
                 'average_cpc' => 'cpc',
                 'total_results' => 'results',
@@ -306,6 +351,9 @@ class FacebookMarketingController extends Controller
                     'total_spend' => 'spend',
                     'total_clicks' => 'clicks',
                     'total_impressions' => 'impressions',
+                    'total_reach' => 'reach',
+                    'average_frequency' => 'frequency',
+                    'average_cpm' => 'cpm',
                     'average_ctr' => 'ctr',
                     'average_cpc' => 'cpc',
                     'average_purchase_roas' => 'purchase_roas',

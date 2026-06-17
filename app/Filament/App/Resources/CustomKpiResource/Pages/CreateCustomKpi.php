@@ -34,14 +34,14 @@ class CreateCustomKpi extends CreateRecord
     {
         return [
             Actions\Action::make('execute')
-                ->label('Test KPI Payload')
+                ->label(__('Test KPI Payload'))
                 ->icon('heroicon-o-play')
                 ->color('success')
                 ->action(function () {
                     $state = $this->form->getState();
                     
                     if (empty($state['calculation_type'])) {
-                        \Filament\Notifications\Notification::make()->title('Missing calculation type')->danger()->send();
+                        \Filament\Notifications\Notification::make()->title(__('Missing calculation type'))->danger()->send();
                         return;
                     }
 
@@ -56,14 +56,14 @@ class CreateCustomKpi extends CreateRecord
 
                     if (isset($result['success']) && $result['success']) {
                         \Filament\Notifications\Notification::make()
-                            ->title('Execution Successful')
+                            ->title(__('Execution Successful'))
                             ->success()
                             ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">' . json_encode($result['data'] ?? [], JSON_PRETTY_PRINT) . '</pre>')
                             ->persistent()
                             ->send();
                     } else {
                         \Filament\Notifications\Notification::make()
-                            ->title('Execution Failed')
+                            ->title(__('Execution Failed'))
                             ->danger()
                             ->body($result['message'] ?? 'An unknown error occurred.')
                             ->persistent()
@@ -71,11 +71,11 @@ class CreateCustomKpi extends CreateRecord
                     }
                 }),
             Actions\Action::make('debug')
-                ->label('Debug Payload')
+                ->label(__('Debug Payload'))
                 ->icon('heroicon-o-code-bracket')
                 ->color('gray')
                 ->visible(fn () => config('app.env') !== 'production')
-                ->modalHeading('Payload Debugger')
+                ->modalHeading(__('Payload Debugger'))
                 ->modalContent(function () {
                     $state = $this->form->getState();
                     if (empty($state['calculation_type'])) {

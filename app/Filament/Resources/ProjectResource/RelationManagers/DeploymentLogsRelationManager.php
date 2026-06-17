@@ -49,7 +49,7 @@ class DeploymentLogsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('completed_at')
                     ->dateTime()
                     ->sortable()
-                    ->placeholder('-'),
+                    ->placeholder(__('-')),
             ])
             ->filters([
                 //

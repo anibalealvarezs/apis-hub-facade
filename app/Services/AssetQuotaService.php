@@ -112,38 +112,51 @@ class AssetQuotaService
 
         $activeAssets = [];
 
+        $collectAsset = function (array $asset, string $channelKey) use ($project, $ownerId, &$activeAssets) {
+            if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
+                $identifier = $asset['id'] ?? $asset['url'] ?? null;
+                if ($identifier) {
+                    $activeAssets[$channelKey][] = $identifier;
+
+                    $lock = AssetBillingLock::where('project_id', $project->id)
+                        ->where('channel', $channelKey)
+                        ->where('asset_identifier', $identifier)
+                        ->first();
+
+                    if (!$lock) {
+                        AssetBillingLock::create([
+                            'user_id' => $ownerId,
+                            'project_id' => $project->id,
+                            'channel' => $channelKey,
+                            'asset_identifier' => $identifier,
+                            'status' => 'staged',
+                            'staged_at' => now(),
+                        ]);
+                    }
+                }
+            }
+        };
+
+        $scanner = function ($obj, string $channelKey) use (&$scanner, $collectAsset) {
+            if (!is_array($obj)) return;
+
+            if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
+                $collectAsset($obj, $channelKey);
+                return;
+            }
+
+            foreach ($obj as $child) {
+                if (is_array($child)) {
+                    $scanner($child, $channelKey);
+                }
+            }
+        };
+
         foreach ($syncConfig as $channelKey => $channelConfig) {
             if (!is_array($channelConfig)) continue;
             if (empty($channelConfig['enabled'])) continue;
 
-            foreach ($channelConfig as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $asset) {
-                        if (!empty($asset['enabled']) && empty($asset['lost_access'])) {
-                            $identifier = $asset['id'] ?? $asset['url'] ?? null;
-                            if ($identifier) {
-                                $activeAssets[$channelKey][] = $identifier;
-
-                                $lock = AssetBillingLock::where('project_id', $project->id)
-                                    ->where('channel', $channelKey)
-                                    ->where('asset_identifier', $identifier)
-                                    ->first();
-
-                                if (!$lock) {
-                                    AssetBillingLock::create([
-                                        'user_id' => $ownerId,
-                                        'project_id' => $project->id,
-                                        'channel' => $channelKey,
-                                        'asset_identifier' => $identifier,
-                                        'status' => 'staged',
-                                        'staged_at' => now(),
-                                    ]);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            $scanner($channelConfig, $channelKey);
         }
 
         $existingLocks = AssetBillingLock::where('project_id', $project->id)->get();
@@ -152,7 +165,9 @@ class AssetQuotaService
 
             if (!$isActive) {
                 if ($lock->status === 'staged') {
-                    $lock->delete();
+                    if (!$lock->disabled_at) {
+                        $lock->update(['disabled_at' => now()]);
+                    }
                 } elseif ($lock->status === 'locked') {
                     $lock->update([
                         'status' => 'pending_release',

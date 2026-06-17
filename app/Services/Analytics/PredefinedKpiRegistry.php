@@ -447,6 +447,66 @@ class PredefinedKpiRegistry
                     ]
                 ]
             ],
+            'seo_structural_inertia' => [
+                'name' => 'SEO Structural Inertia (Linear + SMA)',
+                'description' => 'Calculates the underlying growth trend of your organic search presence by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'impressionable'],
+                'calculation_type' => 'calculate_trend_linear',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__SEO_CHANNEL_1__',
+                        'metric' => 'impressions'
+                    ]
+                ]
+            ],
+            'fb_algorithmic_inertia' => [
+                'name' => 'Algorithmic Basal Inertia (Holt-Winters)',
+                'description' => 'Isolates the true algorithmic distribution floor of your Facebook Page by mathematically removing weekly seasonality using Triple Exponential Smoothing.',
+                'scope' => 'asset',
+                'categories' => ['organic', 'trends', 'seasonality', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'reach_driven'],
+                'calculation_type' => 'calculate_trend_holt_winters',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                        'metric' => 'reach'
+                    ]
+                ]
+            ],
+            'ig_viral_momentum' => [
+                'name' => 'Viral Momentum (Logarithmic Trend)',
+                'description' => 'Determines if an Instagram post has broken the standard temporal decay curve by applying a Logarithmic Regression against interaction velocity.',
+                'scope' => 'asset',
+                'categories' => ['organic', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'reach_driven'],
+                'calculation_type' => 'calculate_trend_logarithmic',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                        'metric' => 'total_interactions'
+                    ]
+                ]
+            ],
+            'paid_learning_inertia' => [
+                'name' => 'Learning Phase Inertia (EMA Crossover)',
+                'description' => 'Uses Exponential Moving Average crossovers (EMA 7 vs EMA 14) to mathematically confirm when an ad campaign\'s cost efficiency trend has genuinely shifted due to optimization.',
+                'scope' => 'channel',
+                'categories' => ['cost', 'trends', 'performance', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable'],
+                'calculation_type' => 'calculate_trend_ema',
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__SPENDABLE_CHANNEL_1__',
+                        'metric' => 'cost_per_result'
+                    ]
+                ]
+            ],
         ];
     }
 

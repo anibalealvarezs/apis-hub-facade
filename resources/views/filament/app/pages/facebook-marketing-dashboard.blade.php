@@ -3,6 +3,9 @@
         :root {
             --fb-spend: #10b981;
             --fb-impr: #6366f1;
+            --fb-reach: #3b82f6;
+            --fb-freq: #f43f5e;
+            --fb-cpm: #eab308;
             --fb-clicks: #0ea5e9;
             --fb-ctr: #8b5cf6;
             --fb-cpc: #f59e0b;
@@ -40,7 +43,7 @@
 
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
 
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-fb {
             background: var(--fb-bg-card);
@@ -137,11 +140,22 @@
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('Meta Ads Manager Insights') }}
+                    {{ __('Meta Ads Insights') }}
                 </h1>
             </div>
             <div class="fb-header-controls">
-                <button type="button" @click="forceRefresh()"
+                <div class="flex items-center mr-4 gap-2">
+                    <button type="button" 
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
+                            @click="showTrends = !showTrends; handleTrendToggle()" 
+                            role="switch" 
+                            :aria-checked="showTrends.toString()">
+                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                </div>                <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
                         :disabled="isSummaryLoading || isChartLoading || isTableLoading">
@@ -151,7 +165,8 @@
                 </button>
                 <div class="relative" x-data="{ open: false, searchAccount: '' }">
                     <button @click="open = !open" @click.outside="open = false" type="button"
-                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full sm:w-64 md:w-72 px-4 py-2.5 h-[42px]">
+                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px]"
+                            style="max-width:250px;">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                               x-text="accounts.length === 0 ? '{{ __('Select Ad Accounts...') }}' : (accounts.length === 1 ? accountNames[accounts[0]] : accounts.length + ' {{ __('accounts') }}')"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
@@ -247,6 +262,33 @@
                     <span x-text="formatVariance(variance.impressions)"></span>
                 </div>
             </div>
+            <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''"
+                 @click="toggleMetric('reach')" style="--color: var(--fb-reach);">
+                <div class="fb-label">{{ __('Reach') }}</div>
+                <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
+                    <span x-text="getVarianceIcon(variance.reach)"></span>
+                    <span x-text="formatVariance(variance.reach)"></span>
+                </div>
+            </div>
+            <div class="card-stat-fb" :class="activeMetrics.frequency ? 'active' : ''"
+                 @click="toggleMetric('frequency')" style="--color: var(--fb-freq);">
+                <div class="fb-label">{{ __('Frequency') }}</div>
+                <div class="card-metric-value" x-text="formatDecimal(summary.frequency)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.frequency, true)">
+                    <span x-text="getVarianceIcon(variance.frequency, true)"></span>
+                    <span x-text="formatVariance(variance.frequency)"></span>
+                </div>
+            </div>
+            <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''"
+                 @click="toggleMetric('cpm')" style="--color: var(--fb-cpm);">
+                <div class="fb-label">{{ __('CPM') }}</div>
+                <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
+                    <span x-text="getVarianceIcon(variance.cpm, true)"></span>
+                    <span x-text="formatVariance(variance.cpm)"></span>
+                </div>
+            </div>
             <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                  style="--color: var(--fb-clicks);">
                 <div class="fb-label">{{ __('Link Clicks') }}</div>
@@ -285,6 +327,9 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
                  @click="toggleMetric('cost_per_result')" style="--color: var(--fb-cpr);">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="fb-label">{{ __('Cost per Result') }}</div>
                 <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_result)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_result, true)">
@@ -303,6 +348,9 @@
             </div>
             <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
                  @click="toggleMetric('purchase_roas')" style="--color: var(--fb-roas);">
+                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                </div>
                 <div class="fb-label">{{ __('ROAS') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.purchase_roas) + 'x'"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.purchase_roas)">
@@ -394,6 +442,15 @@
                         <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }}
                             <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
                         </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('reach')">{{ __('Reach') }}
+                            <span x-show="sortCol === 'reach'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('frequency')">{{ __('Freq.') }}
+                            <span x-show="sortCol === 'frequency'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
+                        <th class="metric-cell cursor-pointer" @click="sortBy('cpm')">{{ __('CPM') }}
+                            <span x-show="sortCol === 'cpm'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                        </th>
                         <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Link Clicks') }} <span
                                 x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
                         <th class="metric-cell cursor-pointer" @click="sortBy('results')">{{ __('Purchases') }} <span
@@ -431,6 +488,9 @@
                             </td>
                             <td class="metric-cell" x-text="formatCurrency(row.spend)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
+                            <td class="metric-cell" x-text="formatNumber(row.reach)"></td>
+                            <td class="metric-cell" x-text="formatDecimal(row.frequency)"></td>
+                            <td class="metric-cell" x-text="formatCurrency(row.cpm)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.clicks)"></td>
                             <td class="metric-cell" x-text="formatNumber(row.results)"></td>
                             <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
@@ -494,6 +554,9 @@
                             spend: 0,
                             clicks: 0,
                             impressions: 0,
+                            reach: 0,
+                            frequency: 0,
+                            cpm: 0,
                             ctr: 0,
                             cpc: 0,
                             results: 0,
@@ -505,6 +568,9 @@
                             spend: 0,
                             clicks: 0,
                             impressions: 0,
+                            reach: 0,
+                            frequency: 0,
+                            cpm: 0,
                             ctr: 0,
                             cpc: 0,
                             results: 0,
@@ -514,11 +580,17 @@
                         },
                         chartDataRaw: [],
                         tableDataRaw: [],
+                        
+                        showTrends: false,
+                        trendData: {},
 
                         activeMetrics: {
                             spend: true,
                             clicks: true,
                             impressions: true,
+                            reach: false,
+                            frequency: false,
+                            cpm: false,
                             ctr: false,
                             cpc: false,
                             results: false,
@@ -589,8 +661,8 @@
                                         this.activeFilters.ads = [];
                                         this.saveFilters();
                                     }
-                                    this.loadFilters();
                                     this.syncToUrl();
+                                    this.trendData = {};
                                     this.fetchAll();
                                 });
                                 this.$watch('activeFilters.campaigns', (val) => {
@@ -716,6 +788,7 @@
 
                         forceRefresh() {
                             this.clearCache();
+                            this.trendData = {};
                             this.fetchAll();
                         },
 
@@ -780,6 +853,9 @@
                                     spend: 0,
                                     clicks: 0,
                                     impressions: 0,
+                                    reach: 0,
+                                    frequency: 0,
+                                    cpm: 0,
                                     ctr: 0,
                                     cpc: 0,
                                     results: 0,
@@ -791,6 +867,9 @@
                                     spend: 0,
                                     clicks: 0,
                                     impressions: 0,
+                                    reach: 0,
+                                    frequency: 0,
+                                    cpm: 0,
                                     ctr: 0,
                                     cpc: 0,
                                     results: 0,
@@ -811,6 +890,9 @@
                                         spend: 0,
                                         clicks: 0,
                                         impressions: 0,
+                                        reach: 0,
+                                        frequency: 0,
+                                        cpm: 0,
                                         ctr: 0,
                                         cpc: 0,
                                         results: 0,
@@ -822,6 +904,9 @@
                                         spend: 0,
                                         clicks: 0,
                                         impressions: 0,
+                                        reach: 0,
+                                        frequency: 0,
+                                        cpm: 0,
                                         ctr: 0,
                                         cpc: 0,
                                         results: 0,
@@ -837,6 +922,69 @@
                             }
                         },
 
+                        async fetchTrends() {
+                            if (!this.showTrends || !this.chartDataRaw || this.chartDataRaw.length === 0) return;
+                            
+                            const activeKeys = Object.keys(this.activeMetrics).filter(k => this.activeMetrics[k]);
+                            const allowedMetrics = ['cost_per_result', 'purchase_roas'];
+                            const validMetrics = activeKeys.filter(m => allowedMetrics.includes(m));
+                            
+                            if (validMetrics.length === 0) {
+                                this.updateChart();
+                                return;
+                            }
+                            
+                            this.isChartLoading = true;
+                            
+                            try {
+                                const promises = validMetrics.map(async (metric) => {
+                                    const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
+                                    const seriesValues = this.chartDataRaw.map(r => {
+                                        let v = r[metric] ?? r['trend_total_' + metric] ?? r['trend_average_' + metric];
+                                        return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
+                                    });
+                                    
+                                    const payload = {
+                                        tenant: this.tenantId,
+                                        metric: metric,
+                                        series: {
+                                            dates: seriesDates,
+                                            values: seriesValues
+                                        },
+                                        activeTab: this.activeTab
+                                    };
+                                    
+                                    const response = await fetch('/api/fbm/trend', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+                                    const data = await response.json();
+                                    if(data.trend) {
+                                        this.trendData[metric] = data.trend;
+                                    }
+                                });
+                                
+                                await Promise.all(promises);
+                                this.updateChart();
+                            } catch (error) {
+                                console.error('Error fetching trends:', error);
+                            } finally {
+                                this.isChartLoading = false;
+                            }
+                        },
+
+                        handleTrendToggle() {
+                            if (this.showTrends) {
+                                this.fetchTrends();
+                            } else {
+                                this.updateChart();
+                            }
+                        },
+                        
                         async fetchChart() {
                             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
                             const cacheKey = this.getCacheKey('chart');
@@ -844,7 +992,11 @@
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                                 this.chartDataRaw = data.chart || [];
-                                this.updateChart();
+                                if (this.showTrends) {
+                                    this.fetchTrends();
+                                } else {
+                                    this.updateChart();
+                                }
                                 return;
                             }
 
@@ -855,7 +1007,11 @@
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                                     this.chartDataRaw = data.chart || [];
-                                    this.updateChart();
+                                    if (this.showTrends) {
+                                        this.fetchTrends();
+                                    } else {
+                                        this.updateChart();
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error fetching chart:', error);
@@ -941,6 +1097,9 @@
                                 spend: calc(this.summary.spend, this.previous.spend),
                                 clicks: calc(this.summary.clicks, this.previous.clicks),
                                 impressions: calc(this.summary.impressions, this.previous.impressions),
+                                reach: calc(this.summary.reach, this.previous.reach),
+                                frequency: calc(this.summary.frequency, this.previous.frequency),
+                                cpm: calc(this.summary.cpm, this.previous.cpm),
                                 ctr: calc(this.summary.ctr, this.previous.ctr),
                                 cpc: calc(this.summary.cpc, this.previous.cpc),
                                 results: calc(this.summary.results, this.previous.results),
@@ -1000,11 +1159,14 @@
                                                 label: function(context) {
                                                     var label = context.dataset.label || '';
                                                     var value = context.parsed.y;
-                                                    if (['Amount Spent', 'CPC', 'Cost per Result'].includes(label)) {
+                                                    if (['Amount Spent', 'CPC', 'Cost per Result', 'CPM'].includes(label)) {
                                                         return label + ': $' + Number(value).toFixed(2);
                                                     }
                                                     if (['CTR', 'Result Rate'].includes(label)) {
                                                         return label + ': ' + Number(value).toFixed(2) + '%';
+                                                    }
+                                                    if (['Frequency'].includes(label)) {
+                                                        return label + ': ' + Number(value).toFixed(2);
                                                     }
                                                     if (label === 'ROAS') {
                                                         return label + ': ' + Number(value).toFixed(2) + 'x';
@@ -1074,6 +1236,9 @@
                                     daily: dateStr,
                                     spend: 0, trend_total_spend: 0,
                                     impressions: 0, trend_total_impressions: 0,
+                                    reach: 0, trend_total_reach: 0,
+                                    frequency: 0, trend_average_frequency: 0,
+                                    cpm: 0, trend_average_cpm: 0,
                                     clicks: 0, trend_total_clicks: 0,
                                     ctr: 0, trend_average_ctr: 0,
                                     cpc: 0, trend_average_cpc: 0,
@@ -1115,6 +1280,51 @@
                                     pointHoverRadius: 6,
                                     fill: true,
                                     yAxisID: 'yImpressions',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.reach) {
+                                datasets.push({
+                                    label: 'Reach',
+                                    data: chartData.map(r => r.reach || r.trend_total_reach || 0),
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: true,
+                                    yAxisID: 'yReach',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.frequency) {
+                                datasets.push({
+                                    label: 'Frequency',
+                                    data: chartData.map(r => r.frequency || r.trend_average_frequency || 0),
+                                    borderColor: '#F43F5E',
+                                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yFrequency',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.cpm) {
+                                datasets.push({
+                                    label: 'CPM',
+                                    data: chartData.map(r => r.cpm || r.trend_average_cpm || 0),
+                                    borderColor: '#EAB308',
+                                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yCpm',
                                     tension: 0.4
                                 });
                             }
@@ -1224,6 +1434,65 @@
                                 });
                             }
 
+                            if (this.showTrends) {
+                                const metricConfig = {
+                                    spend: { label: 'Amount Spent', color: '#10B981', yAxis: 'ySpend', mult: 1 },
+                                    impressions: { label: 'Impressions', color: '#6366F1', yAxis: 'yImpressions', mult: 1 },
+                                    reach: { label: 'Reach', color: '#3B82F6', yAxis: 'yReach', mult: 1 },
+                                    frequency: { label: 'Frequency', color: '#F43F5E', yAxis: 'yFrequency', mult: 1 },
+                                    cpm: { label: 'CPM', color: '#EAB308', yAxis: 'yCpm', mult: 1 },
+                                    clicks: { label: 'Clicks', color: '#0EA5E9', yAxis: 'yClicks', mult: 1 },
+                                    ctr: { label: 'CTR', color: '#8B5CF6', yAxis: 'yCtr', mult: 100 },
+                                    cpc: { label: 'CPC', color: '#F59E0B', yAxis: 'yCpc', mult: 1 },
+                                    results: { label: 'Purchases', color: '#14B8A6', yAxis: 'yResults', mult: 1 },
+                                    purchase_roas: { label: 'ROAS', color: '#EC4899', yAxis: 'yRoas', mult: 1 },
+                                    cost_per_result: { label: 'Cost per Result', color: '#A855F7', yAxis: 'yCpr', mult: 1 },
+                                    result_rate: { label: 'Result Rate', color: '#EF4444', yAxis: 'yRr', mult: 100 }
+                                };
+
+                                Object.keys(this.activeMetrics).forEach(metric => {
+                                    if (this.activeMetrics[metric] && this.trendData[metric]) {
+                                        const config = metricConfig[metric];
+                                        const trendLong = this.trendData[metric].trend_long || this.trendData[metric].trend || [];
+                                        const trendShort = this.trendData[metric].trend_short || [];
+
+                                        if (trendShort.length) {
+                                            datasets.push({
+                                                label: config.label + ' (EMA 7)',
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendShort.find(t => t.date === d);
+                                                    return point ? point.value * config.mult : null;
+                                                }),
+                                                borderColor: config.color,
+                                                borderDash: [5, 5],
+                                                borderWidth: 2,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: config.yAxis,
+                                                tension: 0.4
+                                            });
+                                        }
+
+                                        if (trendLong.length) {
+                                            datasets.push({
+                                                label: config.label + (trendShort.length ? ' (EMA 14)' : ' (Trend)'),
+                                                data: fullDateRange.map(d => {
+                                                    const point = trendLong.find(t => t.date === d);
+                                                    return point ? point.value * config.mult : null;
+                                                }),
+                                                borderColor: config.color,
+                                                borderDash: [2, 2],
+                                                borderWidth: 1,
+                                                pointRadius: 0,
+                                                fill: false,
+                                                yAxisID: config.yAxis,
+                                                tension: 0.4
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+
                             // Manage scale visibility and background grid dynamically
                             let gridDrawn = false;
                             const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--fb-chart-grid').trim();
@@ -1232,7 +1501,7 @@
                             chart.options.scales.x.grid.color = cssGridColor;
                             chart.options.scales.x.ticks.color = cssTicksColor;
 
-                            ['spend', 'impressions', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
+                            ['spend', 'impressions', 'reach', 'frequency', 'cpm', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
                                 let scaleId;
                                 if (m === 'purchase_roas') scaleId = 'yRoas';
                                 else if (m === 'cost_per_result') scaleId = 'yCpr';
@@ -1319,6 +1588,11 @@
                         formatNumber(num) {
                             if (num === undefined || num === null) return '0';
                             return new Intl.NumberFormat('en-US').format(num);
+                        },
+
+                        formatDecimal(num) {
+                            if (num === undefined || num === null) return '0.00';
+                            return new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(num);
                         },
 
                         formatCurrency(num) {

@@ -55,6 +55,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
         return (bool) ($this->is_active ?? true);
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool) $this->hasRole('super_admin');
+    }
+
     protected $fillable = [
         'name',
         'email',
@@ -71,6 +76,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function projects(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Project::class)->using(ProjectUser::class);
+    }
+
+    /**
+     * Relationship: Support tickets where this user is tagged internally (admin-only associations).
+     */
+    public function supportTicketInternalAssociations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(SupportTicket::class, 'ticket_internal_users');
     }
 
     /**

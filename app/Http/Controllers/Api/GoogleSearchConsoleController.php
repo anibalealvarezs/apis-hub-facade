@@ -200,4 +200,49 @@ class GoogleSearchConsoleController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function trend(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'tenant' => 'required|string',
+                'metric' => 'required|string',
+                'series' => 'required|array',
+                'series.dates' => 'required|array',
+                'series.values' => 'required|array',
+            ]);
+
+            $tenant = Project::findOrFail($validated['tenant']);
+            $service = app(RemoteEngineService::class);
+
+            $payload = [
+                'metric' => $validated['metric'],
+                'series' => $validated['series']
+            ];
+
+            // For GSC we need Linear regression + 28-day SMA
+            $linearResult = $service->getTrend('linear', $payload);
+            
+            $smaPayload = array_merge($payload, ['window' => 28]);
+            $smaResult = $service->getTrend('sma', $smaPayload);
+
+            $trendData = [];
+            
+            if (isset($linearResult['success']) && $linearResult['success']) {
+                $trendData['trend_linear'] = $linearResult['trend'] ?? [];
+            }
+            
+            if (isset($smaResult['success']) && $smaResult['success']) {
+                $trendData['trend_sma'] = $smaResult['trend'] ?? [];
+            }
+
+            if (empty($trendData)) {
+                return response()->json(['success' => false, 'error' => 'No trend calculated']);
+            }
+
+            return response()->json(['trend' => array_merge(['success' => true], $trendData)]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("GSC Trend Proxy Error: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

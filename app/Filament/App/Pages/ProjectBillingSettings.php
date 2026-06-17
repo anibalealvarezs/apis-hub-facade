@@ -3,6 +3,8 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\BillingProfile;
+use App\Notifications\BillingProfileAssignmentCancelledNotification;
+use App\Notifications\BillingProfileAssignmentRequestedNotification;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Pages\Page;
@@ -41,6 +43,7 @@ class ProjectBillingSettings extends Page
     {
         return [
             $this->assignProfileAction(),
+            $this->cancelPendingRequestAction(),
         ];
     }
 
@@ -113,9 +116,82 @@ class ProjectBillingSettings extends Page
 
                     \Filament\Notifications\Notification::make()
                         ->title(__('Assignment Requested'))
-                        ->body(__('The billing profile owner must approve this request before it can be activated.'))
+                        ->body(__('Your project will be deactivated until the billing profile owner approves this request. Your request will expire if not answered within 7 days. You can cancel it anytime from the billing settings page.'))
                         ->warning()
+                        ->persistent()
                         ->send();
+
+                    $profile->user->notify(new BillingProfileAssignmentRequestedNotification(
+                        billingProfile: $profile,
+                        project: $project,
+                        requesterName: auth()->user()->name,
+                    ));
+                }
+            });
+    }
+
+    public function cancelPendingRequestAction(): Action
+    {
+        return Action::make('cancel_pending_request')
+            ->label(__('Cancel Request'))
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->visible(function () {
+                $project = filament()->getTenant();
+                return $project?->billing_status === 'pending_approval';
+            })
+            ->requiresConfirmation()
+            ->modalHeading(__('Cancel Billing Profile Request'))
+            ->modalDescription(__('Are you sure you want to cancel your request to use the shared billing profile? Your project will be reassigned to your default billing profile and reactivated.'))
+            ->action(function () {
+                $project = filament()->getTenant();
+                $user = auth()->user();
+
+                $sharedProfile = $project->billingProfile;
+
+                $defaultProfile = $user->billingProfiles()
+                    ->where('is_default', true)
+                    ->first();
+
+                if ($defaultProfile && $defaultProfile->id !== $sharedProfile?->id) {
+                    $project->update([
+                        'billing_profile_id' => $defaultProfile->id,
+                        'billing_status' => 'active',
+                        'is_active' => true,
+                    ]);
+                } else {
+                    $fallback = $user->billingProfiles()
+                        ->where('id', '!=', $sharedProfile?->id)
+                        ->first();
+
+                    if ($fallback) {
+                        $project->update([
+                            'billing_profile_id' => $fallback->id,
+                            'billing_status' => 'active',
+                            'is_active' => true,
+                        ]);
+                    } else {
+                        $project->update([
+                            'billing_profile_id' => null,
+                            'billing_status' => 'suspended',
+                            'is_active' => false,
+                        ]);
+                    }
+                }
+
+                \Filament\Notifications\Notification::make()
+                    ->title(__('Request Cancelled'))
+                    ->body('Your request to use the shared billing profile has been cancelled. Your project has been reassigned.')
+                    ->success()
+                    ->send();
+
+                if ($sharedProfile && $sharedProfile->user_id !== $user->id) {
+                    $sharedProfile->user->notify(new BillingProfileAssignmentCancelledNotification(
+                        billingProfileName: $sharedProfile->name,
+                        projectName: $project->name,
+                        reason: 'cancelled',
+                        actorName: $user->name,
+                    ));
                 }
             });
     }

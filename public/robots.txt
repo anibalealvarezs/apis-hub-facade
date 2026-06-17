@@ -1,14 +1,30 @@
 User-agent: *
-Allow: /
-Allow: /sitemap.xml
-Disallow: /admin/
-Disallow: /app/
-Disallow: /login
 
-# Prevent crawlers from indexing subdomains if linked accidentally
-Disallow: /*?
-Disallow: /api/
-Disallow: /caddy/
-Disallow: /debug-saas
+# Block everything by default
+Disallow: /
+
+# Allow essential assets for page rendering
+Allow: /build/
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /favicon.ico
+
+# Allow explicitly indexed URLs (English)
+Allow: /$
+Allow: /app/login$
+Allow: /app/register$
+Allow: /privacy$
+Allow: /tos$
+Allow: /data-deletion$
+
+# Allow explicitly indexed URLs (Spanish)
+Allow: /es$
+Allow: /es/privacy$
+Allow: /es/tos$
+Allow: /es/data-deletion$
+
+# Allow Sitemap
+Allow: /sitemap.xml
 
 Sitemap: https://apis-hub.cloud/sitemap.xml

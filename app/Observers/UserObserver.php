@@ -25,8 +25,9 @@ class UserObserver
         // Automatically provision a default billing profile for the user, only if not invited
         if (!$hasValidInvitation) {
             $user->billingProfiles()->create([
-                'name' => $user->name . ' Default Profile',
-                'type' => 'personal',
+                'name' => $user->name,
+                'reference_name' => $user->name . ' Default Profile',
+                'type' => 'individual',
                 'tier' => UserTier::FREE,
                 'country_code' => 'ES',
                 'is_default' => true,

@@ -12,8 +12,13 @@ class AccountSubscription extends Page
     protected static ?string $navigationIcon = 'heroicon-o-star';
 
     protected static string $view = 'filament.account.pages.account-subscription';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Payments');
+    }
 
-    protected static ?string $navigationGroup = 'Billing & Payments';
+
+    
 
     public function getTitle(): string
     {
@@ -25,19 +30,46 @@ class AccountSubscription extends Page
         return __('Manage Subscriptions');
     }
 
-    public $plans;
+    public $monthlyPlans;
+    public $annualPlans;
+    
+    #[\Livewire\Attributes\Url(as: 'profile', history: true)]
     public $selectedProfileId;
 
     public function mount()
     {
-        $this->plans = SubscriptionPlan::where('is_active', true)->orderBy('price', 'asc')->get();
+        $tierOrder = ['pro' => 1, 'founder' => 2, 'ultra' => 3, 'enterprise' => 4];
+
+        $this->monthlyPlans = SubscriptionPlan::where('is_active', true)
+            ->whereIn('billing_cycle', ['monthly', 'both'])
+            ->get()
+            ->sortBy(function($plan) use ($tierOrder) {
+                $tierValue = $plan->tier instanceof \UnitEnum ? $plan->tier->value : $plan->tier;
+                return $tierOrder[strtolower($tierValue)] ?? 99;
+            })
+            ->values();
+
+        $this->annualPlans = SubscriptionPlan::where('is_active', true)
+            ->whereIn('billing_cycle', ['yearly', 'both'])
+            ->get()
+            ->sortBy(function($plan) use ($tierOrder) {
+                $tierValue = $plan->tier instanceof \UnitEnum ? $plan->tier->value : $plan->tier;
+                return $tierOrder[strtolower($tierValue)] ?? 99;
+            })
+            ->values();
         
-        // Select the default billing profile or the first available one
-        $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
-        if ($defaultProfile) {
-            $this->selectedProfileId = $defaultProfile->id;
+        $availableProfiles = auth()->user()->getAvailableBillingProfiles();
+
+        if ($this->selectedProfileId && $availableProfiles->contains($this->selectedProfileId)) {
+            // Valid profile provided via URL
         } else {
-            $this->selectedProfileId = auth()->user()->getAvailableBillingProfiles()->first()?->id;
+            // Select the default billing profile or the first available one
+            $defaultProfile = auth()->user()->billingProfiles()->where('is_default', true)->first();
+            if ($defaultProfile) {
+                $this->selectedProfileId = $defaultProfile->id;
+            } else {
+                $this->selectedProfileId = $availableProfiles->first()?->id;
+            }
         }
     }
 
@@ -60,11 +92,21 @@ class AccountSubscription extends Page
     {
         return [
             \Filament\Actions\Action::make('downgradeToFree')
-                ->label(__('Cancel & Downgrade to Free'))
+                ->label(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Cancel Subscription') 
+                        : __('Cancel & Downgrade to Free');
+                })
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->requiresConfirmation()
-                ->modalHeading(__('Confirm Downgrade'))
+                ->modalHeading(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Confirm Cancellation') 
+                        : __('Confirm Downgrade');
+                })
                 ->modalDescription(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {
@@ -90,7 +132,12 @@ class AccountSubscription extends Page
                     
                     return __('Are you sure you want to cancel the subscription for :name? At the end of the billing cycle, the profile will be downgraded to the Free tier and projects exceeding limits will be suspended.', ['name' => $profile->name]);
                 })
-                ->modalSubmitActionLabel(__('Yes, Cancel Subscription'))
+                ->modalSubmitActionLabel(function () {
+                    $profile = $this->getSelectedProfileProperty();
+                    return $profile && $profile->tier === \App\Enums\UserTier::ENTERPRISE 
+                        ? __('Yes, Cancel Subscription') 
+                        : __('Yes, Cancel & Downgrade');
+                })
                 ->action(function () {
                     $profile = $this->getSelectedProfileProperty();
                     if (!$profile) {

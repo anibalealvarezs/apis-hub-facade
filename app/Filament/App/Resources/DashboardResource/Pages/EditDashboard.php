@@ -14,7 +14,7 @@ class EditDashboard extends EditRecord
     {
         return [
             Actions\Action::make('open_builder')
-                ->label('Open Builder')
+                ->label(__('Open Builder'))
                 ->icon('heroicon-o-pencil-square')
                 ->url(DashboardResource::getUrl('builder', ['record' => $this->record])),
             Actions\DeleteAction::make(),

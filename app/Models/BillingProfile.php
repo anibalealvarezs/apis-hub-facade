@@ -111,6 +111,14 @@ class BillingProfile extends Model
     }
 
     /**
+     * Relationship: Support tickets where this billing profile is tagged internally (admin-only associations).
+     */
+    public function supportTicketInternalAssociations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(SupportTicket::class, 'ticket_internal_billing_profiles');
+    }
+
+    /**
      * Get the users this profile is shared with.
      */
     public function sharedWithUsers()

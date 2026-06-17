@@ -10,8 +10,18 @@ class FacebookMarketingDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?string $navigationGroup = 'Meta';
-    protected static ?string $navigationLabel = 'Facebook Marketing';
+    public static function getNavigationLabel(): string
+    {
+        return __('Facebook Marketing');
+    }
+
+    
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Meta');
+    }
+
     public function getTitle(): string
     {
         return __('Meta Ads Manager Insights');

@@ -85,20 +85,20 @@ class KpiReference extends Page
     public function getCategoryGroups(): array
     {
         return [
-            'Channel' => [
+            __('Channel') => [
                 'cross-channel' => __('Cross-Channel'),
                 'organic' => __('Organic'),
                 'seo' => __('SEO'),
             ],
-            'Data Origin' => [
+            __('Data Origin') => [
                 'source_src' => __('Source Data'),
                 'source_tracking' => __('Tracking Data'),
             ],
-            'Data Perspective' => [
+            __('Data Perspective') => [
                 'org_mkt_marketing' => __('Marketing Focus'),
                 'org_mkt_organic' => __('Organic Focus'),
             ],
-            'Focus' => [
+            __('Focus') => [
                 'agency' => __('Agency Performance'),
                 'alerts' => __('Alerts'),
                 'cost' => __('Cost'),
@@ -107,12 +107,12 @@ class KpiReference extends Page
                 'seasonality' => __('Seasonality'),
                 'trends' => __('Trends'),
             ],
-            'Metric' => [
+            __('Metric') => [
                 'clicks' => __('Clicks'),
                 'impressions' => __('Impressions'),
                 'results' => __('Results'),
             ],
-            'Scope' => [
+            __('Scope') => [
                 'scope_asset' => __('Asset'),
                 'scope_channel' => __('Channel'),
                 'scope_global' => __('Global'),
@@ -242,6 +242,30 @@ class KpiReference extends Page
                 'explanation' => __('Measures how many clicks you generate per unit of search position. A page ranking #5 that gets as many clicks as a page ranking #2 has higher "snippet appeal" — its title, description, and rich results are more compelling. This KPI tracks that ratio over time.'),
                 'use_case' => __('You\'ve been optimizing your meta titles and descriptions, but rankings haven\'t changed much. Are the changes working? This KPI tells you if your click-through efficiency is improving even when positions stay the same — proving that your snippet optimization is paying off.'),
                 'interpretation' => __('A rising trend means your search snippets are becoming more compelling — better titles, descriptions, or structured data are convincing users to click regardless of ranking position. A falling trend means something is off: your snippets might be losing relevance, or you\'re ranking for queries with lower click intent. Compare this with CTR Efficiency to distinguish between ranking issues and snippet quality issues.'),
+            ],
+            'seo_structural_inertia' => [
+                'type_label' => __('Growth Trend Baseline'),
+                'explanation' => __('Calculates the underlying growth trend of your organic search presence by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.'),
+                'use_case' => __('Your daily search impressions bounce up and down wildly. You need to know if the overall trajectory is positive, ignoring weekend dips or minor Google updates.'),
+                'interpretation' => __('A positive slope (m) confirms accelerating SEO inertia. If the trend is positive despite daily volatility, your strategy is working.'),
+            ],
+            'fb_algorithmic_inertia' => [
+                'type_label' => __('True Reach Floor'),
+                'explanation' => __('Isolates the true algorithmic distribution floor of your Facebook Page by mathematically removing weekly seasonality using Triple Exponential Smoothing (Holt-Winters).'),
+                'use_case' => __('Facebook reach is always lower on weekends. This metric strips out the "weekend effect" to show the true health and distribution momentum of your page.'),
+                'interpretation' => __('A stable or rising trend indicates healthy algorithmic baseline distribution. A falling trend means the platform is naturally choking your baseline reach regardless of the day of the week.'),
+            ],
+            'ig_viral_momentum' => [
+                'type_label' => __('Decay Escape Velocity'),
+                'explanation' => __('Determines if an Instagram post has broken the standard temporal decay curve by applying a Logarithmic Regression against interaction velocity.'),
+                'use_case' => __('You want to know if a recent post is going viral or just experiencing the standard 48-hour spike and fade.'),
+                'interpretation' => __('If the real interaction curve stays above the theoretical logarithmic decay line after 48 hours, the post has broken the decay cycle and retains viral inertia.'),
+            ],
+            'paid_learning_inertia' => [
+                'type_label' => __('Optimization Confirmation'),
+                'explanation' => __('Uses Exponential Moving Average crossovers (EMA 7 vs EMA 14) to mathematically confirm when an ad campaign\'s cost efficiency trend has genuinely shifted due to optimization.'),
+                'use_case' => __('You made a change to an ad campaign and want to know if it actually improved the cost per acquisition, or if it\'s just daily noise.'),
+                'interpretation' => __('When the fast EMA (7-day) crosses below the slow EMA (14-day) for CPA, it mathematically confirms a successful optimization phase. A cross above indicates eroding efficiency.'),
             ],
         ];
 
