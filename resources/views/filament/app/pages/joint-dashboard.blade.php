@@ -51,9 +51,25 @@
         .dark .corr-strong-neg { color: #f87171; }
         .corr-weak { background: rgba(156,163,175,0.1); color: #4b5563; border: 1px solid rgba(156,163,175,0.2); }
         .dark .corr-weak { color: #9ca3af; }
+
+        @media print {
+            .fi-sidebar, .fi-topbar, .fi-header {
+                display: none !important;
+            }
+            .fi-main {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .joint-card, .chart-container-joint {
+                page-break-inside: avoid;
+            }
+            body { background: white !important; }
+        }
     </style>
 
-    <div x-data="jointDashboard()" x-init="initDashboard()">
+    <div id="joint-dashboard-container" x-data="jointDashboard()" x-init="initDashboard()">
         <div class="joint-header-row">
             <div>
                 <h1 class="joint-header-title">
@@ -61,7 +77,12 @@
                     {{ __('Performance Correlations') }}
                 </h1>
             </div>
-            <div class="joint-header-controls">
+            <div class="joint-header-controls print:hidden">
+                <button type="button" @click="window.print()"
+                        class="flex items-center justify-center bg-gray-500 hover:bg-gray-400 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition shadow-sm mr-2">
+                    <x-heroicon-o-printer class="w-5 h-5 mr-2" />
+                    <span>{{ __('Export PDF') }}</span>
+                </button>
                 <input type="date" x-model.lazy="dateStart"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
