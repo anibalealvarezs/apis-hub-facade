@@ -456,13 +456,24 @@
                     applyPlay(play) {
                         this.selectedPlay = play;
                         
-                        // Set Curve A (preserve asset if channel matches)
+                        // Determine assets
                         let assetA = this.curveA.channel === play.config.curveA.channel ? this.curveA.asset : '';
-                        this.curveA = { ...play.config.curveA, asset: assetA };
-                        
-                        // Set Curve B (preserve asset if channel matches)
                         let assetB = this.curveB.channel === play.config.curveB.channel ? this.curveB.asset : '';
-                        this.curveB = { ...play.config.curveB, asset: assetB };
+                        
+                        // If channels will match, sync assetB to assetA
+                        if (play.config.curveA.channel && play.config.curveA.channel === play.config.curveB.channel && assetA) {
+                            assetB = assetA;
+                        }
+                        
+                        // Update channels immediately so DOM can render new <option> elements
+                        this.curveA.channel = play.config.curveA.channel;
+                        this.curveB.channel = play.config.curveB.channel;
+
+                        // Use nextTick to assign metrics AFTER DOM <options> are ready
+                        this.$nextTick(() => {
+                            this.curveA = { ...play.config.curveA, asset: assetA };
+                            this.curveB = { ...play.config.curveB, asset: assetB };
+                        });
                     },
 
                     transformData(dates, values, level, lag, targetStart, targetEnd) {
