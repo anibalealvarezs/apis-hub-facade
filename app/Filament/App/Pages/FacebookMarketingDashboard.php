@@ -35,7 +35,11 @@ class FacebookMarketingDashboard extends Page
 
     public static function canAccess(): bool
     {
-        if (!auth()->user()->can('view_data')) return false;
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user || !$user->can('view_data')) {
+            return false;
+        }
         $tenant = Filament::getTenant();
         $config = $tenant->sync_config ?? [];
         return !empty($config['facebook_marketing']['enabled']);
