@@ -523,9 +523,9 @@ class ProjectResource extends Resource
                                 ->send();
                             return;
                         }
-                        
                         $results = $validation['results'] ?? [];
                         $validCount = 0;
+                        $warningCount = 0;
                         $invalidCount = 0;
                         $details = [];
                         
@@ -534,6 +534,9 @@ class ProjectResource extends Resource
                             if (($data['status'] ?? '') === 'valid') {
                                 $validCount++;
                                 $details[] = "✅ <strong>{$name}</strong>";
+                            } elseif (($data['status'] ?? '') === 'warning') {
+                                $warningCount++;
+                                $details[] = "⚠️ <strong>{$name}</strong> - Rate Limited";
                             } else {
                                 $invalidCount++;
                                 $details[] = "❌ <strong>{$name}</strong>";
@@ -549,10 +552,12 @@ class ProjectResource extends Resource
                         }
 
                         $notification = Notification::make()
-                            ->title(__("Validation Complete: $validCount valid, $invalidCount invalid"))
+                            ->title(__("Validation Complete: $validCount valid, $warningCount warnings, $invalidCount invalid"))
                             ->body(implode('<br>', $details));
 
                         if ($invalidCount > 0) {
+                            $notification->danger()->persistent();
+                        } elseif ($warningCount > 0) {
                             $notification->warning()->persistent();
                         } else {
                             $notification->success();
