@@ -361,7 +361,7 @@ EOT;
             "docker compose build",
             
             // 3.5. Ensure the host's vendor directory matches the new composer.lock before mounting it in the isolated container
-            "MSYS_NO_PATHCONV=1 docker run --rm -v \"$(pwd):/app\" -w /app composer:latest install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs",
+            "MSYS_NO_PATHCONV=1 docker run --rm -v {$path}:/app -w /app composer:latest install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs",
             
             // 4. Execute Migration Sequencer in an isolated container (bypassing entrypoint.sh so crons/workers don't start)
             "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
