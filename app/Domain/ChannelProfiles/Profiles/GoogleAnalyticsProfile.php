@@ -4,16 +4,16 @@ namespace App\Domain\ChannelProfiles\Profiles;
 
 use App\Domain\ChannelProfiles\AbstractChannelProfile;
 
-class GoogleSearchConsoleProfile extends AbstractChannelProfile
+class GoogleAnalyticsProfile extends AbstractChannelProfile
 {
     public function getChannelKey(): string
     {
-        return 'google_search_console';
+        return 'google_analytics';
     }
 
     public function getLabel(): string
     {
-        return 'Google Search Console';
+        return 'Google Analytics';
     }
 
     public function getSchemaDefinition(): array
@@ -22,37 +22,32 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
             'type' => $this->getChannelKey(),
             'fields' => [
                 'enabled' => $this->configurableField('boolean', true),
-                'cache_history_range' => $this->configurableField('string', '16 months', [
-                    '1 month' => '1 Month',
-                    '3 months' => '3 Months',
-                    '6 months' => '6 Months',
-                    '1 year' => '1 Year',
-                    '16 months' => '16 Months (Max)',
+                'cache_history_range' => $this->configurableField('string', '30 days', [
+                    '7 days' => '7 Days',
+                    '14 days' => '14 Days',
+                    '30 days' => '30 Days',
+                    '90 days' => '90 Days',
+                    '16 months' => '16 Months',
                 ]),
                 // Fixed system configuration variables - DO NOT let user edit
-                'cron_recent_hour' => $this->systemField('integer', 5),
+                'cron_recent_hour' => $this->systemField('integer', 10),
                 'cron_recent_minute' => $this->systemField('integer', 0),
-                'max_workers' => $this->systemField('integer', 4),
-                'granular_sync' => $this->systemField('boolean', true),
-                
-                'calculate_synthetics' => $this->systemField('boolean', true),
+                'max_workers' => $this->systemField('integer', 3),
+                'granular_sync' => $this->systemField('boolean', false),
                 
                 'feature_toggles' => $this->systemField('object', [
-                    'cache_aggregations' => true,
+                    'cache_aggregations' => false,
                 ]),
                 
                 'assets' => $this->configurableField('object', [], null, [
                     'schema' => [
-                        'sites' => [
+                        'properties' => [
                             'type' => 'array',
                             'default' => [],
                             'item_schema' => [
-                                'url' => ['type' => 'string'],
-                                'title' => ['type' => 'string'],
-                                'hostname' => ['type' => 'string'],
+                                'platformId' => ['type' => 'string'],
+                                'name' => ['type' => 'string'],
                                 'enabled' => ['type' => 'boolean', 'default' => false],
-                                'target_countries' => ['type' => 'object', 'default' => []],
-                                'target_keywords' => ['type' => 'object', 'default' => []],
                                 'lost_access' => ['type' => 'boolean', 'default' => false],
                                 'data' => ['type' => 'object']
                             ]
