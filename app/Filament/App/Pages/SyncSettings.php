@@ -108,20 +108,6 @@ class SyncSettings extends Page
         $tenant = Filament::getTenant();
         $this->isSyncable = $tenant->is_active && $tenant->health_status !== 'provisioning';
 
-        // RECONCILIATION: Pull latest tokens from Node if reachable
-        if ($this->isSyncable) {
-            $validation = $service->validateTokens($tenant, 'facebook');
-            $fbData = $validation['results']['facebook'] ?? [];
-
-            if (($fbData['status'] ?? '') === 'valid' && ! empty($fbData['access_token'])) {
-                if ($tenant->facebook_user_token !== $fbData['access_token']) {
-                    // Update Facade silently with Node's truth
-                    $tenant->facebook_user_token = $fbData['access_token'];
-                    $tenant->facebook_user_id = $fbData['user_id'] ?? $tenant->facebook_user_id;
-                    $tenant->save();
-                }
-            }
-        }
 
         $this->form->fill([
             ...($tenant->sync_config ?? []),
