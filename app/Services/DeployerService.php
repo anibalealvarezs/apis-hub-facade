@@ -50,7 +50,7 @@ class DeployerService
             $versionTag = escapeshellarg($project->apisHubRelease->version_tag);
             Log::info("Deploying pinned release series {$versionTag} (latest patch) for project {$project->name}");
             
-            $commands[] = "cd {$path} && git fetch --tags";
+            $commands[] = "cd {$path} && git fetch --tags --force";
             // Extract the major.minor prefix (e.g. 'v1.13') and resolve the highest patch tag.
             // If the repo doesn't contain the tags or resolution fails, fallback to the exact versionTag.
             $commands[] = "cd {$path} && PREFIX=\$(echo {$versionTag} | cut -d. -f1,2) && LATEST_PATCH=\$(git tag -l \"\${PREFIX}.*\" | sort -V | tail -n 1) && if [ -z \"\$LATEST_PATCH\" ]; then LATEST_PATCH={$versionTag}; fi && git checkout \$LATEST_PATCH";
@@ -350,7 +350,7 @@ EOT;
         $commands = [
             "cd {$path}",
             // 1. Fetch and checkout new version
-            "git fetch --tags",
+            "git fetch --tags --force",
             "git reset --hard",
             "git checkout {$targetTag}",
             
