@@ -513,6 +513,56 @@ class ProjectSettings extends Page
                     }
                 });
 
+        $actions[] = Action::make('upgrade')
+                ->label(__('Upgrade Project'))
+                ->color('primary')
+                ->icon('heroicon-o-arrow-up-circle')
+                ->disabled($isSuspended)
+                ->visible(function () use ($user, $project) {
+                    if ($user->id !== $project->user_id) {
+                        return false;
+                    }
+
+                    $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
+                    if (! $defaultRelease) {
+                        return false;
+                    }
+
+                    $currentRelease = $project->apisHubRelease;
+                    if (! $currentRelease) {
+                        return true;
+                    }
+
+                    return \App\Models\ApisHubRelease::isNewerThan($defaultRelease->version_tag, $currentRelease->version_tag);
+                })
+                ->requiresConfirmation()
+                ->modalHeading(__('Upgrade Project'))
+                ->modalDescription(__('Are you sure you want to upgrade your project to the newer version? This is a destructive operation.'))
+                ->form([
+                    TextInput::make('confirmation')
+                        ->label(__('Type "UPGRADE" to confirm'))
+                        ->required()
+                        ->rule(function () {
+                            return function (string $attribute, $value, \Closure $fail) {
+                                if ($value !== 'UPGRADE') {
+                                    $fail(__('Confirmation text does not match.'));
+                                }
+                            };
+                        }),
+                ])
+                ->action(function () use ($project) {
+                    $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
+                    if ($defaultRelease) {
+                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+
+                        Notification::make()
+                            ->title(__('Upgrade Initiated'))
+                            ->body(__('Project upgrade to :version has been scheduled.', ['version' => $defaultRelease->version_tag]))
+                            ->success()
+                            ->send();
+                    }
+                });
+
         return $actions;
     }
 
