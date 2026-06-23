@@ -66,7 +66,7 @@ class SyncSettings extends Page
                 ->label(__('View Last Deployment Log'))
                 ->icon('heroicon-o-document-text')
                 ->color('gray')
-                ->visible(fn () => auth()->user()->can('edit_preferences'))
+                ->visible(fn () => \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'))
                 ->modalHeading(__('Deployment Log Output'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(__('Close'))
@@ -84,7 +84,7 @@ class SyncSettings extends Page
                 ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
                     || Filament::getTenant()->fresh()->billing_status === 'suspended'
                     || Filament::getTenant()->fresh()->health_status !== 'online'
-                    || ! auth()->user()->can('deploy_project'))
+                    || ! \Illuminate\Support\Facades\Auth::user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
                     $tenant = Filament::getTenant()->fresh();
@@ -196,7 +196,7 @@ class SyncSettings extends Page
                                 \Filament\Forms\Components\Actions\Action::make('rotateKey')
                                     ->icon('heroicon-m-arrow-path')
                                     ->color('warning')
-                                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || ! auth()->user()->can('edit_preferences'))
+                                    ->disabled(fn () => ! Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || ! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('Rotate API Key?'))
                                     ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all your external integrations (PowerBI, Looker, etc.) with the new key.'))
@@ -243,7 +243,7 @@ class SyncSettings extends Page
                                         <h3 class="font-bold">' . __('Upgrade Required') . '</h3>
                                     </div>
                                     <p class="text-sm mb-3">' . __('API Access is exclusively available on Ultra and Enterprise tiers. Please upgrade your associated billing profile to one of these tiers to unlock external integration capabilities.') . '</p>
-                                    ' . (Filament::getTenant()->billingProfile?->user_id === auth()->id() ? '
+                                    ' . (Filament::getTenant()->billingProfile?->user_id === \Illuminate\Support\Facades\Auth::id() ? '
                                     <a href="/account/account-subscription?profile=' . Filament::getTenant()->billingProfile?->id . '" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400">
                                         ' . __('Manage Subscription') . '
                                     </a>
@@ -257,7 +257,7 @@ class SyncSettings extends Page
                     ]),
             ])
             ->statePath('data')
-            ->disabled($isSuspended || ! auth()->user()->can('edit_preferences'));
+            ->disabled($isSuspended || ! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'));
     }
 
     public function save(RemoteEngineService $service, \App\Services\DeployerService $deployer): void
@@ -275,7 +275,7 @@ class SyncSettings extends Page
             return;
         }
 
-        if (! auth()->user()->can('edit_preferences')) {
+        if (! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences')) {
             Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify sync preferences.'))->danger()->send();
 
             return;

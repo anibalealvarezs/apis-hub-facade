@@ -118,7 +118,7 @@
         {
             $tenant = Filament::getTenant();
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $limits = $quotaService->calculateLimits($tenant, auth()->user());
+            $limits = $quotaService->calculateLimits($tenant, \Illuminate\Support\Facades\Auth::user());
 
             return $limits['usage'];
         }
@@ -127,7 +127,7 @@
         {
             $tenant = Filament::getTenant();
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $limits = $quotaService->calculateLimits($tenant, auth()->user());
+            $limits = $quotaService->calculateLimits($tenant, \Illuminate\Support\Facades\Auth::user());
 
             return $limits['limit'];
         }
@@ -139,10 +139,10 @@
             if (!$billingProfile) {
                 $ownerId = $tenant->owner_id ?? $tenant->user_id;
 
-                return auth()->id() === $ownerId;
+                return \Illuminate\Support\Facades\Auth::id() === $ownerId;
             }
 
-            return auth()->id() === $billingProfile->user_id;
+            return \Illuminate\Support\Facades\Auth::id() === $billingProfile->user_id;
         }
 
         public function mount()
@@ -568,7 +568,7 @@
             return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
-                ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels'))
+                ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
                     $response = $service->fetchAssets($tenant, $this->activeChannel);
@@ -659,7 +659,7 @@
             return Action::make('connect')
                 ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
-                ->visible(fn() => auth()->user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
+                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn() => $this->getChannelSelectionForm())
                 ->action(function (array $data) {
@@ -680,7 +680,7 @@
             return Action::make('updateCredentials')
                 ->label(__('Update Permissions'))
                 ->icon('heroicon-o-key')
-                ->visible(fn() => auth()->user()->can('manage_channels') && $this->isConnected($this->activeChannel))
+                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn() => $this->getChannelSelectionForm())
                 ->requiresConfirmation()
@@ -699,7 +699,7 @@
                         ]);
                     }
 
-                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id(), $types);
+                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, \Illuminate\Support\Facades\Auth::id(), $types);
 
                     Notification::make()
                         ->title(__('Safe Update Initiated'))
@@ -835,7 +835,7 @@
             return $form
                 ->schema($this->getDynamicSchema())
                 ->statePath('data')
-                ->disabled($isSuspended || !auth()->user()->can('manage_channels'));
+                ->disabled($isSuspended || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'));
         }
 
         protected function getDynamicSchema(): array
@@ -889,7 +889,7 @@
                                 ->label(__('Regex Generator'))
                                 ->icon('heroicon-m-beaker')
                                 ->color('primary')
-                                ->visible(fn() => auth()->user()->can('manage_channels'))
+                                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                                 ->form([
                                     \Filament\Forms\Components\Repeater::make('strings')
                                         ->label(__('Strings to Match'))
@@ -1335,7 +1335,7 @@
                             ->label(__('Select All'))
                             ->button()
                             ->color('success')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1351,7 +1351,7 @@
                             ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1522,7 +1522,7 @@
                             ->button()
                             ->color('success')
                             ->icon('heroicon-m-check')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->modalHeading(__('Enable assets'))
                             ->modalDescription(__('Choose how you want to enable the selected assets.'))
                             ->modalWidth('md')
@@ -1574,7 +1574,7 @@
                             ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1627,7 +1627,7 @@
                 return;
             }
 
-            if (!auth()->user()->can('manage_channels')) {
+            if (!\Illuminate\Support\Facades\Auth::user()->can('manage_channels')) {
                 Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
 
                 return;
@@ -1743,7 +1743,7 @@
             }
 
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $user = auth()->user();
+            $user = \Illuminate\Support\Facades\Auth::user();
 
             // Pass the newly staged count. The AssetQuotaService adds this to the global ledger count
             // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
