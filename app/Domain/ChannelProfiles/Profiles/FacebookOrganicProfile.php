@@ -39,8 +39,8 @@ class FacebookOrganicProfile extends AbstractChannelProfile
                 
                 'PAGE' => $this->systemField('object', [
                     'page_metrics' => true,
-                    'posts' => true,
-                    'post_metrics' => true,
+                    'posts' => false,
+                    'post_metrics' => false,
                     'ig_accounts' => true,
                     'ig_account_metrics' => true,
                     'ig_account_media' => true,

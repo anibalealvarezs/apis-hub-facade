@@ -22,12 +22,13 @@ class GoogleAnalyticsProfile extends AbstractChannelProfile
             'type' => $this->getChannelKey(),
             'fields' => [
                 'enabled' => $this->configurableField('boolean', true),
-                'cache_history_range' => $this->configurableField('string', '30 days', [
+                'cache_history_range' => $this->configurableField('string', '2 years', [
                     '7 days' => '7 Days',
                     '14 days' => '14 Days',
                     '30 days' => '30 Days',
                     '90 days' => '90 Days',
-                    '16 months' => '16 Months',
+                    '18 months' => '18 Months',
+                    '2 years' => '2 Years',
                 ]),
                 // Fixed system configuration variables - DO NOT let user edit
                 'cron_recent_hour' => $this->systemField('integer', 10),
