@@ -66,10 +66,28 @@ class ApisHubReleaseResource extends Resource
                     ]),
 
                 Forms\Components\Section::make('Channel Schemas')
-                    ->description(__('Auto-generated from ChannelProfileRegistry. Read-only in this form.'))
+                    ->description(__('Select which channels are available in this version.'))
                     ->schema([
-                        Forms\Components\KeyValue::make('supported_channels')
-                            ->label(__('Supported Channels')),
+                        Forms\Components\Select::make('supported_channels')
+                            ->label(__('Supported Channels'))
+                            ->multiple()
+                            ->options([
+                                'google_search_console' => 'Google Search Console',
+                                'google_analytics' => 'Google Analytics',
+                                'google_ads' => 'Google Ads',
+                                'facebook_marketing' => 'Facebook Marketing',
+                                'facebook_organic' => 'Facebook Organic',
+                                'facebook_leads' => 'Facebook Leads',
+                                'tiktok_marketing' => 'TikTok Marketing',
+                                'tiktok_organic' => 'TikTok Organic',
+                                'tiktok_leads' => 'TikTok Leads',
+                                'klaviyo_metrics' => 'Klaviyo Metrics',
+                                'klaviyo_events' => 'Klaviyo Events',
+                                'shopify_metrics' => 'Shopify Metrics',
+                                'shopify_orders' => 'Shopify Orders',
+                                'shopify_products' => 'Shopify Products',
+                                'shopify_customers' => 'Shopify Customers',
+                            ]),
                         Forms\Components\Textarea::make('config_schemas')
                             ->label(__('Config Schemas (JSON)'))
                             ->rows(4)

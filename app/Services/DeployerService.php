@@ -337,25 +337,35 @@ EOT;
     public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $versionTag = escapeshellarg($targetRelease->version_tag);
+        $targetTag = escapeshellarg($targetRelease->version_tag);
+        
+        // Clean version tags to bare semantic numbers for the API
+        $currentVersionRaw = $project->apisHubRelease ? ltrim($project->apisHubRelease->version_tag, 'v') : '1.13.0';
+        $currentVersionArg = escapeshellarg($currentVersionRaw);
+        
+        $oldTag = escapeshellarg($project->apisHubRelease ? $project->apisHubRelease->version_tag : $targetRelease->version_tag);
 
-        Log::info("Upgrading project {$project->name} to release {$targetRelease->version_tag}");
+        Log::info("Upgrading project {$project->name} from {$currentVersionRaw} to release {$targetRelease->version_tag}");
 
         $commands = [
-            // 1. Fetch, discard local changes, and checkout new version
-            "cd {$path} && git fetch --tags && git reset --hard && git checkout {$versionTag}",
+            "cd {$path}",
+            // 1. Fetch and checkout new version
+            "git fetch --tags",
+            "git reset --hard",
+            "git checkout {$targetTag}",
+            
+            // 2. Kill current active workers instantly
+            "docker compose stop",
+            
+            // 3. Build the new images based on the target version
+            "docker compose build",
+            
+            // 4. Execute Migration Sequencer in an isolated container (bypassing entrypoint.sh so crons/workers don't start)
+            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
+            
+            // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
+            "bash bin/full-deploy.sh"
         ];
-
-        // 2. Run per-version upgrade commands (e.g. DB migrations, data transformations)
-        foreach ($targetRelease->upgrade_commands ?? [] as $cmd) {
-            $cmdText = is_array($cmd) ? ($cmd['command'] ?? '') : $cmd;
-            if (filled($cmdText)) {
-                $commands[] = "cd {$path} && {$cmdText}";
-            }
-        }
-
-        // 3. Rebuild images and restart services (no full-deploy.sh — it's too heavy for upgrades)
-        $commands[] = "cd {$path} && docker compose up -d --build --remove-orphans";
 
         return $this->runSshCommands($project->server, $commands, timeout: 900);
     }

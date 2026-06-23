@@ -381,53 +381,58 @@
 
         public function getProviders(): array
         {
+            $tenant = Filament::getTenant();
+            $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->where('is_default', true)->first();
+            $supportedChannels = $release && is_array($release->supported_channels) ? $release->supported_channels : [];
+
             $providers = [
                 'google'   => [
                     'label'    => 'Google',
                     'channels' => [
-                        ['key' => 'google_search_console', 'label' => 'Google Search Console', 'status' => 'Active'],
-                        ['key' => 'google_analytics', 'label' => 'Google Analytics', 'status' => 'Maintenance'],
-                        ['key' => 'google_ads', 'label' => 'Google Ads', 'status' => 'Maintenance'],
+                        ['key' => 'google_search_console', 'label' => 'Google Search Console'],
+                        ['key' => 'google_analytics', 'label' => 'Google Analytics'],
+                        ['key' => 'google_ads', 'label' => 'Google Ads'],
                     ],
                 ],
                 'facebook' => [
                     'label'    => 'Facebook',
                     'channels' => [
-                        ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing', 'status' => 'Active'],
-                        ['key' => 'facebook_organic', 'label' => 'Facebook Organic', 'status' => 'Active'],
-                        ['key' => 'facebook_leads', 'label' => 'Facebook Leads', 'status' => 'Maintenance'],
+                        ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
+                        ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
+                        ['key' => 'facebook_leads', 'label' => 'Facebook Leads'],
                     ],
                 ],
                 'tiktok'   => [
                     'label'    => 'TikTok',
                     'channels' => [
-                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Coming Soon'],
-                        ['key' => 'tiktok_organic', 'label' => 'TikTok Organic', 'status' => 'Coming Soon'],
-                        ['key' => 'tiktok_leads', 'label' => 'TikTok Leads', 'status' => 'Coming Soon'],
+                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing'],
+                        ['key' => 'tiktok_organic', 'label' => 'TikTok Organic'],
+                        ['key' => 'tiktok_leads', 'label' => 'TikTok Leads'],
                     ],
                 ],
                 'klaviyo'  => [
                     'label'    => 'Klaviyo',
                     'channels' => [
-                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Coming Soon'],
-                        ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events', 'status' => 'Coming Soon'],
+                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics'],
+                        ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events'],
                     ],
                 ],
                 'shopify'  => [
                     'label'    => 'Shopify',
                     'channels' => [
-                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_orders', 'label' => 'Shopify Orders', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_products', 'label' => 'Shopify Products', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_customers', 'label' => 'Shopify Customers', 'status' => 'Coming Soon'],
+                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics'],
+                        ['key' => 'shopify_orders', 'label' => 'Shopify Orders'],
+                        ['key' => 'shopify_products', 'label' => 'Shopify Products'],
+                        ['key' => 'shopify_customers', 'label' => 'Shopify Customers'],
                     ],
                 ],
             ];
 
-            // Sort channels inside providers
+            // Sort channels inside providers and set dynamic status
             foreach ($providers as $pKey => &$provider) {
                 $providerCount = 0;
                 foreach ($provider['channels'] as &$channel) {
+                    $channel['status'] = in_array($channel['key'], $supportedChannels) ? 'Active' : 'Coming Soon';
                     $channel['count'] = $this->getChannelAssetCount($channel['key']);
                     $providerCount += $channel['count'];
                 }
