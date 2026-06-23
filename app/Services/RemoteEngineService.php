@@ -12,7 +12,7 @@ class RemoteEngineService
     /**
      * Get an instance of the ApisHubApi client for a project.
      */
-    protected function getClient(Project $project): ApisHubApi
+    protected function getClient(Project $project, int $timeout = 120): ApisHubApi
     {
         $baseDomain = config('app.network_domain');
         $domain = "{$project->subdomain}.{$baseDomain}";
@@ -29,10 +29,16 @@ class RemoteEngineService
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
+        $guzzleClient = new \GuzzleHttp\Client([
+            'timeout' => $timeout,
+            'connect_timeout' => $timeout,
+        ]);
+
         // Initialize SDK with base protocol and API Key
         return new ApisHubApi(
             baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
+            guzzleClient: $guzzleClient,
             debugMode: false // NEVER couple this to config('app.debug'), otherwise the SDK intercepts and mocks all requests
         );
     }
@@ -40,10 +46,10 @@ class RemoteEngineService
     /**
      * Execute a task via the SDK with centralized error handling.
      */
-    public function execute(Project $project, callable $callback)
+    public function execute(Project $project, callable $callback, int $timeout = 120)
     {
         try {
-            $client = $this->getClient($project);
+            $client = $this->getClient($project, $timeout);
 
             return $callback($client);
         } catch (Exception $e) {
@@ -205,7 +211,7 @@ class RemoteEngineService
      */
     public function validateTokens(Project $project, string $type = 'all')
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]), 15);
     }
 
     /**
