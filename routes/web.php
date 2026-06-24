@@ -87,6 +87,11 @@ Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicControll
 Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth']);
 Route::post('/api/fbo/trend', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'trend'])->middleware(['web', 'auth']);
 
+Route::post('/api/ga4/summary', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'summary'])->middleware(['web', 'auth']);
+Route::post('/api/ga4/chart', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'chart'])->middleware(['web', 'auth']);
+Route::post('/api/ga4/table', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'table'])->middleware(['web', 'auth']);
+Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'listProperties'])->middleware(['web', 'auth']);
+
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');

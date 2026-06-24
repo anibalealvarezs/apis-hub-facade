@@ -241,6 +241,7 @@ class DashboardWidgetDataController extends Controller
             'facebook_marketing' => \App\Http\Controllers\Api\FacebookMarketingController::class,
             'facebook_organic' => \App\Http\Controllers\Api\FacebookOrganicController::class,
             'google_search_console' => \App\Http\Controllers\Api\GoogleSearchConsoleController::class,
+            'google_analytics' => \App\Http\Controllers\Api\GoogleAnalyticsController::class,
         ];
 
         $controllerClass = $endpoints[$channel] ?? null;
