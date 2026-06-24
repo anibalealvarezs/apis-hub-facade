@@ -66,15 +66,21 @@ class GoogleAnalyticsDashboard extends Page
 
             $response = $service->listChanneled($tenant, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
 
-            $config = $tenant->sync_config['google_analytics']['properties'] ?? [];
+            $gaConfig = $tenant->sync_config['google_analytics'] ?? [];
+            $config = $gaConfig['assets']['properties'] ?? $gaConfig['properties'] ?? [];
             $enabledIds = [];
             foreach ($config as $prop) {
-                if (!empty($prop['enabled']) && !empty($prop['platformId'])) {
-                    $enabledIds[] = (string) $prop['platformId'];
+                $pid = $prop['platformId'] ?? $prop['platform_id'] ?? null;
+                if (!empty($prop['enabled']) && $pid) {
+                    $enabledIds[] = (string) $pid;
                 }
             }
 
+            \Illuminate\Support\Facades\Log::info("GA4 Dashboard - enabled property IDs", ['enabledIds' => $enabledIds, 'config_keys' => array_keys($gaConfig)]);
+
             if (isset($response['data']) && is_array($response['data'])) {
+                \Illuminate\Support\Facades\Log::info("GA4 Dashboard - remote channeled_accounts", ['count' => count($response['data']), 'sample' => array_slice($response['data'], 0, 3)]);
+
                 foreach ($response['data'] as $prop) {
                     $platformId = (string) ($prop['platformId'] ?? $prop['platform_id'] ?? $prop['id']);
                     if (in_array($platformId, $enabledIds)) {
