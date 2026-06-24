@@ -127,11 +127,12 @@ class GoogleAnalyticsController extends Controller
             $dimKey = $groupByKeys[$idx] ?? null;
             if (!$dimKey || !$rows) continue;
 
-            $lookup = strtolower(str_replace('dimensions.', '', $dimKey));
+            $lookupFull = strtolower($dimKey);
+            $lookupStripped = strtolower(str_replace('dimensions.', '', $dimKey));
 
             foreach ($rows as $row) {
                 $rowLower = array_change_key_case($row, CASE_LOWER);
-                $dimValue = $rowLower[$lookup] ?? $rowLower[$dimKey] ?? null;
+                $dimValue = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? null;
                 if (!$dimValue || $dimValue === 'null' || $dimValue === '(not set)') {
                     $dimValue = 'Unknown';
                 }
@@ -144,7 +145,7 @@ class GoogleAnalyticsController extends Controller
                 $existing = $map[$key];
                 foreach ($row as $k => $v) {
                     $kLower = strtolower($k);
-                    if ($kLower === $lookup || $kLower === $dimKey) continue;
+                    if ($kLower === $lookupFull || $kLower === $lookupStripped) continue;
                     $num = is_numeric($v) ? (float) $v : $v;
                     if (is_float($num)) {
                         $existing[$k] = ($existing[$k] ?? 0) + $num;
@@ -377,10 +378,12 @@ class GoogleAnalyticsController extends Controller
                 $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', ['table' => $payload]);
                 $tableData = $results['table']['data'] ?? [];
 
-                $dimKey = !empty($q['groupBy']) ? str_replace('dimensions.', '', $q['groupBy'][0]) : 'id';
+                $rawKey = !empty($q['groupBy']) ? $q['groupBy'][0] : 'id';
+                $lookupFull = strtolower($rawKey);
+                $lookupStripped = strtolower(str_replace('dimensions.', '', $rawKey));
                 foreach ($tableData as &$row) {
                     $rowLower = array_change_key_case($row, CASE_LOWER);
-                    $val = $rowLower[$dimKey] ?? $rowLower['id'] ?? 'Unknown';
+                    $val = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? $rowLower['id'] ?? 'Unknown';
                     if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
                     $row['id'] = $val;
                     $row['name'] = $val;
