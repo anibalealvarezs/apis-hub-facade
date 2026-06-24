@@ -21,7 +21,7 @@ class ConfigPayloadService
     {
         $remoteAssetKeyMap = [
             'google_search_console' => 'gsc',
-            'google_analytics' => 'ga',
+            'google_analytics' => 'google_analytics',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
         ];
