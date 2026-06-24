@@ -82,6 +82,7 @@
         .tab-ga4 { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--ga4-text-dim); border-right: 1px solid var(--ga4-border); transition: all 0.2s; }
         .tab-ga4:hover { background: var(--ga4-bg-hover); }
         .tab-ga4.active { background: var(--ga4-bg-card); color: var(--ga4-sessions); border-bottom: 2px solid var(--ga4-sessions); }
+        .tab-group-label { padding: 15px 12px 15px 20px; font-size: 0.7rem; font-weight: 700; color: var(--ga4-text-dim); text-transform: uppercase; letter-spacing: 0.1em; border-right: 1px solid var(--ga4-border); background: transparent; display: flex; align-items: center; }
 
         .ga4-table { width: 100%; border-collapse: collapse; text-align: left; }
         .ga4-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--ga4-text-dim); font-weight: 700; border-bottom: 1px solid var(--ga4-border); }
@@ -195,24 +196,41 @@
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
             <div class="tab-nav-ga4">
+                <div class="tab-group-label">{{ __('Campaigns') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'campaigns' ? 'active' : ''"
-                     @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
+                     @click="setTab('campaigns')">{{ __('BY CAMPAIGN') }}</div>
+                <div class="tab-ga4" :class="activeTab === 'adgroups' ? 'active' : ''"
+                     @click="setTab('adgroups')">{{ __('BY AD GROUP') }}</div>
+
+                <div class="tab-group-label">{{ __('Channels') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'channels' ? 'active' : ''"
-                     @click="setTab('channels')">{{ __('CHANNELS') }}</div>
+                     @click="setTab('channels')">{{ __('BY CHANNEL') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'sources' ? 'active' : ''"
-                     @click="setTab('sources')">{{ __('SOURCES') }}</div>
+                     @click="setTab('sources')">{{ __('BY SOURCE') }}</div>
+
+                <div class="tab-group-label">{{ __('Traffic') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'traffic_pages' ? 'active' : ''"
                      @click="setTab('traffic_pages')">{{ __('LANDING PAGES') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'traffic_countries' ? 'active' : ''"
                      @click="setTab('traffic_countries')">{{ __('COUNTRIES') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'traffic_devices' ? 'active' : ''"
                      @click="setTab('traffic_devices')">{{ __('DEVICES') }}</div>
+
+                <div class="tab-group-label">{{ __('Acquisition') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'acquisition_channels' ? 'active' : ''"
-                     @click="setTab('acquisition_channels')">{{ __('ACQ. CHANNELS') }}</div>
+                     @click="setTab('acquisition_channels')">{{ __('CHANNELS') }}</div>
+
+                <div class="tab-group-label">{{ __('Events') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'events' ? 'active' : ''"
-                     @click="setTab('events')">{{ __('EVENTS') }}</div>
+                     @click="setTab('events')">{{ __('ALL EVENTS') }}</div>
+
+                <div class="tab-group-label">{{ __('Ad Touchpoints') }}</div>
                 <div class="tab-ga4" :class="activeTab === 'adtouchpoints_adgroups' ? 'active' : ''"
                      @click="setTab('adtouchpoints_adgroups')">{{ __('AD GROUPS') }}</div>
+                <div class="tab-ga4" :class="activeTab === 'adtouchpoints_terms' ? 'active' : ''"
+                     @click="setTab('adtouchpoints_terms')">{{ __('MANUAL TERMS') }}</div>
+                <div class="tab-ga4" :class="activeTab === 'adtouchpoints_content' ? 'active' : ''"
+                     @click="setTab('adtouchpoints_content')">{{ __('AD CONTENT') }}</div>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -232,11 +250,12 @@
                     <thead>
                     <tr>
                         <th><span x-text="tabLabel"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('sessions')">{{ __('Sessions') }} <span x-show="sortCol === 'sessions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('activeUsers')">{{ __('Users') }} <span x-show="sortCol === 'activeUsers'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('newUsers')">{{ __('New') }} <span x-show="sortCol === 'newUsers'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('conversions')">{{ __('Conv.') }} <span x-show="sortCol === 'conversions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('screenPageViews')">{{ __('Page Views') }} <span x-show="sortCol === 'screenPageViews'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
+                        <template x-for="m in (tabConfig[activeTab]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sortBy(m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sortCol === m" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
                     </tr>
                     </thead>
                     <tbody>
@@ -247,45 +266,19 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <td class="metric-cell">
-                                <div class="metric-val-main" x-text="formatNumber(row.sessions)"></div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: var(--ga4-sessions);"
-                                         :style="`width: ${(row.sessions / maxMetric('sessions')) * 100}%`"></div>
-                                </div>
-                            </td>
-                            <td class="metric-cell">
-                                <div class="metric-val-main" x-text="formatNumber(row.activeUsers)"></div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: var(--ga4-activeUsers);"
-                                         :style="`width: ${(row.activeUsers / maxMetric('activeUsers')) * 100}%`"></div>
-                                </div>
-                            </td>
-                            <td class="metric-cell">
-                                <div class="metric-val-main" x-text="formatNumber(row.newUsers)"></div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: var(--ga4-newUsers);"
-                                         :style="`width: ${(row.newUsers / maxMetric('newUsers')) * 100}%`"></div>
-                                </div>
-                            </td>
-                            <td class="metric-cell">
-                                <div class="metric-val-main" x-text="formatNumber(row.conversions)"></div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: var(--ga4-conversions);"
-                                         :style="`width: ${(row.conversions / maxMetric('conversions')) * 100}%`"></div>
-                                </div>
-                            </td>
-                            <td class="metric-cell">
-                                <div class="metric-val-main" x-text="formatNumber(row.screenPageViews)"></div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: var(--ga4-pageViews);"
-                                         :style="`width: ${(row.screenPageViews / maxMetric('screenPageViews')) * 100}%`"></div>
-                                </div>
-                            </td>
+                            <template x-for="m in (tabConfig[activeTab]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / maxMetric(m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
                         </tr>
                     </template>
                     <tr x-show="paginatedTableData.length === 0">
-                        <td colspan="6" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="(tabConfig[activeTab]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -346,19 +339,34 @@
                         currentPage: 1,
                         pageSize: 10,
 
+                        tabConfig: {
+                            campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
+                            adgroups:   {label: 'Ad Group',    metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
+                            channels:   {label: 'Channel',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
+                            sources:    {label: 'Source/Medium',metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
+                            traffic_pages:     {label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
+                            traffic_countries: {label: 'Country',      metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
+                            traffic_devices:   {label: 'Device',       metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
+                            acquisition_channels: {label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers']},
+                            events: {label: 'Event Name', metrics: ['eventCount', 'conversions']},
+                            adtouchpoints_adgroups: {label: 'Ad Group',   metrics: ['sessions', 'conversions']},
+                            adtouchpoints_terms:    {label: 'Manual Term', metrics: ['sessions', 'conversions']},
+                            adtouchpoints_content:  {label: 'Ad Content',  metrics: ['sessions', 'conversions']},
+                        },
+                        metricLabels: {
+                            sessions: 'Sessions', activeUsers: 'Users', newUsers: 'New',
+                            conversions: 'Conv.', screenPageViews: 'Page Views',
+                            bounceRate: 'Bounce Rate', eventCount: 'Event Count'
+                        },
+                        metricColors: {
+                            sessions: 'var(--ga4-sessions)', activeUsers: 'var(--ga4-activeUsers)',
+                            newUsers: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
+                            screenPageViews: 'var(--ga4-pageViews)', bounceRate: 'var(--ga4-revenue)',
+                            eventCount: '#8B5CF6'
+                        },
+
                         get tabLabel() {
-                            const labels = {
-                                campaigns: '{{ __("Campaigns") }}',
-                                channels: '{{ __("Channels") }}',
-                                sources: '{{ __("Sources/Mediums") }}',
-                                traffic_pages: '{{ __("Landing Pages") }}',
-                                traffic_countries: '{{ __("Countries") }}',
-                                traffic_devices: '{{ __("Devices") }}',
-                                acquisition_channels: '{{ __("Acq. Channels") }}',
-                                events: '{{ __("Events") }}',
-                                adtouchpoints_adgroups: '{{ __("Ad Groups") }}',
-                            };
-                            return labels[this.activeTab] || this.activeTab;
+                            return this.tabConfig[this.activeTab]?.label || this.activeTab;
                         },
 
                         restoreFromUrl() {
@@ -443,6 +451,9 @@
                             this.activeTab = tab;
                             this.currentPage = 1;
                             this.searchQuery = '';
+                            const metrics = this.tabConfig[tab]?.metrics;
+                            this.sortCol = (metrics && metrics.length) ? metrics[0] : 'sessions';
+                            this.sortDir = 'desc';
                             this.syncToUrl();
                             this.fetchTable();
                             this.$wire.setActiveTab(tab);
@@ -721,11 +732,8 @@
                                 if (dataByDate[dateStr]) return dataByDate[dateStr];
                                 return {
                                     daily: dateStr,
-                                    sessions: 0,
-                                    activeUsers: 0,
-                                    newUsers: 0,
-                                    conversions: 0,
-                                    screenPageViews: 0
+                                    sessions: 0, activeUsers: 0, newUsers: 0,
+                                    conversions: 0, screenPageViews: 0, bounceRate: 0
                                 };
                             });
 
@@ -835,13 +843,15 @@
                                 data = data.filter(row => String(row.name || row.id || '').toLowerCase().includes(query));
                             }
 
+                            const activeMetrics = this.tabConfig[this.activeTab]?.metrics || [];
+                            const sortKey = activeMetrics.includes(this.sortCol) ? this.sortCol : (activeMetrics[0] || 'sessions');
                             return data.sort((a, b) => {
-                                let valA = Number(a[this.sortCol]);
-                                let valB = Number(b[this.sortCol]);
+                                let valA = Number(a[sortKey]);
+                                let valB = Number(b[sortKey]);
 
                                 if (isNaN(valA) || isNaN(valB)) {
-                                    valA = String(a[this.sortCol] || '').toLowerCase();
-                                    valB = String(b[this.sortCol] || '').toLowerCase();
+                                    valA = String(a[sortKey] || '').toLowerCase();
+                                    valB = String(b[sortKey] || '').toLowerCase();
                                 }
 
                                 if (valA === valB) return 0;

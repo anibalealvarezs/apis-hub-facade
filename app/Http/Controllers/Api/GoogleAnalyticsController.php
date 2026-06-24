@@ -33,15 +33,19 @@ class GoogleAnalyticsController extends Controller
         };
     }
 
-    private function metricsForScope(string $scope): array
+    private function metricsForScope(string $scope, bool $includeBounceRate = false): array
     {
-        return match ($scope) {
+        $base = match ($scope) {
             'traffic_matrix' => ['sessions', 'screenPageViews', 'conversions'],
             'acquisition_matrix' => ['newUsers', 'activeUsers'],
             'event_matrix' => ['eventCount', 'conversions'],
             'ad_touchpoint_matrix' => ['sessions', 'conversions'],
             default => ['sessions', 'activeUsers'],
         };
+        if ($scope === 'traffic_matrix' && $includeBounceRate) {
+            $base[] = 'bounceRate';
+        }
+        return $base;
     }
 
     private function buildAggregations(array $metrics): array
@@ -98,7 +102,8 @@ class GoogleAnalyticsController extends Controller
     private function singleScopeQuery(string $tab): array
     {
         $scope = $this->scopeForTab($tab);
-        $metrics = $this->metricsForScope($scope);
+        $includeBounceRate = in_array($tab, ['traffic_pages', 'traffic_countries', 'traffic_devices']);
+        $metrics = $this->metricsForScope($scope, $includeBounceRate);
 
         $groupBy = match ($tab) {
             'traffic_pages' => ['dimensions.landing_page'],
