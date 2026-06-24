@@ -283,11 +283,12 @@
 
             $maxRanges = [
                 'google_search_console' => '16 months',
+                'google_analytics' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
             ];
 
-            foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
@@ -362,7 +363,7 @@
                 if (!is_array($data)) {
                     return;
                 }
-                if (array_key_exists('enabled', $data) && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('lost_access', $data))) {
+                if (array_key_exists('enabled', $data) && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('lost_access', $data) || array_key_exists('platformId', $data))) {
                     if (!empty($data['enabled']) && empty($data['lost_access'])) {
                         $count++;
                     }
@@ -577,6 +578,7 @@
                         // Hardcode correct resource keys for extraction since services.php is generic
                         $resourceKeyMap = [
                             'google_search_console' => 'sites',
+                            'google_analytics'      => 'properties',
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
@@ -761,7 +763,7 @@
 
             // Build map of live assets by their ID or URL
             foreach ($actualLiveAssets as $live) {
-                $identifier = $live['id'] ?? $live['url'] ?? null;
+                $identifier = $live['id'] ?? $live['url'] ?? $live['platformId'] ?? null;
                 if ($identifier) {
                     $liveMap[$identifier] = $live;
                 }
@@ -769,7 +771,7 @@
 
             // Process existing local assets
             foreach ($localAssets as $local) {
-                $identifier = $local['id'] ?? $local['url'] ?? null;
+                $identifier = $local['id'] ?? $local['url'] ?? $local['platformId'] ?? null;
                 if ($identifier) {
                     if ($this->activeChannel === 'facebook_organic') {
                         $local['page_metrics'] = $local['page_metrics'] ?? true;
@@ -1239,7 +1241,7 @@
                 $type = $definition['type'] ?? 'string';
 
                 // Preserve data objects and identifying strings in the form state invisibly
-                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time'])) {
+                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
                     $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
 
                     continue;
@@ -1250,18 +1252,19 @@
                         ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset'))
                         ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
                             <div class="flex items-center gap-2">
-                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
-                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
+                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"
+                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
                             </div>
                         '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                             $get('lost_access') ? __('⚠️ Lost Access') : (
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
                                 ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://'.preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))).'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>' :
+                                    ($this->activeChannel === 'google_analytics' ? 'Property ID: '.($get('platformId') ?? 'N/A') :
                                     'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
                             )
-                        ))
+                        )))
                         ->inline(false)
                         ->default(true)
                         ->columnSpan(4);
@@ -1371,11 +1374,12 @@
                                 $get('name') ?? '',
                                 $get('url') ?? '',
                                 $get('id') ?? '',
+                                $get('platformId') ?? '',
                             ]));
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1697,12 +1701,12 @@
             $scanner = function ($obj) use (&$scanner, &$proposedProjectAssets) {
                 if (is_array($obj)) {
                     // If it looks like an asset object
-                    if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
+                    if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj) || array_key_exists('platformId', $obj))) {
                         $isEnabled = filter_var($obj['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
                         $hasLostAccess = filter_var($obj['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                         if ($isEnabled && !$hasLostAccess) {
-                            $id = $obj['id'] ?? $obj['url'] ?? null;
+                            $id = $obj['id'] ?? $obj['url'] ?? $obj['platformId'] ?? null;
                             if ($id) {
                                 $proposedProjectAssets[] = $id;
                             }
@@ -1765,6 +1769,7 @@
             $service = app(\App\Services\RemoteEngineService::class);
             $remoteAssetKeyMap = [
                 'google_search_console' => 'gsc',
+                'google_analytics'      => 'ga',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
             ];

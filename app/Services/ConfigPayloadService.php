@@ -21,6 +21,7 @@ class ConfigPayloadService
     {
         $remoteAssetKeyMap = [
             'google_search_console' => 'gsc',
+            'google_analytics' => 'ga',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
         ];
@@ -66,6 +67,12 @@ class ConfigPayloadService
             if (isset($channelConfig['calculate_synthetics'])) {
                 $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
             }
+        } elseif ($channel === 'google_analytics') {
+            $payload['max_workers'] = 3;
+
+            $payload['feature_toggles'] = [
+                'cache_aggregations' => false,
+            ];
         } elseif ($channel === 'facebook_organic') {
             $payload['max_workers'] = 1;
 
@@ -116,6 +123,7 @@ class ConfigPayloadService
         // FORCE CACHE HISTORY RANGE UNCONDITIONALLY
         $maxRanges = [
             'google_search_console' => '16 months',
+            'google_analytics'      => '2 years',
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
         ];

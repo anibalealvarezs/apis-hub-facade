@@ -106,9 +106,9 @@
 
                 function scan(obj) {
                     if (typeof obj === 'object' && obj !== null) {
-                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
+                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access') || obj.hasOwnProperty('platformId'))) {
                             if (obj.enabled && !obj.lost_access) {
-                                let id = obj.id || obj.url;
+                                let id = obj.id || obj.url || obj.platformId;
                                 if (id) formAssets.add(id);
                             }
                             return;
@@ -161,7 +161,7 @@
 
                 function scan(obj) {
                     if (typeof obj === 'object' && obj !== null) {
-                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access'))) {
+                        if (obj.hasOwnProperty('enabled') && (obj.hasOwnProperty('url') || obj.hasOwnProperty('id') || obj.hasOwnProperty('lost_access') || obj.hasOwnProperty('platformId'))) {
                             if (obj.enabled && !obj.lost_access) count++;
                             return;
                         }
