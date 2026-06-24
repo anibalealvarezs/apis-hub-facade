@@ -155,13 +155,13 @@ class ConfigPayloadService
         } else {
             $newAssetsList = [];
             foreach ($assetsListUi as $index => $uiAsset) {
-                $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? null;
+                $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? $uiAsset['platformId'] ?? null;
                 $dbAsset = null;
 
                 // Match by ID/URL if possible, otherwise by index
                 if ($uiId) {
                     foreach ($assetsListDb as $dbA) {
-                        if (($dbA['id'] ?? $dbA['url'] ?? null) === $uiId) {
+                        if (($dbA['id'] ?? $dbA['url'] ?? $dbA['platformId'] ?? null) === $uiId) {
                             $dbAsset = $dbA;
 
                             break;
@@ -193,7 +193,7 @@ class ConfigPayloadService
         // Filter out malformed/empty entries (e.g. YAML stubs '-' or null URLs).
         // The driver exits early and saves NOTHING if the incoming list is empty and type !== 'global'.
         $assetsListDb = array_values(array_filter($assetsListDb, function ($item) {
-            $id = $item['url'] ?? $item['id'] ?? null;
+            $id = $item['url'] ?? $item['id'] ?? $item['platformId'] ?? null;
             return !empty($id) && $id !== '-';
         }));
 
@@ -203,6 +203,9 @@ class ConfigPayloadService
         $assetsListDb = array_map(function ($item) {
             if (empty($item['url']) && !empty($item['id'])) {
                 $item['url'] = $item['id'];
+            }
+            if (empty($item['url']) && !empty($item['platformId'])) {
+                $item['url'] = $item['platformId'];
             }
             return $item;
         }, $assetsListDb);
