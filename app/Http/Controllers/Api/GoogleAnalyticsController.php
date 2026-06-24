@@ -206,7 +206,7 @@ class GoogleAnalyticsController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account']];
+            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $trafficMetrics = $this->metricsForScope('traffic_matrix');
             $acqMetrics = $this->metricsForScope('acquisition_matrix');
@@ -276,7 +276,7 @@ class GoogleAnalyticsController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account']];
+            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $trafficMetrics = $this->metricsForScope('traffic_matrix');
             $acqMetrics = $this->metricsForScope('acquisition_matrix');
@@ -337,7 +337,7 @@ class GoogleAnalyticsController extends Controller
             $service = app(RemoteEngineService::class);
 
             $tab = $validated['activeTab'] ?? 'campaigns';
-            $baseFilters = ['channeledAccount' => (string) $validated['account']];
+            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             if ($this->isDualScopeTab($tab)) {
                 $queries = $this->dualScopeQueries($tab);

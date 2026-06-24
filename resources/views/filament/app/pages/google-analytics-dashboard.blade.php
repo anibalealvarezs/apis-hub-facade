@@ -102,6 +102,9 @@
         .ga4-pagination-btn:hover:not(:disabled) { background: var(--ga4-bg-hover); }
         .ga4-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .ga4-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--ga4-bg-card); border-radius: 4px; font-size: 0.75rem; }
+
+        .ga4-section-header { padding: 15px 20px; border-bottom: 1px solid var(--ga4-border); background: var(--ga4-bg-card); }
+        .ga4-section-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--ga4-text-main); margin: 0; }
     </style>
 
     <div x-data="ga4Dashboard()" x-init="initDashboard()">
@@ -115,10 +118,10 @@
             <div class="ga4-header-controls">
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
-                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
-                        :disabled="isSummaryLoading || isChartLoading || isTableLoading">
+                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isAnySectionLoading }"
+                        :disabled="isSummaryLoading || isChartLoading || isAnySectionLoading">
                     <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
-                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
+                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isAnySectionLoading }"/>
                     <span>{{ __('Update') }}</span>
                 </button>
                 <select wire:model.live="selectedAccount"
@@ -190,101 +193,71 @@
             </div>
         </div>
 
+        {{-- Campaigns Section --}}
         <div class="ga4-table-container relative">
-            <div x-show="isTableLoading"
+            <div x-show="sl.campaigns"
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
-            <div class="tab-nav-ga4">
-                <div class="tab-group-label">{{ __('Campaigns') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'campaigns' ? 'active' : ''"
-                     @click="setTab('campaigns')">{{ __('BY CAMPAIGN') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'adgroups' ? 'active' : ''"
-                     @click="setTab('adgroups')">{{ __('BY AD GROUP') }}</div>
-
-                <div class="tab-group-label">{{ __('Channels') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'channels' ? 'active' : ''"
-                     @click="setTab('channels')">{{ __('BY CHANNEL') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'sources' ? 'active' : ''"
-                     @click="setTab('sources')">{{ __('BY SOURCE') }}</div>
-
-                <div class="tab-group-label">{{ __('Traffic') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'traffic_pages' ? 'active' : ''"
-                     @click="setTab('traffic_pages')">{{ __('LANDING PAGES') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'traffic_countries' ? 'active' : ''"
-                     @click="setTab('traffic_countries')">{{ __('COUNTRIES') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'traffic_devices' ? 'active' : ''"
-                     @click="setTab('traffic_devices')">{{ __('DEVICES') }}</div>
-
-                <div class="tab-group-label">{{ __('Acquisition') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'acquisition_channels' ? 'active' : ''"
-                     @click="setTab('acquisition_channels')">{{ __('CHANNELS') }}</div>
-
-                <div class="tab-group-label">{{ __('Events') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'events' ? 'active' : ''"
-                     @click="setTab('events')">{{ __('ALL EVENTS') }}</div>
-
-                <div class="tab-group-label">{{ __('Ad Touchpoints') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'adtouchpoints_adgroups' ? 'active' : ''"
-                     @click="setTab('adtouchpoints_adgroups')">{{ __('AD GROUPS') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'adtouchpoints_terms' ? 'active' : ''"
-                     @click="setTab('adtouchpoints_terms')">{{ __('MANUAL TERMS') }}</div>
-                <div class="tab-ga4" :class="activeTab === 'adtouchpoints_content' ? 'active' : ''"
-                     @click="setTab('adtouchpoints_content')">{{ __('AD CONTENT') }}</div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.campaigns.label"></h3>
             </div>
-
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.campaigns.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.campaigns === t ? 'active' : ''"
+                         @click="setSectionSubTab('campaigns', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
                 <div class="relative w-full max-w-md">
                     <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
-                    <input type="text" x-model.debounce.300ms="searchQuery"
+                    <input type="text" x-model.debounce.300ms="sq.campaigns"
                            class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
                            style="padding-left: 2.75rem;"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
-
             <div class="overflow-x-auto">
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabLabel"></span></th>
-                        <template x-for="m in (tabConfig[activeTab]?.metrics || [])" :key="m">
-                            <th class="metric-cell cursor-pointer" @click="sortBy(m)">
+                        <th><span x-text="tabConfig[ss.campaigns]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.campaigns]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('campaigns', m)">
                                 <span x-text="metricLabels[m] || m"></span>
-                                <span x-show="sortCol === m" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
+                                <span x-show="sc.campaigns === m" x-text="sd2.campaigns === 'desc' ? '↓' : '↑'"></span>
                             </th>
                         </template>
                     </tr>
                     </thead>
                     <tbody>
-                    <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
+                    <template x-for="(row, idx) in sectionPaginated('campaigns')" :key="(row.id || idx) + '_' + idx">
                         <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
                             <td>
                                 <div class="flex items-center gap-2">
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[activeTab]?.metrics || [])" :key="m">
+                            <template x-for="m in (tabConfig[ss.campaigns]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
-                                             :style="`width: ${(row[m] / maxMetric(m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                             :style="`width: ${(row[m] / sectionMaxMetric('campaigns', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
                                     </div>
                                 </td>
                             </template>
                         </tr>
                     </template>
-                    <tr x-show="paginatedTableData.length === 0">
-                        <td :colspan="(tabConfig[activeTab]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    <tr x-show="sectionPaginated('campaigns').length === 0">
+                        <td :colspan="(tabConfig[ss.campaigns]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-
-            <div class="ga4-pagination-container" x-show="tableDataRaw.length > 0">
+            <div class="ga4-pagination-container" x-show="sd.campaigns.length > 0">
                 <div class="flex items-center gap-4 mb-4 sm:mb-0">
                     <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
                     <select x-model="pageSize" class="ga4-pagination-select">
@@ -297,12 +270,452 @@
                 </div>
                 <div class="flex items-center gap-6">
                     <span class="ga4-pagination-text">
-                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong x-text="totalPages"></strong>
-                        <span class="ga4-pagination-badge">(<span x-text="tableDataRaw.length"></span> {{ __('results') }})</span>
+                        {{ __('Page') }} <strong x-text="sp.campaigns"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('campaigns')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.campaigns.length"></span> {{ __('results') }})</span>
                     </span>
                     <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                        <button @click="sectionPrevPage('campaigns')" :disabled="sp.campaigns === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('campaigns')" :disabled="sp.campaigns === sectionTotalPages('campaigns')" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Channels Section --}}
+        <div class="ga4-table-container relative">
+            <div x-show="sl.channels"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+            </div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.channels.label"></h3>
+            </div>
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.channels.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.channels === t ? 'active' : ''"
+                         @click="setSectionSubTab('channels', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                    </div>
+                    <input type="text" x-model.debounce.300ms="sq.channels"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           style="padding-left: 2.75rem;"
+                           placeholder="{{ __('Filter rows...') }}">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="ga4-table">
+                    <thead>
+                    <tr>
+                        <th><span x-text="tabConfig[ss.channels]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.channels]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('channels', m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sc.channels === m" x-text="sd2.channels === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in sectionPaginated('channels')" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                </div>
+                            </td>
+                            <template x-for="m in (tabConfig[ss.channels]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / sectionMaxMetric('channels', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="sectionPaginated('channels').length === 0">
+                        <td :colspan="(tabConfig[ss.channels]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ga4-pagination-container" x-show="sd.channels.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="pageSize" class="ga4-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="ga4-pagination-text">
+                        {{ __('Page') }} <strong x-text="sp.channels"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('channels')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.channels.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="sectionPrevPage('channels')" :disabled="sp.channels === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('channels')" :disabled="sp.channels === sectionTotalPages('channels')" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Traffic Section --}}
+        <div class="ga4-table-container relative">
+            <div x-show="sl.traffic"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+            </div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.traffic.label"></h3>
+            </div>
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.traffic.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.traffic === t ? 'active' : ''"
+                         @click="setSectionSubTab('traffic', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                    </div>
+                    <input type="text" x-model.debounce.300ms="sq.traffic"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           style="padding-left: 2.75rem;"
+                           placeholder="{{ __('Filter rows...') }}">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="ga4-table">
+                    <thead>
+                    <tr>
+                        <th><span x-text="tabConfig[ss.traffic]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.traffic]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('traffic', m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sc.traffic === m" x-text="sd2.traffic === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in sectionPaginated('traffic')" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                </div>
+                            </td>
+                            <template x-for="m in (tabConfig[ss.traffic]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / sectionMaxMetric('traffic', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="sectionPaginated('traffic').length === 0">
+                        <td :colspan="(tabConfig[ss.traffic]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ga4-pagination-container" x-show="sd.traffic.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="pageSize" class="ga4-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="ga4-pagination-text">
+                        {{ __('Page') }} <strong x-text="sp.traffic"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('traffic')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.traffic.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="sectionPrevPage('traffic')" :disabled="sp.traffic === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('traffic')" :disabled="sp.traffic === sectionTotalPages('traffic')" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Acquisition Section --}}
+        <div class="ga4-table-container relative">
+            <div x-show="sl.acquisition"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+            </div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.acquisition.label"></h3>
+            </div>
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.acquisition.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.acquisition === t ? 'active' : ''"
+                         @click="setSectionSubTab('acquisition', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                    </div>
+                    <input type="text" x-model.debounce.300ms="sq.acquisition"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           style="padding-left: 2.75rem;"
+                           placeholder="{{ __('Filter rows...') }}">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="ga4-table">
+                    <thead>
+                    <tr>
+                        <th><span x-text="tabConfig[ss.acquisition]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.acquisition]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('acquisition', m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sc.acquisition === m" x-text="sd2.acquisition === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in sectionPaginated('acquisition')" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                </div>
+                            </td>
+                            <template x-for="m in (tabConfig[ss.acquisition]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / sectionMaxMetric('acquisition', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="sectionPaginated('acquisition').length === 0">
+                        <td :colspan="(tabConfig[ss.acquisition]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ga4-pagination-container" x-show="sd.acquisition.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="pageSize" class="ga4-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="ga4-pagination-text">
+                        {{ __('Page') }} <strong x-text="sp.acquisition"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('acquisition')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.acquisition.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="sectionPrevPage('acquisition')" :disabled="sp.acquisition === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('acquisition')" :disabled="sp.acquisition === sectionTotalPages('acquisition')" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Events Section --}}
+        <div class="ga4-table-container relative">
+            <div x-show="sl.events"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+            </div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.events.label"></h3>
+            </div>
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.events.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.events === t ? 'active' : ''"
+                         @click="setSectionSubTab('events', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                    </div>
+                    <input type="text" x-model.debounce.300ms="sq.events"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           style="padding-left: 2.75rem;"
+                           placeholder="{{ __('Filter rows...') }}">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="ga4-table">
+                    <thead>
+                    <tr>
+                        <th><span x-text="tabConfig[ss.events]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.events]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('events', m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sc.events === m" x-text="sd2.events === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in sectionPaginated('events')" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                </div>
+                            </td>
+                            <template x-for="m in (tabConfig[ss.events]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / sectionMaxMetric('events', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="sectionPaginated('events').length === 0">
+                        <td :colspan="(tabConfig[ss.events]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ga4-pagination-container" x-show="sd.events.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="pageSize" class="ga4-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="ga4-pagination-text">
+                        {{ __('Page') }} <strong x-text="sp.events"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('events')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.events.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="sectionPrevPage('events')" :disabled="sp.events === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('events')" :disabled="sp.events === sectionTotalPages('events')" class="ga4-pagination-btn">{{ __('Next') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Ad Touchpoints Section --}}
+        <div class="ga4-table-container relative">
+            <div x-show="sl.adtouchpoints"
+                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+            </div>
+            <div class="ga4-section-header">
+                <h3 x-text="sectionConfig.adtouchpoints.label"></h3>
+            </div>
+            <div class="tab-nav-ga4">
+                <template x-for="t in sectionConfig.adtouchpoints.tabs" :key="t">
+                    <div class="tab-ga4" :class="ss.adtouchpoints === t ? 'active' : ''"
+                         @click="setSectionSubTab('adtouchpoints', t)" x-text="tabConfig[t]?.label || t"></div>
+                </template>
+            </div>
+            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                    </div>
+                    <input type="text" x-model.debounce.300ms="sq.adtouchpoints"
+                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
+                           style="padding-left: 2.75rem;"
+                           placeholder="{{ __('Filter rows...') }}">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="ga4-table">
+                    <thead>
+                    <tr>
+                        <th><span x-text="tabConfig[ss.adtouchpoints]?.label || 'Name'"></span></th>
+                        <template x-for="m in (tabConfig[ss.adtouchpoints]?.metrics || [])" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="sectionSortBy('adtouchpoints', m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="sc.adtouchpoints === m" x-text="sd2.adtouchpoints === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in sectionPaginated('adtouchpoints')" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                </div>
+                            </td>
+                            <template x-for="m in (tabConfig[ss.adtouchpoints]?.metrics || [])" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / sectionMaxMetric('adtouchpoints', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="sectionPaginated('adtouchpoints').length === 0">
+                        <td :colspan="(tabConfig[ss.adtouchpoints]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ga4-pagination-container" x-show="sd.adtouchpoints.length > 0">
+                <div class="flex items-center gap-4 mb-4 sm:mb-0">
+                    <span class="ga4-pagination-text font-medium">{{ __('Rows per page:') }}</span>
+                    <select x-model="pageSize" class="ga4-pagination-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="ga4-pagination-text">
+                        {{ __('Page') }} <strong x-text="sp.adtouchpoints"></strong> {{ __('of') }} <strong x-text="sectionTotalPages('adtouchpoints')"></strong>
+                        <span class="ga4-pagination-badge">(<span x-text="sd.adtouchpoints.length"></span> {{ __('results') }})</span>
+                    </span>
+                    <div class="flex gap-2">
+                        <button @click="sectionPrevPage('adtouchpoints')" :disabled="sp.adtouchpoints === 1" class="ga4-pagination-btn">{{ __('Prev') }}</button>
+                        <button @click="sectionNextPage('adtouchpoints')" :disabled="sp.adtouchpoints === sectionTotalPages('adtouchpoints')" class="ga4-pagination-btn">{{ __('Next') }}</button>
                     </div>
                 </div>
             </div>
@@ -322,22 +735,50 @@
 
                         isSummaryLoading: false,
                         isChartLoading: false,
-                        isTableLoading: false,
 
                         summary: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0},
                         previous: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0},
                         chartDataRaw: [],
-                        tableDataRaw: [],
 
                         activeMetrics: {sessions: true, activeUsers: true, newUsers: false, conversions: false},
 
-                        searchQuery: '',
-
-                        sortCol: 'sessions',
-                        sortDir: 'desc',
-
-                        currentPage: 1,
+                        sd: {
+                            campaigns: [],
+                            channels: [],
+                            traffic: [],
+                            acquisition: [],
+                            events: [],
+                            adtouchpoints: [],
+                        },
+                        sl: {
+                            campaigns: false, channels: false, traffic: false,
+                            acquisition: false, events: false, adtouchpoints: false,
+                        },
+                        ss: {
+                            campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
+                            acquisition: 'acquisition_channels', events: 'events',
+                            adtouchpoints: 'adtouchpoints_adgroups',
+                        },
+                        sq: { campaigns: '', channels: '', traffic: '', acquisition: '', events: '', adtouchpoints: '' },
+                        sc: {
+                            campaigns: 'sessions', channels: 'sessions', traffic: 'sessions',
+                            acquisition: 'newUsers', events: 'eventCount', adtouchpoints: 'sessions',
+                        },
+                        sd2: {
+                            campaigns: 'desc', channels: 'desc', traffic: 'desc',
+                            acquisition: 'desc', events: 'desc', adtouchpoints: 'desc',
+                        },
+                        sp: { campaigns: 1, channels: 1, traffic: 1, acquisition: 1, events: 1, adtouchpoints: 1 },
                         pageSize: 10,
+
+                        sectionConfig: {
+                            campaigns: {label: 'Campaigns', tabs: ['campaigns', 'adgroups']},
+                            channels: {label: 'Channels', tabs: ['channels', 'sources']},
+                            traffic: {label: 'Traffic', tabs: ['traffic_pages', 'traffic_countries', 'traffic_devices']},
+                            acquisition: {label: 'Acquisition', tabs: ['acquisition_channels']},
+                            events: {label: 'Events', tabs: ['events']},
+                            adtouchpoints: {label: 'Ad Touchpoints', tabs: ['adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content']},
+                        },
 
                         tabConfig: {
                             campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
@@ -363,6 +804,10 @@
                             newUsers: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
                             screenPageViews: 'var(--ga4-pageViews)', bounceRate: 'var(--ga4-revenue)',
                             eventCount: '#8B5CF6'
+                        },
+
+                        get isAnySectionLoading() {
+                            return Object.values(this.sl).some(v => v);
                         },
 
                         get tabLabel() {
@@ -423,7 +868,7 @@
                                 });
 
                                 this.$watch('pageSize', () => {
-                                    this.currentPage = 1;
+                                    Object.keys(this.sp).forEach(k => this.sp[k] = 1);
                                 });
 
                                 if (this.account && this.dateStart && this.dateEnd) {
@@ -447,15 +892,16 @@
                             }
                         },
 
-                        setTab(tab) {
-                            this.activeTab = tab;
-                            this.currentPage = 1;
-                            this.searchQuery = '';
+                        setSectionSubTab(section, tab) {
+                            this.ss[section] = tab;
+                            this.sp[section] = 1;
+                            this.sq[section] = '';
                             const metrics = this.tabConfig[tab]?.metrics;
-                            this.sortCol = (metrics && metrics.length) ? metrics[0] : 'sessions';
-                            this.sortDir = 'desc';
+                            this.sc[section] = (metrics && metrics.length) ? metrics[0] : 'sessions';
+                            this.sd2[section] = 'desc';
+                            this.activeTab = tab;
                             this.syncToUrl();
-                            this.fetchTable();
+                            this.fetchSection(section);
                             this.$wire.setActiveTab(tab);
                         },
 
@@ -473,8 +919,9 @@
                             });
                         },
 
-                        getCacheKey(endpoint) {
-                            return `ga4_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}`;
+                        getCacheKey(endpoint, section = null) {
+                            const tab = section ? this.ss[section] : '';
+                            return `ga4_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${tab}`;
                         },
 
                         safeCacheSet(key, value) {
@@ -505,23 +952,26 @@
                             if (!this.account || !this.dateStart || !this.dateEnd) return;
                             this.fetchSummary();
                             this.fetchChart();
-                            this.fetchTable();
+                            Object.keys(this.sectionConfig).forEach(s => this.fetchSection(s));
                         },
 
-                        getFetchOptions() {
+                        getFetchOptions(section = null) {
+                            const body = {
+                                tenant: this.tenantId,
+                                account: this.account,
+                                dateStart: this.dateStart,
+                                dateEnd: this.dateEnd,
+                            };
+                            if (section) {
+                                body.activeTab = this.ss[section];
+                            }
                             return {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                 },
-                                body: JSON.stringify({
-                                    tenant: this.tenantId,
-                                    account: this.account,
-                                    dateStart: this.dateStart,
-                                    dateEnd: this.dateEnd,
-                                    activeTab: this.activeTab
-                                })
+                                body: JSON.stringify(body)
                             };
                         },
 
@@ -579,29 +1029,29 @@
                             }
                         },
 
-                        async fetchTable() {
+                        async fetchSection(section) {
                             if (!this.account || !this.dateStart || !this.dateEnd) return;
-                            const cacheKey = this.getCacheKey('table');
+                            const cacheKey = this.getCacheKey('table', section);
 
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                                this.tableDataRaw = data.table || [];
+                                this.sd[section] = data.table || [];
                                 return;
                             }
 
-                            this.isTableLoading = true;
+                            this.sl[section] = true;
                             try {
-                                const response = await fetch('/api/ga4/table', this.getFetchOptions());
+                                const response = await fetch('/api/ga4/table', this.getFetchOptions(section));
                                 const data = await response.json();
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                                    this.tableDataRaw = data.table || [];
-                                    this.currentPage = 1;
+                                    this.sd[section] = data.table || [];
+                                    this.sp[section] = 1;
                                 }
                             } catch (error) {
-                                console.error('Error fetching table:', error);
+                                console.error('Error fetching section ' + section + ':', error);
                             } finally {
-                                this.isTableLoading = false;
+                                this.sl[section] = false;
                             }
                         },
 
@@ -825,62 +1275,69 @@
                             chart.update();
                         },
 
-                        sortBy(col) {
-                            if (this.sortCol === col) {
-                                this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
-                            } else {
-                                this.sortCol = col;
-                                this.sortDir = 'desc';
-                            }
-                            this.currentPage = 1;
-                        },
-
-                        get sortedTableData() {
-                            let data = [...this.tableDataRaw];
-
-                            if (this.searchQuery && this.searchQuery.trim() !== '') {
-                                const query = this.searchQuery.toLowerCase().trim();
+                        sectionData(section) {
+                            let data = [...(this.sd[section] || [])];
+                            const query = (this.sq[section] || '').toLowerCase().trim();
+                            if (query) {
                                 data = data.filter(row => String(row.name || row.id || '').toLowerCase().includes(query));
                             }
-
-                            const activeMetrics = this.tabConfig[this.activeTab]?.metrics || [];
-                            const sortKey = activeMetrics.includes(this.sortCol) ? this.sortCol : (activeMetrics[0] || 'sessions');
+                            const metrics = this.tabConfig[this.ss[section]]?.metrics || [];
+                            const sortKey = metrics.includes(this.sc[section]) ? this.sc[section] : (metrics[0] || 'sessions');
                             return data.sort((a, b) => {
                                 let valA = Number(a[sortKey]);
                                 let valB = Number(b[sortKey]);
-
                                 if (isNaN(valA) || isNaN(valB)) {
                                     valA = String(a[sortKey] || '').toLowerCase();
                                     valB = String(b[sortKey] || '').toLowerCase();
                                 }
-
                                 if (valA === valB) return 0;
-                                if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
+                                if (this.sd2[section] === 'desc') return valA < valB ? 1 : -1;
                                 return valA > valB ? 1 : -1;
                             });
                         },
 
-                        get totalPages() {
-                            return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
+                        sectionTotalPages(section) {
+                            return Math.ceil((this.sd[section] || []).length / this.pageSize) || 1;
                         },
 
-                        get paginatedTableData() {
-                            const start = (this.currentPage - 1) * this.pageSize;
+                        sectionPaginated(section) {
+                            const start = (this.sp[section] - 1) * this.pageSize;
                             const end = start + Number(this.pageSize);
-                            return this.sortedTableData.slice(start, end);
+                            return this.sectionData(section).slice(start, end);
                         },
 
-                        nextPage() {
-                            if (this.currentPage < this.totalPages) this.currentPage++;
+                        sectionNextPage(section) {
+                            if (this.sp[section] < this.sectionTotalPages(section)) this.sp[section]++;
                         },
 
-                        prevPage() {
-                            if (this.currentPage > 1) this.currentPage--;
+                        sectionPrevPage(section) {
+                            if (this.sp[section] > 1) this.sp[section]--;
                         },
 
-                        maxMetric(metric) {
-                            if (!this.sortedTableData.length) return 1;
-                            return Math.max(...this.sortedTableData.map(r => r[metric] || 0));
+                        sectionSortBy(section, col) {
+                            if (this.sc[section] === col) {
+                                this.sd2[section] = this.sd2[section] === 'desc' ? 'asc' : 'desc';
+                            } else {
+                                this.sc[section] = col;
+                                this.sd2[section] = 'desc';
+                            }
+                            this.sp[section] = 1;
+                        },
+
+                        sectionMaxMetric(section, metric) {
+                            const data = this.sectionData(section);
+                            if (!data.length) return 1;
+                            return Math.max(...data.map(r => r[metric] || 0));
+                        },
+
+                        tabForSection(section) {
+                            const config = this.sectionConfig[section];
+                            if (!config) return [];
+                            return config.tabs.map(t => ({
+                                key: t,
+                                label: this.tabConfig[t]?.label || t,
+                                active: this.ss[section] === t
+                            }));
                         },
 
                         formatNumber(num) {
