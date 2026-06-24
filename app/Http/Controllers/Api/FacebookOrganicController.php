@@ -486,6 +486,16 @@
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+
+                if ($validated['activeTab'] === 'instagram' && empty($parsedAccounts['igAccountIds'])) {
+                    return response()->json([
+                        'summary'  => [],
+                        'previous' => [],
+                        'chart'    => [],
+                        'table'    => [],
+                    ]);
+                }
+
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
                 $summaryGroupBy = $validated['activeTab'] === 'facebook' ? $config['groupBy'] : [];
