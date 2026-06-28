@@ -99,7 +99,7 @@ class DeployerService
         $dbUser = $project->db_user ?: "postgres";
         $dbPass = $project->db_password ?: "secret-pass";
 
-        $tokenAuthorityUrl = config('app.url') . '/api/v1/tokens/refresh';
+        $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';

@@ -71,6 +71,7 @@ Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
 Route::post('/api/channels/auth-failed', [\App\Http\Controllers\MonitoringController::class, 'authFailed']);
 Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']);
+Route::post('/api/v1/tokens/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']); // Backwards compatibility for older worker deployments
 Route::post('/api/gsc/summary', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'summary'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/chart', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'chart'])->middleware(['web', 'auth']);
 Route::post('/api/gsc/table', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'table'])->middleware(['web', 'auth']);
