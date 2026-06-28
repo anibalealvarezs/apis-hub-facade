@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
 use App\Models\ChannelProfile;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +16,7 @@ class TokenAuthorityController extends Controller
     public function refresh(Request $request)
     {
         $bearerToken = $request->bearerToken();
-        if (!$bearerToken) {
+        if (! $bearerToken) {
             return response()->json(['error' => 'Missing Bearer Token'], 401);
         }
 
@@ -27,12 +27,12 @@ class TokenAuthorityController extends Controller
             return $p->public_api_key === $bearerToken || $p->remote_admin_api_key === $bearerToken;
         });
 
-        if (!$project) {
+        if (! $project) {
             return response()->json(['error' => 'Invalid Authority Token'], 403);
         }
 
         $channel = $request->input('channel');
-        if (!$channel) {
+        if (! $channel) {
             return response()->json(['error' => 'Channel is required'], 400);
         }
 
@@ -52,23 +52,47 @@ class TokenAuthorityController extends Controller
         $profileIdColumn = "{$provider}_profile_id";
         $profileId = $project->{$profileIdColumn};
 
-        if (!$profileId) {
+        if (! $profileId) {
             return response()->json(['error' => "No {$provider} profile linked to this project"], 404);
         }
 
         $profile = ChannelProfile::find($profileId);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['error' => "Profile not found"], 404);
         }
 
         try {
+            $cacheKey = "profile_{$profile->id}_last_refresher_project_id";
+            $lastRefresherProjectId = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+            // If the current token in the database is still technically unexpired...
+            if ($profile->access_token && $profile->expires_at && $profile->expires_at->isFuture()) {
+                
+                // If a DIFFERENT project is asking, they just need to catch up to the latest token!
+                // We return the existing token to them without hitting the provider API.
+                if ($lastRefresherProjectId !== $project->id) {
+                    return response()->json([
+                        'access_token' => $profile->access_token,
+                        'expires_at' => $profile->expires_at->toIso8601String(),
+                    ]);
+                }
+                
+                // If the SAME project is asking again, it implies the token we previously gave them 
+                // is being rejected by the provider, so we MUST allow a fresh API request.
+            }
+
             $newToken = $this->performRefresh($profile);
+
+            // Record that THIS project was the one who caused the fresh token to be issued
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $project->id, now()->addDays(7));
+
             return response()->json([
                 'access_token' => $newToken,
                 'expires_at' => $profile->expires_at?->toIso8601String(),
             ]);
         } catch (\Exception $e) {
             Log::error("Token Authority Refresh Failed for Project {$project->id}: " . $e->getMessage());
+
             return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], 500);
         }
     }
@@ -79,7 +103,7 @@ class TokenAuthorityController extends Controller
     protected function performRefresh(ChannelProfile $profile)
     {
         if ($profile->provider === 'google') {
-            if (!$profile->refresh_token) {
+            if (! $profile->refresh_token) {
                 throw new \Exception("No refresh token available for Google profile.");
             }
 
