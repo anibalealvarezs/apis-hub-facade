@@ -21,8 +21,10 @@ class TokenAuthorityController extends Controller
         }
 
         // Validate the bearer token against the Tenant (Project)
-        // We injected the `public_api_key` as the TOKEN_AUTHORITY_BEARER
-        $project = Project::where('public_api_key', $bearerToken)->first();
+        // We injected the `public_api_key` (or `remote_admin_api_key`) as the TOKEN_AUTHORITY_BEARER
+        $project = Project::where('public_api_key', $bearerToken)
+            ->orWhere('remote_admin_api_key', $bearerToken)
+            ->first();
 
         if (!$project) {
             return response()->json(['error' => 'Invalid Authority Token'], 403);
