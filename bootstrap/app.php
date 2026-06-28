@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/heartbeat',
             'api/channels/auth-failed',
             'api/token-authority/refresh',
+            'api/v1/tokens/refresh',
             'webhooks/paypal',
         ]);
     })
