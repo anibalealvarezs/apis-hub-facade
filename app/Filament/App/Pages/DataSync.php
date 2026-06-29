@@ -74,22 +74,33 @@ class DataSync extends Page
 
                         // Check if current node represents an asset
                         $assetName = $data['title'] ?? $data['name'] ?? null;
-                        if (isset($data['id']) && is_string($assetName) && !empty($assetName)) {
-                            // Some telemetry systems prefix FB ids with 'act_'
-                            $cleanId = str_replace('act_', '', (string)$data['id']);
-                            
-                            $accountMap[$cleanId] = [
-                                'name' => $assetName,
-                                'ig_username' => null,
-                            ];
-                            $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
+                        
+                        $possibleIds = [];
+                        if (isset($data['id'])) $possibleIds[] = (string)$data['id'];
+                        if (isset($data['property_id'])) $possibleIds[] = (string)$data['property_id'];
+                        if (isset($data['url'])) {
+                            $possibleIds[] = (string)$data['url'];
+                            $possibleIds[] = md5((string)$data['url']);
+                        }
 
-                            // Check for IG account inside FB page
-                            if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
-                                $ig = $data['instagram_business_account'];
-                                if (isset($ig['username'])) {
-                                    $accountMap[$cleanId]['ig_username'] = $ig['username'];
-                                    $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
+                        if (!empty($possibleIds) && is_string($assetName) && !empty($assetName)) {
+                            foreach ($possibleIds as $extractedId) {
+                                // Some telemetry systems prefix FB ids with 'act_'
+                                $cleanId = str_replace('act_', '', $extractedId);
+                                
+                                $accountMap[$cleanId] = [
+                                    'name' => $assetName,
+                                    'ig_username' => null,
+                                ];
+                                $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
+
+                                // Check for IG account inside FB page
+                                if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
+                                    $ig = $data['instagram_business_account'];
+                                    if (isset($ig['username'])) {
+                                        $accountMap[$cleanId]['ig_username'] = $ig['username'];
+                                        $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
+                                    }
                                 }
                             }
                         }
