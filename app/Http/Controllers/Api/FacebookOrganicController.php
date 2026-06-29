@@ -617,6 +617,13 @@
                 $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
 
                 $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+
+                if ($validated['activeTab'] === 'instagram' && empty($parsedAccounts['igAccountIds'])) {
+                    return response()->json([
+                        'chart' => []
+                    ]);
+                }
+
                 if ($validated['activeTab'] === 'facebook') {
                     $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
                 }
@@ -721,6 +728,14 @@
                 $tenant = Project::findOrFail($validated['tenant']);
                 $service = app(RemoteEngineService::class);
 
+                $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
+
+                if ($validated['activeTab'] === 'instagram' && empty($parsedAccounts['igAccountIds'])) {
+                    return response()->json([
+                        'table' => []
+                    ]);
+                }
+
                 $tableMode = $validated['tableMode'] ?? 'posts';
 
                 if ($tableMode === 'breakdown') {
@@ -732,7 +747,6 @@
                     $this->applyBreakdownFilters($baseFilters, $internalTab, $validated['activeFilters'] ?? null);
                     unset($baseFilters['dimensionSet']);
 
-                    $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                     if ($validated['activeTab'] === 'facebook') {
                         $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
                     }
@@ -782,7 +796,6 @@
 
                 $baseFilters = $config['filters'];
 
-                $parsedAccounts = $this->parseSelectedAccounts($validated['account'] ?? []);
                 if ($validated['activeTab'] === 'facebook') {
                     $parsedAccounts = $this->hydrateResolvedFacebookPageIds($tenant, $service, $validated, $parsedAccounts);
                 }
