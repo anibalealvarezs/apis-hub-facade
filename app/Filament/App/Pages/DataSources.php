@@ -310,11 +310,41 @@
                 $config['facebook_marketing']['metrics_level'] = 'AD';
             }
 
+            // Calculate staggered defaults for cron_time if missing
+            // Providers list defines the deterministic order of channels
+            $providers = $this->getProviders();
+            $enabledChannels = [];
+            foreach ($providers as $provider) {
+                foreach ($provider['channels'] as $ch) {
+                    if (!empty($config[$ch['key']]['enabled'])) {
+                        $enabledChannels[] = $ch['key'];
+                    }
+                }
+            }
+
             foreach ($config as $channelKey => &$channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
                     $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     $config[$channelKey . '_enabled'] = $boolVal;
                     $channelConfig['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
+
+                    // Setup legacy backward compatibility and staggered default for cron_time
+                    if (!isset($channelConfig['cron_time'])) {
+                        if (isset($channelConfig['cron_recent_hour'])) {
+                            // Legacy fallback
+                            $h = $channelConfig['cron_recent_hour'];
+                            $m = $channelConfig['cron_recent_minute'] ?? 0;
+                            $channelConfig['cron_time'] = sprintf('%02d:%02d', $h, $m);
+                        } else {
+                            // Staggered default: 4:00 AM + 15 min per enabled channel
+                            $index = array_search($channelKey, $enabledChannels);
+                            if ($index === false) $index = 0; // fallback
+                            $totalMinutes = 4 * 60 + ($index * 15);
+                            $h = floor($totalMinutes / 60) % 24;
+                            $m = $totalMinutes % 60;
+                            $channelConfig['cron_time'] = sprintf('%02d:%02d', $h, $m);
+                        }
+                    }
                 }
                 
                 if (is_array($channelConfig)) {
@@ -863,6 +893,17 @@
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
 
             $secondarySections = [];
+
+            $secondarySections[] = Section::make(__('Synchronization Schedule'))
+                ->description(__('Set the time when daily data should be synchronized for this channel.'))
+                ->schema([
+                    \Filament\Forms\Components\TimePicker::make($this->activeChannel.'.cron_time')
+                        ->label(__('Daily Sync Time'))
+                        ->seconds(false)
+                        ->required()
+                        ->helperText(__('Times are in your configured project timezone ('.(config('app.timezone') ?? 'Local').').')),
+                ])
+                ->columns(1);
 
             if (!empty($parts['advanced'])) {
                 $secondarySections[] = Section::make(__('Advanced Configuration'))
