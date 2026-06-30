@@ -900,6 +900,7 @@
                     \Filament\Forms\Components\TimePicker::make($this->activeChannel.'.cron_time')
                         ->label(__('Daily Sync Time'))
                         ->seconds(false)
+                        ->format('H:i')
                         ->required()
                         ->helperText(__('Times are in your configured project timezone ('.(config('app.timezone') ?? 'Local').').')),
                 ])
