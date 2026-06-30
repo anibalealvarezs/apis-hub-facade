@@ -46,7 +46,6 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('filament.hooks.beta-badge'),
             )
 
-            ->profile()
             ->sidebarCollapsibleOnDesktop()
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
                 <div class="w-full flex items-center justify-center">
