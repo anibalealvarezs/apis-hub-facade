@@ -2,16 +2,14 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\Project;
 use App\Http\Middleware\VerifyReCaptcha;
+use App\Models\Project;
 use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateBatch;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -33,7 +31,7 @@ class AppPanelProvider extends PanelProvider
             ->registration(\App\Filament\Pages\Auth\CustomRegister::class)
             ->passwordReset()
             ->emailVerification()
-            
+
             ->renderHook(
                 \Filament\View\PanelsRenderHook::TOPBAR_START,
                 fn () => view('filament.hooks.topbar-logo'),
@@ -210,10 +208,10 @@ class AppPanelProvider extends PanelProvider
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->userMenuItems([
-                'profile' => \Filament\Navigation\MenuItem::make()
+                /* 'profile' => \Filament\Navigation\MenuItem::make()
                     ->label(__('Profile'))
-                    ->url('/app/my-profile')
-                    ->icon('heroicon-o-user-circle'),
+                    ->url('/account/my-profile')
+                    ->icon('heroicon-o-user-circle'), */
                 'my_account' => \Filament\Navigation\MenuItem::make()
                     ->label(__('My Account'))
                     ->url('/account')
