@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Account\Widgets;
+namespace App\Filament\Account\Resources\BillingProfileResource\Widgets;
 
 use App\Notifications\BillingProfileAssignmentProcessedNotification;
 use Filament\Tables;

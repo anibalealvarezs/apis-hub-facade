@@ -13,24 +13,38 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class BillingProfileResource extends Resource
 {
     protected static ?string $model = BillingProfile::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing & Payments');
     }
 
-    
-    
+    public static function getNavigationBadge(): ?string
+    {
+        $count = \App\Models\Project::whereHas('billingProfile', function ($q) {
+            $q->where('user_id', auth()->id());
+        })
+            ->where('billing_status', 'pending_approval')
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
+    }
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $userId = auth()->id();
+
         return parent::getEloquentQuery()
             ->where(function (Builder $query) use ($userId) {
                 $query->where('user_id', $userId)
@@ -44,8 +58,8 @@ class BillingProfileResource extends Resource
         $hasFreeProfile = BillingProfile::where('user_id', auth()->id())
             ->where('tier', 'free')
             ->exists();
-            
-        return !$hasFreeProfile;
+
+        return ! $hasFreeProfile;
     }
 
     public static function canEdit(Model $record): bool
@@ -178,17 +192,23 @@ class BillingProfileResource extends Resource
                         $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
                         foreach ($projectsToScan as $project) {
                             $syncConfig = $project->sync_config ?? [];
-                            if (!is_array($syncConfig)) continue;
+                            if (! is_array($syncConfig)) {
+                                continue;
+                            }
 
                             foreach ($syncConfig as $channelKey => $channelConfig) {
-                                if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+                                if (! is_array($channelConfig) || empty($channelConfig['enabled'])) {
+                                    continue;
+                                }
 
                                 foreach ($assetKeys as $assetKey) {
                                     $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
-                                    if (!is_array($assets)) continue;
+                                    if (! is_array($assets)) {
+                                        continue;
+                                    }
 
                                     foreach ($assets as $asset) {
-                                        if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                        if (is_array($asset) && ! empty($asset['enabled']) && empty($asset['lost_access'])) {
                                             $assetCount++;
                                         }
                                     }
@@ -196,18 +216,24 @@ class BillingProfileResource extends Resource
                             }
                         }
 
-                        if (!$isOwner) {
+                        if (! $isOwner) {
                             $totalAssetCount = 0;
                             foreach ($record->projects as $project) {
                                 $syncConfig = $project->sync_config ?? [];
-                                if (!is_array($syncConfig)) continue;
+                                if (! is_array($syncConfig)) {
+                                    continue;
+                                }
                                 foreach ($syncConfig as $channelKey => $channelConfig) {
-                                    if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+                                    if (! is_array($channelConfig) || empty($channelConfig['enabled'])) {
+                                        continue;
+                                    }
                                     foreach ($assetKeys as $assetKey) {
                                         $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
-                                        if (!is_array($assets)) continue;
+                                        if (! is_array($assets)) {
+                                            continue;
+                                        }
                                         foreach ($assets as $asset) {
-                                            if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                            if (is_array($asset) && ! empty($asset['enabled']) && empty($asset['lost_access'])) {
                                                 $totalAssetCount++;
                                             }
                                         }
@@ -260,6 +286,7 @@ class BillingProfileResource extends Resource
                         if ($count > 0) {
                             return __('WARNING: This profile is actively paying for :count project(s). If you delete it now, all attached projects will be IMMEDIATELY SUSPENDED and their infrastructure will be stopped. We highly recommend assigning them a different billing profile first. Are you absolutely sure?', ['count' => $count]);
                         }
+
                         return __('Are you sure you want to delete this billing profile? This action cannot be undone.');
                     }),
             ])
@@ -276,6 +303,7 @@ class BillingProfileResource extends Resource
                             if ($totalProjects > 0) {
                                 return __('WARNING: The selected profiles are actively paying for :count project(s) in total. If you delete them, ALL attached projects will be IMMEDIATELY SUSPENDED. We highly recommend assigning them a different billing profile first. Are you absolutely sure?', ['count' => $totalProjects]);
                             }
+
                             return __('Are you sure you want to delete the selected billing profiles? This action cannot be undone.');
                         }),
                 ]),
