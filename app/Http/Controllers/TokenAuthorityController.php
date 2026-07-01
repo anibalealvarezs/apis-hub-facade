@@ -107,11 +107,7 @@ class TokenAuthorityController extends Controller
                     // Notify the true owner
                     $owner = $project->trueOwner;
                     if ($owner) {
-                        \Filament\Notifications\Notification::make()
-                            ->title('Integration Disconnected')
-                            ->body("The authentication token for {$profile->provider} has expired or was revoked. Please reconnect your account.")
-                            ->danger()
-                            ->sendToDatabase($owner);
+                        $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
                     }
                 }
             }
