@@ -516,7 +516,7 @@
 
             $profile = \App\Models\ChannelProfile::find($tenant->{$profileIdColumn});
             if ($profile && is_array($profile->authorized_channels)) {
-                return in_array($channel, $profile->authorized_channels);
+                return in_array($channel, $profile->authorized_channels) && !empty($profile->access_token);
             }
 
             // Fallback for legacy connections before the column was added

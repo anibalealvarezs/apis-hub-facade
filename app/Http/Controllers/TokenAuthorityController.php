@@ -96,6 +96,24 @@ class TokenAuthorityController extends Controller
             $statusCode = 500;
             if (str_contains($e->getMessage(), 'Google API rejected refresh') || str_contains($e->getMessage(), 'Facebook API rejected refresh')) {
                 $statusCode = 400;
+
+                // Disable the profile tokens so the UI detects it as disconnected
+                if (isset($profile)) {
+                    $profile->update([
+                        'access_token' => null,
+                        'refresh_token' => null,
+                    ]);
+
+                    // Notify the true owner
+                    $owner = $project->trueOwner;
+                    if ($owner) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Integration Disconnected')
+                            ->body("The authentication token for {$profile->provider} has expired or was revoked. Please reconnect your account.")
+                            ->danger()
+                            ->sendToDatabase($owner);
+                    }
+                }
             }
 
             return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], $statusCode);
