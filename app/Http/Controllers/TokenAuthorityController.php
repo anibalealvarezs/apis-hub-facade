@@ -93,7 +93,12 @@ class TokenAuthorityController extends Controller
         } catch (\Exception $e) {
             Log::error("Token Authority Refresh Failed for Project {$project->id}: " . $e->getMessage());
 
-            return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], 500);
+            $statusCode = 500;
+            if (str_contains($e->getMessage(), 'Google API rejected refresh') || str_contains($e->getMessage(), 'Facebook API rejected refresh')) {
+                $statusCode = 400;
+            }
+
+            return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], $statusCode);
         }
     }
 
