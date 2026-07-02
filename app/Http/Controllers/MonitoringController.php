@@ -65,9 +65,40 @@ class MonitoringController extends Controller
             return response('Channel not provided', 400);
         }
 
-        // Do NOT nullify the profile ID as this alters project configuration and breaks billing.
-        // The Token Authority already handles marking the profile's access_token as null when the grant is invalid.
-        \Illuminate\Support\Facades\Log::warning("Permanent auth failure reported by worker for channel $channel on project {$project->name}. TokenAuthority should have already marked the profile as disconnected.");
+        // We do NOT nullify the profile ID on the project as this alters project configuration and breaks billing.
+        // Instead, we nullify the access_token and refresh_token on the ChannelProfile itself.
+        // For Google, the Token Authority handles this during refresh, but for Facebook long-lived tokens
+        // that are revoked mid-lifecycle (e.g. password change), the Token Authority never gets the invalid_grant.
+        // Therefore, we must manually disconnect the profile here.
+        $provider = 'unknown';
+        if (str_starts_with($channel, 'google')) {
+            $provider = 'google';
+        } elseif (str_starts_with($channel, 'facebook') || str_starts_with($channel, 'meta')) {
+            $provider = 'facebook';
+        }
+
+        if ($provider !== 'unknown') {
+            $profileIdColumn = "{$provider}_profile_id";
+            $profileId = $project->{$profileIdColumn};
+
+            if ($profileId) {
+                $profile = \App\Models\ChannelProfile::find($profileId);
+                if ($profile && $profile->access_token !== null) {
+                    $profile->update([
+                        'access_token' => null,
+                        'refresh_token' => null,
+                    ]);
+
+                    // Notify the true owner
+                    $owner = $project->trueOwner;
+                    if ($owner) {
+                        $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
+                    }
+                    
+                    \Illuminate\Support\Facades\Log::warning("Permanent auth failure reported by worker for channel $channel on project {$project->name}. Disconnected {$provider} profile.");
+                }
+            }
+        }
 
         return response()->json([
             'status' => 'success',
