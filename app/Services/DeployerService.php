@@ -241,7 +241,7 @@ EOT;
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         
-        $channelArg = '--channel=' . escapeshellarg(implode(',', $channels));
+        $channelArg = '--channel=' . implode(',', $channels);
         $commands = [
             "cd {$path}",
             "bash bin/nuclear-sync.sh {$channelArg}",
