@@ -174,11 +174,11 @@ class DataSync extends Page
         $canResync = true;
         $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
 
-        $hasChannels = $tenant->countEnabledChannels() > 0;
+        $hasChannels = $tenant->countEnabledChannels(true) > 0;
         
         if (!$hasChannels) {
             $canResync = false;
-            $resyncMessage = __('No active channels configured for this project.');
+            $resyncMessage = __('No active and connected channels configured for this project.');
         } elseif ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
             if ($daysSince < $cooldownDays) {
@@ -210,7 +210,8 @@ class DataSync extends Page
                     if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
                         foreach (array_keys($this->syncData['channels']) as $c) {
                             $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
-                            if ($isConfigured) {
+                            $isConnected = $tenant->isChannelConnected($c);
+                            if ($isConfigured && $isConnected) {
                                 $channels[$c] = ucwords(str_replace('_', ' ', $c));
                             }
                         }
