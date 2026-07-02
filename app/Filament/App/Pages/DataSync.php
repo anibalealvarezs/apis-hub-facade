@@ -174,7 +174,12 @@ class DataSync extends Page
         $canResync = true;
         $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
 
-        if ($tenant->last_historical_resync_at) {
+        $hasChannels = $tenant->countEnabledChannels() > 0;
+        
+        if (!$hasChannels) {
+            $canResync = false;
+            $resyncMessage = __('No active channels configured for this project.');
+        } elseif ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
             if ($daysSince < $cooldownDays) {
                 $canResync = false;
@@ -199,11 +204,15 @@ class DataSync extends Page
                 ->requiresConfirmation()
                 ->modalHeading(__('Historical Resync (Nuclear)'))
                 ->modalDescription($resyncMessage.' '.__('Please, type "RESYNC" to confirm.'))
-                ->form(function () {
+                ->form(function () use ($tenant) {
                     $channels = [];
+                    $syncConfig = $tenant->sync_config ?? [];
                     if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
                         foreach (array_keys($this->syncData['channels']) as $c) {
-                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                            $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
+                            if ($isConfigured) {
+                                $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                            }
                         }
                     }
 
