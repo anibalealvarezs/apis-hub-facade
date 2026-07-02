@@ -26,7 +26,7 @@ class ApplyTenantScopes
 
             $lastTenantId = session()->get('current_tenant_id');
 
-            if ($lastTenantId && $lastTenantId !== $tenant->id) {
+            if ($request->isMethod('GET') && $lastTenantId && $lastTenantId !== $tenant->id) {
                 // Flash confirmation notification
                 \Filament\Notifications\Notification::make()
                     ->title("Switched to {$tenant->name}")
@@ -71,7 +71,9 @@ class ApplyTenantScopes
                 }
             }
 
-            session()->put('current_tenant_id', $tenant->id);
+            if ($request->isMethod('GET')) {
+                session()->put('current_tenant_id', $tenant->id);
+            }
         }
 
         return $next($request);
