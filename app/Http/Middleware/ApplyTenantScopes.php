@@ -50,9 +50,19 @@ class ApplyTenantScopes
                                     $relativeUrl .= '?' . $parsedReferer['query'];
                                 }
 
+                                // Check if the path contains a numeric ID or UUID (e.g. /dashboards/123/edit)
+                                // If it does, it's a record-specific page that likely doesn't exist in the new tenant.
+                                // In this case, we fallback to the new tenant's dashboard root.
+                                $hasId = preg_match('#/(?:\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:/|$)#', '/' . $relativeUrl);
+
                                 // If landing on the dashboard root for the new tenant, intercept and redirect
                                 if ($request->path() === 'app/' . $tenant->subdomain) {
                                     session()->put('current_tenant_id', $tenant->id);
+                                    
+                                    if ($hasId) {
+                                        return redirect('/app/' . $tenant->subdomain); // Fallback
+                                    }
+                                    
                                     return redirect('/app/' . $tenant->subdomain . '/' . $relativeUrl);
                                 }
                             }
