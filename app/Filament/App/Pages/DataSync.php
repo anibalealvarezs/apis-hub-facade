@@ -218,12 +218,14 @@ class DataSync extends Page
                     }
 
                     return [
-                        \Filament\Forms\Components\Select::make('channel')
-                            ->label(__('Target Channel'))
-                            ->options(array_merge(['all' => __('All Channels')], $channels))
-                            ->default('all')
+                        \Filament\Forms\Components\Select::make('channels')
+                            ->label(__('Target Channels'))
+                            ->options($channels)
+                            ->default(array_keys($channels))
+                            ->multiple()
                             ->required()
-                            ->helperText(__('Select a specific channel to limit the reset, or all channels.')),
+                            ->minItems(1)
+                            ->helperText(__('Select one or more channels to reset.')),
                         \Filament\Forms\Components\TextInput::make('confirmation')
                             ->label(__('Confirmation'))
                             ->required()
@@ -238,14 +240,12 @@ class DataSync extends Page
                     if ($data['confirmation'] !== 'RESYNC') {
                         return;
                     }
-                    $response = $service->triggerHistoricalResync($tenant, $data['channel']);
+                    $response = $service->triggerHistoricalResync($tenant, $data['channels']);
                     if (($response['status'] ?? '') === 'error') {
                         Notification::make()->title(__('Error:').' '.($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
-                        if ($data['channel'] === 'all') {
-                            $tenant->update(['last_historical_resync_at' => now()]);
-                        }
-                        Notification::make()->title(__('Historical resync initiated for ').($data['channel'] === 'all' ? __('all channels') : $data['channel']).__('... New jobs will be processed as soon as workers become available.'))->success()->send();
+                        $tenant->update(['last_historical_resync_at' => now()]);
+                        Notification::make()->title(__('Historical resync initiated for ').count($data['channels']).__(' channels... New jobs will be processed as soon as workers become available.'))->success()->send();
                     }
                 }),
         ];

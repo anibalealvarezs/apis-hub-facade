@@ -234,10 +234,11 @@ EOT;
     /**
      * Trigger a nuclear historical resync over SSH.
      */
-    public function nuclearResync(Project $project, string $channel = 'all')
+    public function nuclearResync(Project $project, array $channels)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
+        
+        $channelArg = '--channel=' . escapeshellarg(implode(',', $channels));
         $commands = [
             "cd {$path}",
             "bash bin/nuclear-sync.sh {$channelArg}",

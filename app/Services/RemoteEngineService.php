@@ -99,12 +99,12 @@ class RemoteEngineService
     }
 
     /**
-     * Trigger a nuclear historical resync via a tracked background job.
+     * Trigger a historical synchronization resync over SSH.
      */
-    public function triggerHistoricalResync(Project $project, string $channel = 'all')
+    public function triggerHistoricalResync(Project $project, array $channels)
     {
         try {
-            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channel);
+            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channels);
 
             return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
 

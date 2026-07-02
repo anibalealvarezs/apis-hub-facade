@@ -20,7 +20,7 @@ class NuclearResyncProjectJob implements ShouldQueue
 
     public function __construct(
         public Project $project,
-        public string $channel = 'all'
+        public array $channels
     ) {}
 
     public function handle(DeployerService $deployer): void
@@ -31,17 +31,19 @@ class NuclearResyncProjectJob implements ShouldQueue
             'deploy_started_at' => now(),
         ]);
 
+        $channelsStr = implode(', ', $this->channels);
+
         // 1. Create a Deployment Log
         $deploymentLog = ProjectDeploymentLog::create([
             'project_id' => $this->project->id,
             'status'     => 'running',
             'started_at' => now(),
-            'output'     => "Starting nuclear historical resync for channel: {$this->channel}...",
+            'output'     => "Starting nuclear historical resync for channels: {$channelsStr}...",
         ]);
 
         try {
             // 2. Run Nuclear Resync
-            $result = $deployer->nuclearResync($this->project, $this->channel);
+            $result = $deployer->nuclearResync($this->project, $this->channels);
 
             // 3. Update Log with Result
             $deploymentLog->update([
