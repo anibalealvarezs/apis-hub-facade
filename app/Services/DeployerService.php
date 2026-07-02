@@ -233,6 +233,9 @@ EOT;
 
     /**
      * Trigger a nuclear historical resync over SSH.
+     * 
+     * @param Project $project
+     * @param string[] $channels
      */
     public function nuclearResync(Project $project, array $channels)
     {
