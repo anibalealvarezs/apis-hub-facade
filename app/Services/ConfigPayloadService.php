@@ -60,25 +60,18 @@ class ConfigPayloadService
         unset($payload[$channel . '_enabled']);
 
         // Check if the integration is disconnected
-        $providerMap = [
-            'google_search_console' => 'google',
-            'google_analytics' => 'google',
-            'facebook_marketing' => 'facebook',
-            'facebook_organic' => 'facebook',
-            'klaviyo' => 'klaviyo',
-            'shopify' => 'shopify',
-            'netsuite' => 'netsuite',
-            'amazon' => 'amazon',
-            'bigcommerce' => 'bigcommerce',
-            'pinterest' => 'pinterest',
-            'linkedin' => 'linkedin',
-            'tiktok' => 'tiktok',
-            'x' => 'x',
-            'triple_whale' => 'triple_whale',
-        ];
-        $provider = $providerMap[$channel] ?? null;
+        $provider = null;
+        $credential = null;
+        
+        foreach ($tenant->credentials as $cred) {
+            if (str_starts_with($channel, $cred->provider)) {
+                $provider = $cred->provider;
+                $credential = $cred;
+                break;
+            }
+        }
+
         if ($provider) {
-            $credential = $tenant->credentials()->where('provider', $provider)->first();
             if (!$credential || empty($credential->token)) {
                 $payload['is_disconnected'] = true;
             } else {

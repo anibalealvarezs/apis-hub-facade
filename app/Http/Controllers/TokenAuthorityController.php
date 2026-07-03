@@ -109,6 +109,9 @@ class TokenAuthorityController extends Controller
                     if ($owner) {
                         $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
                     }
+
+                    // Force a configuration deployment to the tenant so it receives the is_disconnected=true flag immediately
+                    \App\Jobs\DeployProjectJob::dispatch($project);
                 }
             }
 
