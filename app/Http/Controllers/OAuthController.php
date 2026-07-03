@@ -209,6 +209,14 @@ class OAuthController extends Controller
                 Log::warning("Failed to push {$provider} tokens to remote node for project {$tenant->id} (may not be deployed yet): " . $e->getMessage());
             }
 
+            // Synchronously push the updated configuration to the tenant so the circuit breaker (is_disconnected) is instantly lifted
+            try {
+                \App\Jobs\HydrateProjectConfigJob::dispatchSync($tenant);
+                Log::info("Synchronously hydrated config for project {$tenant->id} post OAuth to lift circuit breaker.");
+            } catch (\Exception $e) {
+                Log::warning("Failed to hydrate config for project {$tenant->id} post OAuth: " . $e->getMessage());
+            }
+
             // Reschedule any jobs that failed due to permanent auth errors
             try {
                 $sdk->rescheduleAuthFailedJobs($provider);
