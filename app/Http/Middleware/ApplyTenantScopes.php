@@ -26,7 +26,9 @@ class ApplyTenantScopes
 
             $lastTenantId = session()->get('current_tenant_id');
 
-            if ($request->isMethod('GET') && $lastTenantId && $lastTenantId != $tenant->id) {
+            $isStandardGet = $request->isMethod('GET') && !$request->hasHeader('X-Livewire') && !$request->ajax();
+
+            if ($isStandardGet && $lastTenantId && $lastTenantId != $tenant->id) {
                 // Flash confirmation notification
                 \Filament\Notifications\Notification::make()
                     ->title("Switched to {$tenant->name}")
@@ -71,7 +73,7 @@ class ApplyTenantScopes
                 }
             }
 
-            if ($request->isMethod('GET')) {
+            if ($isStandardGet) {
                 session()->put('current_tenant_id', $tenant->id);
             }
         }
