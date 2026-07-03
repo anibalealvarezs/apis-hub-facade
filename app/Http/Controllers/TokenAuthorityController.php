@@ -111,7 +111,7 @@ class TokenAuthorityController extends Controller
                     }
 
                     // Force a configuration deployment to the tenant so it receives the is_disconnected=true flag immediately
-                    \App\Jobs\DeployProjectJob::dispatch($project);
+                    \App\Jobs\HydrateProjectConfigJob::dispatch($project);
                 }
             }
 
