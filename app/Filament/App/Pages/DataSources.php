@@ -599,6 +599,7 @@
             return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
+                ->visible(fn() => $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
