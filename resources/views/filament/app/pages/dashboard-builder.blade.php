@@ -234,7 +234,7 @@
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
                     <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
-                         x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : (widgetControlsTarget.source_type === 'metric' ? 'Metric (Raw Aggregation)' : 'Entity (Channel Table)')"></div>
+                         x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : 'Metric (Raw Aggregation)'"></div>
                     <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
                         <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
                              x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
