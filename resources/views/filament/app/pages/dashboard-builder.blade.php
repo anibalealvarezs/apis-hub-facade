@@ -760,6 +760,8 @@
                             metrics: wc.metrics || [],
                         };
 
+                        const savedMetrics = wc.metrics || [];
+
                         this.widgetKpiConfig = {};
                         if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id) {
                             @this.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
@@ -769,11 +771,44 @@
                                 if (this.widgetKpiConfig.dependent_channel && !this.widgetControlsForm.channel) {
                                     this.widgetControlsForm.channel = this.widgetKpiConfig.dependent_channel;
                                 }
+
+                                this.loadWidgetMetrics(savedMetrics);
                             });
+                        } else {
+                            this.loadWidgetMetrics(savedMetrics);
                         }
 
-                        this.onWidgetChannelChange();
                         this.showWidgetControls = true;
+                    },
+
+                    loadWidgetMetrics(savedMetrics) {
+                        const ch = this.widgetControlsForm.channel || this.dashboardControls.channel;
+                        if (this.allChannelMetrics[ch]) {
+                            this.widgetAssets = this.allChannelAssets[ch] || {};
+                            this.widgetMetrics = this.allChannelMetrics[ch] || {};
+                            this.restoreWidgetMetrics(savedMetrics);
+                        } else if (ch) {
+                            @this.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets[ch] = assets;
+                                this.widgetAssets = assets;
+                            });
+                            @this.getMetricsForChannel(ch).then(metrics => {
+                                this.allChannelMetrics[ch] = metrics;
+                                this.widgetMetrics = metrics;
+                                this.restoreWidgetMetrics(savedMetrics);
+                            });
+                        } else {
+                            this.widgetAssets = {};
+                            this.widgetMetrics = {};
+                        }
+                    },
+
+                    restoreWidgetMetrics(savedMetrics) {
+                        if (savedMetrics.length > 0) {
+                            this.$nextTick(() => {
+                                this.widgetControlsForm.metrics = [...savedMetrics];
+                            });
+                        }
                     },
 
                     onWidgetChannelChange() {
