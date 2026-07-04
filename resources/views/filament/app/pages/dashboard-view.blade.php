@@ -215,8 +215,8 @@
                 };
             }
 
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('widgetHeader', (widgetId, rawControls, rawSeriesOptions) => ({
+            function widgetHeader(widgetId, rawControls, rawSeriesOptions) {
+                return {
                     widgetId: widgetId,
                     controls: JSON.parse(rawControls),
                     seriesOptions: JSON.parse(rawSeriesOptions) || {},
@@ -305,8 +305,8 @@
                         }
                         return badges;
                     }
-                }));
-            });
+                };
+            }
         </script>
     @endpush
 </x-filament-panels::page>
