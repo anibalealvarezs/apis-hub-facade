@@ -49,7 +49,7 @@
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
                         @if ($widget['title'] || $widget['name'])
                             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
-                                  x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}', '{{ addslashes(json_encode($widget['metric_options'])) }}', '{{ $widget['source_type'] }}')"
+                                  x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}', '{{ addslashes(json_encode($widget['metric_options'])) }}', '{{ $widget['source_type'] }}', '{{ addslashes(json_encode($widget['variables'] ?? [])) }}')"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                                 <div>
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
@@ -63,16 +63,18 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    {{-- Metric selector (on-the-go) --}}
-                                    <template x-if="metricOnTheGo && metricOptions && Object.keys(metricOptions).length > 0">
-                                        <select x-model="controls.metrics[0]"
-                                                x-on:change="updateWidget()"
-                                                class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
-                                            <option value="">Metric...</option>
-                                            <template x-for="(label, key) in metricOptions" :key="key">
-                                                <option :value="key" x-text="label"></option>
-                                            </template>
-                                        </select>
+                                    {{-- Per-variable metric selectors (on-the-go) --}}
+                                    <template x-for="(vConfig, vKey) in variables" :key="vKey">
+                                        <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
+                                            <select x-model="controls.metrics[vConfig.index]"
+                                                    x-on:change="updateWidget()"
+                                                    class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
+                                                <option value="" x-text="vKey === 'dependent' ? 'Dep metric...' : 'Ind metric...'"></option>
+                                                <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                    <option :value="key" x-text="label"></option>
+                                                </template>
+                                            </select>
+                                        </template>
                                     </template>
 
                                     {{-- Granularity selector (on-the-go) --}}
@@ -247,25 +249,25 @@
                 };
             }
 
-            function widgetHeader(widgetId, rawControls, rawSeriesOptions, rawMetricOptions, sourceType) {
+            function widgetHeader(widgetId, rawControls, rawSeriesOptions, rawMetricOptions, sourceType, rawVariables) {
                 return {
                     widgetId: widgetId,
                     controls: JSON.parse(rawControls),
                     seriesOptions: JSON.parse(rawSeriesOptions) || {},
                     metricOptions: JSON.parse(rawMetricOptions) || {},
+                    variables: JSON.parse(rawVariables || '{}') || {},
                     sourceType: sourceType || '',
                     openFilters: false,
                     searchQueries: {},
                     
                     init() {
-                        // Metric selector is always available when options exist
-                        if (this.metricOptions && Object.keys(this.metricOptions).length > 0) {
-                            this.metricOnTheGo = true;
-                        } else {
-                            this.metricOnTheGo = false;
-                        }
                         if (!this.controls.metrics) this.controls.metrics = [];
                         if (!this.controls.series_assets) this.controls.series_assets = {};
+                        // Initialize metrics array to match variable count
+                        const varCount = Object.keys(this.variables).length;
+                        while (this.controls.metrics.length < varCount) {
+                            this.controls.metrics.push('');
+                        }
                         // Initialize series_assets from pre-configured assets
                         if (this.controls.assets && this.controls.assets.length > 0) {
                             if (!this.controls.series_assets.dependent) {
@@ -286,17 +288,15 @@
                     },
                     
                     toggleAsset(seriesKey, assetId) {
-                        if (!this.controls.series_assets[seriesKey]) {
-                            this.controls.series_assets[seriesKey] = [];
-                        }
-                        let arr = this.controls.series_assets[seriesKey];
-                        const idx = arr.indexOf(String(assetId));
+                        const current = this.controls.series_assets[seriesKey] || [];
+                        const idx = current.indexOf(String(assetId));
+                        let next;
                         if (idx > -1) {
-                            arr.splice(idx, 1);
+                            next = current.filter((_, i) => i !== idx);
                         } else {
-                            arr.push(String(assetId));
+                            next = [...current, String(assetId)];
                         }
-                        this.controls.series_assets[seriesKey] = arr;
+                        this.controls.series_assets[seriesKey] = next;
                         this.updateWidget();
                     },
                     

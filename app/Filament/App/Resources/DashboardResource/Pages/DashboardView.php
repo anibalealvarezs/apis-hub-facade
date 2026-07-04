@@ -87,11 +87,37 @@ class DashboardView extends Page
                 $provideAssetFilters($resolved['channel'], 'dependent');
             }
 
-            // Expose available metric options for on-the-go selection
-            $metricChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
-            $widgetArray['metric_options'] = !empty($metricChannel)
-                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($metricChannel)
+            // Expose per-variable metric options for on-the-go selection (regression KPIs)
+            $variables = [];
+            $varIndex = 0;
+
+            $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
+            $depMetrics = !empty($depChannel)
+                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel)
                 : [];
+            $variables['dependent'] = [
+                'index' => $varIndex++,
+                'channel' => $depChannel,
+                'metrics' => $depMetrics,
+            ];
+
+            if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                foreach ($uiState['independent_variables'] as $key => $var) {
+                    $indChannel = $var['independent_channel'] ?? '';
+                    $indMetrics = !empty($indChannel)
+                        ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($indChannel)
+                        : [];
+                    $variables['independent_' . $key] = [
+                        'index' => $varIndex++,
+                        'channel' => $indChannel,
+                        'metrics' => $indMetrics,
+                    ];
+                }
+            }
+
+            $widgetArray['variables'] = $variables;
+            // Keep flat metric_options for backward compatibility
+            $widgetArray['metric_options'] = $depMetrics;
         }
     }
 
