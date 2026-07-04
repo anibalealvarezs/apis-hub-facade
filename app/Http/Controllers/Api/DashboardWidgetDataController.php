@@ -85,51 +85,92 @@ class DashboardWidgetDataController extends Controller
             $effectiveWidgetType = $widget->widget_type;
 
             if (isset($data['anomaly_detected'])) {
-                $effectiveWidgetType = 'anomaly_chart';
+                $chartTypes = ['line_chart', 'bar_chart', 'sparkline', 'anomaly_list'];
                 $series = $data['series'] ?? ['dates' => [], 'values' => []];
                 $anomalyDates = array_flip($data['anomaly_dates'] ?? []);
 
-                if (!empty($series['dates'])) {
-                    $pointRadius = array_map(
-                        fn($d) => isset($anomalyDates[$d]) ? 7 : 2,
-                        $series['dates']
-                    );
-                    $pointBg = array_map(
-                        fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
-                        $series['dates']
-                    );
-                    $pointBorder = array_map(
-                        fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
-                        $series['dates']
-                    );
-                    $pointBorderWidth = array_map(
-                        fn($d) => isset($anomalyDates[$d]) ? 3 : 0,
-                        $series['dates']
-                    );
+                if (in_array($effectiveWidgetType, $chartTypes)) {
+                    $effectiveWidgetType = 'anomaly_chart';
+                    if (!empty($series['dates'])) {
+                        $pointRadius = array_map(
+                            fn($d) => isset($anomalyDates[$d]) ? 7 : 2,
+                            $series['dates']
+                        );
+                        $pointBg = array_map(
+                            fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                            $series['dates']
+                        );
+                        $pointBorder = array_map(
+                            fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                            $series['dates']
+                        );
+                        $pointBorderWidth = array_map(
+                            fn($d) => isset($anomalyDates[$d]) ? 3 : 0,
+                            $series['dates']
+                        );
 
-                    $data = [
-                        'labels' => $series['dates'],
-                        'datasets' => [
-                            [
-                                'label' => $widget->name ?: 'Metric',
-                                'data' => $series['values'],
-                                'borderColor' => '#3b82f6',
-                                'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
-                                'fill' => true,
-                                'tension' => 0.3,
-                                'pointRadius' => $pointRadius,
-                                'pointBackgroundColor' => $pointBg,
-                                'pointBorderColor' => $pointBorder,
-                                'pointBorderWidth' => $pointBorderWidth,
+                        $data = [
+                            'labels' => $series['dates'],
+                            'datasets' => [
+                                [
+                                    'label' => $widget->name ?: 'Metric',
+                                    'data' => $series['values'],
+                                    'borderColor' => '#3b82f6',
+                                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                                    'fill' => true,
+                                    'tension' => 0.3,
+                                    'pointRadius' => $pointRadius,
+                                    'pointBackgroundColor' => $pointBg,
+                                    'pointBorderColor' => $pointBorder,
+                                    'pointBorderWidth' => $pointBorderWidth,
+                                ],
                             ],
-                        ],
-                        'anomaly_dates' => array_keys($anomalyDates),
-                    ];
-                } else {
+                            'anomaly_dates' => array_keys($anomalyDates),
+                        ];
+                    } else {
+                        $data = [
+                            'labels' => [],
+                            'datasets' => [],
+                            'anomaly_dates' => [],
+                        ];
+                    }
+                } elseif ($effectiveWidgetType === 'table') {
+                    $rows = [];
+                    foreach ($series['dates'] ?? [] as $i => $date) {
+                        $rows[] = [
+                            'date' => $date,
+                            'value' => $series['values'][$i] ?? 0,
+                            'anomaly' => isset($anomalyDates[$date]) ? 'Yes' : 'No',
+                        ];
+                    }
                     $data = [
-                        'labels' => [],
-                        'datasets' => [],
-                        'anomaly_dates' => [],
+                        'columns' => [
+                            ['key' => 'date', 'label' => 'Date'],
+                            ['key' => 'value', 'label' => 'Value', 'format' => 'number'],
+                            ['key' => 'anomaly', 'label' => 'Anomaly'],
+                        ],
+                        'rows' => $rows,
+                        'anomaly_detected' => $data['anomaly_detected'],
+                        'anomaly_dates' => $data['anomaly_dates'],
+                    ];
+                } elseif ($effectiveWidgetType === 'tile') {
+                    $anomalyCount = count($data['anomaly_dates'] ?? []);
+                    $totalPoints = $data['data_points'] ?? count($series['dates'] ?? []);
+                    $data = [
+                        'value' => $anomalyCount,
+                        'label' => 'Anomalies Detected',
+                        'previous' => null,
+                        'suffix' => $totalPoints > 0 ? " / {$totalPoints} points" : '',
+                    ];
+                } elseif ($effectiveWidgetType === 'gauge') {
+                    $anomalyCount = count($data['anomaly_dates'] ?? []);
+                    $totalPoints = $data['data_points'] ?? count($series['dates'] ?? []);
+                    $pct = $totalPoints > 0 ? round(($anomalyCount / $totalPoints) * 100) : 0;
+                    $data = [
+                        'value' => $pct,
+                        'min' => 0,
+                        'max' => 100,
+                        'label' => 'Anomaly Rate',
                     ];
                 }
             }
@@ -199,7 +240,7 @@ class DashboardWidgetDataController extends Controller
 
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (empty($var['independent_metric']) && isset($runtimeMetrics[$metricIndex])) {
+                if (isset($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                     $metricIndex++;
                 }
@@ -219,7 +260,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        $mergedState = array_merge($controlsToMerge, $uiState);
+        $mergedState = array_merge($uiState, $controlsToMerge);
 
         if (empty($mergedState['dependent_metric'])) {
             $channelMetrics = !empty($uiState['dependent_channel'])
@@ -264,7 +305,7 @@ class DashboardWidgetDataController extends Controller
     {
         $config = $widget->source_config ?? [];
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
-        $metrics = $config['metrics'] ?? [];
+        $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
 
         if (!$channel) {
             throw new \RuntimeException('No channel configured for metric widget');
@@ -291,7 +332,7 @@ class DashboardWidgetDataController extends Controller
     {
         $config = $widget->source_config ?? [];
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
-        $entityType = $config['entity_type'] ?? 'campaigns';
+        $entityType = $controls['entity_type'] ?? $config['entity_type'] ?? 'campaigns';
         $limit = $config['limit'] ?? 50;
 
         if (!$channel) {
