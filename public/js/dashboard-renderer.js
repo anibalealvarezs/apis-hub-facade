@@ -58,7 +58,8 @@ window.dashboardRenderer = {
             case 'table':      this.renderTable(containerEl, data); break;
             case 'gauge':      this.renderGauge(containerEl, data); break;
             case 'sparkline':  this.renderSparkline(containerEl, data); break;
-            case 'anomaly_list': this.renderAnomalyList(containerEl, data); break;
+            case 'anomaly_list':  this.renderAnomalyList(containerEl, data); break;
+            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data); break;
             default:
                 containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
         }
@@ -393,6 +394,87 @@ window.dashboardRenderer = {
         }
 
         containerEl.innerHTML = html;
+    },
+
+    // ─── Anomaly Chart ───
+
+    renderAnomalyChart(containerEl, data) {
+        const labels = data?.labels ?? [];
+        const datasets = data?.datasets ?? [];
+        const anomalyDates = data?.anomaly_dates ?? [];
+
+        if (!labels.length || !datasets.length) {
+            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            return;
+        }
+
+        const anomalySet = new Set(anomalyDates);
+
+        const anomalyPlugin = {
+            id: 'anomalyLines',
+            afterDraw(chart) {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+
+                ctx.save();
+                ctx.setLineDash([4, 4]);
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#ef4444';
+
+                labels.forEach((label, i) => {
+                    if (anomalySet.has(label)) {
+                        const x = xScale.getPixelForValue(i);
+                        const y0 = chart.chartArea.top;
+                        const y1 = chart.chartArea.bottom;
+
+                        ctx.beginPath();
+                        ctx.moveTo(x, y0);
+                        ctx.lineTo(x, y1);
+                        ctx.stroke();
+                    }
+                });
+
+                ctx.restore();
+            },
+        };
+
+        this.renderChart(containerEl, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label(ctx) {
+                                const val = ctx.parsed.y;
+                                return ctx.dataset.label + ': ' + (val != null ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '—');
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 10, font: { size: 10 } },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: { size: 10 },
+                            callback(val) {
+                                if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                                if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+                                return val;
+                            },
+                        },
+                    },
+                },
+            },
+            plugins: [anomalyPlugin],
+        });
     },
 
     // ─── Chart.js Helper ───

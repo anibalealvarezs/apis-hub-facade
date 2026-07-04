@@ -79,17 +79,53 @@ class DashboardWidgetDataController extends Controller
             $effectiveWidgetType = $widget->widget_type;
 
             if (isset($data['anomaly_detected'])) {
-                $effectiveWidgetType = 'anomaly_list';
-                $anomalyDates = $data['anomaly_dates'] ?? [];
-                $data = [
-                    'anomalies' => array_map(fn($date) => [
-                        'date' => $date,
-                        'value' => 1,
-                        'expected' => 0,
-                        'label' => 'Anomaly',
-                        'severity' => 0.9,
-                    ], $anomalyDates),
-                ];
+                $effectiveWidgetType = 'anomaly_chart';
+                $series = $data['series'] ?? ['dates' => [], 'values' => []];
+                $anomalyDates = array_flip($data['anomaly_dates'] ?? []);
+
+                if (!empty($series['dates'])) {
+                    $pointRadius = array_map(
+                        fn($d) => isset($anomalyDates[$d]) ? 7 : 2,
+                        $series['dates']
+                    );
+                    $pointBg = array_map(
+                        fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                        $series['dates']
+                    );
+                    $pointBorder = array_map(
+                        fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                        $series['dates']
+                    );
+                    $pointBorderWidth = array_map(
+                        fn($d) => isset($anomalyDates[$d]) ? 3 : 0,
+                        $series['dates']
+                    );
+
+                    $data = [
+                        'labels' => $series['dates'],
+                        'datasets' => [
+                            [
+                                'label' => $widget->name ?: 'Metric',
+                                'data' => $series['values'],
+                                'borderColor' => '#3b82f6',
+                                'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                                'fill' => true,
+                                'tension' => 0.3,
+                                'pointRadius' => $pointRadius,
+                                'pointBackgroundColor' => $pointBg,
+                                'pointBorderColor' => $pointBorder,
+                                'pointBorderWidth' => $pointBorderWidth,
+                            ],
+                        ],
+                        'anomaly_dates' => array_keys($anomalyDates),
+                    ];
+                } else {
+                    $data = [
+                        'labels' => [],
+                        'datasets' => [],
+                        'anomaly_dates' => [],
+                    ];
+                }
             }
 
             return response()->json([
