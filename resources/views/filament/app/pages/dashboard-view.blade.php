@@ -258,19 +258,25 @@
                     searchQueries: {},
                     
                     init() {
-                        // Detect if metric is pre-configured or on-the-go
-                        this.metricOnTheGo = !this.controls.metrics || this.controls.metrics.length === 0 || this.controls.metrics[0] === '';
+                        // Metric selector is always available when options exist
+                        if (this.metricOptions && Object.keys(this.metricOptions).length > 0) {
+                            this.metricOnTheGo = true;
+                        } else {
+                            this.metricOnTheGo = false;
+                        }
                         if (!this.controls.metrics) this.controls.metrics = [];
                         if (!this.controls.series_assets) this.controls.series_assets = {};
+                        // Initialize series_assets from pre-configured assets
+                        if (this.controls.assets && this.controls.assets.length > 0) {
+                            if (!this.controls.series_assets.dependent) {
+                                this.controls.series_assets.dependent = this.controls.assets.map(String);
+                            }
+                        }
                         // Detect if granularity is pre-configured or on-the-go
                         this.granularityOnTheGo = !this.controls.granularity || this.controls.granularity === '';
                         if (!this.controls.granularity) this.controls.granularity = '';
                         for (const key in this.seriesOptions) {
                             this.searchQueries[key] = '';
-                        }
-                        // Default metric for on-the-go selection
-                        if (this.metricOnTheGo && Object.keys(this.metricOptions).length > 0) {
-                            this.controls.metrics[0] = '';
                         }
                     },
                     

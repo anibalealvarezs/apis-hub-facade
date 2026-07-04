@@ -59,30 +59,32 @@ class DashboardView extends Page
                 return $filtered;
             };
 
-            if (!empty($uiState['dependent_channel']) && empty($uiState['dependent_asset_filter'])) {
-                $widgetArray['series_assets_options']['dependent'] = [
-                    'label' => 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')',
-                    'options' => $getAssetsForChannel($uiState['dependent_channel'])
-                ];
+            // Always provide asset filter options when a channel with assets is available
+            $provideAssetFilters = function(string $channel, string $key, ?string $label = null) use (&$widgetArray, $getAssetsForChannel) {
+                $assets = $getAssetsForChannel($channel);
+                if (!empty($assets)) {
+                    $widgetArray['series_assets_options'][$key] = [
+                        'label' => $label ?? \Illuminate\Support\Str::headline($channel),
+                        'options' => $assets,
+                    ];
+                }
+            };
+
+            if (!empty($uiState['dependent_channel'])) {
+                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')');
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
-                    if (!empty($var['independent_channel']) && empty($var['independent_asset_filter'])) {
-                        $widgetArray['series_assets_options']['independent_' . $key] = [
-                            'label' => 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')',
-                            'options' => $getAssetsForChannel($var['independent_channel'])
-                        ];
+                    if (!empty($var['independent_channel'])) {
+                        $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')');
                     }
                 }
             }
 
-            // Fallback for regular widgets or incomplete KPIs
-            if (empty($widgetArray['series_assets_options']) && !empty($resolved['channel']) && empty($resolved['assets'])) {
-                $widgetArray['series_assets_options']['dependent'] = [
-                    'label' => \Illuminate\Support\Str::headline($resolved['channel']),
-                    'options' => $getAssetsForChannel($resolved['channel'])
-                ];
+            // Fallback for non-KPI widgets with a channel
+            if (empty($widgetArray['series_assets_options']) && !empty($resolved['channel'])) {
+                $provideAssetFilters($resolved['channel'], 'dependent');
             }
 
             // Expose available metric options for on-the-go selection

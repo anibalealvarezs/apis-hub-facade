@@ -303,15 +303,15 @@
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Channel</span>
                             <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
-                                    :disabled="widgetKpiConfig.dependent_channel"
-                                    :class="widgetKpiConfig.dependent_channel ? 'opacity-50 cursor-not-allowed' : ''"
+                                    :disabled="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel"
+                                    :class="(widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel) ? 'opacity-50 cursor-not-allowed' : ''"
                                     class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
                                 <option value="">Auto-detect</option>
                                 <template x-for="(label, key) in channels" :key="key">
                                     <option :value="key" x-text="label"></option>
                                 </template>
                             </select>
-                            <p x-show="widgetKpiConfig.dependent_channel" class="text-xs text-primary-500 mt-1">Fixed by KPI template</p>
+                            <p x-show="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel" class="text-xs text-primary-500 mt-1">Fixed by KPI template</p>
                         </div>
                         
                         <div>
@@ -348,8 +348,6 @@
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
                                         <select x-model="widgetControlsForm.metrics[index]"
-                                                :disabled="index === 0 && widgetKpiConfig.dependent_metric"
-                                                :class="(index === 0 && widgetKpiConfig.dependent_metric) ? 'opacity-50 cursor-not-allowed' : ''"
                                                 class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
                                             <option value="">Select a metric...</option>
                                             <template x-for="(label, key) in widgetMetrics" :key="key">
@@ -357,7 +355,6 @@
                                             </template>
                                         </select>
                                         <button class="text-red-500 hover:text-red-700" 
-                                                :class="(index === 0 && widgetKpiConfig.dependent_metric) ? 'hidden' : ''"
                                                 x-on:click="widgetControlsForm.metrics.splice(index, 1)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>

@@ -188,11 +188,11 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        // Hydrate missing metrics from runtime dashboard metrics array
+        // Hydrate/override metrics from runtime controls (on-the-go / widget-level override)
         $runtimeMetrics = $controls['metrics'] ?? [];
         $metricIndex = 0;
 
-        if (empty($uiState['dependent_metric']) && isset($runtimeMetrics[$metricIndex])) {
+        if (isset($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
             $metricIndex++;
         }
@@ -270,7 +270,7 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for metric widget');
         }
 
-        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? null;
+        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? $controls['series_assets']['dependent'][0] ?? null;
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -298,7 +298,7 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for entity widget');
         }
 
-        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? null;
+        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? $controls['series_assets']['dependent'][0] ?? null;
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
