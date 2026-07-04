@@ -23,6 +23,7 @@ class DashboardWidgetDataController extends Controller
     {
         $validated = $request->validate([
             'tenant' => 'required|string',
+            'controls' => 'nullable|array',
         ]);
 
         $project = Project::where('subdomain', $validated['tenant'])->firstOrFail();
@@ -43,6 +44,11 @@ class DashboardWidgetDataController extends Controller
         $dashboard = $widget->dashboard;
 
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
+
+        // Merge runtime overrides from the request (on-the-go UX)
+        if (!empty($validated['controls'])) {
+            $resolvedControls = array_merge($resolvedControls, $validated['controls']);
+        }
 
         if (!$dashboard->is_public && $user && !empty($resolvedControls['channel'])) {
             $isProjectUser = \Illuminate\Support\Facades\DB::table('model_has_roles')
@@ -200,15 +206,6 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        // Auto-resolve missing dependent metric from channel's available metrics
-        if (empty($uiState['dependent_metric']) && !empty($uiState['dependent_channel'])) {
-            $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel']);
-            if (!empty($channelMetrics)) {
-                $metricKeys = array_keys($channelMetrics);
-                $uiState['dependent_metric'] = $metricKeys[0];
-            }
-        }
-
         // Auto-resolve missing independent variable metrics
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
@@ -225,7 +222,16 @@ class DashboardWidgetDataController extends Controller
         $mergedState = array_merge($controlsToMerge, $uiState);
 
         if (empty($mergedState['dependent_metric'])) {
-            throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured and no runtime metric was provided by the dashboard.");
+            $channelMetrics = !empty($uiState['dependent_channel'])
+                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
+                : [];
+
+            if (!empty($channelMetrics)) {
+                $metricKeys = array_keys($channelMetrics);
+                $mergedState['dependent_metric'] = $metricKeys[0];
+            } else {
+                throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured, no runtime metric was provided, and no default metrics are available for the channel.");
+            }
         }
 
         $payload = KpiPayloadBuilder::build(

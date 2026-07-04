@@ -84,6 +84,12 @@ class DashboardView extends Page
                     'options' => $getAssetsForChannel($resolved['channel'])
                 ];
             }
+
+            // Expose available metric options for on-the-go selection
+            $metricChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
+            $widgetArray['metric_options'] = !empty($metricChannel)
+                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($metricChannel)
+                : [];
         }
     }
 

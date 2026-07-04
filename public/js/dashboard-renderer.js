@@ -18,10 +18,19 @@ window.dashboardRenderer = {
         containerEl.innerHTML = this.loadingSkeleton();
 
         try {
+            const body = { tenant };
+            if (controls) {
+                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'channel'];
+                const overrides = {};
+                for (const key of overrideKeys) {
+                    if (controls[key] !== undefined) overrides[key] = controls[key];
+                }
+                if (Object.keys(overrides).length > 0) body.controls = overrides;
+            }
             const response = await fetch('/api/dashboard/widget/' + widgetId + '/data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                body: JSON.stringify({ tenant }),
+                body: JSON.stringify(body),
             });
 
             if (!response.ok) {

@@ -18,32 +18,24 @@
             </div>
         </div>
 
-        {{-- Controls Summary --}}
-        @if ($this->dashboard->controls)
-            <div class="flex flex-wrap gap-3 text-xs">
-                @php $c = $this->dashboard->controls; @endphp
-                @if (!empty($c['channel']))
-                    <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                        Channel: {{ \Illuminate\Support\Str::headline($c['channel']) }}
-                    </span>
-                @endif
-                @if (!empty($c['asset']))
-                    <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                        Asset: {{ $c['asset'] }}
-                    </span>
-                @endif
-                @if (!empty($c['granularity']))
-                    <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                        {{ ucfirst($c['granularity']) }}
-                    </span>
-                @endif
-                @if (!empty($c['date_start']) || !empty($c['date_end']))
-                    <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                        {{ $c['date_start'] ?? '—' }} → {{ $c['date_end'] ?? '—' }}
-                    </span>
-                @endif
-            </div>
-        @endif
+        {{-- Dashboard Controls (on-the-go) --}}
+        @php $dc = $this->dashboard->controls ?? []; @endphp
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Date range:</span>
+            <input type="date" x-model="dashboardOverrides.date_start"
+                   class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
+                   :max="dashboardOverrides.date_end || '{{ date('Y-m-d') }}'">
+            <span class="text-gray-400">→</span>
+            <input type="date" x-model="dashboardOverrides.date_end"
+                   class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
+                   :min="dashboardOverrides.date_start || ''" max="{{ date('Y-m-d') }}">
+            <button x-on:click="applyDateRange()"
+                    class="px-3 py-1.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors">Apply</button>
+            <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
+                <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
+            </span>
+        </div>
 
         {{-- Grid --}}
         <div id="view-grid-stack" class="grid-stack">
@@ -57,7 +49,7 @@
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
                         @if ($widget['title'] || $widget['name'])
                             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
-                                 x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}')"
+                                  x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}', '{{ addslashes(json_encode($widget['metric_options'])) }}', '{{ $widget['source_type'] }}')"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                                 <div>
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
@@ -71,6 +63,30 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
+                                    {{-- Metric selector (on-the-go) --}}
+                                    <template x-if="metricOnTheGo && metricOptions && Object.keys(metricOptions).length > 0">
+                                        <select x-model="controls.metrics[0]"
+                                                x-on:change="updateWidget()"
+                                                class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
+                                            <option value="">Metric...</option>
+                                            <template x-for="(label, key) in metricOptions" :key="key">
+                                                <option :value="key" x-text="label"></option>
+                                            </template>
+                                        </select>
+                                    </template>
+
+                                    {{-- Granularity selector (on-the-go) --}}
+                                    <template x-if="granularityOnTheGo">
+                                        <select x-model="controls.granularity"
+                                                x-on:change="updateWidget()"
+                                                class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </template>
+
+                                    {{-- Asset filters --}}
                                     @if (!empty($widget['series_assets_options']))
                                         <div class="relative">
                                             <button @click="openFilters = !openFilters; $el.closest('.grid-stack-item').style.zIndex = openFilters ? 50 : ''" @click.away="openFilters = false; $el.closest('.grid-stack-item').style.zIndex = ''" class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1 shadow-sm">
@@ -147,6 +163,11 @@
                     loadedCount: 0,
                     totalCount: {{ count($this->widgets) }},
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
+                    dashboardOverrides: {
+                        date_start: '{{ $dc['date_start'] ?? '' }}',
+                        date_end: '{{ $dc['date_end'] ?? '' }}',
+                        zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
+                    },
                     init() {
                         this.$nextTick(() => {
                             const tryInit = () => {
@@ -166,10 +187,21 @@
                         });
                     },
 
+                    applyDateRange() {
+                        this.refreshAll();
+                    },
+
                     renderWidget(widgetId, el, controls) {
                         el.setAttribute('data-raw-controls', JSON.stringify(controls));
                         
+                        // Merge dashboard overrides (date range from on-the-go controls)
                         let effectiveControls = { ...controls };
+                        if (this.dashboardOverrides.date_start) {
+                            effectiveControls.date_start = this.dashboardOverrides.date_start;
+                        }
+                        if (this.dashboardOverrides.date_end) {
+                            effectiveControls.date_end = this.dashboardOverrides.date_end;
+                        }
 
                         const tryRender = () => {
                             if (window.dashboardRenderer) {
@@ -215,18 +247,30 @@
                 };
             }
 
-            function widgetHeader(widgetId, rawControls, rawSeriesOptions) {
+            function widgetHeader(widgetId, rawControls, rawSeriesOptions, rawMetricOptions, sourceType) {
                 return {
                     widgetId: widgetId,
                     controls: JSON.parse(rawControls),
                     seriesOptions: JSON.parse(rawSeriesOptions) || {},
+                    metricOptions: JSON.parse(rawMetricOptions) || {},
+                    sourceType: sourceType || '',
                     openFilters: false,
                     searchQueries: {},
                     
                     init() {
+                        // Detect if metric is pre-configured or on-the-go
+                        this.metricOnTheGo = !this.controls.metrics || this.controls.metrics.length === 0 || this.controls.metrics[0] === '';
+                        if (!this.controls.metrics) this.controls.metrics = [];
                         if (!this.controls.series_assets) this.controls.series_assets = {};
+                        // Detect if granularity is pre-configured or on-the-go
+                        this.granularityOnTheGo = !this.controls.granularity || this.controls.granularity === '';
+                        if (!this.controls.granularity) this.controls.granularity = '';
                         for (const key in this.seriesOptions) {
                             this.searchQueries[key] = '';
+                        }
+                        // Default metric for on-the-go selection
+                        if (this.metricOnTheGo && Object.keys(this.metricOptions).length > 0) {
+                            this.controls.metrics[0] = '';
                         }
                     },
                     
