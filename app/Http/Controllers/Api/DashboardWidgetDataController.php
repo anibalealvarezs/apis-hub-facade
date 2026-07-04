@@ -76,9 +76,25 @@ class DashboardWidgetDataController extends Controller
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
 
+            $effectiveWidgetType = $widget->widget_type;
+
+            if (isset($data['anomaly_detected'])) {
+                $effectiveWidgetType = 'anomaly_list';
+                $anomalyDates = $data['anomaly_dates'] ?? [];
+                $data = [
+                    'anomalies' => array_map(fn($date) => [
+                        'date' => $date,
+                        'value' => 1,
+                        'expected' => 0,
+                        'label' => 'Anomaly',
+                        'severity' => 0.9,
+                    ], $anomalyDates),
+                ];
+            }
+
             return response()->json([
                 'success' => true,
-                'widget_type' => $widget->widget_type,
+                'widget_type' => $effectiveWidgetType,
                 'source_type' => $widget->source_type,
                 'data' => $data,
                 'controls' => $resolvedControls,
@@ -144,6 +160,28 @@ class DashboardWidgetDataController extends Controller
                 if (empty($var['independent_metric']) && isset($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                     $metricIndex++;
+                }
+            }
+        }
+
+        // Auto-resolve missing dependent metric from channel's available metrics
+        if (empty($uiState['dependent_metric']) && !empty($uiState['dependent_channel'])) {
+            $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel']);
+            if (!empty($channelMetrics)) {
+                $metricKeys = array_keys($channelMetrics);
+                $uiState['dependent_metric'] = $metricKeys[0];
+            }
+        }
+
+        // Auto-resolve missing independent variable metrics
+        if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+            foreach ($uiState['independent_variables'] as $key => $var) {
+                if (empty($var['independent_metric']) && !empty($var['independent_channel'])) {
+                    $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($var['independent_channel']);
+                    if (!empty($channelMetrics)) {
+                        $metricKeys = array_keys($channelMetrics);
+                        $uiState['independent_variables'][$key]['independent_metric'] = $metricKeys[0];
+                    }
                 }
             }
         }
