@@ -237,7 +237,7 @@
                          x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : (widgetControlsTarget.source_type === 'metric' ? 'Metric (Raw Aggregation)' : 'Entity (Channel Table)')"></div>
                     <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
                         <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
-                             x-text="'KPI: ' + (kpiOptions[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
+                             x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
                     </template>
                 </div>
 
