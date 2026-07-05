@@ -63,65 +63,92 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    {{-- Per-variable metric selectors (on-the-go) --}}
-                                    <template x-for="(vConfig, vKey) in variables" :key="vKey">
-                                        <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
-                                            <select x-model="controls.metrics[vConfig.index]"
-                                                    x-on:change="updateWidget()"
-                                                    class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
-                                                <option value="" x-text="vKey === 'dependent' ? 'Dep metric...' : 'Ind metric...'"></option>
-                                                <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                    <option :value="key" x-text="label"></option>
-                                                </template>
-                                            </select>
-                                        </template>
-                                    </template>
+                                    {{-- Settings button (gear icon) --}}
+                                    <button @click="openSettings = true"
+                                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            title="Widget Settings">
+                                        <x-filament::icon name="heroicon-m-cog-6-tooth" class="w-4 h-4" />
+                                    </button>
+                                </div>
 
-                                    {{-- Granularity selector (on-the-go) --}}
-                                    <template x-if="granularityOnTheGo">
-                                        <select x-model="controls.granularity"
-                                                x-on:change="updateWidget()"
-                                                class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2">
-                                            <option value="daily">Daily</option>
-                                            <option value="weekly">Weekly</option>
-                                            <option value="monthly">Monthly</option>
-                                        </select>
-                                    </template>
+                                {{-- Settings Modal --}}
+                                <div x-show="openSettings" style="display: none;"
+                                     class="fixed inset-0 z-[200] flex items-start justify-center pt-10 sm:pt-20"
+                                     x-cloak>
+                                    {{-- Backdrop --}}
+                                    <div @click="openSettings = false" class="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"></div>
 
-                                    {{-- Asset filters --}}
-                                    @if (!empty($widget['series_assets_options']))
-                                        <div class="relative">
-                                            <button @click="openFilters = !openFilters; $el.closest('.grid-stack-item').style.zIndex = openFilters ? 50 : ''" @click.away="openFilters = false; $el.closest('.grid-stack-item').style.zIndex = ''" class="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1 shadow-sm">
-                                                <x-filament::icon name="heroicon-m-funnel" class="w-3 h-3 text-primary-500" />
-                                                <span class="font-medium">Filters</span>
-                                                <span x-show="getActiveFilterCount() > 0" class="ml-1 bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="getActiveFilterCount()"></span>
+                                    {{-- Modal panel --}}
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+                                         @click.away="openSettings = false">
+                                        {{-- Header --}}
+                                        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Widget Settings</h3>
+                                            <button @click="openSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
+                                                <x-filament::icon name="heroicon-m-x-mark" class="w-5 h-5" />
                                             </button>
-                                            
-                                            <div x-show="openFilters" x-transition style="display: none;" class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 flex flex-col overflow-hidden">
-                                                <div class="max-h-96 overflow-y-auto p-4 space-y-6">
+                                        </div>
+
+                                        {{-- Scrollable body --}}
+                                        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+
+                                            {{-- Metric selectors --}}
+                                            <template x-for="(vConfig, vKey) in variables" :key="vKey">
+                                                <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
+                                                    <div class="space-y-1.5">
+                                                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                                            <span x-text="vKey === 'dependent' ? 'Dependent Metric' : 'Independent Metric ' + (vConfig.index)"></span>
+                                                        </label>
+                                                        <select x-model="controls.metrics[vConfig.index]"
+                                                                class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                                                            <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
+                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                                <option :value="key" x-text="label"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+                                            </template>
+
+                                            {{-- Granularity --}}
+                                            <template x-if="granularityOnTheGo">
+                                                <div class="space-y-1.5">
+                                                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</label>
+                                                    <select x-model="controls.granularity"
+                                                            class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                                                        <option value="daily">Daily</option>
+                                                        <option value="weekly">Weekly</option>
+                                                        <option value="monthly">Monthly</option>
+                                                    </select>
+                                                </div>
+                                            </template>
+
+                                            {{-- Asset filters --}}
+                                            @if (!empty($widget['series_assets_options']))
+                                                <div class="space-y-4">
                                                     <template x-for="(seriesData, seriesKey) in seriesOptions" :key="seriesKey">
                                                         <div class="space-y-2">
                                                             <div class="flex items-center justify-between">
                                                                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="seriesData.label"></label>
                                                                 <div class="flex gap-2">
-                                                                    <button @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:underline">All</button>
-                                                                    <button @click="clearAll(seriesKey)" class="text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:underline">Clear</button>
+                                                                    <button @click="selectAll(seriesKey)" class="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline">All</button>
+                                                                    <button @click="clearAll(seriesKey)" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:underline">Clear</button>
                                                                 </div>
                                                             </div>
                                                             <div class="relative">
                                                                 <div class="absolute inset-y-0 left-0 w-8 flex items-center justify-center pointer-events-none">
-                                                                    <x-filament::icon name="heroicon-m-magnifying-glass" class="w-3 h-3 text-gray-400" />
+                                                                    <x-filament::icon name="heroicon-m-magnifying-glass" class="w-3.5 h-3.5 text-gray-400" />
                                                                 </div>
-                                                                <input type="text" x-model="searchQueries[seriesKey]" placeholder="Search..." class="bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-[11px] rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-1.5">
+                                                                <input type="text" x-model="searchQueries[seriesKey]" placeholder="Search..." class="bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-2">
                                                             </div>
-                                                            <div class="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+                                                            <div class="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1 -mr-1">
                                                                 <template x-for="[assetId, assetName] in Object.entries(seriesData.options)" :key="assetId">
                                                                     <div x-show="searchQueries[seriesKey] === '' || assetName.toLowerCase().includes(searchQueries[seriesKey].toLowerCase())"
                                                                          @click="toggleAsset(seriesKey, assetId)"
-                                                                         class="flex gap-x-2 items-center px-2 py-1.5 text-xs text-gray-700 dark:text-gray-300 rounded cursor-pointer transition-colors"
-                                                                         :class="isSelected(seriesKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700'">
-                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded-sm border transition-colors"
-                                                                             :class="isSelected(seriesKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                         class="flex gap-x-2.5 items-center px-2.5 py-2 text-xs text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-colors"
+                                                                         :class="isSelected(seriesKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/60'">
+                                                                        <div class="w-4.5 h-4.5 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                             :class="isSelected(seriesKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'">
                                                                             <svg x-show="isSelected(seriesKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                                             </svg>
@@ -133,9 +160,21 @@
                                                         </div>
                                                     </template>
                                                 </div>
-                                            </div>
+                                            @endif
                                         </div>
-                                    @endif
+
+                                        {{-- Footer with Update button --}}
+                                        <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
+                                            <button @click="openSettings = false"
+                                                    class="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                Cancel
+                                            </button>
+                                            <button @click="saveSettings()"
+                                                    class="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2 rounded-lg shadow-sm transition-colors">
+                                                Update
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -257,7 +296,7 @@
                     metricOptions: JSON.parse(rawMetricOptions) || {},
                     variables: JSON.parse(rawVariables || '{}') || {},
                     sourceType: sourceType || '',
-                    openFilters: false,
+                    openSettings: false,
                     searchQueries: {},
                     
                     init() {
@@ -287,6 +326,11 @@
                         }
                     },
                     
+                    saveSettings() {
+                        this.updateWidget();
+                        this.openSettings = false;
+                    },
+                    
                     isSelected(seriesKey, assetId) {
                         if (!this.controls.series_assets[seriesKey]) return false;
                         return this.controls.series_assets[seriesKey].includes(String(assetId));
@@ -302,18 +346,15 @@
                             next = [...current, String(assetId)];
                         }
                         this.controls.series_assets[seriesKey] = next;
-                        this.updateWidget();
                     },
                     
                     selectAll(seriesKey) {
                         const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
                         this.controls.series_assets[seriesKey] = allIds;
-                        this.updateWidget();
                     },
                     
                     clearAll(seriesKey) {
                         this.controls.series_assets[seriesKey] = [];
-                        this.updateWidget();
                     },
 
                     getActiveFilterCount() {
