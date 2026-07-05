@@ -64,7 +64,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     {{-- Settings button (gear icon) --}}
-                                    <button @click="openSettings = true"
+                                    <button @click="openDashboardSettings()"
                                             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                                             title="Widget Settings">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -72,150 +72,6 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                     </button>
-                                </div>
-
-                                {{-- Settings Modal --}}
-                                <div x-show="openSettings" style="display: none;"
-                                     class="fixed inset-0 z-[200] flex items-start justify-center pt-10 sm:pt-20"
-                                     x-cloak>
-                                    {{-- Backdrop --}}
-                                    <div @click="openSettings = false" class="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"></div>
-
-                                    {{-- Modal panel --}}
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-6xl mx-2 sm:mx-4 lg:mx-6 my-4 sm:my-6 max-h-[85vh] flex flex-col"
-                                         @click.away="openSettings = false">
-                                        {{-- Header --}}
-                                        <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-                                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Widget Settings</h3>
-                                            <button @click="openSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-
-                                        {{-- Scrollable body --}}
-                                        <div class="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                            {{-- Card: Date Range --}}
-                                            <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
-                                                <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                                                    </svg>
-                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date Range</span>
-                                                </div>
-                                                <div class="p-4 flex items-center gap-3">
-                                                    <input type="date" x-model="controls.date_start"
-                                                           class="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
-                                                    <span class="text-gray-400 text-xs">→</span>
-                                                    <input type="date" x-model="controls.date_end"
-                                                           class="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
-                                                </div>
-                                            </div>
-
-                                            {{-- Cards: Per-variable (metric + assets) --}}
-                                            <template x-for="(vConfig, vKey) in variables" :key="vKey">
-                                                <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
-                                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
-                                                        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
-                                                            <div class="flex items-center gap-2">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
-                                                                </svg>
-                                                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : 'Independent Variable ' + (vConfig.index)"></span>
-                                                            </div>
-                                                            <template x-if="vConfig.channel">
-                                                                <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full" x-text="vConfig.channel"></span>
-                                                            </template>
-                                                        </div>
-                                                        <div class="p-4 space-y-3">
-                                                            {{-- Metric selector --}}
-                                                            <div class="space-y-1">
-                                                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-400">Metric</label>
-                                                                <select x-model="controls.metrics[vConfig.index]"
-                                                                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
-                                                                    <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
-                                                                    <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                        <option :value="key" x-text="label"></option>
-                                                                    </template>
-                                                                </select>
-                                                            </div>
-
-                                                            {{-- Asset filter (if this variable has assets in seriesOptions) --}}
-                                                            <template x-if="seriesOptions[vKey] && Object.keys(seriesOptions[vKey].options).length > 0">
-                                                                <div class="space-y-2 pt-1">
-                                                                    <div class="flex items-center justify-between">
-                                                                        <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-400">Assets</label>
-                                                                        <div class="flex gap-2">
-                                                                            <button @click="selectAll(vKey)" class="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline">All</button>
-                                                                            <button @click="clearAll(vKey)" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:underline">Clear</button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="relative">
-                                                                        <div class="absolute inset-y-0 left-0 w-8 flex items-center justify-center pointer-events-none">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                                                            </svg>
-                                                                        </div>
-                                                                        <input type="text" x-model="searchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-2">
-                                                                    </div>
-                                                                    <div class="flex flex-col gap-0.5 max-h-40 overflow-y-auto pr-0.5 -mr-0.5">
-                                                                        <template x-for="[assetId, assetName] in Object.entries(seriesOptions[vKey].options)" :key="assetId">
-                                                                            <div x-show="searchQueries[vKey] === '' || assetName.toLowerCase().includes(searchQueries[vKey].toLowerCase())"
-                                                                                 @click="toggleAsset(vKey, assetId)"
-                                                                                 class="flex gap-x-2.5 items-center px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-colors"
-                                                                                 :class="isSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/60'">
-                                                                                <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                     :class="isSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'">
-                                                                                    <svg x-show="isSelected(vKey, assetId)" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3.5" stroke="currentColor">
-                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                    </svg>
-                                                                                </div>
-                                                                                <span class="truncate font-medium" :class="isSelected(vKey, assetId) ? 'text-primary-700 dark:text-primary-300' : ''" x-text="assetName"></span>
-                                                                            </div>
-                                                                        </template>
-                                                                    </div>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </template>
-
-                                            {{-- Card: Granularity --}}
-                                            <template x-if="granularityOnTheGo">
-                                                <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
-                                                    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</span>
-                                                    </div>
-                                                    <div class="p-4">
-                                                        <select x-model="controls.granularity"
-                                                                class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
-                                                            <option value="daily">Daily</option>
-                                                            <option value="weekly">Weekly</option>
-                                                            <option value="monthly">Monthly</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-
-                                        {{-- Footer with Update button --}}
-                                        <div class="flex items-center justify-end gap-3 p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
-                                            <button @click="openSettings = false"
-                                                    class="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                                Cancel
-                                            </button>
-                                            <button @click="saveSettings()"
-                                                    class="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2 rounded-lg shadow-sm transition-colors">
-                                                Update
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -233,6 +89,145 @@
                 <p class="text-gray-500 dark:text-gray-400 text-lg">No widgets on this dashboard yet</p>
             </div>
         @endif
+
+        {{-- Settings Modal (at page root to avoid GridStack z-index issues) --}}
+        <div x-show="openSettings" style="display: none;"
+             class="fixed inset-0 z-[200] flex items-start justify-center pt-10 sm:pt-20"
+             x-cloak>
+            <div @click="closeSettings()" class="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"></div>
+
+            <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-6xl mx-2 sm:mx-4 lg:mx-6 my-4 sm:my-6 max-h-[85vh] flex flex-col"
+                 @click.away="closeSettings()">
+                <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">Widget Settings</h3>
+                    <button @click="closeSettings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {{-- Card: Date Range --}}
+                    <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
+                        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date Range</span>
+                        </div>
+                        <div class="p-4 flex items-center gap-3">
+                            <input type="date" x-model="settingsControls.date_start"
+                                   class="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                            <span class="text-gray-400 text-xs">→</span>
+                            <input type="date" x-model="settingsControls.date_end"
+                                   class="flex-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                        </div>
+                    </div>
+
+                    {{-- Cards: Per-variable (metric + assets) --}}
+                    <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
+                        <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
+                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
+                                <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
+                                    <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                                        </svg>
+                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : 'Independent Variable ' + (vConfig.index)"></span>
+                                    </div>
+                                    <template x-if="vConfig.channel">
+                                        <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full" x-text="vConfig.channel"></span>
+                                    </template>
+                                </div>
+                                <div class="p-4 space-y-3">
+                                    {{-- Metric selector --}}
+                                    <div class="space-y-1">
+                                        <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-400">Metric</label>
+                                        <select x-model="settingsControls.metrics[vConfig.index]"
+                                                class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                                            <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
+                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                <option :value="key" x-text="label"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+
+                                    {{-- Asset filter --}}
+                                    <template x-if="settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options).length > 0">
+                                        <div class="space-y-2 pt-1">
+                                            <div class="flex items-center justify-between">
+                                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-400">Assets</label>
+                                                <div class="flex gap-2">
+                                                    <button @click="settingsSelectAll(vKey)" class="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline">All</button>
+                                                    <button @click="settingsClearAll(vKey)" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:underline">Clear</button>
+                                                </div>
+                                            </div>
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 w-8 flex items-center justify-center pointer-events-none">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                                    </svg>
+                                                </div>
+                                                <input type="text" x-model="settingsSearchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-2">
+                                            </div>
+                                            <div class="flex flex-col gap-0.5 max-h-40 overflow-y-auto pr-0.5 -mr-0.5">
+                                                <template x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey].options)" :key="assetId">
+                                                    <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
+                                                         @click="settingsToggleAsset(vKey, assetId)"
+                                                         class="flex gap-x-2.5 items-center px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-colors"
+                                                         :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700/60'">
+                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                             :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'">
+                                                            <svg x-show="settingsIsSelected(vKey, assetId)" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3.5" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                            </svg>
+                                                        </div>
+                                                        <span class="truncate font-medium" :class="settingsIsSelected(vKey, assetId) ? 'text-primary-700 dark:text-primary-300' : ''" x-text="assetName"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+
+                    {{-- Card: Granularity --}}
+                    <template x-if="settingsGranularityOnTheGo">
+                        <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
+                            <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</span>
+                            </div>
+                            <div class="p-4">
+                                <select x-model="settingsControls.granularity"
+                                        class="w-full text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 py-2 px-3">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
+                    <button @click="closeSettings()"
+                            class="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        Cancel
+                    </button>
+                    <button @click="saveSettings()"
+                            class="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-5 py-2 rounded-lg shadow-sm transition-colors">
+                        Update
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -325,6 +320,78 @@
                         el.innerHTML = '';
                         if (this.loadedCount > 0) this.loadedCount--;
                         this.renderWidget(widgetId, el, controls);
+                    },
+
+                    // Settings modal state
+                    settingsWidgetId: null,
+                    settingsControls: null,
+                    settingsSeriesOptions: {},
+                    settingsVariables: {},
+                    settingsGranularityOnTheGo: false,
+                    openSettings: false,
+                    settingsSearchQueries: {},
+
+                    openWidgetSettings(widgetId, controls, seriesOptions, variables, granularityOnTheGo) {
+                        this.settingsWidgetId = widgetId;
+                        this.settingsControls = controls;
+                        this.settingsSeriesOptions = seriesOptions;
+                        this.settingsVariables = variables;
+                        this.settingsGranularityOnTheGo = granularityOnTheGo;
+                        this.settingsSearchQueries = {};
+                        for (const key in seriesOptions) {
+                            this.settingsSearchQueries[key] = '';
+                        }
+                        for (const key in variables) {
+                            if (!this.settingsSearchQueries[key]) this.settingsSearchQueries[key] = '';
+                        }
+                        this.openSettings = true;
+                    },
+
+                    closeSettings() {
+                        this.openSettings = false;
+                        this.settingsWidgetId = null;
+                        this.settingsControls = null;
+                    },
+
+                    saveSettings() {
+                        const widgetId = this.settingsWidgetId;
+                        const controls = this.settingsControls;
+                        // Sync updated controls back to the widget header component
+                        const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
+                        if (widgetItem) {
+                            const headerEl = widgetItem.querySelector('[x-data]');
+                            if (headerEl && headerEl.__x) {
+                                headerEl.__x.getUnobservedData().controls = controls;
+                            }
+                        }
+                        this.reloadWidget(widgetId, controls);
+                        this.closeSettings();
+                    },
+
+                    settingsIsSelected(seriesKey, assetId) {
+                        if (!this.settingsControls || !this.settingsControls.series_assets[seriesKey]) return false;
+                        return this.settingsControls.series_assets[seriesKey].includes(String(assetId));
+                    },
+
+                    settingsToggleAsset(seriesKey, assetId) {
+                        const current = this.settingsControls.series_assets[seriesKey] || [];
+                        const idx = current.indexOf(String(assetId));
+                        let next;
+                        if (idx > -1) {
+                            next = current.filter((_, i) => i !== idx);
+                        } else {
+                            next = [...current, String(assetId)];
+                        }
+                        this.settingsControls.series_assets[seriesKey] = next;
+                    },
+
+                    settingsSelectAll(seriesKey) {
+                        const allIds = Object.keys(this.settingsSeriesOptions[seriesKey].options).map(String);
+                        this.settingsControls.series_assets[seriesKey] = allIds;
+                    },
+
+                    settingsClearAll(seriesKey) {
+                        this.settingsControls.series_assets[seriesKey] = [];
                     }
                 };
             }
@@ -337,7 +404,6 @@
                     metricOptions: JSON.parse(rawMetricOptions) || {},
                     variables: JSON.parse(rawVariables || '{}') || {},
                     sourceType: sourceType || '',
-                    openSettings: false,
                     searchQueries: {},
                     
                     init() {
@@ -370,9 +436,17 @@
                         }
                     },
                     
-                    saveSettings() {
-                        this.updateWidget();
-                        this.openSettings = false;
+                    openDashboardSettings() {
+                        const dbView = document.getElementById('view-grid-stack');
+                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
+                            dbView.__x.getUnobservedData().openWidgetSettings(
+                                this.widgetId,
+                                JSON.parse(JSON.stringify(this.controls)),
+                                JSON.parse(JSON.stringify(this.seriesOptions)),
+                                JSON.parse(JSON.stringify(this.variables)),
+                                this.granularityOnTheGo
+                            );
+                        }
                     },
                     
                     isSelected(seriesKey, assetId) {
