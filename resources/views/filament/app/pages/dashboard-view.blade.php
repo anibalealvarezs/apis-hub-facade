@@ -268,10 +268,15 @@
                         while (this.controls.metrics.length < varCount) {
                             this.controls.metrics.push('');
                         }
-                        // Initialize series_assets from pre-configured assets
+                        // Initialize series_assets from pre-configured assets, filtered to only valid options
                         if (this.controls.assets && this.controls.assets.length > 0) {
                             if (!this.controls.series_assets.dependent) {
-                                this.controls.series_assets.dependent = this.controls.assets.map(String);
+                                const validIds = this.seriesOptions.dependent
+                                    ? Object.keys(this.seriesOptions.dependent.options)
+                                    : [];
+                                this.controls.series_assets.dependent = this.controls.assets
+                                    .map(String)
+                                    .filter(id => validIds.includes(id));
                             }
                         }
                         // Detect if granularity is pre-configured or on-the-go

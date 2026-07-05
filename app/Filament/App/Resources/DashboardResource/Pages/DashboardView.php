@@ -60,8 +60,17 @@ class DashboardView extends Page
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function(string $channel, string $key, ?string $label = null) use (&$widgetArray, $getAssetsForChannel) {
+            $provideAssetFilters = function(string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel) {
                 $assets = $getAssetsForChannel($channel);
+                if (!empty($allowedIds)) {
+                    $filtered = [];
+                    foreach ($allowedIds as $id) {
+                        if (isset($assets[$id])) {
+                            $filtered[$id] = $assets[$id];
+                        }
+                    }
+                    $assets = $filtered;
+                }
                 if (!empty($assets)) {
                     $widgetArray['series_assets_options'][$key] = [
                         'label' => $label ?? \Illuminate\Support\Str::headline($channel),
@@ -71,20 +80,33 @@ class DashboardView extends Page
             };
 
             if (!empty($uiState['dependent_channel'])) {
-                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')');
+                $depAssetIds = null;
+                if (!empty($uiState['dependent_asset_filter'])) {
+                    $depAssetIds = is_array($uiState['dependent_asset_filter'])
+                        ? $uiState['dependent_asset_filter']
+                        : [$uiState['dependent_asset_filter']];
+                }
+                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
                     if (!empty($var['independent_channel'])) {
-                        $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')');
+                        $indAssetIds = null;
+                        if (!empty($var['independent_asset_filter'])) {
+                            $indAssetIds = is_array($var['independent_asset_filter'])
+                                ? $var['independent_asset_filter']
+                                : [$var['independent_asset_filter']];
+                        }
+                        $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')', $indAssetIds);
                     }
                 }
             }
 
             // Fallback for non-KPI widgets with a channel
             if (empty($widgetArray['series_assets_options']) && !empty($resolved['channel'])) {
-                $provideAssetFilters($resolved['channel'], 'dependent');
+                $configuredAssets = $resolved['assets'] ?? null;
+                $provideAssetFilters($resolved['channel'], 'dependent', null, $configuredAssets);
             }
 
             // Expose per-variable metric options for on-the-go selection (regression KPIs)
