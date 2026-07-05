@@ -38,9 +38,20 @@ class KpiReference extends Page
     public function getKpisWithGuidance(): array
     {
         $kpis = $this->getKpis();
+        $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $result = [];
         foreach ($kpis as $key => $kpi) {
             $guidance = $this->getGuidance($key);
+            $categories = $kpi['categories'] ?? [];
+            
+            // Dynamically inject specific channel categories based on required tags
+            $requiredTags = $kpi['required_tags'] ?? [];
+            foreach ($channelTags as $channel => $tags) {
+                if (count(array_intersect($requiredTags, $tags)) > 0) {
+                    $categories[] = 'ch_' . $channel;
+                }
+            }
+
             $result[] = [
                 'key' => $key,
                 'name' => $kpi['name'],
@@ -49,7 +60,7 @@ class KpiReference extends Page
                 'explanation' => $guidance['explanation'],
                 'use_case' => $guidance['use_case'],
                 'interpretation' => $guidance['interpretation'],
-                'categories' => $kpi['categories'] ?? [],
+                'categories' => array_values(array_unique($categories)),
                 'scope' => $kpi['scope'] ?? '',
             ];
         }
@@ -79,12 +90,28 @@ class KpiReference extends Page
             'source_src' => __('Source Data'),
             'source_tracking' => __('Tracking Data'),
             'trends' => __('Trends'),
-        ];
+        ], $this->getChannelCategories());
+    }
+
+    private function getChannelCategories(): array
+    {
+        $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+        $cats = [];
+        foreach (array_keys($channels) as $channel) {
+            $name = ucwords(str_replace('_', ' ', $channel));
+            if ($channel === 'facebook_marketing') $name = 'FB Marketing';
+            if ($channel === 'facebook_organic') $name = 'FB Organic';
+            if ($channel === 'google_search_console') $name = 'Google Search Console';
+            if ($channel === 'google_analytics') $name = 'Google Analytics';
+            $cats['ch_' . $channel] = $name;
+        }
+        return $cats;
     }
 
     public function getCategoryGroups(): array
     {
         return [
+            __('Specific Channels') => $this->getChannelCategories(),
             __('Channel') => [
                 'cross-channel' => __('Cross-Channel'),
                 'organic' => __('Organic'),
@@ -266,6 +293,72 @@ class KpiReference extends Page
                 'explanation' => __('Uses Exponential Moving Average crossovers (EMA 7 vs EMA 14) to mathematically confirm when an ad campaign\'s cost efficiency trend has genuinely shifted due to optimization.'),
                 'use_case' => __('You made a change to an ad campaign and want to know if it actually improved the cost per acquisition, or if it\'s just daily noise.'),
                 'interpretation' => __('When the fast EMA (7-day) crosses below the slow EMA (14-day) for CPA, it mathematically confirms a successful optimization phase. A cross above indicates eroding efficiency.'),
+            ],
+            'seo_intent_match' => [
+                'type_label' => __('Content Relevance Checker'),
+                'explanation' => __('Compares organic search clicks with bounce rate to identify if the content matches search intent.'),
+                'use_case' => __('You achieved a top 3 ranking and clicks increased, but is it quality traffic? If the bounce rate for that segment rises proportionally, your content isn\'t answering the user\'s real search intent.'),
+                'interpretation' => __('A rising bounce rate alongside rising clicks means low relevance (toxic keyword/intent mismatch). A stable or dropping bounce rate means you are successfully capturing high-intent traffic.'),
+            ],
+            'organic_conversion_elasticity' => [
+                'type_label' => __('SEO ROI Scalability'),
+                'explanation' => __('Measures how much real site conversions scale for every point improved in organic search position or clicks.'),
+                'use_case' => __('Helps identify which content clusters are truly profitable for SEO. It answers: "Reaching position 1 doubles traffic, but does it double sales?"'),
+                'interpretation' => __('A value above 1 means your SEO gains scale profitably into conversions. A value near 0 means you are ranking for keywords that drive traffic but no business value.'),
+            ],
+            'seo_engagement_quality' => [
+                'type_label' => __('SEO Traffic Quality Indicator'),
+                'explanation' => __('A quality indicator measuring average session duration driven by organic keywords relative to clicks.'),
+                'use_case' => __('Are users actually reading your 2,000-word blog post? If clicks go up but session duration plummets, users are abandoning the page quickly.'),
+                'interpretation' => __('A rising trend means your content is highly engaging and retains the user\'s attention. A falling trend means you attract clicks but fail to retain them.'),
+            ],
+            'toxic_keyword_detector' => [
+                'type_label' => __('Toxic Keyword Identifier'),
+                'explanation' => __('Identifies specific search terms with a high propensity for bouncing.'),
+                'use_case' => __('Locates "low quality" search terms that generate empty traffic, negatively affecting global site metrics and wasting retention efforts.'),
+                'interpretation' => __('High values flag toxic keywords. These should either be de-optimized, or the landing page content must be drastically changed to match the actual user expectation.'),
+            ],
+            'paid_acquisition_saturation' => [
+                'type_label' => __('Audience Saturation Tracker'),
+                'explanation' => __('Crosses ad spend against New Users acquired to reveal if you are still reaching fresh audiences.'),
+                'use_case' => __('You increased your Meta Ads budget by 50%. The ad platform says everything is fine, but this KPI reveals if you are actually bringing "new blood" to the site or just re-targeting the same audience.'),
+                'interpretation' => __('A declining elasticity means saturation: you are spending more but acquiring fewer new users per dollar. Time to refresh creatives or expand targeting.'),
+            ],
+            'click_to_session_drop_off' => [
+                'type_label' => __('Friction & Bot Detector'),
+                'explanation' => __('Detects percentage loss between ad clicks charged by the platform and actual web sessions recorded by analytics.'),
+                'use_case' => __('Meta charges you for 10,000 clicks, but analytics only registers 6,000 sessions. This KPI tracks that discrepancy.'),
+                'interpretation' => __('A rising drop-off rate indicates technical friction (slow loading times), accidental mobile clicks, or low-quality bot traffic from ad networks.'),
+            ],
+            'social_viral_to_revenue_pipeline' => [
+                'type_label' => __('Viral ROI Measurer'),
+                'explanation' => __('Evaluates if organic social virality statistically translates into website revenue in subsequent days.'),
+                'use_case' => __('You had a viral post reaching 100k people. This KPI cuts through the noise to tell you if those "likes" actually moved the financial needle days later.'),
+                'interpretation' => __('A positive granger causality means your viral content drives actual delayed revenue. A negative result means your viral content is just vanity metrics with no commercial value.'),
+            ],
+            'social_traffic_stickiness' => [
+                'type_label' => __('Social Audience Retention'),
+                'explanation' => __('Measures how engaged the audience from social media remains after landing on the website.'),
+                'use_case' => __('Helps identify what types of organic posts (e.g., a blog article vs a short video) attract users willing to consume deep content on your site.'),
+                'interpretation' => __('A higher stickiness means you are driving highly qualified social traffic. A lower stickiness means users click out of curiosity but leave immediately.'),
+            ],
+            'brand_search_halo_effect' => [
+                'type_label' => __('Brand Awareness Spillover'),
+                'explanation' => __('Analyzes if social media efforts (paid and organic) generate a delayed increase in brand searches on Google.'),
+                'use_case' => __('You launch a strong brand awareness campaign on Facebook. This KPI detects if people, instead of clicking the ad, go to Google days later to search for your company.'),
+                'interpretation' => __('A positive regression coefficient confirms that your social efforts are successfully building long-term brand recall and driving indirect search traffic.'),
+            ],
+            'omnichannel_revenue_attribution' => [
+                'type_label' => __('Global Revenue Driver'),
+                'explanation' => __('A multiple regression determining which marketing effort (SEO, Paid, Organic) statistically pushes more global revenue.'),
+                'use_case' => __('Answers the million-dollar question: "Of all my simultaneous marketing efforts, which one is statistically driving the most sales this month?"'),
+                'interpretation' => __('Compares the coefficients of each channel to reveal the true heavyweight champion of your marketing mix, beyond basic last-click attribution.'),
+            ],
+            'traffic_to_conversion_inertia' => [
+                'type_label' => __('Core Site Conversion Health'),
+                'explanation' => __('Determines the natural conversion rhythm of the isolated site: if general traffic grows 20%, do conversions grow 20%?'),
+                'use_case' => __('Ideal for measuring if UX/UI changes on the website are improving the retention and conversion rate, independent of the traffic source quality.'),
+                'interpretation' => __('A value above 1 means your site converts traffic highly efficiently (compounding returns). A value below 1 means your site struggles to convert increased traffic volumes.'),
             ],
         ];
 

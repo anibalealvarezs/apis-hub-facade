@@ -507,6 +507,297 @@ class PredefinedKpiRegistry
                     ]
                 ]
             ],
+            'seo_intent_match' => [
+                'name' => 'SEO Intent Match (Bounce Rate vs Clicks)',
+                'description' => 'Compares organic search clicks with bounce rate to identify if the content matches search intent.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'bounce_rate'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks'
+                        ]
+                    ]
+                ]
+            ],
+            'organic_conversion_elasticity' => [
+                'name' => 'Organic Conversion Elasticity',
+                'description' => 'Measures how much real site conversions scale for every point improved in organic search position/clicks.',
+                'scope' => 'global',
+                'categories' => ['seo', 'results', 'scalability', 'scope_global', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'conversion_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
+                            'metric' => 'conversions'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks'
+                        ]
+                    ]
+                ]
+            ],
+            'seo_engagement_quality' => [
+                'name' => 'SEO Engagement Quality',
+                'description' => 'A quality indicator measuring session duration driven by organic keywords.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'average_session_duration'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks'
+                        ]
+                    ]
+                ]
+            ],
+            'toxic_keyword_detector' => [
+                'name' => 'Toxic Keyword Detector',
+                'description' => 'Identifies specific search terms with high propensity for bouncing.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'alerts', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'bounce_rate'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks'
+                        ]
+                    ]
+                ]
+            ],
+            'paid_acquisition_saturation' => [
+                'name' => 'Paid Acquisition Saturation',
+                'description' => 'Crosses Meta ad spend against New Users acquired to reveal audience saturation.',
+                'scope' => 'channel',
+                'categories' => ['performance', 'scalability', 'cost', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'traffic_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'new_users'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend'
+                        ]
+                    ]
+                ]
+            ],
+            'click_to_session_drop_off' => [
+                'name' => 'Click-to-Session Drop-off',
+                'description' => 'Detects percentage loss between ad clicks charged and actual web sessions.',
+                'scope' => 'channel',
+                'categories' => ['performance', 'alerts', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['paid_media', 'traffic_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'sessions'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__PAID_MEDIA_CHANNEL_1__',
+                            'metric' => 'link_clicks'
+                        ]
+                    ]
+                ]
+            ],
+            'social_viral_to_revenue_pipeline' => [
+                'name' => 'Social Viral to Revenue Pipeline',
+                'description' => 'Evaluates if organic social virality statistically translates into website revenue in subsequent days.',
+                'scope' => 'global',
+                'categories' => ['organic', 'cross-channel', 'results', 'scope_global', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'revenue_tracked'],
+                'calculation_type' => 'calculate_granger',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
+                            'metric' => 'revenue'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                            'metric' => 'reach'
+                        ]
+                    ]
+                ]
+            ],
+            'social_traffic_stickiness' => [
+                'name' => 'Social Traffic Stickiness',
+                'description' => 'Measures how engaged the audience from social media remains after landing on the website.',
+                'scope' => 'asset',
+                'categories' => ['organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'average_session_duration'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                            'metric' => 'reach'
+                        ]
+                    ]
+                ]
+            ],
+            'brand_search_halo_effect' => [
+                'name' => 'Brand Search Halo Effect',
+                'description' => 'Analyzes if social media efforts generate a delayed increase in brand searches on Google.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'seo', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['seo', 'spendable', 'organic_social'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions'
+                        ],
+                        'right' => [
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => [
+                                'type' => 'metric',
+                                'channel' => '__SPENDABLE_CHANNEL_1__',
+                                'metric' => 'spend'
+                            ],
+                            'right' => [
+                                'type' => 'metric',
+                                'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                                'metric' => 'reach'
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'omnichannel_revenue_attribution' => [
+                'name' => 'Omnichannel Revenue Attribution',
+                'description' => 'Multiple regression determining which marketing effort statistically pushes more global revenue.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'results', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['revenue_tracked', 'seo', 'spendable', 'organic_social'],
+                'calculation_type' => 'calculate_regression',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
+                            'metric' => 'revenue'
+                        ],
+                        'right' => [
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => [
+                                'type' => 'metric',
+                                'channel' => '__SEO_CHANNEL_1__',
+                                'metric' => 'clicks'
+                            ],
+                            'right' => [
+                                'type' => 'operator',
+                                'operator' => '+',
+                                'left' => [
+                                    'type' => 'metric',
+                                    'channel' => '__SPENDABLE_CHANNEL_1__',
+                                    'metric' => 'spend'
+                                ],
+                                'right' => [
+                                    'type' => 'metric',
+                                    'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                                    'metric' => 'reach'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'traffic_to_conversion_inertia' => [
+                'name' => 'Traffic to Conversion Inertia',
+                'description' => 'Determines the natural conversion rhythm of the isolated site.',
+                'scope' => 'global',
+                'categories' => ['performance', 'results', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['traffic_tracked', 'conversion_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
+                            'metric' => 'conversions'
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'sessions'
+                        ]
+                    ]
+                ]
+            ],
         ];
     }
 

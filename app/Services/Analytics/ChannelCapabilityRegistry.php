@@ -15,9 +15,9 @@ class ChannelCapabilityRegistry
             'facebook_marketing' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
             'google_search_console' => ['clickable', 'impressionable', 'seo'],
             'facebook_organic' => ['organic_social', 'reach_driven', 'impressionable'],
+            'google_analytics' => ['traffic_tracked', 'conversion_tracked', 'revenue_tracked', 'behavior_tracked', 'analytics'],
             // Future channels:
             // 'google_ads' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
-            // 'google_analytics' => ['clickable', 'conversion_tracked', 'revenue_tracked'],
             // 'klaviyo' => ['revenue_tracked', 'conversion_tracked'],
         ];
     }
