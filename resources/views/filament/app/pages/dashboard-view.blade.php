@@ -324,7 +324,7 @@
 
                     // Settings modal state
                     settingsWidgetId: null,
-                    settingsControls: null,
+                    settingsControls: { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
                     settingsSeriesOptions: {},
                     settingsVariables: {},
                     settingsGranularityOnTheGo: false,
