@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4">
+    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo)">
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div>
@@ -358,13 +358,12 @@
                     saveSettings() {
                         const widgetId = this.settingsWidgetId;
                         const controls = this.settingsControls;
-                        const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
-                        if (widgetItem) {
-                            const headerEl = widgetItem.querySelector('[x-data]');
-                            if (headerEl && headerEl.__x) {
-                                headerEl.__x.getUnobservedData().controls = controls;
+                        window.dispatchEvent(new CustomEvent('reload-widget', {
+                            detail: {
+                                id: widgetId,
+                                controls: controls
                             }
-                        }
+                        }));
                         this.reloadWidget(widgetId, controls);
                         this.closeSettings();
                     },
@@ -442,16 +441,15 @@
                     },
 
                     openDashboardSettings() {
-                        const dbView = document.getElementById('dashboard-view-container');
-                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                            dbView.__x.getUnobservedData().openWidgetSettings(
-                                this.widgetId,
-                                JSON.parse(JSON.stringify(this.controls)),
-                                JSON.parse(JSON.stringify(this.seriesOptions)),
-                                JSON.parse(JSON.stringify(this.variables)),
-                                this.granularityOnTheGo
-                            );
-                        }
+                        window.dispatchEvent(new CustomEvent('open-widget-settings', {
+                            detail: {
+                                widgetId: this.widgetId,
+                                controls: JSON.parse(JSON.stringify(this.controls)),
+                                seriesOptions: JSON.parse(JSON.stringify(this.seriesOptions)),
+                                variables: JSON.parse(JSON.stringify(this.variables)),
+                                granularityOnTheGo: this.granularityOnTheGo
+                            }
+                        }));
                     },
 
                     isSelected(seriesKey, assetId) {
