@@ -82,10 +82,10 @@
                                     <div @click="openSettings = false" class="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"></div>
 
                                     {{-- Modal panel --}}
-                                    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+                                    <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-6xl mx-2 sm:mx-4 lg:mx-6 my-4 sm:my-6 max-h-[85vh] flex flex-col"
                                          @click.away="openSettings = false">
                                         {{-- Header --}}
-                                        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                        <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
                                             <h3 class="text-sm font-bold text-gray-900 dark:text-white">Widget Settings</h3>
                                             <button @click="openSettings = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -95,12 +95,12 @@
                                         </div>
 
                                         {{-- Scrollable body --}}
-                                        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                                        <div class="flex-1 overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
 
                                             {{-- Card: Date Range --}}
-                                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
+                                            <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
                                                 <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                                     </svg>
                                                     <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date Range</span>
@@ -120,7 +120,7 @@
                                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
                                                         <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
                                                             <div class="flex items-center gap-2">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
                                                                 </svg>
                                                                 <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : 'Independent Variable ' + (vConfig.index)"></span>
@@ -185,9 +185,9 @@
 
                                             {{-- Card: Granularity --}}
                                             <template x-if="granularityOnTheGo">
-                                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
+                                                <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 shadow-sm">
                                                     <div class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 rounded-t-xl">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
                                                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</span>
@@ -205,7 +205,7 @@
                                         </div>
 
                                         {{-- Footer with Update button --}}
-                                        <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
+                                        <div class="flex items-center justify-end gap-3 p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
                                             <button @click="openSettings = false"
                                                     class="text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                                 Cancel
