@@ -99,12 +99,13 @@
 
         {{-- Settings Modal (teleported to body to avoid z-index issues) --}}
         <template x-teleport="body">
-            <div x-show="openSettings" style="display: none;"
-                 class="fixed inset-0 z-[9999] flex items-start justify-center pt-10 sm:pt-16"
+            <div x-show="openSettings" style="display: none; z-index: 999999;"
+                 class="fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
                  x-cloak>
                 <div @click="closeSettings()" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
-                <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-[98vw] sm:w-[95vw] md:w-[90vw] lg:w-[85vw] max-w-7xl mx-auto my-4 sm:my-6 max-h-[90vh] flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
+                <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
+                     style="width: 95vw; max-width: 1400px; max-height: 90vh;"
                      @click.away="closeSettings()">
                     <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-2xl">
                         <h3 class="text-base font-bold text-gray-900 dark:text-white">Widget Settings</h3>
