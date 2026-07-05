@@ -49,8 +49,14 @@
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
                         @if ($widget['title'] || $widget['name'])
                             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
-                                  x-data="widgetHeader({{ $widget['id'] }}, '{{ addslashes(json_encode($widget['resolved_controls'])) }}', '{{ addslashes(json_encode($widget['series_assets_options'])) }}', '{{ addslashes(json_encode($widget['metric_options'])) }}', '{{ $widget['source_type'] }}', '{{ addslashes(json_encode($widget['variables'] ?? [])) }}')"
-                                 @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
+                                  x-data="widgetHeader"
+                                  data-widget-id="{{ $widget['id'] }}"
+                                  data-controls="{{ json_encode($widget['resolved_controls']) }}"
+                                  data-series-options="{{ json_encode($widget['series_assets_options']) }}"
+                                  data-metric-options="{{ json_encode($widget['metric_options']) }}"
+                                  data-source-type="{{ $widget['source_type'] }}"
+                                  data-variables="{{ json_encode($widget['variables'] ?? []) }}"
+                                  @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                                 <div>
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
                                     <div class="flex flex-wrap gap-1 mt-1" x-show="getBadges().length > 0">
@@ -76,6 +82,7 @@
                             </div>
                         @endif
                         <div class="widget-content flex-grow p-4 relative overflow-y-auto"
+                             data-widget-id="{{ $widget['id'] }}"
                              x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
                         </div>
                     </div>
@@ -235,7 +242,7 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
         <script src="{{ asset('js/dashboard-renderer.js') }}"></script>
         <script>
-            function dashboardView() {
+            window.dashboardView = function() {
                 return {
                     loadedCount: 0,
                     totalCount: {{ count($this->widgets) }},
@@ -270,8 +277,6 @@
 
                     renderWidget(widgetId, el, controls) {
                         el.setAttribute('data-raw-controls', JSON.stringify(controls));
-                        
-                        // Merge dashboard overrides (date range from on-the-go controls)
                         let effectiveControls = { ...controls };
                         if (this.dashboardOverrides.date_start) {
                             effectiveControls.date_start = this.dashboardOverrides.date_start;
@@ -313,16 +318,13 @@
                     reloadWidget(widgetId, controls) {
                         const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
                         if (!widgetItem) return;
-                        
                         const el = widgetItem.querySelector('.widget-content');
                         if (!el) return;
-
                         el.innerHTML = '';
                         if (this.loadedCount > 0) this.loadedCount--;
                         this.renderWidget(widgetId, el, controls);
                     },
 
-                    // Settings modal state
                     settingsWidgetId: null,
                     settingsControls: { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
                     settingsSeriesOptions: {},
@@ -356,7 +358,6 @@
                     saveSettings() {
                         const widgetId = this.settingsWidgetId;
                         const controls = this.settingsControls;
-                        // Sync updated controls back to the widget header component
                         const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
                         if (widgetItem) {
                             const headerEl = widgetItem.querySelector('[x-data]');
@@ -394,27 +395,32 @@
                         this.settingsControls.series_assets[seriesKey] = [];
                     }
                 };
-            }
+            };
 
-            function widgetHeader(widgetId, rawControls, rawSeriesOptions, rawMetricOptions, sourceType, rawVariables) {
+            window.widgetHeader = function() {
                 return {
-                    widgetId: widgetId,
-                    controls: JSON.parse(rawControls),
-                    seriesOptions: JSON.parse(rawSeriesOptions) || {},
-                    metricOptions: JSON.parse(rawMetricOptions) || {},
-                    variables: JSON.parse(rawVariables || '{}') || {},
-                    sourceType: sourceType || '',
+                    widgetId: null,
+                    controls: {},
+                    seriesOptions: {},
+                    metricOptions: {},
+                    variables: {},
+                    sourceType: '',
                     searchQueries: {},
-                    
+
                     init() {
+                        const el = this.$el;
+                        this.widgetId = parseInt(el.dataset.widgetId);
+                        this.controls = JSON.parse(el.dataset.controls || '{}');
+                        this.seriesOptions = JSON.parse(el.dataset.seriesOptions || '{}');
+                        this.metricOptions = JSON.parse(el.dataset.metricOptions || '{}');
+                        this.sourceType = el.dataset.sourceType || '';
+                        this.variables = JSON.parse(el.dataset.variables || '{}');
                         if (!this.controls.metrics) this.controls.metrics = [];
                         if (!this.controls.series_assets) this.controls.series_assets = {};
-                        // Initialize metrics array to match variable count
                         const varCount = Object.keys(this.variables).length;
                         while (this.controls.metrics.length < varCount) {
                             this.controls.metrics.push('');
                         }
-                        // Initialize series_assets from pre-configured assets, filtered to only valid options
                         if (this.controls.assets && this.controls.assets.length > 0) {
                             if (!this.controls.series_assets.dependent) {
                                 const validIds = this.seriesOptions.dependent
@@ -425,7 +431,6 @@
                                     .filter(id => validIds.includes(id));
                             }
                         }
-                        // Detect if granularity is pre-configured or on-the-go
                         this.granularityOnTheGo = !this.controls.granularity || this.controls.granularity === '';
                         if (!this.controls.granularity) this.controls.granularity = '';
                         for (const key in this.seriesOptions) {
@@ -435,7 +440,7 @@
                             if (!this.searchQueries[key]) this.searchQueries[key] = '';
                         }
                     },
-                    
+
                     openDashboardSettings() {
                         const dbView = document.getElementById('dashboard-view-container');
                         if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
@@ -448,12 +453,12 @@
                             );
                         }
                     },
-                    
+
                     isSelected(seriesKey, assetId) {
                         if (!this.controls.series_assets[seriesKey]) return false;
                         return this.controls.series_assets[seriesKey].includes(String(assetId));
                     },
-                    
+
                     toggleAsset(seriesKey, assetId) {
                         const current = this.controls.series_assets[seriesKey] || [];
                         const idx = current.indexOf(String(assetId));
@@ -465,12 +470,12 @@
                         }
                         this.controls.series_assets[seriesKey] = next;
                     },
-                    
+
                     selectAll(seriesKey) {
                         const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
                         this.controls.series_assets[seriesKey] = allIds;
                     },
-                    
+
                     clearAll(seriesKey) {
                         this.controls.series_assets[seriesKey] = [];
                     },
@@ -484,7 +489,7 @@
                         }
                         return count;
                     },
-                    
+
                     updateWidget() {
                         const raw = JSON.stringify(this.controls);
                         const el = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .widget-content`);
@@ -496,7 +501,7 @@
                             dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
                         }
                     },
-                    
+
                     getBadges() {
                         if (Object.keys(this.seriesOptions).length === 0) return [];
                         let badges = [];
@@ -519,7 +524,7 @@
                         return badges;
                     }
                 };
-            }
+            };
         </script>
     @endpush
 </x-filament-panels::page>
