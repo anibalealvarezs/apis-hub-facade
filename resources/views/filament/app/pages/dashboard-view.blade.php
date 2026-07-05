@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardView()" x-init="init()" class="space-y-4">
+    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4">
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div>
@@ -437,7 +437,7 @@
                     },
                     
                     openDashboardSettings() {
-                        const dbView = document.getElementById('view-grid-stack');
+                        const dbView = document.getElementById('dashboard-view-container');
                         if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
                             dbView.__x.getUnobservedData().openWidgetSettings(
                                 this.widgetId,
@@ -491,8 +491,7 @@
                         if (el) {
                             el.setAttribute('data-raw-controls', raw);
                         }
-                        // Dispatch to the main dashboardView component
-                        const dbView = document.getElementById('view-grid-stack');
+                        const dbView = document.getElementById('dashboard-view-container');
                         if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
                             dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
                         }
