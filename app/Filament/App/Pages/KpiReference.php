@@ -69,7 +69,7 @@ class KpiReference extends Page
 
     public function getCategoryOptions(): array
     {
-        return [
+        return array_merge([
             'agency' => __('Agency Performance'),
             'alerts' => __('Alerts'),
             'clicks' => __('Clicks'),
