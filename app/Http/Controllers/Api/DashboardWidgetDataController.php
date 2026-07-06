@@ -211,12 +211,36 @@ class DashboardWidgetDataController extends Controller
                     $points[] = ['x' => $x, 'y' => $scatter['y'][$i]];
                 }
                 
-                // Generar linea de tendencia ideal (y = mx + b)
-                $b = $data['baseline_intercept'];
+                // Generar linea de tendencia ideal
+                $b = $data['baseline_intercept'] ?? 0;
                 $m = array_values($data['coefficients'])[0] ?? 0;
+                $modelType = $data['model_type'] ?? 'linear';
                 
                 $minX = min($scatter['x']);
                 $maxX = max($scatter['x']);
+                
+                $trendLineData = [];
+                
+                if ($modelType === 'log-log') {
+                    // Para log-log: ln(y) = m * ln(x) + b  =>  y = exp(b) * x^m
+                    $steps = 20;
+                    if ($maxX > $minX) {
+                        $stepSize = ($maxX - $minX) / $steps;
+                        for ($i = 0; $i <= $steps; $i++) {
+                            $currX = $minX + ($i * $stepSize);
+                            if ($currX > 0) {
+                                $currY = exp($b) * pow($currX, $m);
+                                $trendLineData[] = ['x' => $currX, 'y' => $currY];
+                            }
+                        }
+                    }
+                } else {
+                    // Para linear: y = mx + b
+                    $trendLineData = [
+                        ['x' => $minX, 'y' => $m * $minX + $b],
+                        ['x' => $maxX, 'y' => $m * $maxX + $b]
+                    ];
+                }
                 
                 $data = [
                     'labels' => [],
@@ -231,10 +255,7 @@ class DashboardWidgetDataController extends Controller
                         [
                             'type' => 'line',
                             'label' => 'Trend Line',
-                            'data' => [
-                                ['x' => $minX, 'y' => $m * $minX + $b],
-                                ['x' => $maxX, 'y' => $m * $maxX + $b]
-                            ],
+                            'data' => $trendLineData,
                             'borderColor' => '#ef4444',
                             'borderWidth' => 2,
                             'fill' => false,
