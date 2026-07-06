@@ -41,7 +41,12 @@ class KpiPayloadBuilder
         }
 
         // For Univariate, AST is just the dependent node
-        if (in_array($calculationType, ['calculate_autocorrelation', 'calculate_anomaly'])) {
+        if (in_array($calculationType, [
+            'calculate_autocorrelation', 'calculate_anomaly',
+            'calculate_trend_linear', 'calculate_trend_sma', 
+            'calculate_trend_ema', 'calculate_trend_holt_winters', 
+            'calculate_trend_logarithmic'
+        ])) {
             return $dependentNode;
         }
 

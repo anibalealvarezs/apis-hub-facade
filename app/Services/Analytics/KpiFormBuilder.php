@@ -116,6 +116,10 @@ class KpiFormBuilder
         if (str_contains($channel, 'facebook_organic')) return [
             'reach' => 'Reach', 'impressions' => 'Impressions', 'engaged_users' => 'Engaged Users', 'likes' => 'Likes',
         ];
+        if (str_contains($channel, 'google_analytics')) return [
+            'sessions' => 'Sessions', 'new_users' => 'New Users', 'bounce_rate' => 'Bounce Rate',
+            'average_session_duration' => 'Avg Session Duration', 'conversions' => 'Conversions', 'revenue' => 'Revenue'
+        ];
         return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
     }
 
@@ -282,6 +286,10 @@ class KpiFormBuilder
                             'calculate_granger' => 'Granger Causality',
                             'calculate_macd' => 'MACD Momentum',
                             'calculate_anomaly' => 'Anomaly Detection',
+                            'calculate_trend_linear' => 'Linear Trend',
+                            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
+                            'calculate_trend_logarithmic' => 'Logarithmic Trend',
+                            'calculate_trend_ema' => 'EMA Crossover',
                         ])
                         ->required()
                         ->live(),
