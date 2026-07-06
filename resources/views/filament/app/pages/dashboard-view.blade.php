@@ -101,6 +101,7 @@
         <template x-teleport="body">
             <div x-show="openSettings" style="display: none; z-index: 999999;"
                  class="fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
+                 x-trap.noscroll="openSettings"
                  x-cloak>
                 <div @click="closeSettings()" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
@@ -116,7 +117,7 @@
                         </button>
                     </div>
 
-                    <div class="flex-1 min-h-0 overflow-hidden p-6 md:p-8 bg-gray-50 dark:bg-gray-900 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex-1 overflow-hidden p-6 md:p-8 bg-gray-50 dark:bg-gray-900 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
                         
                         {{-- Left Column: Global Configuration --}}
                         <div class="md:col-span-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2">
@@ -210,7 +211,7 @@
                                                     </div>
                                                     <input type="text" x-model="settingsSearchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-[240px]">
                                                     <template x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey].options)" :key="assetId">
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
