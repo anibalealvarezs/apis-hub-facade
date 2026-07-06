@@ -16,8 +16,9 @@ class DashboardView extends Page
     public Dashboard $dashboard;
 
     public array $resolvedControls = [];
-    
+
     public array $widgets = [];
+
     public function mount(Dashboard $record): void
     {
         $this->dashboard = $record;
@@ -34,10 +35,10 @@ class DashboardView extends Page
             $resolved = $service->resolveControls($this->dashboard, $widgetModel);
             $widgetArray['resolved_controls'] = $resolved;
             $widgetArray['series_assets_options'] = [];
-            
+
             $uiState = [];
             $kpiAssetMode = 'multiple';
-            if ($widgetModel->source_type === 'kpi' && !empty($widgetModel->source_config['custom_kpi_id'])) {
+            if ($widgetModel->source_type === 'kpi' && ! empty($widgetModel->source_config['custom_kpi_id'])) {
                 $kpi = \App\Models\CustomKpi::find($widgetModel->source_config['custom_kpi_id']);
                 if ($kpi) {
                     $uiState = $kpi->filters['_ui_state'] ?? [];
@@ -56,22 +57,29 @@ class DashboardView extends Page
             $user = auth()->user();
             $isAdmin = $user && ($user->role === 'admin' || $user->role === 'owner');
 
-            $getAssetsForChannel = function($channel) use ($isAdmin, $user, $service) {
-                if (empty($channel)) return [];
+            $getAssetsForChannel = function ($channel) use ($isAdmin, $user, $service) {
+                if (empty($channel)) {
+                    return [];
+                }
                 $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
-                if ($isAdmin) return $allAssets;
+                if ($isAdmin) {
+                    return $allAssets;
+                }
                 $allowed = $service->filterAllowedAssets(\Filament\Facades\Filament::getTenant(), $user->id, $channel, array_keys($allAssets));
                 $filtered = [];
                 foreach ($allowed as $id) {
-                    if (isset($allAssets[$id])) $filtered[$id] = $allAssets[$id];
+                    if (isset($allAssets[$id])) {
+                        $filtered[$id] = $allAssets[$id];
+                    }
                 }
+
                 return $filtered;
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function(string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode) {
+            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode) {
                 $assets = $getAssetsForChannel($channel);
-                if (!empty($allowedIds)) {
+                if (! empty($allowedIds)) {
                     $filtered = [];
                     foreach ($allowedIds as $id) {
                         if (isset($assets[$id])) {
@@ -80,7 +88,7 @@ class DashboardView extends Page
                     }
                     $assets = $filtered;
                 }
-                if (!empty($assets)) {
+                if (! empty($assets)) {
                     $widgetArray['series_assets_options'][$key] = [
                         'label' => $label ?? \Illuminate\Support\Str::headline($channel),
                         'options' => $assets,
@@ -89,13 +97,13 @@ class DashboardView extends Page
                 }
             };
 
-            if (!empty($uiState['dependent_channel'])) {
+            if (! empty($uiState['dependent_channel'])) {
                 $depAssetIds = null;
-                if (!empty($uiState['dependent_asset_filter'])) {
+                if (! empty($uiState['dependent_asset_filter'])) {
                     $depAssetIds = is_array($uiState['dependent_asset_filter'])
                         ? $uiState['dependent_asset_filter']
                         : [$uiState['dependent_asset_filter']];
-                } elseif (!empty($resolved['assets'])) {
+                } elseif (! empty($resolved['assets'])) {
                     $depAssetIds = $resolved['assets'];
                 }
                 $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
@@ -103,13 +111,13 @@ class DashboardView extends Page
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
-                    if (!empty($var['independent_channel'])) {
+                    if (! empty($var['independent_channel'])) {
                         $indAssetIds = null;
-                        if (!empty($var['independent_asset_filter'])) {
+                        if (! empty($var['independent_asset_filter'])) {
                             $indAssetIds = is_array($var['independent_asset_filter'])
                                 ? $var['independent_asset_filter']
                                 : [$var['independent_asset_filter']];
-                        } elseif (!empty($resolved['assets'])) {
+                        } elseif (! empty($resolved['assets'])) {
                             $indAssetIds = $resolved['assets'];
                         }
                         $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')', $indAssetIds);
@@ -118,13 +126,13 @@ class DashboardView extends Page
             }
 
             // Fallback for non-KPI widgets with a channel
-            if (empty($widgetArray['series_assets_options']) && !empty($resolved['channel'])) {
+            if (empty($widgetArray['series_assets_options']) && ! empty($resolved['channel'])) {
                 $configuredAssets = $resolved['assets'] ?? null;
                 $provideAssetFilters($resolved['channel'], 'dependent', null, $configuredAssets);
             }
 
             // Safety net: enforce widget-configured assets as the max available set in ALL series_assets_options
-            if (!empty($resolved['assets']) && is_array($resolved['assets']) && !empty($widgetArray['series_assets_options'])) {
+            if (! empty($resolved['assets']) && is_array($resolved['assets']) && ! empty($widgetArray['series_assets_options'])) {
                 $configuredIds = array_map('strval', $resolved['assets']);
                 foreach ($widgetArray['series_assets_options'] as $sk => $sv) {
                     $intersected = [];
@@ -133,7 +141,7 @@ class DashboardView extends Page
                             $intersected[$aid] = $sv['options'][$aid];
                         }
                     }
-                    if (!empty($intersected)) {
+                    if (! empty($intersected)) {
                         $widgetArray['series_assets_options'][$sk]['options'] = $intersected;
                     } else {
                         unset($widgetArray['series_assets_options'][$sk]);
@@ -146,7 +154,7 @@ class DashboardView extends Page
             $varIndex = 0;
 
             $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
-            $depMetrics = !empty($depChannel)
+            $depMetrics = ! empty($depChannel)
                 ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel)
                 : [];
             $variables['dependent'] = [
@@ -158,7 +166,7 @@ class DashboardView extends Page
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
                     $indChannel = $var['independent_channel'] ?? '';
-                    $indMetrics = !empty($indChannel)
+                    $indMetrics = ! empty($indChannel)
                         ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($indChannel)
                         : [];
                     $variables['independent_' . $key] = [
