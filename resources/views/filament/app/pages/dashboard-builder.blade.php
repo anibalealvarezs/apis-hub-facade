@@ -369,15 +369,19 @@
                                             
                                             <div class="my-2">
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                <select x-model="series.metric"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                    <option value="">Select a metric...</option>
-                                                    <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
-                                                        <option :value="key" x-text="label"></option>
-                                                    </template>
-                                                </select>
-                                                <template x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
-                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first.</p>
+                                                <template x-if="series.channel && allChannelMetrics[series.channel]">
+                                                    <select x-model="series.metric"
+                                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                        <option value="">Select a metric...</option>
+                                                        <template x-for="(label, key) in allChannelMetrics[series.channel]" :key="key">
+                                                            <option :value="key" x-text="label"></option>
+                                                        </template>
+                                                    </select>
+                                                </template>
+                                                <template x-if="!series.channel || !allChannelMetrics[series.channel]">
+                                                    <select disabled class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 py-2.5 px-4 opacity-75">
+                                                        <option value="" x-text="series.channel ? 'Loading metrics...' : 'Select a channel first...'"></option>
+                                                    </select>
                                                 </template>
                                             </div>
 
@@ -1060,17 +1064,13 @@
                             // Pre-load assets and metrics for channels used in raw series
                             this.widgetControlsForm.raw_series.forEach((series, idx) => {
                                 const ch = series.channel;
-                                const originalMetric = series.metric;
                                 if (ch && !this.allChannelAssets[ch]) {
                                     @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                                 }
                                 if (ch && !this.allChannelMetrics[ch]) {
                                     @this.getMetricsForChannel(ch).then(metrics => { 
                                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                        setTimeout(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; }, 100);
                                     });
-                                } else if (ch) {
-                                    setTimeout(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; }, 100);
                                 }
                             });
                         }
