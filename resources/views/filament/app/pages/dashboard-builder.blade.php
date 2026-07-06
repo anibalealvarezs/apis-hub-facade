@@ -908,7 +908,7 @@
                                 }
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
-                                this.allChannelMetrics[ch] = metrics;
+                                this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 if (ch === this.dashboardControls.channel) {
                                     this.dashboardMetrics = metrics;
                                 }
@@ -1136,7 +1136,7 @@
                                 this.widgetAssets = assets;
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
-                                this.allChannelMetrics[ch] = metrics;
+                                this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 this.widgetMetrics = metrics;
                                 this.restoreWidgetMetrics(savedMetrics);
                             });
@@ -1165,7 +1165,7 @@
                                 this.widgetAssets = assets;
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
-                                this.allChannelMetrics[ch] = metrics;
+                                this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 this.widgetMetrics = metrics;
                             });
                         } else {
