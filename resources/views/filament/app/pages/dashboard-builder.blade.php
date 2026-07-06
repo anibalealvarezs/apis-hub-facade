@@ -427,8 +427,8 @@
                                 <select x-model="addWidgetForm.custom_kpi_id"
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                                     <option value="">{{ __('Choose a KPI...') }}</option>
-                                    <template x-for="(name, id) in kpis" :key="id">
-                                        <option :value="id" x-text="name"></option>
+                                    <template x-for="(kpi, id) in kpis" :key="id">
+                                        <option :value="id" x-text="kpi.name"></option>
                                     </template>
                                 </select>
                             </div>
@@ -638,7 +638,34 @@
                     // ─── Computed ──
                     get availableWidgetTypes() {
                         if (!this.addWidgetForm.source_type) return {};
-                        return @json($this->getAvailableWidgetTypes());
+                        
+                        const allTypes = @json(\App\Services\WidgetTypeRegistry::getWidgetLabels());
+                        let filtered = {};
+                        
+                        if (this.addWidgetForm.source_type === 'metric') {
+                            const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
+                            return filtered;
+                        }
+                        
+                        if (this.addWidgetForm.source_type === 'kpi') {
+                            const kpiId = this.addWidgetForm.custom_kpi_id;
+                            if (!kpiId) return {}; // Wait for KPI selection
+                            
+                            const kpiData = this.kpis[kpiId];
+                            const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
+                            
+                            if (allowed.length === 0) return allTypes;
+                            
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
+                            return filtered;
+                        }
+                        
+                        return allTypes;
                     },
 
                     // ─── UI Helpers ───

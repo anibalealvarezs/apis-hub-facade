@@ -164,10 +164,35 @@ class DashboardBuilder extends Page
     public function getKpisForWidgetPicker(): array
     {
         $project = \Filament\Facades\Filament::getTenant();
-        return CustomKpi::where('project_id', $project->id)
+        $kpis = CustomKpi::where('project_id', $project->id)
             ->where('is_active', true)
-            ->pluck('name', 'id')
-            ->toArray();
+            ->get();
+            
+        $predefined = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+        
+        $result = [];
+        foreach ($kpis as $kpi) {
+            $templateKey = $kpi->filters['_ui_state']['template_key'] ?? null;
+            $compatible = [];
+            
+            if ($templateKey && isset($predefined[$templateKey]['compatible_widgets'])) {
+                $compatible = $predefined[$templateKey]['compatible_widgets'];
+            } else {
+                foreach ($predefined as $def) {
+                    if (($def['calculation_type'] ?? '') === $kpi->calculation_type) {
+                        $compatible = $def['compatible_widgets'] ?? [];
+                        break;
+                    }
+                }
+            }
+            
+            $result[$kpi->id] = [
+                'name' => $kpi->name,
+                'compatible_widgets' => $compatible
+            ];
+        }
+        
+        return $result;
     }
 
     public function getKpiConfiguration(int $kpiId): array
