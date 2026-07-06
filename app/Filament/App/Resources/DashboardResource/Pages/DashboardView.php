@@ -138,7 +138,7 @@ class DashboardView extends Page
             $variables = [];
             $varIndex = 0;
 
-            if ($widget['source_type'] === 'kpi') {
+            if ($widgetArray['source_type'] === 'kpi') {
                 $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
                 $depMetrics = ! empty($depChannel)
                     ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel)
