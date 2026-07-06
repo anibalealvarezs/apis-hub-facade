@@ -359,7 +359,7 @@
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
                                                 <select x-model="series.channel" x-on:change="onWidgetRawChannelChange(index)"
-                                                        x-init="console.log('[DEBUG DOM] Channel select init for index', index, '- series.channel:', series.channel, '- series.metric:', series.metric)"
+                                                        x-init="$nextTick(() => { $el.value = series.channel })"
                                                         class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                     <option value="">Select a channel...</option>
                                                     <template x-for="(label, key) in channels" :key="key">
@@ -370,20 +370,16 @@
                                             
                                             <div class="my-2">
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                <template x-if="series.channel && allChannelMetrics[series.channel]">
-                                                    <select x-model="series.metric"
-                                                            x-init="console.log('[DEBUG DOM] Metric select init for index', index, '- series.metric:', series.metric, '- options:', Object.keys(allChannelMetrics[series.channel] || {}))"
-                                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                        <option value="">Select a metric...</option>
-                                                        <template x-for="(label, key) in allChannelMetrics[series.channel]" :key="key">
-                                                            <option :value="key" x-text="label"></option>
-                                                        </template>
-                                                    </select>
-                                                </template>
-                                                <template x-if="!series.channel || !allChannelMetrics[series.channel]">
-                                                    <select disabled class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 py-2.5 px-4 opacity-75">
-                                                        <option value="" x-text="series.channel ? 'Loading metrics...' : 'Select a channel first...'"></option>
-                                                    </select>
+                                                <select x-model="series.metric"
+                                                        x-init="$nextTick(() => { $el.value = series.metric })"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <option value="">Select a metric...</option>
+                                                    <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
+                                                        <option :value="key" x-text="label"></option>
+                                                    </template>
+                                                </select>
+                                                <template x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
+                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first.</p>
                                                 </template>
                                             </div>
 
@@ -1123,7 +1119,6 @@
                             this.loadWidgetMetrics(savedMetrics);
                         }
 
-                        console.log('[DEBUG] showModal | raw_series:', JSON.stringify(this.widgetControlsForm.raw_series), '| metricsKeys:', Object.keys(this.allChannelMetrics));
                         this.showWidgetControls = true;
                     },
 
