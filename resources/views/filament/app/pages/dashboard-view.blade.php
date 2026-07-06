@@ -180,7 +180,7 @@
                                         {{-- Metric selector --}}
                                         <div class="space-y-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>
-                                            <select x-model="settingsControls.metrics[vConfig.index]"
+                                            <select x-model="(settingsControls.metrics || [])[vConfig.index]"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
@@ -216,14 +216,14 @@
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                             :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                             :class="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                 :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                <svg x-show="(settingsControls.series_assets[vKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                 :class="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                <svg x-show="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                                 </svg>
                                                             </div>
-                                                            <span class="truncate font-medium" :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
+                                                            <span class="truncate font-medium" :class="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -350,9 +350,11 @@
 
                     openWidgetSettings(widgetId, controls, seriesOptions, variables, granularityOnTheGo) {
                         this.settingsWidgetId = widgetId;
-                        this.settingsControls = controls;
-                        this.settingsSeriesOptions = seriesOptions;
-                        this.settingsVariables = variables;
+                        this.settingsControls = controls || {};
+                        if (!this.settingsControls.metrics) this.settingsControls.metrics = [];
+                        if (!this.settingsControls.series_assets) this.settingsControls.series_assets = {};
+                        this.settingsSeriesOptions = seriesOptions || {};
+                        this.settingsVariables = variables || {};
                         this.settingsGranularityOnTheGo = granularityOnTheGo;
                         this.settingsSearchQueries = {};
                         for (const key in seriesOptions) {
@@ -367,7 +369,9 @@
                     closeSettings() {
                         this.openSettings = false;
                         this.settingsWidgetId = null;
-                        this.settingsControls = null;
+                        this.settingsControls = { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} };
+                        this.settingsVariables = {};
+                        this.settingsSeriesOptions = {};
                     },
 
                     saveSettings() {
