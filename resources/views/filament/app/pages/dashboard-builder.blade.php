@@ -359,6 +359,7 @@
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
                                                 <select x-model="series.channel" x-on:change="onWidgetRawChannelChange(index)"
+                                                        x-init="console.log('[DEBUG DOM] Channel select init for index', index, '- series.channel:', series.channel, '- series.metric:', series.metric)"
                                                         class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                     <option value="">Select a channel...</option>
                                                     <template x-for="(label, key) in channels" :key="key">
@@ -371,6 +372,7 @@
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                                 <template x-if="series.channel && allChannelMetrics[series.channel]">
                                                     <select x-model="series.metric"
+                                                            x-init="console.log('[DEBUG DOM] Metric select init for index', index, '- series.metric:', series.metric, '- options:', Object.keys(allChannelMetrics[series.channel] || {}))"
                                                             class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                         <option value="">Select a metric...</option>
                                                         <template x-for="(label, key) in allChannelMetrics[series.channel]" :key="key">
@@ -900,19 +902,15 @@
 
                     initAllAssets() {
                         const channelKeys = Object.keys(this.channels);
-                        console.log('[DEBUG initAllAssets] Starting for channels:', channelKeys);
                         channelKeys.forEach(ch => {
                             @this.getAssetsForChannel(ch).then(assets => {
-                                console.log('[DEBUG initAllAssets] Assets loaded for', ch, ':', Object.keys(assets).length, 'assets');
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 if (ch === this.dashboardControls.channel) {
                                     this.dashboardAssets = assets;
                                 }
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
-                                console.log('[DEBUG initAllAssets] Metrics loaded for', ch, ':', Object.keys(metrics).length, 'metrics. Keys:', Object.keys(this.allChannelMetrics));
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                console.log('[DEBUG initAllAssets] allChannelMetrics keys after update:', Object.keys(this.allChannelMetrics));
                                 if (ch === this.dashboardControls.channel) {
                                     this.dashboardMetrics = metrics;
                                 }
@@ -1032,24 +1030,8 @@
 
                     // ─── Widget Controls ──
                     openWidgetControls(widget) {
-                        console.log('[DEBUG openWidgetControls] === OPENING WIDGET EDITOR ===');
-                        console.log('[DEBUG openWidgetControls] widget.id:', widget.id, 'source_type:', widget.source_type);
-                        console.log('[DEBUG openWidgetControls] widget.controls:', JSON.stringify(widget.controls));
-                        console.log('[DEBUG openWidgetControls] allChannelMetrics keys at entry:', Object.keys(this.allChannelMetrics));
-                        console.log('[DEBUG openWidgetControls] allChannelAssets keys at entry:', Object.keys(this.allChannelAssets));
-
                         this.widgetControlsTarget = widget;
                         const wc = widget.controls || {};
-
-                        console.log('[DEBUG openWidgetControls] wc.metrics:', wc.metrics);
-                        console.log('[DEBUG openWidgetControls] wc.series_channels:', JSON.stringify(wc.series_channels));
-                        console.log('[DEBUG openWidgetControls] wc.series_channels type:', typeof wc.series_channels);
-                        if (wc.series_channels) {
-                            console.log('[DEBUG openWidgetControls] series_channels keys:', Object.keys(wc.series_channels));
-                            console.log('[DEBUG openWidgetControls] series_channels[0]:', wc.series_channels[0], 'type:', typeof wc.series_channels[0]);
-                            console.log('[DEBUG openWidgetControls] series_channels["0"]:', wc.series_channels['0'], 'type:', typeof wc.series_channels['0']);
-                        }
-                        console.log('[DEBUG openWidgetControls] wc.channel:', wc.channel);
 
                         const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
                         const hasZero = wc.zero_handling !== undefined;
@@ -1070,10 +1052,8 @@
                         if (widget.source_type !== 'kpi') {
                             if (wc.metrics && wc.metrics.length > 0) {
                                 wc.metrics.forEach((m, i) => {
-                                    const resolvedChannel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
-                                    console.log('[DEBUG openWidgetControls] Building raw_series[' + i + ']: channel=' + resolvedChannel + ', metric=' + m, ', series_channels[' + i + ']=' + (wc.series_channels ? wc.series_channels[i] : 'N/A'));
                                     this.widgetControlsForm.raw_series.push({
-                                        channel: resolvedChannel,
+                                        channel: (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || ''),
                                         metric: m,
                                         assets: (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : [])
                                     });
@@ -1083,24 +1063,16 @@
                                 this.widgetControlsForm.raw_series.push({ channel: '', metric: '', assets: [] });
                             }
                             
-                            console.log('[DEBUG openWidgetControls] Final raw_series:', JSON.stringify(this.widgetControlsForm.raw_series));
-                            
                             // Pre-load assets and metrics for channels used in raw series
                             this.widgetControlsForm.raw_series.forEach((series, idx) => {
                                 const ch = series.channel;
-                                console.log('[DEBUG openWidgetControls] Pre-load check series[' + idx + ']: ch=' + ch + ', hasAssets=' + !!this.allChannelAssets[ch] + ', hasMetrics=' + !!this.allChannelMetrics[ch]);
                                 if (ch && !this.allChannelAssets[ch]) {
-                                    console.log('[DEBUG openWidgetControls] Fetching assets for', ch);
                                     @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                                 }
                                 if (ch && !this.allChannelMetrics[ch]) {
-                                    console.log('[DEBUG openWidgetControls] Fetching metrics for', ch);
                                     @this.getMetricsForChannel(ch).then(metrics => { 
                                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                        console.log('[DEBUG openWidgetControls] Metrics loaded for', ch, '- series.metric is now:', this.widgetControlsForm.raw_series[idx].metric);
                                     });
-                                } else if (ch) {
-                                    console.log('[DEBUG openWidgetControls] Metrics already cached for', ch, ':', Object.keys(this.allChannelMetrics[ch]).slice(0, 5), '...');
                                 }
                             });
                         }
@@ -1151,7 +1123,7 @@
                             this.loadWidgetMetrics(savedMetrics);
                         }
 
-                        console.log('[DEBUG openWidgetControls] About to show modal. raw_series:', JSON.stringify(this.widgetControlsForm.raw_series));
+                        console.log('[DEBUG] showModal | raw_series:', JSON.stringify(this.widgetControlsForm.raw_series), '| metricsKeys:', Object.keys(this.allChannelMetrics));
                         this.showWidgetControls = true;
                     },
 
