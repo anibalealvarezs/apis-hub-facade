@@ -26,7 +26,14 @@ class KpiFormBuilder
         $active = [];
         foreach ($tenant->sync_config as $channel => $data) {
             if (in_array($channel, $validChannels)) {
-                $active[$channel] = \Illuminate\Support\Str::headline($channel);
+                if (!empty(static::getAssetOptionsForChannel($channel))) {
+                    $name = ucwords(str_replace('_', ' ', $channel));
+                    if ($channel === 'facebook_marketing') $name = 'FB Marketing';
+                    if ($channel === 'facebook_organic') $name = 'FB Organic';
+                    if ($channel === 'google_search_console') $name = 'Google Search Console';
+                    if ($channel === 'google_analytics') $name = 'Google Analytics';
+                    $active[$channel] = $name;
+                }
             }
         }
         return $active;
@@ -35,6 +42,7 @@ class KpiFormBuilder
     public static function getCategoryOptions(): array
     {
         return [
+            'Specific Channels' => static::getChannelCategories(),
             'Channel' => [
                 'cross-channel' => __('Cross-Channel'),
                 'organic' => __('Organic'),
@@ -70,15 +78,41 @@ class KpiFormBuilder
         ];
     }
 
+    private static function getChannelCategories(): array
+    {
+        $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+        $cats = [];
+        foreach (array_keys($channels) as $channel) {
+            $name = ucwords(str_replace('_', ' ', $channel));
+            if ($channel === 'facebook_marketing') $name = 'FB Marketing';
+            if ($channel === 'facebook_organic') $name = 'FB Organic';
+            if ($channel === 'google_search_console') $name = 'Google Search Console';
+            if ($channel === 'google_analytics') $name = 'Google Analytics';
+            $cats['ch_' . $channel] = $name;
+        }
+        return $cats;
+    }
+
     public static function getTemplateOptions(array $categoryFilter = []): array
     {
         $activeChannels = array_keys(self::getActiveChannels());
         $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
+        $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
 
         $options = [];
         foreach ($kpis as $key => $kpi) {
+            $kpiCats = $kpi['categories'] ?? [];
+            $requiredTags = $kpi['required_tags'] ?? [];
+            
+            // Inyectar dinámicamente las categorías de canales
+            foreach ($channelTags as $channel => $tags) {
+                if (count(array_intersect($requiredTags, $tags)) > 0) {
+                    $kpiCats[] = 'ch_' . $channel;
+                }
+            }
+            $kpiCats = array_unique($kpiCats);
+
             if (!empty($categoryFilter)) {
-                $kpiCats = $kpi['categories'] ?? [];
                 $intersection = array_intersect($categoryFilter, $kpiCats);
                 if (count($intersection) !== count($categoryFilter)) {
                     continue;
