@@ -382,10 +382,27 @@
                                             </div>
 
                                             <div class="flex-1 flex flex-col min-h-0 mt-2">
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
+                                                    <template x-if="series.channel">
+                                                        <div class="flex gap-3">
+                                                            <button @click="selectAllRawAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                            <button @click="clearAllRawAssets(index)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <div class="relative mb-1">
+                                                    <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                                        </svg>
+                                                    </div>
+                                                    <input type="text" x-model="searchQueries['raw_' + index]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                </div>
                                                 <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
                                                     <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
-                                                        <div @click="toggleRawAsset(index, id)"
+                                                        <div x-show="(searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase())"
+                                                             @click="toggleRawAsset(index, id)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                              :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
@@ -437,16 +454,35 @@
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
-                                                <div class="flex items-center justify-between">
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
+                                                    <div class="flex gap-3">
+                                                        <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                        <button @click="clearAllKpiAssets('dependent')" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
+                                                    </div>
+                                                </div>
+                                                <div class="relative mb-1">
+                                                    <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                                        </svg>
+                                                    </div>
+                                                    <input type="text" x-model="searchQueries['dependent']" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
                                                 <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
-                                                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
-                                                            <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets.dependent"
-                                                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                            <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                                        </label>
+                                                        <div x-show="(searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase())"
+                                                             @click="toggleKpiAsset('dependent', id)"
+                                                             class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                             :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                            <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                 :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                <svg x-show="(widgetControlsForm.series_assets.dependent || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                </svg>
+                                                            </div>
+                                                            <span class="truncate font-medium" :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="name"></span>
+                                                        </div>
                                                     </template>
                                                     <template x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
                                                         <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
@@ -475,16 +511,35 @@
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                                 <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
-                                                    <div class="flex items-center justify-between">
-                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
+                                                        <div class="flex gap-3">
+                                                            <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                            <button @click="clearAllKpiAssets('independent_' + idx)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="relative mb-1">
+                                                        <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                                            </svg>
+                                                        </div>
+                                                        <input type="text" x-model="searchQueries['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                     </div>
                                                     <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
-                                                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
-                                                                <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets['independent_' + idx]"
-                                                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                                <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                                            </label>
+                                                            <div x-show="(searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase())"
+                                                                 @click="toggleKpiAsset('independent_' + idx, id)"
+                                                                 class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                 :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                     :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                    <svg x-show="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <span class="truncate font-medium" :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="name"></span>
+                                                            </div>
                                                         </template>
                                                         <template x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
                                                             <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
@@ -744,6 +799,7 @@
                     widgetKpiConfig: {},
                     widgetAssets: {},
                     widgetMetrics: {},
+                    searchQueries: {},
 
                     // ─── Share ──
                     showShareDialog: false,
@@ -1134,6 +1190,35 @@
                         } else {
                             this.widgetControlsForm.raw_series[index].assets.push(strId);
                         }
+                    },
+
+                    selectAllRawAssets(index) {
+                        const ch = this.widgetControlsForm.raw_series[index].channel;
+                        const assets = this.allChannelAssets[ch] || {};
+                        this.widgetControlsForm.raw_series[index].assets = Object.keys(assets).map(String);
+                    },
+
+                    clearAllRawAssets(index) {
+                        this.widgetControlsForm.raw_series[index].assets = [];
+                    },
+
+                    toggleKpiAsset(seriesKey, id) {
+                        let current = this.widgetControlsForm.series_assets[seriesKey] || [];
+                        let strId = String(id);
+                        if (current.includes(strId)) {
+                            this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
+                        } else {
+                            this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
+                        }
+                    },
+
+                    selectAllKpiAssets(seriesKey, channel) {
+                        const assets = this.allChannelAssets[channel] || {};
+                        this.widgetControlsForm.series_assets[seriesKey] = Object.keys(assets).map(String);
+                    },
+
+                    clearAllKpiAssets(seriesKey) {
+                        this.widgetControlsForm.series_assets[seriesKey] = [];
                     },
 
                     resetWidgetControls() {
