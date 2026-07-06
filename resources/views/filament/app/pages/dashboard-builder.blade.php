@@ -171,11 +171,12 @@
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                             <input type="date" x-model="dashboardControls.date_start"
+                                   :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
-                            <input type="date" x-model="dashboardControls.date_end" max="{{ date('Y-m-d') }}"
+                            <input type="date" x-model="dashboardControls.date_end" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                         </div>
                     </div>
@@ -261,11 +262,12 @@
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                                 <input type="date" x-model="widgetControlsForm.date_start"
+                                       :max="widgetControlsForm.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
-                                <input type="date" x-model="widgetControlsForm.date_end" max="{{ date('Y-m-d') }}"
+                                <input type="date" x-model="widgetControlsForm.date_end" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                         </div>

@@ -25,12 +25,12 @@
             <input type="date" x-model="dashboardOverrides.date_start"
                    x-on:change.debounce.500ms="applyDateRange()"
                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
-                   :max="dashboardOverrides.date_end || '{{ date('Y-m-d') }}'">
+                   :max="dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'">
             <span class="text-gray-400">→</span>
             <input type="date" x-model="dashboardOverrides.date_end"
                    x-on:change.debounce.500ms="applyDateRange()"
                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
-                   :min="dashboardOverrides.date_start || ''" max="{{ date('Y-m-d') }}">
+                   :min="dashboardOverrides.date_start || ''" max="{{ date('Y-m-d', strtotime('-1 day')) }}">
             <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
                 <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
@@ -138,9 +138,11 @@
                                 </div>
                                 <div class="p-6 flex flex-row items-center gap-3">
                                     <input type="date" x-model="settingsControls.date_start"
+                                           :max="settingsControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                     <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
                                     <input type="date" x-model="settingsControls.date_end"
+                                           :min="settingsControls.date_start || ''" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                 </div>
                             </div>
@@ -269,7 +271,7 @@
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
                     dashboardOverrides: {
                         date_start: '{{ $dc['date_start'] ?? '' }}',
-                        date_end: '{{ $dc['date_end'] ?? '' }}',
+                        date_end: '{{ $dc['date_end'] ?? date('Y-m-d', strtotime('-1 day')) }}',
                         zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
                     },
                     init() {

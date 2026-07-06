@@ -132,7 +132,7 @@
                 </button>
                 <input type="date" x-model.lazy="dateStart"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
-                <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d') }}"
+                <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
                 <button type="button" @click="fetchData()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 text-white text-sm font-medium rounded-lg px-6 py-2.5 transition shadow-sm"
