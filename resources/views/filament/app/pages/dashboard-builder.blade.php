@@ -390,12 +390,12 @@
         {{-- ============================================================ --}}
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showAddWidgetModal = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
+            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2 pb-2">
-                    {{-- Column 1 --}}
-                    <div class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 overflow-y-auto pr-2 pb-2">
+                    {{-- Column 1 (Settings) --}}
+                    <div class="space-y-6 lg:col-span-5">
                         {{-- Name --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
@@ -435,24 +435,24 @@
                         </template>
                     </div>
 
-                    {{-- Column 2 --}}
-                    <div class="space-y-6">
+                    {{-- Column 2 (Widget Types) --}}
+                    <div class="space-y-6 lg:col-span-7">
                         {{-- Widget Type --}}
                         <template x-if="addWidgetForm.source_type">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Type</label>
-                                <div class="grid grid-cols-1 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <template x-for="(label, type) in availableWidgetTypes" :key="type">
-                                        <button class="p-3 rounded-xl border text-left transition-colors flex items-center gap-4"
+                                        <button class="p-3 rounded-xl border text-left transition-colors flex items-center gap-3"
                                                 :class="addWidgetForm.widget_type === type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm'"
                                                 x-on:click="addWidgetForm.widget_type = type">
-                                            <div class="w-14 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center" x-html="getWidgetSvg(type)">
+                                            <div class="w-12 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center" x-html="getWidgetSvg(type)">
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <span class="block text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="label"></span>
-                                                <span class="block text-xs text-gray-500 dark:text-gray-400 leading-tight mt-0.5" x-text="getWidgetDescription(type)"></span>
+                                                <span class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;" x-text="getWidgetDescription(type)"></span>
                                             </div>
                                         </button>
                                     </template>
