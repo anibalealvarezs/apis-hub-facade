@@ -239,10 +239,17 @@ class KpiFormBuilder
                                 ->searchable()
                                 ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
                                 ->live()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
                                     if (!$state) return;
                                     $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$state] ?? null;
                                     if (!$kpi) return;
+
+                                    if (empty($get('name'))) {
+                                        $set('name', $kpi['name'] ?? '');
+                                    }
+                                    if (empty($get('description'))) {
+                                        $set('description', $kpi['description'] ?? '');
+                                    }
 
                                     $set('calculation_type', $kpi['calculation_type']);
 
