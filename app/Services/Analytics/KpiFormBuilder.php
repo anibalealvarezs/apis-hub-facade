@@ -359,7 +359,8 @@ class KpiFormBuilder
                                     'daily' => 'Daily',
                                     'weekly' => 'Weekly',
                                     'monthly' => 'Monthly'
-                                ]),
+                                ])
+                                ->default('daily'),
                             Select::make('zero_handling')
                                 ->label('Zero Handling')
                                 ->options([

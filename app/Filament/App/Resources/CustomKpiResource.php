@@ -110,7 +110,8 @@
                                     'daily' => 'Daily',
                                     'weekly' => 'Weekly',
                                     'monthly' => 'Monthly',
-                                ]);
+                                ])
+                                ->default('daily');
                         }
 
                         if (empty($uiState['dependent_channel'])) {
