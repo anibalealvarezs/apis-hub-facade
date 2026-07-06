@@ -120,7 +120,7 @@
 
                         {{-- Card: Date Range --}}
                         <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-                            <div class="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80">
+                            <div class="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                 </svg>
@@ -128,10 +128,10 @@
                             </div>
                             <div class="p-5 flex flex-col sm:flex-row items-center gap-4">
                                 <input type="date" x-model="settingsControls.date_start"
-                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                 <span class="text-gray-400 dark:text-gray-500 text-sm hidden sm:block">→</span>
                                 <input type="date" x-model="settingsControls.date_end"
-                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                             </div>
                         </div>
 
@@ -139,7 +139,7 @@
                         <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                             <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col">
-                                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80">
+                                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                         <div class="flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
@@ -155,7 +155,7 @@
                                         <div class="space-y-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>
                                             <select x-model="settingsControls.metrics[vConfig.index]"
-                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
                                                     <option :value="key" x-text="label"></option>
@@ -168,10 +168,12 @@
                                             <div class="space-y-3 flex-1 flex flex-col">
                                                 <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets</label>
-                                                    <div class="flex gap-3">
-                                                        <button @click="settingsSelectAll(vKey)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
-                                                        <button @click="settingsClearAll(vKey)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
-                                                    </div>
+                                                    <template x-if="(settingsSeriesOptions[vKey].mode || 'multiple') === 'multiple'">
+                                                        <div class="flex gap-3">
+                                                            <button @click="settingsSelectAll(vKey)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                            <button @click="settingsClearAll(vKey)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
+                                                        </div>
+                                                    </template>
                                                 </div>
                                                 <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
@@ -179,14 +181,14 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="settingsSearchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5">
+                                                    <input type="text" x-model="settingsSearchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5">
                                                 </div>
                                                 <div class="flex flex-col gap-1 max-h-52 overflow-y-auto pr-1">
                                                     <template x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey].options)" :key="assetId">
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
-                                                             class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                             :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'">
+                                                             class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                             :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
                                                                  :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                 <svg x-show="settingsIsSelected(vKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -207,7 +209,7 @@
                         {{-- Card: Granularity --}}
                         <template x-if="settingsGranularityOnTheGo">
                             <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-                                <div class="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80">
+                                <div class="flex items-center gap-2 px-5 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
@@ -215,7 +217,7 @@
                                 </div>
                                 <div class="p-5">
                                     <select x-model="settingsControls.granularity"
-                                            class="w-full md:w-1/2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                            class="w-full md:w-1/2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                         <option value="daily">Daily</option>
                                         <option value="weekly">Weekly</option>
                                         <option value="monthly">Monthly</option>
@@ -377,24 +379,40 @@
                     },
 
                     settingsToggleAsset(seriesKey, assetId) {
+                        const mode = this.settingsSeriesOptions[seriesKey].mode || 'multiple';
                         const current = this.settingsControls.series_assets[seriesKey] || [];
-                        const idx = current.indexOf(String(assetId));
                         let next;
-                        if (idx > -1) {
-                            next = current.filter((_, i) => i !== idx);
+                        
+                        if (mode === 'single') {
+                            next = [String(assetId)];
                         } else {
-                            next = [...current, String(assetId)];
+                            const idx = current.indexOf(String(assetId));
+                            if (idx > -1) {
+                                next = current.filter((_, i) => i !== idx);
+                            } else {
+                                next = [...current, String(assetId)];
+                            }
                         }
-                        this.settingsControls.series_assets[seriesKey] = next;
+                        
+                        this.settingsControls.series_assets = {
+                            ...this.settingsControls.series_assets,
+                            [seriesKey]: next
+                        };
                     },
 
                     settingsSelectAll(seriesKey) {
                         const allIds = Object.keys(this.settingsSeriesOptions[seriesKey].options).map(String);
-                        this.settingsControls.series_assets[seriesKey] = allIds;
+                        this.settingsControls.series_assets = {
+                            ...this.settingsControls.series_assets,
+                            [seriesKey]: allIds
+                        };
                     },
 
                     settingsClearAll(seriesKey) {
-                        this.settingsControls.series_assets[seriesKey] = [];
+                        this.settingsControls.series_assets = {
+                            ...this.settingsControls.series_assets,
+                            [seriesKey]: []
+                        };
                     }
                 };
             };

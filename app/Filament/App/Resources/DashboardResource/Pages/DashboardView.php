@@ -37,10 +37,20 @@ class DashboardView extends Page
             $widgetArray['series_assets_options'] = [];
             
             $uiState = [];
+            $kpiAssetMode = 'multiple';
             if ($widgetModel->source_type === 'kpi' && !empty($widgetModel->source_config['custom_kpi_id'])) {
                 $kpi = \App\Models\CustomKpi::find($widgetModel->source_config['custom_kpi_id']);
                 if ($kpi) {
                     $uiState = $kpi->filters['_ui_state'] ?? [];
+                    $templateKey = $uiState['template_key'] ?? null;
+                    if ($templateKey) {
+                        $predefined = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+                        if (isset($predefined[$templateKey]['asset_selection_mode'])) {
+                            $kpiAssetMode = $predefined[$templateKey]['asset_selection_mode'];
+                        } elseif (isset($predefined[$templateKey]['scope']) && $predefined[$templateKey]['scope'] === 'asset') {
+                            $kpiAssetMode = 'single';
+                        }
+                    }
                 }
             }
 
@@ -75,6 +85,7 @@ class DashboardView extends Page
                     $widgetArray['series_assets_options'][$key] = [
                         'label' => $label ?? \Illuminate\Support\Str::headline($channel),
                         'options' => $assets,
+                        'mode' => $kpiAssetMode,
                     ];
                 }
             };
