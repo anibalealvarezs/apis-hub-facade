@@ -1058,13 +1058,19 @@
                             }
                             
                             // Pre-load assets and metrics for channels used in raw series
-                            this.widgetControlsForm.raw_series.forEach(series => {
+                            this.widgetControlsForm.raw_series.forEach((series, idx) => {
                                 const ch = series.channel;
+                                const originalMetric = series.metric;
                                 if (ch && !this.allChannelAssets[ch]) {
                                     @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                                 }
                                 if (ch && !this.allChannelMetrics[ch]) {
-                                    @this.getMetricsForChannel(ch).then(metrics => { this.allChannelMetrics[ch] = metrics; });
+                                    @this.getMetricsForChannel(ch).then(metrics => { 
+                                        this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                        this.$nextTick(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; });
+                                    });
+                                } else if (ch) {
+                                    this.$nextTick(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; });
                                 }
                             });
                         }
@@ -1177,7 +1183,7 @@
                         }
                         if (ch && !this.allChannelMetrics[ch]) {
                             @this.getMetricsForChannel(ch).then(metrics => {
-                                this.allChannelMetrics[ch] = metrics;
+                                this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                             });
                         }
                     },
@@ -1274,11 +1280,14 @@
                             payload.metrics = [];
                             payload.series_assets = {};
                             payload.series_channels = {};
-                            c.raw_series.forEach((s, i) => {
+                            
+                            let validIdx = 0;
+                            c.raw_series.forEach((s) => {
                                 if (s.metric) {
                                     payload.metrics.push(s.metric);
-                                    payload.series_assets[i] = [...(s.assets || [])];
-                                    payload.series_channels[i] = s.channel || '';
+                                    payload.series_assets[validIdx] = [...(s.assets || [])];
+                                    payload.series_channels[validIdx] = s.channel || '';
+                                    validIdx++;
                                 }
                             });
                             if (payload.series_channels['0']) {
