@@ -173,6 +173,76 @@ class DashboardWidgetDataController extends Controller
                         'label' => 'Anomaly Rate',
                     ];
                 }
+            } elseif ($effectiveWidgetType === 'combo_chart' && isset($data['series']['macd_line'])) {
+                $series = $data['series'];
+                $data = [
+                    'labels' => $series['dates'] ?? [],
+                    'datasets' => [
+                        [
+                            'type' => 'line',
+                            'label' => 'MACD Line',
+                            'data' => $series['macd_line'],
+                            'borderColor' => '#3b82f6',
+                            'borderWidth' => 2,
+                            'fill' => false,
+                            'pointRadius' => 0
+                        ],
+                        [
+                            'type' => 'line',
+                            'label' => 'Signal Line',
+                            'data' => $series['signal_line'],
+                            'borderColor' => '#f59e0b',
+                            'borderWidth' => 2,
+                            'fill' => false,
+                            'pointRadius' => 0
+                        ],
+                        [
+                            'type' => 'bar',
+                            'label' => 'Histogram',
+                            'data' => $series['histogram'],
+                            'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)', $series['histogram'] ?? [])
+                        ]
+                    ]
+                ];
+            } elseif ($effectiveWidgetType === 'scatter_plot' && isset($data['scatter_data'])) {
+                $scatter = $data['scatter_data'];
+                $points = [];
+                foreach ($scatter['x'] as $i => $x) {
+                    $points[] = ['x' => $x, 'y' => $scatter['y'][$i]];
+                }
+                
+                // Generar linea de tendencia ideal (y = mx + b)
+                $b = $data['baseline_intercept'];
+                $m = array_values($data['coefficients'])[0] ?? 0;
+                
+                $minX = min($scatter['x']);
+                $maxX = max($scatter['x']);
+                
+                $data = [
+                    'labels' => [],
+                    'datasets' => [
+                        [
+                            'type' => 'scatter',
+                            'label' => 'Data Points',
+                            'data' => $points,
+                            'backgroundColor' => 'rgba(59, 130, 246, 0.6)',
+                            'pointRadius' => 4
+                        ],
+                        [
+                            'type' => 'line',
+                            'label' => 'Trend Line',
+                            'data' => [
+                                ['x' => $minX, 'y' => $m * $minX + $b],
+                                ['x' => $maxX, 'y' => $m * $maxX + $b]
+                            ],
+                            'borderColor' => '#ef4444',
+                            'borderWidth' => 2,
+                            'fill' => false,
+                            'pointRadius' => 0
+                        ]
+                    ],
+                    'x_label' => $scatter['x_label'] ?? 'Independent Variable'
+                ];
             }
 
             return response()->json([

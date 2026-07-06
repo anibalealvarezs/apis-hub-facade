@@ -69,6 +69,8 @@ window.dashboardRenderer = {
             case 'sparkline':  this.renderSparkline(containerEl, data); break;
             case 'anomaly_list':  this.renderAnomalyList(containerEl, data); break;
             case 'anomaly_chart': this.renderAnomalyChart(containerEl, data); break;
+            case 'scatter_plot': this.renderScatterPlot(containerEl, data); break;
+            case 'combo_chart': this.renderComboChart(containerEl, data); break;
             default:
                 containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
         }
@@ -483,6 +485,58 @@ window.dashboardRenderer = {
                 },
             },
             plugins: [anomalyPlugin],
+        });
+    },
+
+    // ─── Scatter Plot ───
+
+    renderScatterPlot(containerEl, data) {
+        if (!data || !data.datasets || !data.datasets.length) {
+            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            return;
+        }
+
+        this.renderChart(containerEl, {
+            type: 'scatter',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: { display: !!data.x_label, text: data.x_label }
+                    }
+                },
+                plugins: {
+                    legend: { display: true, position: 'bottom' }
+                }
+            }
+        });
+    },
+
+    // ─── Combo Chart (MACD) ───
+
+    renderComboChart(containerEl, data) {
+        if (!data || !data.datasets || !data.datasets.length) {
+            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            return;
+        }
+
+        this.renderChart(containerEl, {
+            type: 'bar', // Base type, datasets override this
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: true, position: 'bottom' }
+                }
+            }
         });
     },
 
