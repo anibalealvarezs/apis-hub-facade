@@ -212,7 +212,7 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls" style="display: none; z-index: 999999;" class="fixed inset-0 flex items-start justify-center pt-10 sm:pt-16" x-trap.noscroll="showWidgetControls" x-cloak>
             <div @click="showWidgetControls = false" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10" style="width: 95vw; max-width: 1400px; max-height: 90vh;" @click.away="showWidgetControls = false">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10" style="width: 95vw; max-width: 1400px; height: 90vh;" @click.away="showWidgetControls = false">
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
                     <div class="flex flex-col gap-1">
                         <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h3>

@@ -106,7 +106,7 @@
                 <div @click="closeSettings()" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
                 <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
-                     style="width: 95vw; max-width: 1400px; max-height: 90vh;"
+                     style="width: 95vw; max-width: 1400px; height: 90vh;"
                      @click.away="closeSettings()">
                     <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
                         <h3 class="text-base font-bold text-gray-900 dark:text-white">Widget Settings</h3>
