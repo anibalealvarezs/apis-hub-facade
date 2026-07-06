@@ -185,7 +185,7 @@
                                     </div>
                                     <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
-                                        <div class="space-y-2">
+                                        <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>
                                             <select x-model="(settingsControls.metrics || [])[vConfig.index]"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
@@ -195,12 +195,10 @@
                                                 </template>
                                             </select>
                                         </div>
-                                        
-                                        <hr class="border-gray-200 dark:border-gray-700">
 
                                         {{-- Asset filter --}}
                                         <template x-if="settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options).length > 0">
-                                            <div class="gap-3 flex-1 flex flex-col min-h-0">
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
                                                 <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets</label>
                                                     <template x-if="(settingsSeriesOptions[vKey].mode || 'multiple') === 'multiple'">
