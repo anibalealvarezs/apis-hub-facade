@@ -89,7 +89,7 @@ class DashboardBuilder extends Page
     {
         return $this->dashboard->controls ?? [
             'date_start' => '',
-            'date_end' => '',
+            'date_end' => \Carbon\Carbon::now()->subDays(1)->format('Y-m-d'),
             'zero_handling' => 'remove',
             'channel' => '',
             'asset_mode' => 'single',

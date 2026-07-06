@@ -262,12 +262,15 @@
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                                 <input type="date" x-model="widgetControlsForm.date_start"
-                                       :max="widgetControlsForm.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                       :min="dashboardControls.date_start || ''"
+                                       :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                             <div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
-                                <input type="date" x-model="widgetControlsForm.date_end" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
+                                <input type="date" x-model="widgetControlsForm.date_end"
+                                       :min="widgetControlsForm.date_start || dashboardControls.date_start || ''"
+                                       :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
                             </div>
                         </div>
@@ -854,6 +857,40 @@
 
                     confirmDashboardControls() {
                         const c = this.dashboardControls;
+                        let adjustedWidgets = 0;
+                        let warningTriggered = false;
+                        
+                        // 4. Validate all contained widgets before saving
+                        this.widgets.forEach(w => {
+                            let wc = w.controls || {};
+                            let hasCustomDate = wc.date_start !== undefined || wc.date_end !== undefined;
+                            if (hasCustomDate) {
+                                let changed = false;
+                                
+                                if (wc.date_start && c.date_start && wc.date_start < c.date_start) {
+                                    wc.date_start = c.date_start;
+                                    changed = true;
+                                }
+                                
+                                let dashEnd = c.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}';
+                                if (wc.date_end && wc.date_end > dashEnd) {
+                                    wc.date_end = dashEnd;
+                                    changed = true;
+                                }
+                                
+                                if (changed) {
+                                    w.controls = wc;
+                                    @this.saveWidgetControls(w.id, wc);
+                                    adjustedWidgets++;
+                                    warningTriggered = true;
+                                }
+                            }
+                        });
+                        
+                        if (warningTriggered) {
+                            alert("Warning: " + adjustedWidgets + " widget(s) did not comply with the new dashboard date range and were automatically adjusted.");
+                        }
+
                         const payload = {
                             date_start: c.date_start || '',
                             date_end: c.date_end || '',
@@ -994,6 +1031,24 @@
 
                     confirmWidgetControls() {
                         const c = this.widgetControlsForm;
+                        
+                        let cDash = this.dashboardControls;
+                        let dateAdjusted = false;
+                        if (!c.date_inherit) {
+                            if (c.date_start && cDash.date_start && c.date_start < cDash.date_start) {
+                                c.date_start = cDash.date_start;
+                                dateAdjusted = true;
+                            }
+                            let maxEnd = cDash.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}';
+                            if (c.date_end && c.date_end > maxEnd) {
+                                c.date_end = maxEnd;
+                                dateAdjusted = true;
+                            }
+                        }
+                        if (dateAdjusted) {
+                            alert("Warning: The widget date range exceeded the dashboard limits and was adjusted to comply.");
+                        }
+
                         const payload = {};
 
                         if (!c.date_inherit) {

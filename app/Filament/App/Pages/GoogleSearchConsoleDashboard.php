@@ -51,7 +51,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function mount(): void
     {
-        $this->dateEnd = Carbon::now()->subDays(3)->format('Y-m-d');
+        $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
 
         $this->loadAccounts();
