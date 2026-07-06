@@ -368,7 +368,7 @@ class KpiFormBuilder
                                     'trim' => 'Trim Leading/Trailing Zeroes',
                                     'keep' => 'Keep Zeroes',
                                 ])
-                                ->default('remove')
+                                ->default('trim')
                                 ->helperText('How to treat zero values in the time series before analysis.'),
                         ])->columns(3),
                 ])->columns(1)

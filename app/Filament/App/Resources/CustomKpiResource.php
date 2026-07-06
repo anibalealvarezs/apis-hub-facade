@@ -184,7 +184,7 @@
                                     'trim' => 'Trim Leading/Trailing Zeroes',
                                     'keep' => 'Keep Zeroes',
                                 ])
-                                ->default('remove')
+                                ->default('trim')
                                 ->helperText(__('How to treat zero values in the time series before analysis.'));
                         }
 
