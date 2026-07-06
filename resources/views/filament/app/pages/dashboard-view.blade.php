@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo)">
+    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)">
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div>
@@ -181,20 +181,20 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
                                             </svg>
-                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : (sourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1))"></span>
+                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : (settingsSourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1))"></span>
                                         </div>
                                         <div class="flex flex-col items-end gap-1">
                                             <template x-if="vConfig.channel">
                                                 <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel_name || vConfig.channel"></span>
                                             </template>
-                                            <template x-if="sourceType === 'kpi' && vConfig.selected_metric">
+                                            <template x-if="settingsSourceType === 'kpi' && vConfig.selected_metric">
                                                 <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(vConfig.metrics || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
                                             </template>
                                         </div>
                                     </div>
                                     <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
-                                        <template x-if="sourceType !== 'kpi'">
+                                        <template x-if="settingsSourceType !== 'kpi'">
                                             <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                             <select x-model="(settingsControls.metrics || [])[vConfig.index]"
@@ -362,10 +362,11 @@
                     settingsSeriesOptions: {},
                     settingsVariables: {},
                     settingsGranularityOnTheGo: false,
+                    settingsSourceType: '',
                     openSettings: false,
                     settingsSearchQueries: {},
 
-                    openWidgetSettings(widgetId, controls, seriesOptions, variables, granularityOnTheGo) {
+                    openWidgetSettings(widgetId, controls, seriesOptions, variables, granularityOnTheGo, sourceType) {
                         this.settingsWidgetId = widgetId;
                         this.settingsOriginalControls = JSON.parse(JSON.stringify(controls || {}));
                         this.settingsControls = controls || {};
@@ -374,6 +375,7 @@
                         this.settingsSeriesOptions = seriesOptions || {};
                         this.settingsVariables = variables || {};
                         this.settingsGranularityOnTheGo = granularityOnTheGo;
+                        this.settingsSourceType = sourceType || '';
                         this.settingsSearchQueries = {};
                         for (const key in seriesOptions) {
                             this.settingsSearchQueries[key] = '';
@@ -515,7 +517,8 @@
                                 controls: JSON.parse(JSON.stringify(this.controls)),
                                 seriesOptions: JSON.parse(JSON.stringify(this.seriesOptions)),
                                 variables: JSON.parse(JSON.stringify(this.variables)),
-                                granularityOnTheGo: this.granularityOnTheGo
+                                granularityOnTheGo: this.granularityOnTheGo,
+                                sourceType: this.sourceType
                             }
                         }));
                     },
