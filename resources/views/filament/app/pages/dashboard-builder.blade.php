@@ -393,9 +393,9 @@
             <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 overflow-y-auto pr-2 pb-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2 pb-2">
                     {{-- Column 1 (Settings) --}}
-                    <div class="space-y-6 lg:col-span-5">
+                    <div class="space-y-6">
                         {{-- Name --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
@@ -436,7 +436,7 @@
                     </div>
 
                     {{-- Column 2 (Widget Types) --}}
-                    <div class="space-y-6 lg:col-span-7">
+                    <div class="space-y-6">
                         {{-- Widget Type --}}
                         <template x-if="addWidgetForm.source_type">
                             <div>
