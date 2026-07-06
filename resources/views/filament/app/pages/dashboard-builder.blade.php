@@ -212,234 +212,281 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showWidgetControls = false"></div>
-            <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white"
-                    x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h2>
-
-                {{-- Info line --}}
-                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-400"
-                          x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
-                    <span class="inline-block w-2 h-2 rounded-full bg-blue-400"
-                          x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
-                    <span x-show="!widgetHasCustomControls(widgetControlsTarget)">All controls inherited from dashboard defaults.</span>
-                    <span
-                        x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
-                    <button class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                            x-on:click="resetWidgetControls()">Reset all to inherit
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl w-[90vw] max-w-6xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
+                    <div class="flex flex-col gap-1">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h3>
+                        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span class="inline-block w-2 h-2 rounded-full bg-green-400" x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
+                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400" x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
+                            <span x-show="!widgetHasCustomControls(widgetControlsTarget)">All controls inherited from dashboard defaults.</span>
+                            <span x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
+                            <button class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline" x-on:click="resetWidgetControls()">Reset all to inherit</button>
+                        </div>
+                    </div>
+                    <button @click="showWidgetControls = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
-                {{-- Data Source Info (Read Only) --}}
-                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
-                    <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
-                         x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : 'Metric (Raw Aggregation)'"></div>
-                    <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
-                        <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
-                             x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
-                    </template>
-                </div>
-
-                {{-- Date Range --}}
-                <div class="control-group" :class="widgetControlsForm.date_inherit ? 'is-inherited' : 'has-custom'">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Date Range') }}</span>
-                        <label class="inherit-toggle">
-                            <input type="checkbox" x-model="widgetControlsForm.date_inherit"/>
-                            <span class="slider"></span>
-                            <span class="text-xs"
-                                  x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
-                        </label>
-                    </div>
-                    <template x-if="widgetControlsForm.date_inherit">
-                        <div class="inherited-value"
-                             x-text="'Inherited: ' + (dashboardControls.date_start || '—') + ' → ' + (dashboardControls.date_end || '—')"></div>
-                    </template>
-                    <template x-if="!widgetControlsForm.date_inherit">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
-                                <input type="date" x-model="widgetControlsForm.date_start"
-                                       :min="dashboardControls.date_start || ''"
-                                       :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
-                            </div>
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
-                                <input type="date" x-model="widgetControlsForm.date_end"
-                                       :min="widgetControlsForm.date_start || dashboardControls.date_start || ''"
-                                       :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
-                            </div>
+                <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex gap-6 min-h-0 overflow-y-auto desktop-overflow-hidden" style="flex-wrap: wrap;">
+                    
+                    {{-- Left Column: Global Configuration --}}
+                    <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; max-height: 100%;">
+                        {{-- Data Source Info (Read Only) --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0 p-4 space-y-1">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
+                                 x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : 'Metric (Raw Aggregation)'"></div>
+                            <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
+                                <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
+                                     x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
+                            </template>
                         </div>
-                    </template>
-                </div>
 
-                {{-- Zero Handling --}}
-                <div class="control-group" :class="widgetControlsForm.zero_inherit ? 'is-inherited' : 'has-custom'">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Zero / Missing Data') }}</span>
-                        <label class="inherit-toggle">
-                            <input type="checkbox" x-model="widgetControlsForm.zero_inherit"/>
-                            <span class="slider"></span>
-                            <span class="text-xs"
-                                  x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
-                        </label>
-                    </div>
-                    <template x-if="widgetControlsForm.zero_inherit">
-                        <div class="inherited-value"
-                             x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', dashboardControls.zero_handling) || 'Remove zeros')"></div>
-                    </template>
-                    <template x-if="!widgetControlsForm.zero_inherit">
-                        <select x-model="widgetControlsForm.zero_handling"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="remove">{{ __('Remove zeros from results') }}</option>
-                            <option value="keep">{{ __('Keep zeros in results') }}</option>
-                            <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
-                        </select>
-                    </template>
-                </div>
-
-                {{-- Series: Channel + Assets + Metrics (Raw Metric) --}}
-                <template x-if="widgetControlsTarget.source_type !== 'kpi'">
-                    <div class="control-group">
-                        <div class="space-y-3">
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Channel</span>
-                                <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                                    <option value="">Auto-detect</option>
-                                    <template x-for="(label, key) in channels" :key="key">
-                                        <option :value="key" x-text="label"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Assets (Leave empty for All Assets)</span>
-                                <div class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-                                    <template x-for="(name, id) in widgetAssets" :key="id">
-                                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
-                                            <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
-                                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                            <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                        </label>
-                                    </template>
+                        {{-- Card: Date Range --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                    </svg>
+                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Date Range</span>
                                 </div>
-                                <template x-if="Object.keys(widgetAssets).length === 0">
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="widgetControlsForm.date_inherit" class="sr-only peer"/>
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
+                                </label>
+                            </div>
+                            <div class="p-6 flex flex-row items-center gap-3">
+                                <template x-if="widgetControlsForm.date_inherit">
+                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                         x-text="'Inherited: ' + (dashboardControls.date_start || '—') + ' → ' + (dashboardControls.date_end || '—')"></div>
+                                </template>
+                                <template x-if="!widgetControlsForm.date_inherit">
+                                    <div class="w-full flex flex-row items-center gap-3">
+                                        <input type="date" x-model="widgetControlsForm.date_start"
+                                               :min="dashboardControls.date_start || ''"
+                                               :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                        <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
+                                        <input type="date" x-model="widgetControlsForm.date_end"
+                                               :min="widgetControlsForm.date_start || dashboardControls.date_start || ''" 
+                                               :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                    </div>
                                 </template>
                             </div>
+                        </div>
 
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Granularity</span>
+                        {{-- Card: Zero / Missing Data --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Zero / Missing Data</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="widgetControlsForm.zero_inherit" class="sr-only peer"/>
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
+                                </label>
+                            </div>
+                            <div class="p-6">
+                                <template x-if="widgetControlsForm.zero_inherit">
+                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                         x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', dashboardControls.zero_handling) || 'Remove zeros')"></div>
+                                </template>
+                                <template x-if="!widgetControlsForm.zero_inherit">
+                                    <select x-model="widgetControlsForm.zero_handling"
+                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                        <option value="remove">{{ __('Remove zeros from results') }}</option>
+                                        <option value="keep">{{ __('Keep zeros in results') }}</option>
+                                        <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
+                                    </select>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Card: Granularity --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Granularity</span>
+                                </div>
+                            </div>
+                            <div class="p-6">
                                 <select x-model="widgetControlsForm.granularity"
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
 
-                            {{-- Metrics --}}
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Time Series / Metrics</span>
-                                <div class="mt-1 space-y-2">
-                                    <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
+                    {{-- Right Column: Variables Configuration --}}
+                    <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
+                        
+                        {{-- Series: Raw Metric --}}
+                        <template x-if="widgetControlsTarget.source_type !== 'kpi'">
+                            <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                         <div class="flex items-center gap-2">
-                                            <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
-                                            <select x-model="widgetControlsForm.metrics[index]"
-                                                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                                                <option value="">Select a metric...</option>
-                                                <template x-for="(label, key) in widgetMetrics" :key="key">
+                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Metric Source</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
+                                            <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                <option value="">Auto-detect</option>
+                                                <template x-for="(label, key) in channels" :key="key">
                                                     <option :value="key" x-text="label"></option>
                                                 </template>
                                             </select>
-                                            <button class="text-red-500 hover:text-red-700" 
-                                                    x-on:click="widgetControlsForm.metrics.splice(index, 1)">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            </button>
                                         </div>
-                                    </template>
-                                    <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-                                            x-on:click="widgetControlsForm.metrics.push('')">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                        Add Metric
-                                    </button>
-                                    <template x-if="Object.keys(widgetMetrics).length === 0">
-                                        <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
-                                    </template>
+                                        
+                                        <div class="flex-1 flex flex-col min-h-0">
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                            <div class="flex-1 min-h-0 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2 custom-scrollbar">
+                                                <template x-for="(name, id) in widgetAssets" :key="id">
+                                                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                                        <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
+                                                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                        <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                                    </label>
+                                                </template>
+                                                <template x-if="Object.keys(widgetAssets).length === 0">
+                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Time Series / Metrics</label>
+                                            <div class="mt-1 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                                                <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
+                                                        <select x-model="widgetControlsForm.metrics[index]"
+                                                                class="flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                            <option value="">Select a metric...</option>
+                                                            <template x-for="(label, key) in widgetMetrics" :key="key">
+                                                                <option :value="key" x-text="label"></option>
+                                                            </template>
+                                                        </select>
+                                                        <button class="text-red-500 hover:text-red-700" 
+                                                                x-on:click="widgetControlsForm.metrics.splice(index, 1)">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                                <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 mt-2"
+                                                        x-on:click="widgetControlsForm.metrics.push('')">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    Add Metric
+                                                </button>
+                                                <template x-if="Object.keys(widgetMetrics).length === 0">
+                                                    <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </template>
+                        </template>
 
-                {{-- Variables: Assets per variable (KPI) --}}
-                <template x-if="widgetControlsTarget.source_type === 'kpi'">
-                    <div class="control-group">
-                        <div class="space-y-4">
-                            <div>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">Granularity</span>
-                                <select x-model="widgetControlsForm.granularity"
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm mt-1">
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-
+                        {{-- Variables: Assets per variable (KPI) --}}
+                        <template x-if="widgetControlsTarget.source_type === 'kpi'">
                             <template x-if="widgetKpiConfig.dependent_channel">
-                                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2" x-text="'Dependent: ' + channels[widgetKpiConfig.dependent_channel]"></span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Assets (Leave empty for All Assets)</span>
-                                    <div class="max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded p-2">
-                                        <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
-                                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                                                <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets.dependent"
-                                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                            </label>
-                                        </template>
-                                        <template x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
-                                            <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
-                                        </template>
+                                <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                        <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Dependent Series</span>
+                                            </div>
+                                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[widgetKpiConfig.dependent_channel]"></span>
+                                        </div>
+                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                </div>
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                    <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
+                                                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                                            <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets.dependent"
+                                                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                            <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                                        </label>
+                                                    </template>
+                                                    <template x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
+                                                        <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
+                        </template>
 
+                        <template x-if="widgetControlsTarget.source_type === 'kpi'">
                             <template x-if="widgetKpiConfig.independent_variables">
                                 <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
-                                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700" x-show="varCfg.independent_channel">
-                                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2" x-text="'Independent ' + idx + ': ' + channels[varCfg.independent_channel]"></span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Assets (Leave empty for All Assets)</span>
-                                        <div class="max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded p-2">
-                                            <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
-                                                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                                                    <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets['independent_' + idx]"
-                                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                    <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                                </label>
-                                            </template>
-                                            <template x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
-                                                <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
-                                            </template>
+                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start" x-show="varCfg.independent_channel">
+                                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="'Independent ' + idx"></span>
+                                                </div>
+                                                <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[varCfg.independent_channel]"></span>
+                                            </div>
+                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
+                                                    <div class="flex items-center justify-between">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                        <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
+                                                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                                                <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets['independent_' + idx]"
+                                                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                                <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                                            </label>
+                                                        </template>
+                                                        <template x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
+                                                            <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
                             </template>
-                        </div>
-                    </div>
-                </template>
+                        </template>
 
-                <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <button
-                        class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
-                        x-on:click="showWidgetControls = false">Cancel
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
+                    <button class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-6 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
+                            x-on:click="showWidgetControls = false">Cancel
                     </button>
-                    <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 text-sm"
+                    <button class="text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 px-6 py-2.5 rounded-lg shadow-sm transition-colors border border-transparent"
                             x-on:click="confirmWidgetControls()">Save Controls
                     </button>
                 </div>
