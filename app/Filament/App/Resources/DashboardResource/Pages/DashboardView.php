@@ -16,9 +16,8 @@ class DashboardView extends Page
     public Dashboard $dashboard;
 
     public array $resolvedControls = [];
-
-
-
+    
+    public array $widgets = [];
     public function mount(Dashboard $record): void
     {
         $this->dashboard = $record;
@@ -70,7 +69,7 @@ class DashboardView extends Page
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function(string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel) {
+            $provideAssetFilters = function(string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode) {
                 $assets = $getAssetsForChannel($channel);
                 if (!empty($allowedIds)) {
                     $filtered = [];
