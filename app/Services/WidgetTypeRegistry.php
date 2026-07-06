@@ -5,7 +5,7 @@ namespace App\Services;
 class WidgetTypeRegistry
 {
     protected static array $compatibility = [
-        'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_list'],
+        'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart'],
         'metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline'],
     ];
 
@@ -21,7 +21,7 @@ class WidgetTypeRegistry
         'table' => 'Table',
         'gauge' => 'Gauge',
         'sparkline' => 'Sparkline',
-        'anomaly_list' => 'Anomaly List',
+        'anomaly_chart' => 'Anomaly Chart',
     ];
 
     public static function getWidgetTypesForSource(string $sourceType): array

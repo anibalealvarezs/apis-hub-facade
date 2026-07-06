@@ -85,7 +85,7 @@ class DashboardWidgetDataController extends Controller
             $effectiveWidgetType = $widget->widget_type;
 
             if (isset($data['anomaly_detected'])) {
-                $chartTypes = ['line_chart', 'bar_chart', 'sparkline', 'anomaly_list'];
+                $chartTypes = ['line_chart', 'bar_chart', 'sparkline', 'anomaly_chart'];
                 $series = $data['series'] ?? ['dates' => [], 'values' => []];
                 $anomalyDates = array_flip($data['anomaly_dates'] ?? []);
 
