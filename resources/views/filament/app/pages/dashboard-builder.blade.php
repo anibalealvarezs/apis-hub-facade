@@ -441,14 +441,19 @@
                         <template x-if="addWidgetForm.source_type">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Type</label>
-                                <div class="grid grid-cols-1 gap-2">
+                                <div class="grid grid-cols-1 gap-3">
                                     <template x-for="(label, type) in availableWidgetTypes" :key="type">
-                                        <button class="p-2 rounded-lg border text-center text-sm transition-colors"
+                                        <button class="p-3 rounded-xl border text-left transition-colors flex items-center gap-4"
                                                 :class="addWidgetForm.widget_type === type
-                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm'"
                                                 x-on:click="addWidgetForm.widget_type = type">
-                                            <span x-text="label"></span>
+                                            <div class="w-14 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center" x-html="getWidgetSvg(type)">
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <span class="block text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="label"></span>
+                                                <span class="block text-xs text-gray-500 dark:text-gray-400 leading-tight mt-0.5" x-text="getWidgetDescription(type)"></span>
+                                            </div>
                                         </button>
                                     </template>
                                 </div>
@@ -634,6 +639,37 @@
                     get availableWidgetTypes() {
                         if (!this.addWidgetForm.source_type) return {};
                         return @json($this->getAvailableWidgetTypes());
+                    },
+
+                    // ─── UI Helpers ───
+                    getWidgetDescription(type) {
+                        const descs = {
+                            tile: 'Single large number for totals',
+                            line_chart: 'Track continuous trends over time',
+                            bar_chart: 'Compare discrete volumes side-by-side',
+                            scatter_plot: 'Find correlations and trendlines',
+                            combo_chart: 'Dual-axis bars and lines (e.g. MACD)',
+                            table: 'Detailed row-by-row data view',
+                            gauge: 'Percentage or progress to a target',
+                            sparkline: 'Minimalist trendline without axes',
+                            anomaly_chart: 'Highlights statistical outliers in red'
+                        };
+                        return descs[type] || 'Standard widget';
+                    },
+
+                    getWidgetSvg(type) {
+                        const svgs = {
+                            tile: `<svg viewBox="0 0 40 24" class="w-full h-full"><text x="20" y="16" text-anchor="middle" font-weight="bold" font-size="14" class="fill-gray-800 dark:fill-gray-200">12K</text><path d="M 28 8 L 32 4 L 36 8 M 32 4 L 32 16" class="stroke-green-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+                            line_chart: `<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 20 L 12 12 L 20 16 L 28 6 L 36 8" class="stroke-primary-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="2.5" class="fill-primary-500"/><circle cx="20" cy="16" r="2.5" class="fill-primary-500"/><circle cx="28" cy="6" r="2.5" class="fill-primary-500"/></svg>`,
+                            bar_chart: `<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="10" width="6" height="10" rx="1" class="fill-primary-400"/><rect x="17" y="6" width="6" height="14" rx="1" class="fill-primary-600"/><rect x="28" y="14" width="6" height="6" rx="1" class="fill-primary-300"/></svg>`,
+                            scatter_plot: `<svg viewBox="0 0 40 24" class="w-full h-full"><line x1="4" y1="20" x2="36" y2="4" class="stroke-red-500" stroke-width="1.5" stroke-dasharray="2 2" stroke-linecap="round"/><circle cx="10" cy="16" r="1.5" class="fill-primary-500"/><circle cx="14" cy="18" r="1.5" class="fill-primary-500"/><circle cx="20" cy="10" r="1.5" class="fill-primary-500"/><circle cx="24" cy="14" r="1.5" class="fill-primary-500"/><circle cx="30" cy="8" r="1.5" class="fill-primary-500"/><circle cx="34" cy="10" r="1.5" class="fill-primary-500"/></svg>`,
+                            combo_chart: `<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="14" width="4" height="6" class="fill-green-500 opacity-50"/><rect x="14" y="8" width="4" height="12" class="fill-green-500 opacity-50"/><rect x="22" y="16" width="4" height="4" class="fill-red-500 opacity-50"/><rect x="30" y="12" width="4" height="8" class="fill-red-500 opacity-50"/><path d="M 4 18 L 16 6 L 24 10 L 36 4" class="stroke-blue-500" stroke-width="1.5" fill="none"/><path d="M 4 14 L 16 10 L 24 16 L 36 8" class="stroke-yellow-500" stroke-width="1.5" fill="none"/></svg>`,
+                            table: `<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="4" y="4" width="32" height="16" rx="2" class="stroke-gray-400 dark:stroke-gray-600" stroke-width="1.5" fill="none"/><line x1="4" y1="10" x2="36" y2="10" class="stroke-gray-400 dark:stroke-gray-600" stroke-width="1.5"/><line x1="4" y1="15" x2="36" y2="15" class="stroke-gray-300 dark:stroke-gray-700" stroke-width="1"/><line x1="16" y1="4" x2="16" y2="20" class="stroke-gray-400 dark:stroke-gray-600" stroke-width="1.5"/></svg>`,
+                            gauge: `<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 10 20 A 10 10 0 0 1 30 20" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M 10 20 A 10 10 0 0 1 20 10" class="stroke-primary-500" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="20" cy="20" r="2" class="fill-gray-800 dark:fill-gray-200"/><line x1="20" y1="20" x2="14" y2="14" class="stroke-gray-800 dark:stroke-gray-200" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+                            sparkline: `<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 18 Q 12 10 20 16 T 36 6" class="stroke-primary-400" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`,
+                            anomaly_chart: `<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 20 L 12 18 L 20 8 L 28 16 L 36 14" class="stroke-gray-400 dark:stroke-gray-600" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2" fill="none"/><circle cx="20" cy="8" r="4" class="fill-red-500 ring-2 ring-red-200 dark:ring-red-900/50"/></svg>`
+                        };
+                        return svgs[type] || svgs['tile'];
                     },
 
                     // ─── Initialization ──
