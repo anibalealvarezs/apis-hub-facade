@@ -297,81 +297,137 @@
                     </template>
                 </div>
 
-                {{-- Series: Channel + Assets + Granularity --}}
-                <div class="control-group">
-                    <div class="space-y-3">
-                        <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Channel</span>
-                            <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
-                                    :disabled="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel"
-                                    :class="(widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel) ? 'opacity-50 cursor-not-allowed' : ''"
-                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                                <option value="">Auto-detect</option>
-                                <template x-for="(label, key) in channels" :key="key">
-                                    <option :value="key" x-text="label"></option>
-                                </template>
-                            </select>
-                            <p x-show="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel" class="text-xs text-primary-500 mt-1">Fixed by KPI template</p>
-                        </div>
-                        
-                        <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Assets (Leave empty for All Assets)</span>
-                            <div class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
-                                <template x-for="(name, id) in widgetAssets" :key="id">
-                                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
-                                        <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
-                                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                        <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                    </label>
+                {{-- Series: Channel + Assets + Metrics (Raw Metric) --}}
+                <template x-if="widgetControlsTarget.source_type !== 'kpi'">
+                    <div class="control-group">
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Channel</span>
+                                <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                    <option value="">Auto-detect</option>
+                                    <template x-for="(label, key) in channels" :key="key">
+                                        <option :value="key" x-text="label"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Assets (Leave empty for All Assets)</span>
+                                <div class="mt-1 max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+                                    <template x-for="(name, id) in widgetAssets" :key="id">
+                                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
+                                            <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
+                                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                            <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <template x-if="Object.keys(widgetAssets).length === 0">
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
                                 </template>
                             </div>
-                            <template x-if="Object.keys(widgetAssets).length === 0">
-                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
-                            </template>
-                        </div>
 
-                        <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Granularity</span>
-                            <select x-model="widgetControlsForm.granularity"
-                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </select>
-                        </div>
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Granularity</span>
+                                <select x-model="widgetControlsForm.granularity"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
 
-                        {{-- Metrics --}}
-                        <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Time Series / Metrics</span>
-                            <div class="mt-1 space-y-2">
-                                <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
-                                        <select x-model="widgetControlsForm.metrics[index]"
-                                                class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                                            <option value="">Select a metric...</option>
-                                            <template x-for="(label, key) in widgetMetrics" :key="key">
-                                                <option :value="key" x-text="label"></option>
-                                            </template>
-                                        </select>
-                                        <button class="text-red-500 hover:text-red-700" 
-                                                x-on:click="widgetControlsForm.metrics.splice(index, 1)">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    </div>
-                                </template>
-                                <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-                                        x-on:click="widgetControlsForm.metrics.push('')">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    Add Metric
-                                </button>
-                                <template x-if="Object.keys(widgetMetrics).length === 0">
-                                    <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
-                                </template>
+                            {{-- Metrics --}}
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Time Series / Metrics</span>
+                                <div class="mt-1 space-y-2">
+                                    <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
+                                            <select x-model="widgetControlsForm.metrics[index]"
+                                                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                                                <option value="">Select a metric...</option>
+                                                <template x-for="(label, key) in widgetMetrics" :key="key">
+                                                    <option :value="key" x-text="label"></option>
+                                                </template>
+                                            </select>
+                                            <button class="text-red-500 hover:text-red-700" 
+                                                    x-on:click="widgetControlsForm.metrics.splice(index, 1)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                                            x-on:click="widgetControlsForm.metrics.push('')">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                        Add Metric
+                                    </button>
+                                    <template x-if="Object.keys(widgetMetrics).length === 0">
+                                        <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </template>
+
+                {{-- Variables: Assets per variable (KPI) --}}
+                <template x-if="widgetControlsTarget.source_type === 'kpi'">
+                    <div class="control-group">
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Granularity</span>
+                                <select x-model="widgetControlsForm.granularity"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm mt-1">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+
+                            <template x-if="widgetKpiConfig.dependent_channel">
+                                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2" x-text="'Dependent: ' + channels[widgetKpiConfig.dependent_channel]"></span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Assets (Leave empty for All Assets)</span>
+                                    <div class="max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded p-2">
+                                        <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
+                                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                                                <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets.dependent"
+                                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                            </label>
+                                        </template>
+                                        <template x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
+                                            <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="widgetKpiConfig.independent_variables">
+                                <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
+                                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700" x-show="varCfg.independent_channel">
+                                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2" x-text="'Independent ' + idx + ': ' + channels[varCfg.independent_channel]"></span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Assets (Leave empty for All Assets)</span>
+                                        <div class="max-h-32 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded p-2">
+                                            <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
+                                                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                                                    <input type="checkbox" :value="id" x-model="widgetControlsForm.series_assets['independent_' + idx]"
+                                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                    <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
+                                                </label>
+                                            </template>
+                                            <template x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
+                                                <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
+                </template>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <button
@@ -612,6 +668,7 @@
                         assets: [],
                         granularity: 'daily',
                         metrics: [],
+                        series_assets: {},
                     },
                     widgetKpiConfig: {},
                     widgetAssets: {},
@@ -820,8 +877,8 @@
                             zero_handling: wc.zero_handling || 'remove',
                             channel: wc.channel || '',
                             assets: wc.assets || [],
-                            granularity: wc.granularity || 'daily',
                             metrics: wc.metrics || [],
+                            series_assets: wc.series_assets || {},
                         };
 
                         const savedMetrics = wc.metrics || [];
@@ -831,10 +888,33 @@
                             @this.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
                                 this.widgetKpiConfig = config || {};
                                 
-                                // Automatically sync widget controls if fixed by KPI
-                                if (this.widgetKpiConfig.dependent_channel && !this.widgetControlsForm.channel) {
-                                    this.widgetControlsForm.channel = this.widgetKpiConfig.dependent_channel;
+                                // Initialize arrays if undefined
+                                if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
+                                if (this.widgetKpiConfig.independent_variables) {
+                                    for (let key in this.widgetKpiConfig.independent_variables) {
+                                        if (!this.widgetControlsForm.series_assets['independent_' + key]) {
+                                            this.widgetControlsForm.series_assets['independent_' + key] = [];
+                                        }
+                                    }
                                 }
+
+                                // Fetch missing assets for all required channels
+                                const channelsToLoad = new Set();
+                                if (this.widgetKpiConfig.dependent_channel) channelsToLoad.add(this.widgetKpiConfig.dependent_channel);
+                                if (this.widgetKpiConfig.independent_variables) {
+                                    for (let key in this.widgetKpiConfig.independent_variables) {
+                                        if (this.widgetKpiConfig.independent_variables[key].independent_channel) {
+                                            channelsToLoad.add(this.widgetKpiConfig.independent_variables[key].independent_channel);
+                                        }
+                                    }
+                                }
+                                channelsToLoad.forEach(ch => {
+                                    if (!this.allChannelAssets[ch]) {
+                                        @this.getAssetsForChannel(ch).then(assets => {
+                                            this.allChannelAssets[ch] = assets;
+                                        });
+                                    }
+                                });
 
                                 this.loadWidgetMetrics(savedMetrics);
                             });
@@ -906,6 +986,7 @@
                             assets: [],
                             granularity: 'daily',
                             metrics: [],
+                            series_assets: {},
                         };
                     },
 
@@ -926,6 +1007,7 @@
                         payload.assets = c.assets;
                         payload.granularity = c.granularity;
                         payload.metrics = c.metrics;
+                        payload.series_assets = c.series_assets;
 
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload);
                         this.showWidgetControls = false;
