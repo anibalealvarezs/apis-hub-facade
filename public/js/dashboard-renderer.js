@@ -20,7 +20,7 @@ window.dashboardRenderer = {
         try {
             const body = { tenant };
             if (controls) {
-                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'channel'];
+                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'series_channels', 'channel'];
                 const overrides = {};
                 for (const key of overrideKeys) {
                     if (controls[key] !== undefined) overrides[key] = controls[key];

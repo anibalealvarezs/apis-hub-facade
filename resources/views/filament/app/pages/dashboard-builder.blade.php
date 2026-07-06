@@ -339,72 +339,85 @@
                         
                         {{-- Series: Raw Metric --}}
                         <template x-if="widgetControlsTarget.source_type !== 'kpi'">
-                            <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
-                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
-                                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Metric Source</span>
+                            <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                        <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                                                </svg>
+                                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="'Series ' + (index + 1)"></span>
+                                            </div>
+                                            <button class="text-red-500 hover:text-red-700" 
+                                                    x-show="widgetControlsForm.raw_series.length > 1"
+                                                    x-on:click="widgetControlsForm.raw_series.splice(index, 1)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                        <div>
-                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
-                                            <select x-model="widgetControlsForm.channel" x-on:change="onWidgetChannelChange()"
-                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                <option value="">Auto-detect</option>
-                                                <template x-for="(label, key) in channels" :key="key">
-                                                    <option :value="key" x-text="label"></option>
-                                                </template>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="flex-1 flex flex-col min-h-0">
-                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
-                                            <div class="flex-1 min-h-0 overflow-y-auto space-y-1 border border-gray-200 dark:border-gray-700 rounded-lg p-2 custom-scrollbar">
-                                                <template x-for="(name, id) in widgetAssets" :key="id">
-                                                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1 rounded">
-                                                        <input type="checkbox" :value="id" x-model="widgetControlsForm.assets"
-                                                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                        <span x-text="name" class="text-gray-700 dark:text-gray-300"></span>
-                                                    </label>
-                                                </template>
-                                                <template x-if="Object.keys(widgetAssets).length === 0">
-                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first to see available assets.</p>
+                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
+                                                <select x-model="series.channel" x-on:change="onWidgetRawChannelChange(index)"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <option value="">Select a channel...</option>
+                                                    <template x-for="(label, key) in channels" :key="key">
+                                                        <option :value="key" x-text="label"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="my-2">
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
+                                                <select x-model="series.metric"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <option value="">Select a metric...</option>
+                                                    <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
+                                                        <option :value="key" x-text="label"></option>
+                                                    </template>
+                                                </select>
+                                                <template x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
+                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first.</p>
                                                 </template>
                                             </div>
-                                        </div>
 
-                                        <div class="mt-4">
-                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Time Series / Metrics</label>
-                                            <div class="mt-1 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                                                <template x-for="(metric, index) in widgetControlsForm.metrics" :key="index">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xs text-gray-500 font-medium" style="width: 40px" x-text="(index === 0 ? 'Dep:' : 'Ind ' + index + ':')"></span>
-                                                        <select x-model="widgetControlsForm.metrics[index]"
-                                                                class="flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                            <option value="">Select a metric...</option>
-                                                            <template x-for="(label, key) in widgetMetrics" :key="key">
-                                                                <option :value="key" x-text="label"></option>
-                                                            </template>
-                                                        </select>
-                                                        <button class="text-red-500 hover:text-red-700" 
-                                                                x-on:click="widgetControlsForm.metrics.splice(index, 1)">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                        </button>
-                                                    </div>
-                                                </template>
-                                                <button class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 mt-2"
-                                                        x-on:click="widgetControlsForm.metrics.push('')">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                                    Add Metric
-                                                </button>
-                                                <template x-if="Object.keys(widgetMetrics).length === 0">
-                                                    <p class="text-xs text-gray-400 dark:text-gray-500">Select a channel first to see available metrics.</p>
-                                                </template>
+                                            <div class="flex-1 flex flex-col min-h-0 mt-2">
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets (Leave empty for All Assets)</label>
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
+                                                    <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
+                                                        <div @click="toggleRawAsset(index, id)"
+                                                             class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                             :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                            <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                 :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                <svg x-show="(series.assets || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                </svg>
+                                                            </div>
+                                                            <span class="truncate font-medium" :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="name"></span>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first.</p>
+                                                    </template>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </template>
+                            
+                            {{-- Add Series Button Card --}}
+                            <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                <button x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metric: '', assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);" 
+                                        class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
+                                    <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
+                                        <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">Add Series</span>
+                                </button>
                             </div>
                         </template>
 
@@ -965,7 +978,34 @@
                             assets: wc.assets || [],
                             metrics: wc.metrics || [],
                             series_assets: wc.series_assets || {},
+                            raw_series: [],
                         };
+
+                        if (widget.source_type !== 'kpi') {
+                            if (wc.metrics && wc.metrics.length > 0) {
+                                wc.metrics.forEach((m, i) => {
+                                    this.widgetControlsForm.raw_series.push({
+                                        channel: (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || ''),
+                                        metric: m,
+                                        assets: (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : [])
+                                    });
+                                });
+                            }
+                            if (this.widgetControlsForm.raw_series.length === 0) {
+                                this.widgetControlsForm.raw_series.push({ channel: '', metric: '', assets: [] });
+                            }
+                            
+                            // Pre-load assets and metrics for channels used in raw series
+                            this.widgetControlsForm.raw_series.forEach(series => {
+                                const ch = series.channel;
+                                if (ch && !this.allChannelAssets[ch]) {
+                                    @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets[ch] = assets; });
+                                }
+                                if (ch && !this.allChannelMetrics[ch]) {
+                                    @this.getMetricsForChannel(ch).then(metrics => { this.allChannelMetrics[ch] = metrics; });
+                                }
+                            });
+                        }
 
                         const savedMetrics = wc.metrics || [];
 
@@ -1061,6 +1101,30 @@
                         }
                     },
 
+                    onWidgetRawChannelChange(index) {
+                        const ch = this.widgetControlsForm.raw_series[index].channel;
+                        if (ch && !this.allChannelAssets[ch]) {
+                            @this.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets[ch] = assets;
+                            });
+                        }
+                        if (ch && !this.allChannelMetrics[ch]) {
+                            @this.getMetricsForChannel(ch).then(metrics => {
+                                this.allChannelMetrics[ch] = metrics;
+                            });
+                        }
+                    },
+
+                    toggleRawAsset(index, id) {
+                        let current = this.widgetControlsForm.raw_series[index].assets || [];
+                        let strId = String(id);
+                        if (current.includes(strId)) {
+                            this.widgetControlsForm.raw_series[index].assets = current.filter(a => a !== strId);
+                        } else {
+                            this.widgetControlsForm.raw_series[index].assets.push(strId);
+                        }
+                    },
+
                     resetWidgetControls() {
                         this.widgetControlsForm = {
                             date_inherit: true,
@@ -1106,12 +1170,30 @@
                             payload.zero_handling = c.zero_handling;
                         }
 
-                        // Always save series controls since widgets are the source of truth
-                        payload.channel = c.channel;
-                        payload.assets = c.assets;
                         payload.granularity = c.granularity;
-                        payload.metrics = c.metrics;
-                        payload.series_assets = c.series_assets;
+
+                        if (this.widgetControlsTarget.source_type !== 'kpi') {
+                            payload.channel = '';
+                            payload.assets = [];
+                            payload.metrics = [];
+                            payload.series_assets = {};
+                            payload.series_channels = {};
+                            c.raw_series.forEach((s, i) => {
+                                if (s.metric) {
+                                    payload.metrics.push(s.metric);
+                                    payload.series_assets[i] = [...(s.assets || [])];
+                                    payload.series_channels[i] = s.channel || '';
+                                }
+                            });
+                            if (payload.series_channels['0']) {
+                                payload.channel = payload.series_channels['0'];
+                            }
+                        } else {
+                            payload.channel = c.channel;
+                            payload.assets = c.assets;
+                            payload.metrics = c.metrics;
+                            payload.series_assets = c.series_assets;
+                        }
 
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload);
                         this.showWidgetControls = false;

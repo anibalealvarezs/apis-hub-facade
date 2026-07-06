@@ -122,8 +122,14 @@ class DashboardView extends Page
             }
 
             // Fallback for non-KPI widgets with a channel
-            if (empty($widgetArray['series_assets_options']) && ! empty($resolved['channel'])) {
-                $provideAssetFilters($resolved['channel'], 'dependent', null, null);
+            if (empty($widgetArray['series_assets_options'])) {
+                if (!empty($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $idx => $chan) {
+                        $provideAssetFilters($chan, strval($idx), null, null);
+                    }
+                } elseif (!empty($resolved['channel'])) {
+                    $provideAssetFilters($resolved['channel'], '0', null, null);
+                }
             }
 
 
@@ -132,35 +138,58 @@ class DashboardView extends Page
             $variables = [];
             $varIndex = 0;
 
-            $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
-            $depMetrics = ! empty($depChannel)
-                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel)
-                : [];
-            $variables['dependent'] = [
-                'index' => $varIndex++,
-                'channel' => $depChannel,
-                'channel_name' => !empty($depChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($depChannel) : '',
-                'metrics' => $depMetrics,
-            ];
+            if ($widget['source_type'] === 'kpi') {
+                $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
+                $depMetrics = ! empty($depChannel)
+                    ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel)
+                    : [];
+                $variables['dependent'] = [
+                    'index' => $varIndex++,
+                    'channel' => $depChannel,
+                    'channel_name' => !empty($depChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($depChannel) : '',
+                    'metrics' => $depMetrics,
+                ];
 
-            if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
-                foreach ($uiState['independent_variables'] as $key => $var) {
-                    $indChannel = $var['independent_channel'] ?? '';
-                    $indMetrics = ! empty($indChannel)
-                        ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($indChannel)
-                        : [];
-                    $variables['independent_' . $key] = [
+                if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                    foreach ($uiState['independent_variables'] as $key => $var) {
+                        $indChannel = $var['independent_channel'] ?? '';
+                        $indMetrics = ! empty($indChannel)
+                            ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($indChannel)
+                            : [];
+                        $variables['independent_' . $key] = [
+                            'index' => $varIndex++,
+                            'channel' => $indChannel,
+                            'channel_name' => !empty($indChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($indChannel) : '',
+                            'metrics' => $indMetrics,
+                        ];
+                    }
+                }
+            } else {
+                // Raw metrics variables mapping
+                if (!empty($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $idx => $chan) {
+                        $metrics = !empty($chan) ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($chan) : [];
+                        $variables[strval($idx)] = [
+                            'index' => $varIndex++,
+                            'channel' => $chan,
+                            'channel_name' => !empty($chan) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($chan) : '',
+                            'metrics' => $metrics,
+                        ];
+                    }
+                } elseif (!empty($resolved['channel'])) {
+                    $metrics = !empty($resolved['channel']) ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($resolved['channel']) : [];
+                    $variables['0'] = [
                         'index' => $varIndex++,
-                        'channel' => $indChannel,
-                        'channel_name' => !empty($indChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($indChannel) : '',
-                        'metrics' => $indMetrics,
+                        'channel' => $resolved['channel'],
+                        'channel_name' => \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($resolved['channel']),
+                        'metrics' => $metrics,
                     ];
                 }
             }
 
             $widgetArray['variables'] = $variables;
             // Keep flat metric_options for backward compatibility
-            $widgetArray['metric_options'] = $depMetrics;
+            $widgetArray['metric_options'] = isset($depMetrics) ? $depMetrics : [];
         }
     }
 
