@@ -390,76 +390,80 @@
         {{-- ============================================================ --}}
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showAddWidgetModal = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Add Widget') }}</h2>
+            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
 
-                {{-- Step 1: Source Type --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Source') }}</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <template x-for="(label, type) in sourceTypes" :key="type">
-                            <button class="p-3 rounded-lg border text-center text-sm transition-colors"
-                                    :class="addWidgetForm.source_type === type
-                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                    x-on:click="addWidgetForm.source_type = type; addWidgetForm.widget_type = ''">
-                                <span x-text="label"></span>
-                            </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2 pb-2">
+                    {{-- Column 1 --}}
+                    <div class="space-y-6">
+                        {{-- Name --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
+                            <input type="text" x-model="addWidgetForm.name"
+                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                   placeholder="My Widget"/>
+                        </div>
+
+                        {{-- Source Type --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Source') }}</label>
+                            <div class="grid grid-cols-1 gap-3">
+                                <template x-for="(label, type) in sourceTypes" :key="type">
+                                    <button class="p-3 rounded-lg border text-center text-sm transition-colors"
+                                            :class="addWidgetForm.source_type === type
+                                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                            x-on:click="addWidgetForm.source_type = type; addWidgetForm.widget_type = ''">
+                                        <span x-text="label"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- KPI (if kpi source) --}}
+                        <template x-if="addWidgetForm.source_type === 'kpi'">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select KPI</label>
+                                <select x-model="addWidgetForm.custom_kpi_id"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                    <option value="">{{ __('Choose a KPI...') }}</option>
+                                    <template x-for="(name, id) in kpis" :key="id">
+                                        <option :value="id" x-text="name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Column 2 --}}
+                    <div class="space-y-6">
+                        {{-- Widget Type --}}
+                        <template x-if="addWidgetForm.source_type">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Type</label>
+                                <div class="grid grid-cols-1 gap-2">
+                                    <template x-for="(label, type) in availableWidgetTypes" :key="type">
+                                        <button class="p-2 rounded-lg border text-center text-sm transition-colors"
+                                                :class="addWidgetForm.widget_type === type
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
+                                                x-on:click="addWidgetForm.widget_type = type">
+                                            <span x-text="label"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                         </template>
                     </div>
                 </div>
 
-                {{-- Step 2: KPI (if kpi source) --}}
-                <template x-if="addWidgetForm.source_type === 'kpi'">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select
-                            KPI</label>
-                        <select x-model="addWidgetForm.custom_kpi_id"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-                            <option value="">{{ __('Choose a KPI...') }}</option>
-                            <template x-for="(name, id) in kpis" :key="id">
-                                <option :value="id" x-text="name"></option>
-                            </template>
-                        </select>
-                    </div>
-                </template>
-
-                {{-- Step 3: Widget Type --}}
-                <template x-if="addWidgetForm.source_type">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget
-                            Type</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <template x-for="(label, type) in availableWidgetTypes" :key="type">
-                                <button class="p-2 rounded-lg border text-center text-xs transition-colors"
-                                        :class="addWidgetForm.widget_type === type
-                                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                        x-on:click="addWidgetForm.widget_type = type">
-                                    <span x-text="label"></span>
-                                </button>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-
-                {{-- Step 4: Name --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
-                    <input type="text" x-model="addWidgetForm.name"
-                           class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                           placeholder="My Widget"/>
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button
-                        class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        x-on:click="showAddWidgetModal = false">Cancel
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            x-on:click="showAddWidgetModal = false">Cancel
                     </button>
-                    <button
-                        class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
-                        :disabled="!canAddWidget()"
-                        x-on:click="confirmAddWidget()">Add Widget
+                    <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"
+                            :disabled="!canAddWidget()"
+                            x-on:click="confirmAddWidget()">Add Widget
                     </button>
                 </div>
             </div>
