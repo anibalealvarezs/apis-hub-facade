@@ -116,7 +116,7 @@
                         </button>
                     </div>
 
-                    <div class="flex-1 overflow-hidden p-6 md:p-8 bg-gray-50 dark:bg-gray-900 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex-1 min-h-0 overflow-hidden p-6 md:p-8 bg-gray-50 dark:bg-gray-900 grid grid-cols-1 md:grid-cols-3 gap-6">
                         
                         {{-- Left Column: Global Configuration --}}
                         <div class="md:col-span-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2">
@@ -159,11 +159,11 @@
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
-                        <div class="md:col-span-2 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
+                        <div class="md:col-span-2 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
-                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full flex flex-col snap-start">
-                                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full max-h-full">
+                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                     <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                         <div class="flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
@@ -172,10 +172,10 @@
                                             <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : 'Independent Variable ' + (vConfig.index)"></span>
                                         </div>
                                         <template x-if="vConfig.channel">
-                                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel"></span>
+                                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel_name || vConfig.channel"></span>
                                         </template>
                                     </div>
-                                    <div class="p-6 flex-1 flex flex-col space-y-5">
+                                    <div class="p-6 flex-1 flex flex-col space-y-5 min-h-0">
                                         {{-- Metric selector --}}
                                         <div class="space-y-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>

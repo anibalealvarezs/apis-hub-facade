@@ -27,16 +27,26 @@ class KpiFormBuilder
         foreach ($tenant->sync_config as $channel => $data) {
             if (in_array($channel, $validChannels)) {
                 if (!empty(static::getAssetOptionsForChannel($channel))) {
-                    $name = ucwords(str_replace('_', ' ', $channel));
-                    if ($channel === 'facebook_marketing') $name = 'FB Marketing';
-                    if ($channel === 'facebook_organic') $name = 'FB Organic';
-                    if ($channel === 'google_search_console') $name = 'Google Search Console';
-                    if ($channel === 'google_analytics') $name = 'Google Analytics';
-                    $active[$channel] = $name;
+                    $active[$channel] = self::getChannelDisplayName($channel);
                 }
             }
         }
         return $active;
+    }
+
+    public static function getChannelDisplayName(string $channel): string
+    {
+        $name = ucwords(str_replace('_', ' ', $channel));
+        if ($channel === 'facebook_marketing') {
+            $name = 'FB Marketing';
+        } elseif ($channel === 'facebook_organic') {
+            $name = 'FB Organic';
+        } elseif ($channel === 'google_search_console') {
+            $name = 'Google Search Console';
+        } elseif ($channel === 'google_analytics') {
+            $name = 'Google Analytics';
+        }
+        return $name;
     }
 
     public static function getCategoryOptions(): array
@@ -83,12 +93,7 @@ class KpiFormBuilder
         $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $cats = [];
         foreach (array_keys($channels) as $channel) {
-            $name = ucwords(str_replace('_', ' ', $channel));
-            if ($channel === 'facebook_marketing') $name = 'FB Marketing';
-            if ($channel === 'facebook_organic') $name = 'FB Organic';
-            if ($channel === 'google_search_console') $name = 'Google Search Console';
-            if ($channel === 'google_analytics') $name = 'Google Analytics';
-            $cats['ch_' . $channel] = $name;
+            $cats['ch_' . $channel] = self::getChannelDisplayName($channel);
         }
         return $cats;
     }

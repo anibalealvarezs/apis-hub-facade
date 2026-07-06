@@ -139,6 +139,7 @@ class DashboardView extends Page
             $variables['dependent'] = [
                 'index' => $varIndex++,
                 'channel' => $depChannel,
+                'channel_name' => !empty($depChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($depChannel) : '',
                 'metrics' => $depMetrics,
             ];
 
@@ -151,6 +152,7 @@ class DashboardView extends Page
                     $variables['independent_' . $key] = [
                         'index' => $varIndex++,
                         'channel' => $indChannel,
+                        'channel_name' => !empty($indChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($indChannel) : '',
                         'metrics' => $indMetrics,
                     ];
                 }
