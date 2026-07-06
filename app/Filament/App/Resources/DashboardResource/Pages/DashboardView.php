@@ -104,6 +104,13 @@ class DashboardView extends Page
                         ? $uiState['dependent_asset_filter']
                         : [$uiState['dependent_asset_filter']];
                 }
+                if (!empty($resolved['series_assets']['dependent'])) {
+                    if ($depAssetIds === null) {
+                        $depAssetIds = $resolved['series_assets']['dependent'];
+                    } else {
+                        $depAssetIds = array_intersect($depAssetIds, $resolved['series_assets']['dependent']);
+                    }
+                }
                 $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
             }
 
@@ -116,7 +123,15 @@ class DashboardView extends Page
                                 ? $var['independent_asset_filter']
                                 : [$var['independent_asset_filter']];
                         }
-                        $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')', $indAssetIds);
+                        $idxKey = 'independent_' . $key;
+                        if (!empty($resolved['series_assets'][$idxKey])) {
+                            if ($indAssetIds === null) {
+                                $indAssetIds = $resolved['series_assets'][$idxKey];
+                            } else {
+                                $indAssetIds = array_intersect($indAssetIds, $resolved['series_assets'][$idxKey]);
+                            }
+                        }
+                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')', $indAssetIds);
                     }
                 }
             }
@@ -125,10 +140,22 @@ class DashboardView extends Page
             if (empty($widgetArray['series_assets_options'])) {
                 if (!empty($resolved['series_channels'])) {
                     foreach ($resolved['series_channels'] as $idx => $chan) {
-                        $provideAssetFilters($chan, strval($idx), null, null);
+                        $rawAssetIds = null;
+                        if (!empty($resolved['raw_series'][$idx]['assets'])) {
+                            $rawAssetIds = $resolved['raw_series'][$idx]['assets'];
+                        } elseif (!empty($resolved['series_assets'][$idx])) {
+                            $rawAssetIds = $resolved['series_assets'][$idx];
+                        }
+                        $provideAssetFilters($chan, strval($idx), null, $rawAssetIds);
                     }
                 } elseif (!empty($resolved['channel'])) {
-                    $provideAssetFilters($resolved['channel'], '0', null, null);
+                    $rawAssetIds = null;
+                    if (!empty($resolved['assets'])) {
+                        $rawAssetIds = $resolved['assets'];
+                    } elseif (!empty($resolved['series_assets']['0'])) {
+                        $rawAssetIds = $resolved['series_assets']['0'];
+                    }
+                    $provideAssetFilters($resolved['channel'], '0', null, $rawAssetIds);
                 }
             }
 
