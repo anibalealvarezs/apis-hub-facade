@@ -231,7 +231,14 @@
                     </button>
                 </div>
 
-                <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex gap-6 min-h-0 overflow-y-auto desktop-overflow-hidden" style="flex-wrap: wrap;">
+                    <style>
+                        @media (min-width: 768px) {
+                            .desktop-overflow-hidden {
+                                overflow: hidden !important;
+                            }
+                        }
+                    </style>
+                    <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex gap-6 min-h-0 overflow-y-auto desktop-overflow-hidden" style="flex-wrap: wrap;">
                     
                     {{-- Left Column: Global Configuration --}}
                     <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; max-height: 100%;">
@@ -401,7 +408,7 @@
                                                     </div>
                                                     <input type="text" x-model="searchQueries['raw_' + index]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
                                                         <div x-show="(searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase())"
                                                              @click="toggleRawAsset(index, id)"
@@ -471,7 +478,7 @@
                                                     </div>
                                                     <input type="text" x-model="searchQueries['dependent']" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
                                                         <div x-show="(searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase())"
                                                              @click="toggleKpiAsset('dependent', id)"
@@ -528,7 +535,7 @@
                                                         </div>
                                                         <input type="text" x-model="searchQueries['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                     </div>
-                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
+                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
                                                             <div x-show="(searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase())"
                                                                  @click="toggleKpiAsset('independent_' + idx, id)"
