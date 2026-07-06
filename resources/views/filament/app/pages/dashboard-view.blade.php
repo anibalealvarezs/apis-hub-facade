@@ -215,7 +215,7 @@
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                             :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'">
+                                                             :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
                                                                  :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                 <svg x-show="(settingsControls.series_assets[vKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
