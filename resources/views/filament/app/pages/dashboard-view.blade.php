@@ -186,7 +186,7 @@
                                     <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
                                         <div class="my-2">
-                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                             <select x-model="(settingsControls.metrics || [])[vConfig.index]"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
@@ -200,7 +200,7 @@
                                         <template x-if="settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options).length > 0">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
                                                 <div class="flex items-center justify-between">
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets</label>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets</label>
                                                     <template x-if="(settingsSeriesOptions[vKey].mode || 'multiple') === 'multiple'">
                                                         <div class="flex gap-3">
                                                             <button @click="settingsSelectAll(vKey)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
