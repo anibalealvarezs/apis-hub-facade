@@ -19,6 +19,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cost', 'cross-channel', 'agency', 'scope_global', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -52,6 +53,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cost', 'scalability', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -76,6 +78,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social'],
                 'calculation_type' => 'calculate_autocorrelation',
+                'compatible_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -91,6 +94,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cross-channel', 'organic', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'organic_social'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -115,6 +119,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'trends', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -139,6 +144,7 @@ class PredefinedKpiRegistry
                 'categories' => ['impressions', 'alerts', 'scope_asset', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['impressionable'],
                 'calculation_type' => 'calculate_anomaly',
+                'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -154,6 +160,7 @@ class PredefinedKpiRegistry
                 'categories' => ['clicks', 'trends', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'clickable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -169,6 +176,7 @@ class PredefinedKpiRegistry
                 'categories' => ['impressions', 'scalability', 'cost', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -193,6 +201,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_autocorrelation',
+                'compatible_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -208,6 +217,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cross-channel', 'performance', 'organic', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'organic_social', 'impressionable'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -232,6 +242,7 @@ class PredefinedKpiRegistry
                 'categories' => ['clicks', 'impressions', 'seo', 'scope_channel', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'clickable', 'impressionable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -256,6 +267,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'results', 'scalability', 'agency', 'scope_global', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'revenue_tracked'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -280,6 +292,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'results', 'trends', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -304,6 +317,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'results', 'cross-channel', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['seo', 'revenue_tracked'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -328,6 +342,7 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'performance', 'cost', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -352,6 +367,7 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'trends', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -376,6 +392,7 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -400,6 +417,7 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'trends', 'cost', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_tracking'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -415,6 +433,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'alerts', 'agency', 'scope_asset', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_anomaly',
+                'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -430,6 +449,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -454,6 +474,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'impressionable'],
                 'calculation_type' => 'calculate_trend_linear',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -469,6 +490,7 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'trends', 'seasonality', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_holt_winters',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -484,6 +506,7 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_logarithmic',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -499,6 +522,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'trends', 'performance', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_trend_ema',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -514,6 +538,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -538,6 +563,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'results', 'scalability', 'scope_global', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'conversion_tracked'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -562,6 +588,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -586,6 +613,7 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'alerts', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -610,6 +638,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'scalability', 'cost', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'traffic_tracked'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -634,6 +663,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'alerts', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['paid_media', 'traffic_tracked'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -658,6 +688,7 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'cross-channel', 'results', 'scope_global', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'revenue_tracked'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -682,6 +713,7 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -706,6 +738,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cross-channel', 'seo', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['seo', 'spendable', 'organic_social'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -739,6 +772,7 @@ class PredefinedKpiRegistry
                 'categories' => ['cross-channel', 'results', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['revenue_tracked', 'seo', 'spendable', 'organic_social'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -781,6 +815,7 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'results', 'scope_global', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['traffic_tracked', 'conversion_tracked'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
