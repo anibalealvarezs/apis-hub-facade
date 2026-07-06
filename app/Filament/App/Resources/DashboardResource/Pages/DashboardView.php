@@ -148,6 +148,7 @@ class DashboardView extends Page
                     'channel' => $depChannel,
                     'channel_name' => !empty($depChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($depChannel) : '',
                     'metrics' => $depMetrics,
+                    'selected_metric' => $uiState['dependent_metric'] ?? '',
                 ];
 
                 if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
@@ -161,6 +162,7 @@ class DashboardView extends Page
                             'channel' => $indChannel,
                             'channel_name' => !empty($indChannel) ? \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($indChannel) : '',
                             'metrics' => $indMetrics,
+                            'selected_metric' => $var['independent_metric'] ?? '',
                         ];
                     }
                 }

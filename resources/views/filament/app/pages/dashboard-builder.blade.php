@@ -430,7 +430,10 @@
                                             <div class="flex items-center gap-2">
                                                 <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Dependent Series</span>
                                             </div>
-                                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[widgetKpiConfig.dependent_channel]"></span>
+                                            <div class="flex flex-col items-end gap-1">
+                                                <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[widgetKpiConfig.dependent_channel]"></span>
+                                                <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
+                                            </div>
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
@@ -465,7 +468,10 @@
                                                 <div class="flex items-center gap-2">
                                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="'Independent ' + idx"></span>
                                                 </div>
-                                                <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[varCfg.independent_channel]"></span>
+                                                <div class="flex flex-col items-end gap-1">
+                                                    <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[varCfg.independent_channel]"></span>
+                                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
+                                                </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                                 <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
@@ -1038,6 +1044,11 @@
                                     if (!this.allChannelAssets[ch]) {
                                         @this.getAssetsForChannel(ch).then(assets => {
                                             this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                                        });
+                                    }
+                                    if (!this.allChannelMetrics[ch]) {
+                                        @this.getMetricsForChannel(ch).then(metrics => {
+                                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                         });
                                     }
                                 });

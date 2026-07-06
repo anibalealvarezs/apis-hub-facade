@@ -183,13 +183,19 @@
                                             </svg>
                                             <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="vKey === 'dependent' ? 'Dependent Series' : (sourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1))"></span>
                                         </div>
-                                        <template x-if="vConfig.channel">
-                                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel_name || vConfig.channel"></span>
-                                        </template>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <template x-if="vConfig.channel">
+                                                <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel_name || vConfig.channel"></span>
+                                            </template>
+                                            <template x-if="sourceType === 'kpi' && vConfig.selected_metric">
+                                                <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(vConfig.metrics || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
+                                            </template>
+                                        </div>
                                     </div>
                                     <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
-                                        <div class="my-2">
+                                        <template x-if="sourceType !== 'kpi'">
+                                            <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                             <select x-model="(settingsControls.metrics || [])[vConfig.index]"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
@@ -197,8 +203,9 @@
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
                                                     <option :value="key" x-text="label"></option>
                                                 </template>
-                                            </select>
-                                        </div>
+                                                </select>
+                                            </div>
+                                        </template>
 
                                         {{-- Asset filter --}}
                                         <template x-if="settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options).length > 0">
