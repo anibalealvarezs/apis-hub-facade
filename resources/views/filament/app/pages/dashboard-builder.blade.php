@@ -383,8 +383,8 @@
                                                 </template>
                                             </div>
 
-                                            <div class="flex-1 flex flex-col min-h-0 mt-2">
-                                                <div class="flex items-center justify-between mb-2">
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
                                                     <template x-if="series.channel">
                                                         <div class="flex gap-3">
@@ -393,7 +393,7 @@
                                                         </div>
                                                     </template>
                                                 </div>
-                                                <div class="relative mb-1">
+                                                <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -455,15 +455,15 @@
                                             </div>
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
-                                                <div class="flex items-center justify-between mb-2">
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
                                                     <div class="flex gap-3">
                                                         <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
                                                         <button @click="clearAllKpiAssets('dependent')" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                     </div>
                                                 </div>
-                                                <div class="relative mb-1">
+                                                <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -471,7 +471,7 @@
                                                     </div>
                                                     <input type="text" x-model="searchQueries['dependent']" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
                                                         <div x-show="(searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase())"
                                                              @click="toggleKpiAsset('dependent', id)"
@@ -512,15 +512,15 @@
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
-                                                    <div class="flex items-center justify-between mb-2">
+                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                    <div class="flex items-center justify-between">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
                                                         <div class="flex gap-3">
                                                             <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
                                                             <button @click="clearAllKpiAssets('independent_' + idx)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </div>
-                                                    <div class="relative mb-1">
+                                                    <div class="relative">
                                                         <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -528,7 +528,7 @@
                                                         </div>
                                                         <input type="text" x-model="searchQueries['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                     </div>
-                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar" style="max-height: 70%">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
                                                             <div x-show="(searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase())"
                                                                  @click="toggleKpiAsset('independent_' + idx, id)"
