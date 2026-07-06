@@ -127,7 +127,7 @@
                     <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex gap-6 min-h-0 overflow-y-auto desktop-overflow-hidden" style="flex-wrap: wrap;">
                         
                         {{-- Left Column: Global Configuration --}}
-                        <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%;">
+                        <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; max-height: 100%;">
                             {{-- Card: Date Range --}}
                             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
                                 <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -167,7 +167,7 @@
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
-                        <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%;">
+                        <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                     <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
