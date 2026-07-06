@@ -408,7 +408,8 @@
                                                     </div>
                                                     <input type="text" x-model="searchQueries['raw_' + index]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                <div class="flex-1 relative min-h-0">
+                                                    <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
                                                         <div x-show="(searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase())"
                                                              @click="toggleRawAsset(index, id)"
@@ -426,6 +427,7 @@
                                                     <template x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
                                                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Select a channel first.</p>
                                                     </template>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -478,7 +480,8 @@
                                                     </div>
                                                     <input type="text" x-model="searchQueries['dependent']" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                 </div>
-                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                <div class="flex-1 relative min-h-0">
+                                                    <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
                                                         <div x-show="(searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase())"
                                                              @click="toggleKpiAsset('dependent', id)"
@@ -496,6 +499,7 @@
                                                     <template x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
                                                         <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
                                                     </template>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -535,7 +539,8 @@
                                                         </div>
                                                         <input type="text" x-model="searchQueries['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
                                                     </div>
-                                                    <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                                                    <div class="flex-1 relative min-h-0">
+                                                        <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
                                                             <div x-show="(searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase())"
                                                                  @click="toggleKpiAsset('independent_' + idx, id)"
@@ -553,6 +558,7 @@
                                                         <template x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
                                                             <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
                                                         </template>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
