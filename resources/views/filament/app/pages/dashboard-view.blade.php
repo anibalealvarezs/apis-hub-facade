@@ -117,10 +117,10 @@
                         </button>
                     </div>
 
-                    <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex flex-col md:grid md:grid-cols-3 md:grid-rows-1 gap-6 min-h-0 overflow-y-auto md:overflow-hidden">
+                    <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row gap-6 min-h-0 overflow-y-auto md:overflow-hidden">
                         
                         {{-- Left Column: Global Configuration --}}
-                        <div class="md:col-span-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0">
+                        <div class="w-full md:w-1/3 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 flex-shrink-0">
                             {{-- Card: Date Range --}}
                             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
                                 <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -160,7 +160,7 @@
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
-                        <div class="md:col-span-2 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
+                        <div class="flex-1 min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                     <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
