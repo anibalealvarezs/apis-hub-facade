@@ -116,29 +116,54 @@
                         </button>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-900">
+                    <div class="flex-1 overflow-hidden p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex flex-col lg:flex-row gap-6">
+                        
+                        {{-- Left Column: Global Configuration --}}
+                        <div class="w-full lg:w-1/3 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2">
+                            {{-- Card: Date Range --}}
+                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                    </svg>
+                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date Range</span>
+                                </div>
+                                <div class="p-6 flex flex-col items-center gap-4">
+                                    <input type="date" x-model="settingsControls.date_start"
+                                           class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                    <span class="text-gray-400 dark:text-gray-500 text-sm hidden sm:block">↓</span>
+                                    <input type="date" x-model="settingsControls.date_end"
+                                           class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
 
-                        {{-- Card: Date Range --}}
-                        <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-                            <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                                </svg>
-                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Date Range</span>
-                            </div>
-                            <div class="p-6 flex flex-col sm:flex-row items-center gap-4">
-                                <input type="date" x-model="settingsControls.date_start"
-                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                <span class="text-gray-400 dark:text-gray-500 text-sm hidden sm:block">→</span>
-                                <input type="date" x-model="settingsControls.date_end"
-                                       class="w-full sm:flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                            </div>
+                            {{-- Card: Granularity --}}
+                            <template x-if="settingsGranularityOnTheGo">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</span>
+                                    </div>
+                                    <div class="p-6">
+                                        <select x-model="settingsControls.granularity"
+                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
-                        {{-- Cards: Per-variable (metric + assets) --}}
-                        <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
-                            <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
-                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col">
+                        {{-- Right Column: Variables Configuration --}}
+                        <div class="w-full lg:w-2/3 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
+                            <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
+                                <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
+                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full flex flex-col snap-start">
+                                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full">
                                     <div class="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                         <div class="flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
@@ -202,29 +227,11 @@
                                             </div>
                                         </template>
                                     </div>
-                                </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </template>
-                        </template>
-
-                        {{-- Card: Granularity --}}
-                        <template x-if="settingsGranularityOnTheGo">
-                            <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-                                <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Granularity</span>
-                                </div>
-                                <div class="p-6">
-                                    <select x-model="settingsControls.granularity"
-                                            class="w-full md:w-1/2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </template>
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
