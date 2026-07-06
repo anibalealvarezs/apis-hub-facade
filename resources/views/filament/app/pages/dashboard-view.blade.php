@@ -176,7 +176,7 @@
                                             <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="vConfig.channel_name || vConfig.channel"></span>
                                         </template>
                                     </div>
-                                    <div class="p-6 flex-1 flex flex-col space-y-5 min-h-0">
+                                    <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
                                         <div class="space-y-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Metric</label>
@@ -193,7 +193,7 @@
 
                                         {{-- Asset filter --}}
                                         <template x-if="settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options).length > 0">
-                                            <div class="space-y-3 flex-1 flex flex-col min-h-0">
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0">
                                                 <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets</label>
                                                     <template x-if="(settingsSeriesOptions[vKey].mode || 'multiple') === 'multiple'">
@@ -211,7 +211,7 @@
                                                     </div>
                                                     <input type="text" x-model="settingsSearchQueries[vKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5">
                                                 </div>
-                                                <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-[240px]">
+                                                <div class="flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey].options)" :key="assetId">
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
