@@ -43,7 +43,7 @@
             @endphp
 
             {{-- 🟢 Layer 0: Worker Status --}}
-            <div class="mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
+            <div class="mb-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
                 <div>
                     <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">{{ __('Remote Workers Status') }}</h2>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -58,7 +58,7 @@
             </div>
 
             {{-- 🟢 Layer 1: Global Health Overview --}}
-            <div class="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
+            <div class="mb-8 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div class="w-full md:w-1/2">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Overall Sync Progress') }}</h2>
@@ -110,7 +110,7 @@
                         $chFailed = $channelData['failed'] ?? 0;
                         $hasAssets = !empty($channelData['assets']);
                     @endphp
-                    <div x-data="{ expanded: false }" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
+                    <div x-data="{ expanded: false }" class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
 
                         {{-- Channel Header Card --}}
                         <div class="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" @click="expanded = !expanded">

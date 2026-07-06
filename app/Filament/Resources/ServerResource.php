@@ -17,13 +17,11 @@ class ServerResource extends Resource
     protected static ?string $model = Server::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-server';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Infrastructure');
     }
-
-
-    
 
     public static function form(Form $form): Form
     {

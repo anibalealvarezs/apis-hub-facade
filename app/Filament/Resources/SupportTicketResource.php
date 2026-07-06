@@ -20,13 +20,11 @@ class SupportTicketResource extends Resource
     protected static ?string $model = SupportTicket::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Support');
     }
-
-
-    
 
     public static function getEloquentQuery(): Builder
     {
@@ -275,9 +273,10 @@ class SupportTicketResource extends Resource
     private static function getUserOptionLabel($value): ?string
     {
         $user = User::find($value);
-        if (!$user) {
+        if (! $user) {
             return null;
         }
+
         return "{$user->name} ({$user->email})";
     }
 
@@ -299,6 +298,7 @@ class SupportTicketResource extends Resource
     {
         $name = e($user->name);
         $email = e($user->email);
+
         return "<span class=\"font-semibold\">{$name}</span> <span class=\"text-gray-400\">— {$email}</span>";
     }
 
@@ -342,7 +342,7 @@ class SupportTicketResource extends Resource
 
         $projects = Project::with('user:id,name,email')
             ->where(function (Builder $q) use ($userIds) {
-                if (!empty($userIds)) {
+                if (! empty($userIds)) {
                     $q->whereIn('user_id', $userIds)
                       ->orWhereHas('users', fn (Builder $sub) => $sub->whereIn('users.id', $userIds));
                 }
@@ -361,7 +361,7 @@ class SupportTicketResource extends Resource
 
         $profiles = BillingProfile::with('user:id,name,email')
             ->where(function (Builder $q) use ($userIds) {
-                if (!empty($userIds)) {
+                if (! empty($userIds)) {
                     $q->whereIn('user_id', $userIds)
                       ->orWhereHas('sharedWithUsers', fn (Builder $sub) => $sub->whereIn('users.id', $userIds));
                 }
@@ -386,6 +386,7 @@ class SupportTicketResource extends Resource
                 : $owner;
             $options[$model->id] = "<span class=\"font-semibold\">{$label}</span> <span class=\"text-gray-400\">— {$description}</span>";
         }
+
         return $options;
     }
 }

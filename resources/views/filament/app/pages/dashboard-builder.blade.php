@@ -159,7 +159,7 @@
         <div x-show="showDashboardControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showDashboardControls = false"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">These defaults apply to all widgets. Widgets can
                     override individually.</p>
@@ -212,7 +212,7 @@
         <div x-show="showWidgetControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showWidgetControls = false"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white"
                     x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h2>
 
@@ -390,7 +390,7 @@
         {{-- ============================================================ --}}
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showAddWidgetModal = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 overflow-y-auto pr-2 pb-2">
@@ -479,7 +479,7 @@
         {{-- ============================================================ --}}
         <div x-show="showShareDialog" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showShareDialog = false"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-6">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Share Dashboard') }}</h2>
 
                 {{-- Public Toggle --}}

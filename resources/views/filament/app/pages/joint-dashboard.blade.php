@@ -338,7 +338,7 @@
         </div>
 
         <div class="joint-card" x-show="chartRendered" style="display: none;">
-            <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-2xl">
+            <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-xl">
                 <div class="flex flex-col items-center">
                     <svg class="animate-spin h-10 w-10 text-primary-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -350,7 +350,7 @@
             
             <div class="flex justify-between items-start mb-10">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Comparison View') }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Comparison View') }}</h2>
                     <p class="text-md font-semibold text-gray-600 dark:text-gray-300 mb-4" x-text="subtitle"></p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-3xl">
                         {{ __('Displays both metrics mapped over time. Z-Score (default) scales both metrics by their standard deviations, allowing you to perfectly compare relative volatility regardless of their raw numbers.') }}

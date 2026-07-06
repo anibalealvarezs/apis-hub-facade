@@ -103,8 +103,6 @@ class DashboardView extends Page
                     $depAssetIds = is_array($uiState['dependent_asset_filter'])
                         ? $uiState['dependent_asset_filter']
                         : [$uiState['dependent_asset_filter']];
-                } elseif (! empty($resolved['assets'])) {
-                    $depAssetIds = $resolved['assets'];
                 }
                 $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
             }
@@ -117,8 +115,6 @@ class DashboardView extends Page
                             $indAssetIds = is_array($var['independent_asset_filter'])
                                 ? $var['independent_asset_filter']
                                 : [$var['independent_asset_filter']];
-                        } elseif (! empty($resolved['assets'])) {
-                            $indAssetIds = $resolved['assets'];
                         }
                         $provideAssetFilters($var['independent_channel'], 'independent_' . $key, 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')', $indAssetIds);
                     }
@@ -127,27 +123,10 @@ class DashboardView extends Page
 
             // Fallback for non-KPI widgets with a channel
             if (empty($widgetArray['series_assets_options']) && ! empty($resolved['channel'])) {
-                $configuredAssets = $resolved['assets'] ?? null;
-                $provideAssetFilters($resolved['channel'], 'dependent', null, $configuredAssets);
+                $provideAssetFilters($resolved['channel'], 'dependent', null, null);
             }
 
-            // Safety net: enforce widget-configured assets as the max available set in ALL series_assets_options
-            if (! empty($resolved['assets']) && is_array($resolved['assets']) && ! empty($widgetArray['series_assets_options'])) {
-                $configuredIds = array_map('strval', $resolved['assets']);
-                foreach ($widgetArray['series_assets_options'] as $sk => $sv) {
-                    $intersected = [];
-                    foreach ($configuredIds as $aid) {
-                        if (isset($sv['options'][$aid])) {
-                            $intersected[$aid] = $sv['options'][$aid];
-                        }
-                    }
-                    if (! empty($intersected)) {
-                        $widgetArray['series_assets_options'][$sk]['options'] = $intersected;
-                    } else {
-                        unset($widgetArray['series_assets_options'][$sk]);
-                    }
-                }
-            }
+
 
             // Expose per-variable metric options for on-the-go selection (regression KPIs)
             $variables = [];

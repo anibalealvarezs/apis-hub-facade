@@ -10,11 +10,9 @@ use Filament\Pages\SettingsPage;
 class ManagePaymentSettings extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
-    
-    
-    
 
     protected static string $settings = PaymentSettings::class;
+
     public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
     {
         return __('Configure Payment Methods');
@@ -30,7 +28,6 @@ class ManagePaymentSettings extends SettingsPage
         return __('System Configuration');
     }
 
-
     public function form(Form $form): Form
     {
         return $form
@@ -41,7 +38,7 @@ class ManagePaymentSettings extends SettingsPage
                         Forms\Components\Toggle::make('enable_stripe')
                             ->label(__('Habilitar Stripe (Tarjetas de Crédito)'))
                             ->helperText(__('Permitir pagos con tarjeta de crédito/débito a través de Stripe.')),
-                        
+
                         Forms\Components\Toggle::make('enable_paypal')
                             ->label(__('Habilitar PayPal'))
                             ->helperText(__('Permitir pagos utilizando el balance de PayPal o cuentas asociadas.')),

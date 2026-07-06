@@ -104,10 +104,10 @@
                  x-cloak>
                 <div @click="closeSettings()" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
-                <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
+                <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
                      style="width: 95vw; max-width: 1400px; max-height: 90vh;"
                      @click.away="closeSettings()">
-                    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-2xl">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
                         <h3 class="text-base font-bold text-gray-900 dark:text-white">Widget Settings</h3>
                         <button @click="closeSettings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -188,14 +188,14 @@
                                                         <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
                                                              @click="settingsToggleAsset(vKey, assetId)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                             :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'">
+                                                             :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                 :class="settingsIsSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                <svg x-show="settingsIsSelected(vKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                 :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                <svg x-show="(settingsControls.series_assets[vKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                                 </svg>
                                                             </div>
-                                                            <span class="truncate font-medium" :class="settingsIsSelected(vKey, assetId) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
+                                                            <span class="truncate font-medium" :class="(settingsControls.series_assets[vKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -227,7 +227,7 @@
                         </template>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-2xl">
+                    <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
                         <button @click="closeSettings()"
                                 class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-6 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent">
                             Cancel
@@ -371,11 +371,6 @@
                         }));
                         this.reloadWidget(widgetId, controls);
                         this.closeSettings();
-                    },
-
-                    settingsIsSelected(seriesKey, assetId) {
-                        if (!this.settingsControls || !this.settingsControls.series_assets[seriesKey]) return false;
-                        return this.settingsControls.series_assets[seriesKey].includes(String(assetId));
                     },
 
                     settingsToggleAsset(seriesKey, assetId) {

@@ -551,7 +551,7 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="fb-modal-panel relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-2xl transition-all border border-gray-200 dark:border-white/10">
+                     class="fb-modal-panel relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-xl transition-all border border-gray-200 dark:border-white/10">
 
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="fb-close-btn">

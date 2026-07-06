@@ -372,7 +372,7 @@
                 <form wire:submit="save">
                     {{ $this->form }}
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 flex justify-end pointer-events-none">
-                        <div class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
                             {{ $this->getAction('redeployInfrastructure') }}
                             
                             <x-filament::button type="submit" color="primary" size="lg"
