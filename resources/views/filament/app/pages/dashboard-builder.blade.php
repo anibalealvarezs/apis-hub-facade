@@ -1067,10 +1067,10 @@
                                 if (ch && !this.allChannelMetrics[ch]) {
                                     @this.getMetricsForChannel(ch).then(metrics => { 
                                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                        this.$nextTick(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; });
+                                        setTimeout(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; }, 100);
                                     });
                                 } else if (ch) {
-                                    this.$nextTick(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; });
+                                    setTimeout(() => { this.widgetControlsForm.raw_series[idx].metric = originalMetric; }, 100);
                                 }
                             });
                         }
