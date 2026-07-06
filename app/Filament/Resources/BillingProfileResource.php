@@ -146,7 +146,7 @@ class BillingProfileResource extends Resource
                             $syncConfig = $project->sync_config ?? [];
                             if (!is_array($syncConfig)) continue;
 
-                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+                            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
                             foreach ($syncConfig as $channelKey => $channelConfig) {
                                 if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
 

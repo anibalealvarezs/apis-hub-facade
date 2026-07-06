@@ -189,7 +189,7 @@ class BillingProfileResource extends Resource
                         }
 
                         $assetCount = 0;
-                        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+                        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
                         foreach ($projectsToScan as $project) {
                             $syncConfig = $project->sync_config ?? [];
                             if (! is_array($syncConfig)) {

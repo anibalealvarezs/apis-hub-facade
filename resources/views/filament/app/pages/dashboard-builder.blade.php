@@ -836,7 +836,7 @@
                         const channelKeys = Object.keys(this.channels);
                         channelKeys.forEach(ch => {
                             @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 if (ch === this.dashboardControls.channel) {
                                     this.dashboardAssets = assets;
                                 }
@@ -999,7 +999,7 @@
                             this.widgetControlsForm.raw_series.forEach(series => {
                                 const ch = series.channel;
                                 if (ch && !this.allChannelAssets[ch]) {
-                                    @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets[ch] = assets; });
+                                    @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                                 }
                                 if (ch && !this.allChannelMetrics[ch]) {
                                     @this.getMetricsForChannel(ch).then(metrics => { this.allChannelMetrics[ch] = metrics; });
@@ -1037,7 +1037,7 @@
                                 channelsToLoad.forEach(ch => {
                                     if (!this.allChannelAssets[ch]) {
                                         @this.getAssetsForChannel(ch).then(assets => {
-                                            this.allChannelAssets[ch] = assets;
+                                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                         });
                                     }
                                 });
@@ -1059,7 +1059,7 @@
                             this.restoreWidgetMetrics(savedMetrics);
                         } else if (ch) {
                             @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 this.widgetAssets = assets;
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
@@ -1088,7 +1088,7 @@
                             this.widgetMetrics = this.allChannelMetrics[ch] || {};
                         } else if (ch) {
                             @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 this.widgetAssets = assets;
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
@@ -1105,7 +1105,7 @@
                         const ch = this.widgetControlsForm.raw_series[index].channel;
                         if (ch && !this.allChannelAssets[ch]) {
                             @this.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets[ch] = assets;
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                             });
                         }
                         if (ch && !this.allChannelMetrics[ch]) {

@@ -328,7 +328,7 @@ class ManageCollaborators extends Page implements HasTable
     {
         $config = $project->sync_config[$channel] ?? [];
         $assets = [];
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
         $searchIn = function ($items) use (&$assets) {
             if (!is_array($items)) {

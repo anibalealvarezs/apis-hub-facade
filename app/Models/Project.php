@@ -364,7 +364,7 @@ class Project extends Model
             }
 
             // We explicitly target the known asset list keys defined by the driver schemas
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
             // 1. Check direct asset lists (e.g., $channelConfig['pages'])
             foreach ($assetKeys as $assetKey) {
@@ -473,7 +473,7 @@ class Project extends Model
                 continue;
             }
 
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
             // 1. Check direct asset lists
             foreach ($assetKeys as $assetKey) {

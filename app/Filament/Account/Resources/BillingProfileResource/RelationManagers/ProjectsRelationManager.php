@@ -18,7 +18,7 @@ class ProjectsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
         $countAssets = function (Project $project) use ($assetKeys): int {
             $count = 0;

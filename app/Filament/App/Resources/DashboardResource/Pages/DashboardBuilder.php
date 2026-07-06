@@ -125,7 +125,7 @@ class DashboardBuilder extends Page
 
         $config = $project->sync_config[$channel] ?? [];
         $assets = [];
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
         foreach ($assetKeys as $assetKey) {
             if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
