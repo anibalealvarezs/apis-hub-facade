@@ -393,9 +393,9 @@
             <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-2 pb-2">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 overflow-y-auto pr-2 pb-2">
                     {{-- Column 1 (Settings) --}}
-                    <div class="space-y-6">
+                    <div class="space-y-6 md:col-span-1">
                         {{-- Name --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
@@ -436,12 +436,12 @@
                     </div>
 
                     {{-- Column 2 (Widget Types) --}}
-                    <div class="space-y-6">
+                    <div class="space-y-6 md:col-span-2">
                         {{-- Widget Type --}}
                         <template x-if="addWidgetForm.source_type">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Widget Type</label>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <template x-for="(label, type) in availableWidgetTypes" :key="type">
                                         <button class="p-3 rounded-xl border text-left transition-colors flex items-center gap-3"
                                                 :class="addWidgetForm.widget_type === type
