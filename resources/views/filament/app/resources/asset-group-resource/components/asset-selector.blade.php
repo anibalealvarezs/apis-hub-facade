@@ -21,18 +21,30 @@
     @endphp
 
     <div x-data="{
-        state: $wire.$entangle('{{ $getStatePath() }}'),
+        state: {{ json_encode($getState() ?: new \stdClass()) }},
         options: @js($options),
         searchQueries: {},
 
         init() {
-            // Livewire/PHP now provides this.state as a proper `{}` object
+            if (!this.state || Array.isArray(this.state)) {
+                this.state = {};
+            }
+            
             for (const key in this.options) {
                 this.searchQueries[key] = '';
                 if (this.state[key] === undefined) {
                     this.state[key] = [];
                 }
             }
+            
+            // Sync initial state to hidden input
+            this.$refs.hiddenInput.value = JSON.stringify(this.state);
+            this.$refs.hiddenInput.dispatchEvent(new Event('input'));
+        },
+
+        updateHidden() {
+            this.$refs.hiddenInput.value = JSON.stringify(this.state);
+            this.$refs.hiddenInput.dispatchEvent(new Event('input'));
         },
 
         toggleAsset(channelKey, assetId) {
@@ -48,17 +60,22 @@
             }
             
             this.state[channelKey] = next;
+            this.updateHidden();
         },
 
         selectAll(channelKey) {
             const allIds = Object.keys(this.options[channelKey].assets).map(String);
             this.state[channelKey] = allIds;
+            this.updateHidden();
         },
 
         clearAll(channelKey) {
             this.state[channelKey] = [];
+            this.updateHidden();
         }
     }" class="w-full">
+        
+        <input type="hidden" x-ref="hiddenInput" wire:model="{{ $getStatePath() }}">
         
         <style>
             .custom-scrollbar::-webkit-scrollbar {

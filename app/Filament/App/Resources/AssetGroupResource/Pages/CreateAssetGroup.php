@@ -13,6 +13,9 @@ class CreateAssetGroup extends CreateRecord
     protected function afterCreate(): void
     {
         $state = $this->data['assets_data'] ?? [];
+        if (is_string($state)) {
+            $state = json_decode($state, true);
+        }
         if (is_object($state)) {
             $state = (array) $state;
         }
