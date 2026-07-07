@@ -88,13 +88,14 @@ class DashboardView extends Page
                     }
                     $assets = $filtered;
                 }
-                if (! empty($assets)) {
-                    $widgetArray['series_assets_options'][$key] = [
-                        'label' => $label ?? \Illuminate\Support\Str::headline($channel),
-                        'options' => $assets,
-                        'mode' => $kpiAssetMode,
-                    ];
+                if (empty($assets)) {
+                    $assets = []; // ensure it's an array
                 }
+                $widgetArray['series_assets_options'][$key] = [
+                    'label' => $label ?? \Illuminate\Support\Str::headline($channel),
+                    'options' => (object) $assets,
+                    'mode' => $kpiAssetMode,
+                ];
             };
 
             if (! empty($uiState['dependent_channel'])) {
@@ -216,10 +217,12 @@ class DashboardView extends Page
                 }
             }
 
-            $widgetArray['variables'] = $variables;
+            $widgetArray['variables'] = (object) $variables;
             // Keep flat metric_options for backward compatibility
-            $widgetArray['metric_options'] = isset($depMetrics) ? $depMetrics : [];
+            $widgetArray['metric_options'] = isset($depMetrics) ? (object) $depMetrics : new \stdClass();
+            $widgetArray['series_assets_options'] = (object) $widgetArray['series_assets_options'];
         }
+
     }
 
     protected function getHeaderActions(): array
