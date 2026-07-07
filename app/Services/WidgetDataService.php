@@ -14,6 +14,16 @@ class WidgetDataService
     public function resolveControls(Dashboard $dashboard, DashboardWidget $widget): array
     {
         $dashboardControls = $dashboard->controls ?? [];
+        if (empty($dashboardControls['date_end'])) {
+            $dashboardControls['date_end'] = \Carbon\Carbon::now()->subDays(1)->format('Y-m-d');
+        }
+        if (empty($dashboardControls['zero_handling'])) {
+            $dashboardControls['zero_handling'] = 'remove';
+        }
+        if (empty($dashboardControls['granularity'])) {
+            $dashboardControls['granularity'] = 'daily';
+        }
+
         $widgetControls = $widget->controls ?? [];
 
         $resolved = [];
