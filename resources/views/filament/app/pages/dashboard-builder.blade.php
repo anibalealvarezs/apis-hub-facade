@@ -83,6 +83,19 @@
                                                   x-text="widget.title || widget.name"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
+                                            <template x-if="widget.description">
+                                                <div class="group relative flex items-center justify-center p-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help transition-colors">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                                    </svg>
+                                                    <div class="pointer-events-none absolute bottom-full mb-2 w-64 opacity-0 transition-opacity group-hover:opacity-100 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
+                                                        <div class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left">
+                                                            <span x-text="widget.description"></span>
+                                                            <div class="absolute -bottom-1 right-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                 x-on:click="openWidgetControls(widget)"
@@ -251,6 +264,30 @@
                                 <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
                                      x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
                             </template>
+                        </div>
+                        
+                        {{-- Card: Identity --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                            <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                </svg>
+                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Identity</span>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Widget Title <span class="text-red-500">*</span></label>
+                                    <input type="text" x-model="widgetControlsForm.title"
+                                           class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                           placeholder="Enter widget title">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Description <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                    <textarea x-model="widgetControlsForm.description" rows="2"
+                                              class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                              placeholder="Enter a brief description..."></textarea>
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Card: Date Range --}}
@@ -1049,6 +1086,8 @@
                         const hasZero = wc.zero_handling !== undefined;
 
                         this.widgetControlsForm = {
+                            title: widget.title || widget.name || '',
+                            description: widget.description || '',
                             date_inherit: !hasDate,
                             date_start: wc.date_start || '',
                             date_end: wc.date_end || '',
@@ -1278,6 +1317,11 @@
 
                         const payload = {};
 
+                        if (!c.title || c.title.trim() === '') {
+                            this.widgetControlsError = "Please enter a title for the widget.";
+                            return;
+                        }
+
                         if (!c.date_inherit) {
                             payload.date_start = c.date_start;
                             payload.date_end = c.date_end;
@@ -1324,7 +1368,7 @@
                             payload.series_assets = c.series_assets;
                         }
 
-                        @this.saveWidgetControls(this.widgetControlsTarget.id, payload);
+                        @this.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
                         this.showWidgetControls = false;
                         this.reloadGrid();
 
@@ -1332,6 +1376,8 @@
                         const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);
                         if (idx !== -1) {
                             this.widgets[idx].controls = payload;
+                            this.widgets[idx].title = c.title.trim();
+                            this.widgets[idx].description = c.description ? c.description.trim() : null;
                         }
                     },
 

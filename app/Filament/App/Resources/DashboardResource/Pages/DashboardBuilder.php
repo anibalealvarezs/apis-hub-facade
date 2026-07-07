@@ -72,12 +72,16 @@ class DashboardBuilder extends Page
 
     // ─── Widget Controls ───
 
-    public function saveWidgetControls(int $widgetId, array $controls): void
+    public function saveWidgetControls(int $widgetId, array $controls, string $title, ?string $description = null): void
     {
         $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
             ->findOrFail($widgetId);
 
-        $widget->update(['controls' => $controls]);
+        $widget->update([
+            'controls' => $controls,
+            'title' => $title,
+            'description' => $description,
+        ]);
 
         Notification::make()
             ->title(__('Widget controls saved'))
