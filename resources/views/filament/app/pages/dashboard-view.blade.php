@@ -372,6 +372,19 @@
                             if (rawControls) {
                                 try {
                                     const controls = JSON.parse(rawControls);
+                                    if (this.dashboardOverrides.date_start) {
+                                        controls.date_start = this.dashboardOverrides.date_start;
+                                    }
+                                    if (this.dashboardOverrides.date_end) {
+                                        controls.date_end = this.dashboardOverrides.date_end;
+                                    }
+                                    window.dispatchEvent(new CustomEvent('reload-widget', {
+                                        detail: {
+                                            id: parseInt(widgetId),
+                                            controls: controls
+                                        }
+                                    }));
+                                    // reload-widget listener in widgetHeader already updates controls, but we also pass it directly to renderWidget
                                     this.renderWidget(widgetId, el, controls);
                                 } catch (e) {}
                             } else {
