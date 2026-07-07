@@ -227,14 +227,26 @@
             <div @click="showWidgetControls = false" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10" style="width: 95vw; max-width: 1400px; height: 90vh;" @click.away="showWidgetControls = false">
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
-                    <div class="flex flex-col gap-1">
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h3>
-                        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                            <span class="inline-block w-2 h-2 rounded-full bg-green-400" x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
-                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400" x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="'Configure: ' + (widgetControlsTarget.title || widgetControlsTarget.name)"></h3>
+                            
+                            {{-- Data Source Badges --}}
+                            <span class="inline-flex items-center rounded-md bg-primary-50 dark:bg-primary-950/40 px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-400 ring-1 ring-inset ring-primary-700/10 dark:ring-primary-400/20"
+                                  x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI' : 'Metric'"></span>
+                            
+                            <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
+                                <span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
+                                      x-text="kpis[widgetControlsTarget.source_config.custom_kpi_id] ? kpis[widgetControlsTarget.source_config.custom_kpi_id].name : ('KPI ID: ' + widgetControlsTarget.source_config.custom_kpi_id)"></span>
+                            </template>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400" x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
                             <span x-show="!widgetHasCustomControls(widgetControlsTarget)">All controls inherited from dashboard defaults.</span>
                             <span x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
-                            <button class="ml-auto text-xs text-primary-600 dark:text-primary-400 hover:underline" x-on:click="resetWidgetControls()">Reset all to inherit</button>
+                            <button class="ml-2 text-primary-600 dark:text-primary-400 hover:underline font-medium" x-on:click="resetWidgetControls()">Reset all to inherit</button>
                         </div>
                     </div>
                     <button @click="showWidgetControls = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -271,17 +283,7 @@
                         <div class="modal-body-absolute-wrapper-custom flex flex-col md:flex-row gap-6">
                             {{-- Left Column: Global Configuration --}}
                             <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; height: 100%;">
-                        {{-- Data Source Info (Read Only) --}}
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0 p-4 space-y-1">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
-                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100" 
-                                 x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI (Analytics Engine)' : 'Metric (Raw Aggregation)'"></div>
-                            <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
-                                <div class="text-xs text-primary-600 dark:text-primary-400 font-medium" 
-                                     x-text="'KPI: ' + (kpis[widgetControlsTarget.source_config.custom_kpi_id] || ('ID: ' + widgetControlsTarget.source_config.custom_kpi_id))"></div>
-                            </template>
-                        </div>
-                        
+
                         {{-- Card: Identity --}}
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
                             <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
