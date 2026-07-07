@@ -54,43 +54,41 @@ class AssetGroupResource extends Resource
                     
                 Forms\Components\Section::make('Assets')
                     ->schema([
-                        Forms\Components\Repeater::make('items')
-                            ->relationship()
-                            ->schema([
-                                Forms\Components\Select::make('channel')
-                                    ->required()
-                                    ->options(function () {
-                                        return \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
-                                    })
-                                    ->live()
-                                    ->afterStateUpdated(fn (callable $set) => $set('asset_id', null)),
-                                Forms\Components\Select::make('asset_id')
-                                    ->label('Asset')
-                                    ->required()
-                                    ->options(function (\Filament\Forms\Get $get) use ($project) {
-                                        $channel = $get('channel');
-                                        if (!$channel) {
-                                            return [];
-                                        }
-                                        $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
-                                        $user = auth()->user();
-                                        if ($user->role === 'admin' || $user->role === 'owner') {
-                                            return $allAssets;
-                                        }
-                                        $allowed = app(\App\Services\WidgetDataService::class)->filterAllowedAssets($project, $user->id, $channel, array_keys($allAssets));
-                                        $filtered = [];
-                                        foreach ($allowed as $id) {
-                                            if (isset($allAssets[$id])) {
-                                                $filtered[$id] = $allAssets[$id];
-                                            }
-                                        }
-                                        return $filtered;
-                                    })
-                                    ->searchable(),
-                            ])
-                            ->columns(2)
-                            ->addActionLabel('Add Asset')
-                            ->collapsible()
+                        Forms\Components\ViewField::make('assets_data')
+                            ->hiddenLabel()
+                            ->view('filament.app.resources.asset-group-resource.components.asset-selector')
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function (Forms\Components\ViewField $component, ?AssetGroup $record) {
+                                if (!$record) {
+                                    $component->state([]);
+                                    return;
+                                }
+                                $state = [];
+                                foreach ($record->items as $item) {
+                                    if (!isset($state[$item->channel])) {
+                                        $state[$item->channel] = [];
+                                    }
+                                    $state[$item->channel][] = $item->asset_id;
+                                }
+                                $component->state($state);
+                            })
+                            ->saveRelationshipsUsing(function (AssetGroup $record, $state) {
+                                $record->items()->delete();
+                                if (!is_array($state)) {
+                                    return;
+                                }
+                                foreach ($state as $channel => $assetIds) {
+                                    if (!is_array($assetIds)) {
+                                        continue;
+                                    }
+                                    foreach ($assetIds as $assetId) {
+                                        $record->items()->create([
+                                            'channel' => $channel,
+                                            'asset_id' => $assetId,
+                                        ]);
+                                    }
+                                }
+                            })
                     ])
             ]);
     }
