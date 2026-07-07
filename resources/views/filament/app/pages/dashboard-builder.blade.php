@@ -572,6 +572,7 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
+                    <span x-show="widgetControlsError" x-text="widgetControlsError" class="text-sm text-red-600 dark:text-red-400 mr-auto font-medium" style="display: none;"></span>
                     <button class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-6 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
                             x-on:click="showWidgetControls = false">Cancel
                     </button>
@@ -1038,7 +1039,9 @@
                     },
 
                     // ─── Widget Controls ──
+                    widgetControlsError: '',
                     openWidgetControls(widget) {
+                        this.widgetControlsError = '';
                         this.widgetControlsTarget = widget;
                         const wc = widget.controls || {};
 
@@ -1285,15 +1288,16 @@
 
                         payload.granularity = c.granularity;
 
+                        this.widgetControlsError = '';
                         if (this.widgetControlsTarget.source_type !== 'kpi') {
                             if (!c.raw_series || c.raw_series.length === 0) {
-                                alert("Please add at least one series before saving.");
+                                this.widgetControlsError = "Please add at least one series before saving.";
                                 return;
                             }
                             
                             const missingChannel = c.raw_series.some(s => !s.channel || s.channel.trim() === '');
                             if (missingChannel) {
-                                alert("Please select a channel for all series before saving.");
+                                this.widgetControlsError = "Please select a channel for all series before saving.";
                                 return;
                             }
 
