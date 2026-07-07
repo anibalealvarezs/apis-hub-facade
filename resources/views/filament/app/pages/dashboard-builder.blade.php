@@ -252,7 +252,7 @@
                         }
                     </style>
                     <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative">
-                        <div class="absolute inset-0 p-6 md:p-8 flex flex-col md:flex-row gap-6">
+                        <div class="absolute inset-6 md:inset-8 flex flex-col md:flex-row gap-6">
                             {{-- Left Column: Global Configuration --}}
                             <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 h-full" style="flex: 1 1 250px; max-width: 100%;">
                         {{-- Data Source Info (Read Only) --}}
