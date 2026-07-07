@@ -80,7 +80,7 @@
             }
         </style>
 
-        <div class="min-w-0 flex overflow-x-auto gap-6 custom-scrollbar pb-4 items-stretch snap-x snap-mandatory min-h-[700px] h-[700px]" style="max-width: 100%;">
+        <div class="min-w-0 flex overflow-x-auto gap-6 custom-scrollbar pb-4 items-stretch snap-x snap-mandatory" style="max-width: 100%; min-height: 700px; height: 700px;">
             <template x-for="(channelData, channelKey) in options" :key="channelKey">
                 <div class="flex-none w-[calc(100%/3-1rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
