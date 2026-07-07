@@ -19,6 +19,8 @@ class EditAssetGroup extends EditRecord
 
     protected function afterSave(): void
     {
+        \Illuminate\Support\Facades\Log::info('EditAssetGroup afterSave - ENTIRE DATA:', ['data' => $this->data]);
+        
         $state = $this->data['assets_data'] ?? [];
         if (is_string($state)) {
             $state = json_decode($state, true);

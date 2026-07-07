@@ -43,8 +43,10 @@
         },
 
         updateHidden() {
-            this.$refs.hiddenInput.value = JSON.stringify(this.state);
+            const jsonStr = JSON.stringify(this.state);
+            this.$refs.hiddenInput.value = jsonStr;
             this.$refs.hiddenInput.dispatchEvent(new Event('input'));
+            $wire.set('{{ $getStatePath() }}', jsonStr, false); // defer sync until form submit
         },
 
         toggleAsset(channelKey, assetId) {
