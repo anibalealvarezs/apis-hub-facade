@@ -5,10 +5,27 @@ namespace App\Filament\App\Resources\AssetGroupResource\Pages;
 use App\Filament\App\Resources\AssetGroupResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Log;
 
 class EditAssetGroup extends EditRecord
 {
     protected static string $resource = AssetGroupResource::class;
+
+    public string $assetSelections = '{}';
+
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+
+        $state = [];
+        foreach ($this->record->items as $item) {
+            if (!isset($state[$item->channel])) {
+                $state[$item->channel] = [];
+            }
+            $state[$item->channel][] = $item->asset_id;
+        }
+        $this->assetSelections = !empty($state) ? json_encode($state) : '{}';
+    }
 
     protected function getHeaderActions(): array
     {
@@ -17,27 +34,25 @@ class EditAssetGroup extends EditRecord
         ];
     }
 
+    public function setAssetSelections(string $json): void
+    {
+        $this->assetSelections = $json;
+        Log::info('EditAssetGroup setAssetSelections called:', ['json' => $json]);
+    }
+
     protected function afterSave(): void
     {
-        \Illuminate\Support\Facades\Log::info('EditAssetGroup afterSave - ENTIRE DATA:', ['data' => $this->data]);
-        
-        $state = $this->data['assets_data'] ?? [];
-        if (is_string($state)) {
-            $state = json_decode($state, true);
-        }
-        if (is_object($state)) {
-            $state = (array) $state;
-        }
-        
-        \Illuminate\Support\Facades\Log::info('EditAssetGroup afterSave - assets_data state:', ['state' => $state]);
-        
-        $record = $this->record;
-        
-        $record->items()->delete();
+        Log::info('EditAssetGroup afterSave - assetSelections property:', ['value' => $this->assetSelections]);
+
+        $state = json_decode($this->assetSelections, true);
         if (!is_array($state) || empty($state)) {
-            \Illuminate\Support\Facades\Log::warning('EditAssetGroup afterSave - state is empty or not an array, skipping saving items');
+            Log::warning('EditAssetGroup afterSave - decoded state is empty or not an array');
             return;
         }
+
+        $record = $this->record;
+        $record->items()->delete();
+
         foreach ($state as $channel => $assetIds) {
             if (!is_array($assetIds)) {
                 continue;
@@ -49,5 +64,7 @@ class EditAssetGroup extends EditRecord
                 ]);
             }
         }
+
+        Log::info('EditAssetGroup afterSave - items saved successfully');
     }
 }

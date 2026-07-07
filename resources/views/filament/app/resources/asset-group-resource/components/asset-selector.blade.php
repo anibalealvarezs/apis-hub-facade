@@ -18,14 +18,69 @@
                 ];
             }
         }
+
+        // Read existing selections from the page-level Livewire property
+        $existingSelections = $this->assetSelections ?? '{}';
     @endphp
 
-    <div x-data="assetSelectorComponent({
-        initialState: @js($getState() ?: '{}'),
-        options: @js($options),
-        statePath: '{{ $getStatePath() }}'
-    })" class="w-full">
-        
+    <div
+        x-data="{
+            state: {},
+            options: @js($options),
+            searchQueries: {},
+
+            init() {
+                let raw = @js($existingSelections);
+                let parsed = {};
+                if (typeof raw === 'string') {
+                    try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
+                } else if (raw && typeof raw === 'object') {
+                    parsed = raw;
+                }
+                if (Array.isArray(parsed)) parsed = {};
+                this.state = parsed;
+
+                for (const key in this.options) {
+                    this.searchQueries[key] = '';
+                    if (this.state[key] === undefined) {
+                        this.state[key] = [];
+                    }
+                }
+
+                // Sync initial state to server
+                this.syncState();
+            },
+
+            syncState() {
+                $wire.call('setAssetSelections', JSON.stringify(this.state));
+            },
+
+            toggleAsset(channelKey, assetId) {
+                const current = this.state[channelKey] || [];
+                const idStr = String(assetId);
+                const idx = current.indexOf(idStr);
+
+                if (idx > -1) {
+                    this.state[channelKey] = current.filter((id) => id !== idStr);
+                } else {
+                    this.state[channelKey] = [...current, idStr];
+                }
+
+                this.syncState();
+            },
+
+            selectAll(channelKey) {
+                this.state[channelKey] = Object.keys(this.options[channelKey].assets).map(String);
+                this.syncState();
+            },
+
+            clearAll(channelKey) {
+                this.state[channelKey] = [];
+                this.syncState();
+            }
+        }"
+        class="w-full"
+    >
         <style>
             .custom-scrollbar::-webkit-scrollbar {
                 width: 6px;
@@ -80,14 +135,14 @@
                                             <div x-show="searchQueries[channelKey] === '' || String(assetName).toLowerCase().includes(searchQueries[channelKey].toLowerCase())"
                                                  @click="toggleAsset(channelKey, assetId)"
                                                  class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                 :class="(state && state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                 :class="(state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                 <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                     :class="(state && state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                    <svg x-show="(state && state[channelKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                     :class="(state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                    <svg x-show="(state[channelKey] || []).includes(String(assetId))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                     </svg>
                                                 </div>
-                                                <span class="truncate font-medium" :class="(state && state[channelKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
+                                                <span class="truncate font-medium" :class="(state[channelKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
                                             </div>
                                         </template>
                                     </div>
@@ -100,73 +155,3 @@
         </div>
     </div>
 </x-dynamic-component>
-
-<script>
-    if (typeof window.assetSelectorComponent === 'undefined') {
-        window.assetSelectorComponent = function(config) {
-            return {
-                state: {},
-                options: config.options,
-                searchQueries: {},
-                statePath: config.statePath,
-                
-                init() {
-                    let parsedState = {};
-                    if (typeof config.initialState === 'string') {
-                        try {
-                            parsedState = JSON.parse(config.initialState);
-                        } catch (e) {
-                            parsedState = {};
-                        }
-                    } else if (config.initialState) {
-                        parsedState = config.initialState;
-                    }
-                    
-                    if (Array.isArray(parsedState)) {
-                        parsedState = {};
-                    }
-                    
-                    this.state = parsedState;
-                    
-                    for (const key in this.options) {
-                        this.searchQueries[key] = '';
-                        if (this.state[key] === undefined) {
-                            this.state[key] = [];
-                        }
-                    }
-                },
-                
-                syncState() {
-                    this.$wire.set(this.statePath, JSON.stringify(this.state), false);
-                },
-                
-                toggleAsset(channelKey, assetId) {
-                    const current = this.state[channelKey] || [];
-                    const idStr = String(assetId);
-                    const idx = current.indexOf(idStr);
-                    let next;
-                    
-                    if (idx > -1) {
-                        next = current.filter((id) => id !== idStr);
-                    } else {
-                        next = [...current, idStr];
-                    }
-                    
-                    this.state[channelKey] = next;
-                    this.syncState();
-                },
-                
-                selectAll(channelKey) {
-                    const allIds = Object.keys(this.options[channelKey].assets).map(String);
-                    this.state[channelKey] = allIds;
-                    this.syncState();
-                },
-                
-                clearAll(channelKey) {
-                    this.state[channelKey] = [];
-                    this.syncState();
-                }
-            };
-        };
-    }
-</script>
