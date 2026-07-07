@@ -20,73 +20,11 @@
         }
     @endphp
 
-    <div x-data="{
-        state: JSON.parse(@js($getState() ?: '{}')),
+    <div x-data="assetSelectorComponent({
+        initialState: @js($getState() ?: '{}'),
         options: @js($options),
-        searchQueries: {},
-
-        init() {
-            // If Livewire passed the JSON string down, parse it into a real object
-            if (typeof this.state === 'string') {
-                try {
-                    this.state = JSON.parse(this.state);
-                } catch (e) {
-                    this.state = {};
-                }
-            }
-            
-            if (!this.state || Array.isArray(this.state)) {
-                this.state = {};
-            }
-            
-            for (const key in this.options) {
-                this.searchQueries[key] = '';
-                if (this.state[key] === undefined) {
-                    this.state[key] = [];
-                }
-            }
-            
-            // Sync initial state to hidden input
-            this.$refs.hiddenInput.value = JSON.stringify(this.state);
-            this.$refs.hiddenInput.dispatchEvent(new Event('input'));
-        },
-
-        updateHidden() {
-            const jsonStr = JSON.stringify(this.state);
-            this.$refs.hiddenInput.value = jsonStr;
-            this.$refs.hiddenInput.dispatchEvent(new Event('input'));
-            $wire.set('{{ $getStatePath() }}', jsonStr, false); // defer sync until form submit
-        },
-
-        toggleAsset(channelKey, assetId) {
-            const current = this.state[channelKey] || [];
-            const idStr = String(assetId);
-            const idx = current.indexOf(idStr);
-            let next;
-            
-            if (idx > -1) {
-                next = current.filter((id) => id !== idStr);
-            } else {
-                next = [...current, idStr];
-            }
-            
-            this.state[channelKey] = next;
-            this.updateHidden();
-        },
-
-        selectAll(channelKey) {
-            const allIds = Object.keys(this.options[channelKey].assets).map(String);
-            this.state[channelKey] = allIds;
-            this.updateHidden();
-        },
-
-        clearAll(channelKey) {
-            this.state[channelKey] = [];
-            this.updateHidden();
-        }
-    }" class="w-full">
-        
-        <input type="hidden" x-ref="hiddenInput" wire:model="{{ $getStatePath() }}">
+        statePath: '{{ $getStatePath() }}'
+    })" class="w-full">
         
         <style>
             .custom-scrollbar::-webkit-scrollbar {
@@ -162,3 +100,73 @@
         </div>
     </div>
 </x-dynamic-component>
+
+<script>
+    if (typeof window.assetSelectorComponent === 'undefined') {
+        window.assetSelectorComponent = function(config) {
+            return {
+                state: {},
+                options: config.options,
+                searchQueries: {},
+                statePath: config.statePath,
+                
+                init() {
+                    let parsedState = {};
+                    if (typeof config.initialState === 'string') {
+                        try {
+                            parsedState = JSON.parse(config.initialState);
+                        } catch (e) {
+                            parsedState = {};
+                        }
+                    } else if (config.initialState) {
+                        parsedState = config.initialState;
+                    }
+                    
+                    if (Array.isArray(parsedState)) {
+                        parsedState = {};
+                    }
+                    
+                    this.state = parsedState;
+                    
+                    for (const key in this.options) {
+                        this.searchQueries[key] = '';
+                        if (this.state[key] === undefined) {
+                            this.state[key] = [];
+                        }
+                    }
+                },
+                
+                syncState() {
+                    this.$wire.set(this.statePath, JSON.stringify(this.state), false);
+                },
+                
+                toggleAsset(channelKey, assetId) {
+                    const current = this.state[channelKey] || [];
+                    const idStr = String(assetId);
+                    const idx = current.indexOf(idStr);
+                    let next;
+                    
+                    if (idx > -1) {
+                        next = current.filter((id) => id !== idStr);
+                    } else {
+                        next = [...current, idStr];
+                    }
+                    
+                    this.state[channelKey] = next;
+                    this.syncState();
+                },
+                
+                selectAll(channelKey) {
+                    const allIds = Object.keys(this.options[channelKey].assets).map(String);
+                    this.state[channelKey] = allIds;
+                    this.syncState();
+                },
+                
+                clearAll(channelKey) {
+                    this.state[channelKey] = [];
+                    this.syncState();
+                }
+            };
+        };
+    }
+</script>
