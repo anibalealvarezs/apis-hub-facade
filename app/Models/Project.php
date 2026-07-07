@@ -182,6 +182,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Asset Groups belonging to this project.
+     */
+    public function assetGroups(): HasMany
+    {
+        return $this->hasMany(AssetGroup::class);
+    }
+
+    /**
      * Get the APIs Hub Release associated with the project.
      */
     public function apisHubRelease(): BelongsTo
