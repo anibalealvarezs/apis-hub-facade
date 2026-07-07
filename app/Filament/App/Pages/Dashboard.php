@@ -11,6 +11,11 @@ class Dashboard extends BaseDashboard
 
     protected static string $view = 'filament.app.pages.home-dashboard';
 
+    public function getHeading(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
+
     public function getWidgets(): array
     {
         return [];
