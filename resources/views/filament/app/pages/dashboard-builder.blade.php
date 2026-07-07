@@ -252,6 +252,9 @@
                             left: 1.5rem !important;
                             right: 1.5rem !important;
                         }
+                        .flex-shrink-0 {
+                            flex-shrink: 0 !important;
+                        }
                         @media (min-width: 768px) {
                             .desktop-overflow-hidden {
                                 overflow: hidden !important;
