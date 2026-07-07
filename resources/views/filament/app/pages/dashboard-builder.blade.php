@@ -1286,6 +1286,17 @@
                         payload.granularity = c.granularity;
 
                         if (this.widgetControlsTarget.source_type !== 'kpi') {
+                            if (!c.raw_series || c.raw_series.length === 0) {
+                                alert("Please add at least one series before saving.");
+                                return;
+                            }
+                            
+                            const missingChannel = c.raw_series.some(s => !s.channel || s.channel.trim() === '');
+                            if (missingChannel) {
+                                alert("Please select a channel for all series before saving.");
+                                return;
+                            }
+
                             payload.channel = '';
                             payload.assets = [];
                             payload.metrics = [];
@@ -1294,12 +1305,10 @@
                             
                             let validIdx = 0;
                             c.raw_series.forEach((s) => {
-                                if (s.metric) {
-                                    payload.metrics.push(s.metric);
-                                    payload.series_assets[validIdx] = [...(s.assets || [])];
-                                    payload.series_channels[validIdx] = s.channel || '';
-                                    validIdx++;
-                                }
+                                payload.metrics.push(s.metric || '');
+                                payload.series_assets[validIdx] = [...(s.assets || [])];
+                                payload.series_channels[validIdx] = s.channel || '';
+                                validIdx++;
                             });
                             if (payload.series_channels['0']) {
                                 payload.channel = payload.series_channels['0'];
