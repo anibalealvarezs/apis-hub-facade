@@ -138,4 +138,5 @@
                 </div>
             </template>
         </div>
+    </div>
 </x-dynamic-component>
