@@ -60,7 +60,7 @@ class AssetGroupResource extends Resource
                                 Forms\Components\Select::make('channel')
                                     ->required()
                                     ->options(function () {
-                                        return \App\Services\Analytics\KpiFormBuilder::getChannelOptions();
+                                        return \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
                                     })
                                     ->live()
                                     ->afterStateUpdated(fn (callable $set) => $set('asset_id', null)),
