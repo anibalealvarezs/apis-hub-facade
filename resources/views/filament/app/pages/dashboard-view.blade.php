@@ -227,7 +227,8 @@
                                         <template x-if="settingsSourceType !== 'kpi'">
                                             <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                            <select x-model="(settingsControls.metrics || [])[vConfig.index]"
+                                            <select :value="settingsControls.metrics ? settingsControls.metrics[vConfig.index] : ''"
+                                                    @change="if (!settingsControls.metrics) settingsControls.metrics = []; settingsControls.metrics[vConfig.index] = $event.target.value"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">

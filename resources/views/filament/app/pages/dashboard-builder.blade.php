@@ -432,8 +432,8 @@
                                             
                                             <div class="my-2">
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                <select x-model="series.metric"
-                                                        x-init="$nextTick(() => { $el.value = series.metric })"
+                                                <select :value="series.metric"
+                                                        @change="series.metric = $event.target.value"
                                                         class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                     <option value="">Select a metric...</option>
                                                     <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
