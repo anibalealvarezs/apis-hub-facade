@@ -11,21 +11,10 @@
         $options = [];
         foreach ($channels as $channel => $name) {
             $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
-            if ($isAdmin) {
-                $filtered = $allAssets;
-            } else {
-                $allowed = app(\App\Services\WidgetDataService::class)->filterAllowedAssets($project, $user->id, $channel, array_keys($allAssets));
-                $filtered = [];
-                foreach ($allowed as $id) {
-                    if (isset($allAssets[$id])) {
-                        $filtered[$id] = $allAssets[$id];
-                    }
-                }
-            }
-            if (!empty($filtered)) {
+            if (!empty($allAssets)) {
                 $options[$channel] = [
                     'name' => $name,
-                    'assets' => $filtered
+                    'assets' => $allAssets
                 ];
             }
         }
@@ -125,7 +114,7 @@
                                 <div class="flex-1 relative min-h-0 mt-2">
                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                         <template x-for="[assetId, assetName] in Object.entries(channelData.assets)" :key="assetId">
-                                            <div x-show="searchQueries[channelKey] === '' || assetName.toLowerCase().includes(searchQueries[channelKey].toLowerCase())"
+                                            <div x-show="searchQueries[channelKey] === '' || String(assetName).toLowerCase().includes(searchQueries[channelKey].toLowerCase())"
                                                  @click="toggleAsset(channelKey, assetId)"
                                                  class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                  :class="(state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
