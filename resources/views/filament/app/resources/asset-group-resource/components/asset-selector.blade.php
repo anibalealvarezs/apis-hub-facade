@@ -26,6 +26,15 @@
         searchQueries: {},
 
         init() {
+            // If Livewire passed the JSON string down, parse it into a real object
+            if (typeof this.state === 'string') {
+                try {
+                    this.state = JSON.parse(this.state);
+                } catch (e) {
+                    this.state = {};
+                }
+            }
+            
             if (!this.state || Array.isArray(this.state)) {
                 this.state = {};
             }
