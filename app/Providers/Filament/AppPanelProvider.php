@@ -182,7 +182,7 @@ class AppPanelProvider extends PanelProvider
                     ->label(fn () => __('Meta')),
             ])
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\App\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
