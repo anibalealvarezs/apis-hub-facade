@@ -23,14 +23,19 @@ class Dashboard extends BaseDashboard
 
     public function mount(): void
     {
-        $projectId = auth()->user()->currentProject?->id;
-        if (!$projectId) {
+        $project = \Filament\Facades\Filament::getTenant();
+        
+        \Illuminate\Support\Facades\Log::info('App Dashboard Mount', ['project_id' => $project?->id]);
+
+        if (!$project) {
             return;
         }
 
-        $default = \App\Models\Dashboard::where('project_id', $projectId)
+        $default = \App\Models\Dashboard::where('project_id', $project->id)
             ->where('is_default', true)
             ->first();
+            
+        \Illuminate\Support\Facades\Log::info('App Dashboard Default Found', ['found' => $default ? true : false, 'default_id' => $default?->id]);
 
         if ($default) {
             $this->loadDashboardViewData($default);
