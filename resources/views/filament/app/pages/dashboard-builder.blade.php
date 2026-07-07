@@ -437,7 +437,7 @@
                                                         class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                     <option value="">Select a metric...</option>
                                                     <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
-                                                        <option :value="key" x-text="label"></option>
+                                                        <option :value="key" :selected="key == series.metric" x-text="label"></option>
                                                     </template>
                                                 </select>
                                                 <template x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">

@@ -30,7 +30,7 @@
             <input type="date" x-model="dashboardOverrides.date_end"
                    x-on:change.debounce.500ms="applyDateRange()"
                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
-                   :min="dashboardOverrides.date_start || ''" max="{{ date('Y-m-d', strtotime('-1 day')) }}">
+                   :min="dashboardOverrides.date_start || ''" :max="dashboardDefaults.date_end">
             <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
                 <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
@@ -168,13 +168,13 @@
                                 </div>
                                 <div class="p-6 flex flex-row items-center gap-3">
                                     <input type="date" x-model="settingsControls.date_start"
-                                           :min="settingsBuilderControls.date_start || dashboardOverrides.date_start || ''"
-                                           :max="settingsControls.date_end || settingsBuilderControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                           :min="settingsBuilderControls.date_start || dashboardDefaults.date_start || ''"
+                                           :max="settingsControls.date_end || settingsBuilderControls.date_end || dashboardDefaults.date_end"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                     <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
                                     <input type="date" x-model="settingsControls.date_end"
-                                           :min="settingsControls.date_start || settingsBuilderControls.date_start || dashboardOverrides.date_start || ''" 
-                                           :max="settingsBuilderControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                           :min="settingsControls.date_start || settingsBuilderControls.date_start || dashboardDefaults.date_start || ''" 
+                                           :max="settingsBuilderControls.date_end || dashboardDefaults.date_end"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                 </div>
                             </div>
@@ -228,12 +228,11 @@
                                         <template x-if="settingsSourceType !== 'kpi'">
                                             <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                            <select :value="settingsControls.metrics ? settingsControls.metrics[vConfig.index] : ''"
-                                                    @change="if (!settingsControls.metrics) settingsControls.metrics = []; settingsControls.metrics[vConfig.index] = $event.target.value"
+                                            <select x-model="settingsControls.metrics[vConfig.index]"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                    <option :value="key" :selected="key == (settingsControls.metrics ? settingsControls.metrics[vConfig.index] : '')" x-text="label"></option>
+                                                    <option :value="key" x-text="label"></option>
                                                 </template>
                                                 </select>
                                             </div>
@@ -313,11 +312,17 @@
                     loadedCount: 0,
                     totalCount: {{ count($this->widgets) }},
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
+                    dashboardDefaults: {
+                        date_start: '{{ $dc['date_start'] ?? '' }}',
+                        date_end: '{{ $dc['date_end'] ?? date('Y-m-d', strtotime('-1 day')) }}',
+                        zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
+                    },
                     dashboardOverrides: {
                         date_start: '{{ $dc['date_start'] ?? '' }}',
                         date_end: '{{ $dc['date_end'] ?? date('Y-m-d', strtotime('-1 day')) }}',
                         zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
                     },
+                    hasUserChangedGlobalDate: false,
                     init() {
                         this.$nextTick(() => {
                             const tryInit = () => {
@@ -338,17 +343,20 @@
                     },
 
                     applyDateRange() {
+                        this.hasUserChangedGlobalDate = true;
                         this.refreshAll();
                     },
 
                     renderWidget(widgetId, el, controls) {
                         el.setAttribute('data-raw-controls', JSON.stringify(controls));
                         let effectiveControls = { ...controls };
-                        if (this.dashboardOverrides.date_start) {
-                            effectiveControls.date_start = this.dashboardOverrides.date_start;
-                        }
-                        if (this.dashboardOverrides.date_end) {
-                            effectiveControls.date_end = this.dashboardOverrides.date_end;
+                        
+                        if (this.hasUserChangedGlobalDate) {
+                            if (this.dashboardOverrides.date_start) effectiveControls.date_start = this.dashboardOverrides.date_start;
+                            if (this.dashboardOverrides.date_end) effectiveControls.date_end = this.dashboardOverrides.date_end;
+                        } else {
+                            if (!effectiveControls.date_start && this.dashboardDefaults.date_start) effectiveControls.date_start = this.dashboardDefaults.date_start;
+                            if (!effectiveControls.date_end && this.dashboardDefaults.date_end) effectiveControls.date_end = this.dashboardDefaults.date_end;
                         }
 
                         const tryRender = () => {
@@ -373,11 +381,12 @@
                             if (rawControls) {
                                 try {
                                     const controls = JSON.parse(rawControls);
-                                    if (this.dashboardOverrides.date_start) {
-                                        controls.date_start = this.dashboardOverrides.date_start;
-                                    }
-                                    if (this.dashboardOverrides.date_end) {
-                                        controls.date_end = this.dashboardOverrides.date_end;
+                                    if (this.hasUserChangedGlobalDate) {
+                                        if (this.dashboardOverrides.date_start) controls.date_start = this.dashboardOverrides.date_start;
+                                        if (this.dashboardOverrides.date_end) controls.date_end = this.dashboardOverrides.date_end;
+                                    } else {
+                                        if (!controls.date_start && this.dashboardDefaults.date_start) controls.date_start = this.dashboardDefaults.date_start;
+                                        if (!controls.date_end && this.dashboardDefaults.date_end) controls.date_end = this.dashboardDefaults.date_end;
                                     }
                                     window.dispatchEvent(new CustomEvent('reload-widget', {
                                         detail: {
@@ -461,8 +470,8 @@
                         const controls = this.settingsControls;
                         
                         let dateAdjusted = false;
-                        let minStart = this.settingsBuilderControls.date_start || this.dashboardOverrides.date_start || '';
-                        let maxEnd = this.settingsBuilderControls.date_end || this.dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}';
+                        let minStart = this.settingsBuilderControls.date_start || this.dashboardDefaults.date_start || '';
+                        let maxEnd = this.settingsBuilderControls.date_end || this.dashboardDefaults.date_end;
                         
                         if (controls.date_start && minStart && controls.date_start < minStart) {
                             controls.date_start = minStart;
