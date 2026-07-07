@@ -19,11 +19,14 @@ class EditAssetGroup extends EditRecord
 
     protected function afterSave(): void
     {
-        $state = $this->data['assets_data'] ?? [];
+        $state = $this->data['assets_data'] ?? null;
+        \Illuminate\Support\Facades\Log::info('EditAssetGroup afterSave - assets_data state:', ['state' => $state]);
+        
         $record = $this->record;
         
         $record->items()->delete();
         if (!is_array($state)) {
+            \Illuminate\Support\Facades\Log::warning('EditAssetGroup afterSave - state is not an array, skipping saving items');
             return;
         }
         foreach ($state as $channel => $assetIds) {
