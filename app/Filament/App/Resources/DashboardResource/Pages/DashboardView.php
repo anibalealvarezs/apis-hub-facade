@@ -86,7 +86,13 @@ class DashboardView extends Page
                             $filtered[$id] = $assets[$id];
                         }
                     }
-                    $assets = $filtered;
+                    if (empty($filtered)) {
+                        // If all provided IDs were invalid (e.g. channel changed but old assets remained),
+                        // reset to all available channel assets so the user can make a new selection.
+                        $assets = $getAssetsForChannel($channel);
+                    } else {
+                        $assets = $filtered;
+                    }
                 }
                 if (empty($assets)) {
                     $assets = []; // ensure it's an array

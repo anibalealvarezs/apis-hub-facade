@@ -1373,7 +1373,13 @@
                             let validIdx = 0;
                             c.raw_series.forEach((s) => {
                                 payload.metrics.push(s.metric || '');
-                                payload.series_assets[validIdx] = [...(s.assets || [])];
+                                
+                                let channelAssets = this.allChannelAssets[s.channel] || {};
+                                let validAssets = [...(s.assets || [])].filter(id => {
+                                    return channelAssets[id] !== undefined;
+                                });
+                                
+                                payload.series_assets[validIdx] = validAssets;
                                 payload.series_channels[validIdx] = s.channel || '';
                                 validIdx++;
                             });
