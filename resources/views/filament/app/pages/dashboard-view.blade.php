@@ -314,13 +314,13 @@
                     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
                     dashboardDefaults: {
                         date_start: '{{ $dc['date_start'] ?? '' }}',
-                        date_end: '{{ $dc['date_end'] ?? date('Y-m-d', strtotime('-1 day')) }}',
-                        zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
+                        date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
+                        zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
                     },
                     dashboardOverrides: {
                         date_start: '{{ $dc['date_start'] ?? '' }}',
-                        date_end: '{{ $dc['date_end'] ?? date('Y-m-d', strtotime('-1 day')) }}',
-                        zero_handling: '{{ $dc['zero_handling'] ?? 'remove' }}',
+                        date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
+                        zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
                     },
                     hasUserChangedGlobalDate: false,
                     init() {
