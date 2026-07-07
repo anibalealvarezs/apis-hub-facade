@@ -1318,7 +1318,7 @@
                             <div class="flex items-center gap-2">
                                 <button type="button" 
                                     x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\').length > 0"
-                                    x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\'), theme: $store.theme, trigger: \'click\' }"
+                                    x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\'), theme: $store.theme, trigger: \'click\', allowHTML: true }"
                                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
@@ -1377,25 +1377,25 @@
                         </div>
                         <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Statuses').'</option>
-                                <option value="enabled">'.__('Enabled Only').'</option>
-                                <option value="disabled">'.__('Disabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option value="all">'.__('All States').'</option>
-                                <option value="grace">'.__('In Grace Period').'</option>
-                                <option value="locked">'.__('Asset Locked').'</option>
-                                <option value="none">'.__('No Grace Period status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Groups').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
                                 <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option :value="group.name" x-text="group.name"></option>
+                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -1492,7 +1492,7 @@
                     <div class="flex items-center gap-2">
                         <button type="button" 
                             x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\').length > 0"
-                            x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\'), theme: $store.theme, trigger: \'click\' }"
+                            x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\'), theme: $store.theme, trigger: \'click\', allowHTML: true }"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
@@ -1580,25 +1580,25 @@
                         </div>
                         <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Statuses').'</option>
-                                <option value="enabled">'.__('Enabled Only').'</option>
-                                <option value="disabled">'.__('Disabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option value="all">'.__('All States').'</option>
-                                <option value="grace">'.__('In Grace Period').'</option>
-                                <option value="locked">'.__('Asset Locked').'</option>
-                                <option value="none">'.__('No Grace Period status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Groups').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
                                 <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option :value="group.name" x-text="group.name"></option>
+                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
                                 </template>
                             </select>
                         </div>

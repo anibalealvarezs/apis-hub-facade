@@ -81,7 +81,9 @@
             getAssetGroupsTooltip(id) {
                 let groups = this.getAssetGroups(id);
                 if (groups.length === 0) return '';
-                return '{{ __('Groups:') }} ' + groups.join(', ');
+                let title = '{{ __('Groups:') }}';
+                let list = groups.map(g => `<li class="ml-2">&bull; ${g}</li>`).join('');
+                return `<div class="text-left font-sans"><strong class="block mb-1 font-medium text-gray-200">${title}</strong><ul class="text-xs text-gray-300 leading-tight">${list}</ul></div>`;
             },
 
             getAssetBadgeText(id) {
