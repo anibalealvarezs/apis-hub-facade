@@ -1,8 +1,4 @@
 <x-filament-panels::page>
-    <div style="background: red; color: white; padding: 10px;">
-        Tenant ID: {{ \Filament\Facades\Filament::getTenant()?->id ?? 'NULL' }} <br>
-        Default DB: {{ \App\Models\Dashboard::where('project_id', \Filament\Facades\Filament::getTenant()?->id)->where('is_default', true)->first()?->id ?? 'NULL' }}
-    </div>
     @if(isset($this->dashboard))
         @include('filament.app.pages.partials.dashboard-view-content')
     @else
