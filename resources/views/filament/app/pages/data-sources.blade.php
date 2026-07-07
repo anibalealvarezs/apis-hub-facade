@@ -9,6 +9,7 @@
             lockStates: @js($this->getAssetLockStates()),
             cycleBounds: @js($this->getCycleBounds()),
             projectDeploymentTime: @js($this->getProjectDeploymentTime()),
+            assetGroupsData: @js($this->getAssetGroupsData()),
             currentTime: new Date().getTime(),
             cycleLabel: '{{ __('Cycle') }}',
 
@@ -70,6 +71,17 @@
                     return `${this.gracePeriodLabel} ${timeStr})`;
                 }
                 return '';
+            },
+
+            getAssetGroups(id) {
+                if (!this.assetGroupsData || !this.assetGroupsData.assetMap) return [];
+                return this.assetGroupsData.assetMap[id] || [];
+            },
+
+            getAssetGroupsTooltip(id) {
+                let groups = this.getAssetGroups(id);
+                if (groups.length === 0) return '';
+                return '{{ __('Groups:') }} ' + groups.join(', ');
             },
 
             getAssetBadgeText(id) {

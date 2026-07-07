@@ -71,6 +71,27 @@
                 ->toArray();
         }
 
+        public function getAssetGroupsData(): array
+        {
+            $tenant = Filament::getTenant();
+            $groups = \App\Models\AssetGroup::where('project_id', $tenant->id)->with('items')->get();
+            
+            $assetMap = [];
+            foreach ($groups as $group) {
+                foreach ($group->items as $item) {
+                    if (!isset($assetMap[$item->asset_id])) {
+                        $assetMap[$item->asset_id] = [];
+                    }
+                    $assetMap[$item->asset_id][] = $group->name;
+                }
+            }
+            
+            return [
+                'groups' => $groups->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->toArray(),
+                'assetMap' => $assetMap,
+            ];
+        }
+
         public function getCycleBounds(): array
         {
             $tenant = Filament::getTenant();
@@ -1295,6 +1316,14 @@
                         ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset'))
                         ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
                             <div class="flex items-center gap-2">
+                                <button type="button" 
+                                    x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\').length > 0"
+                                    x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\'), theme: $store.theme, trigger: \'click\' }"
+                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                    </svg>
+                                </button>
                                 <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
                                 <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"
                                       :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
@@ -1362,6 +1391,14 @@
                                 <option value="none">'.__('No Grace Period status').'</option>
                             </select>
                         </div>
+                        <div class="w-48">
+                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Groups').'</option>
+                                <template x-for="group in assetGroupsData.groups" :key="group.id">
+                                    <option :value="group.name" x-text="group.name"></option>
+                                </template>
+                            </select>
+                        </div>
                     </div>
                 ')),
                 Repeater::make($fieldKey)
@@ -1422,7 +1459,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1433,7 +1470,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1453,6 +1490,14 @@
                 ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? __('Unknown Asset')))
                 ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
                     <div class="flex items-center gap-2">
+                        <button type="button" 
+                            x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\').length > 0"
+                            x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\'), theme: $store.theme, trigger: \'click\' }"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                            </svg>
+                        </button>
                         <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
                         <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
                               :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
@@ -1547,6 +1592,14 @@
                                 <option value="grace">'.__('In Grace Period').'</option>
                                 <option value="locked">'.__('Asset Locked').'</option>
                                 <option value="none">'.__('No Grace Period status').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option value="all">'.__('All Groups').'</option>
+                                <template x-for="group in assetGroupsData.groups" :key="group.id">
+                                    <option :value="group.name" x-text="group.name"></option>
+                                </template>
                             </select>
                         </div>
                     </div>
@@ -1645,7 +1698,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1656,7 +1709,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
