@@ -254,7 +254,7 @@
                     <div class="flex-1 p-6 md:p-8 bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row gap-6 min-h-0 overflow-y-auto desktop-overflow-hidden">
                     
                     {{-- Left Column: Global Configuration --}}
-                    <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; max-height: 100%;">
+                    <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 h-full" style="flex: 1 1 250px; max-width: 100%;">
                         {{-- Data Source Info (Read Only) --}}
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0 p-4 space-y-1">
                             <span class="text-xs text-gray-500 dark:text-gray-400 block uppercase tracking-wider font-semibold">{{ __('Data Source') }}</span>
