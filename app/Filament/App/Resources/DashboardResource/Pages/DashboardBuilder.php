@@ -91,20 +91,16 @@ class DashboardBuilder extends Page
 
     public function getDashboardControls(): array
     {
-        $controls = $this->dashboard->controls ?? [];
-        
-        // Ensure defaults if keys are empty
-        if (empty($controls['date_end'])) {
-            $controls['date_end'] = \Carbon\Carbon::now()->subDays(1)->format('Y-m-d');
-        }
-        if (empty($controls['zero_handling'])) {
-            $controls['zero_handling'] = 'remove';
-        }
-        if (empty($controls['granularity'])) {
-            $controls['granularity'] = 'daily';
-        }
-        
-        return $controls;
+        return $this->dashboard->controls ?? [
+            'date_start' => '',
+            'date_end' => '',
+            'zero_handling' => 'remove',
+            'channel' => '',
+            'asset_mode' => 'single',
+            'asset' => '',
+            'assets' => [],
+            'granularity' => 'daily',
+        ];
     }
 
     // ─── Data Sources ───

@@ -332,12 +332,12 @@
                                     <div class="w-full flex flex-row items-center gap-3">
                                         <input type="date" x-model="widgetControlsForm.date_start"
                                                :min="dashboardControls.date_start || ''"
-                                               :max="widgetControlsForm.date_end || dashboardControls.date_end"
+                                               :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                         <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
                                         <input type="date" x-model="widgetControlsForm.date_end"
                                                :min="widgetControlsForm.date_start || dashboardControls.date_start || ''" 
-                                               :max="dashboardControls.date_end"
+                                               :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                     </div>
                                 </template>
