@@ -26,13 +26,10 @@
         searchQueries: {},
 
         init() {
-            if (!this.state || Array.isArray(this.state)) {
-                this.state = {};
-            }
-            
+            // Livewire/PHP now provides this.state as a proper `{}` object
             for (const key in this.options) {
                 this.searchQueries[key] = '';
-                if (!this.state[key]) {
+                if (this.state[key] === undefined) {
                     this.state[key] = [];
                 }
             }
@@ -51,18 +48,15 @@
             }
             
             this.state[channelKey] = next;
-            this.state = Object.assign({}, this.state);
         },
 
         selectAll(channelKey) {
             const allIds = Object.keys(this.options[channelKey].assets).map(String);
             this.state[channelKey] = allIds;
-            this.state = Object.assign({}, this.state);
         },
 
         clearAll(channelKey) {
             this.state[channelKey] = [];
-            this.state = Object.assign({}, this.state);
         }
     }" class="w-full">
         

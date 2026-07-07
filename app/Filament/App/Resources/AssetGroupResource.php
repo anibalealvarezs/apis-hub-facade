@@ -58,10 +58,10 @@ class AssetGroupResource extends Resource
                             ->hiddenLabel()
                             ->view('filament.app.resources.asset-group-resource.components.asset-selector')
                             ->columnSpanFull()
-                            ->default(null)
+                            ->default((object) [])
                             ->loadStateFromRelationshipsUsing(function (Forms\Components\ViewField $component, ?AssetGroup $record) {
                                 if (!$record) {
-                                    $component->state(null);
+                                    $component->state((object) []);
                                     return;
                                 }
                                 $state = [];
@@ -71,7 +71,7 @@ class AssetGroupResource extends Resource
                                     }
                                     $state[$item->channel][] = $item->asset_id;
                                 }
-                                $component->state(!empty($state) ? $state : null);
+                                $component->state(!empty($state) ? $state : (object) []);
                             })
                     ])
             ]);
