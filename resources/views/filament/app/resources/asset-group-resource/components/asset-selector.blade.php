@@ -26,7 +26,7 @@
         searchQueries: {},
 
         init() {
-            if (!this.state) {
+            if (!this.state || Array.isArray(this.state)) {
                 this.state = {};
             }
             
@@ -51,15 +51,18 @@
             }
             
             this.state[channelKey] = next;
+            this.state = Object.assign({}, this.state);
         },
 
         selectAll(channelKey) {
             const allIds = Object.keys(this.options[channelKey].assets).map(String);
             this.state[channelKey] = allIds;
+            this.state = Object.assign({}, this.state);
         },
 
         clearAll(channelKey) {
             this.state[channelKey] = [];
+            this.state = Object.assign({}, this.state);
         }
     }" class="w-full">
         
