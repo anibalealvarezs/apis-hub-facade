@@ -21,7 +21,7 @@
     @endphp
 
     <div x-data="{
-        state: {{ json_encode($getState() ?: new \stdClass()) }},
+        state: JSON.parse(@js($getState() ?: '{}')),
         options: @js($options),
         searchQueries: {},
 
