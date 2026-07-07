@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)">
+    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)">
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div>
@@ -168,13 +168,13 @@
                                 </div>
                                 <div class="p-6 flex flex-row items-center gap-3">
                                     <input type="date" x-model="settingsControls.date_start"
-                                           :min="settingsOriginalControls.date_start || dashboardOverrides.date_start || ''"
-                                           :max="settingsControls.date_end || settingsOriginalControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                           :min="settingsBuilderControls.date_start || dashboardOverrides.date_start || ''"
+                                           :max="settingsControls.date_end || settingsBuilderControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                     <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
                                     <input type="date" x-model="settingsControls.date_end"
-                                           :min="settingsControls.date_start || settingsOriginalControls.date_start || dashboardOverrides.date_start || ''" 
-                                           :max="settingsOriginalControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                           :min="settingsControls.date_start || settingsBuilderControls.date_start || dashboardOverrides.date_start || ''" 
+                                           :max="settingsBuilderControls.date_end || dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                 </div>
                             </div>
@@ -232,7 +232,7 @@
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                    <option :value="key" x-text="label"></option>
+                                                    <option :value="key" :selected="key == (settingsControls.metrics ? settingsControls.metrics[vConfig.index] : '')" x-text="label"></option>
                                                 </template>
                                                 </select>
                                             </div>
@@ -391,6 +391,7 @@
                     },
 
                     settingsWidgetId: null,
+                    settingsBuilderControls: { date_start: '', date_end: '' },
                     settingsOriginalControls: { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
                     settingsControls: { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
                     settingsSeriesOptions: {},
@@ -400,8 +401,9 @@
                     openSettings: false,
                     settingsSearchQueries: {},
 
-                    openWidgetSettings(widgetId, controls, seriesOptions, variables, granularityOnTheGo, sourceType) {
+                    openWidgetSettings(widgetId, controls, builderControls, seriesOptions, variables, granularityOnTheGo, sourceType) {
                         this.settingsWidgetId = widgetId;
+                        this.settingsBuilderControls = JSON.parse(JSON.stringify(builderControls || {}));
                         this.settingsOriginalControls = JSON.parse(JSON.stringify(controls || {}));
                         this.settingsControls = controls || {};
                         if (!this.settingsControls.metrics) this.settingsControls.metrics = [];
@@ -434,8 +436,8 @@
                         const controls = this.settingsControls;
                         
                         let dateAdjusted = false;
-                        let minStart = this.settingsOriginalControls.date_start || this.dashboardOverrides.date_start || '';
-                        let maxEnd = this.settingsOriginalControls.date_end || this.dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}';
+                        let minStart = this.settingsBuilderControls.date_start || this.dashboardOverrides.date_start || '';
+                        let maxEnd = this.settingsBuilderControls.date_end || this.dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}';
                         
                         if (controls.date_start && minStart && controls.date_start < minStart) {
                             controls.date_start = minStart;
@@ -512,6 +514,7 @@
                     init() {
                         const el = this.$el;
                         this.widgetId = parseInt(el.dataset.widgetId);
+                        this.builderControls = JSON.parse(el.dataset.controls || '{}');
                         this.controls = JSON.parse(el.dataset.controls || '{}');
                         this.seriesOptions = JSON.parse(el.dataset.seriesOptions || '{}');
                         this.metricOptions = JSON.parse(el.dataset.metricOptions || '{}');
@@ -548,6 +551,7 @@
                         window.dispatchEvent(new CustomEvent('open-widget-settings', {
                             detail: {
                                 widgetId: this.widgetId,
+                                builderControls: JSON.parse(JSON.stringify(this.builderControls)),
                                 controls: JSON.parse(JSON.stringify(this.controls)),
                                 seriesOptions: JSON.parse(JSON.stringify(this.seriesOptions)),
                                 variables: JSON.parse(JSON.stringify(this.variables)),
