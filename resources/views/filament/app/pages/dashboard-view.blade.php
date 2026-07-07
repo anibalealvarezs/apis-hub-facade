@@ -204,7 +204,8 @@
                         <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
-                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                         x-init="console.log('DEBUG loop:', { vKey: vKey, vConfig: vConfig, seriesOption: settingsSeriesOptions[vKey], mode: settingsSeriesOptions[vKey]?.mode })">
                                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                     <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                         <div class="flex items-center gap-2">
@@ -432,6 +433,17 @@
                         for (const key in variables) {
                             if (!this.settingsSearchQueries[key]) this.settingsSearchQueries[key] = '';
                         }
+                        
+                        console.log("DEBUG openWidgetSettings:", {
+                            widgetId: widgetId,
+                            sourceType: sourceType,
+                            controls: controls,
+                            variables: variables,
+                            seriesOptions: seriesOptions,
+                            settingsSeriesOptions: this.settingsSeriesOptions,
+                            settingsVariables: this.settingsVariables
+                        });
+                        
                         this.openSettings = true;
                     },
 
