@@ -160,6 +160,33 @@ class DashboardBuilder extends Page
         return $assets;
     }
 
+    public function getAssetGroupsForChannel(string $channel): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project) return [];
+
+        $groups = \App\Models\AssetGroup::where('project_id', $project->id)
+            ->whereHas('items', function ($query) use ($channel) {
+                $query->where('channel', $channel);
+            })
+            ->with(['items' => function ($query) use ($channel) {
+                $query->where('channel', $channel);
+            }])
+            ->get();
+
+        $result = [];
+        foreach ($groups as $group) {
+            $activeAssets = $group->active_items->pluck('asset_id')->toArray();
+            if (!empty($activeAssets)) {
+                $result[$group->id] = [
+                    'name' => $group->name,
+                    'assets' => array_values($activeAssets),
+                ];
+            }
+        }
+        return $result;
+    }
+
     public function getMetricsForChannel(string $channel): array
     {
         return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel);

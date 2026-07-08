@@ -519,11 +519,27 @@
                                             </div>
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            
+                                            <template x-if="!widgetKpiConfig.dependent_asset_filter">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                <div class="flex items-center justify-between">
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
+                                                <template x-if="!widgetKpiConfig.dependent_asset_group">
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Asset Group</label>
+                                                    <select x-model="widgetControlsForm.series_asset_groups.dependent"
+                                                            :disabled="widgetControlsForm.series_assets.dependent && widgetControlsForm.series_assets.dependent.length > 0"
+                                                            class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                        <option value="">Select an asset group</option>
+                                                        <template x-for="(groupData, groupId) in allChannelAssetGroups[widgetKpiConfig.dependent_channel] || {}" :key="groupId">
+                                                            <option :value="groupId" x-text="groupData.name"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                </template>
+
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="widgetKpiConfig.dependent_asset_group">(Limited to KPI Group)</span><span x-show="!widgetKpiConfig.dependent_asset_group">(Leave empty for All Assets)</span></label>
                                                     <div class="flex gap-3">
-                                                        <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                        <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel, widgetKpiConfig.dependent_asset_group)" :disabled="widgetControlsForm.series_asset_groups.dependent" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
                                                         <button @click="clearAllKpiAssets('dependent')" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                     </div>
                                                 </div>
@@ -533,15 +549,15 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['dependent']" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                    <input type="text" x-model="searchQueries['dependent']" :disabled="widgetControlsForm.series_asset_groups.dependent" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed" style="padding-left: 2.5rem;">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
-                                                        <div x-show="(searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase())"
-                                                             @click="toggleKpiAsset('dependent', id)"
+                                                        <div x-show="(!widgetKpiConfig.dependent_asset_group || (allChannelAssetGroups[widgetKpiConfig.dependent_channel] && allChannelAssetGroups[widgetKpiConfig.dependent_channel][widgetKpiConfig.dependent_asset_group] && (allChannelAssetGroups[widgetKpiConfig.dependent_channel][widgetKpiConfig.dependent_asset_group].assets || []).map(String).includes(String(id)))) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
+                                                             @click="if (!widgetControlsForm.series_asset_groups.dependent) toggleKpiAsset('dependent', id)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                             :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                             :class="(widgetControlsForm.series_asset_groups.dependent) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
                                                             <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
                                                                  :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                 <svg x-show="(widgetControlsForm.series_assets.dependent || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -557,6 +573,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -578,11 +595,27 @@
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                                
+                                                <template x-if="!varCfg.independent_asset_filter">
                                                 <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                    <div class="flex items-center justify-between">
-                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
+                                                    <template x-if="!varCfg.independent_asset_group">
+                                                    <div>
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Asset Group</label>
+                                                        <select x-model="widgetControlsForm.series_asset_groups['independent_' + idx]"
+                                                                :disabled="widgetControlsForm.series_assets['independent_' + idx] && widgetControlsForm.series_assets['independent_' + idx].length > 0"
+                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                            <option value="">Select an asset group</option>
+                                                            <template x-for="(groupData, groupId) in allChannelAssetGroups[varCfg.independent_channel] || {}" :key="groupId">
+                                                                <option :value="groupId" x-text="groupData.name"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                    </template>
+
+                                                    <div class="flex items-center justify-between mt-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="varCfg.independent_asset_group">(Limited to KPI Group)</span><span x-show="!varCfg.independent_asset_group">(Leave empty for All Assets)</span></label>
                                                         <div class="flex gap-3">
-                                                            <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                            <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
                                                             <button @click="clearAllKpiAssets('independent_' + idx)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </div>
@@ -592,15 +625,15 @@
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                             </svg>
                                                         </div>
-                                                        <input type="text" x-model="searchQueries['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                        <input type="text" x-model="searchQueries['independent_' + idx]" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed" style="padding-left: 2.5rem;">
                                                     </div>
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
-                                                            <div x-show="(searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase())"
-                                                                 @click="toggleKpiAsset('independent_' + idx, id)"
+                                                            <div x-show="(!varCfg.independent_asset_group || (allChannelAssetGroups[varCfg.independent_channel] && allChannelAssetGroups[varCfg.independent_channel][varCfg.independent_asset_group] && (allChannelAssetGroups[varCfg.independent_channel][varCfg.independent_asset_group].assets || []).map(String).includes(String(id)))) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
+                                                                 @click="if (!widgetControlsForm.series_asset_groups['independent_' + idx]) toggleKpiAsset('independent_' + idx, id)"
                                                                  class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                 :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                 :class="(widgetControlsForm.series_asset_groups['independent_' + idx]) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
                                                                 <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
                                                                      :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                     <svg x-show="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -616,6 +649,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -842,6 +876,7 @@
                     // ─── Channels & Assets ───
                     channels: @json($this->getActiveChannels()),
                     allChannelAssets: {},
+                    allChannelAssetGroups: {},
                     allChannelMetrics: {},
                     dashboardAssets: {},
                     dashboardMetrics: {},
@@ -867,6 +902,7 @@
                         granularity: 'daily',
                         metrics: [],
                         series_assets: {},
+                        series_asset_groups: {},
                     },
                     widgetKpiConfig: {},
                     widgetAssets: {},
@@ -974,6 +1010,9 @@
                                 if (ch === this.dashboardControls.channel) {
                                     this.dashboardAssets = assets;
                                 }
+                            });
+                            @this.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
@@ -1116,6 +1155,7 @@
                             assets: wc.assets || [],
                             metrics: wc.metrics || [],
                             series_assets: wc.series_assets || {},
+                            series_asset_groups: wc.series_asset_groups || {},
                             raw_series: [],
                         };
 
@@ -1139,6 +1179,9 @@
                                 if (ch && !this.allChannelAssets[ch]) {
                                     @this.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                                 }
+                                if (ch && !this.allChannelAssetGroups[ch]) {
+                                    @this.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
+                                }
                                 if (ch && !this.allChannelMetrics[ch]) {
                                     @this.getMetricsForChannel(ch).then(metrics => { 
                                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
@@ -1156,10 +1199,14 @@
                                 
                                 // Initialize arrays if undefined
                                 if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
+                                if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = '';
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         if (!this.widgetControlsForm.series_assets['independent_' + key]) {
                                             this.widgetControlsForm.series_assets['independent_' + key] = [];
+                                        }
+                                        if (!this.widgetControlsForm.series_asset_groups['independent_' + key]) {
+                                            this.widgetControlsForm.series_asset_groups['independent_' + key] = '';
                                         }
                                     }
                                 }
@@ -1178,6 +1225,11 @@
                                     if (!this.allChannelAssets[ch]) {
                                         @this.getAssetsForChannel(ch).then(assets => {
                                             this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                                        });
+                                    }
+                                    if (!this.allChannelAssetGroups[ch]) {
+                                        @this.getAssetGroupsForChannel(ch).then(groups => {
+                                            this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                                         });
                                     }
                                     if (!this.allChannelMetrics[ch]) {
@@ -1206,6 +1258,9 @@
                             @this.getAssetsForChannel(ch).then(assets => {
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 this.widgetAssets = assets;
+                            });
+                            @this.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                             });
                             @this.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
@@ -1236,6 +1291,9 @@
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
                                 this.widgetAssets = assets;
                             });
+                            @this.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
+                            });
                             @this.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 this.widgetMetrics = metrics;
@@ -1251,6 +1309,11 @@
                         if (ch && !this.allChannelAssets[ch]) {
                             @this.getAssetsForChannel(ch).then(assets => {
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                            });
+                        }
+                        if (ch && !this.allChannelAssetGroups[ch]) {
+                            @this.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                             });
                         }
                         if (ch && !this.allChannelMetrics[ch]) {
@@ -1290,9 +1353,14 @@
                         }
                     },
 
-                    selectAllKpiAssets(seriesKey, channel) {
+                    selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
                         const assets = this.allChannelAssets[channel] || {};
-                        this.widgetControlsForm.series_assets[seriesKey] = Object.keys(assets).map(String);
+                        let validIds = Object.keys(assets).map(String);
+                        if (kpiGroup && this.allChannelAssetGroups[channel] && this.allChannelAssetGroups[channel][kpiGroup]) {
+                            const groupAssets = this.allChannelAssetGroups[channel][kpiGroup].assets.map(String);
+                            validIds = validIds.filter(id => groupAssets.includes(id));
+                        }
+                        this.widgetControlsForm.series_assets[seriesKey] = validIds;
                     },
 
                     clearAllKpiAssets(seriesKey) {
@@ -1311,6 +1379,7 @@
                             granularity: 'daily',
                             metrics: [],
                             series_assets: {},
+                            series_asset_groups: {},
                         };
                     },
 
@@ -1391,6 +1460,7 @@
                             payload.assets = c.assets;
                             payload.metrics = c.metrics;
                             payload.series_assets = c.series_assets;
+                            payload.series_asset_groups = c.series_asset_groups;
                         }
 
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
