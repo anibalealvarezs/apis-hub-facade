@@ -393,7 +393,10 @@ class KpiFormBuilder
                     Select::make($name . '_channel')
                         ->label('Channel (keep empty for runtime)')
                         ->options(fn () => self::getActiveChannels())
-                        ->live(),
+                        ->live()
+                        ->hint(fn (Get $get) => empty($get($name . '_channel')) ? 'ACTION REQUIRED: Please select a channel' : 'Channel Assigned')
+                        ->hintIcon(fn (Get $get) => empty($get($name . '_channel')) ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
+                        ->hintColor(fn (Get $get) => empty($get($name . '_channel')) ? 'danger' : 'success'),
                     Select::make($name . '_metric')
                         ->label('Metric')
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
@@ -669,7 +672,7 @@ class KpiFormBuilder
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_template')
                                                 ->label('Next')
-                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
+                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
                                                 ->disabled(fn (Get $get) => empty($get('template'))),
                             ]),
                         ])
