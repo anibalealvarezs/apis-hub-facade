@@ -151,7 +151,7 @@
                                     <div class="flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
                                         <div class="w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center opacity-70" x-html="getWidgetSvg(widget.widget_type)"></div>
                                         <div class="flex flex-wrap items-center justify-center gap-2">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="widget.widget_type"></span>
+                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="widgetLabels[widget.widget_type] || widget.widget_type"></span>
                                             <template x-if="widget.source_type === 'kpi'">
                                                 <div class="flex flex-wrap items-center justify-center gap-2">
                                                     <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">KPI</span>
@@ -889,6 +889,7 @@
                     widgets: @json($this->widgets ?? []),
                     gridLayout: @json($this->gridState ?? []),
                     grid: null,
+                    widgetLabels: @json(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
 
                     // ─── Channels & Assets ───
                     channels: @json($this->getActiveChannels()),
@@ -1544,6 +1545,10 @@
                         this.$nextTick(() => {
                             setTimeout(() => {
                                 @this.saveLayout(this.getLayout());
+                                const el = document.querySelector(`[gs-id="${widget.id}"]`);
+                                if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
                             }, 500);
                         });
                     })
@@ -1620,6 +1625,10 @@
                         this.$nextTick(() => {
                             setTimeout(() => {
                                 @this.saveLayout(this.getLayout());
+                                const el = document.querySelector(`[gs-id="${widget.id}"]`);
+                                if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
                             }, 500);
                         });
                     })
