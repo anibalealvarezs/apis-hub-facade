@@ -84,7 +84,7 @@
                                         setTimeout(() => { widget._isNew = false; }, 2500);
                                     }
                                  ">
-                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col h-full w-full">
+                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col">
                                     {{-- Widget Header --}}
                                     <div
                                         class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
@@ -152,7 +152,12 @@
                                         <div class="flex flex-wrap items-center justify-center gap-2">
                                             <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="widget.widget_type"></span>
                                             <template x-if="widget.source_type === 'kpi'">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">KPI</span>
+                                                <div class="flex flex-wrap items-center justify-center gap-2">
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">KPI</span>
+                                                    <template x-if="widget.source_config?.custom_kpi_id && kpis[widget.source_config.custom_kpi_id]">
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700" x-text="kpis[widget.source_config.custom_kpi_id].name"></span>
+                                                    </template>
+                                                </div>
                                             </template>
                                             <template x-if="widget.source_type === 'metric'">
                                                 <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">Metric</span>
