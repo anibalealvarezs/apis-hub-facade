@@ -10,7 +10,7 @@
         
         $options = [];
         foreach ($channels as $channel => $name) {
-            $allAssets = \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
+            $allAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
             if (!empty($allAssets)) {
                 $options[$channel] = [
                     'name' => $name,
