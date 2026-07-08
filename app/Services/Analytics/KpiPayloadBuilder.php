@@ -35,8 +35,16 @@ class KpiPayloadBuilder
             'metric' => ($state['dependent_channel'] ?? '') . '.' . ($state['dependent_metric'] ?? ''),
         ];
 
-        if (!empty($state['dependent_asset_filter'])) {
-            // Very simplified filter key, real implementation would map channel to filter key e.g. channeledCampaign
+        if (!empty($state['dependent_asset_group'])) {
+            $group = \App\Models\AssetGroup::find($state['dependent_asset_group']);
+            $assets = $group ? $group->active_items->where('channel', $state['dependent_channel'])->pluck('asset_id')->toArray() : [];
+            
+            if (!empty($assets)) {
+                $dependentNode['filters'] = ['asset_platform_id' => array_values($assets)];
+            } else {
+                $dependentNode['filters'] = ['asset_platform_id' => ['__empty_group__']];
+            }
+        } elseif (!empty($state['dependent_asset_filter'])) {
             $dependentNode['filters'] = ['asset_platform_id' => $state['dependent_asset_filter']];
         }
 
@@ -76,9 +84,20 @@ class KpiPayloadBuilder
                 'type' => 'metric',
                 'metric' => ($var['independent_channel'] ?? '') . '.' . ($var['independent_metric'] ?? ''),
             ];
-            if (!empty($var['independent_asset_filter'])) {
+            
+            if (!empty($var['independent_asset_group'])) {
+                $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
+                $assets = $group ? $group->active_items->where('channel', $var['independent_channel'])->pluck('asset_id')->toArray() : [];
+                
+                if (!empty($assets)) {
+                    $node['filters'] = ['asset_platform_id' => array_values($assets)];
+                } else {
+                    $node['filters'] = ['asset_platform_id' => ['__empty_group__']];
+                }
+            } elseif (!empty($var['independent_asset_filter'])) {
                 $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
             }
+            
             return $node;
         }
 
@@ -88,7 +107,17 @@ class KpiPayloadBuilder
             'type' => 'metric',
             'metric' => ($first['independent_channel'] ?? '') . '.' . ($first['independent_metric'] ?? ''),
         ];
-        if (!empty($first['independent_asset_filter'])) {
+        
+        if (!empty($first['independent_asset_group'])) {
+            $group = \App\Models\AssetGroup::find($first['independent_asset_group']);
+            $assets = $group ? $group->active_items->where('channel', $first['independent_channel'])->pluck('asset_id')->toArray() : [];
+            
+            if (!empty($assets)) {
+                $left['filters'] = ['asset_platform_id' => array_values($assets)];
+            } else {
+                $left['filters'] = ['asset_platform_id' => ['__empty_group__']];
+            }
+        } elseif (!empty($first['independent_asset_filter'])) {
             $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
         }
 

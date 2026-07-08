@@ -221,6 +221,13 @@ class KpiFormBuilder
         return $options;
     }
 
+    public static function getAssetGroupOptions(): array
+    {
+        $tenant = Filament::getTenant();
+        if (!$tenant) return [];
+        return \App\Models\AssetGroup::where('project_id', $tenant->id)->pluck('name', 'id')->toArray();
+    }
+
     public static function getNodeSchema(string $name, string $label): array
     {
         return [
@@ -234,10 +241,16 @@ class KpiFormBuilder
                         ->label('Metric')
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
                         ->required(fn () => $name === 'dependent'),
+                    Select::make($name . '_asset_group')
+                        ->label('Asset Group (keep empty for runtime)')
+                        ->options(fn () => static::getAssetGroupOptions())
+                        ->disabled(fn (Get $get) => filled($get($name . '_asset_filter')))
+                        ->live(),
                     Select::make($name . '_asset_filter')
                         ->label('Asset Filter (keep empty for runtime)')
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
-                ])->columns(3)
+                        ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
+                ])->columns(4)
         ];
     }
     
@@ -321,6 +334,7 @@ class KpiFormBuilder
                                                 $independents[] = [
                                                     'independent_channel' => $resolveChannel($node['channel']),
                                                     'independent_metric' => $node['metric'] ?? '',
+                                                    'independent_asset_group' => null,
                                                     'independent_asset_filter' => null,
                                                 ];
                                             } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
@@ -370,6 +384,7 @@ class KpiFormBuilder
                             Repeater::make('independent_variables')
                                 ->label('')
                                 ->schema(self::getNodeSchema('independent', 'Variable'))
+                                ->columnSpanFull()
                                 ->defaultItems(1)
                                 ->minItems(0)
                         ]),
