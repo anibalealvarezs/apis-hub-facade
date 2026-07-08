@@ -23,8 +23,8 @@ class KpiExecuteActionBuilder
             ->label(__('Test KPI Payload'))
             ->icon('heroicon-o-play')
             ->color('success')
-            ->form(function () use ($getUiState, $getCalculationType) {
-                $uiState = $getUiState();
+            ->form(function (?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
+                $uiState = $getUiState($record);
                 $fields = [];
 
                 if (empty($uiState['start_date'])) {
@@ -149,8 +149,8 @@ class KpiExecuteActionBuilder
                         ->icon('heroicon-o-code-bracket')
                         ->color('gray')
                         ->modalHeading(__('Payload Preview'))
-                        ->modalContent(function (Get $get) use ($getUiState, $getCalculationType) {
-                            $uiState = $getUiState();
+                        ->modalContent(function (Get $get, ?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
+                            $uiState = $getUiState($record);
 
                             foreach (['start_date', 'end_date', 'granularity'] as $field) {
                                 $val = $get($field);
@@ -194,7 +194,7 @@ class KpiExecuteActionBuilder
                             // Re-apply to uiState (using original keys if needed, but payload builder handles seq)
                             $uiState['independent_variables'] = $independentsSeq;
 
-                            $calcType = $getCalculationType();
+                            $calcType = $getCalculationType($record);
                             if (empty($calcType)) {
                                 return new HtmlString('<p class="text-danger-500">Please select a calculation type first.</p>');
                             }
@@ -217,8 +217,8 @@ class KpiExecuteActionBuilder
 
                 return $fields;
             })
-            ->action(function (array $data, RemoteEngineService $service) use ($getUiState, $getCalculationType) {
-                $uiState = $getUiState();
+            ->action(function (array $data, RemoteEngineService $service, ?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
+                $uiState = $getUiState($record);
 
                 if (!empty($data['runtime_dependent_channel'])) {
                     $uiState['dependent_channel'] = $data['runtime_dependent_channel'];
@@ -248,7 +248,7 @@ class KpiExecuteActionBuilder
                 }
                 $uiState['independent_variables'] = $independentsSeq;
 
-                $calcType = $getCalculationType();
+                $calcType = $getCalculationType($record);
                 if (empty($calcType)) {
                     \Filament\Notifications\Notification::make()->title(__('Missing calculation type'))->danger()->send();
                     return;

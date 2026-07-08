@@ -48,7 +48,8 @@
             return $form
                 ->schema([
                     ... \App\Services\Analytics\KpiFormBuilder::getSchema(),
-                ]);
+                ])
+                ->disabled(!auth()->user()->can('edit_preferences'));
         }
 
         public static function table(Table $table): Table
@@ -76,8 +77,8 @@
                 ->actions([
                 \App\Services\Analytics\KpiExecuteActionBuilder::configure(
                     Tables\Actions\Action::make('execute'),
-                    fn () => $record->filters['_ui_state'] ?? [],
-                    fn () => $record->calculation_type
+                    fn ($record) => $record ? ($record->filters['_ui_state'] ?? []) : [],
+                    fn ($record) => $record ? $record->calculation_type : null
                 ),
                     Tables\Actions\Action::make('debugPayload')
                         ->label(__('Debug Payload'))
