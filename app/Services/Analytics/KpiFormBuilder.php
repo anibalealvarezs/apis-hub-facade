@@ -802,22 +802,31 @@ class KpiFormBuilder
                                                     return false;
                                                 })
                                                 ->requiresConfirmation(function (Get $get) {
-                                                    $depGroup = $get('dependent_asset_group');
-                                                    $independents = $get('independent_variables') ?? [];
+                                                    $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
                                                     
-                                                    $hasAnyGroup = !empty($depGroup);
+                                                    $depGroup = (string) ($get('dependent_asset_group') ?? '');
+                                                    $independents = $isBivariate ? ($get('independent_variables') ?? []) : [];
+                                                    
+                                                    $allGroups = [];
+                                                    if ($depGroup !== '') {
+                                                        $allGroups[] = $depGroup;
+                                                    } else {
+                                                        $allGroups[] = 'EMPTY';
+                                                    }
+                                                    
+                                                    $hasAnyGroup = ($depGroup !== '');
+                                                    
                                                     foreach ($independents as $item) {
-                                                        if (!empty($item['independent_asset_group'])) {
+                                                        $indGroup = (string) ($item['independent_asset_group'] ?? '');
+                                                        if ($indGroup !== '') {
                                                             $hasAnyGroup = true;
+                                                            $allGroups[] = $indGroup;
+                                                        } else {
+                                                            $allGroups[] = 'EMPTY';
                                                         }
                                                     }
                                                     
                                                     if (!$hasAnyGroup) return false;
-                                                    
-                                                    $allGroups = [$depGroup ?: null];
-                                                    foreach ($independents as $item) {
-                                                        $allGroups[] = $item['independent_asset_group'] ?: null;
-                                                    }
                                                     
                                                     return count(array_unique($allGroups)) > 1;
                                                 })
