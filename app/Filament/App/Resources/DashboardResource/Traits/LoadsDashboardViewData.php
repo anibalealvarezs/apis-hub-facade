@@ -100,10 +100,12 @@ trait LoadsDashboardViewData
                     $assets = []; // ensure it's an array
                 }
                 
-                // Pre-select first asset if none selected
-                if (empty($resolved['series_assets'][$key]) && !empty($assets)) {
+                // The view must not select all assets per series by default, but just a single asset per series.
+                if (!empty($assets)) {
                     reset($assets);
                     $resolved['series_assets'][$key] = [strval(key($assets))];
+                } else {
+                    $resolved['series_assets'][$key] = [];
                 }
 
                 $widgetArray['series_assets_options'][$key] = [

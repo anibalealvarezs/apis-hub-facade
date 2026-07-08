@@ -600,6 +600,7 @@
                         const idx = current.indexOf(String(assetId));
                         let next;
                         if (idx > -1) {
+                            if (current.length <= 1) return; // Prevent unselecting the last asset
                             next = current.filter((_, i) => i !== idx);
                         } else {
                             next = [...current, String(assetId)];
@@ -610,10 +611,6 @@
                     selectAll(seriesKey) {
                         const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
                         this.controls.series_assets[seriesKey] = allIds;
-                    },
-
-                    clearAll(seriesKey) {
-                        this.controls.series_assets[seriesKey] = [];
                     },
 
                     getActiveFilterCount() {
