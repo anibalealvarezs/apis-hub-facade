@@ -72,7 +72,7 @@
                         ->sortable(),
                     Tables\Columns\TextColumn::make('dashboards_count')
                         ->counts('dashboards')
-                        ->label('Dashboards')
+                        ->label('Widgets')
                         ->sortable(),
                     Tables\Columns\TextColumn::make('created_at')
                         ->dateTime()
