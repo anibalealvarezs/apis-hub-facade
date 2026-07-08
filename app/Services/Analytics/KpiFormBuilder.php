@@ -824,14 +824,16 @@ class KpiFormBuilder
                                                         return false;
                                                     }
 
-                                                    $depGroups = array_filter((array) ($get('dependent_asset_group') ?? []));
+                                                    $depGroup = $get('dependent_asset_group');
                                                     $independents = $get('independent_variables') ?? [];
 
-                                                    $hasAnyGroup = count($depGroups) > 0;
+                                                    $depStr = is_array($depGroup) ? implode(',', $depGroup) : (string) ($depGroup ?? '');
+                                                    $hasAnyGroup = $depStr !== '';
 
                                                     foreach ($independents as $item) {
-                                                        $indGroups = array_filter((array) ($item['independent_asset_group'] ?? []));
-                                                        if (count($indGroups) > 0) {
+                                                        $indVal = $item['independent_asset_group'] ?? '';
+                                                        $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
+                                                        if ($indStr !== '') {
                                                             $hasAnyGroup = true;
                                                         }
                                                     }
@@ -840,20 +842,12 @@ class KpiFormBuilder
                                                         return false;
                                                     }
 
-                                                    sort($depGroups);
-                                                    $depString = implode(',', $depGroups);
-
                                                     foreach ($independents as $item) {
-                                                        $indGroups = array_filter((array) ($item['independent_asset_group'] ?? []));
-                                                        sort($indGroups);
-                                                        $indString = implode(',', $indGroups);
+                                                        $indVal = $item['independent_asset_group'] ?? '';
+                                                        $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
 
-                                                        if ($indString !== $depString) {
-                                                            \Illuminate\Support\Facades\Log::warning('Asset Groups Mismatch Triggered!', [
-                                                                'depGroups' => $depGroups,
-                                                                'indGroups' => $indGroups,
-                                                            ]);
-                                                            return true;
+                                                        if ($indStr !== $depStr) {
+                                                            throw new \Exception("Mismatch Debug! Dependent: [{$depStr}], Independent: [{$indStr}]. Please provide a screenshot of this error.");
                                                         }
                                                     }
 
