@@ -85,10 +85,17 @@
                 ])
                 ->filters([
                     Tables\Filters\SelectFilter::make('dashboards')
-                        ->relationship('dashboards', 'name')
+                        ->label('Dashboards')
                         ->multiple()
                         ->preload()
-                        ->label('Dashboards'),
+                        ->options(fn () => \App\Models\Dashboard::pluck('name', 'id')->toArray())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['values'])) {
+                                $query->whereHas('dashboards', function ($q) use ($data) {
+                                    $q->whereIn('dashboards.id', $data['values']);
+                                });
+                            }
+                        }),
                     Tables\Filters\SelectFilter::make('calculation_type')
                         ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
                     Tables\Filters\SelectFilter::make('asset_group')
