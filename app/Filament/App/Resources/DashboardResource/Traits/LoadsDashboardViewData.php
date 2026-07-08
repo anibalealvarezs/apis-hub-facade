@@ -23,7 +23,7 @@ trait LoadsDashboardViewData
     public function loadDashboardViewData(Dashboard $record): void
     {
         $this->dashboard = $record;
-        $this->allChannels = \App\Services\Analytics\KpiFormBuilder::getChannelOptions();
+        $this->allChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
 
         $this->widgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
