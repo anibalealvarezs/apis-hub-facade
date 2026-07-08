@@ -29,7 +29,7 @@ class KpiFormBuilder
         if (! $tenant) {
             return [];
         }
-        
+
         $config = $tenant->sync_config ?? [];
         $providers = [];
         foreach ($config as $channelKey => $channelData) {
@@ -37,13 +37,15 @@ class KpiFormBuilder
                 $providers[] = $channelKey;
             }
         }
-        
+
         $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $active = [];
-        
+
         foreach (array_keys($channels) as $channel) {
-            if (in_array($channel, $providers)) continue;
-            
+            if (in_array($channel, $providers)) {
+                continue;
+            }
+
             if (self::channelHasEnabledAssets($channel)) {
                 $active[$channel] = self::getChannelDisplayName($channel);
             }
@@ -146,6 +148,7 @@ class KpiFormBuilder
                         $cats['ch_' . $channel] = $activeChannels[$channel];
                     }
                 }
+
                 return $cats;
             }
         }
@@ -270,7 +273,7 @@ class KpiFormBuilder
         }
 
         $activeChannels = array_keys(self::getActiveChannels());
-        if (!in_array($channel, $activeChannels)) {
+        if (! in_array($channel, $activeChannels)) {
             return [];
         }
 
@@ -349,7 +352,7 @@ class KpiFormBuilder
                 array_key_exists('enabled', $data)
                 && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('platformId', $data))
             ) {
-                if (!empty($data['enabled']) && empty($data['lost_access'])) {
+                if (! empty($data['enabled']) && empty($data['lost_access'])) {
                     $id = $data['id'] ?? $data['url'] ?? $data['platformId'] ?? '';
                     $name = $data['name'] ?? $data['url'] ?? $data['platformId'] ?? $id;
                     if ($id) {
@@ -359,6 +362,7 @@ class KpiFormBuilder
                         ];
                     }
                 }
+
                 return;
             }
 
@@ -408,8 +412,10 @@ class KpiFormBuilder
                         ->options(function (Get $get) {
                             $allChannels = self::getActiveChannels();
                             $requiredTag = $get('_required_tag');
-                            if (empty($requiredTag)) return $allChannels;
-                            
+                            if (empty($requiredTag)) {
+                                return $allChannels;
+                            }
+
                             $registryTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
                             $filtered = [];
                             foreach ($allChannels as $key => $label) {
@@ -418,6 +424,7 @@ class KpiFormBuilder
                                     $filtered[$key] = $label;
                                 }
                             }
+
                             return $filtered;
                         })
                         ->live()
@@ -608,68 +615,71 @@ class KpiFormBuilder
                                                     return null;
                                                 };
 
-                                                    $extractTag = function ($placeholder) {
-                                                        if (!$placeholder) return null;
-                                                        preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
-                                                        return isset($matches[1]) ? strtolower($matches[1]) : null;
-                                                    };
-
-                                                    $ast = $kpi['template']['ast'] ?? [];
-
-                                                    $isUnivariateAst = ($ast['type'] ?? '') === 'metric';
-                                                    if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly']) || $isUnivariateAst) {
-                                                        if (isset($ast['channel'])) {
-                                                            $set('dependent_channel', $resolveChannel($ast['channel']));
-                                                            $set('dependent_metric', $ast['metric'] ?? '');
-                                                            $set('_required_tag', $extractTag($ast['channel']));
-                                                            if ($globalGroup) {
-                                                                $set('dependent_asset_group', $globalGroup);
-                                                                $set('dependent_asset_filter', null);
-                                                            }
-                                                        }
-                                                        $set('independent_variables', []);
-
-                                                        return;
+                                                $extractTag = function ($placeholder) {
+                                                    if (! $placeholder) {
+                                                        return null;
                                                     }
+                                                    preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
 
-                                                    if (isset($ast['left']['channel'])) {
-                                                        $set('dependent_channel', $resolveChannel($ast['left']['channel']));
-                                                        $set('dependent_metric', $ast['left']['metric'] ?? '');
-                                                        $set('_required_tag', $extractTag($ast['left']['channel']));
+                                                    return isset($matches[1]) ? strtolower($matches[1]) : null;
+                                                };
+
+                                                $ast = $kpi['template']['ast'] ?? [];
+
+                                                $isUnivariateAst = ($ast['type'] ?? '') === 'metric';
+                                                if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly']) || $isUnivariateAst) {
+                                                    if (isset($ast['channel'])) {
+                                                        $set('dependent_channel', $resolveChannel($ast['channel']));
+                                                        $set('dependent_metric', $ast['metric'] ?? '');
+                                                        $set('_required_tag', $extractTag($ast['channel']));
                                                         if ($globalGroup) {
                                                             $set('dependent_asset_group', $globalGroup);
                                                             $set('dependent_asset_filter', null);
                                                         }
                                                     }
+                                                    $set('independent_variables', []);
 
-                                                    if (isset($ast['right'])) {
-                                                        $independents = [];
+                                                    return;
+                                                }
 
-                                                        $unpackIndependents = function ($node) use (&$unpackIndependents, $resolveChannel, $extractTag, &$independents, $globalGroup) {
-                                                            if (($node['type'] ?? '') === 'metric') {
-                                                                $independents[] = [
-                                                                    'independent_channel' => $resolveChannel($node['channel']),
-                                                                    'independent_metric' => $node['metric'] ?? '',
-                                                                    '_required_tag' => $extractTag($node['channel']),
-                                                                    'independent_asset_group' => $globalGroup,
-                                                                    'independent_asset_filter' => null,
-                                                                ];
-                                                            } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
-                                                                $unpackIndependents($node['left']);
-                                                                $unpackIndependents($node['right']);
-                                                            }
-                                                        };
-
-                                                        $unpackIndependents($ast['right']);
-
-                                                        if (! empty($independents)) {
-                                                            $repeaterData = [];
-                                                            foreach ($independents as $idx => $ind) {
-                                                                $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
-                                                            }
-                                                            $set('independent_variables', $repeaterData);
-                                                        }
+                                                if (isset($ast['left']['channel'])) {
+                                                    $set('dependent_channel', $resolveChannel($ast['left']['channel']));
+                                                    $set('dependent_metric', $ast['left']['metric'] ?? '');
+                                                    $set('_required_tag', $extractTag($ast['left']['channel']));
+                                                    if ($globalGroup) {
+                                                        $set('dependent_asset_group', $globalGroup);
+                                                        $set('dependent_asset_filter', null);
                                                     }
+                                                }
+
+                                                if (isset($ast['right'])) {
+                                                    $independents = [];
+
+                                                    $unpackIndependents = function ($node) use (&$unpackIndependents, $resolveChannel, $extractTag, &$independents, $globalGroup) {
+                                                        if (($node['type'] ?? '') === 'metric') {
+                                                            $independents[] = [
+                                                                'independent_channel' => $resolveChannel($node['channel']),
+                                                                'independent_metric' => $node['metric'] ?? '',
+                                                                '_required_tag' => $extractTag($node['channel']),
+                                                                'independent_asset_group' => $globalGroup,
+                                                                'independent_asset_filter' => null,
+                                                            ];
+                                                        } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
+                                                            $unpackIndependents($node['left']);
+                                                            $unpackIndependents($node['right']);
+                                                        }
+                                                    };
+
+                                                    $unpackIndependents($ast['right']);
+
+                                                    if (! empty($independents)) {
+                                                        $repeaterData = [];
+                                                        foreach ($independents as $idx => $ind) {
+                                                            $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
+                                                        }
+                                                        $set('independent_variables', $repeaterData);
+                                                    }
+                                                }
                                             }),
                             ])->columnSpan(1)->extraAttributes(['class' => 'relative z-50']),
 
@@ -781,7 +791,7 @@ class KpiFormBuilder
                                                 'md' => 3,
                                 ]),
                             Actions::make(array_filter([
-                                !$isEdit ? Actions\Action::make('back_series')
+                                ! $isEdit ? Actions\Action::make('back_series')
                                                 ->label('Back')
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
@@ -789,59 +799,65 @@ class KpiFormBuilder
                                                 ->label('Next')
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                                                 ->disabled(function (Get $get) {
-                                                    if (empty($get('dependent_channel'))) return true;
-                                                    
+                                                    if (empty($get('dependent_channel'))) {
+                                                        return true;
+                                                    }
+
                                                     $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
                                                     if ($isBivariate) {
                                                         $independents = $get('independent_variables') ?? [];
-                                                        if (empty($independents)) return true;
+                                                        if (empty($independents)) {
+                                                            return true;
+                                                        }
                                                         foreach ($independents as $item) {
-                                                            if (empty($item['independent_channel'])) return true;
+                                                            if (empty($item['independent_channel'])) {
+                                                                return true;
+                                                            }
                                                         }
                                                     }
+
                                                     return false;
                                                 })
                                                 ->requiresConfirmation(function (Get $get) {
                                                     $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
-                                                    
-                                                    $depGroup = $get('dependent_asset_group');
-                                                    $independents = $isBivariate ? ($get('independent_variables') ?? []) : [];
-                                                    
-                                                    $allGroups = [];
-                                                    if (!empty($depGroup)) {
-                                                        $allGroups[] = (string) $depGroup;
-                                                    } else {
-                                                        $allGroups[] = 'EMPTY';
-                                                    }
-                                                    
-                                                    $hasAnyGroup = !empty($depGroup);
-                                                    
-                                                    foreach ($independents as $item) {
-                                                        if (!empty($item['independent_asset_group'])) {
-                                                            $hasAnyGroup = true;
-                                                            $allGroups[] = (string) $item['independent_asset_group'];
-                                                        } else {
-                                                            $allGroups[] = 'EMPTY';
-                                                        }
-                                                    }
-                                                    
-                                                    if (!$hasAnyGroup) {
+                                                    if (! $isBivariate) {
                                                         return false;
                                                     }
-                                                    
-                                                    $uniqueGroups = array_unique($allGroups);
-                                                    $mismatch = count($uniqueGroups) > 1;
-                                                    
-                                                    if ($mismatch) {
-                                                        \Illuminate\Support\Facades\Log::warning('Asset Groups Mismatch Triggered!', [
-                                                            'depGroup' => $depGroup,
-                                                            'independents' => $independents,
-                                                            'allGroups' => $allGroups,
-                                                            'uniqueGroups' => $uniqueGroups,
-                                                        ]);
+
+                                                    $depGroups = array_filter((array) ($get('dependent_asset_group') ?? []));
+                                                    $independents = $get('independent_variables') ?? [];
+
+                                                    $hasAnyGroup = count($depGroups) > 0;
+
+                                                    foreach ($independents as $item) {
+                                                        $indGroups = array_filter((array) ($item['independent_asset_group'] ?? []));
+                                                        if (count($indGroups) > 0) {
+                                                            $hasAnyGroup = true;
+                                                        }
                                                     }
-                                                    
-                                                    return $mismatch;
+
+                                                    if (! $hasAnyGroup) {
+                                                        return false;
+                                                    }
+
+                                                    sort($depGroups);
+                                                    $depString = implode(',', $depGroups);
+
+                                                    foreach ($independents as $item) {
+                                                        $indGroups = array_filter((array) ($item['independent_asset_group'] ?? []));
+                                                        sort($indGroups);
+                                                        $indString = implode(',', $indGroups);
+
+                                                        if ($indString !== $depString) {
+                                                            \Illuminate\Support\Facades\Log::warning('Asset Groups Mismatch Triggered!', [
+                                                                'depGroups' => $depGroups,
+                                                                'indGroups' => $indGroups,
+                                                            ]);
+                                                            return true;
+                                                        }
+                                                    }
+
+                                                    return false;
                                                 })
                                                 ->modalHeading('Asset Groups Mismatch')
                                                 ->modalDescription('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?')
@@ -952,18 +968,21 @@ class KpiFormBuilder
                                     // Dependent variable
                                     $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
                                     $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
-                                    
-                                    $getAssetsText = function($groupVal, $filterVal) {
+
+                                    $getAssetsText = function ($groupVal, $filterVal) {
                                         if ($groupVal) {
                                             $group = \App\Models\AssetGroup::find($groupVal);
+
                                             return $group ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">Group: ' . e($group->name) . '</span>' : 'Group ID: ' . $groupVal;
                                         } elseif ($filterVal) {
                                             $count = is_array($filterVal) ? count($filterVal) : 1;
+
                                             return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300">' . $count . ' selected</span>';
                                         }
+
                                         return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400 italic">Runtime</span>';
                                     };
-                                    
+
                                     $depAssets = $getAssetsText($get('dependent_asset_group'), $get('dependent_asset_filter'));
 
                                     // Independent variables
@@ -1023,7 +1042,7 @@ class KpiFormBuilder
                                                 ->label($isEdit ? 'Save changes' : 'Create')
                                                 ->color('primary')
                                                 ->submit($isEdit ? 'save' : 'create'),
-                                !$isEdit ? Actions\Action::make('create_another_kpi')
+                                ! $isEdit ? Actions\Action::make('create_another_kpi')
                                                 ->label('Create & create another')
                                                 ->color('gray')
                                                 ->submit('create')
