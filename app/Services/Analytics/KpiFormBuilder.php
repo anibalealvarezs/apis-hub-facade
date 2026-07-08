@@ -535,7 +535,7 @@ class KpiFormBuilder
                                         }
                                     }
                                 })
-                            ])->columnSpan(1),
+                            ])->columnSpan(1)->extraAttributes(['class' => 'relative z-50']),
 
                             Group::make([
                                 \Filament\Forms\Components\Placeholder::make('template_details')
@@ -543,33 +543,33 @@ class KpiFormBuilder
                                     ->content(function (Get $get) {
                                         $templateId = $get('template');
                                         if (!$templateId) {
-                                            return new \Illuminate\Support\HtmlString('<div class="h-full flex items-center justify-center p-6 text-gray-500 italic bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">Select a template to view its details.</div>');
+                                            return new \Illuminate\Support\HtmlString('<div class="h-full flex items-center justify-center p-6 text-gray-500 italic bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">Select a template to view its details.</div>');
                                         }
                                         
                                         $kpis = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
                                         $kpi = $kpis[$templateId] ?? null;
                                         
                                         if (!$kpi) {
-                                            return new \Illuminate\Support\HtmlString('<div class="text-red-500 p-4 bg-red-50 rounded-lg border border-red-200">Template details not found.</div>');
+                                            return new \Illuminate\Support\HtmlString('<div class="text-danger-600 dark:text-danger-400 p-4 bg-danger-50 dark:bg-danger-400/10 rounded-xl ring-1 ring-danger-600/10 dark:ring-danger-400/20">Template details not found.</div>');
                                         }
                                         
                                         $reference = app(\App\Filament\App\Pages\KpiReference::class);
                                         $guidance = $reference->getGuidance($templateId);
                                         
-                                        $html = '<div class="space-y-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-full">';
-                                        $html .= '<div><h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">' . e($kpi['name']) . '</h3>';
-                                        $html .= '<span class="inline-block mt-1 px-2 py-1 text-[10px] font-semibold text-primary-700 bg-primary-100 rounded-full">' . e($guidance['type_label']) . '</span></div>';
+                                        $html = '<div class="space-y-4 p-5 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">';
+                                        $html .= '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e($kpi['name']) . '</h3>';
+                                        $html .= '<span class="inline-block mt-1 px-2 py-1 text-xs font-medium text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-400/10 rounded-full">' . e($guidance['type_label']) . '</span></div>';
                                         
                                         if (!empty($guidance['explanation'])) {
-                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">What it does</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['explanation'])) . '</p></div>';
+                                            $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">What it does</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['explanation'])) . '</p></div>';
                                         }
                                         
                                         if (!empty($guidance['use_case'])) {
-                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Golden use case</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['use_case'])) . '</p></div>';
+                                            $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">Golden use case</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['use_case'])) . '</p></div>';
                                         }
                                         
                                         if (!empty($guidance['interpretation'])) {
-                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reading the result</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['interpretation'])) . '</p></div>';
+                                            $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">Reading the result</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['interpretation'])) . '</p></div>';
                                         }
                                         
                                         $html .= '</div>';
