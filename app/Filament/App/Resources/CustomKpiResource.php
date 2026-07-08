@@ -45,9 +45,10 @@
 
         public static function form(Form $form): Form
         {
+            $isEdit = $form->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
             return $form
                 ->schema([
-                    ... \App\Services\Analytics\KpiFormBuilder::getSchema(),
+                    ... \App\Services\Analytics\KpiFormBuilder::getSchema($isEdit),
                 ])
                 ->disabled(!auth()->user()->can('edit_preferences'));
         }

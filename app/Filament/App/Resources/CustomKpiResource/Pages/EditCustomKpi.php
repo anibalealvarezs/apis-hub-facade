@@ -21,6 +21,8 @@ class EditCustomKpi extends EditRecord
                 $data[$key] = $val;
             }
         }
+        $data['_builder_step'] = '22_series';
+        $data['_step_history'] = json_encode(['1_intent']);
         return $data;
     }
 
@@ -47,10 +49,7 @@ class EditCustomKpi extends EditRecord
 
     protected function getFormActions(): array
     {
-        if (!auth()->user()->can('edit_preferences')) {
-            return [];
-        }
-        return parent::getFormActions();
+        return [];
     }
 
     protected function getHeaderActions(): array

@@ -440,7 +440,7 @@ class KpiFormBuilder
         ];
     }
 
-    public static function getSchema(): array
+    public static function getSchema(bool $isEdit = false): array
     {
         $forwardAction = function (Set $set, Get $get, string $nextStep) {
             $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
@@ -765,15 +765,15 @@ class KpiFormBuilder
                                                 'sm' => 1,
                                                 'md' => 3,
                                 ]),
-                            Actions::make([
-                                Actions\Action::make('back_series')
+                            Actions::make(array_filter([
+                                !$isEdit ? Actions\Action::make('back_series')
                                                 ->label('Back')
                                                 ->color('gray')
-                                                ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
+                                                ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
                                 Actions\Action::make('next_series')
                                                 ->label('Next')
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope')),
-                            ]),
+                            ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
 
@@ -926,21 +926,21 @@ class KpiFormBuilder
 
                                     return new HtmlString($html);
                                 }),
-                            Actions::make([
+                            Actions::make(array_filter([
                                 Actions\Action::make('back_summary')
                                                 ->label('Back')
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('create_kpi')
-                                                ->label('Create')
+                                                ->label($isEdit ? 'Save changes' : 'Create')
                                                 ->color('primary')
-                                                ->submit('create'),
-                                Actions\Action::make('create_another_kpi')
+                                                ->submit($isEdit ? 'save' : 'create'),
+                                !$isEdit ? Actions\Action::make('create_another_kpi')
                                                 ->label('Create & create another')
                                                 ->color('gray')
                                                 ->submit('create')
-                                                ->extraAttributes(['name' => 'createAnother', 'value' => true]),
-                            ]),
+                                                ->extraAttributes(['name' => 'createAnother', 'value' => true]) : null,
+                            ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '25_summary'),
                 ]),
