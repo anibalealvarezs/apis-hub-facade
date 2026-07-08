@@ -2,51 +2,44 @@
 
 namespace App\Services\Analytics;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
+use App\Models\CustomKpi;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\DatePicker;
-use Filament\Facades\Filament;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Facades\Filament;
+use Illuminate\Support\Str;
 
 class KpiFormBuilder
 {
     public static function getActiveChannels(): array
     {
         $tenant = Filament::getTenant();
-        if (!$tenant || empty($tenant->sync_config)) {
+        if (!$tenant) {
             return [];
         }
-        
-        $validChannels = array_keys(ChannelCapabilityRegistry::getTags());
+        $config = $tenant->sync_config ?? [];
         $active = [];
-        foreach ($tenant->sync_config as $channel => $data) {
-            if (in_array($channel, $validChannels)) {
-                if (!empty(static::getAssetOptionsForChannel($channel))) {
-                    $active[$channel] = self::getChannelDisplayName($channel);
-                }
+
+        foreach ($config as $channelKey => $channelData) {
+            if (isset($channelData['is_active']) && $channelData['is_active']) {
+                $active[$channelKey] = self::getChannelDisplayName($channelKey);
             }
         }
         return $active;
     }
 
-    public static function getChannelDisplayName(string $channel): string
+    private static function getChannelDisplayName(string $name): string
     {
-        $name = ucwords(str_replace('_', ' ', $channel));
-        if ($channel === 'facebook_marketing') {
-            $name = 'FB Marketing';
-        } elseif ($channel === 'facebook_organic') {
-            $name = 'FB Organic';
-        } elseif ($channel === 'google_search_console') {
-            $name = 'Google Search Console';
-        } elseif ($channel === 'google_analytics') {
-            $name = 'Google Analytics';
-        }
-        return $name;
+        return Str::headline($name);
     }
 
     public static function getCategoryOptions(?string $globalAssetGroup = null): array
@@ -56,35 +49,31 @@ class KpiFormBuilder
             'Channel' => [
                 'cross-channel' => __('Cross-Channel'),
                 'organic' => __('Organic'),
-                'seo' => __('SEO'),
+                'paid' => __('Paid'),
+                'crm' => __('CRM & Email'),
+                'ecommerce' => __('E-commerce'),
+                'web-analytics' => __('Web Analytics'),
             ],
-            'Data Origin' => [
-                'source_src' => __('Source Data'),
-                'source_tracking' => __('Tracking Data'),
+            'Type' => [
+                'type_cost' => __('Cost / Spend'),
+                'type_revenue' => __('Revenue / Value'),
+                'type_volume' => __('Volume / Count'),
+                'type_rate' => __('Rate / Ratio'),
             ],
-            'Data Perspective' => [
-                'org_mkt_marketing' => __('Marketing Focus'),
-                'org_mkt_organic' => __('Organic Focus'),
+            'Funnel Stage' => [
+                'funnel_awareness' => __('Awareness'),
+                'funnel_acquisition' => __('Acquisition'),
+                'funnel_engagement' => __('Engagement'),
+                'funnel_conversion' => __('Conversion'),
+                'funnel_retention' => __('Retention'),
             ],
-            'Focus' => [
-                'agency' => __('Agency Performance'),
-                'alerts' => __('Alerts'),
-                'cost' => __('Cost'),
-                'performance' => __('Performance'),
-                'scalability' => __('Scalability'),
-                'seasonality' => __('Seasonality'),
-                'trends' => __('Trends'),
-            ],
-            'Metric' => [
-                'clicks' => __('Clicks'),
-                'impressions' => __('Impressions'),
-                'results' => __('Results'),
-            ],
-            'Scope' => [
-                'scope_asset' => __('Asset'),
-                'scope_channel' => __('Channel'),
-                'scope_global' => __('Global'),
-            ],
+            'Analysis Method' => [
+                'analysis_trend' => __('Trend & Seasonality'),
+                'analysis_efficiency' => __('Efficiency (ROI/ROAS)'),
+                'analysis_attribution' => __('Attribution / Contribution'),
+                'analysis_anomaly' => __('Anomaly & Alerting'),
+                'analysis_correlation' => __('Correlation & Dependence'),
+            ]
         ];
     }
 
@@ -161,84 +150,136 @@ class KpiFormBuilder
                     continue;
                 }
             }
-            $name = htmlspecialchars($kpi['name'], ENT_QUOTES, 'UTF-8');
-            $desc = htmlspecialchars($kpi['description'], ENT_QUOTES, 'UTF-8');
-            $options[] = [
-                'key' => $key,
-                'name' => $name,
-                'html' => "<span class=\"font-semibold\">{$name}</span> <span class=\"text-gray-400\">— {$desc}</span>",
-            ];
-        }
 
-        usort($options, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+            $metrics = [];
+            if (isset($kpi['template']['ast']['metric'])) {
+                $metrics[] = $kpi['template']['ast']['metric'];
+            }
+            if (isset($kpi['template']['ast']['left']['metric'])) {
+                $metrics[] = $kpi['template']['ast']['left']['metric'];
+            }
+            if (isset($kpi['template']['ast']['right'])) {
+                $extractMetrics = function($node) use (&$extractMetrics, &$metrics) {
+                    if (($node['type'] ?? '') === 'metric' && isset($node['metric'])) {
+                        $metrics[] = $node['metric'];
+                    } elseif (($node['type'] ?? '') === 'operator' && isset($node['left'], $node['right'])) {
+                        $extractMetrics($node['left']);
+                        $extractMetrics($node['right']);
+                    }
+                };
+                $extractMetrics($kpi['template']['ast']['right']);
+            }
+            $metrics = array_unique($metrics);
 
-        $sorted = [];
-        foreach ($options as $item) {
-            $sorted[$item['key']] = $item['html'];
+            $metricLabels = [];
+            foreach ($metrics as $m) {
+                $metricLabels[] = self::getChannelDisplayName($m);
+            }
+            $description = implode(' / ', $metricLabels);
+
+            $options[$key] = '<div class="flex flex-col">
+                <span class="font-medium text-gray-900 dark:text-gray-100">' . e($kpi['name']) . '</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">' . e($description) . '</span>
+            </div>';
         }
-        return $sorted;
+        return $options;
     }
 
     public static function getMetricOptionsForChannel(?string $channel): array
     {
-        if (!$channel) return [];
-        if (str_contains($channel, 'facebook_marketing')) return [
-            'spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions',
-            'results' => 'Results', 'result_rate' => 'Result Rate', 'cpc' => 'CPC',
-            'purchase_roas' => 'ROAS (Purchase)',
-        ];
-        if (str_contains($channel, 'google_search_console')) return [
-            'clicks' => 'Clicks', 'impressions' => 'Impressions', 'ctr' => 'CTR', 'position' => 'Position',
-        ];
-        if (str_contains($channel, 'facebook_organic')) return [
-            'reach' => 'Reach', 'impressions' => 'Impressions', 'engaged_users' => 'Engaged Users', 'likes' => 'Likes',
-        ];
-        if (str_contains($channel, 'google_analytics')) return [
-            'sessions' => 'Sessions', 'new_users' => 'New Users', 'bounce_rate' => 'Bounce Rate',
-            'average_session_duration' => 'Avg Session Duration', 'conversions' => 'Conversions', 'revenue' => 'Revenue'
-        ];
-        return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
+        if (empty($channel)) {
+            return [];
+        }
+
+        $project = Filament::getTenant();
+        if (!$project) {
+            return [];
+        }
+
+        $syncConfig = $project->sync_config ?? [];
+        if (!isset($syncConfig[$channel]['is_active']) || !$syncConfig[$channel]['is_active']) {
+            return [];
+        }
+
+        $options = [];
+        $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags()[$channel] ?? [];
+
+        foreach ($channelTags as $tag) {
+            $options["{$channel}_{$tag}_metric_placeholder"] = self::getChannelDisplayName($tag) . ' (Simulated Metric)';
+        }
+
+        $configFields = \App\Services\Analytics\ChannelCapabilityRegistry::getConfigFields()[$channel] ?? [];
+        foreach ($configFields as $key => $field) {
+            if ($field['type'] === 'metric' || $field['type'] === 'dimension') {
+                $options[$key] = $field['label'];
+            }
+        }
+
+        $metrics = \App\Services\Analytics\PredefinedMetricRegistry::getMetricsForChannel($channel);
+        foreach ($metrics as $key => $config) {
+            $options[$key] = $config['label'];
+        }
+
+        return $options;
     }
 
     public static function getAllAssetsForChannel(?string $channel): array
     {
-        if (!$channel) return [];
-        $tenant = Filament::getTenant();
-        if (!$tenant) return [];
-        $config = $tenant->sync_config[$channel] ?? [];
+        if (empty($channel)) {
+            return [];
+        }
+
+        $project = Filament::getTenant();
+        if (!$project) {
+            return [];
+        }
+
+        $syncConfig = $project->sync_config ?? [];
+        if (empty($syncConfig[$channel]['is_active'])) {
+            return [];
+        }
+
+        $items = \App\Models\AssetGroupItem::whereHas('group', function($q) use ($project) {
+            $q->where('project_id', $project->id);
+        })
+        ->where('channel', $channel)
+        ->get();
+
         $assets = [];
+        foreach ($items as $item) {
+            $assets[$item->asset_id] = [
+                'name' => $item->asset_name ?? $item->asset_id,
+                'enabled' => true,
+            ];
+        }
 
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
-
-        foreach ($assetKeys as $assetKey) {
-            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
-                foreach ($config[$assetKey] as $item) {
-                    if (is_array($item) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                        $id = $item['id'] ?? $item['url'] ?? $item['platformId'] ?? '';
-                        $nameStr = $item['title'] ?? $item['name'] ?? $item['url'] ?? $id;
-                        $enabled = !empty($item['enabled']);
-                        $assets[$id] = [
-                            'name' => $nameStr,
-                            'enabled' => $enabled,
-                        ];
+        foreach (['facebook', 'google', 'meta', 'klaviyo', 'shopify', 'netsuite', 'amazon', 'bigcommerce', 'pinterest', 'linkedin', 'tiktok', 'x', 'triple_whale'] as $provider) {
+            if (strpos($channel, $provider) !== false && !empty($syncConfig[$channel]['accounts'])) {
+                foreach ($syncConfig[$channel]['accounts'] as $acc) {
+                    if (is_array($acc) && !empty($acc['enabled']) && empty($acc['lost_access'])) {
+                        $id = $acc['id'] ?? $acc['url'] ?? '';
+                        $name = $acc['name'] ?? $acc['url'] ?? $id;
+                        if ($id) {
+                            $assets[$id] = [
+                                'name' => $name,
+                                'enabled' => true,
+                            ];
+                        }
                     }
                 }
             }
         }
 
-        if (!empty($config['assets']) && is_array($config['assets'])) {
-            foreach ($assetKeys as $assetKey) {
-                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
-                    foreach ($config['assets'][$assetKey] as $item) {
-                        if (is_array($item) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                            $id = $item['id'] ?? $item['url'] ?? $item['platformId'] ?? '';
-                            $nameStr = $item['title'] ?? $item['name'] ?? $item['url'] ?? $id;
-                            $enabled = !empty($item['enabled']);
-                            $assets[$id] = [
-                                'name' => $nameStr,
-                                'enabled' => $enabled,
-                            ];
-                        }
+        if (strpos($channel, 'google') !== false && !empty($syncConfig[$channel]['properties'])) {
+            foreach ($syncConfig[$channel]['properties'] as $prop) {
+                if (is_array($prop) && !empty($prop['enabled']) && empty($prop['lost_access'])) {
+                    $id = $prop['id'] ?? $prop['url'] ?? '';
+                    $name = $prop['name'] ?? $prop['url'] ?? $id;
+                    if ($id) {
+                        $assets[$id] = [
+                            'name' => $name,
+                            'enabled' => true,
+                        ];
                     }
                 }
             }
@@ -269,7 +310,7 @@ class KpiFormBuilder
     public static function getNodeSchema(string $name, string $label): array
     {
         return [
-            Fieldset::make($label)
+            Section::make($label)
                 ->schema([
                     Select::make($name . '_channel')
                         ->label('Channel (keep empty for runtime)')
@@ -289,26 +330,71 @@ class KpiFormBuilder
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
                         ->live()
-                ])->columns(4)
+                ])->columns(1)
         ];
     }
     
     public static function getSchema(): array
     {
         return [
+            Hidden::make('_builder_step')->default('1_intent'),
+
             Section::make('KPI Configuration')
                 ->schema([
-                    Section::make('Quick Start')
-                        ->description('Browse and pick a predefined template to auto-fill the configuration below.')
-                        ->collapsible()
-                        ->compact()
-                        ->extraAttributes(['class' => 'bg-gray-50 dark:bg-white/5 rounded-lg'])
+                    // Step 1: Intent
+                    Section::make('1. Choose Build Method')
                         ->schema([
+                            Radio::make('_intent')
+                                ->label('Do you want to build a KPI from scratch or use a predefined template?')
+                                ->options([
+                                    'template' => 'Use a predefined template',
+                                    'scratch' => 'Build from scratch',
+                                ])
+                                ->live(),
+                            Actions::make([
+                                Actions\Action::make('next_intent')
+                                    ->label('Next')
+                                    ->action(function (Set $set, Get $get) {
+                                        if ($get('_intent') === 'template') {
+                                            $set('_builder_step', '1a1_asset_group');
+                                        } elseif ($get('_intent') === 'scratch') {
+                                            $set('_builder_step', '21_calculation');
+                                        }
+                                    })
+                                    ->disabled(fn (Get $get) => empty($get('_intent')))
+                            ])
+                        ])
+                        ->visible(fn (Get $get) => $get('_builder_step') === '1_intent'),
+
+                    // Step 1.A.1: Asset Group Focus
+                    Section::make('1.A.1. Focus on specific assets?')
+                        ->schema([
+                            Radio::make('_focus_assets')
+                                ->label('Do you want to focus in a specific group of assets?')
+                                ->options([
+                                    'group' => 'Select an asset group',
+                                    'all' => 'All assets',
+                                ])
+                                ->live(),
                             Select::make('global_asset_group')
                                 ->label('Global Asset Group (optional)')
                                 ->options(fn () => static::getAssetGroupOptions())
+                                ->visible(fn (Get $get) => $get('_focus_assets') === 'group')
                                 ->live(),
+                            Actions::make([
+                                Actions\Action::make('next_focus')
+                                    ->label('Assign & Next')
+                                    ->action(function (Set $set) {
+                                        $set('_builder_step', '1a2_template');
+                                    })
+                                    ->disabled(fn (Get $get) => empty($get('_focus_assets')) || ($get('_focus_assets') === 'group' && empty($get('global_asset_group'))))
+                            ])
+                        ])
+                        ->visible(fn (Get $get) => $get('_builder_step') === '1a1_asset_group'),
 
+                    // Step 1.A.2: Template Selection
+                    Section::make('1.A.2. Select Template')
+                        ->schema([
                             Select::make('category_filter')
                                 ->label('Filter by category')
                                 ->multiple()
@@ -414,42 +500,74 @@ class KpiFormBuilder
                                         }
                                     }
                                 }),
-
-                    ]),
-
-                    Select::make('calculation_type')
-                        ->label('Calculation Type')
-                        ->options([
-                            'calculate_regression' => 'Multiple Linear Regression',
-                            'calculate_elasticity' => 'Elasticity',
-                            'calculate_autocorrelation' => 'Autocorrelation',
-                            'calculate_granger' => 'Granger Causality',
-                            'calculate_macd' => 'MACD Momentum',
-                            'calculate_anomaly' => 'Anomaly Detection',
-                            'calculate_trend_linear' => 'Linear Trend',
-                            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
-                            'calculate_trend_logarithmic' => 'Logarithmic Trend',
-                            'calculate_trend_ema' => 'EMA Crossover',
+                            Actions::make([
+                                Actions\Action::make('next_template')
+                                    ->label('Next')
+                                    ->action(fn (Set $set) => $set('_builder_step', '23_scope'))
+                                    ->disabled(fn (Get $get) => empty($get('template')))
+                            ])
                         ])
-                        ->required()
-                        ->live(),
+                        ->visible(fn (Get $get) => $get('_builder_step') === '1a2_template'),
 
-                    // Dependent Variable (Y) - Used in everything
-                    ...self::getNodeSchema('dependent', 'Dependent Variable (Y - Explained)'),
-
-                    // Independent Variables (X) - Used in Bivariate
-                    Fieldset::make('Independent Variables (X - Explanatory)')
-                        ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']))
+                    // Step 2.1: Calculation Type
+                    Section::make('2.1. Choose your calculation type')
                         ->schema([
-                            Repeater::make('independent_variables')
-                                ->label('')
-                                ->schema(self::getNodeSchema('independent', 'Variable'))
-                                ->columnSpanFull()
-                                ->defaultItems(1)
-                                ->minItems(0)
-                        ]),
-                    
-                    Fieldset::make('Scope / Filters')
+                            Select::make('calculation_type')
+                                ->label('Calculation Type')
+                                ->options([
+                                    'calculate_regression' => 'Multiple Linear Regression',
+                                    'calculate_elasticity' => 'Elasticity',
+                                    'calculate_autocorrelation' => 'Autocorrelation',
+                                    'calculate_granger' => 'Granger Causality',
+                                    'calculate_macd' => 'MACD Momentum',
+                                    'calculate_anomaly' => 'Anomaly Detection',
+                                    'calculate_trend_linear' => 'Linear Trend',
+                                    'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
+                                    'calculate_trend_logarithmic' => 'Logarithmic Trend',
+                                    'calculate_trend_ema' => 'EMA Crossover',
+                                ])
+                                ->required()
+                                ->live(),
+                            Actions::make([
+                                Actions\Action::make('next_calc')
+                                    ->label('Next')
+                                    ->action(fn (Set $set) => $set('_builder_step', '22_series'))
+                                    ->disabled(fn (Get $get) => empty($get('calculation_type')))
+                            ])
+                        ])
+                        ->visible(fn (Get $get) => $get('_builder_step') === '21_calculation'),
+
+                    // Step 2.2: Configure Series (Horizontal layout)
+                    Section::make('2.2. Configure Series')
+                        ->schema([
+                            Grid::make(3) // Ensure max 3 cols logic if we need it
+                                ->schema([
+                                    Group::make(self::getNodeSchema('dependent', 'Dependent Variable (Y - Explained)'))
+                                        ->columnSpan(1),
+                                        
+                                    Repeater::make('independent_variables')
+                                        ->label('Independent Variables (X - Explanatory)')
+                                        ->schema(self::getNodeSchema('independent', 'Variable'))
+                                        ->grid(2)
+                                        ->columnSpan(2)
+                                        ->defaultItems(1)
+                                        ->minItems(0)
+                                        ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']))
+                                ])
+                                ->columns([
+                                    'sm' => 1,
+                                    'md' => 3,
+                                ]),
+                            Actions::make([
+                                Actions\Action::make('next_series')
+                                    ->label('Next')
+                                    ->action(fn (Set $set) => $set('_builder_step', '23_scope'))
+                            ])
+                        ])
+                        ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
+
+                    // Step 2.3: Scope / Filters
+                    Section::make('2.3. Scope & Filters')
                         ->schema([
                             DatePicker::make('start_date')->label('Start Date'),
                             DatePicker::make('end_date')->label('End Date'),
@@ -469,9 +587,10 @@ class KpiFormBuilder
                                     'keep' => 'Keep Zeroes',
                                 ])
                                 ->default('trim')
-                                ->helperText('How to treat zero values in the time series before analysis.'),
-                        ])->columns(3),
-                ])->columns(1)
+                                ->helperText('How to treat zero values in the time series before analysis.')
+                        ])
+                        ->visible(fn (Get $get) => $get('_builder_step') === '23_scope'),
+                ])
         ];
     }
 }
