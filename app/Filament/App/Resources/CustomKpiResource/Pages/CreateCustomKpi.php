@@ -42,8 +42,8 @@ class CreateCustomKpi extends CreateRecord
         return [
             \App\Services\Analytics\KpiExecuteActionBuilder::configure(
                 Actions\Action::make('execute'),
-                fn () => $this->form->getRawState(),
-                fn () => $this->form->getRawState()['calculation_type'] ?? null
+                fn () => $this->data,
+                fn () => $this->data['calculation_type'] ?? null
             ),
             Actions\Action::make('debug')
                 ->label(__('Debug Payload'))
@@ -52,7 +52,7 @@ class CreateCustomKpi extends CreateRecord
                 ->visible(fn () => config('app.env') !== 'production')
                 ->modalHeading(__('Payload Debugger'))
                 ->modalContent(function () {
-                    $state = $this->form->getRawState();
+                    $state = $this->data;
                     if (empty($state['calculation_type'])) {
                         return new \Illuminate\Support\HtmlString('<p>Please select a calculation type first.</p>');
                     }
