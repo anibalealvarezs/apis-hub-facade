@@ -134,36 +134,24 @@ class KpiFormBuilder
 
     private static function getChannelCategories(?string $globalAssetGroup = null): array
     {
-        $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+        $activeChannels = self::getActiveChannels();
         $cats = [];
-        $providers = array_keys(self::getActiveChannels());
 
-        $validChannels = array_keys($channels);
         if ($globalAssetGroup) {
             $group = \App\Models\AssetGroup::find($globalAssetGroup);
             if ($group) {
-                $validChannels = $group->active_items->pluck('channel')->unique()->toArray();
-            }
-        } else {
-            // No asset group — show only sub-channels that have enabled assets
-            $validSubchannels = [];
-            foreach ($validChannels as $channel) {
-                if (in_array($channel, $providers)) {
-                    continue;
+                $groupChannels = $group->active_items->pluck('channel')->unique()->toArray();
+                foreach ($groupChannels as $channel) {
+                    if (isset($activeChannels[$channel])) {
+                        $cats['ch_' . $channel] = $activeChannels[$channel];
+                    }
                 }
-                if (self::channelHasEnabledAssets($channel)) {
-                    $validSubchannels[] = $channel;
-                }
+                return $cats;
             }
-            $validChannels = $validSubchannels;
         }
 
-        foreach (array_keys($channels) as $channel) {
-            if (in_array($channel, $providers)) continue;
-            
-            if (in_array($channel, $validChannels)) {
-                $cats['ch_' . $channel] = self::getChannelDisplayName($channel);
-            }
+        foreach ($activeChannels as $channel => $name) {
+            $cats['ch_' . $channel] = $name;
         }
 
         return $cats;
@@ -449,6 +437,7 @@ class KpiFormBuilder
                         ->live(),
                     Select::make($name . '_asset_filter')
                         ->label('Asset Filter (keep empty for runtime)')
+                        ->multiple()
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
                         ->live(),
@@ -811,7 +800,30 @@ class KpiFormBuilder
                                                         }
                                                     }
                                                     return false;
-                                                }),
+                                                })
+                                                ->requiresConfirmation(function (Get $get) {
+                                                    $depGroup = $get('dependent_asset_group');
+                                                    $independents = $get('independent_variables') ?? [];
+                                                    
+                                                    $hasAnyGroup = !empty($depGroup);
+                                                    foreach ($independents as $item) {
+                                                        if (!empty($item['independent_asset_group'])) {
+                                                            $hasAnyGroup = true;
+                                                        }
+                                                    }
+                                                    
+                                                    if (!$hasAnyGroup) return false;
+                                                    
+                                                    $allGroups = [$depGroup ?: null];
+                                                    foreach ($independents as $item) {
+                                                        $allGroups[] = $item['independent_asset_group'] ?: null;
+                                                    }
+                                                    
+                                                    return count(array_unique($allGroups)) > 1;
+                                                })
+                                                ->modalHeading('Asset Groups Mismatch')
+                                                ->modalDescription('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?')
+                                                ->modalSubmitActionLabel('Yes, proceed'),
                             ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
@@ -918,6 +930,19 @@ class KpiFormBuilder
                                     // Dependent variable
                                     $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
                                     $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
+                                    
+                                    $getAssetsText = function($groupVal, $filterVal) {
+                                        if ($groupVal) {
+                                            $group = \App\Models\AssetGroup::find($groupVal);
+                                            return $group ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">Group: ' . e($group->name) . '</span>' : 'Group ID: ' . $groupVal;
+                                        } elseif ($filterVal) {
+                                            $count = is_array($filterVal) ? count($filterVal) : 1;
+                                            return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300">' . $count . ' selected</span>';
+                                        }
+                                        return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400 italic">Runtime</span>';
+                                    };
+                                    
+                                    $depAssets = $getAssetsText($get('dependent_asset_group'), $get('dependent_asset_filter'));
 
                                     // Independent variables
                                     $independents = $get('independent_variables') ?? [];
@@ -926,7 +951,8 @@ class KpiFormBuilder
                                     foreach ($independents as $var) {
                                         $ch = e(Str::headline($var['independent_channel'] ?? '—'));
                                         $me = e(Str::headline($var['independent_metric'] ?? '—'));
-                                        $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td></tr>";
+                                        $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
+                                        $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ast}</td></tr>";
                                         $idx++;
                                     }
 
@@ -957,8 +983,8 @@ class KpiFormBuilder
                                     // Series section
                                     $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
                                     $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Series</h4>';
-                                    $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th></tr></thead><tbody>';
-                                    $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td></tr>";
+                                    $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Assets</th></tr></thead><tbody>';
+                                    $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depAssets}</td></tr>";
                                     $html .= $indHtml;
                                     $html .= '</tbody></table></div>';
 
