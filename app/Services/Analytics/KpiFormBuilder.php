@@ -331,7 +331,8 @@ class KpiFormBuilder
                                     }
                                     if (empty($get('description'))) {
                                         $set('description', $kpi['description'] ?? '');
-$set('calculation_type', $kpi['calculation_type']);
+                                    }
+                                    $set('calculation_type', $kpi['calculation_type']);
 
                                     $activeChannels = array_keys(self::getActiveChannels());
                                     $registryTags = ChannelCapabilityRegistry::getTags();
