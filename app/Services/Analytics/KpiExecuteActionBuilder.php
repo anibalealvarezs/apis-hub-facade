@@ -25,18 +25,18 @@ class KpiExecuteActionBuilder
             ->color('success')
             ->form(function (?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
                 $uiState = $getUiState($record);
-                $fields = [];
+                $globalFields = [];
 
                 if (empty($uiState['start_date'])) {
-                    $fields[] = Forms\Components\DatePicker::make('start_date')
+                    $globalFields[] = Forms\Components\DatePicker::make('start_date')
                         ->label(__('Start Date'));
                 }
                 if (empty($uiState['end_date'])) {
-                    $fields[] = Forms\Components\DatePicker::make('end_date')
+                    $globalFields[] = Forms\Components\DatePicker::make('end_date')
                         ->label(__('End Date'));
                 }
                 if (empty($uiState['granularity'])) {
-                    $fields[] = Forms\Components\Select::make('granularity')
+                    $globalFields[] = Forms\Components\Select::make('granularity')
                         ->label(__('Granularity'))
                         ->options([
                             'daily' => 'Daily',
@@ -45,18 +45,31 @@ class KpiExecuteActionBuilder
                         ])
                         ->default('daily');
                 }
+                if (empty($uiState['zero_handling'])) {
+                    $globalFields[] = Forms\Components\Select::make('zero_handling')
+                        ->label(__('Zero Handling'))
+                        ->options([
+                            'remove' => 'Remove Zeroes',
+                            'trim' => 'Trim Leading/Trailing Zeroes',
+                            'keep' => 'Keep Zeroes',
+                        ])
+                        ->default('trim')
+                        ->helperText(__('How to treat zero values in the time series before analysis.'));
+                }
+
+                $dependentFields = [];
 
                 if (empty($uiState['dependent_channel'])) {
-                    $fields[] = Forms\Components\Select::make('runtime_dependent_channel')
-                        ->label(__('Dependent Channel'))
+                    $dependentFields[] = Forms\Components\Select::make('runtime_dependent_channel')
+                        ->label(__('Channel'))
                         ->options(fn () => KpiFormBuilder::getActiveChannels())
                         ->live()
                         ->afterStateUpdated(fn (Forms\Set $set) => $set('runtime_dependent_metric', null));
                 }
 
                 if (empty($uiState['dependent_metric'])) {
-                    $fields[] = Forms\Components\Select::make('runtime_dependent_metric')
-                        ->label(__('Dependent Metric'))
+                    $dependentFields[] = Forms\Components\Select::make('runtime_dependent_metric')
+                        ->label(__('Metric'))
                         ->options(function (Get $get) use ($uiState) {
                             $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
                             return KpiFormBuilder::getMetricOptionsForChannel($channel);
@@ -65,8 +78,8 @@ class KpiExecuteActionBuilder
                 }
 
                 if (empty($uiState['dependent_asset_filter'])) {
-                    $fields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
-                        ->label(__('Dependent Asset Filter'))
+                    $dependentFields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
+                        ->label(__('Asset Filter'))
                         ->options(function (Get $get) use ($uiState) {
                             $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
                             $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
@@ -86,21 +99,23 @@ class KpiExecuteActionBuilder
 
                 $independents = $uiState['independent_variables'] ?? [];
                 $idx = 0;
-                // Handle both sequential and UUID-keyed arrays
+                $independentCardSchemas = [];
+
                 foreach (array_values($independents) as $var) {
                     $prefix = "runtime_independent_{$idx}";
+                    $indFields = [];
 
                     if (empty($var['independent_channel'])) {
-                        $fields[] = Forms\Components\Select::make("{$prefix}_channel")
-                            ->label(__('Variable ' . ($idx + 1) . ' - Channel'))
+                        $indFields[] = Forms\Components\Select::make("{$prefix}_channel")
+                            ->label(__('Channel'))
                             ->options(fn () => KpiFormBuilder::getActiveChannels())
                             ->live()
                             ->afterStateUpdated(fn (Forms\Set $set) => $set("{$prefix}_metric", null));
                     }
 
                     if (empty($var['independent_metric'])) {
-                        $fields[] = Forms\Components\Select::make("{$prefix}_metric")
-                            ->label(__('Variable ' . ($idx + 1) . ' - Metric'))
+                        $indFields[] = Forms\Components\Select::make("{$prefix}_metric")
+                            ->label(__('Metric'))
                             ->options(function (Get $get) use ($var, $idx) {
                                 $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
                                 return KpiFormBuilder::getMetricOptionsForChannel($channel);
@@ -109,8 +124,8 @@ class KpiExecuteActionBuilder
                     }
 
                     if (empty($var['independent_asset_filter'])) {
-                        $fields[] = Forms\Components\Select::make("{$prefix}_asset_filter")
-                            ->label(__('Variable ' . ($idx + 1) . ' - Asset Filter'))
+                        $indFields[] = Forms\Components\Select::make("{$prefix}_asset_filter")
+                            ->label(__('Asset Filter'))
                             ->options(function (Get $get) use ($var, $idx) {
                                 $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
                                 $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
@@ -128,22 +143,47 @@ class KpiExecuteActionBuilder
                             ->live();
                     }
 
+                    if (!empty($indFields)) {
+                        $independentCardSchemas[] = Forms\Components\Section::make(__('Variable ' . ($idx + 1)))
+                            ->schema($indFields)
+                            ->columnSpan(1);
+                    }
+
                     $idx++;
                 }
 
-                if (empty($uiState['zero_handling'])) {
-                    $fields[] = Forms\Components\Select::make('zero_handling')
-                        ->label(__('Zero Handling'))
-                        ->options([
-                            'remove' => 'Remove Zeroes',
-                            'trim' => 'Trim Leading/Trailing Zeroes',
-                            'keep' => 'Keep Zeroes',
-                        ])
-                        ->default('trim')
-                        ->helperText(__('How to treat zero values in the time series before analysis.'));
+                $seriesColumn = [];
+                
+                if (!empty($dependentFields)) {
+                    $seriesColumn[] = Forms\Components\Section::make(__('Dependent Variable (Y - Explained)'))
+                        ->schema($dependentFields);
                 }
 
-                $fields[] = Forms\Components\Actions::make([
+                if (!empty($independentCardSchemas)) {
+                    $seriesColumn[] = Forms\Components\Section::make(__('Independent Variables (X - Explanatory)'))
+                        ->schema([
+                            Forms\Components\Grid::make(2)
+                                ->schema($independentCardSchemas)
+                        ]);
+                }
+
+                $layout = [];
+
+                if (!empty($globalFields) || !empty($seriesColumn)) {
+                    $layout[] = Forms\Components\Grid::make(3)
+                        ->schema([
+                            Forms\Components\Section::make(__('Global Configuration'))
+                                ->schema($globalFields)
+                                ->columnSpan(1)
+                                ->hidden(fn () => empty($globalFields)),
+
+                            Forms\Components\Group::make($seriesColumn)
+                                ->columnSpan(empty($globalFields) ? 3 : 2)
+                                ->hidden(fn () => empty($seriesColumn)),
+                        ]);
+                }
+
+                $layout[] = Forms\Components\Actions::make([
                     Forms\Components\Actions\Action::make('previewPayload')
                         ->label(__('Preview Payload'))
                         ->icon('heroicon-o-code-bracket')
@@ -215,7 +255,7 @@ class KpiExecuteActionBuilder
                 ])
                 ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production');
 
-                return $fields;
+                return $layout;
             })
             ->action(function (array $data, RemoteEngineService $service, ?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
                 $uiState = $getUiState($record);
