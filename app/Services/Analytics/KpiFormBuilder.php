@@ -49,10 +49,10 @@ class KpiFormBuilder
         return $name;
     }
 
-    public static function getCategoryOptions(): array
+    public static function getCategoryOptions(?string $globalAssetGroup = null): array
     {
         return [
-            'Specific Channels' => static::getChannelCategories(),
+            'Specific Channels' => static::getChannelCategories($globalAssetGroup),
             'Channel' => [
                 'cross-channel' => __('Cross-Channel'),
                 'organic' => __('Organic'),
@@ -88,26 +88,64 @@ class KpiFormBuilder
         ];
     }
 
-    private static function getChannelCategories(): array
+    private static function getChannelCategories(?string $globalAssetGroup = null): array
     {
         $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $cats = [];
+        
+        $validChannels = array_keys($channels);
+        if ($globalAssetGroup) {
+            $group = \App\Models\AssetGroup::find($globalAssetGroup);
+            if ($group) {
+                $validChannels = $group->active_items->pluck('channel')->unique()->toArray();
+            }
+        }
+        
         foreach (array_keys($channels) as $channel) {
-            $cats['ch_' . $channel] = self::getChannelDisplayName($channel);
+            if (in_array($channel, $validChannels)) {
+                $cats['ch_' . $channel] = self::getChannelDisplayName($channel);
+            }
         }
         return $cats;
     }
 
-    public static function getTemplateOptions(array $categoryFilter = []): array
+    public static function getTemplateOptions(array $categoryFilter = [], ?string $globalAssetGroup = null): array
     {
         $activeChannels = array_keys(self::getActiveChannels());
         $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
 
+        $groupChannels = null;
+        if ($globalAssetGroup) {
+            $group = \App\Models\AssetGroup::find($globalAssetGroup);
+            if ($group) {
+                $groupChannels = $group->active_items->pluck('channel')->unique()->toArray();
+            }
+        }
+
         $options = [];
         foreach ($kpis as $key => $kpi) {
             $kpiCats = $kpi['categories'] ?? [];
             $requiredTags = $kpi['required_tags'] ?? [];
+            
+            if ($groupChannels !== null) {
+                $availableTags = [];
+                foreach ($groupChannels as $channel) {
+                    if (isset($channelTags[$channel])) {
+                        $availableTags = array_merge($availableTags, $channelTags[$channel]);
+                    }
+                }
+                $availableTags = array_unique($availableTags);
+                
+                $isValid = true;
+                foreach ($requiredTags as $reqTag) {
+                    if (!in_array($reqTag, $availableTags)) {
+                        $isValid = false;
+                        break;
+                    }
+                }
+                if (!$isValid) continue;
+            }
             
             // Inyectar dinámicamente las categorías de canales
             foreach ($channelTags as $channel => $tags) {
@@ -266,17 +304,22 @@ class KpiFormBuilder
                         ->compact()
                         ->extraAttributes(['class' => 'bg-gray-50 dark:bg-white/5 rounded-lg'])
                         ->schema([
+                            Select::make('global_asset_group')
+                                ->label('Global Asset Group (optional)')
+                                ->options(fn () => static::getAssetGroupOptions())
+                                ->live(),
+
                             Select::make('category_filter')
                                 ->label('Filter by category')
                                 ->multiple()
-                                ->options(fn () => self::getCategoryOptions())
+                                ->options(fn (Get $get) => self::getCategoryOptions($get('global_asset_group')))
                                 ->live(),
 
                             Select::make('template')
                                 ->label('Quick Start Template')
                                 ->allowHtml()
                                 ->searchable()
-                                ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
+                                ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? [], $get('global_asset_group')))
                                 ->live()
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
                                     if (!$state) return;
@@ -288,20 +331,27 @@ class KpiFormBuilder
                                     }
                                     if (empty($get('description'))) {
                                         $set('description', $kpi['description'] ?? '');
-                                    }
-
-                                    $set('calculation_type', $kpi['calculation_type']);
+$set('calculation_type', $kpi['calculation_type']);
 
                                     $activeChannels = array_keys(self::getActiveChannels());
                                     $registryTags = ChannelCapabilityRegistry::getTags();
+                                    $globalGroup = $get('global_asset_group');
 
-                                    $resolveChannel = function($placeholder) use ($activeChannels, $registryTags) {
+                                    $resolveChannel = function($placeholder) use ($activeChannels, $registryTags, $globalGroup) {
                                         preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
                                         if (empty($matches[1])) return null;
 
                                         $requiredTag = strtolower($matches[1]);
+                                        
+                                        $allowedChannels = $activeChannels;
+                                        if ($globalGroup) {
+                                            $group = \App\Models\AssetGroup::find($globalGroup);
+                                            if ($group) {
+                                                $allowedChannels = array_intersect($allowedChannels, $group->active_items->pluck('channel')->unique()->toArray());
+                                            }
+                                        }
 
-                                        foreach ($activeChannels as $channel) {
+                                        foreach ($allowedChannels as $channel) {
                                             $tags = $registryTags[$channel] ?? [];
                                             if (in_array($requiredTag, $tags)) {
                                                 return $channel;
@@ -317,6 +367,10 @@ class KpiFormBuilder
                                         if (isset($ast['channel'])) {
                                             $set('dependent_channel', $resolveChannel($ast['channel']));
                                             $set('dependent_metric', $ast['metric'] ?? '');
+                                            if ($globalGroup) {
+                                                $set('dependent_asset_group', $globalGroup);
+                                                $set('dependent_asset_filter', null);
+                                            }
                                         }
                                         $set('independent_variables', []);
                                         return;
@@ -325,17 +379,21 @@ class KpiFormBuilder
                                     if (isset($ast['left']['channel'])) {
                                         $set('dependent_channel', $resolveChannel($ast['left']['channel']));
                                         $set('dependent_metric', $ast['left']['metric'] ?? '');
+                                        if ($globalGroup) {
+                                            $set('dependent_asset_group', $globalGroup);
+                                            $set('dependent_asset_filter', null);
+                                        }
                                     }
 
                                     if (isset($ast['right'])) {
                                         $independents = [];
 
-                                        $unpackIndependents = function($node) use (&$unpackIndependents, $resolveChannel, &$independents) {
+                                        $unpackIndependents = function($node) use (&$unpackIndependents, $resolveChannel, &$independents, $globalGroup) {
                                             if (($node['type'] ?? '') === 'metric') {
                                                 $independents[] = [
                                                     'independent_channel' => $resolveChannel($node['channel']),
                                                     'independent_metric' => $node['metric'] ?? '',
-                                                    'independent_asset_group' => null,
+                                                    'independent_asset_group' => $globalGroup,
                                                     'independent_asset_filter' => null,
                                                 ];
                                             } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
