@@ -17,7 +17,9 @@ class CreateCustomKpi extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['ast'] = \App\Services\Analytics\KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
+        $data = array_merge($this->form->getRawState(), $data);
+        
+        $data['ast'] = \App\Services\Analytics\KpiPayloadBuilder::buildAstFromState($data['calculation_type'] ?? '', $data);
         
         // Package the UI state and scope into the filters column
         $filters = $data['filters'] ?? [];
@@ -43,7 +45,7 @@ class CreateCustomKpi extends CreateRecord
                 ->icon('heroicon-o-play')
                 ->color('success')
                 ->action(function () {
-                    $state = $this->form->getState();
+                    $state = $this->form->getRawState();
                     
                     if (empty($state['calculation_type'])) {
                         \Filament\Notifications\Notification::make()->title(__('Missing calculation type'))->danger()->send();
@@ -82,7 +84,7 @@ class CreateCustomKpi extends CreateRecord
                 ->visible(fn () => config('app.env') !== 'production')
                 ->modalHeading(__('Payload Debugger'))
                 ->modalContent(function () {
-                    $state = $this->form->getState();
+                    $state = $this->form->getRawState();
                     if (empty($state['calculation_type'])) {
                         return new \Illuminate\Support\HtmlString('<p>Please select a calculation type first.</p>');
                     }

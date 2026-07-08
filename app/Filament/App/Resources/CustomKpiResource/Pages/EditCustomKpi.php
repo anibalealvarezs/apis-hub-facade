@@ -26,7 +26,8 @@ class EditCustomKpi extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
+        $data = array_merge($this->form->getRawState(), $data);
+        $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'] ?? '', $data);
         
         $filters = $data['filters'] ?? [];
         $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter']);
@@ -65,9 +66,10 @@ class EditCustomKpi extends EditRecord
                 ->color('success')
                 ->action(function () {
                     $record = $this->getRecord();
+                    $state = $this->form->getRawState();
                     $payload = KpiPayloadBuilder::build(
                         $record->calculation_type, 
-                        $this->form->getState()
+                        $state
                     );
 
                     $project = \Filament\Facades\Filament::getTenant();
@@ -97,7 +99,7 @@ class EditCustomKpi extends EditRecord
                 ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
                 ->modalHeading(__('Payload Debugger'))
                 ->modalContent(function () {
-                    $state = $this->form->getState();
+                    $state = $this->form->getRawState();
                     if (empty($state['calculation_type'])) {
                         return new HtmlString('<p>Please select a calculation type first.</p>');
                     }
