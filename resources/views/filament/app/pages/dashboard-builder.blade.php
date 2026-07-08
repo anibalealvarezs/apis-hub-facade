@@ -1023,6 +1023,11 @@
 
                     // ─── Grid ──
                     initGrid() {
+                        if (typeof GridStack === 'undefined') {
+                            setTimeout(() => this.initGrid(), 50);
+                            return;
+                        }
+
                         const container = document.getElementById('grid-stack');
                         if (!container) return;
 
