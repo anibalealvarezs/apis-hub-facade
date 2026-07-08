@@ -80,17 +80,30 @@ class KpiFormBuilder
     {
         $channels = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $cats = [];
+        $providers = array_keys(self::getActiveChannels());
 
         $validChannels = array_keys($channels);
         if ($globalAssetGroup) {
             $group = \App\Models\AssetGroup::find($globalAssetGroup);
             if ($group) {
                 $validChannels = $group->active_items->pluck('channel')->unique()->toArray();
-                $validChannels = array_unique(array_merge($validChannels, array_keys(self::getActiveChannels())));
             }
+        } else {
+            $validSubchannels = [];
+            foreach ($validChannels as $channel) {
+                if (in_array($channel, $providers)) continue;
+                
+                $assets = self::getAssetOptionsForChannel($channel);
+                if (!empty($assets)) {
+                    $validSubchannels[] = $channel;
+                }
+            }
+            $validChannels = $validSubchannels;
         }
 
         foreach (array_keys($channels) as $channel) {
+            if (in_array($channel, $providers)) continue;
+            
             if (in_array($channel, $validChannels)) {
                 $cats['ch_' . $channel] = self::getChannelDisplayName($channel);
             }
@@ -111,6 +124,18 @@ class KpiFormBuilder
                 $groupChannels = $group->active_items->pluck('channel')->unique()->toArray();
                 $activeChannels = array_unique(array_merge($activeChannels, $groupChannels));
             }
+        } else {
+            // When no global group is selected, discover all sub-channels with active assets
+            $providers = $activeChannels;
+            foreach (array_keys($channelTags) as $channel) {
+                if (!in_array($channel, $providers)) {
+                    $assets = self::getAssetOptionsForChannel($channel);
+                    if (!empty($assets)) {
+                        $activeChannels[] = $channel;
+                    }
+                }
+            }
+            $activeChannels = array_unique($activeChannels);
         }
 
         $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
