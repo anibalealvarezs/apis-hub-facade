@@ -8,7 +8,7 @@
     <div x-data="{ state: $wire.$entangle('{{ $statePath }}') }" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @foreach ($getOptions() as $value => $label)
             @php
-                $isOptionDisabled = $isDisabled || $isOptionDisabled($value, $label);
+                $optionDisabled = $isDisabled || $isOptionDisabled($value, $label);
             @endphp
             <label 
                 for="{{ $id . '-' . $value }}"
@@ -21,7 +21,7 @@
                     name="{{ $id }}" 
                     value="{{ $value }}"
                     {{ $applyStateBindingModifiers('wire:model') }}="{{ $statePath }}"
-                    @if($isOptionDisabled) disabled @endif
+                    @if($optionDisabled) disabled @endif
                     class="sr-only"
                 >
                 <div class="font-bold text-sm text-gray-900 dark:text-white">{{ $label }}</div>
