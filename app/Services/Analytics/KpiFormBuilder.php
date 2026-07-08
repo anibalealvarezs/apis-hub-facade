@@ -818,10 +818,10 @@ class KpiFormBuilder
 
                                                     return false;
                                                 })
-                                                ->requiresConfirmation(function (Get $get) {
+                                                ->modalHidden(function (Get $get) {
                                                     $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
                                                     if (! $isBivariate) {
-                                                        return false;
+                                                        return true; // hide modal
                                                     }
 
                                                     $depGroup = $get('dependent_asset_group');
@@ -839,7 +839,7 @@ class KpiFormBuilder
                                                     }
 
                                                     if (! $hasAnyGroup) {
-                                                        return false;
+                                                        return true; // hide modal
                                                     }
 
                                                     foreach ($independents as $item) {
@@ -847,12 +847,13 @@ class KpiFormBuilder
                                                         $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
 
                                                         if ($indStr !== $depStr) {
-                                                            throw new \Exception("Mismatch Debug! Dependent: [{$depStr}], Independent: [{$indStr}]. Please provide a screenshot of this error.");
+                                                            return false; // mismatch found, do NOT hide modal!
                                                         }
                                                     }
 
-                                                    return false;
+                                                    return true; // all match, hide modal
                                                 })
+                                                ->requiresConfirmation()
                                                 ->modalHeading('Asset Groups Mismatch')
                                                 ->modalDescription('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?')
                                                 ->modalSubmitActionLabel('Yes, proceed'),
