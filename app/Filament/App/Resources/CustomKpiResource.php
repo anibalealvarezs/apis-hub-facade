@@ -132,22 +132,23 @@
                                 ->live();
                         }
 
-                        if (empty($uiState['dependent_asset_group'])) {
-                            $fields[] = Forms\Components\Select::make('runtime_dependent_asset_group')
-                                ->label(__('Dependent Asset Group'))
-                                ->options(fn () => KpiFormBuilder::getAssetGroupOptions())
-                                ->disabled(fn (Get $get) => filled($get('runtime_dependent_asset_filter')))
-                                ->live();
-                        }
-
                         if (empty($uiState['dependent_asset_filter'])) {
                             $fields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
                                 ->label(__('Dependent Asset Filter'))
                                 ->options(function (Get $get) use ($uiState) {
                                     $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
-                                    return KpiFormBuilder::getAssetOptionsForChannel($channel);
+                                    $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
+
+                                    if (!empty($uiState['dependent_asset_group'])) {
+                                        $group = \App\Models\AssetGroup::find($uiState['dependent_asset_group']);
+                                        if ($group) {
+                                            $allowedAssets = $group->active_items->where('channel', $channel)->pluck('asset_id')->toArray();
+                                            $options = array_intersect_key($options, array_flip($allowedAssets));
+                                        }
+                                    }
+
+                                    return $options;
                                 })
-                                ->disabled(fn (Get $get) => filled($get('runtime_dependent_asset_group')))
                                 ->live();
                         }
 
@@ -174,22 +175,23 @@
                                     ->live();
                             }
 
-                            if (empty($var['independent_asset_group'])) {
-                                $fields[] = Forms\Components\Select::make("{$prefix}_asset_group")
-                                    ->label(__('Variable ' . ($idx + 1) . ' - Asset Group'))
-                                    ->options(fn () => KpiFormBuilder::getAssetGroupOptions())
-                                    ->disabled(fn (Get $get) => filled($get("{$prefix}_asset_filter")))
-                                    ->live();
-                            }
-
                             if (empty($var['independent_asset_filter'])) {
                                 $fields[] = Forms\Components\Select::make("{$prefix}_asset_filter")
                                     ->label(__('Variable ' . ($idx + 1) . ' - Asset Filter'))
                                     ->options(function (Get $get) use ($var, $idx) {
                                         $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
-                                        return KpiFormBuilder::getAssetOptionsForChannel($channel);
+                                        $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
+
+                                        if (!empty($var['independent_asset_group'])) {
+                                            $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
+                                            if ($group) {
+                                                $allowedAssets = $group->active_items->where('channel', $channel)->pluck('asset_id')->toArray();
+                                                $options = array_intersect_key($options, array_flip($allowedAssets));
+                                            }
+                                        }
+
+                                        return $options;
                                     })
-                                    ->disabled(fn (Get $get) => filled($get("{$prefix}_asset_group")))
                                     ->live();
                             }
 
@@ -232,10 +234,6 @@
                                     if (!empty($metric)) {
                                         $uiState['dependent_metric'] = $metric;
                                     }
-                                    $assetGroup = $get('runtime_dependent_asset_group');
-                                    if (!empty($assetGroup)) {
-                                        $uiState['dependent_asset_group'] = $assetGroup;
-                                    }
                                     $asset = $get('runtime_dependent_asset_filter');
                                     if (!empty($asset)) {
                                         $uiState['dependent_asset_filter'] = $asset;
@@ -247,16 +245,12 @@
                                         $prefix = "runtime_independent_{$idx}";
                                         $ch = $get("{$prefix}_channel");
                                         $me = $get("{$prefix}_metric");
-                                        $ag = $get("{$prefix}_asset_group");
                                         $as = $get("{$prefix}_asset_filter");
                                         if (!empty($ch)) {
                                             $independents[$key]['independent_channel'] = $ch;
                                         }
                                         if (!empty($me)) {
                                             $independents[$key]['independent_metric'] = $me;
-                                        }
-                                        if (!empty($ag)) {
-                                            $independents[$key]['independent_asset_group'] = $ag;
                                         }
                                         if (!empty($as)) {
                                             $independents[$key]['independent_asset_filter'] = $as;
@@ -292,9 +286,6 @@
                         if (!empty($data['runtime_dependent_metric'])) {
                             $uiState['dependent_metric'] = $data['runtime_dependent_metric'];
                         }
-                        if (!empty($data['runtime_dependent_asset_group'])) {
-                            $uiState['dependent_asset_group'] = $data['runtime_dependent_asset_group'];
-                        }
                         if (!empty($data['runtime_dependent_asset_filter'])) {
                             $uiState['dependent_asset_filter'] = $data['runtime_dependent_asset_filter'];
                         }
@@ -308,9 +299,6 @@
                             }
                             if (!empty($data["{$prefix}_metric"])) {
                                 $independents[$key]['independent_metric'] = $data["{$prefix}_metric"];
-                            }
-                            if (!empty($data["{$prefix}_asset_group"])) {
-                                $independents[$key]['independent_asset_group'] = $data["{$prefix}_asset_group"];
                             }
                             if (!empty($data["{$prefix}_asset_filter"])) {
                                 $independents[$key]['independent_asset_filter'] = $data["{$prefix}_asset_filter"];
