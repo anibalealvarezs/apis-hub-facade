@@ -457,7 +457,7 @@ class KpiFormBuilder
                                     ->disabled(fn (Get $get) => empty($get('_intent'))),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1_intent' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1_intent' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 1.A.1: Asset Group Focus
                     Section::make('1.A.1. Focus on specific assets?')
@@ -498,7 +498,7 @@ class KpiFormBuilder
                                     ->disabled(fn (Get $get) => empty($get('_focus_assets')) || ($get('_focus_assets') === 'group' && empty($get('global_asset_group')))),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1a1_asset_group' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1a1_asset_group' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 1.A.2: Template Selection
                     Section::make('1.A.2. Select Template')
@@ -673,7 +673,7 @@ class KpiFormBuilder
                                                 ->disabled(fn (Get $get) => empty($get('template'))),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1a2_template' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '1a2_template' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 2.1: Calculation Type
                     Section::make('2.1. Choose your calculation type')
@@ -705,7 +705,7 @@ class KpiFormBuilder
                                                 ->disabled(fn (Get $get) => empty($get('calculation_type'))),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '21_calculation' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '21_calculation' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 2.2: Configure Series (Horizontal layout)
                     Section::make('2.2. Configure Series')
@@ -738,7 +738,7 @@ class KpiFormBuilder
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope')),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '22_series' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '22_series' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 2.3: Scope / Filters
                     Section::make('2.3. Scope & Filters')
@@ -772,7 +772,7 @@ class KpiFormBuilder
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '24_info')),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '23_scope' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '23_scope' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 2.4: General Information
                     Section::make('2.4. General Information')
@@ -799,7 +799,7 @@ class KpiFormBuilder
                                                 ->disabled(fn (Get $get) => empty($get('name'))),
                             ]),
                         ])->columns(2)
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '24_info' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '24_info' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
 
                     // Step 2.5: Summary & Create
                     Section::make('2.5. Review & Create')
@@ -905,7 +905,7 @@ class KpiFormBuilder
                                                 ->extraAttributes(['name' => 'createAnother', 'value' => true]),
                             ]),
                         ])
-                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '25_summary' ? [] : ['style' => 'display: none;']),
+                        ->extraAttributes(fn (Get $get) => $get('_builder_step') === '25_summary' ? [] : ['class' => 'invisible absolute h-0 overflow-hidden p-0']),
                 ]),
         ];
     }
