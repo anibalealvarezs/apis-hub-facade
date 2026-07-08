@@ -70,6 +70,10 @@
                     Tables\Columns\IconColumn::make('is_active')
                         ->boolean()
                         ->sortable(),
+                    Tables\Columns\TextColumn::make('dashboards_count')
+                        ->counts('dashboards')
+                        ->label('Dashboards')
+                        ->sortable(),
                     Tables\Columns\TextColumn::make('created_at')
                         ->dateTime()
                         ->sortable()
@@ -80,6 +84,11 @@
                         ->toggleable(isToggledHiddenByDefault: true),
                 ])
                 ->filters([
+                    Tables\Filters\SelectFilter::make('dashboards')
+                        ->relationship('dashboards', 'name')
+                        ->multiple()
+                        ->preload()
+                        ->label('Dashboards'),
                     Tables\Filters\SelectFilter::make('calculation_type')
                         ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
                     Tables\Filters\SelectFilter::make('asset_group')

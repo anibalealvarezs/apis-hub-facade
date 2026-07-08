@@ -30,4 +30,9 @@ class CustomKpi extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    public function dashboards(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Dashboard::class, 'dashboard_widgets', 'custom_kpi_id', 'dashboard_id')->distinct();
+    }
 }
