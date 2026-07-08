@@ -36,6 +36,46 @@ class KpiFormBuilder
         return $active;
     }
 
+    /**
+     * Check whether a sub-channel key in sync_config has at least one enabled asset.
+     * Unlike getAllAssetsForChannel(), this does NOT require is_active on the
+     * channel entry — is_active lives only on provider-level keys (meta, google …),
+     * while assets live under sub-channel keys (facebook_marketing, google_analytics …).
+     */
+    private static function channelHasEnabledAssets(string $channel): bool
+    {
+        $tenant = Filament::getTenant();
+        if (! $tenant) {
+            return false;
+        }
+
+        $channelData = ($tenant->sync_config ?? [])[$channel] ?? [];
+        if (! is_array($channelData)) {
+            return false;
+        }
+
+        // Recursive scanner — mirrors DataSources::getChannelAssetCount
+        $scan = function (array $data) use (&$scan): bool {
+            // Leaf node that looks like an asset record
+            if (
+                array_key_exists('enabled', $data)
+                && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('platformId', $data))
+            ) {
+                return ! empty($data['enabled']) && empty($data['lost_access']);
+            }
+
+            foreach ($data as $value) {
+                if (is_array($value) && $scan($value)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        return $scan($channelData);
+    }
+
     private static function getChannelDisplayName(string $name): string
     {
         return Str::headline($name);
@@ -89,12 +129,13 @@ class KpiFormBuilder
                 $validChannels = $group->active_items->pluck('channel')->unique()->toArray();
             }
         } else {
+            // No asset group — show only sub-channels that have enabled assets
             $validSubchannels = [];
             foreach ($validChannels as $channel) {
-                if (in_array($channel, $providers)) continue;
-                
-                $assets = self::getAssetOptionsForChannel($channel);
-                if (!empty($assets)) {
+                if (in_array($channel, $providers)) {
+                    continue;
+                }
+                if (self::channelHasEnabledAssets($channel)) {
                     $validSubchannels[] = $channel;
                 }
             }
@@ -125,14 +166,11 @@ class KpiFormBuilder
                 $activeChannels = array_unique(array_merge($activeChannels, $groupChannels));
             }
         } else {
-            // When no global group is selected, discover all sub-channels with active assets
-            $providers = $activeChannels;
+            // No asset group — discover all sub-channels with enabled assets
+            $providerKeys = $activeChannels;
             foreach (array_keys($channelTags) as $channel) {
-                if (!in_array($channel, $providers)) {
-                    $assets = self::getAssetOptionsForChannel($channel);
-                    if (!empty($assets)) {
-                        $activeChannels[] = $channel;
-                    }
+                if (! in_array($channel, $providerKeys) && self::channelHasEnabledAssets($channel)) {
+                    $activeChannels[] = $channel;
                 }
             }
             $activeChannels = array_unique($activeChannels);
