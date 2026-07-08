@@ -120,8 +120,11 @@ trait LoadsDashboardViewData
                 $configuredGroup = $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
                 if (!empty($configuredGroup)) {
                     $group = AssetGroup::find($configuredGroup);
-                    if ($group && !empty($group->assets)) {
-                        $depAssetIds = $group->assets;
+                    if ($group) {
+                        $activeAssetIds = $group->active_items->pluck('asset_id')->toArray();
+                        if (!empty($activeAssetIds)) {
+                            $depAssetIds = $activeAssetIds;
+                        }
                     }
                 } elseif (! empty($uiState['dependent_asset_filter'])) {
                     $depAssetIds = is_array($uiState['dependent_asset_filter'])
@@ -146,8 +149,11 @@ trait LoadsDashboardViewData
                         $configuredGroup = $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
                         if (!empty($configuredGroup)) {
                             $group = AssetGroup::find($configuredGroup);
-                            if ($group && !empty($group->assets)) {
-                                $indAssetIds = $group->assets;
+                            if ($group) {
+                                $activeAssetIds = $group->active_items->pluck('asset_id')->toArray();
+                                if (!empty($activeAssetIds)) {
+                                    $indAssetIds = $activeAssetIds;
+                                }
                             }
                         } elseif (! empty($var['independent_asset_filter'])) {
                             $indAssetIds = is_array($var['independent_asset_filter'])
