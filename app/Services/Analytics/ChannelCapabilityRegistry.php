@@ -12,13 +12,18 @@ class ChannelCapabilityRegistry
     public static function getTags(): array
     {
         return [
+            // Top-level Providers (from sync_config)
             'meta' => ['spendable', 'clickable', 'impressionable', 'paid_media', 'organic_social', 'reach_driven'],
             'google' => ['spendable', 'clickable', 'impressionable', 'seo', 'traffic_tracked', 'conversion_tracked', 'revenue_tracked', 'behavior_tracked', 'analytics', 'paid_media'],
             'klaviyo' => ['revenue_tracked', 'conversion_tracked', 'email_marketing'],
             'shopify' => ['revenue_tracked', 'conversion_tracked', 'ecommerce'],
-            // Future channels
-            // 'tiktok' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
-            // 'pinterest' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
+            
+            // Sub-channels / Drivers (from Asset Groups)
+            'facebook_marketing' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
+            'facebook_organic' => ['organic_social', 'reach_driven', 'impressionable'],
+            'google_search_console' => ['clickable', 'impressionable', 'seo'],
+            'google_analytics' => ['traffic_tracked', 'conversion_tracked', 'revenue_tracked', 'behavior_tracked', 'analytics'],
+            'google_ads' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
         ];
     }
 

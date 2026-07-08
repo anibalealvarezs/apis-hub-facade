@@ -117,7 +117,7 @@ trait LoadsDashboardViewData
 
             if (! empty($uiState['dependent_channel'])) {
                 $depAssetIds = null;
-                $configuredGroup = $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
+                $configuredGroup = $uiState['global_asset_group'] ?? $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
                 if (!empty($configuredGroup)) {
                     $group = AssetGroup::find($configuredGroup);
                     if ($group) {
@@ -146,7 +146,7 @@ trait LoadsDashboardViewData
                     if (! empty($var['independent_channel'])) {
                         $idxKey = 'independent_' . $key;
                         $indAssetIds = null;
-                        $configuredGroup = $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
+                        $configuredGroup = $uiState['global_asset_group'] ?? $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
                         if (!empty($configuredGroup)) {
                             $group = AssetGroup::find($configuredGroup);
                             if ($group) {

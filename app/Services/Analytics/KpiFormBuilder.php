@@ -87,6 +87,7 @@ class KpiFormBuilder
             $group = \App\Models\AssetGroup::find($globalAssetGroup);
             if ($group) {
                 $validChannels = $group->active_items->pluck('channel')->unique()->toArray();
+                $validChannels = array_unique(array_merge($validChannels, array_keys(self::getActiveChannels())));
             }
         }
         
@@ -101,7 +102,6 @@ class KpiFormBuilder
     public static function getTemplateOptions(array $categoryFilter = [], ?string $globalAssetGroup = null): array
     {
         $activeChannels = array_keys(self::getActiveChannels());
-        $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
 
         $groupChannels = null;
@@ -109,9 +109,11 @@ class KpiFormBuilder
             $group = \App\Models\AssetGroup::find($globalAssetGroup);
             if ($group) {
                 $groupChannels = $group->active_items->pluck('channel')->unique()->toArray();
+                $activeChannels = array_unique(array_merge($activeChannels, $groupChannels));
             }
         }
 
+        $kpis = PredefinedKpiRegistry::getAvailableKpis($activeChannels);
         $options = [];
         foreach ($kpis as $key => $kpi) {
             $kpiCats = $kpi['categories'] ?? [];
@@ -425,19 +427,22 @@ class KpiFormBuilder
                     // Step 1.A.2: Template Selection
                     Section::make('1.A.2. Select Template')
                         ->schema([
-                            Select::make('category_filter')
-                                ->label('Filter by category')
-                                ->multiple()
-                                ->options(fn (Get $get) => self::getCategoryOptions($get('global_asset_group')))
-                                ->live(),
+                            Grid::make(2)
+                                ->schema([
+                                    Group::make([
+                                        Select::make('category_filter')
+                                            ->label('Filter by category')
+                                            ->multiple()
+                                            ->options(fn (Get $get) => self::getCategoryOptions($get('global_asset_group')))
+                                            ->live(),
 
-                            Select::make('template')
-                                ->label('Quick Start Template')
-                                ->allowHtml()
-                                ->searchable()
-                                ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? [], $get('global_asset_group')))
-                                ->live()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
+                                        Select::make('template')
+                                            ->label('Quick Start Template')
+                                            ->allowHtml()
+                                            ->searchable()
+                                            ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? [], $get('global_asset_group')))
+                                            ->live()
+                                            ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
                                     if (!$state) return;
                                     $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$state] ?? null;
                                     if (!$kpi) return;
@@ -529,8 +534,51 @@ class KpiFormBuilder
                                             $set('independent_variables', $repeaterData);
                                         }
                                     }
-                                }),
-                            Actions::make([
+                                })
+                            ])->columnSpan(1),
+
+                            Group::make([
+                                \Filament\Forms\Components\Placeholder::make('template_details')
+                                    ->hiddenLabel()
+                                    ->content(function (Get $get) {
+                                        $templateId = $get('template');
+                                        if (!$templateId) {
+                                            return new \Illuminate\Support\HtmlString('<div class="h-full flex items-center justify-center p-6 text-gray-500 italic bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">Select a template to view its details.</div>');
+                                        }
+                                        
+                                        $kpis = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+                                        $kpi = $kpis[$templateId] ?? null;
+                                        
+                                        if (!$kpi) {
+                                            return new \Illuminate\Support\HtmlString('<div class="text-red-500 p-4 bg-red-50 rounded-lg border border-red-200">Template details not found.</div>');
+                                        }
+                                        
+                                        $reference = app(\App\Filament\App\Pages\KpiReference::class);
+                                        $guidance = $reference->getGuidance($templateId);
+                                        
+                                        $html = '<div class="space-y-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-full">';
+                                        $html .= '<div><h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">' . e($kpi['name']) . '</h3>';
+                                        $html .= '<span class="inline-block mt-1 px-2 py-1 text-[10px] font-semibold text-primary-700 bg-primary-100 rounded-full">' . e($guidance['type_label']) . '</span></div>';
+                                        
+                                        if (!empty($guidance['explanation'])) {
+                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">What it does</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['explanation'])) . '</p></div>';
+                                        }
+                                        
+                                        if (!empty($guidance['use_case'])) {
+                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Golden use case</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['use_case'])) . '</p></div>';
+                                        }
+                                        
+                                        if (!empty($guidance['interpretation'])) {
+                                            $html .= '<div><h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reading the result</h4><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' . nl2br(e($guidance['interpretation'])) . '</p></div>';
+                                        }
+                                        
+                                        $html .= '</div>';
+                                        
+                                        return new \Illuminate\Support\HtmlString($html);
+                                    })
+                            ])->columnSpan(1)
+                        ]),
+                        Actions::make([
                                 Actions\Action::make('back_template')
                                     ->label('Back')
                                     ->color('gray')
