@@ -250,6 +250,7 @@ class KpiFormBuilder
                         ->label('Asset Filter (keep empty for runtime)')
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
+                        ->live()
                 ])->columns(4)
         ];
     }
