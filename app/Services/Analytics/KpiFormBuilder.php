@@ -294,10 +294,7 @@ class KpiFormBuilder
         }
 
 
-        $metrics = \App\Services\Analytics\PredefinedMetricRegistry::getMetricsForChannel($channel);
-        foreach ($metrics as $key => $config) {
-            $options[$key] = $config['label'];
-        }
+
 
         return $options;
     }
