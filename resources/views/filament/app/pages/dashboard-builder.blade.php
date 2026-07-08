@@ -451,7 +451,6 @@
                                                     <template x-if="series.channel">
                                                         <div class="flex gap-3">
                                                             <button @click="selectAllRawAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
-                                                            <button @click="clearAllRawAssets(index)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -616,7 +615,6 @@
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="varCfg.independent_asset_group">(Limited to KPI Group)</span><span x-show="!varCfg.independent_asset_group">(Leave empty for All Assets)</span></label>
                                                         <div class="flex gap-3">
                                                             <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
-                                                            <button @click="clearAllKpiAssets('independent_' + idx)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </div>
                                                     <div class="relative">
@@ -1324,12 +1322,13 @@
                     },
 
                     toggleRawAsset(index, id) {
-                        let current = this.widgetControlsForm.raw_series[index].assets || [];
-                        let strId = String(id);
+                        const current = this.widgetControlsForm.raw_series[index].assets || [];
+                        const strId = String(id);
                         if (current.includes(strId)) {
+                            if (current.length <= 1) return;
                             this.widgetControlsForm.raw_series[index].assets = current.filter(a => a !== strId);
                         } else {
-                            this.widgetControlsForm.raw_series[index].assets.push(strId);
+                            this.widgetControlsForm.raw_series[index].assets = [...current, strId];
                         }
                     },
 
@@ -1337,20 +1336,6 @@
                         const ch = this.widgetControlsForm.raw_series[index].channel;
                         const assets = this.allChannelAssets[ch] || {};
                         this.widgetControlsForm.raw_series[index].assets = Object.keys(assets).map(String);
-                    },
-
-                    clearAllRawAssets(index) {
-                        this.widgetControlsForm.raw_series[index].assets = [];
-                    },
-
-                    toggleKpiAsset(seriesKey, id) {
-                        let current = this.widgetControlsForm.series_assets[seriesKey] || [];
-                        let strId = String(id);
-                        if (current.includes(strId)) {
-                            this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
-                        } else {
-                            this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
-                        }
                     },
 
                     selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
@@ -1361,6 +1346,24 @@
                             validIds = validIds.filter(id => groupAssets.includes(id));
                         }
                         this.widgetControlsForm.series_assets[seriesKey] = validIds;
+                    },
+
+                    toggleKpiAsset(seriesKey, id) {
+                        const current = this.widgetControlsForm.series_assets[seriesKey] || [];
+                        const strId = String(id);
+                        
+                        // Enforce single selection mode if kpiSeriesAssetMode === 'single'
+                        if (this.kpiSeriesAssetMode === 'single') {
+                            this.widgetControlsForm.series_assets[seriesKey] = [strId];
+                            return;
+                        }
+                        
+                        if (current.includes(strId)) {
+                            if (current.length <= 1) return;
+                            this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
+                        } else {
+                            this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
+                        }
                     },
 
                     clearAllKpiAssets(seriesKey) {

@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources\DashboardResource\Traits;
 use App\Models\Dashboard;
 use App\Models\DashboardWidget;
 use App\Models\CustomKpi;
+use App\Models\AssetGroup;
 use App\Services\WidgetDataService;
 use App\Services\Analytics\PredefinedKpiRegistry;
 use App\Services\Analytics\KpiFormBuilder;
@@ -17,10 +18,12 @@ trait LoadsDashboardViewData
     public Dashboard $dashboard;
     public array $resolvedControls = [];
     public array $widgets = [];
+    public array $allChannels = [];
 
     public function loadDashboardViewData(Dashboard $record): void
     {
         $this->dashboard = $record;
+        $this->allChannels = \App\Services\Analytics\KpiFormBuilder::getChannelOptions();
 
         $this->widgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
@@ -76,7 +79,7 @@ trait LoadsDashboardViewData
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode) {
+            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
                 $assets = $getAssetsForChannel($channel);
                 if (! empty($allowedIds)) {
                     $filtered = [];
@@ -96,6 +99,13 @@ trait LoadsDashboardViewData
                 if (empty($assets)) {
                     $assets = []; // ensure it's an array
                 }
+                
+                // Pre-select first asset if none selected
+                if (empty($resolved['series_assets'][$key]) && !empty($assets)) {
+                    reset($assets);
+                    $resolved['series_assets'][$key] = [strval(key($assets))];
+                }
+
                 $widgetArray['series_assets_options'][$key] = [
                     'label' => $label ?? Str::headline($channel),
                     'options' => (object) $assets,
@@ -105,7 +115,13 @@ trait LoadsDashboardViewData
 
             if (! empty($uiState['dependent_channel'])) {
                 $depAssetIds = null;
-                if (! empty($uiState['dependent_asset_filter'])) {
+                $configuredGroup = $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
+                if (!empty($configuredGroup)) {
+                    $group = AssetGroup::find($configuredGroup);
+                    if ($group && !empty($group->assets)) {
+                        $depAssetIds = $group->assets;
+                    }
+                } elseif (! empty($uiState['dependent_asset_filter'])) {
                     $depAssetIds = is_array($uiState['dependent_asset_filter'])
                         ? $uiState['dependent_asset_filter']
                         : [$uiState['dependent_asset_filter']];
@@ -123,13 +139,19 @@ trait LoadsDashboardViewData
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
                     if (! empty($var['independent_channel'])) {
+                        $idxKey = 'independent_' . $key;
                         $indAssetIds = null;
-                        if (! empty($var['independent_asset_filter'])) {
+                        $configuredGroup = $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
+                        if (!empty($configuredGroup)) {
+                            $group = AssetGroup::find($configuredGroup);
+                            if ($group && !empty($group->assets)) {
+                                $indAssetIds = $group->assets;
+                            }
+                        } elseif (! empty($var['independent_asset_filter'])) {
                             $indAssetIds = is_array($var['independent_asset_filter'])
                                 ? $var['independent_asset_filter']
                                 : [$var['independent_asset_filter']];
                         }
-                        $idxKey = 'independent_' . $key;
                         if (!empty($resolved['series_assets'][$idxKey])) {
                             if ($indAssetIds === null) {
                                 $indAssetIds = $resolved['series_assets'][$idxKey];
@@ -144,6 +166,13 @@ trait LoadsDashboardViewData
 
             // Fallback for non-KPI widgets with a channel
             if (empty($widgetArray['series_assets_options'])) {
+                if (empty($resolved['series_channels']) && empty($resolved['channel'])) {
+                    $firstChannel = !empty($this->allChannels) ? array_key_first($this->allChannels) : null;
+                    if ($firstChannel) {
+                        $resolved['channel'] = $firstChannel;
+                    }
+                }
+                
                 if (!empty($resolved['series_channels'])) {
                     foreach ($resolved['series_channels'] as $idx => $chan) {
                         $rawAssetIds = null;
@@ -224,6 +253,7 @@ trait LoadsDashboardViewData
             // Keep flat metric_options for backward compatibility
             $widgetArray['metric_options'] = isset($depMetrics) ? (object) $depMetrics : new stdClass();
             $widgetArray['series_assets_options'] = (object) $widgetArray['series_assets_options'];
+            $widgetArray['resolved_controls'] = $resolved;
         }
     }
 }

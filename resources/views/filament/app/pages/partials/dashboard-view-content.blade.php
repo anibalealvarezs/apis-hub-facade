@@ -1,4 +1,4 @@
-﻿    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
     <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)">
         {{-- Header --}}
@@ -245,7 +245,6 @@
                                                     <template x-if="(settingsSeriesOptions[vKey].mode || 'multiple') === 'multiple'">
                                                         <div class="flex gap-3">
                                                             <button @click="settingsSelectAll(vKey)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
-                                                            <button @click="settingsClearAll(vKey)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -505,6 +504,10 @@
                         } else {
                             const idx = current.indexOf(String(assetId));
                             if (idx > -1) {
+                                if (current.length <= 1) {
+                                    // Prevent unselecting the last asset
+                                    return;
+                                }
                                 next = current.filter((_, i) => i !== idx);
                             } else {
                                 next = [...current, String(assetId)];
@@ -522,13 +525,6 @@
                         this.settingsControls.series_assets = {
                             ...this.settingsControls.series_assets,
                             [seriesKey]: allIds
-                        };
-                    },
-
-                    settingsClearAll(seriesKey) {
-                        this.settingsControls.series_assets = {
-                            ...this.settingsControls.series_assets,
-                            [seriesKey]: []
                         };
                     }
                 };
