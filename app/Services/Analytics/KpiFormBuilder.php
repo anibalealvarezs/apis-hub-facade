@@ -281,8 +281,8 @@ class KpiFormBuilder
             return [];
         }
 
-        $syncConfig = $project->sync_config ?? [];
-        if (! isset($syncConfig[$channel]['is_active']) || ! $syncConfig[$channel]['is_active']) {
+        $activeChannels = array_keys(self::getActiveChannels());
+        if (!in_array($channel, $activeChannels)) {
             return [];
         }
 
@@ -293,12 +293,6 @@ class KpiFormBuilder
             $options["{$channel}_{$tag}_metric_placeholder"] = self::getChannelDisplayName($tag) . ' (Simulated Metric)';
         }
 
-        $configFields = \App\Services\Analytics\ChannelCapabilityRegistry::getConfigFields()[$channel] ?? [];
-        foreach ($configFields as $key => $field) {
-            if ($field['type'] === 'metric' || $field['type'] === 'dimension') {
-                $options[$key] = $field['label'];
-            }
-        }
 
         $metrics = \App\Services\Analytics\PredefinedMetricRegistry::getMetricsForChannel($channel);
         foreach ($metrics as $key => $config) {
@@ -817,7 +811,8 @@ class KpiFormBuilder
                             TextInput::make('name')
                                 ->label('KPI Name')
                                 ->required()
-                                ->maxLength(255),
+                                ->maxLength(255)
+                                ->live(debounce: 500),
                             Textarea::make('description')
                                 ->label('Description')
                                 ->maxLength(65535)
@@ -834,7 +829,7 @@ class KpiFormBuilder
                                                 ->label('Next')
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '25_summary'))
                                                 ->disabled(fn (Get $get) => empty($get('name'))),
-                            ]),
+                            ])->columnSpanFull(),
                         ])->columns(2)
                         ->visible(fn (Get $get) => $get('_builder_step') === '24_info'),
 
