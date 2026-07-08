@@ -23,7 +23,7 @@ class KpiExecuteActionBuilder
             ->label(__('Test KPI Payload'))
             ->icon('heroicon-o-play')
             ->color('success')
-            ->form(function () use ($getUiState) {
+            ->form(function () use ($getUiState, $getCalculationType) {
                 $uiState = $getUiState();
                 $fields = [];
 
