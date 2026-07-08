@@ -327,6 +327,13 @@
                         })
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Close'),
+                    Tables\Actions\ReplicateAction::make()
+                        ->label(__('Duplicate'))
+                        ->excludeAttributes(['id'])
+                        ->beforeReplicaSaved(function (CustomKpi $replica) {
+                            $replica->name = $replica->name . ' (copy)';
+                        })
+                        ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
