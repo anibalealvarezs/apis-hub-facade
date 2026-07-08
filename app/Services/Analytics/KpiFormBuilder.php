@@ -280,22 +280,7 @@ class KpiFormBuilder
         $options = [];
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags()[$channel] ?? [];
 
-        $tagToMetricMap = [
-            'spendable' => ['spend' => 'Spend'],
-            'clickable' => ['clicks' => 'Clicks', 'link_clicks' => 'Link Clicks'],
-            'impressionable' => ['impressions' => 'Impressions', 'cpm' => 'CPM'],
-            'revenue_tracked' => ['revenue' => 'Revenue', 'purchase_roas' => 'ROAS'],
-            'conversion_tracked' => ['conversions' => 'Conversions', 'results' => 'Results', 'cost_per_result' => 'Cost per Result'],
-            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'new_users' => 'New Users'],
-            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'average_session_duration' => 'Avg Session Duration'],
-            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach', 'engaged_users' => 'Engaged Users', 'total_interactions' => 'Total Interactions'],
-            'reach_driven' => ['reach' => 'Reach'],
-            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks', 'bounces' => 'Bounces'],
-            'ecommerce' => ['orders' => 'Orders', 'aov' => 'AOV', 'revenue' => 'Revenue'],
-            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position', 'ctr' => 'CTR'],
-            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions', 'cpc' => 'CPC', 'purchase_roas' => 'ROAS', 'cost_per_result' => 'Cost per Result', 'results' => 'Results', 'link_clicks' => 'Link Clicks'],
-            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate', 'new_users' => 'New Users', 'average_session_duration' => 'Avg Session Duration'],
-        ];
+        $tagToMetricMap = self::getTagToMetricMap();
 
         foreach ($channelTags as $tag) {
             if (isset($tagToMetricMap[$tag])) {
@@ -956,18 +941,7 @@ class KpiFormBuilder
 
     public static function generateSummaryHtml(callable $get): HtmlString
     {
-        $calcLabels = [
-            'calculate_regression' => 'Multiple Linear Regression',
-            'calculate_elasticity' => 'Elasticity',
-            'calculate_autocorrelation' => 'Autocorrelation',
-            'calculate_granger' => 'Granger Causality',
-            'calculate_macd' => 'MACD Momentum',
-            'calculate_anomaly' => 'Anomaly Detection',
-            'calculate_trend_linear' => 'Linear Trend',
-            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
-            'calculate_trend_logarithmic' => 'Logarithmic Trend',
-            'calculate_trend_ema' => 'EMA Crossover',
-        ];
+        $calcLabels = self::getCalculationTypeOptions();
 
         $name = e($get('name') ?: '—');
         $desc = e($get('description') ?: '—');
@@ -1054,5 +1028,52 @@ class KpiFormBuilder
         $html .= '</div>';
 
         return new HtmlString($html);
+    }
+
+    public static function getTagToMetricMap(): array
+    {
+        return [
+            'spendable' => ['spend' => 'Spend'],
+            'clickable' => ['clicks' => 'Clicks', 'link_clicks' => 'Link Clicks'],
+            'impressionable' => ['impressions' => 'Impressions', 'cpm' => 'CPM'],
+            'revenue_tracked' => ['revenue' => 'Revenue', 'purchase_roas' => 'ROAS'],
+            'conversion_tracked' => ['conversions' => 'Conversions', 'results' => 'Results', 'cost_per_result' => 'Cost per Result'],
+            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'new_users' => 'New Users'],
+            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'average_session_duration' => 'Avg Session Duration'],
+            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach', 'engaged_users' => 'Engaged Users', 'total_interactions' => 'Total Interactions'],
+            'reach_driven' => ['reach' => 'Reach'],
+            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks', 'bounces' => 'Bounces'],
+            'ecommerce' => ['orders' => 'Orders', 'aov' => 'AOV', 'revenue' => 'Revenue'],
+            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position', 'ctr' => 'CTR'],
+            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions', 'cpc' => 'CPC', 'purchase_roas' => 'ROAS', 'cost_per_result' => 'Cost per Result', 'results' => 'Results', 'link_clicks' => 'Link Clicks'],
+            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate', 'new_users' => 'New Users', 'average_session_duration' => 'Avg Session Duration'],
+        ];
+    }
+
+    public static function getAllMetricOptions(): array
+    {
+        $options = [];
+        foreach (self::getTagToMetricMap() as $metrics) {
+            foreach ($metrics as $key => $label) {
+                $options[$key] = $label;
+            }
+        }
+        return $options;
+    }
+
+    public static function getCalculationTypeOptions(): array
+    {
+        return [
+            'calculate_regression' => 'Multiple Linear Regression',
+            'calculate_elasticity' => 'Elasticity',
+            'calculate_autocorrelation' => 'Autocorrelation',
+            'calculate_granger' => 'Granger Causality',
+            'calculate_macd' => 'MACD Momentum',
+            'calculate_anomaly' => 'Anomaly Detection',
+            'calculate_trend_linear' => 'Linear Trend',
+            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
+            'calculate_trend_logarithmic' => 'Logarithmic Trend',
+            'calculate_trend_ema' => 'EMA Crossover',
+        ];
     }
 }

@@ -60,6 +60,13 @@
                     Tables\Columns\TextColumn::make('name')
                         ->searchable()
                         ->sortable(),
+                    Tables\Columns\TextColumn::make('description')
+                        ->searchable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('calculation_type')
+                        ->formatStateUsing(fn (string $state) => \App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()[$state] ?? $state)
+                        ->searchable()
+                        ->sortable(),
                     Tables\Columns\IconColumn::make('is_active')
                         ->boolean()
                         ->sortable(),
@@ -73,7 +80,47 @@
                         ->toggleable(isToggledHiddenByDefault: true),
                 ])
                 ->filters([
-                    //
+                    Tables\Filters\SelectFilter::make('calculation_type')
+                        ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
+                    Tables\Filters\SelectFilter::make('asset_group')
+                        ->label('Asset Group')
+                        ->options(fn () => \App\Models\AssetGroup::pluck('name', 'id')->toArray())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"global_asset_group":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"dependent_asset_group":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_asset_group":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\SelectFilter::make('metric')
+                        ->label('Metric')
+                        ->options(\App\Services\Analytics\KpiFormBuilder::getAllMetricOptions())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"dependent_metric":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_metric":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\SelectFilter::make('channel')
+                        ->label('Channel')
+                        ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getActiveChannels())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"dependent_channel":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_channel":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\TernaryFilter::make('is_active')
+                        ->label('Status'),
                 ])
                 ->actions([
                 \App\Services\Analytics\KpiExecuteActionBuilder::configure(
