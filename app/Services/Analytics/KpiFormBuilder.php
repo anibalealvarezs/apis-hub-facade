@@ -433,9 +433,11 @@ class KpiFormBuilder
                             return $filtered;
                         })
                         ->live()
-                        ->hint(fn (Get $get) => empty($get($name . '_channel')) ? 'ACTION REQUIRED: Please select a channel' : 'Channel Assigned')
-                        ->hintIcon(fn (Get $get) => empty($get($name . '_channel')) ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
-                        ->hintColor(fn (Get $get) => empty($get($name . '_channel')) ? 'danger' : 'success'),
+                        ->extraAttributes(function (Get $get) use ($name) {
+                            return empty($get($name . '_channel'))
+                                ? ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-amber-500 [&_.fi-input-wrapper]:!bg-amber-50 dark:[&_.fi-input-wrapper]:!bg-amber-900/20 [&_.fi-input-wrapper_*]:!text-amber-900 dark:[&_.fi-input-wrapper_*]:!text-amber-100']
+                                : ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-green-500 [&_.fi-input-wrapper]:!bg-green-50 dark:[&_.fi-input-wrapper]:!bg-green-900/20 [&_.fi-input-wrapper_*]:!text-green-900 dark:[&_.fi-input-wrapper_*]:!text-green-100'];
+                        }),
                     Select::make($name . '_metric')
                         ->label('Metric')
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
@@ -485,6 +487,11 @@ class KpiFormBuilder
                                     'template' => 'Use a predefined template',
                                     'scratch' => 'Build from scratch',
                                 ])
+                                ->descriptions([
+                                    'template' => 'Select a predefined marketing theory scenario.',
+                                    'scratch' => 'Start with a blank canvas to explore your own hypotheses.',
+                                ])
+                                ->view('filament.forms.components.playbook-radio')
                                 ->live(),
                             Actions::make([
                                 Actions\Action::make('next_intent')
@@ -510,6 +517,11 @@ class KpiFormBuilder
                                     'group' => 'Select an asset group',
                                     'all' => 'All assets',
                                 ])
+                                ->descriptions([
+                                    'group' => 'Analyze a specific segment or campaign group.',
+                                    'all' => 'Analyze across the entire organization.',
+                                ])
+                                ->view('filament.forms.components.playbook-radio')
                                 ->live()
                                 ->afterStateUpdated(function (Set $set, $state) {
                                     if ($state === 'all') {

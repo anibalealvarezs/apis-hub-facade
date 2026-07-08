@@ -92,6 +92,11 @@
             color: #d1fae5 !important;
         }
 
+        select { color-scheme: light; }
+        .dark select { color-scheme: dark; }
+        select option { background-color: #ffffff; color: #111827; }
+        .dark select option { background-color: #1f2937; color: #f9fafb; }
+
         @media print {
             .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
                 display: none !important;
