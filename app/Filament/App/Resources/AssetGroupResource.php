@@ -78,10 +78,12 @@ class AssetGroupResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items')
                     ->label('Assets Summary')
+                    ->badge()
+                    ->placeholder('None')
                     ->getStateUsing(function (AssetGroup $record) {
                         $items = $record->items;
                         if ($items->isEmpty()) {
-                            return 'None';
+                            return null;
                         }
                         
                         $grouped = $items->groupBy('channel');
@@ -91,7 +93,7 @@ class AssetGroupResource extends Resource
                             $summary[] = "{$channelName} ({$groupItems->count()})";
                         }
                         
-                        return implode(', ', $summary);
+                        return $summary;
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
