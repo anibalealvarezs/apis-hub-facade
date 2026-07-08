@@ -60,38 +60,11 @@ class EditCustomKpi extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('execute')
-                ->label(__('Execute KPI'))
-                ->icon('heroicon-o-play')
-                ->color('success')
-                ->action(function () {
-                    $record = $this->getRecord();
-                    $state = $this->form->getRawState();
-                    $payload = KpiPayloadBuilder::build(
-                        $record->calculation_type, 
-                        $state
-                    );
-
-                    $project = \Filament\Facades\Filament::getTenant();
-                    $service = app(\App\Services\RemoteEngineService::class);
-                    $result = $service->computeKpi($project, $payload);
-
-                    if (isset($result['success']) && $result['success']) {
-                        Notification::make()
-                            ->title(__('Execution Successful'))
-                            ->success()
-                            ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">' . json_encode($result['data'] ?? [], JSON_PRETTY_PRINT) . '</pre>')
-                            ->persistent()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title(__('Execution Failed'))
-                            ->danger()
-                            ->body($result['message'] ?? 'An unknown error occurred.')
-                            ->persistent()
-                            ->send();
-                    }
-                }),
+            \App\Services\Analytics\KpiExecuteActionBuilder::configure(
+                Actions\Action::make('execute'),
+                fn () => $this->form->getRawState(),
+                fn () => $this->form->getRawState()['calculation_type'] ?? null
+            ),
             Actions\Action::make('debug')
                 ->label(__('Debug Payload'))
                 ->icon('heroicon-o-code-bracket')

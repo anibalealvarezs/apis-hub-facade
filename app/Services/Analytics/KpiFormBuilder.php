@@ -320,17 +320,20 @@ class KpiFormBuilder
         }
 
         $syncConfig = $project->sync_config ?? [];
-        if (empty($syncConfig[$channel]['is_active'])) {
+        $channelData = $syncConfig[$channel] ?? [];
+        if (! is_array($channelData)) {
             return [];
         }
 
+        $assets = [];
+
+        // DB items (custom assets or renamed)
         $items = \App\Models\AssetGroupItem::whereHas('group', function ($q) use ($project) {
             $q->where('project_id', $project->id);
         })
         ->where('channel', $channel)
         ->get();
 
-        $assets = [];
         foreach ($items as $item) {
             $assets[$item->asset_id] = [
                 'name' => $item->asset_name ?? $item->asset_id,
@@ -338,28 +341,15 @@ class KpiFormBuilder
             ];
         }
 
-        foreach (['facebook', 'google', 'meta', 'klaviyo', 'shopify', 'netsuite', 'amazon', 'bigcommerce', 'pinterest', 'linkedin', 'tiktok', 'x', 'triple_whale'] as $provider) {
-            if (strpos($channel, $provider) !== false && ! empty($syncConfig[$channel]['accounts'])) {
-                foreach ($syncConfig[$channel]['accounts'] as $acc) {
-                    if (is_array($acc) && ! empty($acc['enabled']) && empty($acc['lost_access'])) {
-                        $id = $acc['id'] ?? $acc['url'] ?? '';
-                        $name = $acc['name'] ?? $acc['url'] ?? $id;
-                        if ($id) {
-                            $assets[$id] = [
-                                'name' => $name,
-                                'enabled' => true,
-                            ];
-                        }
-                    }
-                }
-            }
-        }
-
-        if (strpos($channel, 'google') !== false && ! empty($syncConfig[$channel]['properties'])) {
-            foreach ($syncConfig[$channel]['properties'] as $prop) {
-                if (is_array($prop) && ! empty($prop['enabled']) && empty($prop['lost_access'])) {
-                    $id = $prop['id'] ?? $prop['url'] ?? '';
-                    $name = $prop['name'] ?? $prop['url'] ?? $id;
+        // Recursive scan to find all assets
+        $scan = function (array $data) use (&$scan, &$assets) {
+            if (
+                array_key_exists('enabled', $data)
+                && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('platformId', $data))
+            ) {
+                if (!empty($data['enabled']) && empty($data['lost_access'])) {
+                    $id = $data['id'] ?? $data['url'] ?? $data['platformId'] ?? '';
+                    $name = $data['name'] ?? $data['url'] ?? $data['platformId'] ?? $id;
                     if ($id) {
                         $assets[$id] = [
                             'name' => $name,
@@ -367,8 +357,17 @@ class KpiFormBuilder
                         ];
                     }
                 }
+                return;
             }
-        }
+
+            foreach ($data as $value) {
+                if (is_array($value)) {
+                    $scan($value);
+                }
+            }
+        };
+
+        $scan($channelData);
 
         return $assets;
     }
