@@ -786,7 +786,20 @@ class KpiFormBuilder
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
                                 Actions\Action::make('next_series')
                                                 ->label('Next')
-                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope')),
+                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
+                                                ->disabled(function (Get $get) {
+                                                    if (empty($get('dependent_channel'))) return true;
+                                                    
+                                                    $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
+                                                    if ($isBivariate) {
+                                                        $independents = $get('independent_variables') ?? [];
+                                                        if (empty($independents)) return true;
+                                                        foreach ($independents as $item) {
+                                                            if (empty($item['independent_channel'])) return true;
+                                                        }
+                                                    }
+                                                    return false;
+                                                }),
                             ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
