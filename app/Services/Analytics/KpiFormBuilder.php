@@ -804,31 +804,44 @@ class KpiFormBuilder
                                                 ->requiresConfirmation(function (Get $get) {
                                                     $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
                                                     
-                                                    $depGroup = (string) ($get('dependent_asset_group') ?? '');
+                                                    $depGroup = $get('dependent_asset_group');
                                                     $independents = $isBivariate ? ($get('independent_variables') ?? []) : [];
                                                     
                                                     $allGroups = [];
-                                                    if ($depGroup !== '') {
-                                                        $allGroups[] = $depGroup;
+                                                    if (!empty($depGroup)) {
+                                                        $allGroups[] = (string) $depGroup;
                                                     } else {
                                                         $allGroups[] = 'EMPTY';
                                                     }
                                                     
-                                                    $hasAnyGroup = ($depGroup !== '');
+                                                    $hasAnyGroup = !empty($depGroup);
                                                     
                                                     foreach ($independents as $item) {
-                                                        $indGroup = (string) ($item['independent_asset_group'] ?? '');
-                                                        if ($indGroup !== '') {
+                                                        if (!empty($item['independent_asset_group'])) {
                                                             $hasAnyGroup = true;
-                                                            $allGroups[] = $indGroup;
+                                                            $allGroups[] = (string) $item['independent_asset_group'];
                                                         } else {
                                                             $allGroups[] = 'EMPTY';
                                                         }
                                                     }
                                                     
-                                                    if (!$hasAnyGroup) return false;
+                                                    if (!$hasAnyGroup) {
+                                                        return false;
+                                                    }
                                                     
-                                                    return count(array_unique($allGroups)) > 1;
+                                                    $uniqueGroups = array_unique($allGroups);
+                                                    $mismatch = count($uniqueGroups) > 1;
+                                                    
+                                                    if ($mismatch) {
+                                                        \Illuminate\Support\Facades\Log::warning('Asset Groups Mismatch Triggered!', [
+                                                            'depGroup' => $depGroup,
+                                                            'independents' => $independents,
+                                                            'allGroups' => $allGroups,
+                                                            'uniqueGroups' => $uniqueGroups,
+                                                        ]);
+                                                    }
+                                                    
+                                                    return $mismatch;
                                                 })
                                                 ->modalHeading('Asset Groups Mismatch')
                                                 ->modalDescription('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?')
