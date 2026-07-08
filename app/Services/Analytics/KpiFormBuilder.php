@@ -291,19 +291,19 @@ class KpiFormBuilder
 
         $tagToMetricMap = [
             'spendable' => ['spend' => 'Spend'],
-            'clickable' => ['clicks' => 'Clicks'],
-            'impressionable' => ['impressions' => 'Impressions'],
-            'revenue_tracked' => ['revenue' => 'Revenue'],
-            'conversion_tracked' => ['conversions' => 'Conversions'],
-            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews'],
-            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'avg_session_duration' => 'Avg Session Duration'],
-            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach'],
+            'clickable' => ['clicks' => 'Clicks', 'link_clicks' => 'Link Clicks'],
+            'impressionable' => ['impressions' => 'Impressions', 'cpm' => 'CPM'],
+            'revenue_tracked' => ['revenue' => 'Revenue', 'purchase_roas' => 'ROAS'],
+            'conversion_tracked' => ['conversions' => 'Conversions', 'results' => 'Results', 'cost_per_result' => 'Cost per Result'],
+            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'new_users' => 'New Users'],
+            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'average_session_duration' => 'Avg Session Duration'],
+            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach', 'engaged_users' => 'Engaged Users', 'total_interactions' => 'Total Interactions'],
             'reach_driven' => ['reach' => 'Reach'],
-            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks'],
+            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks', 'bounces' => 'Bounces'],
             'ecommerce' => ['orders' => 'Orders', 'aov' => 'AOV', 'revenue' => 'Revenue'],
-            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position'],
-            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions'],
-            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate'],
+            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position', 'ctr' => 'CTR'],
+            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions', 'cpc' => 'CPC', 'purchase_roas' => 'ROAS', 'cost_per_result' => 'Cost per Result', 'results' => 'Results', 'link_clicks' => 'Link Clicks'],
+            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate', 'new_users' => 'New Users', 'average_session_duration' => 'Avg Session Duration'],
         ];
 
         foreach ($channelTags as $tag) {
