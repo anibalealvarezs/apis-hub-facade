@@ -336,8 +336,23 @@ class KpiFormBuilder
     
     public static function getSchema(): array
     {
+        $forwardAction = function (Set $set, Get $get, string $nextStep) {
+            $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+            $history[] = $get('_builder_step');
+            $set('_step_history', json_encode($history));
+            $set('_builder_step', $nextStep);
+        };
+
+        $backAction = function (Set $set, Get $get) {
+            $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+            $prevStep = array_pop($history) ?? '1_intent';
+            $set('_step_history', json_encode($history));
+            $set('_builder_step', $prevStep);
+        };
+
         return [
             Hidden::make('_builder_step')->default('1_intent'),
+            Hidden::make('_step_history')->default('[]'),
 
             Section::make('KPI Configuration')
                 ->schema([
@@ -354,11 +369,11 @@ class KpiFormBuilder
                             Actions::make([
                                 Actions\Action::make('next_intent')
                                     ->label('Next')
-                                    ->action(function (Set $set, Get $get) {
+                                    ->action(function (Set $set, Get $get) use ($forwardAction) {
                                         if ($get('_intent') === 'template') {
-                                            $set('_builder_step', '1a1_asset_group');
+                                            $forwardAction($set, $get, '1a1_asset_group');
                                         } elseif ($get('_intent') === 'scratch') {
-                                            $set('_builder_step', '21_calculation');
+                                            $forwardAction($set, $get, '21_calculation');
                                         }
                                     })
                                     ->disabled(fn (Get $get) => empty($get('_intent')))
@@ -382,10 +397,14 @@ class KpiFormBuilder
                                 ->visible(fn (Get $get) => $get('_focus_assets') === 'group')
                                 ->live(),
                             Actions::make([
+                                Actions\Action::make('back_focus')
+                                    ->label('Back')
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_focus')
                                     ->label('Assign & Next')
-                                    ->action(function (Set $set) {
-                                        $set('_builder_step', '1a2_template');
+                                    ->action(function (Set $set, Get $get) use ($forwardAction) {
+                                        $forwardAction($set, $get, '1a2_template');
                                     })
                                     ->disabled(fn (Get $get) => empty($get('_focus_assets')) || ($get('_focus_assets') === 'group' && empty($get('global_asset_group'))))
                             ])
@@ -501,9 +520,13 @@ class KpiFormBuilder
                                     }
                                 }),
                             Actions::make([
+                                Actions\Action::make('back_template')
+                                    ->label('Back')
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_template')
                                     ->label('Next')
-                                    ->action(fn (Set $set) => $set('_builder_step', '23_scope'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                                     ->disabled(fn (Get $get) => empty($get('template')))
                             ])
                         ])
@@ -529,9 +552,13 @@ class KpiFormBuilder
                                 ->required()
                                 ->live(),
                             Actions::make([
+                                Actions\Action::make('back_calc')
+                                    ->label('Back')
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_calc')
                                     ->label('Next')
-                                    ->action(fn (Set $set) => $set('_builder_step', '22_series'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
                                     ->disabled(fn (Get $get) => empty($get('calculation_type')))
                             ])
                         ])
@@ -559,9 +586,13 @@ class KpiFormBuilder
                                     'md' => 3,
                                 ]),
                             Actions::make([
+                                Actions\Action::make('back_series')
+                                    ->label('Back')
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_series')
                                     ->label('Next')
-                                    ->action(fn (Set $set) => $set('_builder_step', '23_scope'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                             ])
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
@@ -587,7 +618,13 @@ class KpiFormBuilder
                                     'keep' => 'Keep Zeroes',
                                 ])
                                 ->default('trim')
-                                ->helperText('How to treat zero values in the time series before analysis.')
+                                ->helperText('How to treat zero values in the time series before analysis.'),
+                            Actions::make([
+                                Actions\Action::make('back_scope')
+                                    ->label('Back')
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
+                            ])
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '23_scope'),
                 ])
