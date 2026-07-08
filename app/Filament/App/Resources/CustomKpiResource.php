@@ -47,19 +47,6 @@
         {
             return $form
                 ->schema([
-                    Forms\Components\Section::make('General Information')
-                        ->schema([
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\Textarea::make('description')
-                                ->maxLength(65535)
-                                ->columnSpanFull(),
-                            Forms\Components\Toggle::make('is_active')
-                                ->label(__('Active'))
-                                ->default(true),
-                        ])->columns(2),
-
                     ... \App\Services\Analytics\KpiFormBuilder::getSchema(),
                 ]);
         }

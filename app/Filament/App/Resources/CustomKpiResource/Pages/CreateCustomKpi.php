@@ -10,6 +10,11 @@ class CreateCustomKpi extends CreateRecord
 {
     protected static string $resource = CustomKpiResource::class;
 
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['ast'] = \App\Services\Analytics\KpiPayloadBuilder::buildAstFromState($data['calculation_type'], $data);
