@@ -162,7 +162,7 @@ class KpiFormBuilder
         return ['metric_1' => 'Metric 1', 'metric_2' => 'Metric 2'];
     }
 
-    public static function getAssetOptionsForChannel(?string $channel): array
+    public static function getAllAssetsForChannel(?string $channel): array
     {
         if (!$channel) return [];
         $tenant = Filament::getTenant();
@@ -175,10 +175,14 @@ class KpiFormBuilder
         foreach ($assetKeys as $assetKey) {
             if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
                 foreach ($config[$assetKey] as $item) {
-                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                        $id = $item['id'] ?? $item['url'];
-                        $nameStr = $item['name'] ?? $item['url'] ?? $id;
-                        $assets[$id] = $nameStr;
+                    if (is_array($item) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
+                        $id = $item['id'] ?? $item['url'] ?? $item['platformId'] ?? '';
+                        $nameStr = $item['title'] ?? $item['name'] ?? $item['url'] ?? $id;
+                        $enabled = !empty($item['enabled']);
+                        $assets[$id] = [
+                            'name' => $nameStr,
+                            'enabled' => $enabled,
+                        ];
                     }
                 }
             }
@@ -188,10 +192,14 @@ class KpiFormBuilder
             foreach ($assetKeys as $assetKey) {
                 if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                     foreach ($config['assets'][$assetKey] as $item) {
-                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
-                            $id = $item['id'] ?? $item['url'];
-                            $nameStr = $item['name'] ?? $item['url'] ?? $id;
-                            $assets[$id] = $nameStr;
+                        if (is_array($item) && empty($item['lost_access']) && (isset($item['id']) || isset($item['url']))) {
+                            $id = $item['id'] ?? $item['url'] ?? $item['platformId'] ?? '';
+                            $nameStr = $item['title'] ?? $item['name'] ?? $item['url'] ?? $id;
+                            $enabled = !empty($item['enabled']);
+                            $assets[$id] = [
+                                'name' => $nameStr,
+                                'enabled' => $enabled,
+                            ];
                         }
                     }
                 }
@@ -199,6 +207,18 @@ class KpiFormBuilder
         }
 
         return $assets;
+    }
+
+    public static function getAssetOptionsForChannel(?string $channel): array
+    {
+        $allAssets = static::getAllAssetsForChannel($channel);
+        $options = [];
+        foreach ($allAssets as $id => $data) {
+            if ($data['enabled']) {
+                $options[$id] = $data['name'];
+            }
+        }
+        return $options;
     }
 
     public static function getNodeSchema(string $name, string $label): array

@@ -70,7 +70,9 @@
             },
 
             selectAll(channelKey) {
-                this.state[channelKey] = Object.keys(this.options[channelKey].assets).map(String);
+                this.state[channelKey] = Object.entries(this.options[channelKey].assets)
+                    .filter(([id, obj]) => obj.enabled)
+                    .map(([id, obj]) => String(id));
                 this.syncState();
             },
 
@@ -109,7 +111,7 @@
                                 </svg>
                                 <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="channelData.name"></span>
                             </div>
-                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="Object.keys(channelData.assets).length + ' Assets'"></span>
+                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="Object.entries(channelData.assets).filter(([id, a]) => a.enabled || (state[channelKey] || []).includes(String(id))).length + ' Assets'"></span>
                         </div>
                         
                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
@@ -131,8 +133,8 @@
                                 </div>
                                 <div class="flex-1 relative min-h-0 mt-2">
                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                        <template x-for="[assetId, assetName] in Object.entries(channelData.assets)" :key="assetId">
-                                            <div x-show="searchQueries[channelKey] === '' || String(assetName).toLowerCase().includes(searchQueries[channelKey].toLowerCase())"
+                                        <template x-for="[assetId, assetObj] in Object.entries(channelData.assets)" :key="assetId">
+                                            <div x-show="(assetObj.enabled || (state[channelKey] || []).includes(String(assetId))) && (searchQueries[channelKey] === '' || String(assetObj.name).toLowerCase().includes(searchQueries[channelKey].toLowerCase()))"
                                                  @click="toggleAsset(channelKey, assetId)"
                                                  class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                  :class="(state[channelKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
@@ -142,7 +144,10 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                     </svg>
                                                 </div>
-                                                <span class="truncate font-medium" :class="(state[channelKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
+                                                <div class="flex-1 min-w-0 flex items-center gap-2">
+                                                    <span class="truncate font-medium" :class="(state[channelKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetObj.name"></span>
+                                                    <span x-show="!assetObj.enabled" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/30 whitespace-nowrap">Disabled</span>
+                                                </div>
                                             </div>
                                         </template>
                                     </div>
