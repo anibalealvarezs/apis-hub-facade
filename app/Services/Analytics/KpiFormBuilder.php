@@ -94,7 +94,7 @@ class KpiFormBuilder
         return $scan($channelData);
     }
 
-    private static function getChannelDisplayName(string $name): string
+    public static function getChannelDisplayName(string $name): string
     {
         return Str::headline($name);
     }
