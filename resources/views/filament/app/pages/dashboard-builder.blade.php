@@ -66,8 +66,24 @@
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
-                            <div class="grid-stack-item"
-                                 x-init="$el.setAttribute('gs-id', widget.id); $el.setAttribute('gs-x', widget.grid_x); $el.setAttribute('gs-y', widget.grid_y); $el.setAttribute('gs-w', widget.grid_w); $el.setAttribute('gs-h', widget.grid_h); $el.setAttribute('gs-min-w', 2); $el.setAttribute('gs-min-h', 2); if (grid) grid.makeWidget($el);">
+                            <div class="grid-stack-item transition-all duration-700 ease-in-out"
+                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
+                                 x-init="
+                                    $el.setAttribute('gs-id', widget.id); 
+                                    $el.setAttribute('gs-w', widget.grid_w || 4); 
+                                    $el.setAttribute('gs-h', widget.grid_h || 3); 
+                                    $el.setAttribute('gs-min-w', 2); 
+                                    $el.setAttribute('gs-min-h', 2); 
+                                    if (widget.grid_x !== undefined && widget.grid_x !== null) $el.setAttribute('gs-x', widget.grid_x); 
+                                    if (widget.grid_y !== undefined && widget.grid_y !== null) $el.setAttribute('gs-y', widget.grid_y); 
+                                    else $el.setAttribute('gs-auto-position', 'true');
+                                    
+                                    if (grid) grid.makeWidget($el);
+                                    
+                                    if (widget._isNew) {
+                                        setTimeout(() => { widget._isNew = false; }, 2500);
+                                    }
+                                 ">
                                 <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative">
                                     {{-- Widget Header --}}
                                     <div
@@ -133,8 +149,7 @@
                                     {{-- Widget Content (placeholder) --}}
                                     <div class="p-4 flex items-center justify-center h-[calc(100%-2.5rem)]">
                                         <div class="text-center">
-                                            <x-filament::icon :name="'heroicon-o-chart-bar'"
-                                                              class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600"/>
+                                            <div class="w-16 h-12 mx-auto mb-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center opacity-70" x-html="getWidgetSvg(widget.widget_type)"></div>
                                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                                 <span x-text="widget.widget_type"></span>
                                                 <template x-if="widget.source_type === 'kpi'">
@@ -1509,15 +1524,24 @@
                             source_config: form.source_type === 'kpi' ? {custom_kpi_id: form.custom_kpi_id} : {},
                             widget_type: form.widget_type,
                             controls: {},
-                            grid_x: 0,
-                            grid_y: 0,
+                            grid_x: null,
+                            grid_y: null,
                             grid_w: 4,
                             grid_h: 3,
                         };
 
                     @this.addWidget(data).then(widget => {
+                        widget._isNew = true;
+                        widget.grid_x = null;
+                        widget.grid_y = null;
                         this.widgets.push(widget);
                         this.showAddWidgetModal = false;
+                        
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                @this.saveLayout(this.getLayout());
+                            }, 500);
+                        });
                     })
                         ;
                     },
@@ -1584,7 +1608,16 @@
 
                     duplicateWidget(id) {
                     @this.duplicateWidget(id).then(widget => {
+                        widget._isNew = true;
+                        widget.grid_x = null;
+                        widget.grid_y = null;
                         this.widgets.push(widget);
+                        
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                @this.saveLayout(this.getLayout());
+                            }, 500);
+                        });
                     })
                         ;
                     },
