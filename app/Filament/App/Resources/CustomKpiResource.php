@@ -81,6 +81,22 @@
                     fn ($record) => $record ? ($record->filters['_ui_state'] ?? []) : [],
                     fn ($record) => $record ? $record->calculation_type : null
                 ),
+                    Tables\Actions\Action::make('preview')
+                        ->label(__('Preview'))
+                        ->icon('heroicon-o-magnifying-glass')
+                        ->color('gray')
+                        ->modalHeading(__('KPI Configuration Summary'))
+                        ->modalContent(function (CustomKpi $record) {
+                            $state = array_merge(
+                                $record->toArray(),
+                                $record->filters['_ui_state'] ?? []
+                            );
+                            return \App\Services\Analytics\KpiFormBuilder::generateSummaryHtml(function ($key) use ($state) {
+                                return \Illuminate\Support\Arr::get($state, $key);
+                            });
+                        })
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Close'),
                     Tables\Actions\Action::make('debugPayload')
                         ->label(__('Debug Payload'))
                         ->icon('heroicon-o-code-bracket')

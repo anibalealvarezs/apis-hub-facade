@@ -929,104 +929,9 @@ class KpiFormBuilder
                             Placeholder::make('kpi_summary')
                                 ->hiddenLabel()
                                 ->content(function (Get $get) {
-                                    $calcLabels = [
-                                        'calculate_regression' => 'Multiple Linear Regression',
-                                        'calculate_elasticity' => 'Elasticity',
-                                        'calculate_autocorrelation' => 'Autocorrelation',
-                                        'calculate_granger' => 'Granger Causality',
-                                        'calculate_macd' => 'MACD Momentum',
-                                        'calculate_anomaly' => 'Anomaly Detection',
-                                        'calculate_trend_linear' => 'Linear Trend',
-                                        'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
-                                        'calculate_trend_logarithmic' => 'Logarithmic Trend',
-                                        'calculate_trend_ema' => 'EMA Crossover',
-                                    ];
-
-                                    $name = e($get('name') ?: '—');
-                                    $desc = e($get('description') ?: '—');
-                                    $active = $get('is_active') ? '✅ Active' : '❌ Inactive';
-                                    $calc = e($calcLabels[$get('calculation_type')] ?? ($get('calculation_type') ?: '—'));
-                                    $granularity = e(ucfirst($get('granularity') ?: '—'));
-                                    $start = e($get('start_date') ?: 'Not set');
-                                    $end = e($get('end_date') ?: 'Not set');
-                                    $zeroLabels = ['remove' => 'Remove Zeroes', 'trim' => 'Trim Leading/Trailing', 'keep' => 'Keep Zeroes'];
-                                    $zero = e($zeroLabels[$get('zero_handling')] ?? ($get('zero_handling') ?: '—'));
-
-                                    // Template info
-                                    $templateKey = $get('template');
-                                    $templateName = '—';
-                                    if ($templateKey) {
-                                        $kpis = PredefinedKpiRegistry::getPredefinedKpis();
-                                        $templateName = e($kpis[$templateKey]['name'] ?? $templateKey);
-                                    }
-
-                                    // Dependent variable
-                                    $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
-                                    $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
-
-                                    $getAssetsText = function ($groupVal, $filterVal) {
-                                        if ($groupVal) {
-                                            $group = \App\Models\AssetGroup::find($groupVal);
-
-                                            return $group ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">Group: ' . e($group->name) . '</span>' : 'Group ID: ' . $groupVal;
-                                        } elseif ($filterVal) {
-                                            $count = is_array($filterVal) ? count($filterVal) : 1;
-
-                                            return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300">' . $count . ' selected</span>';
-                                        }
-
-                                        return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400 italic">Runtime</span>';
-                                    };
-
-                                    $depAssets = $getAssetsText($get('dependent_asset_group'), $get('dependent_asset_filter'));
-
-                                    // Independent variables
-                                    $independents = $get('independent_variables') ?? [];
-                                    $indHtml = '';
-                                    $idx = 1;
-                                    foreach ($independents as $var) {
-                                        $ch = e(Str::headline($var['independent_channel'] ?? '—'));
-                                        $me = e(Str::headline($var['independent_metric'] ?? '—'));
-                                        $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
-                                        $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ast}</td></tr>";
-                                        $idx++;
-                                    }
-
-                                    $html = '<div class="space-y-6">';
-
-                                    // General section
-                                    $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
-                                    $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">General</h4>';
-                                    $html .= '<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">';
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Name</dt><dd class=\"text-gray-950 dark:text-white font-medium\">{$name}</dd>";
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Status</dt><dd>{$active}</dd>";
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400 col-span-2\">Description</dt><dd class=\"text-gray-950 dark:text-white col-span-2\">{$desc}</dd>";
-                                    $html .= '</dl></div>';
-
-                                    // Configuration section
-                                    $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
-                                    $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Configuration</h4>';
-                                    $html .= '<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">';
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Calculation</dt><dd class=\"text-gray-950 dark:text-white font-medium\">{$calc}</dd>";
-                                    if ($templateKey) {
-                                        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Template</dt><dd class=\"text-gray-950 dark:text-white\">{$templateName}</dd>";
-                                    }
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";
-                                    $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Date range</dt><dd class=\"text-gray-950 dark:text-white\">{$start} → {$end}</dd>";
-                                    $html .= '</dl></div>';
-
-                                    // Series section
-                                    $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
-                                    $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Series</h4>';
-                                    $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Assets</th></tr></thead><tbody>';
-                                    $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depAssets}</td></tr>";
-                                    $html .= $indHtml;
-                                    $html .= '</tbody></table></div>';
-
-                                    $html .= '</div>';
-
-                                    return new HtmlString($html);
+                                    return self::generateSummaryHtml(function ($key) use ($get) {
+                                        return $get($key);
+                                    });
                                 }),
                             Actions::make(array_filter([
                                 Actions\Action::make('back_summary')
@@ -1047,5 +952,107 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '25_summary'),
                 ]),
         ];
+    }
+
+    public static function generateSummaryHtml(callable $get): HtmlString
+    {
+        $calcLabels = [
+            'calculate_regression' => 'Multiple Linear Regression',
+            'calculate_elasticity' => 'Elasticity',
+            'calculate_autocorrelation' => 'Autocorrelation',
+            'calculate_granger' => 'Granger Causality',
+            'calculate_macd' => 'MACD Momentum',
+            'calculate_anomaly' => 'Anomaly Detection',
+            'calculate_trend_linear' => 'Linear Trend',
+            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
+            'calculate_trend_logarithmic' => 'Logarithmic Trend',
+            'calculate_trend_ema' => 'EMA Crossover',
+        ];
+
+        $name = e($get('name') ?: '—');
+        $desc = e($get('description') ?: '—');
+        $active = $get('is_active') ? '✅ Active' : '❌ Inactive';
+        $calc = e($calcLabels[$get('calculation_type')] ?? ($get('calculation_type') ?: '—'));
+        $granularity = e(ucfirst($get('granularity') ?: '—'));
+        $start = e($get('start_date') ?: 'Not set');
+        $end = e($get('end_date') ?: 'Not set');
+        $zeroLabels = ['remove' => 'Remove Zeroes', 'trim' => 'Trim Leading/Trailing', 'keep' => 'Keep Zeroes'];
+        $zero = e($zeroLabels[$get('zero_handling')] ?? ($get('zero_handling') ?: '—'));
+
+        // Template info
+        $templateKey = $get('template');
+        $templateName = '—';
+        if ($templateKey) {
+            $kpis = PredefinedKpiRegistry::getPredefinedKpis();
+            $templateName = e($kpis[$templateKey]['name'] ?? $templateKey);
+        }
+
+        // Dependent variable
+        $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
+        $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
+
+        $getAssetsText = function ($groupVal, $filterVal) {
+            if ($groupVal) {
+                $group = \App\Models\AssetGroup::find($groupVal);
+
+                return $group ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">Group: ' . e($group->name) . '</span>' : 'Group ID: ' . $groupVal;
+            } elseif ($filterVal) {
+                $count = is_array($filterVal) ? count($filterVal) : 1;
+
+                return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300">' . $count . ' selected</span>';
+            }
+
+            return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400 italic">Runtime</span>';
+        };
+
+        $depAssets = $getAssetsText($get('dependent_asset_group'), $get('dependent_asset_filter'));
+
+        // Independent variables
+        $independents = $get('independent_variables') ?? [];
+        $indHtml = '';
+        $idx = 1;
+        foreach ($independents as $var) {
+            $ch = e(Str::headline($var['independent_channel'] ?? '—'));
+            $me = e(Str::headline($var['independent_metric'] ?? '—'));
+            $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
+            $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ast}</td></tr>";
+            $idx++;
+        }
+
+        $html = '<div class="space-y-6">';
+
+        // General section
+        $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
+        $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">General</h4>';
+        $html .= '<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">';
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Name</dt><dd class=\"text-gray-950 dark:text-white font-medium\">{$name}</dd>";
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Status</dt><dd>{$active}</dd>";
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400 col-span-2\">Description</dt><dd class=\"text-gray-950 dark:text-white col-span-2\">{$desc}</dd>";
+        $html .= '</dl></div>';
+
+        // Configuration section
+        $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
+        $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Configuration</h4>';
+        $html .= '<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">';
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Calculation</dt><dd class=\"text-gray-950 dark:text-white font-medium\">{$calc}</dd>";
+        if ($templateKey) {
+            $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Template</dt><dd class=\"text-gray-950 dark:text-white\">{$templateName}</dd>";
+        }
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Date range</dt><dd class=\"text-gray-950 dark:text-white\">{$start} → {$end}</dd>";
+        $html .= '</dl></div>';
+
+        // Series section
+        $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
+        $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Series</h4>';
+        $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Assets</th></tr></thead><tbody>';
+        $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depAssets}</td></tr>";
+        $html .= $indHtml;
+        $html .= '</tbody></table></div>';
+
+        $html .= '</div>';
+
+        return new HtmlString($html);
     }
 }
