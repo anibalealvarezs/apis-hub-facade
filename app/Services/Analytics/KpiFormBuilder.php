@@ -390,12 +390,23 @@ class KpiFormBuilder
                                     'group' => 'Select an asset group',
                                     'all' => 'All assets',
                                 ])
-                                ->live(),
+                                ->live()
+                                ->afterStateUpdated(function (Set $set, $state) {
+                                    if ($state === 'all') {
+                                        $set('global_asset_group', null);
+                                    }
+                                    $set('category_filter', []);
+                                    $set('template', null);
+                                }),
                             Select::make('global_asset_group')
                                 ->label('Global Asset Group (optional)')
                                 ->options(fn () => static::getAssetGroupOptions())
                                 ->visible(fn (Get $get) => $get('_focus_assets') === 'group')
-                                ->live(),
+                                ->live()
+                                ->afterStateUpdated(function (Set $set) {
+                                    $set('category_filter', []);
+                                    $set('template', null);
+                                }),
                             Actions::make([
                                 Actions\Action::make('back_focus')
                                     ->label('Back')
