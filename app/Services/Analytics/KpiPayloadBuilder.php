@@ -59,7 +59,7 @@ class KpiPayloadBuilder
         }
 
         // For Bivariate, we need to build the right side (independent variables)
-        $independents = $state['independent_variables'] ?? [];
+        $independents = array_values($state['independent_variables'] ?? []);
         if (empty($independents)) {
             return $dependentNode; // Fallback
         }
