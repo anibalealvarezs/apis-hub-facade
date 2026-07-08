@@ -84,10 +84,10 @@
                                         setTimeout(() => { widget._isNew = false; }, 2500);
                                     }
                                  ">
-                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col">
+                                <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
                                     {{-- Widget Header --}}
                                     <div
-                                        class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg gap-4">
+                                        class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
@@ -96,6 +96,7 @@
                                                   class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
                                                   title="Inheriting dashboard controls"></span>
                                             <span class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                                                  :title="widget.title || widget.name"
                                                   x-text="widget.title || widget.name"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
@@ -147,7 +148,7 @@
                                         </div>
                                     </div>
                                     {{-- Widget Content (placeholder) --}}
-                                    <div class="flex-1 p-4 flex flex-col items-center justify-center min-h-0">
+                                    <div class="flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
                                         <div class="w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center opacity-70" x-html="getWidgetSvg(widget.widget_type)"></div>
                                         <div class="flex flex-wrap items-center justify-center gap-2">
                                             <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" x-text="widget.widget_type"></span>
