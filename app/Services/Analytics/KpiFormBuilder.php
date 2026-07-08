@@ -289,8 +289,31 @@ class KpiFormBuilder
         $options = [];
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags()[$channel] ?? [];
 
+        $tagToMetricMap = [
+            'spendable' => ['spend' => 'Spend'],
+            'clickable' => ['clicks' => 'Clicks'],
+            'impressionable' => ['impressions' => 'Impressions'],
+            'revenue_tracked' => ['revenue' => 'Revenue'],
+            'conversion_tracked' => ['conversions' => 'Conversions'],
+            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews'],
+            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'avg_session_duration' => 'Avg Session Duration'],
+            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach'],
+            'reach_driven' => ['reach' => 'Reach'],
+            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks'],
+            'ecommerce' => ['orders' => 'Orders', 'aov' => 'AOV', 'revenue' => 'Revenue'],
+            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position'],
+            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions'],
+            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate'],
+        ];
+
         foreach ($channelTags as $tag) {
-            $options["{$channel}_{$tag}_metric_placeholder"] = self::getChannelDisplayName($tag) . ' (Simulated Metric)';
+            if (isset($tagToMetricMap[$tag])) {
+                foreach ($tagToMetricMap[$tag] as $key => $label) {
+                    $options[$key] = $label;
+                }
+            } else {
+                $options["{$channel}_{$tag}_metric_placeholder"] = self::getChannelDisplayName($tag) . ' (Simulated Metric)';
+            }
         }
 
 
