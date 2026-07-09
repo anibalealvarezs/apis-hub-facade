@@ -36,6 +36,21 @@ class AssetGroupResource extends Resource
         return __('Asset Groups');
     }
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('edit_preferences');
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()->can('edit_preferences');
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()->can('edit_preferences');
+    }
+
     public static function form(Form $form): Form
     {
         $project = \Filament\Facades\Filament::getTenant();
@@ -108,6 +123,7 @@ class AssetGroupResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

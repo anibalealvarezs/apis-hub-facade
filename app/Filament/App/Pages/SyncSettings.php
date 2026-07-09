@@ -30,6 +30,11 @@ class SyncSettings extends Page
     protected static string $view = 'filament.app.pages.sync-settings';
     protected static ?string $slug = 'sync-settings';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('edit_preferences');
+    }
+
     public ?array $data = [];
     public bool $isSyncable = false;
 

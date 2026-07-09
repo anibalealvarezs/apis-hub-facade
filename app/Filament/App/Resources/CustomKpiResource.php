@@ -26,6 +26,10 @@
 
         public static function canCreate(): bool
         {
+            if (!auth()->user()->can('edit_preferences')) {
+                return false;
+            }
+
             $project = \Filament\Facades\Filament::getTenant();
             if (!$project || !$project->billingProfile) {
                 return false;
@@ -36,6 +40,16 @@
                 ->getMaxCustomKpisForTier($project->billingProfile->tier);
 
             return $currentCount < $maxKpis;
+        }
+
+        public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+        {
+            return auth()->user()->can('edit_preferences');
+        }
+
+        public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+        {
+            return auth()->user()->can('edit_preferences');
         }
 
         public static function getNavigationGroup(): ?string

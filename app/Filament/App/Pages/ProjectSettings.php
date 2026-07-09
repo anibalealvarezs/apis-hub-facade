@@ -41,10 +41,7 @@ class ProjectSettings extends Page
      */
     public static function canAccess(): bool
     {
-        $project = Filament::getTenant();
-
-        // Permitimos acceso, pero restringiremos las acciones internamente
-        return true;
+        return auth()->user()->can('edit_preferences');
     }
 
     private function getProject(): ?\App\Models\Project

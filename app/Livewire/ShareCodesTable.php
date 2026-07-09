@@ -46,7 +46,7 @@ class ShareCodesTable extends Component
 
         $canInvite = app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators(
             $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE
-        );
+        ) && auth()->user()->can('manage_collaborators');
 
         if (!$canInvite) {
             \Filament\Notifications\Notification::make()
@@ -77,7 +77,7 @@ class ShareCodesTable extends Component
         if ($project) {
             $canInvite = app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators(
                 $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE
-            );
+            ) && auth()->user()->can('manage_collaborators');
         }
 
         return view('livewire.share-codes-table', [
