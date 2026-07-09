@@ -37,7 +37,7 @@
             return __('Data Sources Configuration');
         }
 
-        public static function shouldRegisterNavigation(): bool
+        public static function canAccess(): bool
         {
             return auth()->user()->can('view_settings');
         }

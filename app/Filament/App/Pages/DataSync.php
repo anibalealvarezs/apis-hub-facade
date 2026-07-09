@@ -27,7 +27,7 @@ class DataSync extends Page
         return __('Data Telemetry');
     }
 
-    public static function shouldRegisterNavigation(): bool
+    public static function canAccess(): bool
     {
         return auth()->user()->can('view_data');
     }
