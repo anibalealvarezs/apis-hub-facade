@@ -39,6 +39,11 @@ class AssetGroupResource extends Resource
         return __('Asset Groups');
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->can('view_data');
+    }
+
     public static function canCreate(): bool
     {
         return auth()->user()->can('edit_preferences');

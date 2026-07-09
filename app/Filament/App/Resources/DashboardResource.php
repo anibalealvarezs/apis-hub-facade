@@ -19,6 +19,22 @@ class DashboardResource extends Resource
 
     protected static ?string $cluster = \App\Filament\App\Clusters\Dashboards::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        
+        if (!auth()->user()->can('view_data')) {
+            $query->where(function ($q) {
+                $q->where('user_id', auth()->id())
+                  ->orWhereHas('sharedUsers', function ($sq) {
+                      $sq->where('users.id', auth()->id());
+                  });
+            });
+        }
+        
+        return $query;
+    }
+
     public static function canCreate(): bool
     {
         $project = \Filament\Facades\Filament::getTenant();

@@ -62,7 +62,11 @@ class ManageCollaborators extends Page implements HasTable
         $project = Filament::getTenant();
 
         return $table
-            ->query(User::query()->whereHas('projects', fn ($q) => $q->where('projects.id', $project->id)))
+            ->query(User::query()->whereHas('projects', function ($q) use ($project) {
+                $q->where('projects.id', $project->id);
+            })->when(!auth()->user()->can('view_settings'), function ($query) {
+                $query->where('id', auth()->id());
+            }))
             ->columns([
                 TextColumn::make('name')->label(__('Name')),
                 TextColumn::make('email')->label(__('Email')),

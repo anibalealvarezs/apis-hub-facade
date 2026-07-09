@@ -27,6 +27,11 @@ class DataSync extends Page
         return __('Data Telemetry');
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->can('view_data');
+    }
+
     protected static string $view = 'filament.app.pages.data-sync';
     protected static ?string $slug = 'telemetry';
 

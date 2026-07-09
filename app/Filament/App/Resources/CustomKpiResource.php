@@ -57,6 +57,11 @@
             return __('Exploration & Telemetry');
         }
 
+        public static function shouldRegisterNavigation(): bool
+        {
+            return auth()->user()->can('view_data');
+        }
+
         public static function form(Form $form): Form
         {
             $isEdit = $form->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;

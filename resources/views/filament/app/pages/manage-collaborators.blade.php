@@ -41,7 +41,9 @@
         {{ $this->table }}
 
         <!-- Tabla de Invitaciones Pendientes -->
-        @livewire('pending-invitations-table')
+        @if(auth()->user()->can('manage_collaborators'))
+            @livewire('pending-invitations-table')
+        @endif
 
         <!-- Tabla de Códigos Compartidos -->
         @livewire('share-codes-table')

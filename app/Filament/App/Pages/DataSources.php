@@ -37,6 +37,11 @@
             return __('Data Sources Configuration');
         }
 
+        public static function shouldRegisterNavigation(): bool
+        {
+            return auth()->user()->can('view_settings');
+        }
+
         protected static string $view = 'filament.app.pages.data-sources';
         protected static ?string $slug = 'data-sources';
 

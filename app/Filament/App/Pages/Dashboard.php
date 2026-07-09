@@ -23,6 +23,11 @@ class Dashboard extends BaseDashboard
 
     public function mount(): void
     {
+        if (!auth()->user()->can('view_data')) {
+            $this->redirect(DashboardResource::getUrl('index'));
+            return;
+        }
+
         $project = \Filament\Facades\Filament::getTenant();
 
         if (!$project) {
