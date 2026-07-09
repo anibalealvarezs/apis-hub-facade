@@ -196,7 +196,7 @@
                                             <option value="quarterly">Quarterly</option>
                                             <option value="yearly">Yearly</option>
                                             <option value="query">Query (SEO)</option>
-                                            <option value="page">Page (SEO)</option>
+                                            <option value="dimensions.page">Page (SEO)</option>
                                             <option value="country">Country</option>
                                             <option value="device">Device</option>
                                             <option value="post">Post / Media</option>

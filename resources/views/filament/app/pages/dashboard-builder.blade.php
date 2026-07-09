@@ -421,7 +421,7 @@
                                         <option value="weekly">Weekly</option>
                                         <option value="monthly">Monthly</option>
                                         <option value="query">Query</option>
-                                        <option value="page">Page</option>
+                                        <option value="dimensions.page">Page</option>
                                         <option value="country">Country</option>
                                         <option value="device">Device</option>
                                         <option value="post">Post</option>
@@ -1111,7 +1111,7 @@
                     inheritedControlLabel(key, value) {
                         const labels = {
                             zero_handling: {remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros'},
-                            granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', query: 'Query', page: 'Page', country: 'Country', device: 'Device', post: 'Post'},
+                            granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', query: 'Query', 'dimensions.page': 'Page', country: 'Country', device: 'Device', post: 'Post'},
                         };
                         return (labels[key] && labels[key][value]) || value || '—';
                     },
