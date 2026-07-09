@@ -58,19 +58,19 @@ window.dashboardRenderer = {
      * Main render dispatcher.
      */
     render(containerEl, json) {
-        const { widget_type, data } = json;
+        const { widget_type, data, controls } = json;
 
         switch (widget_type) {
-            case 'tile':       this.renderTile(containerEl, data); break;
-            case 'line_chart': this.renderLineChart(containerEl, data); break;
-            case 'bar_chart':  this.renderBarChart(containerEl, data); break;
-            case 'table':      this.renderTable(containerEl, data); break;
-            case 'gauge':      this.renderGauge(containerEl, data); break;
-            case 'sparkline':  this.renderSparkline(containerEl, data); break;
-            case 'anomaly_list':  this.renderAnomalyList(containerEl, data); break;
-            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data); break;
-            case 'scatter_plot': this.renderScatterPlot(containerEl, data); break;
-            case 'combo_chart': this.renderComboChart(containerEl, data); break;
+            case 'tile':       this.renderTile(containerEl, data, controls); break;
+            case 'line_chart': this.renderLineChart(containerEl, data, controls); break;
+            case 'bar_chart':  this.renderBarChart(containerEl, data, controls); break;
+            case 'table':      this.renderTable(containerEl, data, controls); break;
+            case 'gauge':      this.renderGauge(containerEl, data, controls); break;
+            case 'sparkline':  this.renderSparkline(containerEl, data, controls); break;
+            case 'anomaly_list':  this.renderAnomalyList(containerEl, data, controls); break;
+            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data, controls); break;
+            case 'scatter_plot': this.renderScatterPlot(containerEl, data, controls); break;
+            case 'combo_chart': this.renderComboChart(containerEl, data, controls); break;
             default:
                 containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
         }
@@ -163,9 +163,10 @@ window.dashboardRenderer = {
 
     // ─── Line Chart ───
 
-    renderLineChart(containerEl, data) {
+    renderLineChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
+        const reverseY = controls?.metrics?.[0] === 'position';
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -194,7 +195,7 @@ window.dashboardRenderer = {
                 },
                 scales: {
                     x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                    y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
                 },
                 elements: { line: { tension: 0.3 }, point: { radius: 2 } },
             },
@@ -203,9 +204,10 @@ window.dashboardRenderer = {
 
     // ─── Bar Chart ───
 
-    renderBarChart(containerEl, data) {
+    renderBarChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
+        const reverseY = controls?.metrics?.[0] === 'position';
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -233,7 +235,7 @@ window.dashboardRenderer = {
                 },
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                    y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
                 },
             },
         });
@@ -409,10 +411,11 @@ window.dashboardRenderer = {
 
     // ─── Anomaly Chart ───
 
-    renderAnomalyChart(containerEl, data) {
+    renderAnomalyChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
         const anomalyDates = data?.anomaly_dates ?? [];
+        const reverseY = controls?.metrics?.[0] === 'position';
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -472,7 +475,8 @@ window.dashboardRenderer = {
                         ticks: { maxTicksLimit: 10, font: { size: 10 } },
                     },
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: !reverseY,
+                        reverse: reverseY,
                         ticks: {
                             font: { size: 10 },
                             callback(val) {
@@ -490,11 +494,14 @@ window.dashboardRenderer = {
 
     // ─── Scatter Plot ───
 
-    renderScatterPlot(containerEl, data) {
+    renderScatterPlot(containerEl, data, controls) {
         if (!data || !data.datasets || !data.datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
+
+        const reverseY = controls?.metrics?.[0] === 'position';
+        const reverseX = controls?.metrics?.[1] === 'position';
 
         this.renderChart(containerEl, {
             type: 'scatter',
@@ -506,7 +513,11 @@ window.dashboardRenderer = {
                     x: {
                         type: 'linear',
                         position: 'bottom',
-                        title: { display: !!data.x_label, text: data.x_label }
+                        title: { display: !!data.x_label, text: data.x_label },
+                        reverse: reverseX
+                    },
+                    y: {
+                        reverse: reverseY
                     }
                 },
                 plugins: {
