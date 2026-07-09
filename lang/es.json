@@ -1216,5 +1216,7 @@
     "-6 Days": "-6 Días",
     "-7 Days": "-7 Días",
     "Rolling Correlation (7-Day Window)": "Correlación Móvil (Ventana de 7 Días)",
-    "Scatter Plot (Correlation Distribution)": "Gráfico de Dispersión (Distribución de Correlación)"
+    "Scatter Plot (Correlation Distribution)": "Gráfico de Dispersión (Distribución de Correlación)",
+    "Upgrade to Ultra or Enterprise plan to invite collaborators.": "Actualiza al plan Ultra o Enterprise para invitar colaboradores.",
+    "You do not have permission or need to upgrade to invite collaborators.": "No tienes permisos o necesitas actualizar el plan para invitar colaboradores."
 }

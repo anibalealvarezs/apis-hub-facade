@@ -63,7 +63,7 @@ class CreateCustomKpi extends CreateRecord
                     return new \Illuminate\Support\HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">' . json_encode($payload, JSON_PRETTY_PRINT) . '</pre>');
                 })
                 ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close'),
+                ->modalCancelActionLabel(__('Close')),
         ];
     }
 }

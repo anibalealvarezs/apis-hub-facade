@@ -393,7 +393,7 @@ class KpiFormBuilder
                 ->schema([
                     Hidden::make('_required_tag'),
                     Select::make($name . '_channel')
-                        ->label('Channel (keep empty for runtime)')
+                        ->label(__('Channel (keep empty for runtime)'))
                         ->options(function (Get $get) {
                             $allChannels = self::getActiveChannels();
                             $requiredTag = $get('_required_tag');
@@ -419,16 +419,16 @@ class KpiFormBuilder
                                 : ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-green-500 [&_.fi-input-wrapper]:!bg-green-50 dark:[&_.fi-input-wrapper]:!bg-green-900/20 [&_.fi-input-wrapper_*]:!text-green-900 dark:[&_.fi-input-wrapper_*]:!text-green-100'];
                         }),
                     Select::make($name . '_metric')
-                        ->label('Metric')
+                        ->label(__('Metric'))
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
                         ->required(fn () => $name === 'dependent'),
                     Select::make($name . '_asset_group')
-                        ->label('Asset Group (keep empty for runtime)')
+                        ->label(__('Asset Group (keep empty for runtime)'))
                         ->options(fn () => static::getAssetGroupOptions())
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_filter')))
                         ->live(),
                     Select::make($name . '_asset_filter')
-                        ->label('Asset Filter (keep empty for runtime)')
+                        ->label(__('Asset Filter (keep empty for runtime)'))
                         ->multiple()
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
@@ -457,26 +457,26 @@ class KpiFormBuilder
             Hidden::make('_builder_step')->default('1_intent'),
             Hidden::make('_step_history')->default('[]'),
 
-            Section::make('KPI Configuration')
+            Section::make(__('KPI Configuration'))
                 ->schema([
                     // Step 1: Intent
-                    Section::make('1. Choose Build Method')
+                    Section::make(__('1. Choose Build Method'))
                         ->schema([
                             Radio::make('_intent')
-                                ->label('Do you want to build a KPI from scratch or use a predefined template?')
+                                ->label(__('Do you want to build a KPI from scratch or use a predefined template?'))
                                 ->options([
-                                    'template' => 'Use a predefined template',
-                                    'scratch' => 'Build from scratch',
+                                    'template' => __('Use a predefined template'),
+                                    'scratch' => __('Build from scratch'),
                                 ])
                                 ->descriptions([
-                                    'template' => 'Select a predefined marketing theory scenario.',
-                                    'scratch' => 'Start with a blank canvas to explore your own hypotheses.',
+                                    'template' => __('Select a predefined marketing theory scenario.'),
+                                    'scratch' => __('Start with a blank canvas to explore your own hypotheses.'),
                                 ])
                                 ->view('filament.forms.components.playbook-radio')
                                 ->live(),
                             Actions::make([
                                 Actions\Action::make('next_intent')
-                                    ->label('Next')
+                                    ->label(__('Next'))
                                     ->action(function (Set $set, Get $get) use ($forwardAction) {
                                         if ($get('_intent') === 'template') {
                                             $forwardAction($set, $get, '1a1_asset_group');
@@ -490,17 +490,17 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '1_intent'),
 
                     // Step 1.A.1: Asset Group Focus
-                    Section::make('1.A.1. Focus on specific assets?')
+                    Section::make(__('1.A.1. Focus on specific assets?'))
                         ->schema([
                             Radio::make('_focus_assets')
-                                ->label('Do you want to focus in a specific group of assets?')
+                                ->label(__('Do you want to focus in a specific group of assets?'))
                                 ->options([
-                                    'group' => 'Select an asset group',
-                                    'all' => 'All assets',
+                                    'group' => __('Select an asset group'),
+                                    'all' => __('All assets'),
                                 ])
                                 ->descriptions([
-                                    'group' => 'Analyze a specific segment or campaign group.',
-                                    'all' => 'Analyze across the entire organization.',
+                                    'group' => __('Analyze a specific segment or campaign group.'),
+                                    'all' => __('Analyze across the entire organization.'),
                                 ])
                                 ->view('filament.forms.components.playbook-radio')
                                 ->live()
@@ -512,7 +512,7 @@ class KpiFormBuilder
                                     $set('template', null);
                                 }),
                             Select::make('global_asset_group')
-                                ->label('Global Asset Group (optional)')
+                                ->label(__('Global Asset Group (optional)'))
                                 ->options(fn () => static::getAssetGroupOptions())
                                 ->visible(fn (Get $get) => $get('_focus_assets') === 'group')
                                 ->live()
@@ -522,11 +522,11 @@ class KpiFormBuilder
                                 }),
                             Actions::make([
                                 Actions\Action::make('back_focus')
-                                    ->label('Back')
+                                    ->label(__('Back'))
                                     ->color('gray')
                                     ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_focus')
-                                    ->label('Assign & Next')
+                                    ->label(__('Assign & Next'))
                                     ->action(function (Set $set, Get $get) use ($forwardAction) {
                                         $forwardAction($set, $get, '1a2_template');
                                     })
@@ -536,19 +536,19 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '1a1_asset_group'),
 
                     // Step 1.A.2: Template Selection
-                    Section::make('1.A.2. Select Template')
+                    Section::make(__('1.A.2. Select Template'))
                         ->schema([
                             Grid::make(2)
                                 ->schema([
                                     Group::make([
                                         Select::make('category_filter')
-                                            ->label('Filter by category')
+                                            ->label(__('Filter by category'))
                                             ->multiple()
                                             ->options(fn (Get $get) => self::getCategoryOptions($get('global_asset_group')))
                                             ->live(),
 
                                         Select::make('template')
-                                            ->label('Quick Start Template')
+                                            ->label(__('Quick Start Template'))
                                             ->allowHtml()
                                             ->searchable()
                                             ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? [], $get('global_asset_group')))
@@ -666,7 +666,7 @@ class KpiFormBuilder
                                                     }
                                                 }
                                             }),
-                            ])->columnSpan(1)->extraAttributes(['class' => 'relative z-50']),
+                            ])->columnSpan(1)->extraAttributes(['class' => __('relative z-50')]),
 
                             Group::make([
                                             \Filament\Forms\Components\Placeholder::make('template_details')
@@ -711,11 +711,11 @@ class KpiFormBuilder
                         ]),
                         Actions::make([
                                 Actions\Action::make('back_template')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_template')
-                                                ->label('Next')
+                                                ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
                                                 ->disabled(fn (Get $get) => empty($get('template'))),
                             ]),
@@ -723,31 +723,31 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '1a2_template'),
 
                     // Step 2.1: Calculation Type
-                    Section::make('2.1. Choose your calculation type')
+                    Section::make(__('2.1. Choose your calculation type'))
                         ->schema([
                             Select::make('calculation_type')
-                                ->label('Calculation Type')
+                                ->label(__('Calculation Type'))
                                 ->options([
-                                                'calculate_regression' => 'Multiple Linear Regression',
-                                                'calculate_elasticity' => 'Elasticity',
-                                                'calculate_autocorrelation' => 'Autocorrelation',
-                                                'calculate_granger' => 'Granger Causality',
-                                                'calculate_macd' => 'MACD Momentum',
-                                                'calculate_anomaly' => 'Anomaly Detection',
-                                                'calculate_trend_linear' => 'Linear Trend',
-                                                'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
-                                                'calculate_trend_logarithmic' => 'Logarithmic Trend',
-                                                'calculate_trend_ema' => 'EMA Crossover',
+                                                'calculate_regression' => __('Multiple Linear Regression'),
+                                                'calculate_elasticity' => __('Elasticity'),
+                                                'calculate_autocorrelation' => __('Autocorrelation'),
+                                                'calculate_granger' => __('Granger Causality'),
+                                                'calculate_macd' => __('MACD Momentum'),
+                                                'calculate_anomaly' => __('Anomaly Detection'),
+                                                'calculate_trend_linear' => __('Linear Trend'),
+                                                'calculate_trend_holt_winters' => __('Holt-Winters (Seasonality)'),
+                                                'calculate_trend_logarithmic' => __('Logarithmic Trend'),
+                                                'calculate_trend_ema' => __('EMA Crossover'),
                                 ])
                                 ->required()
                                 ->live(),
                             Actions::make([
                                 Actions\Action::make('back_calc')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_calc')
-                                                ->label('Next')
+                                                ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
                                                 ->disabled(fn (Get $get) => empty($get('calculation_type'))),
                             ]),
@@ -755,7 +755,7 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '21_calculation'),
 
                     // Step 2.2: Configure Series (Horizontal layout)
-                    Section::make('2.2. Configure Series')
+                    Section::make(__('2.2. Configure Series'))
                         ->schema([
                             Grid::make(3) // Ensure max 3 cols logic if we need it
                                 ->schema([
@@ -763,7 +763,7 @@ class KpiFormBuilder
                                                     ->columnSpan(1),
 
                                                 Repeater::make('independent_variables')
-                                                    ->label('Independent Variables (X - Explanatory)')
+                                                    ->label(__('Independent Variables (X - Explanatory)'))
                                                     ->schema(self::getNodeSchema('independent', 'Variable'))
                                                     ->grid(2)
                                                     ->columnSpan(2)
@@ -777,11 +777,11 @@ class KpiFormBuilder
                                 ]),
                             Actions::make(array_filter([
                                 ! $isEdit ? Actions\Action::make('back_series')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
                                 Actions\Action::make('next_series')
-                                                ->label('Next')
+                                                ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                                                 ->disabled(function (Get $get) {
                                                     if (empty($get('dependent_channel'))) {
@@ -839,57 +839,57 @@ class KpiFormBuilder
                                                     return true; // all match, hide modal
                                                 })
                                                 ->requiresConfirmation()
-                                                ->modalHeading('Asset Groups Mismatch')
-                                                ->modalDescription('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?')
-                                                ->modalSubmitActionLabel('Yes, proceed'),
+                                                ->modalHeading(__('Asset Groups Mismatch'))
+                                                ->modalDescription(__('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?'))
+                                                ->modalSubmitActionLabel(__('Yes, proceed')),
                             ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
 
                     // Step 2.3: Scope / Filters
-                    Section::make('2.3. Scope & Filters')
+                    Section::make(__('2.3. Scope & Filters'))
                         ->schema([
-                            DatePicker::make('start_date')->label('Start Date'),
-                            DatePicker::make('end_date')->label('End Date'),
+                            DatePicker::make('start_date')->label(__('Start Date')),
+                            DatePicker::make('end_date')->label(__('End Date')),
                             Select::make('granularity')
-                                ->label('Granularity')
+                                ->label(__('Granularity'))
                                 ->options([
-                                                'daily' => 'Daily',
-                                                'weekly' => 'Weekly',
-                                                'monthly' => 'Monthly',
+                                                'daily' => __('Daily'),
+                                                'weekly' => __('Weekly'),
+                                                'monthly' => __('Monthly'),
                                 ])
                                 ->default('daily'),
                             Select::make('zero_handling')
-                                ->label('Zero Handling')
+                                ->label(__('Zero Handling'))
                                 ->options([
-                                                'remove' => 'Remove Zeroes',
-                                                'trim' => 'Trim Leading/Trailing Zeroes',
-                                                'keep' => 'Keep Zeroes',
+                                                'remove' => __('Remove Zeroes'),
+                                                'trim' => __('Trim Leading/Trailing Zeroes'),
+                                                'keep' => __('Keep Zeroes'),
                                 ])
                                 ->default('trim')
                                 ->helperText('How to treat zero values in the time series before analysis.'),
                             Actions::make([
                                 Actions\Action::make('back_scope')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_scope')
-                                                ->label('Next')
+                                                ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '24_info')),
                             ]),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '23_scope'),
 
                     // Step 2.4: General Information
-                    Section::make('2.4. General Information')
+                    Section::make(__('2.4. General Information'))
                         ->schema([
                             TextInput::make('name')
-                                ->label('KPI Name')
+                                ->label(__('KPI Name'))
                                 ->required()
                                 ->maxLength(255)
                                 ->live(debounce: 500),
                             Textarea::make('description')
-                                ->label('Description')
+                                ->label(__('Description'))
                                 ->maxLength(65535)
                                 ->columnSpanFull(),
                             Toggle::make('is_active')
@@ -897,11 +897,11 @@ class KpiFormBuilder
                                 ->default(true),
                             Actions::make([
                                 Actions\Action::make('back_info')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_info')
-                                                ->label('Next')
+                                                ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '25_summary'))
                                                 ->disabled(fn (Get $get) => empty($get('name'))),
                             ])->columnSpanFull(),
@@ -909,7 +909,7 @@ class KpiFormBuilder
                         ->visible(fn (Get $get) => $get('_builder_step') === '24_info'),
 
                     // Step 2.5: Summary & Create
-                    Section::make('2.5. Review & Create')
+                    Section::make(__('2.5. Review & Create'))
                         ->schema([
                             Placeholder::make('kpi_summary')
                                 ->hiddenLabel()
@@ -920,18 +920,18 @@ class KpiFormBuilder
                                 }),
                             Actions::make(array_filter([
                                 Actions\Action::make('back_summary')
-                                                ->label('Back')
+                                                ->label(__('Back'))
                                                 ->color('gray')
                                                 ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('create_kpi')
-                                                ->label($isEdit ? 'Save changes' : 'Create')
+                                                ->label($isEdit ? __('Save changes') : __('Create'))
                                                 ->color('primary')
                                                 ->submit($isEdit ? 'save' : 'create'),
                                 ! $isEdit ? Actions\Action::make('create_another_kpi')
-                                                ->label('Create & create another')
+                                                ->label(__('Create & create another'))
                                                 ->color('gray')
                                                 ->submit('create')
-                                                ->extraAttributes(['name' => 'createAnother', 'value' => true]) : null,
+                                                ->extraAttributes(['name' => __('createAnother'), 'value' => true]) : null,
                             ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '25_summary'),
@@ -950,7 +950,7 @@ class KpiFormBuilder
         $granularity = e(ucfirst($get('granularity') ?: '—'));
         $start = e($get('start_date') ?: 'Not set');
         $end = e($get('end_date') ?: 'Not set');
-        $zeroLabels = ['remove' => 'Remove Zeroes', 'trim' => 'Trim Leading/Trailing', 'keep' => 'Keep Zeroes'];
+        $zeroLabels = ['remove' => __('Remove Zeroes'), 'trim' => __('Trim Leading/Trailing'), 'keep' => __('Keep Zeroes')];
         $zero = e($zeroLabels[$get('zero_handling')] ?? ($get('zero_handling') ?: '—'));
 
         // Template info
@@ -1033,20 +1033,20 @@ class KpiFormBuilder
     public static function getTagToMetricMap(): array
     {
         return [
-            'spendable' => ['spend' => 'Spend'],
-            'clickable' => ['clicks' => 'Clicks', 'link_clicks' => 'Link Clicks'],
-            'impressionable' => ['impressions' => 'Impressions', 'cpm' => 'CPM'],
-            'revenue_tracked' => ['revenue' => 'Revenue', 'purchase_roas' => 'ROAS'],
-            'conversion_tracked' => ['conversions' => 'Conversions', 'results' => 'Results', 'cost_per_result' => 'Cost per Result'],
-            'traffic_tracked' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'new_users' => 'New Users'],
-            'behavior_tracked' => ['bounce_rate' => 'Bounce Rate', 'average_session_duration' => 'Avg Session Duration'],
-            'organic_social' => ['engagements' => 'Engagements', 'followers' => 'Followers', 'impressions' => 'Impressions', 'reach' => 'Reach', 'engaged_users' => 'Engaged Users', 'total_interactions' => 'Total Interactions'],
-            'reach_driven' => ['reach' => 'Reach'],
-            'email_marketing' => ['sends' => 'Sends', 'opens' => 'Opens', 'clicks' => 'Email Clicks', 'bounces' => 'Bounces'],
-            'ecommerce' => ['orders' => 'Orders', 'aov' => 'AOV', 'revenue' => 'Revenue'],
-            'seo' => ['clicks' => 'Search Clicks', 'impressions' => 'Search Impressions', 'position' => 'Average Position', 'ctr' => 'CTR'],
-            'paid_media' => ['spend' => 'Spend', 'clicks' => 'Clicks', 'impressions' => 'Impressions', 'conversions' => 'Conversions', 'cpc' => 'CPC', 'purchase_roas' => 'ROAS', 'cost_per_result' => 'Cost per Result', 'results' => 'Results', 'link_clicks' => 'Link Clicks'],
-            'analytics' => ['sessions' => 'Sessions', 'pageviews' => 'Pageviews', 'bounce_rate' => 'Bounce Rate', 'new_users' => 'New Users', 'average_session_duration' => 'Avg Session Duration'],
+            'spendable' => ['spend' => __('Spend')],
+            'clickable' => ['clicks' => __('Clicks'), 'link_clicks' => __('Link Clicks')],
+            'impressionable' => ['impressions' => __('Impressions'), 'cpm' => __('CPM')],
+            'revenue_tracked' => ['revenue' => __('Revenue'), 'purchase_roas' => __('ROAS')],
+            'conversion_tracked' => ['conversions' => __('Conversions'), 'results' => __('Results'), 'cost_per_result' => __('Cost per Result')],
+            'traffic_tracked' => ['sessions' => __('Sessions'), 'pageviews' => __('Pageviews'), 'new_users' => __('New Users')],
+            'behavior_tracked' => ['bounce_rate' => __('Bounce Rate'), 'average_session_duration' => __('Avg Session Duration')],
+            'organic_social' => ['engagements' => __('Engagements'), 'followers' => __('Followers'), 'impressions' => __('Impressions'), 'reach' => __('Reach'), 'engaged_users' => __('Engaged Users'), 'total_interactions' => __('Total Interactions')],
+            'reach_driven' => ['reach' => __('Reach')],
+            'email_marketing' => ['sends' => __('Sends'), 'opens' => __('Opens'), 'clicks' => __('Email Clicks'), 'bounces' => __('Bounces')],
+            'ecommerce' => ['orders' => __('Orders'), 'aov' => __('AOV'), 'revenue' => __('Revenue')],
+            'seo' => ['clicks' => __('Search Clicks'), 'impressions' => __('Search Impressions'), 'position' => __('Average Position'), 'ctr' => __('CTR')],
+            'paid_media' => ['spend' => __('Spend'), 'clicks' => __('Clicks'), 'impressions' => __('Impressions'), 'conversions' => __('Conversions'), 'cpc' => __('CPC'), 'purchase_roas' => __('ROAS'), 'cost_per_result' => __('Cost per Result'), 'results' => __('Results'), 'link_clicks' => __('Link Clicks')],
+            'analytics' => ['sessions' => __('Sessions'), 'pageviews' => __('Pageviews'), 'bounce_rate' => __('Bounce Rate'), 'new_users' => __('New Users'), 'average_session_duration' => __('Avg Session Duration')],
         ];
     }
 
@@ -1064,16 +1064,16 @@ class KpiFormBuilder
     public static function getCalculationTypeOptions(): array
     {
         return [
-            'calculate_regression' => 'Multiple Linear Regression',
-            'calculate_elasticity' => 'Elasticity',
-            'calculate_autocorrelation' => 'Autocorrelation',
-            'calculate_granger' => 'Granger Causality',
-            'calculate_macd' => 'MACD Momentum',
-            'calculate_anomaly' => 'Anomaly Detection',
-            'calculate_trend_linear' => 'Linear Trend',
-            'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
-            'calculate_trend_logarithmic' => 'Logarithmic Trend',
-            'calculate_trend_ema' => 'EMA Crossover',
+            'calculate_regression' => __('Multiple Linear Regression'),
+            'calculate_elasticity' => __('Elasticity'),
+            'calculate_autocorrelation' => __('Autocorrelation'),
+            'calculate_granger' => __('Granger Causality'),
+            'calculate_macd' => __('MACD Momentum'),
+            'calculate_anomaly' => __('Anomaly Detection'),
+            'calculate_trend_linear' => __('Linear Trend'),
+            'calculate_trend_holt_winters' => __('Holt-Winters (Seasonality)'),
+            'calculate_trend_logarithmic' => __('Logarithmic Trend'),
+            'calculate_trend_ema' => __('EMA Crossover'),
         ];
     }
 }

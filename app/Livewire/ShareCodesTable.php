@@ -51,7 +51,7 @@ class ShareCodesTable extends Component
         if (!$canInvite) {
             \Filament\Notifications\Notification::make()
                 ->danger()
-                ->title(__('Upgrade to Ultra or Enterprise plan to invite collaborators.'))
+                ->title(__('You do not have permission or need to upgrade to invite collaborators.'))
                 ->send();
             return;
         }

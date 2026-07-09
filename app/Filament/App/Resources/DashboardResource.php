@@ -52,7 +52,7 @@ class DashboardResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Dashboard Details')
+                Forms\Components\Section::make(__('Dashboard Details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()

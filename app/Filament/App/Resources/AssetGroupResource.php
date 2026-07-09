@@ -19,7 +19,10 @@ class AssetGroupResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
-    protected static ?string $navigationGroup = 'Data & Integrations';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Data & Integrations');
+    }
 
     public static function getNavigationLabel(): string
     {
@@ -57,7 +60,7 @@ class AssetGroupResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Group Details')
+                Forms\Components\Section::make(__('Group Details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -67,7 +70,7 @@ class AssetGroupResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(2),
                     
-                Forms\Components\Section::make('Assets')
+                Forms\Components\Section::make(__('Assets'))
                     ->schema([
                         Forms\Components\ViewField::make('assets_data')
                             ->hiddenLabel()
@@ -88,13 +91,13 @@ class AssetGroupResource extends Resource
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Total Assets')
+                    ->label(__('Total Assets'))
                     ->counts('items')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items')
-                    ->label('Assets Summary')
+                    ->label(__('Assets Summary'))
                     ->badge()
-                    ->placeholder('None')
+                    ->placeholder(__('None'))
                     ->getStateUsing(function (AssetGroup $record) {
                         $items = $record->items;
                         if ($items->isEmpty()) {

@@ -86,7 +86,7 @@
                         ->sortable(),
                     Tables\Columns\TextColumn::make('dashboards_count')
                         ->counts('dashboards')
-                        ->label('Widgets')
+                        ->label(__('Widgets'))
                         ->sortable(),
                     Tables\Columns\TextColumn::make('created_at')
                         ->dateTime()
@@ -99,7 +99,7 @@
                 ])
                 ->filters([
                     Tables\Filters\SelectFilter::make('dashboards')
-                        ->label('Dashboards')
+                        ->label(__('Dashboards'))
                         ->multiple()
                         ->preload()
                         ->options(fn () => \App\Models\Dashboard::pluck('name', 'id')->toArray())
@@ -113,7 +113,7 @@
                     Tables\Filters\SelectFilter::make('calculation_type')
                         ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
                     Tables\Filters\SelectFilter::make('asset_group')
-                        ->label('Asset Group')
+                        ->label(__('Asset Group'))
                         ->options(fn () => \App\Models\AssetGroup::pluck('name', 'id')->toArray())
                         ->query(function (Builder $query, array $data) {
                             if (!empty($data['value'])) {
@@ -126,7 +126,7 @@
                             }
                         }),
                     Tables\Filters\SelectFilter::make('metric')
-                        ->label('Metric')
+                        ->label(__('Metric'))
                         ->options(\App\Services\Analytics\KpiFormBuilder::getAllMetricOptions())
                         ->query(function (Builder $query, array $data) {
                             if (!empty($data['value'])) {
@@ -138,7 +138,7 @@
                             }
                         }),
                     Tables\Filters\SelectFilter::make('channel')
-                        ->label('Channel')
+                        ->label(__('Channel'))
                         ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getActiveChannels())
                         ->query(function (Builder $query, array $data) {
                             if (!empty($data['value'])) {
@@ -150,7 +150,7 @@
                             }
                         }),
                     Tables\Filters\TernaryFilter::make('is_active')
-                        ->label('Status'),
+                        ->label(__('Status')),
                 ])
                 ->actions([
                 \App\Services\Analytics\KpiExecuteActionBuilder::configure(
@@ -173,7 +173,7 @@
                             });
                         })
                         ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Close'),
+                        ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\Action::make('debugPayload')
                         ->label(__('Debug Payload'))
                         ->icon('heroicon-o-code-bracket')
@@ -190,7 +190,7 @@
                             return new HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'.json_encode($payload, JSON_PRETTY_PRINT).'</pre>');
                         })
                         ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Close'),
+                        ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\ReplicateAction::make()
                         ->label(__('Duplicate'))
                         ->excludeAttributes(['id'])

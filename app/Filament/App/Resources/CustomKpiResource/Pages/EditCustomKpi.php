@@ -78,7 +78,7 @@ class EditCustomKpi extends EditRecord
                     return new HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">' . json_encode($payload, JSON_PRETTY_PRINT) . '</pre>');
                 })
                 ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close'),
+                ->modalCancelActionLabel(__('Close')),
             Actions\DeleteAction::make()
                 ->visible(fn () => auth()->user()->can('edit_preferences')),
         ];
