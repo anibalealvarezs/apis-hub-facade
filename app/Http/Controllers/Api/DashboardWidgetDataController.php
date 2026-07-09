@@ -46,7 +46,10 @@ class DashboardWidgetDataController extends Controller
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
 
         // Merge runtime overrides from the request (on-the-go UX)
-        if (!empty($validated['controls'])) {
+        if (isset($validated['controls'])) {
+            if (array_key_exists('granularity', $validated['controls']) && empty($validated['controls']['granularity'])) {
+                unset($validated['controls']['granularity']);
+            }
             $resolvedControls = array_merge($resolvedControls, $validated['controls']);
         }
 

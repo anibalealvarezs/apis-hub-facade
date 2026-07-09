@@ -28,7 +28,7 @@ class WidgetDataService
 
         $resolved = [];
 
-        $inheritableKeys = ['date_start', 'date_end', 'zero_handling'];
+        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'granularity'];
 
         // Start with widget controls as the base
         $resolved = $widgetControls;

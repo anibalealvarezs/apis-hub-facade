@@ -190,6 +190,7 @@
                                     <div class="p-6">
                                         <select x-model="settingsControls.granularity"
                                                 class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                            <option value="">Dashboard Default</option>
                                             <option value="daily">Daily</option>
                                             <option value="weekly">Weekly</option>
                                             <option value="monthly">Monthly</option>
