@@ -239,7 +239,7 @@
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                    <option :value="key" x-text="label"></option>
+                                                    <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] == key"></option>
                                                 </template>
                                                 </select>
                                             </div>
