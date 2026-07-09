@@ -231,7 +231,7 @@
                                     </div>
                                     <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                         {{-- Metric selector --}}
-                                        <template x-if="settingsSourceType !== 'kpi'">
+                                        <template x-if="settingsSourceType !== 'kpi' || !vConfig.selected_metric">
                                             <div class="my-2">
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                             <select x-model="settingsControls.metrics[vConfig.index]"
