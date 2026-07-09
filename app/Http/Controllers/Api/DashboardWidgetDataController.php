@@ -208,7 +208,11 @@ class DashboardWidgetDataController extends Controller
                 $scatter = $data['scatter_data'];
                 $points = [];
                 foreach ($scatter['x'] as $i => $x) {
-                    $points[] = ['x' => $x, 'y' => $scatter['y'][$i]];
+                    $point = ['x' => $x, 'y' => $scatter['y'][$i]];
+                    if (isset($scatter['labels'][$i])) {
+                        $point['label'] = $scatter['labels'][$i];
+                    }
+                    $points[] = $point;
                 }
                 
                 // Generar linea de tendencia ideal

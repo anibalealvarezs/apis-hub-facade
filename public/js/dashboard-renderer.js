@@ -510,7 +510,18 @@ window.dashboardRenderer = {
                     }
                 },
                 plugins: {
-                    legend: { display: true, position: 'bottom' }
+                    legend: { display: true, position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const point = ctx.raw;
+                                const valX = point.x.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                                const valY = point.y.toLocaleString('en-US', { maximumFractionDigits: 4 });
+                                const baseLabel = point.label ? (point.label + ' - ') : '';
+                                return baseLabel + '(' + valX + ', ' + valY + ')';
+                            }
+                        }
+                    }
                 }
             }
         });
