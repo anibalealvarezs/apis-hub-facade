@@ -503,6 +503,33 @@ window.dashboardRenderer = {
         const reverseY = controls?.metrics?.[0] === 'position';
         const reverseX = controls?.metrics?.[1] === 'position';
 
+        const scatterDataset = data.datasets.find(d => d.type === 'scatter');
+        if (scatterDataset && scatterDataset.data && scatterDataset.data.length > 0) {
+            const yValues = scatterDataset.data.map(p => p.y);
+            const minY = Math.min(...yValues);
+            const maxY = Math.max(...yValues);
+
+            const bgColors = [];
+            const borderColors = [];
+
+            scatterDataset.data.forEach(p => {
+                let t = 0.5;
+                if (maxY > minY) {
+                    t = (p.y - minY) / (maxY - minY);
+                }
+                if (reverseY) {
+                    t = 1 - t;
+                }
+                const hue = t * 120; // 0 is red, 120 is green
+                bgColors.push(`hsla(${hue}, 80%, 50%, 0.7)`);
+                borderColors.push(`hsla(${hue}, 80%, 45%, 1)`);
+            });
+
+            scatterDataset.backgroundColor = bgColors;
+            scatterDataset.borderColor = borderColors;
+            scatterDataset.borderWidth = 1;
+        }
+
         this.renderChart(containerEl, {
             type: 'scatter',
             data: data,
