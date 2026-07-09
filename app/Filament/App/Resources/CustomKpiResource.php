@@ -204,11 +204,40 @@
                         })
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('clearCache')
+                        ->label(__('Clear Cache'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(function (CustomKpi $record) {
+                            app(\App\Services\WidgetDataService::class)->invalidateCache($record->id);
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Cache cleared successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                 ])
                 ->bulkActions([
                     Tables\Actions\BulkActionGroup::make([
+                        Tables\Actions\BulkAction::make('clearCache')
+                            ->label(__('Clear Cache'))
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                                $service = app(\App\Services\WidgetDataService::class);
+                                foreach ($records as $record) {
+                                    $service->invalidateCache($record->id);
+                                }
+                                \Filament\Notifications\Notification::make()
+                                    ->title(__('Cache cleared for selected KPIs'))
+                                    ->success()
+                                    ->send();
+                            })
+                            ->visible(fn() => auth()->user()->can('edit_preferences')),
                         Tables\Actions\DeleteBulkAction::make()
                             ->visible(fn() => auth()->user()->can('edit_preferences')),
                     ]),
