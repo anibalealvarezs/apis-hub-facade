@@ -639,14 +639,13 @@ class PredefinedKpiRegistry
             ],
             'seo_engagement_quality' => [
                 'name' => 'SEO Engagement Quality',
-                'description' => 'A quality indicator measuring session duration driven by organic keywords.',
+                'description' => 'A quality indicator measuring session duration driven by organic landing pages.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
-                'default_granularity' => 'query',
-                'status' => 'unavailable',
+                'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -664,16 +663,15 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
-            'toxic_keyword_detector' => [
-                'name' => 'Toxic Keyword Detector',
-                'description' => 'Identifies specific search terms with high propensity for bouncing.',
+            'toxic_page_detector' => [
+                'name' => 'Toxic Page Detector',
+                'description' => 'Identifies specific landing pages with high propensity for bouncing.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'alerts', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
-                'default_granularity' => 'query',
-                'status' => 'unavailable',
+                'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
