@@ -260,6 +260,12 @@ trait LoadsDashboardViewData
             if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
                 $resolved['metrics'] = [];
             }
+            // First pad the array with empty strings up to the number of variables
+            for ($i = 0; $i < count($variables); $i++) {
+                if (!isset($resolved['metrics'][$i])) {
+                    $resolved['metrics'][$i] = '';
+                }
+            }
             foreach ($variables as $vConfig) {
                 $idx = $vConfig['index'];
                 $hasMetricInControl = !empty($resolved['metrics'][$idx]);

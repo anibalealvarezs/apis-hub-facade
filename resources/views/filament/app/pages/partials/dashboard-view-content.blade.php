@@ -558,6 +558,9 @@
                         this.sourceType = el.dataset.sourceType || '';
                         this.variables = JSON.parse(el.dataset.variables || '{}');
                         if (!this.controls.metrics) this.controls.metrics = [];
+                        if (!Array.isArray(this.controls.metrics)) {
+                            this.controls.metrics = Object.values(this.controls.metrics);
+                        }
                         if (!this.controls.series_assets) this.controls.series_assets = {};
                         const varCount = Object.keys(this.variables).length;
                         while (this.controls.metrics.length < varCount) {
