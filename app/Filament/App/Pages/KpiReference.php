@@ -62,6 +62,7 @@ class KpiReference extends Page
                 'interpretation' => $guidance['interpretation'],
                 'categories' => array_values(array_unique($categories)),
                 'scope' => $kpi['scope'] ?? '',
+                'status' => $kpi['status'] ?? 'active',
             ];
         }
         return $result;

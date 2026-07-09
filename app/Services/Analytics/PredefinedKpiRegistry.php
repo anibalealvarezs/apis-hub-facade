@@ -27,7 +27,7 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'metric' => 'spend',
                         ],
                         'right' => [
                             'type' => 'operator',
@@ -35,16 +35,16 @@ class PredefinedKpiRegistry
                             'left' => [
                                 'type' => 'metric',
                                 'channel' => '__CLICKABLE_CHANNEL_1__',
-                                'metric' => 'clicks'
+                                'metric' => 'clicks',
                             ],
                             'right' => [
                                 'type' => 'metric',
                                 'channel' => '__CLICKABLE_CHANNEL_2__',
-                                'metric' => 'clicks'
-                            ]
-                        ]
-                    ]
-                ]
+                                'metric' => 'clicks',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'spend_elasticity' => [
                 'name' => 'Spend Scalability / Elasticity',
@@ -61,15 +61,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__CLICKABLE_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'weekly_organic_seasonality' => [
                 'name' => 'Weekly Organic Seasonality',
@@ -83,9 +83,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'paid_to_organic_halo_effect' => [
                 'name' => 'Paid to Organic Halo Effect',
@@ -102,15 +102,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
+                            'metric' => 'reach',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'cpc_momentum' => [
                 'name' => 'CPC Momentum (MACD)',
@@ -127,15 +127,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'metric' => 'spend',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__CLICKABLE_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'impression_anomaly_alert' => [
                 'name' => 'Impression Anomaly Alert',
@@ -149,9 +149,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                        'metric' => 'impressions'
-                    ]
-                ]
+                        'metric' => 'impressions',
+                    ],
+                ],
             ],
             'seo_click_momentum' => [
                 'name' => 'SEO Click Momentum',
@@ -165,9 +165,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SEO_CHANNEL_1__',
-                        'metric' => 'clicks'
-                    ]
-                ]
+                        'metric' => 'clicks',
+                    ],
+                ],
             ],
             'reach_elasticity' => [
                 'name' => 'Reach Scalability / Elasticity',
@@ -184,15 +184,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                            'metric' => 'impressions'
+                            'metric' => 'impressions',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'content_half_life' => [
                 'name' => 'Content Half-Life',
@@ -206,9 +206,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'paid_organic_cannibalization' => [
                 'name' => 'Paid to Organic Cannibalization',
@@ -225,15 +225,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
+                            'metric' => 'reach',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'ctr_efficiency' => [
                 'name' => 'CTR Efficiency (SEO)',
@@ -250,15 +250,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'impressions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
             ],
             'revenue_elasticity' => [
                 'name' => 'Revenue Elasticity (ROAS)',
@@ -275,15 +275,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'cpa_trend' => [
                 'name' => 'CPA Trend (Cost per Acquisition)',
@@ -300,15 +300,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'metric' => 'spend',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
-                            'metric' => 'conversions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'conversions',
+                        ],
+                    ],
+                ],
             ],
             'seo_to_revenue_influence' => [
                 'name' => 'SEO to Revenue Influence',
@@ -325,15 +325,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'result_efficiency' => [
                 'name' => 'Result Efficiency',
@@ -350,15 +350,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'results'
+                            'metric' => 'results',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'result_rate_momentum' => [
                 'name' => 'Result Rate Momentum',
@@ -375,15 +375,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'results'
+                            'metric' => 'results',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                            'metric' => 'impressions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
             ],
             'organic_engagement_efficiency' => [
                 'name' => 'Organic Engagement Efficiency',
@@ -393,6 +393,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'post',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -400,15 +401,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'engaged_users'
+                            'metric' => 'engaged_users',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
-                        ]
-                    ]
-                ]
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
             ],
             'roas_momentum' => [
                 'name' => 'ROAS Momentum',
@@ -422,9 +423,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'purchase_roas'
-                    ]
-                ]
+                        'metric' => 'purchase_roas',
+                    ],
+                ],
             ],
             'cpc_anomaly' => [
                 'name' => 'CPC Anomaly Alert',
@@ -438,9 +439,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'cpc'
-                    ]
-                ]
+                        'metric' => 'cpc',
+                    ],
+                ],
             ],
             'search_position_efficiency' => [
                 'name' => 'Search Position Efficiency',
@@ -450,6 +451,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -457,15 +459,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'position'
-                        ]
-                    ]
-                ]
+                            'metric' => 'position',
+                        ],
+                    ],
+                ],
             ],
             'seo_structural_inertia' => [
                 'name' => 'SEO Structural Inertia (Linear + SMA)',
@@ -479,9 +481,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SEO_CHANNEL_1__',
-                        'metric' => 'impressions'
-                    ]
-                ]
+                        'metric' => 'impressions',
+                    ],
+                ],
             ],
             'fb_algorithmic_inertia' => [
                 'name' => 'Algorithmic Basal Inertia (Holt-Winters)',
@@ -495,9 +497,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'ig_viral_momentum' => [
                 'name' => 'Viral Momentum (Logarithmic Trend)',
@@ -511,9 +513,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'total_interactions'
-                    ]
-                ]
+                        'metric' => 'total_interactions',
+                    ],
+                ],
             ],
             'paid_learning_inertia' => [
                 'name' => 'Learning Phase Inertia (EMA Crossover)',
@@ -527,9 +529,9 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'cost_per_result'
-                    ]
-                ]
+                        'metric' => 'cost_per_result',
+                    ],
+                ],
             ],
             'seo_intent_match' => [
                 'name' => 'SEO Intent Match (Bounce Rate vs Clicks)',
@@ -539,6 +541,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -546,15 +549,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
-                            'metric' => 'bounce_rate'
+                            'metric' => 'bounce_rate',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'organic_conversion_elasticity' => [
                 'name' => 'Organic Conversion Elasticity',
@@ -571,15 +574,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
-                            'metric' => 'conversions'
+                            'metric' => 'conversions',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'seo_engagement_quality' => [
                 'name' => 'SEO Engagement Quality',
@@ -589,6 +592,8 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'query',
+                'status' => 'unavailable',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -596,15 +601,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
-                            'metric' => 'average_session_duration'
+                            'metric' => 'average_session_duration',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'toxic_keyword_detector' => [
                 'name' => 'Toxic Keyword Detector',
@@ -614,6 +619,8 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'query',
+                'status' => 'unavailable',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -621,15 +628,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
-                            'metric' => 'bounce_rate'
+                            'metric' => 'bounce_rate',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'paid_acquisition_saturation' => [
                 'name' => 'Paid Acquisition Saturation',
@@ -639,6 +646,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'traffic_tracked'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'country',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -646,15 +654,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
-                            'metric' => 'new_users'
+                            'metric' => 'new_users',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'click_to_session_drop_off' => [
                 'name' => 'Click-to-Session Drop-off',
@@ -664,6 +672,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['paid_media', 'traffic_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'device',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -671,15 +680,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
-                            'metric' => 'sessions'
+                            'metric' => 'sessions',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__PAID_MEDIA_CHANNEL_1__',
-                            'metric' => 'link_clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'link_clicks',
+                        ],
+                    ],
+                ],
             ],
             'social_viral_to_revenue_pipeline' => [
                 'name' => 'Social Viral to Revenue Pipeline',
@@ -696,15 +705,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
-                        ]
-                    ]
-                ]
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
             ],
             'social_traffic_stickiness' => [
                 'name' => 'Social Traffic Stickiness',
@@ -721,15 +730,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
-                            'metric' => 'average_session_duration'
+                            'metric' => 'average_session_duration',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
-                        ]
-                    ]
-                ]
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
             ],
             'brand_search_halo_effect' => [
                 'name' => 'Brand Search Halo Effect',
@@ -746,7 +755,7 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'impressions'
+                            'metric' => 'impressions',
                         ],
                         'right' => [
                             'type' => 'operator',
@@ -754,16 +763,16 @@ class PredefinedKpiRegistry
                             'left' => [
                                 'type' => 'metric',
                                 'channel' => '__SPENDABLE_CHANNEL_1__',
-                                'metric' => 'spend'
+                                'metric' => 'spend',
                             ],
                             'right' => [
                                 'type' => 'metric',
                                 'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                                'metric' => 'reach'
-                            ]
-                        ]
-                    ]
-                ]
+                                'metric' => 'reach',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'omnichannel_revenue_attribution' => [
                 'name' => 'Omnichannel Revenue Attribution',
@@ -780,7 +789,7 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'operator',
@@ -788,7 +797,7 @@ class PredefinedKpiRegistry
                             'left' => [
                                 'type' => 'metric',
                                 'channel' => '__SEO_CHANNEL_1__',
-                                'metric' => 'clicks'
+                                'metric' => 'clicks',
                             ],
                             'right' => [
                                 'type' => 'operator',
@@ -796,17 +805,17 @@ class PredefinedKpiRegistry
                                 'left' => [
                                     'type' => 'metric',
                                     'channel' => '__SPENDABLE_CHANNEL_1__',
-                                    'metric' => 'spend'
+                                    'metric' => 'spend',
                                 ],
                                 'right' => [
                                     'type' => 'metric',
                                     'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                                    'metric' => 'reach'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
+                                    'metric' => 'reach',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'traffic_to_conversion_inertia' => [
                 'name' => 'Traffic to Conversion Inertia',
@@ -823,15 +832,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
-                            'metric' => 'conversions'
+                            'metric' => 'conversions',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
-                            'metric' => 'sessions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'sessions',
+                        ],
+                    ],
+                ],
             ],
         ];
     }
@@ -849,7 +858,7 @@ class PredefinedKpiRegistry
         // Resolve all unique tags available across the user's active channels
         $availableTags = [];
         $registryTags = ChannelCapabilityRegistry::getTags();
-        
+
         foreach ($activeChannels as $channel) {
             if (isset($registryTags[$channel])) {
                 $availableTags = array_merge($availableTags, $registryTags[$channel]);
@@ -859,6 +868,10 @@ class PredefinedKpiRegistry
 
         // Filter KPIs where all required_tags are present in availableTags
         return collect(self::getPredefinedKpis())->filter(function ($kpi) use ($availableTags) {
+            if (($kpi['status'] ?? 'active') === 'unavailable') {
+                return false;
+            }
+
             $requiredTags = $kpi['required_tags'] ?? [];
             return count(array_intersect($requiredTags, $availableTags)) === count($requiredTags);
         })->toArray();

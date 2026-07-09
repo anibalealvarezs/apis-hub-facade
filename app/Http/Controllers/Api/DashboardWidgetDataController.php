@@ -390,8 +390,8 @@ class DashboardWidgetDataController extends Controller
             [
                 'start_date' => $controls['date_start'] ?? null,
                 'end_date' => $controls['date_end'] ?? null,
-                'granularity' => $controls['granularity'] ?? 'daily',
-                'zero_handling' => $controls['zero_handling'] ?? 'remove',
+                'granularity' => $controls['granularity'] ?? null,
+                'zero_handling' => $controls['zero_handling'] ?? null,
             ]
         );
 

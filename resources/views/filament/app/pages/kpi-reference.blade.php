@@ -69,9 +69,17 @@
                     </x-slot>
 
                     <x-slot name="description">
-                        <x-filament::badge color="primary">
-                            <span x-text="kpi.type_label"></span>
-                        </x-filament::badge>
+                        <div class="flex items-center gap-2 mt-1">
+                            <x-filament::badge color="primary">
+                                <span x-text="kpi.type_label"></span>
+                            </x-filament::badge>
+                            
+                            <template x-if="kpi.status === 'unavailable'">
+                                <x-filament::badge color="danger" icon="heroicon-o-exclamation-triangle">
+                                    {{ __('Not Available') }}
+                                </x-filament::badge>
+                            </template>
+                        </div>
                     </x-slot>
 
                     <div class="space-y-5">

@@ -569,6 +569,9 @@ class KpiFormBuilder
                                                     $set('description', $kpi['description'] ?? '');
                                                 }
                                                 $set('calculation_type', $kpi['calculation_type']);
+                                                if (!empty($kpi['default_granularity'])) {
+                                                    $set('granularity', $kpi['default_granularity']);
+                                                }
 
                                                 $activeChannels = array_keys(self::getActiveChannels());
                                                 $registryTags = ChannelCapabilityRegistry::getTags();
@@ -857,6 +860,14 @@ class KpiFormBuilder
                                                 'daily' => __('Daily'),
                                                 'weekly' => __('Weekly'),
                                                 'monthly' => __('Monthly'),
+                                                'query' => __('Query / Keyword'),
+                                                'page' => __('Page / URL'),
+                                                'campaign' => __('Campaign'),
+                                                'adset' => __('Ad Set / Ad Group'),
+                                                'ad' => __('Ad / Creative'),
+                                                'post' => __('Post / Media'),
+                                                'country' => __('Country / Geo'),
+                                                'device' => __('Device'),
                                 ])
                                 ->default('daily'),
                             Select::make('zero_handling')
