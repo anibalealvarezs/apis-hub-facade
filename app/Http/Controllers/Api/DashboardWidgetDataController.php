@@ -263,7 +263,7 @@ class DashboardWidgetDataController extends Controller
                             'type' => 'line',
                             'label' => 'Trend Line',
                             'data' => $trendLineData,
-                            'borderColor' => '#ef4444',
+                            'borderColor' => '#3b82f6',
                             'borderWidth' => 2,
                             'fill' => false,
                             'pointRadius' => 0
