@@ -205,13 +205,16 @@ class DashboardBuilder extends Page
         foreach ($kpis as $kpi) {
             $templateKey = $kpi->filters['_ui_state']['template_key'] ?? null;
             $compatible = [];
+            $optimal = [];
             
             if ($templateKey && isset($predefined[$templateKey]['compatible_widgets'])) {
                 $compatible = $predefined[$templateKey]['compatible_widgets'];
+                $optimal = $predefined[$templateKey]['optimal_widgets'] ?? [];
             } else {
                 foreach ($predefined as $def) {
                     if (($def['calculation_type'] ?? '') === $kpi->calculation_type) {
                         $compatible = $def['compatible_widgets'] ?? [];
+                        $optimal = $def['optimal_widgets'] ?? [];
                         break;
                     }
                 }
@@ -219,7 +222,8 @@ class DashboardBuilder extends Page
             
             $result[$kpi->id] = [
                 'name' => $kpi->name,
-                'compatible_widgets' => $compatible
+                'compatible_widgets' => $compatible,
+                'optimal_widgets' => $optimal
             ];
         }
         
