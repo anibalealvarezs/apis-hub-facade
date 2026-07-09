@@ -42,6 +42,11 @@ class KpiExecuteActionBuilder
                             'daily' => 'Daily',
                             'weekly' => 'Weekly',
                             'monthly' => 'Monthly',
+                            'query' => 'Query',
+                            'page' => 'Page',
+                            'country' => 'Country',
+                            'device' => 'Device',
+                            'post' => 'Post',
                         ])
                         ->default('daily');
                 }

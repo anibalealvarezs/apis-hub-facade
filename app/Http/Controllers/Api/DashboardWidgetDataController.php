@@ -316,7 +316,12 @@ class DashboardWidgetDataController extends Controller
 
         if (!empty($controls['date_start'])) $controlsToMerge['start_date'] = $controls['date_start'];
         if (!empty($controls['date_end'])) $controlsToMerge['end_date'] = $controls['date_end'];
-        if (!empty($controls['granularity'])) $controlsToMerge['granularity'] = $controls['granularity'];
+        if (!empty($controls['granularity'])) {
+            $fixedGranularity = $uiState['granularity'] ?? null;
+            if (!$fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])) {
+                $controlsToMerge['granularity'] = $controls['granularity'];
+            }
+        }
 
         // If independent variables are present and missing channels/assets, override them with controls
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {

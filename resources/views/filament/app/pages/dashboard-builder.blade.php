@@ -403,14 +403,30 @@
                                     </svg>
                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Granularity</span>
                                 </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="widgetControlsForm.granularity_inherit" class="sr-only peer"/>
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.granularity_inherit ? 'Inherit' : 'Custom'"></span>
+                                </label>
                             </div>
                             <div class="p-6">
-                                <select x-model="widgetControlsForm.granularity"
-                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
+                                <template x-if="widgetControlsForm.granularity_inherit">
+                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                         x-text="'Inherited: ' + (inheritedControlLabel('granularity', dashboardControls.granularity) || 'Default')"></div>
+                                </template>
+                                <template x-if="!widgetControlsForm.granularity_inherit">
+                                    <select x-model="widgetControlsForm.granularity"
+                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="query">Query</option>
+                                        <option value="page">Page</option>
+                                        <option value="country">Country</option>
+                                        <option value="device">Device</option>
+                                        <option value="post">Post</option>
+                                    </select>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -1095,7 +1111,7 @@
                     inheritedControlLabel(key, value) {
                         const labels = {
                             zero_handling: {remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros'},
-                            granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly'},
+                            granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', query: 'Query', page: 'Page', country: 'Country', device: 'Device', post: 'Post'},
                         };
                         return (labels[key] && labels[key][value]) || value || '—';
                     },
@@ -1174,6 +1190,8 @@
                             date_end: wc.date_end || '',
                             zero_inherit: !hasZero,
                             zero_handling: wc.zero_handling || 'remove',
+                            granularity_inherit: wc.granularity === undefined,
+                            granularity: wc.granularity || 'daily',
                             channel: wc.channel || '',
                             assets: wc.assets || [],
                             metrics: wc.metrics || [],
@@ -1446,7 +1464,9 @@
                             payload.zero_handling = c.zero_handling;
                         }
 
-                        payload.granularity = c.granularity;
+                        if (!c.granularity_inherit) {
+                            payload.granularity = c.granularity;
+                        }
 
                         this.widgetControlsError = '';
                         if (this.widgetControlsTarget.source_type !== 'kpi') {
