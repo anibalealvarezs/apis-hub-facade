@@ -563,15 +563,6 @@
                         while (this.controls.metrics.length < varCount) {
                             this.controls.metrics.push('');
                         }
-                        for (const key in this.variables) {
-                            const vConfig = this.variables[key];
-                            const idx = vConfig.index;
-                            if (!this.controls.metrics[idx] && (!vConfig.selected_metric || this.sourceType !== 'kpi')) {
-                                if (vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
-                                    this.controls.metrics[idx] = Object.keys(vConfig.metrics)[0];
-                                }
-                            }
-                        }
                         if (this.controls.assets && this.controls.assets.length > 0) {
                             const firstKey = this.sourceType === 'kpi' ? 'dependent' : '0';
                             if (!this.controls.series_assets[firstKey]) {
@@ -590,11 +581,6 @@
                         }
                         for (const key in this.variables) {
                             if (!this.searchQueries[key]) this.searchQueries[key] = '';
-                        }
-                        
-                        const contentEl = el.querySelector('.widget-content');
-                        if (contentEl) {
-                            contentEl.setAttribute('data-raw-controls', JSON.stringify(this.controls));
                         }
                     },
 

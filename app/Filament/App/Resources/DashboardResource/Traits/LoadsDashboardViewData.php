@@ -257,6 +257,22 @@ trait LoadsDashboardViewData
                 }
             }
 
+            if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
+                $resolved['metrics'] = [];
+            }
+            foreach ($variables as $vConfig) {
+                $idx = $vConfig['index'];
+                $hasMetricInControl = !empty($resolved['metrics'][$idx]);
+                $hasMetricInKpi = !empty($vConfig['selected_metric']) && $widgetArray['source_type'] === 'kpi';
+                
+                if (!$hasMetricInControl && !$hasMetricInKpi) {
+                    if (!empty($vConfig['metrics'])) {
+                        $resolved['metrics'][$idx] = array_key_first($vConfig['metrics']);
+                    }
+                }
+            }
+            ksort($resolved['metrics']);
+
             $widgetArray['variables'] = (object) $variables;
             // Keep flat metric_options for backward compatibility
             $widgetArray['metric_options'] = isset($depMetrics) ? (object) $depMetrics : new stdClass();
