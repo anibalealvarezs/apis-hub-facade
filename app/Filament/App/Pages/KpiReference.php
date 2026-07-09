@@ -211,11 +211,17 @@ class KpiReference extends Page
                 'use_case' => __('You launch a big Facebook ad campaign and notice your organic page reach drops during the same period. Is this a coincidence or are your ads actually stealing reach that your organic posts would have gotten? This KPI tells you if your paid and organic channels are eating each other\'s lunch.'),
                 'interpretation' => __('A positive result means cannibalization is happening — your ads are reducing your organic reach. Consider separating paid and organic audiences, or pausing paid campaigns during important organic pushes. A negative result means no conflict; your channels coexist independently.'),
             ],
-            'ctr_efficiency' => [
-                'type_label' => __('Search Presence Quality'),
-                'explanation' => __('Analyzes how effectively your search impressions convert into clicks. As you rank for more keywords (especially lower-volume, long-tail ones), your average CTR naturally changes. This KPI helps you understand if your search snippets and rankings are becoming more or less compelling.'),
-                'use_case' => __('Your Google Search Console shows you\'re getting more impressions than ever, but clicks aren\'t keeping pace. Are you ranking for irrelevant keywords? Did your snippet titles lose their appeal? This KPI isolates the click-through efficiency so you can diagnose if it\'s a ranking issue or a messaging issue.'),
-                'interpretation' => __('A rising value means your search snippets are becoming more effective — better titles, descriptions, or rich results are convincing users to click. A falling value means something is off: maybe you\'re ranking for impressions without clicks (position too low), or your snippets have become less compelling. Investigate which queries are dragging CTR down.'),
+            'ctr_efficiency_page' => [
+                'type_label' => __('Search Presence Quality (Page)'),
+                'explanation' => __('Analyzes how effectively your search impressions convert into clicks by landing page. As you rank for more pages, your average CTR naturally changes. This KPI helps you understand if your search snippets and rankings are becoming more or less compelling per page.'),
+                'use_case' => __('Your Google Search Console shows you\'re getting more impressions than ever, but clicks aren\'t keeping pace. Which landing pages get the most clicks for their impressions? This KPI isolates the click-through efficiency by page so you can diagnose if it\'s a ranking issue or a messaging issue on specific URLs.'),
+                'interpretation' => __('A rising value means your search snippets are becoming more effective for that page — better titles, descriptions, or rich results are convincing users to click. A falling value means something is off: maybe you\'re ranking for impressions without clicks, or your snippets have become less compelling. Investigate which pages are dragging CTR down.'),
+            ],
+            'ctr_efficiency_query' => [
+                'type_label' => __('Search Presence Quality (Keyword)'),
+                'explanation' => __('Analyzes how effectively your search impressions convert into clicks by search term. As you rank for more keywords (especially lower-volume, long-tail ones), your average CTR naturally changes. This KPI helps you understand which specific keywords are driving clicks vs empty impressions.'),
+                'use_case' => __('Your Google Search Console shows you\'re getting more impressions than ever, but clicks aren\'t keeping pace. Are you ranking for irrelevant keywords? This KPI isolates the click-through efficiency by keyword so you can double down on high-intent terms or ignore irrelevant ones.'),
+                'interpretation' => __('A rising value means a specific keyword snippet is highly effective. A falling value means you rank for the keyword but no one clicks it (mismatched intent, or low position). Investigate which queries have high impressions but terrible click-through rates.'),
             ],
             'revenue_elasticity' => [
                 'type_label' => __('Revenue Growth Predictor'),
@@ -265,11 +271,17 @@ class KpiReference extends Page
                 'use_case' => __('Your CPC is normally around $0.50–$0.70, but it jumped to $1.20 today. Is this a temporary auction fluctuation or the start of a lasting cost increase? This KPI tells you if the spike is statistically anomalous and worth investigating immediately.'),
                 'interpretation' => __('When an anomaly is detected, investigate immediately: Did a competitor enter the auction? Did your ad relevance score drop? Was there a targeting change? CPC spikes are often early indicators of broader auction dynamics shifting. A downward anomaly (CPC dropping unusually low) can also be worth investigating — it might mean your ads are working better, or it could mean you\'ve accidentally narrowed your targeting too much.'),
             ],
-            'search_position_efficiency' => [
-                'type_label' => __('Snippet Appeal Score'),
-                'explanation' => __('Measures how many clicks you generate per unit of search position. A page ranking #5 that gets as many clicks as a page ranking #2 has higher "snippet appeal" — its title, description, and rich results are more compelling. This KPI tracks that ratio over time.'),
-                'use_case' => __('You\'ve been optimizing your meta titles and descriptions, but rankings haven\'t changed much. Are the changes working? This KPI tells you if your click-through efficiency is improving even when positions stay the same — proving that your snippet optimization is paying off.'),
-                'interpretation' => __('A rising trend means your search snippets are becoming more compelling — better titles, descriptions, or structured data are convincing users to click regardless of ranking position. A falling trend means something is off: your snippets might be losing relevance, or you\'re ranking for queries with lower click intent. Compare this with CTR Efficiency to distinguish between ranking issues and snippet quality issues.'),
+            'search_position_efficiency_page' => [
+                'type_label' => __('Snippet Appeal Score (Page)'),
+                'explanation' => __('Measures how many clicks you generate per unit of search position by landing page. A page ranking #5 that gets as many clicks as a page ranking #2 has higher "snippet appeal" — its title, description, and rich results are more compelling.'),
+                'use_case' => __('You\'ve been optimizing your meta titles and descriptions across various blog posts, but rankings haven\'t changed much. Are the changes working? This KPI tells you if a specific page\'s click-through efficiency is improving even when positions stay the same.'),
+                'interpretation' => __('A rising trend means your page\'s search snippet is becoming more compelling. A falling trend means the page might be losing relevance. Compare this with CTR Efficiency to distinguish between ranking issues and snippet quality issues.'),
+            ],
+            'search_position_efficiency_query' => [
+                'type_label' => __('Snippet Appeal Score (Keyword)'),
+                'explanation' => __('Measures how many clicks you generate per unit of search position by keyword. A keyword ranking #5 that gets as many clicks as a keyword ranking #2 indicates much higher intent for that specific query.'),
+                'use_case' => __('A single page ranks for 50 different keywords. Which of those keywords actually pull their weight? This KPI reveals that you might be getting a 15% CTR on a highly relevant term and 0.5% on an informational term, even if they have similar rankings.'),
+                'interpretation' => __('High values mean a keyword overperforms its rank (focus on pushing it to #1). Low values mean the keyword underperforms its rank (potentially the wrong intent).'),
             ],
             'seo_structural_inertia' => [
                 'type_label' => __('Growth Trend Baseline'),

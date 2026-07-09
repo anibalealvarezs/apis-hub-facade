@@ -235,14 +235,41 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
-            'ctr_efficiency' => [
-                'name' => 'CTR Efficiency (SEO)',
-                'description' => 'Is your organic search presence becoming more or less effective at turning impressions into clicks?',
-                'scope' => 'channel',
-                'categories' => ['clicks', 'impressions', 'seo', 'scope_channel', 'org_mkt_organic', 'source_src'],
+            'ctr_efficiency_page' => [
+                'name' => 'CTR Efficiency (By Page)',
+                'description' => 'Evaluates by landing page: Is your organic search presence becoming more or less effective at turning impressions into clicks?',
+                'scope' => 'asset',
+                'categories' => ['clicks', 'impressions', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'clickable', 'impressionable'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'page',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
+            ],
+            'ctr_efficiency_query' => [
+                'name' => 'CTR Efficiency (By Keyword)',
+                'description' => 'Evaluates by search term: Is your organic search presence becoming more or less effective at turning impressions into clicks?',
+                'scope' => 'asset',
+                'categories' => ['clicks', 'impressions', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'clickable', 'impressionable'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'query',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -443,15 +470,41 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
-            'search_position_efficiency' => [
-                'name' => 'Search Position Efficiency',
-                'description' => 'How many clicks do you get per unit of search position? Higher means more compelling snippets. A rising trend indicates your search listings are becoming more clickable.',
+            'search_position_efficiency_page' => [
+                'name' => 'Search Position Efficiency (By Page)',
+                'description' => 'Evaluates by landing page: How many clicks do you get per unit of search position? Higher means more compelling snippets.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'default_granularity' => 'page',
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'position',
+                        ],
+                    ],
+                ],
+            ],
+            'search_position_efficiency_query' => [
+                'name' => 'Search Position Efficiency (By Keyword)',
+                'description' => 'Evaluates by search term: How many clicks do you get per unit of search position? Higher means more compelling snippets.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'default_granularity' => 'query',
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
