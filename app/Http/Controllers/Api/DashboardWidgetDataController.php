@@ -393,10 +393,10 @@ class DashboardWidgetDataController extends Controller
             $kpi->calculation_type,
             $mergedState,
             [
-                'start_date' => $controls['date_start'] ?? null,
-                'end_date' => $controls['date_end'] ?? null,
-                'granularity' => $controls['granularity'] ?? null,
-                'zero_handling' => $controls['zero_handling'] ?? null,
+                'start_date' => !empty($controls['date_start']) ? $controls['date_start'] : null,
+                'end_date' => !empty($controls['date_end']) ? $controls['date_end'] : null,
+                'granularity' => !empty($controls['granularity']) ? $controls['granularity'] : null,
+                'zero_handling' => !empty($controls['zero_handling']) ? $controls['zero_handling'] : null,
             ]
         );
 
