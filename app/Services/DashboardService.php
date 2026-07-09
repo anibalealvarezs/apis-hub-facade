@@ -54,6 +54,8 @@ class DashboardService
     public function addWidget(Dashboard $dashboard, array $data): DashboardWidget
     {
         $data['dashboard_id'] = $dashboard->id;
+        if (!isset($data['grid_x'])) $data['grid_x'] = 0;
+        if (!isset($data['grid_y'])) $data['grid_y'] = 0;
         return DashboardWidget::create($data);
     }
 
