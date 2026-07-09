@@ -808,7 +808,12 @@
                                             <div class="w-12 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center" x-html="getWidgetSvg(type)">
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <span class="block text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="label"></span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="block text-sm font-semibold text-gray-900 dark:text-white truncate" x-text="label"></span>
+                                                    <template x-if="optimalWidgetTypes.includes(type)">
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">Recommended</span>
+                                                    </template>
+                                                </div>
                                                 <span class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;" x-text="getWidgetDescription(type)"></span>
                                             </div>
                                         </button>
@@ -998,6 +1003,14 @@
                     },
 
                     // ─── Computed ──
+                    get optimalWidgetTypes() {
+                        if (this.addWidgetForm.source_type === 'kpi' && this.addWidgetForm.custom_kpi_id) {
+                            const kpiData = this.kpis[this.addWidgetForm.custom_kpi_id];
+                            return kpiData ? (kpiData.optimal_widgets || []) : [];
+                        }
+                        return [];
+                    },
+
                     get availableWidgetTypes() {
                         if (!this.addWidgetForm.source_type) return {};
                         

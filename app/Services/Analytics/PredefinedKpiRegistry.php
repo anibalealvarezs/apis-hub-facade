@@ -20,6 +20,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -54,6 +55,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -79,6 +81,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social'],
                 'calculation_type' => 'calculate_autocorrelation',
                 'compatible_widgets' => ['bar_chart'],
+                'optimal_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -95,6 +98,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'organic_social'],
                 'calculation_type' => 'calculate_granger',
                 'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -120,6 +124,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_macd',
                 'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -145,6 +150,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['impressionable'],
                 'calculation_type' => 'calculate_anomaly',
                 'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
+                'optimal_widgets' => ['anomaly_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -161,6 +167,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'clickable'],
                 'calculation_type' => 'calculate_macd',
                 'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -177,6 +184,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -202,6 +210,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_autocorrelation',
                 'compatible_widgets' => ['bar_chart'],
+                'optimal_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -218,6 +227,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'organic_social', 'impressionable'],
                 'calculation_type' => 'calculate_granger',
                 'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -243,6 +253,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'clickable', 'impressionable'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
@@ -269,6 +280,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'clickable', 'impressionable'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'query',
                 'template' => [
                     'ast' => [
@@ -295,6 +307,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'revenue_tracked'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -320,6 +333,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'calculation_type' => 'calculate_macd',
                 'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -345,6 +359,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'revenue_tracked'],
                 'calculation_type' => 'calculate_granger',
                 'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -370,6 +385,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -395,6 +411,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_macd',
                 'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -420,6 +437,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'post',
                 'template' => [
                     'ast' => [
@@ -446,6 +464,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_macd',
                 'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -462,6 +481,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_anomaly',
                 'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
+                'optimal_widgets' => ['anomaly_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -478,6 +498,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
@@ -504,6 +525,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'query',
                 'template' => [
                     'ast' => [
@@ -530,6 +552,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'impressionable'],
                 'calculation_type' => 'calculate_trend_linear',
                 'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -546,6 +569,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_holt_winters',
                 'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -562,6 +586,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_logarithmic',
                 'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -578,6 +603,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_trend_ema',
                 'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -594,6 +620,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
@@ -620,6 +647,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'conversion_tracked'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -645,6 +673,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
@@ -671,6 +700,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
                 'template' => [
                     'ast' => [
@@ -697,6 +727,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['spendable', 'traffic_tracked'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'default_granularity' => 'country',
                 'template' => [
                     'ast' => [
@@ -723,6 +754,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['paid_media', 'traffic_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'device',
                 'template' => [
                     'ast' => [
@@ -749,6 +781,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'revenue_tracked'],
                 'calculation_type' => 'calculate_granger',
                 'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -774,6 +807,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['organic_social', 'behavior_tracked'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -799,6 +833,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['seo', 'spendable', 'organic_social'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -833,6 +868,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['revenue_tracked', 'seo', 'spendable', 'organic_social'],
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -876,6 +912,7 @@ class PredefinedKpiRegistry
                 'required_tags' => ['traffic_tracked', 'conversion_tracked'],
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
