@@ -549,10 +549,28 @@
                                             </div>
                                             <div class="flex flex-col items-end gap-1">
                                                 <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[widgetKpiConfig.dependent_channel]"></span>
-                                                <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
+                                                <template x-if="widgetKpiConfig.dependent_metric">
+                                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
+                                                </template>
+                                                <template x-if="!widgetKpiConfig.dependent_metric">
+                                                    <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">Dynamic Metric</span>
+                                                </template>
                                             </div>
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            
+                                            <template x-if="!widgetKpiConfig.dependent_metric">
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Metric</label>
+                                                    <select x-model="widgetControlsForm.metrics[0]"
+                                                            class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                        <option value="">Select a metric...</option>
+                                                        <template x-for="(label, key) in allChannelMetrics[widgetKpiConfig.dependent_channel] || {}" :key="key">
+                                                            <option :value="key" x-text="label"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </template>
                                             
                                             <template x-if="!widgetKpiConfig.dependent_asset_filter">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
@@ -625,10 +643,28 @@
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1">
                                                     <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="channels[varCfg.independent_channel]"></span>
-                                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
+                                                    <template x-if="varCfg.independent_metric">
+                                                        <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
+                                                    </template>
+                                                    <template x-if="!varCfg.independent_metric">
+                                                        <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">Dynamic Metric</span>
+                                                    </template>
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                                
+                                                <template x-if="!varCfg.independent_metric">
+                                                    <div>
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Metric</label>
+                                                        <select x-model="widgetControlsForm.metrics[idx + 1]"
+                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                            <option value="">Select a metric...</option>
+                                                            <template x-for="(label, key) in allChannelMetrics[varCfg.independent_channel] || {}" :key="key">
+                                                                <option :value="key" x-text="label"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
                                                 
                                                 <template x-if="!varCfg.independent_asset_filter">
                                                 <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
