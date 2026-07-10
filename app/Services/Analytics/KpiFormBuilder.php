@@ -572,6 +572,15 @@ class KpiFormBuilder
                                                 if (!empty($kpi['default_granularity'])) {
                                                     $set('granularity', $kpi['default_granularity']);
                                                 }
+                                                if (!empty($kpi['default_zero_handling'])) {
+                                                    $set('zero_handling', $kpi['default_zero_handling']);
+                                                }
+                                                if (!empty($kpi['default_edge_case_handling']['weighted'])) {
+                                                    $set('edge_case_weighted', $kpi['default_edge_case_handling']['weighted']);
+                                                }
+                                                if (!empty($kpi['default_edge_case_handling']['grouping'])) {
+                                                    $set('edge_case_grouping', $kpi['default_edge_case_handling']['grouping']);
+                                                }
 
                                                 $activeChannels = array_keys(self::getActiveChannels());
                                                 $registryTags = ChannelCapabilityRegistry::getTags();

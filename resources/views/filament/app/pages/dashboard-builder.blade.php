@@ -429,7 +429,53 @@
                                 </template>
                             </div>
                         </div>
-                    </div>
+                        </div>
+
+                            {{-- Card: Edge Case Handling (KPI widgets only) --}}
+                            <template x-if="widgetControlsTarget.source_type === 'kpi'">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                                            </svg>
+                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Edge Cases</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="widgetControlsForm.edge_case_inherit" class="sr-only peer"/>
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                            <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.edge_case_inherit ? 'Inherit' : 'Custom'"></span>
+                                        </label>
+                                    </div>
+                                    <div class="p-6 space-y-4">
+                                        <template x-if="widgetControlsForm.edge_case_inherit">
+                                            <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                <span x-text="`WLS: ${widgetControlsForm.edge_case_weighted ? 'On' : 'Off'}, Grouping: ${widgetControlsForm.edge_case_grouping === 'none' ? 'No grouping' : widgetControlsForm.edge_case_grouping === 'histogram' ? 'Auto histogram-elbow' : 'Bottom percentile'}`"></span>
+                                                <span class="block text-xs text-gray-400 mt-1">Inherited from KPI configuration</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!widgetControlsForm.edge_case_inherit">
+                                            <div class="space-y-4">
+                                                <label class="flex items-center gap-3 cursor-pointer">
+                                                    <input type="checkbox" x-model="widgetControlsForm.edge_case_weighted"
+                                                           class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
+                                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Weighted regression (WLS)</span>
+                                                </label>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.</p>
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group low-frequency values</label>
+                                                    <select x-model="widgetControlsForm.edge_case_grouping"
+                                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                        <option value="none">No grouping</option>
+                                                        <option value="histogram">Auto histogram-elbow</option>
+                                                        <option value="percentile">Bottom percentile</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
 
                     {{-- Right Column: Variables Configuration --}}
                     <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
@@ -1246,6 +1292,9 @@
                             metrics: wc.metrics || [],
                             series_assets: wc.series_assets || {},
                             series_asset_groups: wc.series_asset_groups || {},
+                            edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
+                            edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : true,
+                            edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : 'none',
                             raw_series: [],
                         };
 
@@ -1286,6 +1335,10 @@
                         if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id) {
                             @this.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
                                 this.widgetKpiConfig = config || {};
+                                if (this.widgetControlsForm.edge_case_inherit) {
+                                    this.widgetControlsForm.edge_case_weighted = config?.edge_case_weighted !== undefined ? config.edge_case_weighted : true;
+                                    this.widgetControlsForm.edge_case_grouping = config?.edge_case_grouping || 'none';
+                                }
                                 
                                 // Initialize arrays if undefined
                                 if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
@@ -1475,6 +1528,9 @@
                             metrics: [],
                             series_assets: {},
                             series_asset_groups: {},
+                            edge_case_inherit: true,
+                            edge_case_weighted: true,
+                            edge_case_grouping: 'none',
                         };
                     },
 
@@ -1515,6 +1571,11 @@
 
                         if (!c.granularity_inherit) {
                             payload.granularity = c.granularity;
+                        }
+
+                        if (!c.edge_case_inherit) {
+                            payload.edge_case_weighted = !!c.edge_case_weighted;
+                            payload.edge_case_grouping = c.edge_case_grouping || 'none';
                         }
 
                         this.widgetControlsError = '';

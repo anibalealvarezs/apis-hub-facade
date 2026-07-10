@@ -703,6 +703,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',

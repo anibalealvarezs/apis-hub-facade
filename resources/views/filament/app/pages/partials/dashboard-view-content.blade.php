@@ -207,6 +207,35 @@
                             </template>
                         </div>
 
+                            {{-- Card: Edge Case Handling (KPI widgets only) --}}
+                            <template x-if="settingsSourceType === 'kpi'">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                                        </svg>
+                                        <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Edge Cases</span>
+                                    </div>
+                                    <div class="p-6 space-y-4">
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" x-model="settingsControls.edge_case_weighted"
+                                                   class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Weighted regression (WLS)</span>
+                                        </label>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.</p>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group low-frequency values</label>
+                                            <select x-model="settingsControls.edge_case_grouping"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                <option value="none">No grouping</option>
+                                                <option value="histogram">Auto histogram-elbow</option>
+                                                <option value="percentile">Bottom percentile</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
                         {{-- Right Column: Variables Configuration --}}
                         <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">

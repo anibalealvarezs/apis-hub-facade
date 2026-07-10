@@ -202,6 +202,16 @@ trait LoadsDashboardViewData
                 }
             }
 
+            // Expose edge case handling defaults from the KPI's _ui_state
+            if ($widgetArray['source_type'] === 'kpi' && !empty($uiState)) {
+                if (isset($uiState['edge_case_weighted'])) {
+                    $resolved['edge_case_weighted'] = $uiState['edge_case_weighted'];
+                }
+                if (isset($uiState['edge_case_grouping'])) {
+                    $resolved['edge_case_grouping'] = $uiState['edge_case_grouping'];
+                }
+            }
+
             // Expose per-variable metric options for on-the-go selection (regression KPIs)
             $variables = [];
             $varIndex = 0;

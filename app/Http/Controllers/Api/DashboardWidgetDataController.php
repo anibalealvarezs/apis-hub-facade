@@ -326,6 +326,13 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        if (isset($controls['edge_case_weighted'])) {
+            $controlsToMerge['edge_case_weighted'] = filter_var($controls['edge_case_weighted'], FILTER_VALIDATE_BOOLEAN);
+        }
+        if (isset($controls['edge_case_grouping'])) {
+            $controlsToMerge['edge_case_grouping'] = $controls['edge_case_grouping'];
+        }
+
         // If independent variables are present and missing channels/assets, override them with controls
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
