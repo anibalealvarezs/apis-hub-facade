@@ -309,7 +309,7 @@ class DashboardWidgetDataController extends Controller
                 $points = [];
                 foreach ($rawX as $i => $x) {
                     $y = $rawY[$i];
-                    if ($maxRatio !== null && $y > $maxRatio) {
+                    if ($maxRatio !== null && ($y > $maxRatio || $y < 0)) {
                         continue;
                     }
                     $point = ['x' => $x, 'y' => $y];
