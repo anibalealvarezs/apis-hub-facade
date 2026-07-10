@@ -617,7 +617,7 @@
                                                 </div>
                                             </template>
                                             
-                                            <template x-if="!widgetKpiConfig.dependent_asset_filter">
+                                            <template x-if="!widgetKpiConfig.dependent_asset_filter || (Array.isArray(widgetKpiConfig.dependent_asset_filter) && widgetKpiConfig.dependent_asset_filter.length === 0)">
                                             <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
                                                 <template x-if="!widgetKpiConfig.dependent_asset_group">
                                                 <div>
@@ -711,7 +711,7 @@
                                                     </div>
                                                 </template>
                                                 
-                                                <template x-if="!varCfg.independent_asset_filter">
+                                                <template x-if="!varCfg.independent_asset_filter || (Array.isArray(varCfg.independent_asset_filter) && varCfg.independent_asset_filter.length === 0)">
                                                 <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
                                                     <template x-if="!varCfg.independent_asset_group">
                                                     <div>
