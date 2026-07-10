@@ -4,6 +4,18 @@
  */
 
 window.dashboardRenderer = {
+    METRIC_FORMATS: {
+        'spend': { format: 'currency', prefix: '$' },
+        'cpc': { format: 'currency', prefix: '$' },
+        'cpm': { format: 'currency', prefix: '$' },
+        'revenue': { format: 'currency', prefix: '$' },
+        'purchase_roas': { format: 'currency', prefix: '$' },
+        'aov': { format: 'currency', prefix: '$' },
+        'cost_per_result': { format: 'currency', prefix: '$' },
+        'ctr': { format: 'percentage', multiply: 100 },
+        'bounce_rate': { format: 'percentage', multiply: 100 },
+        'average_session_duration': { format: 'number', suffix: 's' },
+    },
     /**
      * Fetch data for a single widget and render into its container.
      * @param {number} widgetId
@@ -125,13 +137,20 @@ window.dashboardRenderer = {
 
     // ─── Tile ───
 
-    renderTile(containerEl, data) {
-        const value = data?.value ?? data?.current ?? 0;
+    renderTile(containerEl, data, controls) {
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
+        let value = data?.value ?? data?.current ?? 0;
         const previous = data?.previous ?? null;
-        const prefix = data?.prefix ?? '';
-        const suffix = data?.suffix ?? '';
+        const prefix = data?.prefix ?? metricFormat?.prefix ?? '';
+        const suffix = data?.suffix ?? metricFormat?.suffix ?? '';
         const label = data?.label ?? '';
-        const format = data?.format ?? 'number';
+        let format = data?.format ?? metricFormat?.format ?? 'number';
+
+        if (format === 'percentage' && metricFormat?.multiply) {
+            value = value * metricFormat.multiply;
+        }
 
         let trendHtml = '';
         let changePercent = null;
@@ -168,6 +187,9 @@ window.dashboardRenderer = {
         const datasets = data?.datasets ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
@@ -175,7 +197,14 @@ window.dashboardRenderer = {
 
         this.renderChart(containerEl, {
             type: 'line',
-            data: { labels, datasets },
+            data: {
+                labels,
+                datasets: datasets.map(ds => ({
+                    ...ds,
+                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                })),
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -185,6 +214,7 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
+                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
                                 if (ctx.dataset.currency) val = this.formatCurrency(val);
                                 else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
                                 else val = this.formatNumber(val);
@@ -209,6 +239,9 @@ window.dashboardRenderer = {
         const datasets = data?.datasets ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
@@ -216,7 +249,14 @@ window.dashboardRenderer = {
 
         this.renderChart(containerEl, {
             type: 'bar',
-            data: { labels, datasets },
+            data: {
+                labels,
+                datasets: datasets.map(ds => ({
+                    ...ds,
+                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                })),
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -226,7 +266,9 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
+                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
                                 if (ctx.dataset.currency) val = this.formatCurrency(val);
+                                else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
                                 else val = this.formatNumber(val);
                                 return ctx.dataset.label + ': ' + val;
                             },
@@ -283,8 +325,11 @@ window.dashboardRenderer = {
 
     // ─── Gauge ───
 
-    renderGauge(containerEl, data) {
-        const value = data?.value ?? 0;
+    renderGauge(containerEl, data, controls) {
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
+        let value = data?.value ?? 0;
         const min = data?.min ?? 0;
         const max = data?.max ?? 100;
         const label = data?.label ?? '';
@@ -293,6 +338,9 @@ window.dashboardRenderer = {
             { from: 33, to: 66, color: '#f59e0b' },
             { from: 66, to: 100, color: '#22c55e' },
         ];
+
+        const rawValue = value;
+        if (metricFormat?.multiply) value = value * metricFormat.multiply;
 
         const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
@@ -315,7 +363,7 @@ window.dashboardRenderer = {
                     </div>
                 </div>
                 ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">${this.escapeHtml(label)}</p>` : ''}
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${this.formatNumber(value)} / ${this.formatNumber(max)}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${metricFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
             </div>`;
     },
 
@@ -417,6 +465,9 @@ window.dashboardRenderer = {
         const anomalyDates = data?.anomaly_dates ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
@@ -454,7 +505,14 @@ window.dashboardRenderer = {
 
         this.renderChart(containerEl, {
             type: 'line',
-            data: { labels, datasets },
+            data: {
+                labels,
+                datasets: datasets.map(ds => ({
+                    ...ds,
+                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                })),
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -463,8 +521,12 @@ window.dashboardRenderer = {
                     tooltip: {
                         callbacks: {
                             label(ctx) {
-                                const val = ctx.parsed.y;
-                                return ctx.dataset.label + ': ' + (val != null ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '—');
+                                let val = ctx.parsed.y;
+                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
+                                if (ctx.dataset.currency) val = val != null ? '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+                                else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
+                                else val = val != null ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '—';
+                                return ctx.dataset.label + ': ' + val;
                             },
                         },
                     },
@@ -502,6 +564,19 @@ window.dashboardRenderer = {
 
         const reverseY = controls?.metrics?.[0] === 'position';
         const reverseX = controls?.metrics?.[1] === 'position';
+
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const metricKey2 = controls?.metrics?.[1];
+        const metricFormat2 = metricKey2 ? this.METRIC_FORMATS[metricKey2] : null;
+
+        const formatPoint = (v, fmt) => {
+            if (!fmt) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            let val = fmt.multiply ? v * fmt.multiply : v;
+            if (fmt.format === 'currency') return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (fmt.format === 'percentage') return val.toFixed(1) + '%';
+            return val.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        };
 
         const scatterDataset = data.datasets.find(d => d.type === 'scatter');
         if (scatterDataset && scatterDataset.data && scatterDataset.data.length > 0) {
@@ -553,8 +628,8 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: function(ctx) {
                                 const point = ctx.raw;
-                                const valX = point.x.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                                const valY = point.y.toLocaleString('en-US', { maximumFractionDigits: 4 });
+                                const valX = formatPoint(point.x, metricFormat2 || metricFormat);
+                                const valY = formatPoint(point.y, metricFormat);
                                 const baseLabel = point.label ? (point.label + ' - ') : '';
                                 return baseLabel + '(' + valX + ', ' + valY + ')';
                             }
@@ -567,15 +642,25 @@ window.dashboardRenderer = {
 
     // ─── Combo Chart (MACD) ───
 
-    renderComboChart(containerEl, data) {
+    renderComboChart(containerEl, data, controls) {
         if (!data || !data.datasets || !data.datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
+        const metricKey = controls?.metrics?.[0];
+        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+
         this.renderChart(containerEl, {
-            type: 'bar', // Base type, datasets override this
-            data: data,
+            type: 'bar',
+            data: {
+                ...data,
+                datasets: data.datasets.map(ds => ({
+                    ...ds,
+                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                })),
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
