@@ -202,16 +202,44 @@ trait LoadsDashboardViewData
                 }
             }
 
-            // Expose edge case handling defaults from the KPI's _ui_state
+            // Expose KPI-level defaults (from _ui_state) before dashboard-level controls
             if ($widgetArray['source_type'] === 'kpi') {
-                $resolved['edge_case_weighted'] = $uiState['edge_case_weighted'] ?? true;
-                if (isset($uiState['edge_case_grouping'])) {
-                    $resolved['edge_case_grouping'] = $uiState['edge_case_grouping'];
-                } else {
-                    // Smart default: dimension-based KPIs default to histogram grouping
-                    $dimGranularities = ['page', 'query', 'post', 'device', 'country'];
-                    $kpiGranularity = $uiState['granularity'] ?? $resolved['granularity'] ?? null;
-                    $resolved['edge_case_grouping'] = in_array($kpiGranularity, $dimGranularities, true) ? 'histogram' : 'none';
+                $widgetControls = $widgetModel->controls ?? [];
+
+                // Dates: widget → KPI config → dashboard → hardcoded default
+                // Note: KPI uses start_date/end_date, dashboard/widget uses date_start/date_end
+                if (!isset($widgetControls['date_start']) && !empty($uiState['start_date'])) {
+                    $resolved['date_start'] = $uiState['start_date'];
+                }
+                if (!isset($widgetControls['date_end']) && !empty($uiState['end_date'])) {
+                    $resolved['date_end'] = $uiState['end_date'];
+                }
+
+                // Zero handling: widget → KPI config → dashboard → 'remove'
+                if (!isset($widgetControls['zero_handling']) && isset($uiState['zero_handling'])) {
+                    $resolved['zero_handling'] = $uiState['zero_handling'];
+                }
+
+                // Granularity: widget → KPI config → dashboard → 'daily'
+                if (!isset($widgetControls['granularity']) && isset($uiState['granularity'])) {
+                    $resolved['granularity'] = $uiState['granularity'];
+                }
+
+                // Edge cases: widget → KPI config → dashboard → smart default
+                if (!isset($widgetControls['edge_case_weighted'])) {
+                    $resolved['edge_case_weighted'] = $uiState['edge_case_weighted']
+                        ?? $resolved['edge_case_weighted']
+                        ?? true;
+                }
+                if (!isset($widgetControls['edge_case_grouping'])) {
+                    $resolved['edge_case_grouping'] = $uiState['edge_case_grouping']
+                        ?? $resolved['edge_case_grouping']
+                        ?? null;
+                    if ($resolved['edge_case_grouping'] === null) {
+                        $dimGranularities = ['page', 'query', 'post', 'device', 'country'];
+                        $kpiGranularity = $uiState['granularity'] ?? $resolved['granularity'] ?? null;
+                        $resolved['edge_case_grouping'] = in_array($kpiGranularity, $dimGranularities, true) ? 'histogram' : 'none';
+                    }
                 }
             }
 

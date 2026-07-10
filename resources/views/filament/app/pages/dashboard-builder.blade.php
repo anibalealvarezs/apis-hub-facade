@@ -226,6 +226,39 @@
                     </select>
                 </div>
 
+                {{-- Granularity --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
+                    <select x-model="dashboardControls.granularity"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="query">Query</option>
+                        <option value="dimensions.page">Page</option>
+                        <option value="country">Country</option>
+                        <option value="device">Device</option>
+                        <option value="post">Post</option>
+                    </select>
+                </div>
+
+                {{-- Edge Cases --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Edge Cases</label>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <input type="checkbox" x-model="dashboardControls.edge_case_weighted"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                            Weighted regression (WLS)
+                        </label>
+                        <select x-model="dashboardControls.edge_case_grouping"
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                            <option value="none">{{ __('No grouping') }}</option>
+                            <option value="histogram">{{ __('Auto histogram-elbow') }}</option>
+                            <option value="percentile">{{ __('Bottom percentile') }}</option>
+                        </select>
+                    </div>
+                </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <button
@@ -345,7 +378,7 @@
                             <div class="p-6 flex flex-row items-center gap-3">
                                 <template x-if="widgetControlsForm.date_inherit">
                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + (dashboardControls.date_start || '—') + ' → ' + (dashboardControls.date_end || '—')"></div>
+                                         x-text="'Inherited: ' + ((widgetKpiConfig?.start_date || dashboardControls.date_start) || '—') + ' → ' + ((widgetKpiConfig?.end_date || dashboardControls.date_end) || '—')"></div>
                                 </template>
                                 <template x-if="!widgetControlsForm.date_inherit">
                                     <div class="w-full flex flex-row items-center gap-3">
@@ -381,7 +414,7 @@
                             <div class="p-6">
                                 <template x-if="widgetControlsForm.zero_inherit">
                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', dashboardControls.zero_handling) || 'Remove zeros')"></div>
+                                         x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', widgetKpiConfig?.zero_handling ?? dashboardControls.zero_handling) || 'Remove zeros')"></div>
                                 </template>
                                 <template x-if="!widgetControlsForm.zero_inherit">
                                     <select x-model="widgetControlsForm.zero_handling"
@@ -412,7 +445,7 @@
                             <div class="p-6">
                                 <template x-if="widgetControlsForm.granularity_inherit">
                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + (inheritedControlLabel('granularity', dashboardControls.granularity) || 'Default')"></div>
+                                         x-text="'Inherited: ' + (inheritedControlLabel('granularity', widgetKpiConfig?.granularity ?? dashboardControls.granularity) || 'Default')"></div>
                                 </template>
                                 <template x-if="!widgetControlsForm.granularity_inherit">
                                     <select x-model="widgetControlsForm.granularity"
@@ -1013,13 +1046,13 @@
                         date_start: '',
                         date_end: '',
                         zero_inherit: true,
-                        zero_handling: 'remove',
+                        zero_handling: dashboardControls.zero_handling || 'remove',
                         series_inherit: true,
                         channel: '',
                         asset_mode: 'single',
                         asset: '',
                         assets: [],
-                        granularity: 'daily',
+                        granularity: dashboardControls.granularity || 'daily',
                         metrics: [],
                         series_assets: {},
                         series_asset_groups: {},
@@ -1261,6 +1294,9 @@
                             date_start: c.date_start || '',
                             date_end: c.date_end || '',
                             zero_handling: c.zero_handling || 'remove',
+                            granularity: c.granularity || 'daily',
+                            edge_case_weighted: c.edge_case_weighted !== undefined ? !!c.edge_case_weighted : true,
+                            edge_case_grouping: c.edge_case_grouping || 'none',
                         };
                         @this.saveDashboardControls(payload);
                         this.showDashboardControls = false;
@@ -1280,20 +1316,20 @@
                             title: widget.title || widget.name || '',
                             description: widget.description || '',
                             date_inherit: !hasDate,
-                            date_start: wc.date_start || '',
-                            date_end: wc.date_end || '',
+                            date_start: wc.date_start || this.dashboardControls.date_start || '',
+                            date_end: wc.date_end || this.dashboardControls.date_end || '',
                             zero_inherit: !hasZero,
-                            zero_handling: wc.zero_handling || 'remove',
+                            zero_handling: wc.zero_handling || this.dashboardControls.zero_handling || 'remove',
                             granularity_inherit: wc.granularity === undefined,
-                            granularity: wc.granularity || 'daily',
+                            granularity: wc.granularity || this.dashboardControls.granularity || 'daily',
                             channel: wc.channel || '',
                             assets: wc.assets || [],
                             metrics: wc.metrics || [],
                             series_assets: wc.series_assets || {},
                             series_asset_groups: wc.series_asset_groups || {},
                             edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
-                            edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : true,
-                            edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : 'none',
+                            edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : (this.dashboardControls.edge_case_weighted ?? true),
+                            edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
                             raw_series: [],
                         };
 
@@ -1334,9 +1370,19 @@
                         if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id) {
                             @this.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
                                 this.widgetKpiConfig = config || {};
+                                if (this.widgetControlsForm.date_inherit) {
+                                    this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
+                                    this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
+                                }
                                 if (this.widgetControlsForm.edge_case_inherit) {
-                                    this.widgetControlsForm.edge_case_weighted = config?.edge_case_weighted !== undefined ? config.edge_case_weighted : true;
-                                    this.widgetControlsForm.edge_case_grouping = config?.edge_case_grouping || 'none';
+                                    this.widgetControlsForm.edge_case_weighted = config?.edge_case_weighted !== undefined ? config.edge_case_weighted : (this.dashboardControls.edge_case_weighted !== undefined ? !!this.dashboardControls.edge_case_weighted : true);
+                                    this.widgetControlsForm.edge_case_grouping = config?.edge_case_grouping || this.dashboardControls.edge_case_grouping || 'none';
+                                }
+                                if (this.widgetControlsForm.zero_inherit) {
+                                    this.widgetControlsForm.zero_handling = config?.zero_handling ?? this.dashboardControls.zero_handling ?? 'remove';
+                                }
+                                if (this.widgetControlsForm.granularity_inherit) {
+                                    this.widgetControlsForm.granularity = config?.granularity ?? this.dashboardControls.granularity ?? 'daily';
                                 }
                                 
                                 // Initialize arrays if undefined

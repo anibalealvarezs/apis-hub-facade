@@ -23,12 +23,18 @@ class WidgetDataService
         if (empty($dashboardControls['granularity'])) {
             $dashboardControls['granularity'] = 'daily';
         }
+        if (!isset($dashboardControls['edge_case_weighted'])) {
+            $dashboardControls['edge_case_weighted'] = true;
+        }
+        if (empty($dashboardControls['edge_case_grouping'])) {
+            $dashboardControls['edge_case_grouping'] = 'none';
+        }
 
         $widgetControls = $widget->controls ?? [];
 
         $resolved = [];
 
-        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'granularity'];
+        $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'edge_case_weighted', 'edge_case_grouping'];
 
         // Start with widget controls as the base
         $resolved = $widgetControls;

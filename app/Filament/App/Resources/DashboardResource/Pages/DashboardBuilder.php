@@ -95,11 +95,13 @@ class DashboardBuilder extends Page
             'date_start' => '',
             'date_end' => '',
             'zero_handling' => 'remove',
+            'granularity' => 'daily',
+            'edge_case_weighted' => true,
+            'edge_case_grouping' => 'none',
             'channel' => '',
             'asset_mode' => 'single',
             'asset' => '',
             'assets' => [],
-            'granularity' => 'daily',
         ];
     }
 
