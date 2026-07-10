@@ -203,12 +203,15 @@ trait LoadsDashboardViewData
             }
 
             // Expose edge case handling defaults from the KPI's _ui_state
-            if ($widgetArray['source_type'] === 'kpi' && !empty($uiState)) {
-                if (isset($uiState['edge_case_weighted'])) {
-                    $resolved['edge_case_weighted'] = $uiState['edge_case_weighted'];
-                }
+            if ($widgetArray['source_type'] === 'kpi') {
+                $resolved['edge_case_weighted'] = $uiState['edge_case_weighted'] ?? true;
                 if (isset($uiState['edge_case_grouping'])) {
                     $resolved['edge_case_grouping'] = $uiState['edge_case_grouping'];
+                } else {
+                    // Smart default: dimension-based KPIs default to histogram grouping
+                    $dimGranularities = ['page', 'query', 'post', 'device', 'country'];
+                    $kpiGranularity = $uiState['granularity'] ?? $resolved['granularity'] ?? null;
+                    $resolved['edge_case_grouping'] = in_array($kpiGranularity, $dimGranularities, true) ? 'histogram' : 'none';
                 }
             }
 
