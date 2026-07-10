@@ -5,16 +5,85 @@
 
 window.dashboardRenderer = {
     METRIC_FORMATS: {
-        'spend': { format: 'currency', prefix: '$' },
-        'cpc': { format: 'currency', prefix: '$' },
-        'cpm': { format: 'currency', prefix: '$' },
-        'revenue': { format: 'currency', prefix: '$' },
-        'purchase_roas': { format: 'currency', prefix: '$' },
-        'aov': { format: 'currency', prefix: '$' },
-        'cost_per_result': { format: 'currency', prefix: '$' },
-        'ctr': { format: 'percentage', multiply: 100 },
-        'bounce_rate': { format: 'percentage', multiply: 100 },
-        'average_session_duration': { format: 'number', suffix: 's' },
+        'spend': { label: 'Spend', format: 'currency', prefix: '$' },
+        'cpc': { label: 'CPC', format: 'currency', prefix: '$' },
+        'cpm': { label: 'CPM', format: 'currency', prefix: '$' },
+        'revenue': { label: 'Revenue', format: 'currency', prefix: '$' },
+        'purchase_roas': { label: 'ROAS', format: 'currency', prefix: '$' },
+        'aov': { label: 'AOV', format: 'currency', prefix: '$' },
+        'cost_per_result': { label: 'Cost/Result', format: 'currency', prefix: '$' },
+        'ctr': { label: 'CTR', format: 'percentage', multiply: 100 },
+        'bounce_rate': { label: 'Bounce Rate', format: 'percentage', multiply: 100 },
+        'clicks': { label: 'Clicks', format: 'number' },
+        'impressions': { label: 'Impressions', format: 'number' },
+        'reach': { label: 'Reach', format: 'number' },
+        'conversions': { label: 'Conversions', format: 'number' },
+        'results': { label: 'Results', format: 'number' },
+        'sessions': { label: 'Sessions', format: 'number' },
+        'pageviews': { label: 'Pageviews', format: 'number' },
+        'new_users': { label: 'New Users', format: 'number' },
+        'followers': { label: 'Followers', format: 'number' },
+        'engaged_users': { label: 'Engaged Users', format: 'number' },
+        'orders': { label: 'Orders', format: 'number' },
+        'sends': { label: 'Sends', format: 'number' },
+        'opens': { label: 'Opens', format: 'number' },
+        'bounces': { label: 'Bounces', format: 'number' },
+        'link_clicks': { label: 'Link Clicks', format: 'number' },
+        'engagements': { label: 'Engagements', format: 'number' },
+        'total_interactions': { label: 'Total Interactions', format: 'number' },
+        'average_session_duration': { label: 'Avg Session', format: 'number', suffix: 's' },
+        'position': { label: 'Avg Position', format: 'number' },
+    },
+
+    // Ratio KPIs produce a result whose type differs from the raw dependent metric.
+    // Determine the display format for the KPI output based on metric[0] (dependent) and metric[1] (independent).
+    getKpiResultFormat(controls) {
+        const m0 = controls?.metrics?.[0];
+        const m1 = controls?.metrics?.[1];
+        if (!m0) return null;
+        const f0 = this.METRIC_FORMATS[m0];
+        const f1 = m1 ? this.METRIC_FORMATS[m1] : null;
+
+        // Both metrics exist → the KPI computes a ratio (dependent / independent)
+        if (m1) {
+            // Known ratio → output type
+            const ratioFormats = {
+                'clicks/impressions': { label: 'CTR', format: 'percentage', multiply: 100 },
+                'conversions/impressions': { label: 'Conv. Rate', format: 'percentage', multiply: 100 },
+                'conversions/clicks': { label: 'Conv. Rate', format: 'percentage', multiply: 100 },
+                'results/impressions': { label: 'Result Rate', format: 'percentage', multiply: 100 },
+                'results/clicks': { label: 'Result Rate', format: 'percentage', multiply: 100 },
+                'sessions/clicks': { label: 'Session Rate', format: 'percentage', multiply: 100 },
+                'sessions/link_clicks': { label: 'Session Rate', format: 'percentage', multiply: 100 },
+                'bounce_rate/clicks': { label: 'Bounce Rate', format: 'number' },
+                'spend/clicks': { label: 'CPC', format: 'currency', prefix: '$' },
+                'spend/impressions': { label: 'CPM', format: 'currency', prefix: '$' },
+                'spend/conversions': { label: 'CPA', format: 'currency', prefix: '$' },
+                'spend/results': { label: 'Cost/Result', format: 'currency', prefix: '$' },
+                'spend/sessions': { label: 'Cost/Session', format: 'currency', prefix: '$' },
+                'revenue/spend': { label: 'ROAS', format: 'currency', prefix: '$' },
+                'revenue/clicks': { label: 'RPC', format: 'currency', prefix: '$' },
+                'impressions/spend': { label: 'Impr./$', format: 'number' },
+                'sessions/spend': { label: 'Sessions/$', format: 'number' },
+                'new_users/spend': { label: 'New Users/$', format: 'number' },
+                'engaged_users/reach': { label: 'Eng. Rate', format: 'percentage', multiply: 100 },
+                'average_session_duration/clicks': { label: 'Session/Click', format: 'number', suffix: 's' },
+                'clicks/position': { label: 'Clicks/Pos.', format: 'number' },
+            };
+            const key = m0 + '/' + m1;
+            if (ratioFormats[key]) return ratioFormats[key];
+
+            // Fallback heuristic
+            if (f0?.format === 'currency' && f1?.format === 'number') {
+                return { label: f0.label, format: 'currency', prefix: '$' };
+            }
+            if (f0?.format === 'number' && f1?.format === 'number') {
+                return { label: f0.label + '/' + f1.label, format: 'percentage', multiply: 100 };
+            }
+            return f0 || null;
+        }
+
+        return f0 || null;
     },
     /**
      * Fetch data for a single widget and render into its container.
@@ -138,18 +207,17 @@ window.dashboardRenderer = {
     // ─── Tile ───
 
     renderTile(containerEl, data, controls) {
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         let value = data?.value ?? data?.current ?? 0;
         const previous = data?.previous ?? null;
-        const prefix = data?.prefix ?? metricFormat?.prefix ?? '';
-        const suffix = data?.suffix ?? metricFormat?.suffix ?? '';
-        const label = data?.label ?? '';
-        let format = data?.format ?? metricFormat?.format ?? 'number';
+        const prefix = data?.prefix ?? resultFormat?.prefix ?? '';
+        const suffix = data?.suffix ?? resultFormat?.suffix ?? '';
+        const label = data?.label ?? resultFormat?.label ?? '';
+        let format = data?.format ?? resultFormat?.format ?? 'number';
 
-        if (format === 'percentage' && metricFormat?.multiply) {
-            value = value * metricFormat.multiply;
+        if (format === 'percentage' && resultFormat?.multiply) {
+            value = value * resultFormat.multiply;
         }
 
         let trendHtml = '';
@@ -187,8 +255,7 @@ window.dashboardRenderer = {
         const datasets = data?.datasets ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -201,8 +268,8 @@ window.dashboardRenderer = {
                 labels,
                 datasets: datasets.map(ds => ({
                     ...ds,
-                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
                 })),
             },
             options: {
@@ -214,7 +281,7 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
-                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
+                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
                                 if (ctx.dataset.currency) val = this.formatCurrency(val);
                                 else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
                                 else val = this.formatNumber(val);
@@ -239,8 +306,7 @@ window.dashboardRenderer = {
         const datasets = data?.datasets ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -253,8 +319,8 @@ window.dashboardRenderer = {
                 labels,
                 datasets: datasets.map(ds => ({
                     ...ds,
-                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
                 })),
             },
             options: {
@@ -266,7 +332,7 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
-                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
+                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
                                 if (ctx.dataset.currency) val = this.formatCurrency(val);
                                 else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
                                 else val = this.formatNumber(val);
@@ -326,8 +392,7 @@ window.dashboardRenderer = {
     // ─── Gauge ───
 
     renderGauge(containerEl, data, controls) {
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         let value = data?.value ?? 0;
         const min = data?.min ?? 0;
@@ -340,7 +405,7 @@ window.dashboardRenderer = {
         ];
 
         const rawValue = value;
-        if (metricFormat?.multiply) value = value * metricFormat.multiply;
+        if (resultFormat?.multiply) value = value * resultFormat.multiply;
 
         const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
@@ -363,7 +428,7 @@ window.dashboardRenderer = {
                     </div>
                 </div>
                 ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">${this.escapeHtml(label)}</p>` : ''}
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${metricFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
             </div>`;
     },
 
@@ -465,8 +530,7 @@ window.dashboardRenderer = {
         const anomalyDates = data?.anomaly_dates ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
 
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
@@ -509,8 +573,8 @@ window.dashboardRenderer = {
                 labels,
                 datasets: datasets.map(ds => ({
                     ...ds,
-                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
                 })),
             },
             options: {
@@ -522,7 +586,7 @@ window.dashboardRenderer = {
                         callbacks: {
                             label(ctx) {
                                 let val = ctx.parsed.y;
-                                if (metricFormat?.multiply) val = val * metricFormat.multiply;
+                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
                                 if (ctx.dataset.currency) val = val != null ? '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
                                 else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
                                 else val = val != null ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '—';
@@ -565,10 +629,9 @@ window.dashboardRenderer = {
         const reverseY = controls?.metrics?.[0] === 'position';
         const reverseX = controls?.metrics?.[1] === 'position';
 
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
-        const metricKey2 = controls?.metrics?.[1];
-        const metricFormat2 = metricKey2 ? this.METRIC_FORMATS[metricKey2] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
+        const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
+        const yFmt = resultFormat;
 
         const formatPoint = (v, fmt) => {
             if (!fmt) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -577,6 +640,9 @@ window.dashboardRenderer = {
             if (fmt.format === 'percentage') return val.toFixed(1) + '%';
             return val.toLocaleString('en-US', { maximumFractionDigits: 2 });
         };
+
+        const yAxisLabel = yFmt?.label || 'Value';
+        const xAxisLabel = xFmt?.label || (controls?.metrics?.[1] || 'X');
 
         const scatterDataset = data.datasets.find(d => d.type === 'scatter');
         if (scatterDataset && scatterDataset.data && scatterDataset.data.length > 0) {
@@ -615,11 +681,18 @@ window.dashboardRenderer = {
                     x: {
                         type: 'linear',
                         position: 'bottom',
-                        title: { display: !!data.x_label, text: data.x_label },
-                        reverse: reverseX
+                        title: { display: true, text: data.x_label || xAxisLabel },
+                        reverse: reverseX,
+                        ticks: {
+                            callback: (v) => formatPoint(v, xFmt),
+                        },
                     },
                     y: {
-                        reverse: reverseY
+                        title: { display: true, text: data.y_label || yAxisLabel },
+                        reverse: reverseY,
+                        ticks: {
+                            callback: (v) => formatPoint(v, yFmt),
+                        },
                     }
                 },
                 plugins: {
@@ -628,8 +701,8 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: function(ctx) {
                                 const point = ctx.raw;
-                                const valX = formatPoint(point.x, metricFormat2 || metricFormat);
-                                const valY = formatPoint(point.y, metricFormat);
+                                const valX = formatPoint(point.x, xFmt);
+                                const valY = formatPoint(point.y, yFmt);
                                 const baseLabel = point.label ? (point.label + ' - ') : '';
                                 return baseLabel + '(' + valX + ', ' + valY + ')';
                             }
@@ -648,8 +721,7 @@ window.dashboardRenderer = {
             return;
         }
 
-        const metricKey = controls?.metrics?.[0];
-        const metricFormat = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const resultFormat = this.getKpiResultFormat(controls);
 
         this.renderChart(containerEl, {
             type: 'bar',
@@ -657,8 +729,8 @@ window.dashboardRenderer = {
                 ...data,
                 datasets: data.datasets.map(ds => ({
                     ...ds,
-                    currency: ds.currency ?? (metricFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (metricFormat?.format === 'percentage' ? true : undefined),
+                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
                 })),
             },
             options: {
