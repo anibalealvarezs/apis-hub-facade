@@ -687,6 +687,7 @@ window.dashboardRenderer = {
                         },
                     },
                     y: {
+                        type: 'linear',
                         title: { display: true, text: data.y_label || yAxisLabel },
                         reverse: reverseY,
                         ticks: {

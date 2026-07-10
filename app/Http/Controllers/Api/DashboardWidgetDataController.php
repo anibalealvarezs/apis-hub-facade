@@ -269,7 +269,8 @@ class DashboardWidgetDataController extends Controller
                             'pointRadius' => 0
                         ]
                     ],
-                    'x_label' => $scatter['x_label'] ?? 'Independent Variable'
+                    'x_label' => $scatter['x_label'] ?? 'Independent Variable',
+                    'y_label' => $scatter['y_label'] ?? null
                 ];
             }
 
