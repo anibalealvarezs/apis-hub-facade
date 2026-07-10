@@ -30,6 +30,18 @@
                    x-on:change.debounce.500ms="applyDateRange()"
                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
                    :min="dashboardOverrides.date_start || ''" :max="dashboardDefaults.date_end">
+            <template x-if="dashboardDefaults.show_asset_group_selector">
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium ml-2">{{ __('Asset Group:') }}</span>
+            </template>
+            <template x-if="dashboardDefaults.show_asset_group_selector">
+                <select x-model="selectedAssetGroup" x-on:change="applyAssetGroup()"
+                        class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs">
+                    <option value="">{{ __('All Assets') }}</option>
+                    <template x-for="(name, id) in assetGroups" :key="id">
+                        <option :value="id" x-text="name"></option>
+                    </template>
+                </select>
+            </template>
             <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
                 <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
@@ -295,7 +307,7 @@
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey].options)" :key="assetId">
-                                                        <div x-show="settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase())"
+                                                        <div x-show="isViewAssetInGroup(vConfig.channel, assetId) && (settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase()))"
                                                              @click="settingsToggleAsset(vKey, assetId)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                              :class="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
@@ -350,6 +362,7 @@
                         date_start: '{{ $dc['date_start'] ?? '' }}',
                         date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
                         zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
+                        show_asset_group_selector: {{ !empty($dc['show_asset_group_selector']) ? 'true' : 'false' }},
                     },
                     dashboardOverrides: {
                         date_start: '{{ $dc['date_start'] ?? '' }}',
@@ -357,6 +370,9 @@
                         zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
                     },
                     hasUserChangedGlobalDate: false,
+                    assetGroups: @json($this->getAllAssetGroups()),
+                    channelAssetGroupMap: @json($this->getChannelAssetGroupMap()),
+                    selectedAssetGroup: '{{ $dc['asset_group'] ?? '' }}',
                     init() {
                         this.$nextTick(() => {
                             const tryInit = () => {
@@ -379,6 +395,40 @@
                     applyDateRange() {
                         this.hasUserChangedGlobalDate = true;
                         this.refreshAll();
+                    },
+
+                    // ─── Asset Group ───
+
+                    isViewAssetInGroup(channel, assetId) {
+                        if (!this.selectedAssetGroup || !this.channelAssetGroupMap[channel]) return true;
+                        const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup];
+                        if (!groupAssets) return true;
+                        return groupAssets.map(String).includes(String(assetId));
+                    },
+
+                    applyAssetGroup() {
+                        // Filter assets in the settings modal when group changes
+                        if (!this.openSettings) return;
+                        
+                        for (const vKey in this.settingsSeriesOptions) {
+                            const channel = this.settingsVariables[vKey]?.channel;
+                            if (!channel) continue;
+                            const currentAssets = this.settingsControls.series_assets[vKey] || [];
+                            if (currentAssets.length === 0) continue;
+                            
+                            const groupId = this.selectedAssetGroup;
+                            if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
+                            
+                            const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
+                            const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+                            
+                            if (validAssets.length === 0 && allowedAssets.length > 0) {
+                                this.settingsControls.series_assets = {
+                                    ...this.settingsControls.series_assets,
+                                    [vKey]: [allowedAssets[0]]
+                                };
+                            }
+                        }
                     },
 
                     renderWidget(widgetId, el, controls) {
@@ -487,6 +537,20 @@
                             settingsVariables: this.settingsVariables
                         });
                         
+                        // Apply global asset group filtering to preselected assets
+                        if (this.selectedAssetGroup) {
+                            for (const vKey in this.settingsVariables) {
+                                const channel = this.settingsVariables[vKey]?.channel;
+                                if (!channel) continue;
+                                const currentAssets = this.settingsControls.series_assets[vKey] || [];
+                                if (currentAssets.length === 0) continue;
+                                this.settingsControls.series_assets = {
+                                    ...this.settingsControls.series_assets,
+                                    [vKey]: this.ensureValidAssets(vKey, channel, currentAssets)
+                                };
+                            }
+                        }
+                        
                         this.openSettings = true;
                     },
 
@@ -558,10 +622,35 @@
 
                     settingsSelectAll(seriesKey) {
                         const allIds = Object.keys(this.settingsSeriesOptions[seriesKey].options).map(String);
+                        const channel = this.settingsVariables[seriesKey]?.channel;
+                        let validIds = allIds;
+                        if (this.selectedAssetGroup && channel && this.channelAssetGroupMap[channel]?.[this.selectedAssetGroup]) {
+                            const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup].map(String);
+                            validIds = allIds.filter(id => groupAssets.includes(id));
+                        }
                         this.settingsControls.series_assets = {
                             ...this.settingsControls.series_assets,
-                            [seriesKey]: allIds
+                            [seriesKey]: validIds
                         };
+                    },
+
+                    // ─── Compatibility aliases for asset group filtering ───
+                    isAssetAllowedByGroups(seriesKey, channel, assetId) {
+                        if (!this.selectedAssetGroup || !channel || !this.channelAssetGroupMap[channel]) return true;
+                        const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup];
+                        if (!groupAssets) return true;
+                        return groupAssets.map(String).includes(String(assetId));
+                    },
+
+                    ensureValidAssets(seriesKey, channel, selectedAssets) {
+                        if (!this.selectedAssetGroup || !channel || !this.channelAssetGroupMap[channel]) return selectedAssets;
+                        const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup];
+                        if (!groupAssets) return selectedAssets;
+                        const allowedAssets = groupAssets.map(String);
+                        const validAssets = (selectedAssets || []).filter(a => allowedAssets.includes(String(a)));
+                        if (validAssets.length > 0) return validAssets;
+                        if (allowedAssets.length > 0) return [allowedAssets[0]];
+                        return [];
                     }
                 };
             };

@@ -214,6 +214,24 @@
                     </div>
                 </div>
 
+                {{-- Asset Group --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Asset Group') }}</label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Filters available assets for widgets that don&rsquo;t have their own asset group selected.</p>
+                    <select x-model="dashboardControls.asset_group"
+                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
+                        <option value="">{{ __('All Assets (no filter)') }}</option>
+                        <template x-for="(name, id) in assetGroups" :key="id">
+                            <option :value="id" x-text="name"></option>
+                        </template>
+                    </select>
+                    <label class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
+                               class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                        {{ __('Show this selector in the dashboard view') }}
+                    </label>
+                </div>
+
                 {{-- Zero Handling --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Zero / Missing
@@ -578,7 +596,7 @@
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
-                                                        <div x-show="(searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase())"
+                                                        <div x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
                                                              @click="toggleRawAsset(index, id)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                              :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
@@ -684,7 +702,7 @@
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                     <template x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}" :key="id">
-                                                        <div x-show="(!widgetKpiConfig.dependent_asset_group || (allChannelAssetGroups[widgetKpiConfig.dependent_channel] && allChannelAssetGroups[widgetKpiConfig.dependent_channel][widgetKpiConfig.dependent_asset_group] && (allChannelAssetGroups[widgetKpiConfig.dependent_channel][widgetKpiConfig.dependent_asset_group].assets || []).map(String).includes(String(id)))) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
+                                                        <div x-show="isAssetAllowedByGroups('dependent', widgetKpiConfig.dependent_channel, id) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
                                                              @click="if (!widgetControlsForm.series_asset_groups.dependent) toggleKpiAsset('dependent', id)"
                                                              class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                              :class="(widgetControlsForm.series_asset_groups.dependent) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
@@ -777,7 +795,7 @@
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                         <template x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}" :key="id">
-                                                            <div x-show="(!varCfg.independent_asset_group || (allChannelAssetGroups[varCfg.independent_channel] && allChannelAssetGroups[varCfg.independent_channel][varCfg.independent_asset_group] && (allChannelAssetGroups[varCfg.independent_channel][varCfg.independent_asset_group].assets || []).map(String).includes(String(id)))) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
+                                                            <div x-show="isAssetAllowedByGroups('independent_' + idx, varCfg.independent_channel, id) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
                                                                  @click="if (!widgetControlsForm.series_asset_groups['independent_' + idx]) toggleKpiAsset('independent_' + idx, id)"
                                                                  class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                                  :class="(widgetControlsForm.series_asset_groups['independent_' + idx]) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
@@ -1039,6 +1057,7 @@
                     showDashboardControls: false,
                     showWidgetControls: false,
                     dashboardControls,
+                    assetGroups: @json($this->getAllAssetGroups()),
 
                     // ─── Widget Controls ──
                     widgetControlsTarget: {},
@@ -1298,6 +1317,8 @@
                             granularity: c.granularity || 'daily',
                             edge_case_weighted: c.edge_case_weighted !== undefined ? !!c.edge_case_weighted : true,
                             edge_case_grouping: c.edge_case_grouping || 'none',
+                            asset_group: c.asset_group || '',
+                            show_asset_group_selector: c.show_asset_group_selector === true,
                         };
                         @this.saveDashboardControls(payload);
                         this.showDashboardControls = false;
@@ -1363,6 +1384,13 @@
                                     });
                                 }
                             });
+                            
+                            // Apply global asset group filtering to raw series
+                            this.widgetControlsForm.raw_series.forEach(series => {
+                                if (series.channel && series.assets && series.assets.length > 0) {
+                                    series.assets = this.ensureValidAssets(null, series.channel, series.assets);
+                                }
+                            });
                         }
 
                         const savedMetrics = wc.metrics || [];
@@ -1425,6 +1453,22 @@
                                         @this.getMetricsForChannel(ch).then(metrics => {
                                             this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                         });
+                                    }
+                                });
+
+                                // Apply global asset group filtering to KPI series assets
+                                const allSeriesKeys = ['dependent'];
+                                if (this.widgetKpiConfig.independent_variables) {
+                                    for (let key in this.widgetKpiConfig.independent_variables) {
+                                        allSeriesKeys.push('independent_' + key);
+                                    }
+                                }
+                                allSeriesKeys.forEach(sk => {
+                                    const ch = sk === 'dependent'
+                                        ? this.widgetKpiConfig.dependent_channel
+                                        : this.widgetKpiConfig.independent_variables?.[sk.replace('independent_', '')]?.independent_channel;
+                                    if (ch && this.widgetControlsForm.series_assets[sk] && this.widgetControlsForm.series_assets[sk].length > 0) {
+                                        this.widgetControlsForm.series_assets[sk] = this.ensureValidAssets(sk, ch, this.widgetControlsForm.series_assets[sk]);
                                     }
                                 });
 
@@ -1526,7 +1570,13 @@
                     selectAllRawAssets(index) {
                         const ch = this.widgetControlsForm.raw_series[index].channel;
                         const assets = this.allChannelAssets[ch] || {};
-                        this.widgetControlsForm.raw_series[index].assets = Object.keys(assets).map(String);
+                        let validIds = Object.keys(assets).map(String);
+                        const globalGroup = this.dashboardControls?.asset_group;
+                        if (globalGroup && this.allChannelAssetGroups[ch]?.[globalGroup]) {
+                            const groupAssets = this.allChannelAssetGroups[ch][globalGroup].assets.map(String);
+                            validIds = validIds.filter(id => groupAssets.includes(id));
+                        }
+                        this.widgetControlsForm.raw_series[index].assets = validIds;
                     },
 
                     selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
@@ -1535,6 +1585,15 @@
                         if (kpiGroup && this.allChannelAssetGroups[channel] && this.allChannelAssetGroups[channel][kpiGroup]) {
                             const groupAssets = this.allChannelAssetGroups[channel][kpiGroup].assets.map(String);
                             validIds = validIds.filter(id => groupAssets.includes(id));
+                        }
+                        // Apply global group only if no widget-level group is set
+                        const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
+                        if (!widgetGroup && !kpiGroup) {
+                            const globalGroup = this.dashboardControls?.asset_group;
+                            if (globalGroup && this.allChannelAssetGroups[channel]?.[globalGroup]) {
+                                const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
+                                validIds = validIds.filter(id => groupAssets.includes(id));
+                            }
                         }
                         this.widgetControlsForm.series_assets[seriesKey] = validIds;
                     },
@@ -1559,6 +1618,60 @@
 
                     clearAllKpiAssets(seriesKey) {
                         this.widgetControlsForm.series_assets[seriesKey] = [];
+                    },
+
+                    // ─── Asset Group Helpers ───
+
+                    getEffectiveGroup(seriesKey, channel) {
+                        // Returns the group that applies: widget-level → KPI-level → global
+                        
+                        // 1. Widget-level group
+                        const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
+                        if (widgetGroup) return widgetGroup;
+                        
+                        // 2. KPI-level group
+                        if (seriesKey === 'dependent' && this.widgetKpiConfig?.dependent_asset_group) {
+                            return this.widgetKpiConfig.dependent_asset_group;
+                        }
+                        if (seriesKey && seriesKey.startsWith('independent_')) {
+                            const idx = seriesKey.replace('independent_', '');
+                            const kpiGroup = this.widgetKpiConfig?.independent_variables?.[idx]?.independent_asset_group;
+                            if (kpiGroup) return kpiGroup;
+                        }
+                        
+                        // 3. Global dashboard group
+                        if (this.dashboardControls?.asset_group) {
+                            return this.dashboardControls.asset_group;
+                        }
+                        
+                        return '';
+                    },
+
+                    isAssetAllowedByGroups(seriesKey, channel, assetId) {
+                        const groupId = this.getEffectiveGroup(seriesKey, channel);
+                        if (!groupId) return true; // No group filter
+                        
+                        const groupData = this.allChannelAssetGroups[channel]?.[groupId];
+                        if (!groupData) return true; // Group not in this channel, show all
+                        
+                        return (groupData.assets || []).map(String).includes(String(assetId));
+                    },
+
+                    ensureValidAssets(seriesKey, channel, selectedAssets) {
+                        const groupId = this.getEffectiveGroup(seriesKey, channel);
+                        if (!groupId) return selectedAssets;
+                        
+                        const groupData = this.allChannelAssetGroups[channel]?.[groupId];
+                        if (!groupData) return selectedAssets;
+                        
+                        const allowedAssets = groupData.assets.map(String);
+                        const validAssets = (selectedAssets || []).filter(a => allowedAssets.includes(String(a)));
+                        
+                        if (validAssets.length > 0) return validAssets;
+                        
+                        // No valid assets, auto-select first available
+                        if (allowedAssets.length > 0) return [allowedAssets[0]];
+                        return [];
                     },
 
                     resetWidgetControls() {

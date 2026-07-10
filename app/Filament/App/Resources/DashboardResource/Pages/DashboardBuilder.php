@@ -102,6 +102,8 @@ class DashboardBuilder extends Page
             'asset_mode' => 'single',
             'asset' => '',
             'assets' => [],
+            'asset_group' => '',
+            'show_asset_group_selector' => false,
         ];
     }
 
@@ -185,6 +187,19 @@ class DashboardBuilder extends Page
                     'assets' => array_values($activeAssets),
                 ];
             }
+        }
+        return $result;
+    }
+
+    public function getAllAssetGroups(): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project) return [];
+
+        $groups = \App\Models\AssetGroup::where('project_id', $project->id)->get();
+        $result = [];
+        foreach ($groups as $group) {
+            $result[$group->id] = $group->name;
         }
         return $result;
     }
