@@ -373,7 +373,14 @@
                     channelAssetGroupMap: @json($this->getChannelAssetGroupMap()),
                     selectedAssetGroup: '{{ $dc['asset_group'] ?? '' }}',
                     init() {
+                        const groupKeys = Object.keys(this.assetGroups || {});
+                        if (!this.selectedAssetGroup && groupKeys.length > 0) {
+                            this.selectedAssetGroup = groupKeys[0];
+                        }
                         this.$nextTick(() => {
+                            if (this.selectedAssetGroup) {
+                                this.applyAssetGroup();
+                            }
                             const tryInit = () => {
                                 if (typeof GridStack !== 'undefined') {
                                     GridStack.init({
@@ -406,39 +413,90 @@
                     },
 
                     applyAssetGroup() {
-                        // Filter assets in the settings modal when group changes
-                        if (!this.openSettings) return;
-                        
-                        for (const vKey in this.settingsSeriesOptions) {
-                            const channel = this.settingsVariables[vKey]?.channel;
-                            if (!channel) continue;
-                            const currentAssets = this.settingsControls.series_assets[vKey] || [];
-                            if (currentAssets.length === 0) continue;
-                            
-                            const groupId = this.selectedAssetGroup;
-                            if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
-                            
-                            const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
-                            const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
-                            
-                            if (validAssets.length === 0 && allowedAssets.length > 0) {
-                                this.settingsControls.series_assets = {
-                                    ...this.settingsControls.series_assets,
-                                    [vKey]: [allowedAssets[0]]
-                                };
+                        // Case 1: Settings modal is open — filter assets in the modal and reload preview
+                        if (this.openSettings) {
+                            for (const vKey in this.settingsSeriesOptions) {
+                                const channel = this.settingsVariables[vKey]?.channel;
+                                if (!channel) continue;
+                                const currentAssets = this.settingsControls.series_assets[vKey] || [];
+                                if (currentAssets.length === 0) continue;
+                                
+                                const groupId = this.selectedAssetGroup;
+                                if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
+                                
+                                const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
+                                const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+                                
+                                if (validAssets.length === 0 && allowedAssets.length > 0) {
+                                    this.settingsControls.series_assets = {
+                                        ...this.settingsControls.series_assets,
+                                        [vKey]: [allowedAssets[0]]
+                                    };
+                                }
                             }
+                            
+                            const widgetId = this.settingsWidgetId;
+                            const controls = this.settingsControls;
+                            window.dispatchEvent(new CustomEvent('reload-widget', {
+                                detail: { id: widgetId, controls: controls }
+                            }));
+                            this.reloadWidget(widgetId, controls);
+                            return;
                         }
                         
-                        // Reload the widget preview with the filtered asset selection
-                        const widgetId = this.settingsWidgetId;
-                        const controls = this.settingsControls;
-                        window.dispatchEvent(new CustomEvent('reload-widget', {
-                            detail: {
-                                id: widgetId,
-                                controls: controls
-                            }
-                        }));
-                        this.reloadWidget(widgetId, controls);
+                        // Case 2: Main dashboard — filter and reload all rendered widgets
+                        const widgets = document.querySelectorAll('.grid-stack-item-content .widget-content');
+                        widgets.forEach(el => {
+                            const widgetItem = el.closest('.grid-stack-item');
+                            if (!widgetItem) return;
+                            const widgetId = widgetItem.getAttribute('gs-id');
+                            const rawControls = el.getAttribute('data-raw-controls');
+                            if (!rawControls) return;
+                            
+                            try {
+                                const controls = JSON.parse(rawControls);
+                                
+                                const headerEl = el.closest('.grid-stack-item-content')?.querySelector('[data-variables]');
+                                let variables = {};
+                                if (headerEl) {
+                                    try { variables = JSON.parse(headerEl.getAttribute('data-variables') || '{}'); } catch(e) {}
+                                }
+                                
+                                let changed = false;
+                                
+                                for (const vKey in controls.series_assets || {}) {
+                                    const channel = variables[vKey]?.channel;
+                                    if (!channel) continue;
+                                    const currentAssets = controls.series_assets[vKey] || [];
+                                    if (currentAssets.length === 0) continue;
+                                    
+                                    const groupId = this.selectedAssetGroup;
+                                    if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
+                                    
+                                    const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
+                                    const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+                                    
+                                    let newAssets;
+                                    if (validAssets.length > 0) {
+                                        newAssets = validAssets;
+                                    } else if (allowedAssets.length > 0) {
+                                        newAssets = [allowedAssets[0]];
+                                    } else {
+                                        continue;
+                                    }
+                                    
+                                    if (JSON.stringify(newAssets) !== JSON.stringify(currentAssets)) {
+                                        controls.series_assets[vKey] = newAssets;
+                                        changed = true;
+                                    }
+                                }
+                                
+                                if (changed) {
+                                    el.setAttribute('data-raw-controls', JSON.stringify(controls));
+                                    this.reloadWidget(parseInt(widgetId), controls);
+                                }
+                            } catch (e) {}
+                        });
                     },
 
                     renderWidget(widgetId, el, controls) {
