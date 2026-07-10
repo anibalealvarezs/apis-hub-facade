@@ -429,8 +429,6 @@
                                 </template>
                             </div>
                         </div>
-                        </div>
-
                             {{-- Card: Edge Case Handling (KPI widgets only) --}}
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
@@ -476,6 +474,7 @@
                                     </div>
                                 </div>
                             </template>
+                        </div>
 
                     {{-- Right Column: Variables Configuration --}}
                     <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
