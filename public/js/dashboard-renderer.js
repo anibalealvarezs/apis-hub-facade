@@ -633,12 +633,24 @@ window.dashboardRenderer = {
         const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
         const yFmt = resultFormat || (controls?.metrics?.[0] ? (this.METRIC_FORMATS[controls.metrics[0]] || null) : null);
 
-        const formatPoint = (v, fmt) => {
-            if (!fmt) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        console.log('[ScatterPlot] controls:', controls);
+        console.log('[ScatterPlot] metrics:', controls?.metrics);
+        console.log('[ScatterPlot] resultFormat:', resultFormat);
+        console.log('[ScatterPlot] xFmt:', xFmt, '| yFmt:', yFmt);
+
+        const formatPoint = (v, fmt, axis) => {
+            if (!fmt) {
+                const r = v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                if (v === 0 || (v > 0 && v < 1)) console.log(`[formatPoint][${axis}] v=${v}, fmt=null →`, r);
+                return r;
+            }
             let val = fmt.multiply ? v * fmt.multiply : v;
-            if (fmt.format === 'currency') return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            if (fmt.format === 'percentage') return val.toFixed(1) + '%';
-            return val.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            let r;
+            if (fmt.format === 'currency') r = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            else if (fmt.format === 'percentage') r = val.toFixed(1) + '%';
+            else r = val.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            console.log(`[formatPoint][${axis}] v=${v}, fmt=${JSON.stringify(fmt)}, val=${val} →`, r);
+            return r;
         };
 
         const yAxisLabel = yFmt?.label || 'Value';
@@ -684,7 +696,7 @@ window.dashboardRenderer = {
                         title: { display: true, text: data.x_label || xAxisLabel },
                         reverse: reverseX,
                         ticks: {
-                            callback: (v) => formatPoint(v, xFmt),
+                            callback: (v) => formatPoint(v, xFmt, 'X'),
                         },
                     },
                     y: {
@@ -692,7 +704,7 @@ window.dashboardRenderer = {
                         title: { display: true, text: data.y_label || yAxisLabel },
                         reverse: reverseY,
                         ticks: {
-                            callback: (v) => formatPoint(v, yFmt),
+                            callback: (v) => formatPoint(v, yFmt, 'Y'),
                         },
                     }
                 },
