@@ -629,8 +629,9 @@ window.dashboardRenderer = {
         const reverseY = controls?.metrics?.[0] === 'position';
         const reverseX = controls?.metrics?.[1] === 'position';
 
+        const resultFormat = this.getKpiResultFormat(controls);
         const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
-        const yFmt = controls?.metrics?.[0] ? (this.METRIC_FORMATS[controls.metrics[0]] || null) : null;
+        const yFmt = resultFormat || (controls?.metrics?.[0] ? (this.METRIC_FORMATS[controls.metrics[0]] || null) : null);
 
         const formatPoint = (v, fmt) => {
             if (!fmt) return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
