@@ -36,7 +36,6 @@
             <template x-if="dashboardDefaults.show_asset_group_selector">
                 <select x-model="selectedAssetGroup" x-on:change="applyAssetGroup()"
                         class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs">
-                    <option value="">{{ __('All Assets') }}</option>
                     <template x-for="(name, id) in assetGroups" :key="id">
                         <option :value="id" x-text="name"></option>
                     </template>
