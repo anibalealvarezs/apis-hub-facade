@@ -224,38 +224,37 @@ class DashboardWidgetDataController extends Controller
                 ];
             } elseif ($effectiveWidgetType === 'scatter_plot' && isset($data['scatter_data'])) {
                 $scatter = $data['scatter_data'];
+                $rawX = $scatter['x'];
+                $rawY = $scatter['y'];
+                $n = count($rawX);
+
                 $maxRatio = $resolvedControls['max_ratio'] ?? null;
-                $points = [];
-                foreach ($scatter['x'] as $i => $x) {
-                    $y = $scatter['y'][$i];
-                    if ($maxRatio !== null && ($y > $maxRatio || ($scatter['x'][$i] > $maxRatio))) {
-                        continue;
-                    }
-                    $point = ['x' => $x, 'y' => $y];
-                    if (isset($scatter['labels'][$i])) {
-                        $point['label'] = $scatter['labels'][$i];
-                    }
-                    $points[] = $point;
-                }
-                
-                // Recompute regression on the capped data
-                $cleanX = array_column($points, 'x');
-                $cleanY = array_column($points, 'y');
-                $n = count($points);
+                $modelType = $data['model_type'] ?? 'linear';
+
+                // Build regression from ALL data (not filtered)
                 $b = 0;
                 $m = 0;
                 $rSquared = null;
-                $modelType = $data['model_type'] ?? 'linear';
-                
                 if ($n >= 2) {
                     if ($modelType === 'log-log') {
-                        $logX = array_map(fn($v) => $v > 0 ? log($v) : null, $cleanX);
-                        $logY = array_map(fn($v) => $v > 0 ? log($v) : null, $cleanY);
-                        $valid = array_filter(array_map(fn($lx, $ly) => $lx !== null && $ly !== null ? true : null, $logX, $logY));
+                        $logX = array_map(fn($v) => $v > 0 ? log($v) : null, $rawX);
+                        $logY = array_map(fn($v) => $v > 0 ? log($v) : null, $rawY);
+                        $valid = [];
+                        foreach ($logX as $i => $lx) {
+                            if ($lx !== null && $logY[$i] !== null) {
+                                $valid[] = true;
+                            }
+                        }
                         $validN = count($valid);
                         if ($validN >= 2) {
-                            $validLogX = array_values(array_filter($logX, fn($v) => $v !== null));
-                            $validLogY = array_values(array_filter($logY, fn($v) => $v !== null));
+                            $validLogX = [];
+                            $validLogY = [];
+                            foreach ($logX as $i => $lx) {
+                                if ($lx !== null && $logY[$i] !== null) {
+                                    $validLogX[] = $lx;
+                                    $validLogY[] = $logY[$i];
+                                }
+                            }
                             $sumX = array_sum($validLogX);
                             $sumY = array_sum($validLogY);
                             $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $validLogX, $validLogY));
@@ -267,26 +266,25 @@ class DashboardWidgetDataController extends Controller
                             $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
                         }
                     } else {
-                        $sumX = array_sum($cleanX);
-                        $sumY = array_sum($cleanY);
-                        $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $cleanX, $cleanY));
-                        $sumX2 = array_sum(array_map(fn($v) => $v * $v, $cleanX));
+                        $sumX = array_sum($rawX);
+                        $sumY = array_sum($rawY);
+                        $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $rawX, $rawY));
+                        $sumX2 = array_sum(array_map(fn($v) => $v * $v, $rawX));
                         $denom = $n * $sumX2 - $sumX * $sumX;
                         if ($denom != 0) {
                             $m = ($n * $sumXY - $sumX * $sumY) / $denom;
                             $b = ($sumY - $m * $sumX) / $n;
-                            $ssRes = array_sum(array_map(fn($xi, $yi) => ($yi - ($m * $xi + $b)) ** 2, $cleanX, $cleanY));
-                            $ssTot = array_sum(array_map(fn($yi) => ($yi - $sumY / $n) ** 2, $cleanY));
+                            $ssRes = array_sum(array_map(fn($xi, $yi) => ($yi - ($m * $xi + $b)) ** 2, $rawX, $rawY));
+                            $ssTot = array_sum(array_map(fn($yi) => ($yi - $sumY / $n) ** 2, $rawY));
                             $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
                         }
                     }
                 }
-                
-                $minX = count($points) > 0 ? min($cleanX) : 0;
-                $maxX = count($points) > 0 ? max($cleanX) : 0;
-                
+
+                $minX = $n > 0 ? min($rawX) : 0;
+                $maxX = $n > 0 ? max($rawX) : 0;
+
                 $trendLineData = [];
-                
                 if ($modelType === 'log-log') {
                     $steps = 20;
                     if ($maxX > $minX) {
@@ -294,8 +292,7 @@ class DashboardWidgetDataController extends Controller
                         for ($i = 0; $i <= $steps; $i++) {
                             $currX = $minX + ($i * $stepSize);
                             if ($currX > 0) {
-                                $currY = exp($b) * pow($currX, $m);
-                                $trendLineData[] = ['x' => $currX, 'y' => $currY];
+                                $trendLineData[] = ['x' => $currX, 'y' => exp($b) * pow($currX, $m)];
                             }
                         }
                     }
@@ -303,11 +300,25 @@ class DashboardWidgetDataController extends Controller
                     if ($maxX > $minX) {
                         $trendLineData = [
                             ['x' => $minX, 'y' => $m * $minX + $b],
-                            ['x' => $maxX, 'y' => $m * $maxX + $b]
+                            ['x' => $maxX, 'y' => $m * $maxX + $b],
                         ];
                     }
                 }
-                
+
+                // Filter points for display only; regression stays based on all data
+                $points = [];
+                foreach ($rawX as $i => $x) {
+                    $y = $rawY[$i];
+                    if ($maxRatio !== null && $y > $maxRatio) {
+                        continue;
+                    }
+                    $point = ['x' => $x, 'y' => $y];
+                    if (isset($scatter['labels'][$i])) {
+                        $point['label'] = $scatter['labels'][$i];
+                    }
+                    $points[] = $point;
+                }
+
                 $data = [
                     'labels' => [],
                     'datasets' => [
@@ -316,7 +327,7 @@ class DashboardWidgetDataController extends Controller
                             'label' => 'Data Points',
                             'data' => $points,
                             'backgroundColor' => 'rgba(59, 130, 246, 0.6)',
-                            'pointRadius' => 4
+                            'pointRadius' => 4,
                         ],
                         [
                             'type' => 'line',
@@ -325,8 +336,8 @@ class DashboardWidgetDataController extends Controller
                             'borderColor' => '#3b82f6',
                             'borderWidth' => 2,
                             'fill' => false,
-                            'pointRadius' => 0
-                        ]
+                            'pointRadius' => 0,
+                        ],
                     ],
                     'x_label' => $scatter['x_label'] ?? 'Independent Variable',
                     'y_label' => $scatter['y_label'] ?? null,

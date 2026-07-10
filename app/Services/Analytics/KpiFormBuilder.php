@@ -910,7 +910,7 @@ class KpiFormBuilder
                                 ->minValue(0)
                                 ->step(0.01)
                                 ->placeholder('e.g. 1.0')
-                                ->helperText('Caps the ratio at this value (e.g. 1.0 = 100%). Points exceeding the cap are filtered from scatter plots. Leave empty for no cap.'),
+                                ->helperText('Caps the Y-axis ratio at this value (e.g. 1.0 = 100%). Scatter points where the computed ratio exceeds the cap are filtered. Leave empty for no cap.'),
                             Actions::make([
                                 Actions\Action::make('back_scope')
                                                 ->label(__('Back'))
