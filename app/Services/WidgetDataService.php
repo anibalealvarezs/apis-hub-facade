@@ -48,6 +48,14 @@ class WidgetDataService
             }
         }
 
+        // Inherit max_ratio from KPI's _ui_state when not set on widget
+        if (!isset($resolved['max_ratio']) && $widget->source_type === 'kpi' && $widget->customKpi) {
+            $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
+            if (isset($kpiUiState['max_ratio'])) {
+                $resolved['max_ratio'] = $kpiUiState['max_ratio'];
+            }
+        }
+
         return $resolved;
     }
 

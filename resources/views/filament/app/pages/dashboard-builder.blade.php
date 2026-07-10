@@ -525,6 +525,41 @@
                                     </div>
                                 </div>
                             </template>
+
+                            {{-- Card: Max Ratio (KPI widgets only) --}}
+                            <template x-if="widgetControlsTarget.source_type === 'kpi'">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                                            </svg>
+                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Max Ratio</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="widgetControlsForm.max_ratio_inherit" class="sr-only peer"/>
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                            <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.max_ratio_inherit ? 'Inherit' : 'Custom'"></span>
+                                        </label>
+                                    </div>
+                                    <div class="p-6">
+                                        <template x-if="widgetControlsForm.max_ratio_inherit">
+                                            <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                <span x-text="widgetControlsForm.max_ratio !== null && widgetControlsForm.max_ratio !== undefined ? 'Cap at ' + widgetControlsForm.max_ratio : 'No cap'"></span>
+                                                <span class="block text-xs text-gray-400 mt-1">Inherited from KPI configuration</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!widgetControlsForm.max_ratio_inherit">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Value cap (null = no cap)</label>
+                                                <input type="number" step="0.01" min="0" x-model="widgetControlsForm.max_ratio"
+                                                       class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                       placeholder="e.g. 1.0"/>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                     {{-- Right Column: Variables Configuration --}}
@@ -1259,7 +1294,11 @@
                         const labels = {
                             zero_handling: {remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros'},
                             granularity: {daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', query: 'Query', 'dimensions.page': 'Page', country: 'Country', device: 'Device', post: 'Post'},
+                            max_ratio: 'Cap at {value}',
                         };
+                        if (key === 'max_ratio') {
+                            return value !== null && value !== undefined ? `Cap at ${value}` : 'No cap';
+                        }
                         return (labels[key] && labels[key][value]) || value || '—';
                     },
 
@@ -1352,6 +1391,8 @@
                             edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
                             edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : (this.dashboardControls.edge_case_weighted ?? true),
                             edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
+                            max_ratio_inherit: wc.max_ratio === undefined,
+                            max_ratio: wc.max_ratio !== undefined ? wc.max_ratio : null,
                             raw_series: [],
                         };
 
@@ -1412,6 +1453,9 @@
                                 }
                                 if (this.widgetControlsForm.granularity_inherit) {
                                     this.widgetControlsForm.granularity = config?.granularity ?? this.dashboardControls.granularity ?? 'daily';
+                                }
+                                if (this.widgetControlsForm.max_ratio_inherit) {
+                                    this.widgetControlsForm.max_ratio = config?.max_ratio !== undefined ? config.max_ratio : null;
                                 }
                                 
                                 // Initialize arrays if undefined
@@ -1690,6 +1734,8 @@
                             edge_case_inherit: true,
                             edge_case_weighted: true,
                             edge_case_grouping: 'none',
+                            max_ratio_inherit: true,
+                            max_ratio: null,
                         };
                     },
 
@@ -1735,6 +1781,10 @@
                         if (!c.edge_case_inherit) {
                             payload.edge_case_weighted = !!c.edge_case_weighted;
                             payload.edge_case_grouping = c.edge_case_grouping || 'none';
+                        }
+
+                        if (!c.max_ratio_inherit) {
+                            payload.max_ratio = c.max_ratio !== '' && c.max_ratio !== null ? parseFloat(c.max_ratio) : null;
                         }
 
                         this.widgetControlsError = '';

@@ -275,6 +275,7 @@ class PredefinedKpiRegistry
                     'weighted' => true,
                     'grouping' => 'histogram',
                 ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -307,6 +308,7 @@ class PredefinedKpiRegistry
                     'weighted' => true,
                     'grouping' => 'histogram',
                 ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -479,6 +481,7 @@ class PredefinedKpiRegistry
                     'weighted' => true,
                     'grouping' => 'histogram',
                 ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -836,6 +839,7 @@ class PredefinedKpiRegistry
                     'weighted' => true,
                     'grouping' => 'histogram',
                 ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',

@@ -224,27 +224,70 @@ class DashboardWidgetDataController extends Controller
                 ];
             } elseif ($effectiveWidgetType === 'scatter_plot' && isset($data['scatter_data'])) {
                 $scatter = $data['scatter_data'];
+                $maxRatio = $resolvedControls['max_ratio'] ?? null;
                 $points = [];
                 foreach ($scatter['x'] as $i => $x) {
-                    $point = ['x' => $x, 'y' => $scatter['y'][$i]];
+                    $y = $scatter['y'][$i];
+                    if ($maxRatio !== null && ($y > $maxRatio || ($scatter['x'][$i] > $maxRatio))) {
+                        continue;
+                    }
+                    $point = ['x' => $x, 'y' => $y];
                     if (isset($scatter['labels'][$i])) {
                         $point['label'] = $scatter['labels'][$i];
                     }
                     $points[] = $point;
                 }
                 
-                // Generar linea de tendencia ideal
-                $b = $data['baseline_intercept'] ?? 0;
-                $m = array_values($data['coefficients'])[0] ?? 0;
+                // Recompute regression on the capped data
+                $cleanX = array_column($points, 'x');
+                $cleanY = array_column($points, 'y');
+                $n = count($points);
+                $b = 0;
+                $m = 0;
+                $rSquared = null;
                 $modelType = $data['model_type'] ?? 'linear';
                 
-                $minX = min($scatter['x']);
-                $maxX = max($scatter['x']);
+                if ($n >= 2) {
+                    if ($modelType === 'log-log') {
+                        $logX = array_map(fn($v) => $v > 0 ? log($v) : null, $cleanX);
+                        $logY = array_map(fn($v) => $v > 0 ? log($v) : null, $cleanY);
+                        $valid = array_filter(array_map(fn($lx, $ly) => $lx !== null && $ly !== null ? true : null, $logX, $logY));
+                        $validN = count($valid);
+                        if ($validN >= 2) {
+                            $validLogX = array_values(array_filter($logX, fn($v) => $v !== null));
+                            $validLogY = array_values(array_filter($logY, fn($v) => $v !== null));
+                            $sumX = array_sum($validLogX);
+                            $sumY = array_sum($validLogY);
+                            $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $validLogX, $validLogY));
+                            $sumX2 = array_sum(array_map(fn($v) => $v * $v, $validLogX));
+                            $m = ($validN * $sumXY - $sumX * $sumY) / ($validN * $sumX2 - $sumX * $sumX);
+                            $b = ($sumY - $m * $sumX) / $validN;
+                            $ssRes = array_sum(array_map(fn($lx, $ly) => ($ly - ($m * $lx + $b)) ** 2, $validLogX, $validLogY));
+                            $ssTot = array_sum(array_map(fn($ly) => ($ly - $sumY / $validN) ** 2, $validLogY));
+                            $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
+                        }
+                    } else {
+                        $sumX = array_sum($cleanX);
+                        $sumY = array_sum($cleanY);
+                        $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $cleanX, $cleanY));
+                        $sumX2 = array_sum(array_map(fn($v) => $v * $v, $cleanX));
+                        $denom = $n * $sumX2 - $sumX * $sumX;
+                        if ($denom != 0) {
+                            $m = ($n * $sumXY - $sumX * $sumY) / $denom;
+                            $b = ($sumY - $m * $sumX) / $n;
+                            $ssRes = array_sum(array_map(fn($xi, $yi) => ($yi - ($m * $xi + $b)) ** 2, $cleanX, $cleanY));
+                            $ssTot = array_sum(array_map(fn($yi) => ($yi - $sumY / $n) ** 2, $cleanY));
+                            $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
+                        }
+                    }
+                }
+                
+                $minX = count($points) > 0 ? min($cleanX) : 0;
+                $maxX = count($points) > 0 ? max($cleanX) : 0;
                 
                 $trendLineData = [];
                 
                 if ($modelType === 'log-log') {
-                    // Para log-log: ln(y) = m * ln(x) + b  =>  y = exp(b) * x^m
                     $steps = 20;
                     if ($maxX > $minX) {
                         $stepSize = ($maxX - $minX) / $steps;
@@ -257,11 +300,12 @@ class DashboardWidgetDataController extends Controller
                         }
                     }
                 } else {
-                    // Para linear: y = mx + b
-                    $trendLineData = [
-                        ['x' => $minX, 'y' => $m * $minX + $b],
-                        ['x' => $maxX, 'y' => $m * $maxX + $b]
-                    ];
+                    if ($maxX > $minX) {
+                        $trendLineData = [
+                            ['x' => $minX, 'y' => $m * $minX + $b],
+                            ['x' => $maxX, 'y' => $m * $maxX + $b]
+                        ];
+                    }
                 }
                 
                 $data = [
@@ -285,7 +329,10 @@ class DashboardWidgetDataController extends Controller
                         ]
                     ],
                     'x_label' => $scatter['x_label'] ?? 'Independent Variable',
-                    'y_label' => $scatter['y_label'] ?? null
+                    'y_label' => $scatter['y_label'] ?? null,
+                    'r_squared' => $rSquared,
+                    'coefficients' => [$m],
+                    'baseline_intercept' => $b,
                 ];
             }
 
@@ -347,6 +394,10 @@ class DashboardWidgetDataController extends Controller
         }
         if (isset($controls['edge_case_grouping'])) {
             $controlsToMerge['edge_case_grouping'] = $controls['edge_case_grouping'];
+        }
+
+        if (isset($controls['max_ratio'])) {
+            $controlsToMerge['max_ratio'] = $controls['max_ratio'] !== null ? (float) $controls['max_ratio'] : null;
         }
 
         // If independent variables are present and missing channels/assets, override them with controls

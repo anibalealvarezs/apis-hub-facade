@@ -241,6 +241,13 @@
                                                 <option value="percentile">Bottom percentile</option>
                                             </select>
                                         </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Max ratio cap</label>
+                                            <input type="number" step="0.01" min="0" x-model="settingsControls.max_ratio"
+                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   placeholder="No cap"/>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Filter out ratio values above this threshold.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </template>

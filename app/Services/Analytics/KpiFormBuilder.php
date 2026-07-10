@@ -581,6 +581,9 @@ class KpiFormBuilder
                                                 if (!empty($kpi['default_edge_case_handling']['grouping'])) {
                                                     $set('edge_case_grouping', $kpi['default_edge_case_handling']['grouping']);
                                                 }
+                                                if (isset($kpi['default_max_ratio'])) {
+                                                    $set('max_ratio', $kpi['default_max_ratio']);
+                                                }
 
                                                 $activeChannels = array_keys(self::getActiveChannels());
                                                 $registryTags = ChannelCapabilityRegistry::getTags();

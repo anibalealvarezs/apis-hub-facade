@@ -28,6 +28,7 @@ class KpiPayloadBuilder
                 'weighted' => (bool)($state['edge_case_weighted'] ?? true),
                 'grouping' => $state['edge_case_grouping'] ?? 'none',
             ],
+            'max_ratio' => $state['max_ratio'] ?? null,
             $calculationType => true,
         ];
     }

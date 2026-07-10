@@ -225,6 +225,11 @@ trait LoadsDashboardViewData
                     $resolved['granularity'] = $uiState['granularity'];
                 }
 
+                // Max ratio: widget → KPI config → null (no cap)
+                if (!isset($widgetControls['max_ratio']) && isset($uiState['max_ratio'])) {
+                    $resolved['max_ratio'] = $uiState['max_ratio'];
+                }
+
                 // Edge cases: widget → KPI config → dashboard → smart default
                 if (!isset($widgetControls['edge_case_weighted'])) {
                     $resolved['edge_case_weighted'] = $uiState['edge_case_weighted']
