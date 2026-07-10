@@ -904,6 +904,13 @@ class KpiFormBuilder
                                 ])
                                 ->default('none')
                                 ->helperText('Groups sparse dimension values (e.g. queries with very few clicks) into a single "others" centroid to improve chart readability.'),
+                            TextInput::make('max_ratio')
+                                ->label(__('Max ratio cap'))
+                                ->numeric()
+                                ->minValue(0)
+                                ->step(0.01)
+                                ->placeholder('e.g. 1.0')
+                                ->helperText('Caps the ratio at this value (e.g. 1.0 = 100%). Points exceeding the cap are filtered from scatter plots. Leave empty for no cap.'),
                             Actions::make([
                                 Actions\Action::make('back_scope')
                                                 ->label(__('Back'))
@@ -1053,7 +1060,9 @@ class KpiFormBuilder
         $groupLabels = ['none' => 'No grouping', 'histogram' => 'Histogram-elbow', 'percentile' => 'Bottom percentile'];
         $wlsStatus = $get('edge_case_weighted') ? '✅ WLS' : '—';
         $groupMethod = e($groupLabels[$get('edge_case_grouping')] ?? ($get('edge_case_grouping') ?: '—'));
-        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Edge case handling</dt><dd class=\"text-gray-950 dark:text-white\">{$wlsStatus} / {$groupMethod}</dd>";
+        $maxRatio = $get('max_ratio');
+        $maxRatioText = $maxRatio !== null && $maxRatio !== '' ? 'Cap at ' . e($maxRatio) : 'No cap';
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Edge case handling</dt><dd class=\"text-gray-950 dark:text-white\">{$wlsStatus} / {$groupMethod} / {$maxRatioText}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Date range</dt><dd class=\"text-gray-950 dark:text-white\">{$start} → {$end}</dd>";
         $html .= '</dl></div>';
 
