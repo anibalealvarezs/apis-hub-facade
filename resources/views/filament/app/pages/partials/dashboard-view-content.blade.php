@@ -428,6 +428,17 @@
                                 };
                             }
                         }
+                        
+                        // Reload the widget preview with the filtered asset selection
+                        const widgetId = this.settingsWidgetId;
+                        const controls = this.settingsControls;
+                        window.dispatchEvent(new CustomEvent('reload-widget', {
+                            detail: {
+                                id: widgetId,
+                                controls: controls
+                            }
+                        }));
+                        this.reloadWidget(widgetId, controls);
                     },
 
                     renderWidget(widgetId, el, controls) {
