@@ -85,6 +85,21 @@ class DashboardWidgetDataController extends Controller
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
 
+            // Ensure controls.metrics reflects the actual resolved metrics
+            if ($widget->source_type === 'kpi' && $widget->customKpi) {
+                $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
+                $runtimeMetrics = $resolvedControls['metrics'] ?? [];
+                if (empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric'])) {
+                    $resolvedControls['metrics'][0] = $kpiUiState['dependent_metric'];
+                }
+                if (empty($runtimeMetrics[1]) && isset($kpiUiState['independent_variables'])) {
+                    $firstIvar = reset($kpiUiState['independent_variables']);
+                    if (!empty($firstIvar['independent_metric'])) {
+                        $resolvedControls['metrics'][1] = $firstIvar['independent_metric'];
+                    }
+                }
+            }
+
             $effectiveWidgetType = $widget->widget_type;
 
             if (isset($data['anomaly_detected'])) {
