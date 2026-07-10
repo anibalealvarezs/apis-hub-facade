@@ -21,6 +21,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -56,6 +61,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -185,6 +195,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -255,6 +270,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -282,6 +302,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'query',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -308,6 +333,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -386,6 +416,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -439,6 +474,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'post',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -500,6 +540,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -527,6 +572,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'query',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -622,6 +672,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -675,6 +730,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -702,6 +762,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -729,6 +794,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
                 'default_granularity' => 'country',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -756,6 +826,11 @@ class PredefinedKpiRegistry
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
                 'default_granularity' => 'device',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -808,6 +883,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -834,6 +914,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -869,6 +954,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -913,6 +1003,11 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_elasticity',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',

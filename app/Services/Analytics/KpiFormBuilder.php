@@ -879,6 +879,19 @@ class KpiFormBuilder
                                 ])
                                 ->default('trim')
                                 ->helperText('How to treat zero values in the time series before analysis.'),
+                            Toggle::make('edge_case_weighted')
+                                ->label(__('Weighted regression (WLS)'))
+                                ->default(true)
+                                ->helperText('Weight each dimension value by its volume (e.g. clicks), so items with more data influence the regression line proportionally more. Keeps the math robust even with noisy low-volume items.'),
+                            Select::make('edge_case_grouping')
+                                ->label(__('Group low-frequency values'))
+                                ->options([
+                                    'none' => __('No grouping'),
+                                    'histogram' => __('Auto histogram-elbow'),
+                                    'percentile' => __('Bottom percentile'),
+                                ])
+                                ->default('none')
+                                ->helperText('Groups sparse dimension values (e.g. queries with very few clicks) into a single "others" centroid to improve chart readability.'),
                             Actions::make([
                                 Actions\Action::make('back_scope')
                                                 ->label(__('Back'))
@@ -1025,6 +1038,10 @@ class KpiFormBuilder
         }
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";
+        $groupLabels = ['none' => 'No grouping', 'histogram' => 'Histogram-elbow', 'percentile' => 'Bottom percentile'];
+        $wlsStatus = $get('edge_case_weighted') ? '✅ WLS' : '—';
+        $groupMethod = e($groupLabels[$get('edge_case_grouping')] ?? ($get('edge_case_grouping') ?: '—'));
+        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Edge case handling</dt><dd class=\"text-gray-950 dark:text-white\">{$wlsStatus} / {$groupMethod}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Date range</dt><dd class=\"text-gray-950 dark:text-white\">{$start} → {$end}</dd>";
         $html .= '</dl></div>';
 

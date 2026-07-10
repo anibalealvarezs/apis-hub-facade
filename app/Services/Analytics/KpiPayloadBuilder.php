@@ -24,6 +24,10 @@ class KpiPayloadBuilder
                 'groupBy' => [$runtimeOverrides['granularity'] ?? $state['granularity'] ?? 'daily'],
             ],
             'zero_handling' => $runtimeOverrides['zero_handling'] ?? $state['zero_handling'] ?? 'remove',
+            'edge_case_handling' => [
+                'weighted' => (bool)($state['edge_case_weighted'] ?? true),
+                'grouping' => $state['edge_case_grouping'] ?? 'none',
+            ],
             $calculationType => true,
         ];
     }
