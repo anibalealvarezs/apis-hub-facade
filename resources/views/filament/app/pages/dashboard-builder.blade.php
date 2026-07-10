@@ -1019,6 +1019,7 @@
 
         <script>
             function dashboardBuilder() {
+                const dashboardControls = @json($this->getDashboardControls());
                 return {
                     // ─── Grid State ───
                     widgets: @json($this->widgets ?? []),
@@ -1037,7 +1038,7 @@
                     // ─── Dashboard Controls ──
                     showDashboardControls: false,
                     showWidgetControls: false,
-                    dashboardControls: @json($this->getDashboardControls()),
+                    dashboardControls,
 
                     // ─── Widget Controls ──
                     widgetControlsTarget: {},
