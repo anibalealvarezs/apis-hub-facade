@@ -27,10 +27,35 @@ class KpiPayloadBuilder
             'edge_case_handling' => [
                 'weighted' => (bool)($state['edge_case_weighted'] ?? true),
                 'grouping' => $state['edge_case_grouping'] ?? 'none',
+                'group_column' => self::resolveGroupColumn($state),
             ],
             'max_ratio' => $state['max_ratio'] ?? null,
             $calculationType => true,
         ];
+    }
+
+    public static function buildWithGroupColumnDebug(string $calculationType, array $state, array $runtimeOverrides = []): array
+    {
+        $payload = self::build($calculationType, $state, $runtimeOverrides);
+        $groupColumn = self::resolveGroupColumn($state);
+        \Illuminate\Support\Facades\Log::info('KPI payload group_column test', [
+            'group_column' => $groupColumn,
+            'has_group_column_in_payload' => isset($payload['edge_case_handling']['group_column']),
+            'payload_edge_case' => $payload['edge_case_handling'],
+        ]);
+        return $payload;
+    }
+
+    private static function resolveGroupColumn(array $state): ?string
+    {
+        $independents = $state['independent_variables'] ?? [];
+        foreach ($independents as $var) {
+            $metric = $var['independent_metric'] ?? '';
+            if ($metric === 'position') {
+                return 'y';
+            }
+        }
+        return null;
     }
 
     public static function buildAstFromState(string $calculationType, array $state): array
