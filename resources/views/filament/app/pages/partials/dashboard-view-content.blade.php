@@ -171,7 +171,7 @@
                         </button>
                     </div>
                 </div>
-                <div x-ref="popOutContent" class="flex-grow relative overflow-hidden">
+                <div x-ref="popOutContent" class="flex-grow relative overflow-hidden p-10">
                 </div>
             </div>
         </div>
