@@ -143,8 +143,8 @@
              class="fixed inset-0 flex items-center justify-center bg-black/50"
              @click.self="closePopOut()">
             <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden" style="width: 95vw; height: 95vh;">
-                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/50">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
                     <div class="flex items-center gap-1 flex-shrink-0">
                         <button @click="openModalSettings()"
                                 class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -161,9 +161,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
                             </svg>
                         </button>
+                        <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                        <button @click="closePopOut()"
+                                class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Close">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div x-ref="popOutContent" class="flex-grow p-4 relative overflow-hidden">
+                <div x-ref="popOutContent" class="flex-grow relative overflow-hidden">
                 </div>
             </div>
         </div>
@@ -565,16 +573,18 @@
                             if (!effectiveControls.date_end && this.dashboardDefaults.date_end) effectiveControls.date_end = this.dashboardDefaults.date_end;
                         }
 
-                        const tryRender = () => {
-                            if (window.dashboardRenderer) {
-                                window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
-                                    .then(() => { this.loadedCount++; })
-                                    .catch(() => { this.loadedCount++; });
-                            } else {
-                                setTimeout(tryRender, 50);
-                            }
-                        };
-                        tryRender();
+                        return new Promise(resolve => {
+                            const tryRender = () => {
+                                if (window.dashboardRenderer) {
+                                    window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
+                                        .then(() => { this.loadedCount++; resolve(); })
+                                        .catch(() => { this.loadedCount++; resolve(); });
+                                } else {
+                                    setTimeout(tryRender, 50);
+                                }
+                            };
+                            tryRender();
+                        });
                     },
 
                     refreshAll() {
@@ -611,12 +621,12 @@
 
                     reloadWidget(widgetId, controls) {
                         const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
-                        if (!widgetItem) return;
+                        if (!widgetItem) return Promise.resolve();
                         const el = widgetItem.querySelector('.widget-content');
-                        if (!el) return;
+                        if (!el) return Promise.resolve();
                         el.innerHTML = '';
                         if (this.loadedCount > 0) this.loadedCount--;
-                        this.renderWidget(widgetId, el, controls);
+                        return this.renderWidget(widgetId, el, controls) || Promise.resolve();
                     },
 
                     settingsWidgetId: null,
@@ -702,7 +712,20 @@
                                 controls: controls
                             }
                         }));
-                        this.reloadWidget(widgetId, controls);
+                        const reloadPromise = this.reloadWidget(widgetId, controls);
+                        if (this.popOutActive && this.popOutWidgetId === widgetId) {
+                            Promise.resolve(reloadPromise).then(() => {
+                                this.$nextTick(() => {
+                                    const renderer = window.dashboardRenderer;
+                                    if (!renderer) return;
+                                    const target = this.$refs.popOutContent;
+                                    if (!target) return;
+                                    const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                                    if (!contentEl) return;
+                                    renderer.popOutWidget(contentEl, target);
+                                });
+                            });
+                        }
                         this.closeSettings();
                     },
 
