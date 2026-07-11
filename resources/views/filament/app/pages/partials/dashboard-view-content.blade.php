@@ -153,7 +153,7 @@
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-out duration-300"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          style="display: none; z-index: 999998;"
@@ -1018,7 +1018,7 @@
                             const originY = ((this._popFromRect.top + this._popFromRect.height / 2) - cardRect.top) / cardRect.height * 100;
                             card.style.transformOrigin = `${originX}% ${originY}%`;
                         }
-                        card.style.transition = 'transform 0.2s ease-in, opacity 0.15s ease-in';
+                        card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out';
                         card.style.transform = 'scale(0.25)';
                         card.style.opacity = '0';
 
