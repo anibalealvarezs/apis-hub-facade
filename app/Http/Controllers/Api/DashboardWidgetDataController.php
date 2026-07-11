@@ -662,6 +662,33 @@ class DashboardWidgetDataController extends Controller
                 : null,
         ]);
 
+        // Trace all occurrences of "unknown" in the scatter data (value could be duplicated)
+        if (isset($result['data']['scatter_data']['labels']) && isset($result['data']['scatter_data']['x'])) {
+            $unknownIndices = [];
+            foreach ($result['data']['scatter_data']['labels'] as $idx => $label) {
+                if (strtolower($label) === 'unknown') {
+                    $unknownIndices[] = $idx;
+                }
+            }
+            if (!empty($unknownIndices)) {
+                $unknownData = [];
+                foreach ($unknownIndices as $idx) {
+                    $unknownData[] = [
+                        'index' => $idx,
+                        'x' => $result['data']['scatter_data']['x'][$idx] ?? null,
+                        'y' => $result['data']['scatter_data']['y'][$idx] ?? null,
+                    ];
+                }
+                \Illuminate\Support\Facades\Log::info('unknown_trace: entries found', [
+                    'count' => count($unknownIndices),
+                    'entries' => $unknownData,
+                    'total_x_sum' => array_sum(array_column($unknownData, 'x')),
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::info('unknown_trace: no entries found in scatter_data');
+            }
+        }
+
         if (!($result['success'] ?? false)) {
             throw new \RuntimeException($result['message'] ?? 'KPI computation failed');
         }
