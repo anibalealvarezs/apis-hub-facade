@@ -233,11 +233,14 @@ class DashboardWidgetDataController extends Controller
 
                 // Remove data points where position > 30 (poor-ranking noise)
                 // Applied before regression so the trend line also excludes them.
+                // The histogram cluster centroid (label === "others") is kept
+                // regardless so [[[others]]] stays visible on the chart.
                 // Also filter labels to keep indices aligned with filtered x/y arrays.
                 if ($resolvedControls['metrics'][0] === 'position') {
                     $filteredX = []; $filteredY = []; $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
-                        if ($rawY[$i] <= 30) {
+                        $isCluster = isset($scatter['labels'][$i]) && $scatter['labels'][$i] === 'others';
+                        if ($isCluster || $rawY[$i] <= 30) {
                             $filteredX[] = $x; $filteredY[] = $rawY[$i];
                             if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
                         }
@@ -247,7 +250,8 @@ class DashboardWidgetDataController extends Controller
                 } elseif ($resolvedControls['metrics'][1] === 'position') {
                     $filteredX = []; $filteredY = []; $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
-                        if ($x <= 30) {
+                        $isCluster = isset($scatter['labels'][$i]) && $scatter['labels'][$i] === 'others';
+                        if ($isCluster || $x <= 30) {
                             $filteredX[] = $x; $filteredY[] = $rawY[$i];
                             if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
                         }
