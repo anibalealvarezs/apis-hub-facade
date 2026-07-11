@@ -255,10 +255,10 @@ window.dashboardRenderer = {
             ...ds,
             currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-            pointRadius: 3,
-            pointHoverRadius: 6,
+            pointRadius: 5,
+            pointHoverRadius: 9,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
-            pointBorderColor: '#ffffff',
+            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
@@ -566,10 +566,10 @@ window.dashboardRenderer = {
             ...ds,
             currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-            pointRadius: 3,
-            pointHoverRadius: 6,
+            pointRadius: 5,
+            pointHoverRadius: 9,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
-            pointBorderColor: '#ffffff',
+            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
@@ -701,9 +701,8 @@ window.dashboardRenderer = {
         if (mappedData.datasets) {
             mappedData.datasets = mappedData.datasets.map(ds => ({
                 ...ds,
-                pointRadius: 4,
-                pointHoverRadius: 7,
-                pointBorderColor: '#ffffff',
+                pointRadius: 6,
+                pointHoverRadius: 10,
                 pointBorderWidth: 2,
                 pointHoverBorderWidth: 2,
             }));
@@ -1060,8 +1059,19 @@ window.dashboardRenderer = {
             if (container._pendingPin) {
                 delete container._pendingPin;
                 if (tooltip && tooltip.opacity >= 0.01 && tooltip.body?.length) {
+                    let html = '';
+                    tooltip.body.forEach((body, i) => {
+                        const dp = tooltip.dataPoints?.[i];
+                        if (!dp) return;
+                        const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3b82f6';
+                        const val = body.lines?.[0] || '';
+                        html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                            '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                            '<span style="font-weight:600;">' + val + '</span>' +
+                            '</div>';
+                    });
                     this._pinnedTooltips.set(container, {
-                        html: tooltipEl.innerHTML,
+                        html,
                         caretX: tooltip.caretX,
                         caretY: tooltip.caretY,
                     });
