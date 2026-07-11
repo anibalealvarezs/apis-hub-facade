@@ -775,15 +775,27 @@ window.dashboardRenderer = {
             };
         }
 
-        // Constrain axes to scatter data only (ignore trend line endpoints)
+        // Constrain axes to scatter data only (ignore trend line endpoints),
+        // with 10 % breathing room so edge points aren't clipped by the grid border.
         let scatterPoints = mappedData.datasets?.find(d => d.type === 'scatter')?.data;
         if (scatterPoints && scatterPoints.length > 0) {
             const xs = scatterPoints.map(p => p.x);
             const ys = scatterPoints.map(p => p.y);
-            config.options.scales.x.min = Math.min(...xs);
-            config.options.scales.x.max = Math.max(...xs);
-            config.options.scales.y.min = Math.min(...ys);
-            config.options.scales.y.max = Math.max(...ys);
+            let xMin = Math.min(...xs), xMax = Math.max(...xs);
+            let yMin = Math.min(...ys), yMax = Math.max(...ys);
+            const xRange = xMax - xMin || 1;
+            const yRange = yMax - yMin || 1;
+            xMin -= xRange * 0.1;
+            xMax += xRange * 0.1;
+            yMin -= yRange * 0.1;
+            yMax += yRange * 0.1;
+            // Respect soft constraints from yScaleOpts (e.g. suggestedMin: 0 for ratio KPIs)
+            if (yScaleOpts.suggestedMin != null) yMin = Math.max(yMin, yScaleOpts.suggestedMin);
+            if (yScaleOpts.suggestedMax != null) yMax = Math.min(yMax, yScaleOpts.suggestedMax);
+            config.options.scales.x.min = xMin;
+            config.options.scales.x.max = xMax;
+            config.options.scales.y.min = yMin;
+            config.options.scales.y.max = yMax;
         }
 
         // Split cluster point ([[[others]]]) into its own hidden dataset for show/hide toggle
