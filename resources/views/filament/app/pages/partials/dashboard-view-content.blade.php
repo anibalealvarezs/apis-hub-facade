@@ -1,6 +1,8 @@
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
 
-    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4" @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)">
+    <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4"
+         @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)"
+         @open-pop-out.window="openPopOut($event.detail.widgetId)">
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div>
@@ -103,7 +105,7 @@
                                         </svg>
                                     </button>
                                     {{-- Expand button (fullscreen pop-out) --}}
-                                    <button @click="openPopOut()"
+                                    <button @click="$dispatch('open-pop-out', { widgetId })"
                                             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                                             title="Expand to Fullscreen">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -639,16 +641,6 @@
                             if (!this.settingsSearchQueries[key]) this.settingsSearchQueries[key] = '';
                         }
                         
-                        console.log("DEBUG openWidgetSettings:", {
-                            widgetId: widgetId,
-                            sourceType: sourceType,
-                            controls: controls,
-                            variables: variables,
-                            seriesOptions: seriesOptions,
-                            settingsSeriesOptions: this.settingsSeriesOptions,
-                            settingsVariables: this.settingsVariables
-                        });
-                        
                         // Apply global asset group filtering to preselected assets
                         if (this.selectedAssetGroup) {
                             for (const vKey in this.settingsVariables) {
@@ -770,25 +762,21 @@
                     popOutTitle: '',
                     popOutWidgetId: null,
 
-                    openPopOut(widgetId, title) {
-                        console.log('[PopOut] dashboardView.openPopOut called', { widgetId, title });
-                        const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
-                        console.log('[PopOut] contentEl found:', !!contentEl);
-                        if (!contentEl) return;
+                    openPopOut(widgetId) {
+                        const headerEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .grid-stack-item-content`);
+                        const title = headerEl?.querySelector('h3')?.textContent?.trim() || '';
 
                         this.popOutTitle = title;
                         this.popOutWidgetId = widgetId;
-                        console.log('[PopOut] Setting popOutActive = true');
                         this.popOutActive = true;
 
                         this.$nextTick(() => {
-                            console.log('[PopOut] $nextTick fired');
                             const renderer = window.dashboardRenderer;
-                            console.log('[PopOut] Renderer found:', !!renderer);
                             if (!renderer) return;
                             const target = this.$refs.popOutContent;
-                            console.log('[PopOut] popOutContent ref:', !!target);
                             if (!target) return;
+                            const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                            if (!contentEl) return;
                             renderer.popOutWidget(contentEl, target);
                         });
                     },
@@ -917,26 +905,6 @@
                         if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
                             dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
                         }
-                    },
-
-                    openPopOut() {
-                        console.log('[PopOut] widgetHeader.openPopOut called, widgetId:', this.widgetId);
-                        const dbView = document.getElementById('dashboard-view-container');
-                        console.log('[PopOut] dbView:', !!dbView, 'dbView.__x:', !!dbView?.__x, '$data:', !!dbView?.__x?.$data);
-                        if (!dbView || !dbView.__x || !dbView.__x.$data) {
-                            console.warn('[PopOut] Cannot find dashboardView component');
-                            return;
-                        }
-                        const headerEl = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .grid-stack-item-content`);
-                        const title = headerEl?.querySelector('h3')?.textContent?.trim() || '';
-                        console.log('[PopOut] Forwarding to dashboardView with title:', title, 'widgetId:', this.widgetId);
-                        dbView.__x.$data.openPopOut(this.widgetId, title);
-                    },
-
-                    closePopOut() {
-                        const dbView = document.getElementById('dashboard-view-container');
-                        if (!dbView || !dbView.__x || !dbView.__x.$data) return;
-                        dbView.__x.$data.closePopOut();
                     },
 
                     getBadges() {
