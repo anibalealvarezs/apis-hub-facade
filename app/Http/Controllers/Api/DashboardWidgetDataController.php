@@ -30,14 +30,14 @@ class DashboardWidgetDataController extends Controller
         $dashboard = $widget->dashboard;
 
         if ($dashboard->project_id !== $project->id) {
-            return response()->json(['error' => 'Forbidden'], 403);
+            return response()->json(['error' => 'Forbidden'], 403, [], JSON_UNESCAPED_UNICODE);
         }
 
         $user = $request->user();
 
         if (!$dashboard->is_public) {
             if (!$user || $user->cannot('view', $dashboard)) {
-                return response()->json(['error' => 'Unauthorized'], 403);
+                return response()->json(['error' => 'Unauthorized'], 403, [], JSON_UNESCAPED_UNICODE);
             }
         }
 
@@ -72,7 +72,7 @@ class DashboardWidgetDataController extends Controller
                         'success' => false,
                         'error' => 'access_restricted',
                         'message' => 'You do not have access to the selected asset for this dashboard.',
-                    ], 403);
+                    ], 403, [], JSON_UNESCAPED_UNICODE);
                 }
             }
         }
@@ -427,13 +427,13 @@ class DashboardWidgetDataController extends Controller
                 'source_type' => $widget->source_type,
                 'data' => $data,
                 'controls' => $resolvedControls,
-            ]);
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Throwable $e) {
             report($e);
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 500, [], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -666,6 +666,6 @@ class DashboardWidgetDataController extends Controller
             return $response;
         }
 
-        return json_decode(json_encode($response), true);
+        return json_decode(json_encode($response, JSON_UNESCAPED_UNICODE), true);
     }
 }

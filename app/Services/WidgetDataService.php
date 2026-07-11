@@ -90,7 +90,7 @@ class WidgetDataService
     public function computeControlsHash(array $controls): string
     {
         ksort($controls);
-        return hash('sha256', json_encode($controls));
+        return hash('sha256', json_encode($controls, JSON_UNESCAPED_UNICODE));
     }
 
     public function getCachedResult(int $customKpiId, string $controlsHash)
