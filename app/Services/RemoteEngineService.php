@@ -240,7 +240,16 @@ class RemoteEngineService
     {
         $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
         $payload['analytics_engine_host'] = env('ANALYTICS_ENGINE_HOST', 'https://analytics.apis-hub.cloud/');
-        return $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+
+        $logPayload = $payload;
+        unset($logPayload['admin_api_key']);
+        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI payload', $logPayload);
+
+        $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+
+        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => isset($result['data']) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
+
+        return $result;
     }
 
     /**

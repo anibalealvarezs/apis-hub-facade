@@ -448,6 +448,16 @@ class DashboardWidgetDataController extends Controller
                     'all_labels' => array_map(fn($p) => $p['label'] ?? 'no-label', $points),
                 ]);
 
+                if (!empty($points)) {
+                    $maxXPoint = $points[array_search(max(array_column($points, 'x')), array_column($points, 'x'))];
+                    \Illuminate\Support\Facades\Log::info('Max X point after filtering', [
+                        'label' => $maxXPoint['label'] ?? 'no-label',
+                        'x' => $maxXPoint['x'],
+                        'y' => $maxXPoint['y'],
+                        'isCluster' => !empty($maxXPoint['_isCluster']),
+                    ]);
+                }
+
                 $data = [
                     'labels' => [],
                     'datasets' => [
@@ -593,6 +603,20 @@ class DashboardWidgetDataController extends Controller
 
         $mergedState = array_merge($uiState, $controlsToMerge);
 
+        \Illuminate\Support\Facades\Log::info('Merged state after auto-resolution', [
+            'dependent_metric' => $mergedState['dependent_metric'] ?? null,
+            'dependent_channel' => $mergedState['dependent_channel'] ?? null,
+            'independent_vars' => collect($mergedState['independent_variables'] ?? [])->map(fn($v) => [
+                'channel' => $v['independent_channel'] ?? null,
+                'metric' => $v['independent_metric'] ?? null,
+                'group' => $v['independent_asset_group'] ?? null,
+            ])->values()->toArray(),
+            'granularity' => $mergedState['granularity'] ?? null,
+            'zero_handling' => $mergedState['zero_handling'] ?? null,
+            'grouping' => $mergedState['edge_case_grouping'] ?? null,
+            'weighted' => $mergedState['edge_case_weighted'] ?? null,
+        ]);
+
         if (empty($mergedState['dependent_metric'])) {
             $channelMetrics = !empty($uiState['dependent_channel'])
                 ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
@@ -617,7 +641,26 @@ class DashboardWidgetDataController extends Controller
             ]
         );
 
+        \Illuminate\Support\Facades\Log::info('KPI payload built', [
+            'calculation_type' => $kpi->calculation_type,
+            'ast' => $payload['ast'] ?? null,
+            'filters' => $payload['filters'] ?? null,
+            'zero_handling' => $payload['zero_handling'] ?? null,
+            'edge_case_handling' => $payload['edge_case_handling'] ?? null,
+            'max_ratio' => $payload['max_ratio'] ?? null,
+        ]);
+
         $result = $this->remoteEngineService->computeKpi($project, $payload);
+
+        \Illuminate\Support\Facades\Log::info('Raw result from remote node', [
+            'has_data' => isset($result['data']),
+            'scatter_data_keys' => isset($result['data']['scatter_data']) ? array_keys($result['data']['scatter_data']) : null,
+            'scatter_n' => isset($result['data']['scatter_data']['x']) ? count($result['data']['scatter_data']['x']) : null,
+            'scatter_max_x' => isset($result['data']['scatter_data']['x']) ? max($result['data']['scatter_data']['x']) : null,
+            'scatter_max_x_label' => isset($result['data']['scatter_data']['x']) && isset($result['data']['scatter_data']['labels'])
+                ? ($result['data']['scatter_data']['labels'][array_search(max($result['data']['scatter_data']['x']), $result['data']['scatter_data']['x'])] ?? 'unknown')
+                : null,
+        ]);
 
         if (!($result['success'] ?? false)) {
             throw new \RuntimeException($result['message'] ?? 'KPI computation failed');
