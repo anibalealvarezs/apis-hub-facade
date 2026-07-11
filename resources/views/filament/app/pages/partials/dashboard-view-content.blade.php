@@ -960,7 +960,7 @@
 
                             void card.offsetHeight;
 
-                            card.style.transition = 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease-out';
+                            card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out';
                             card.style.transform = 'scale(1)';
                             card.style.opacity = '1';
 
@@ -969,16 +969,24 @@
                                 card.style.transition = '';
                                 card.style.transform = '';
                                 card.style.opacity = '';
-                            }, {once: true});
-                        }
 
-                        const renderer = window.dashboardRenderer;
-                        if (!renderer) return;
-                        const target = this.$refs.popOutContent;
-                        if (!target) return;
-                        const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
-                        if (!contentEl) return;
-                        renderer.popOutWidget(contentEl, target);
+                                const renderer = window.dashboardRenderer;
+                                if (!renderer) return;
+                                const target = this.$refs.popOutContent;
+                                if (!target) return;
+                                const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                                if (!contentEl) return;
+                                renderer.popOutWidget(contentEl, target);
+                            }, {once: true});
+                        } else {
+                            const renderer = window.dashboardRenderer;
+                            if (!renderer) return;
+                            const target = this.$refs.popOutContent;
+                            if (!target) return;
+                            const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                            if (!contentEl) return;
+                            renderer.popOutWidget(contentEl, target);
+                        }
                     });
                 },
 
