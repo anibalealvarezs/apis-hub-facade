@@ -799,7 +799,13 @@ window.dashboardRenderer = {
             targetEl.innerHTML = '';
             targetEl.appendChild(canvas);
             const chart = this._chartInstances.get(containerEl);
-            if (chart) requestAnimationFrame(() => chart.resize());
+            if (chart) {
+                this._chartInstances.set(targetEl, chart);
+                this._chartInstances.delete(containerEl);
+                if (this._popOutObserver) this._popOutObserver.disconnect();
+                this._popOutObserver = new ResizeObserver(() => { chart.resize(); });
+                this._popOutObserver.observe(targetEl);
+            }
             return;
         }
         // HTML widget — clone content into target
@@ -811,23 +817,31 @@ window.dashboardRenderer = {
      * If the container was already re-rendered while popped out, discard the modal's canvas.
      */
     popInWidget(containerEl, targetEl) {
+        if (this._popOutObserver) {
+            this._popOutObserver.disconnect();
+            this._popOutObserver = null;
+        }
         const canvas = targetEl.querySelector('canvas');
         if (canvas) {
             const existingCanvas = containerEl.querySelector('canvas');
             if (existingCanvas) {
                 // Grid was reloaded while popped out — discard modal's stale chart
-                const chart = this._chartInstances.get(containerEl);
+                const chart = this._chartInstances.get(targetEl);
                 if (chart) {
                     chart.destroy();
-                    this._chartInstances.delete(containerEl);
+                    this._chartInstances.delete(targetEl);
                 }
                 targetEl.innerHTML = '';
                 return;
             }
             containerEl.innerHTML = '';
             containerEl.appendChild(canvas);
-            const chart = this._chartInstances.get(containerEl);
-            if (chart) requestAnimationFrame(() => chart.resize());
+            const chart = this._chartInstances.get(targetEl);
+            if (chart) {
+                this._chartInstances.set(containerEl, chart);
+                this._chartInstances.delete(targetEl);
+                chart.resize();
+            }
             return;
         }
         // HTML widget — content was cloned, not moved. Just clear the modal.
