@@ -684,15 +684,7 @@ window.dashboardRenderer = {
             scatterDataset.borderWidth = 1;
         }
 
-        // For bounded-ratio KPIs, force the ratio axis (Y) to start at 0 if no negative values exist
-        const isRatioKpi = controls?.max_ratio != null;
         const yScaleOpts = { type: 'linear', title: { display: true, text: data.y_label || yAxisLabel }, reverse: reverseY, ticks: { callback: (v) => formatPoint(v, yFmt, 'Y') } };
-        if (isRatioKpi) {
-            const allY = data.datasets?.find(d => d.type === 'scatter')?.data?.map(p => p.y) ?? [];
-            if (allY.length > 0 && Math.min(...allY) >= 0) {
-                yScaleOpts.suggestedMin = 0;
-            }
-        }
 
         const xMetricName = this.getMetricName(controls?.metrics?.[1]);
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
@@ -792,9 +784,6 @@ window.dashboardRenderer = {
             xMax += xRange * 0.1;
             yMin -= yRange * 0.1;
             yMax += yRange * 0.1;
-            // Respect soft constraints from yScaleOpts (e.g. suggestedMin: 0 for ratio KPIs)
-            if (yScaleOpts.suggestedMin != null) yMin = Math.max(yMin, yScaleOpts.suggestedMin);
-            if (yScaleOpts.suggestedMax != null) yMax = Math.min(yMax, yScaleOpts.suggestedMax);
             config.options.scales.x.min = xMin;
             config.options.scales.x.max = xMax;
             config.options.scales.x.afterBuildTicks = (axis) => {
