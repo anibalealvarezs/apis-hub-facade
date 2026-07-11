@@ -436,6 +436,44 @@ class DashboardWidgetDataController extends Controller
                     $points[] = $point;
                 }
 
+                // Top percentile cap for chart readability — keep only the top N%
+                // of points by x value (highest impressions, best positions).
+                $displayPercentile = (float) ($resolvedControls['display_percentile'] ?? 0.15);
+                $pointsBeforeCap = count($points);
+                if ($displayPercentile < 1.0 && $pointsBeforeCap > 10) {
+                    $nKeep = max(2, (int) ceil($pointsBeforeCap * $displayPercentile));
+                    $isPosition = ($resolvedControls['metrics'][1] ?? '') === 'position';
+
+                    $alwaysKeep = [];
+                    $filterable = [];
+                    foreach ($points as $p) {
+                        if (!empty($p['_isCluster']) || (isset($p['label']) && $p['label'] === 'unknown')) {
+                            $alwaysKeep[] = $p;
+                        } else {
+                            $filterable[] = $p;
+                        }
+                    }
+
+                    if (count($filterable) > $nKeep) {
+                        if ($isPosition) {
+                            usort($filterable, fn($a, $b) => $a['x'] <=> $b['x']);
+                        } else {
+                            usort($filterable, fn($a, $b) => $b['x'] <=> $a['x']);
+                        }
+                        $filterable = array_slice($filterable, 0, $nKeep);
+                    }
+
+                    $points = array_merge($alwaysKeep, $filterable);
+                    usort($points, fn($a, $b) => $a['x'] <=> $b['x']);
+
+                    \Illuminate\Support\Facades\Log::info('Scatter percentile cap applied', [
+                        'percentile' => $displayPercentile,
+                        'n_before' => $pointsBeforeCap,
+                        'n_after' => count($points),
+                        'always_kept' => count($alwaysKeep),
+                    ]);
+                }
+
                 \Illuminate\Support\Facades\Log::info('Scatter points after filtering', [
                     'total_points' => count($points),
                     'cluster_index' => $clusterIndex,
