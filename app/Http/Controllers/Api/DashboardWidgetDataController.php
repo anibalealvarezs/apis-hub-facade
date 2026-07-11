@@ -228,6 +228,14 @@ class DashboardWidgetDataController extends Controller
                 $rawY = $scatter['y'];
                 $n = count($rawX);
 
+                \Illuminate\Support\Facades\Log::info('Scatter data from Python', [
+                    'n' => $n,
+                    'x_sample' => array_slice($rawX, 0, 5),
+                    'y_sample' => array_slice($rawY, 0, 5),
+                    'labels' => isset($scatter['labels']) ? array_slice($scatter['labels'], 0, 10) : null,
+                    'all_labels' => $scatter['labels'] ?? null,
+                ]);
+
                 $maxRatio = $resolvedControls['max_ratio'] ?? null;
                 $modelType = $data['model_type'] ?? 'linear';
 
@@ -310,6 +318,17 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
 
+                \Illuminate\Support\Facades\Log::info('PHP regression result', [
+                    'n' => $n,
+                    'slope_m' => $m,
+                    'intercept_b' => $b,
+                    'r_squared' => $rSquared,
+                    'minX' => min($rawX),
+                    'maxX' => max($rawX),
+                    'sumX' => $sumX ?? null,
+                    'sumY' => $sumY ?? null,
+                ]);
+
                 $minX = $n > 0 ? min($rawX) : 0;
                 $maxX = $n > 0 ? max($rawX) : 0;
 
@@ -366,6 +385,15 @@ class DashboardWidgetDataController extends Controller
                     $xThreshold = $sortedX[$pctIdx];
                 }
 
+                \Illuminate\Support\Facades\Log::info('Volume filter config', [
+                    'xMetric' => $xMetric,
+                    'isVolumeMetric' => $isVolumeMetric,
+                    'hardFloor' => $hardFloor,
+                    'xThreshold' => $xThreshold,
+                    'totalN' => $totalN,
+                    'maxRatio' => $maxRatio,
+                ]);
+
                 // Identify the histogram cluster point (labeled "others" by Python's
                 // _histogram_elbow_grouping) and relabel to [[[others]]] for the frontend.
                 // Python handles the grouping logic; we just need to detect which point
@@ -407,6 +435,18 @@ class DashboardWidgetDataController extends Controller
                     }
                     $points[] = $point;
                 }
+
+                \Illuminate\Support\Facades\Log::info('Scatter points after filtering', [
+                    'total_points' => count($points),
+                    'cluster_index' => $clusterIndex,
+                    'points_sample' => array_map(fn($p) => [
+                        'label' => $p['label'] ?? 'no-label',
+                        'x' => $p['x'],
+                        'y' => $p['y'],
+                        'isCluster' => !empty($p['_isCluster']),
+                    ], array_slice($points, 0, 10)),
+                    'all_labels' => array_map(fn($p) => $p['label'] ?? 'no-label', $points),
+                ]);
 
                 $data = [
                     'labels' => [],
