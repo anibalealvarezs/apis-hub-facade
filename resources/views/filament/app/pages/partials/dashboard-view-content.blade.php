@@ -771,17 +771,23 @@
                     popOutWidgetId: null,
 
                     openPopOut(widgetId, title) {
+                        console.log('[PopOut] dashboardView.openPopOut called', { widgetId, title });
                         const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                        console.log('[PopOut] contentEl found:', !!contentEl);
                         if (!contentEl) return;
 
                         this.popOutTitle = title;
                         this.popOutWidgetId = widgetId;
+                        console.log('[PopOut] Setting popOutActive = true');
                         this.popOutActive = true;
 
                         this.$nextTick(() => {
+                            console.log('[PopOut] $nextTick fired');
                             const renderer = window.dashboardRenderer;
+                            console.log('[PopOut] Renderer found:', !!renderer);
                             if (!renderer) return;
                             const target = this.$refs.popOutContent;
+                            console.log('[PopOut] popOutContent ref:', !!target);
                             if (!target) return;
                             renderer.popOutWidget(contentEl, target);
                         });
@@ -914,10 +920,16 @@
                     },
 
                     openPopOut() {
+                        console.log('[PopOut] widgetHeader.openPopOut called, widgetId:', this.widgetId);
                         const dbView = document.getElementById('dashboard-view-container');
-                        if (!dbView || !dbView.__x || !dbView.__x.$data) return;
+                        console.log('[PopOut] dbView:', !!dbView, 'dbView.__x:', !!dbView?.__x, '$data:', !!dbView?.__x?.$data);
+                        if (!dbView || !dbView.__x || !dbView.__x.$data) {
+                            console.warn('[PopOut] Cannot find dashboardView component');
+                            return;
+                        }
                         const headerEl = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .grid-stack-item-content`);
                         const title = headerEl?.querySelector('h3')?.textContent?.trim() || '';
+                        console.log('[PopOut] Forwarding to dashboardView with title:', title, 'widgetId:', this.widgetId);
                         dbView.__x.$data.openPopOut(this.widgetId, title);
                     },
 
