@@ -27,7 +27,6 @@ class KpiPayloadBuilder
             'edge_case_handling' => [
                 'weighted' => (bool)($state['edge_case_weighted'] ?? true),
                 'grouping' => $state['edge_case_grouping'] ?? 'none',
-                'group_column' => self::resolveGroupColumn($state),
             ],
             'max_ratio' => $state['max_ratio'] ?? null,
             $calculationType => true,
@@ -135,27 +134,4 @@ class KpiPayloadBuilder
         ];
     }
 
-    /**
-     * Determine which column the histogram elbow should group on.
-     *
-     * When the independent variable is a rank metric (e.g. position),
-     * low x-values mean "best performance", which is the opposite of
-     * what the histogram elbow intends. In that case we group by the
-     * KPI output (y) so that underperformers are clustered into [[[others]]].
-     *
-     * For frequency-based independent variables (impressions, clicks,
-     * spend, reach, etc.), low x-values correctly identify the "long
-     * tail" of noisy / low-volume items, so we group by x (None = default).
-     */
-    private static function resolveGroupColumn(array $state): ?string
-    {
-        $independents = $state['independent_variables'] ?? [];
-        foreach ($independents as $var) {
-            $metric = $var['independent_metric'] ?? '';
-            if ($metric === 'position') {
-                return 'y';
-            }
-        }
-        return null;
-    }
 }
