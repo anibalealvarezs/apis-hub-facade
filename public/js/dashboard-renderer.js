@@ -683,6 +683,16 @@ window.dashboardRenderer = {
             scatterDataset.borderWidth = 1;
         }
 
+        // For bounded-ratio KPIs, force the ratio axis (Y) to start at 0 if no negative values exist
+        const isRatioKpi = controls?.max_ratio != null;
+        const yScaleOpts = { type: 'linear', title: { display: true, text: data.y_label || yAxisLabel }, reverse: reverseY, ticks: { callback: (v) => formatPoint(v, yFmt, 'Y') } };
+        if (isRatioKpi) {
+            const allY = data.datasets?.find(d => d.type === 'scatter')?.data?.map(p => p.y) ?? [];
+            if (allY.length > 0 && Math.min(...allY) >= 0) {
+                yScaleOpts.suggestedMin = 0;
+            }
+        }
+
         this.renderChart(containerEl, {
             type: 'scatter',
             data: data,
@@ -699,14 +709,7 @@ window.dashboardRenderer = {
                             callback: (v) => formatPoint(v, xFmt, 'X'),
                         },
                     },
-                    y: {
-                        type: 'linear',
-                        title: { display: true, text: data.y_label || yAxisLabel },
-                        reverse: reverseY,
-                        ticks: {
-                            callback: (v) => formatPoint(v, yFmt, 'Y'),
-                        },
-                    }
+                    y: yScaleOpts,
                 },
                 plugins: {
                     legend: { display: true, position: 'bottom' },
