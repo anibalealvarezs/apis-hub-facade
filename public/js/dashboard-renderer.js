@@ -798,12 +798,33 @@ window.dashboardRenderer = {
             config.options.scales.x.min = xMin;
             config.options.scales.x.max = xMax;
             config.options.scales.x.afterBuildTicks = (axis) => {
-                axis.ticks = axis.ticks.filter(t => t.value >= dataMinX && t.value <= dataMaxX);
+                const filtered = axis.ticks.filter(t => t.value >= dataMinX && t.value <= dataMaxX);
+                const values = filtered.map(t => t.value);
+                if (values.length > 0) {
+                    const maxVal = Math.max(...values);
+                    if (maxVal < dataMaxX) filtered.push({ value: dataMaxX });
+                    const minVal = Math.min(...values);
+                    if (minVal > dataMinX) filtered.push({ value: dataMinX });
+                }
+                axis.ticks = filtered;
             };
             config.options.scales.y.min = yMin;
             config.options.scales.y.max = yMax;
             config.options.scales.y.afterBuildTicks = (axis) => {
-                axis.ticks = axis.ticks.filter(t => t.value >= dataMinY && t.value <= dataMaxY);
+                const filtered = axis.ticks.filter(t => t.value >= dataMinY && t.value <= dataMaxY);
+                const values = filtered.map(t => t.value);
+                // Keep the 0 reference tick if it falls within the visible axis range (Bug 1 fix)
+                if (0 >= yMin && 0 <= yMax && !values.includes(0)) {
+                    filtered.push({ value: 0 });
+                    values.push(0);
+                }
+                if (values.length > 0) {
+                    const maxVal = Math.max(...values);
+                    if (maxVal < dataMaxY) filtered.push({ value: dataMaxY });
+                    const minVal = Math.min(...values);
+                    if (minVal > dataMinY) filtered.push({ value: dataMinY });
+                }
+                axis.ticks = filtered;
             };
         }
 
