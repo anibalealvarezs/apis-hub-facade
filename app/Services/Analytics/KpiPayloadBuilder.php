@@ -72,6 +72,19 @@ class KpiPayloadBuilder
             $dependentNode['filters'] = ['asset_platform_id' => $state['dependent_asset_filter']];
         }
 
+        // GSC stores data separated by searchAppearance (standard vs AMP/etc).
+        // Without filtering to 'standard', metrics double-count because both
+        // dimension sets are summed independently.
+        // Only apply when NOT grouping BY searchAppearance itself.
+        $granularity = $state['granularity'] ?? 'daily';
+        if (($state['dependent_channel'] ?? '') === 'google_search_console'
+            && $granularity !== 'search_appearance'
+            && $granularity !== 'dimensions.searchAppearance'
+            && !isset($dependentNode['filters']['dimensions.searchAppearance'])
+        ) {
+            $dependentNode['filters']['dimensions.searchAppearance'] = 'standard';
+        }
+
         // For Univariate, AST is just the dependent node
         if (in_array($calculationType, [
             'calculate_autocorrelation', 'calculate_anomaly',
@@ -89,7 +102,7 @@ class KpiPayloadBuilder
         }
 
         // Build right node (might be nested if multiple variables, usually added together)
-        $rightNode = self::buildIndependentNodes($independents);
+        $rightNode = self::buildIndependentNodes($independents, $state['granularity'] ?? 'daily');
 
         // Operator is usually division for regression/elasticity (dependent / independent)
         return [
@@ -121,6 +134,15 @@ class KpiPayloadBuilder
             } elseif (!empty($var['independent_asset_filter'])) {
                 $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
             }
+
+            $granularity = $var['granularity'] ?? 'daily';
+            if (($var['independent_channel'] ?? '') === 'google_search_console'
+                && $granularity !== 'search_appearance'
+                && $granularity !== 'dimensions.searchAppearance'
+                && !isset($node['filters']['dimensions.searchAppearance'])
+            ) {
+                $node['filters']['dimensions.searchAppearance'] = 'standard';
+            }
             
             return $node;
         }
@@ -143,6 +165,10 @@ class KpiPayloadBuilder
             }
         } elseif (!empty($first['independent_asset_filter'])) {
             $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
+        }
+
+        if (($first['independent_channel'] ?? '') === 'google_search_console') {
+            $left['filters']['dimensions.searchAppearance'] = 'standard';
         }
 
         return [
