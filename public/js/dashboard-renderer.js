@@ -714,6 +714,10 @@ window.dashboardRenderer = {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onHover(e) {
+                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                },
                 scales: {
                     x: {
                         type: 'linear',
@@ -1079,11 +1083,64 @@ window.dashboardRenderer = {
             tooltipEl.style.opacity = '0';
             tooltipEl.style.transition = 'opacity 0.15s ease';
             tooltipEl.style.zIndex = '100';
-            tooltipEl.style.maxWidth = '320px';
             tooltipEl.style.whiteSpace = 'nowrap';
             containerEl.appendChild(tooltipEl);
         }
         return tooltipEl;
+    },
+
+    _positionTooltip(tooltipEl, containerEl, caretX, caretY) {
+        const containerRect = containerEl.getBoundingClientRect();
+        const canvas = containerEl.querySelector('canvas');
+        if (!canvas) return;
+        const chartRect = canvas.getBoundingClientRect();
+        const offsetLeft = chartRect.left - containerRect.left;
+        const offsetTop = chartRect.top - containerRect.top;
+
+        const cx = caretX + offsetLeft;
+        const cy = caretY + offsetTop;
+        const tw = tooltipEl.offsetWidth;
+        const th = tooltipEl.offsetHeight;
+        const cw = containerRect.width;
+        const ch = containerRect.height;
+
+        // Dynamic max-width: fit inside container with 16px margin
+        tooltipEl.style.maxWidth = Math.max(160, cw - 32) + 'px';
+
+        // Re-check width after maxWidth constraint
+        const finalTw = tooltipEl.offsetWidth;
+
+        // Smart quadrant-based positioning
+        const gap = 8;
+        const preferRight = cx < cw / 2;
+        const preferBelow = cy < ch / 2;
+
+        let left, top;
+
+        // Horizontal: prefer opposite side from caret
+        if (preferRight) {
+            left = cx + gap;
+            if (left + finalTw > cw - gap) left = cx - finalTw - gap;
+        } else {
+            left = cx - finalTw - gap;
+            if (left < gap) left = cx + gap;
+        }
+        // Clamp horizontal
+        left = Math.max(gap, Math.min(left, cw - finalTw - gap));
+
+        // Vertical: prefer opposite side from caret
+        if (preferBelow) {
+            top = cy + gap;
+            if (top + th > ch - gap) top = cy - th - gap;
+        } else {
+            top = cy - th - gap;
+            if (top < gap) top = cy + gap;
+        }
+        // Clamp vertical
+        top = Math.max(gap, Math.min(top, ch - th - gap));
+
+        tooltipEl.style.left = Math.round(left) + 'px';
+        tooltipEl.style.top = Math.round(top) + 'px';
     },
 
     _externalTooltipHandler(context) {
@@ -1142,26 +1199,7 @@ window.dashboardRenderer = {
             tooltipEl.innerHTML = html;
             tooltipEl.style.pointerEvents = 'none';
 
-            const containerRect = container.getBoundingClientRect();
-            const chartRect = chart.canvas.getBoundingClientRect();
-            const offsetLeft = chartRect.left - containerRect.left;
-            const offsetTop = chartRect.top - containerRect.top;
-
-            let left = tooltip.caretX + offsetLeft;
-            let top = tooltip.caretY + offsetTop;
-
-            const tw = tooltipEl.offsetWidth;
-            const th = tooltipEl.offsetHeight;
-            const cw = containerRect.width;
-            const ch = containerRect.height;
-
-            if (left + tw > cw - 8) left = left - tw - 8;
-            else left = Math.max(4, left - tw / 2);
-            top = top - th - 8;
-            if (top < 4) top = tooltip.caretY + offsetTop + 12;
-
-            tooltipEl.style.left = Math.round(left) + 'px';
-            tooltipEl.style.top = Math.round(top) + 'px';
+            this._positionTooltip(tooltipEl, container, tooltip.caretX, tooltip.caretY);
             tooltipEl.style.opacity = '1';
         } catch (e) {
             // silently ignore tooltip errors
@@ -1191,29 +1229,7 @@ window.dashboardRenderer = {
         tooltipEl.style.pointerEvents = 'auto';
         tooltipEl.innerHTML = pinned.html;
 
-        const containerRect = container.getBoundingClientRect();
-        const canvas = container.querySelector('canvas');
-        if (canvas) {
-            const chartRect = canvas.getBoundingClientRect();
-            const offsetLeft = chartRect.left - containerRect.left;
-            const offsetTop = chartRect.top - containerRect.top;
-
-            let left = pinned.caretX + offsetLeft;
-            let top = pinned.caretY + offsetTop;
-
-            const tw = tooltipEl.offsetWidth;
-            const th = tooltipEl.offsetHeight;
-            const cw = containerRect.width;
-            const ch = containerRect.height;
-
-            if (left + tw > cw - 8) left = left - tw - 8;
-            else left = Math.max(4, left - tw / 2);
-            top = top - th - 8;
-            if (top < 4) top = pinned.caretY + offsetTop + 12;
-
-            tooltipEl.style.left = Math.round(left) + 'px';
-            tooltipEl.style.top = Math.round(top) + 'px';
-            tooltipEl.style.opacity = '1';
-        }
+        this._positionTooltip(tooltipEl, container, pinned.caretX, pinned.caretY);
+        tooltipEl.style.opacity = '1';
     },
 };
