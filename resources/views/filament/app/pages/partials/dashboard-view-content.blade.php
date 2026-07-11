@@ -915,17 +915,16 @@
 
                     openPopOut() {
                         const dbView = document.getElementById('dashboard-view-container');
-                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                            const title = this.$el.closest('.grid-stack-item-content')?.querySelector('h3')?.textContent?.trim() || '';
-                            dbView.__x.getUnobservedData().openPopOut(this.widgetId, title);
-                        }
+                        if (!dbView || !dbView.__x || !dbView.__x.$data) return;
+                        const headerEl = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .grid-stack-item-content`);
+                        const title = headerEl?.querySelector('h3')?.textContent?.trim() || '';
+                        dbView.__x.$data.openPopOut(this.widgetId, title);
                     },
 
                     closePopOut() {
                         const dbView = document.getElementById('dashboard-view-container');
-                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                            dbView.__x.getUnobservedData().closePopOut();
-                        }
+                        if (!dbView || !dbView.__x || !dbView.__x.$data) return;
+                        dbView.__x.$data.closePopOut();
                     },
 
                     getBadges() {
