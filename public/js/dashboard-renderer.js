@@ -1052,23 +1052,15 @@ window.dashboardRenderer = {
 
             let html = '';
 
-            if (tooltip.title?.length) {
-                html += '<div style="font-weight:600;margin-bottom:4px;color:' + mutedColor + ';font-size:11px;">' +
-                    tooltip.title[0] + '</div>';
-            }
-
             if (tooltip.body?.length) {
                 tooltip.body.forEach((body, i) => {
                     const dp = tooltip.dataPoints?.[i];
                     if (!dp) return;
-                    const ds = dp.dataset;
-                    const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
-                    const label = ds.label || '';
+                    const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3b82f6';
                     const val = body.lines?.[0] || '';
                     html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                         '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
-                        '<span style="font-weight:500;">' + this.escapeHtml(label) + ':</span>' +
-                        '<span style="font-weight:600;margin-left:auto;">' + val + '</span>' +
+                        '<span style="font-weight:600;">' + val + '</span>' +
                         '</div>';
                 });
             }
