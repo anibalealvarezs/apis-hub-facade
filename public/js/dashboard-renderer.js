@@ -243,7 +243,6 @@ window.dashboardRenderer = {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
         const reverseY = controls?.metrics?.[0] === 'position';
-
         const resultFormat = this.getKpiResultFormat(controls);
 
         if (!labels.length || !datasets.length) {
@@ -251,16 +250,21 @@ window.dashboardRenderer = {
             return;
         }
 
-        this.renderChart(containerEl, {
+        const mappedDatasets = datasets.map(ds => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointHoverBorderWidth: 2,
+        }));
+
+        const config = {
             type: 'line',
-            data: {
-                labels,
-                datasets: datasets.map(ds => ({
-                    ...ds,
-                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-                })),
-            },
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -271,10 +275,9 @@ window.dashboardRenderer = {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
                                 if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset.currency) val = this.formatCurrency(val);
-                                else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
-                                else val = this.formatNumber(val);
-                                return ctx.dataset.label + ': ' + val;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val);
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
+                                return this.formatNumber(val);
                             },
                         },
                     },
@@ -283,9 +286,11 @@ window.dashboardRenderer = {
                     x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
                     y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
                 },
-                elements: { line: { tension: 0.3 }, point: { radius: 2 } },
+                elements: { line: { tension: 0.3 } },
             },
-        });
+        };
+        this._setAnimation(config, true);
+        this.renderChart(containerEl, config);
     },
 
     // ─── Bar Chart ───
@@ -302,16 +307,15 @@ window.dashboardRenderer = {
             return;
         }
 
-        this.renderChart(containerEl, {
+        const mappedDatasets = datasets.map(ds => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+        }));
+
+        const config = {
             type: 'bar',
-            data: {
-                labels,
-                datasets: datasets.map(ds => ({
-                    ...ds,
-                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-                })),
-            },
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -322,10 +326,9 @@ window.dashboardRenderer = {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
                                 if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset.currency) val = this.formatCurrency(val);
-                                else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
-                                else val = this.formatNumber(val);
-                                return ctx.dataset.label + ': ' + val;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val);
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
+                                return this.formatNumber(val);
                             },
                         },
                     },
@@ -335,7 +338,9 @@ window.dashboardRenderer = {
                     y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
                 },
             },
-        });
+        };
+        this._setAnimation(config, false);
+        this.renderChart(containerEl, config);
     },
 
     // ─── Table ───
@@ -556,16 +561,21 @@ window.dashboardRenderer = {
             },
         };
 
-        this.renderChart(containerEl, {
+        const mappedDatasets = datasets.map(ds => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointHoverBorderWidth: 2,
+        }));
+
+        const config = {
             type: 'line',
-            data: {
-                labels,
-                datasets: datasets.map(ds => ({
-                    ...ds,
-                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-                })),
-            },
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -576,10 +586,9 @@ window.dashboardRenderer = {
                             label(ctx) {
                                 let val = ctx.parsed.y;
                                 if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset.currency) val = val != null ? '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
-                                else if (ctx.dataset.percentage) val = val.toFixed(1) + '%';
-                                else val = val != null ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '—';
-                                return ctx.dataset.label + ': ' + val;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val);
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
+                                return this.formatNumber(val);
                             },
                         },
                     },
@@ -604,7 +613,9 @@ window.dashboardRenderer = {
                 },
             },
             plugins: [anomalyPlugin],
-        });
+        };
+        this._setAnimation(config, true);
+        this.renderChart(containerEl, config);
     },
 
     // ─── Scatter Plot ───
@@ -682,9 +693,24 @@ window.dashboardRenderer = {
             }
         }
 
-        this.renderChart(containerEl, {
+        const xMetricName = this.getMetricName(controls?.metrics?.[1]);
+        const yMetricName = this.getMetricName(controls?.metrics?.[0]);
+
+        const mappedData = JSON.parse(JSON.stringify(data));
+        if (mappedData.datasets) {
+            mappedData.datasets = mappedData.datasets.map(ds => ({
+                ...ds,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointHoverBorderWidth: 2,
+            }));
+        }
+
+        const config = {
             type: 'scatter',
-            data: data,
+            data: mappedData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -704,18 +730,20 @@ window.dashboardRenderer = {
                     legend: { display: true, position: 'bottom' },
                     tooltip: {
                         callbacks: {
-                            label: function(ctx) {
+                            label: (ctx) => {
                                 const point = ctx.raw;
-                                const valX = formatPoint(point.x, xFmt);
-                                const valY = formatPoint(point.y, yFmt);
-                                const baseLabel = point.label ? (point.label + ' - ') : '';
-                                return baseLabel + '(' + valX + ', ' + valY + ')';
-                            }
-                        }
-                    }
-                }
-            }
-        });
+                                const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
+                                const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
+                                const baseLabel = point.label ? (point.label + ' — ') : '';
+                                return baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        this._setAnimation(config, true);
+        this.renderChart(containerEl, config);
     },
 
     // ─── Combo Chart (MACD) ───
@@ -728,30 +756,71 @@ window.dashboardRenderer = {
 
         const resultFormat = this.getKpiResultFormat(controls);
 
-        this.renderChart(containerEl, {
+        const mappedDatasets = data.datasets.map(ds => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+        }));
+
+        const config = {
             type: 'bar',
-            data: {
-                ...data,
-                datasets: data.datasets.map(ds => ({
-                    ...ds,
-                    currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-                    percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-                })),
-            },
+            data: { ...data, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { grid: { display: false } }
+                    x: { grid: { display: false } },
                 },
                 plugins: {
-                    legend: { display: true, position: 'bottom' }
-                }
-            }
-        });
+                    legend: { display: true, position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                let val = ctx.parsed.y;
+                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val);
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
+                                return this.formatNumber(val);
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        this._setAnimation(config, false);
+        this.renderChart(containerEl, config);
     },
 
     // ─── Chart.js Helper ───
+
+    _setAnimation(config, isLine) {
+        if (isLine) {
+            config.options = config.options || {};
+            config.options.animation = {
+                x: {
+                    type: 'number',
+                    easing: 'easeOutQuart',
+                    duration: 1000,
+                    from: NaN,
+                },
+                y: {
+                    type: 'number',
+                    easing: 'easeOutQuart',
+                    duration: 1000,
+                    from: (ctx) => ctx.type === 'data' && ctx.mode === 'default' ? 0 : undefined,
+                },
+            };
+        } else {
+            config.options = config.options || {};
+            config.options.animation = {
+                duration: 1000,
+                easing: 'easeOutQuart',
+                delay(ctx) {
+                    return ctx.dataIndex * 80;
+                },
+            };
+        }
+    },
 
     renderChart(containerEl, config) {
         const isDark = document.documentElement.classList.contains('dark');
@@ -768,6 +837,11 @@ window.dashboardRenderer = {
         if (config.options?.plugins?.legend?.labels) {
             config.options.plugins.legend.labels.color = isDark ? '#d4d4d8' : '#52525b';
         }
+
+        config.options = config.options || {};
+        config.options.plugins = config.options.plugins || {};
+        config.options.plugins.tooltip = config.options.plugins.tooltip || {};
+        config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
 
         const canvas = document.createElement('canvas');
         containerEl.innerHTML = '';
@@ -796,8 +870,10 @@ window.dashboardRenderer = {
 
         const canvas = containerEl.querySelector('canvas');
         if (canvas) {
+            const tooltipEl = containerEl.querySelector('.chart-tooltip');
             targetEl.innerHTML = '';
             targetEl.appendChild(canvas);
+            if (tooltipEl) targetEl.appendChild(tooltipEl);
             const chart = this._chartInstances.get(containerEl);
             if (chart) {
                 this._chartInstances.set(targetEl, chart);
@@ -834,8 +910,10 @@ window.dashboardRenderer = {
                 targetEl.innerHTML = '';
                 return;
             }
+            const tooltipEl = targetEl.querySelector('.chart-tooltip');
             containerEl.innerHTML = '';
             containerEl.appendChild(canvas);
+            if (tooltipEl) containerEl.appendChild(tooltipEl);
             const chart = this._chartInstances.get(targetEl);
             if (chart) {
                 this._chartInstances.set(containerEl, chart);
@@ -875,5 +953,116 @@ window.dashboardRenderer = {
     formatCurrency(n) {
         if (n == null || isNaN(n)) return '—';
         return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+
+    // ─── Metric Display Helpers ───
+
+    formatMetricValue(value, metricKey) {
+        const fmt = this.METRIC_FORMATS[metricKey];
+        if (!fmt) return this.formatNumber(value);
+        let v = value;
+        if (fmt.multiply) v = v * fmt.multiply;
+        if (fmt.format === 'currency') return (fmt.prefix || '$') + this.formatNumber(v);
+        if (fmt.format === 'percentage') return v.toFixed(1) + '%';
+        return this.formatNumber(v);
+    },
+
+    getMetricName(metricKey) {
+        const fmt = this.METRIC_FORMATS[metricKey];
+        return fmt?.label || metricKey || 'Value';
+    },
+
+    // ─── External HTML Tooltip ───
+
+    _setupTooltip(chart, containerEl) {
+        let tooltipEl = containerEl.querySelector('.chart-tooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'chart-tooltip';
+            tooltipEl.style.position = 'absolute';
+            tooltipEl.style.pointerEvents = 'none';
+            tooltipEl.style.opacity = '0';
+            tooltipEl.style.transition = 'opacity 0.15s ease';
+            tooltipEl.style.zIndex = '100';
+            tooltipEl.style.maxWidth = '320px';
+            tooltipEl.style.whiteSpace = 'nowrap';
+            containerEl.appendChild(tooltipEl);
+        }
+        return tooltipEl;
+    },
+
+    _externalTooltipHandler(context) {
+        const {chart, tooltip} = context;
+        const container = chart.canvas.parentNode;
+        if (!container) return;
+        const tooltipEl = this._setupTooltip(chart, container);
+
+        if (!tooltip || tooltip.opacity === 0) {
+            tooltipEl.style.opacity = '0';
+            return;
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const bg = isDark ? '#1f2937' : '#ffffff';
+        const textColor = isDark ? '#f3f4f6' : '#111827';
+        const borderColor = isDark ? '#374151' : '#e5e7eb';
+        const mutedColor = isDark ? '#9ca3af' : '#6b7280';
+
+        tooltipEl.style.background = bg;
+        tooltipEl.style.color = textColor;
+        tooltipEl.style.border = '1px solid ' + borderColor;
+        tooltipEl.style.borderRadius = '8px';
+        tooltipEl.style.padding = '8px 12px';
+        tooltipEl.style.fontSize = '12px';
+        tooltipEl.style.lineHeight = '1.5';
+        tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
+        tooltipEl.style.fontFamily = 'inherit';
+
+        let html = '';
+
+        if (tooltip.title?.length) {
+            html += '<div style="font-weight:600;margin-bottom:4px;color:' + mutedColor + ';font-size:11px;">' +
+                tooltip.title[0] + '</div>';
+        }
+
+        if (tooltip.body?.length) {
+            tooltip.body.forEach((body, i) => {
+                const dp = tooltip.dataPoints?.[i];
+                if (!dp) return;
+                const ds = dp.dataset;
+                const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
+                const label = ds.label || '';
+                const val = body.lines?.[0] || '';
+                html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                    '<span style="font-weight:500;">' + this.escapeHtml(label) + ':</span>' +
+                    '<span style="font-weight:600;margin-left:auto;">' + val + '</span>' +
+                    '</div>';
+            });
+        }
+
+        tooltipEl.innerHTML = html;
+
+        const containerRect = container.getBoundingClientRect();
+        const chartRect = chart.canvas.getBoundingClientRect();
+        const offsetLeft = chartRect.left - containerRect.left;
+        const offsetTop = chartRect.top - containerRect.top;
+
+        let left = tooltip.caretX + offsetLeft;
+        let top = tooltip.caretY + offsetTop;
+
+        const tw = tooltipEl.offsetWidth;
+        const th = tooltipEl.offsetHeight;
+        const cw = containerRect.width;
+        const ch = containerRect.height;
+
+        if (left + tw > cw - 8) left = left - tw - 8;
+        else left = Math.max(4, left - tw / 2);
+        top = top - th - 8;
+        if (top < 4) top = tooltip.caretY + offsetTop + 12;
+
+        tooltipEl.style.left = Math.round(left) + 'px';
+        tooltipEl.style.top = Math.round(top) + 'px';
+        tooltipEl.style.opacity = '1';
     },
 };
