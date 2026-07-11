@@ -113,7 +113,7 @@ class KpiPayloadBuilder
         ];
     }
 
-    private static function buildIndependentNodes(array $variables): array
+    private static function buildIndependentNodes(array $variables, string $granularity = 'daily'): array
     {
         if (count($variables) === 1) {
             $var = $variables[0];
@@ -135,7 +135,6 @@ class KpiPayloadBuilder
                 $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
             }
 
-            $granularity = $var['granularity'] ?? 'daily';
             if (($var['independent_channel'] ?? '') === 'google_search_console'
                 && $granularity !== 'search_appearance'
                 && $granularity !== 'dimensions.searchAppearance'
@@ -167,7 +166,11 @@ class KpiPayloadBuilder
             $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
         }
 
-        if (($first['independent_channel'] ?? '') === 'google_search_console') {
+        if (($first['independent_channel'] ?? '') === 'google_search_console'
+            && $granularity !== 'search_appearance'
+            && $granularity !== 'dimensions.searchAppearance'
+            && !isset($left['filters']['dimensions.searchAppearance'])
+        ) {
             $left['filters']['dimensions.searchAppearance'] = 'standard';
         }
 
@@ -175,7 +178,7 @@ class KpiPayloadBuilder
             'type' => 'operator',
             'operator' => '+',
             'left' => $left,
-            'right' => self::buildIndependentNodes($variables),
+            'right' => self::buildIndependentNodes($variables, $granularity),
         ];
     }
 
