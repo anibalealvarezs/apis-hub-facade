@@ -142,7 +142,7 @@
              style="display: none; z-index: 999998;"
              class="fixed inset-0 flex items-center justify-center bg-black/50"
              @click.self="closePopOut()">
-            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden" style="width: 95vw; height: 95vh;">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
                     <div class="flex items-center gap-1 flex-shrink-0">
