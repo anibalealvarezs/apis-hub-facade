@@ -306,9 +306,21 @@ class DashboardWidgetDataController extends Controller
                 }
 
                 // Filter points for display only; regression stays based on all data
+                // Compute a dynamic X threshold to remove extremely low-frequency outliers
+                $xThreshold = null;
+                $totalN = count($rawX);
+                if ($totalN >= 20) {
+                    $sortedX = $rawX;
+                    sort($sortedX);
+                    $pctIdx = (int) floor($totalN * 0.02);
+                    $xThreshold = $sortedX[$pctIdx];
+                }
                 $points = [];
                 foreach ($rawX as $i => $x) {
                     $y = $rawY[$i];
+                    if ($xThreshold !== null && $x <= $xThreshold) {
+                        continue;
+                    }
                     if ($maxRatio !== null && ($y > $maxRatio || $y < 0)) {
                         continue;
                     }

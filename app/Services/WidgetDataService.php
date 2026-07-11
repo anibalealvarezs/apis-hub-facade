@@ -48,9 +48,12 @@ class WidgetDataService
             }
         }
 
-        // Inherit max_ratio from KPI's _ui_state when not set on widget
-        if (!isset($resolved['max_ratio']) && $widget->source_type === 'kpi' && $widget->customKpi) {
+        // Inherit edge-case and max_ratio from KPI's _ui_state when applicable
+        if ($widget->source_type === 'kpi' && $widget->customKpi) {
             $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
+            if (!empty($kpiUiState['edge_case_grouping'])) {
+                $resolved['edge_case_grouping'] = $kpiUiState['edge_case_grouping'];
+            }
             if (isset($kpiUiState['max_ratio'])) {
                 $resolved['max_ratio'] = $kpiUiState['max_ratio'];
             }

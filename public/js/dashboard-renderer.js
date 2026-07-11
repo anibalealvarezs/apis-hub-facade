@@ -898,8 +898,6 @@ window.dashboardRenderer = {
             const pinned = this._pinnedTooltips.get(containerEl);
             if (pinned) {
                 this._pinnedTooltips.delete(containerEl);
-                chart.setActiveElements([]);
-                chart.draw();
                 const tooltipEl = containerEl.querySelector('.chart-tooltip');
                 if (tooltipEl) {
                     tooltipEl.style.pointerEvents = 'none';
@@ -909,11 +907,52 @@ window.dashboardRenderer = {
                 return;
             }
             const elements = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
-            if (elements.length > 0) {
-                containerEl._pendingPin = true;
-                chart.setActiveElements(elements.map(el => ({ datasetIndex: el.datasetIndex, index: el.index })));
-                chart.draw();
-            }
+            if (elements.length === 0) return;
+            const widgetJson = this._widgetData.get(containerEl);
+            const controls = widgetJson?.controls;
+            const resultFormat = this.getKpiResultFormat(controls);
+            const chartType = chart.config.type;
+            const xMetricName = this.getMetricName(controls?.metrics?.[1]);
+            const yMetricName = this.getMetricName(controls?.metrics?.[0]);
+            let html = '';
+            elements.forEach((el) => {
+                const ds = chart.data.datasets[el.datasetIndex];
+                const raw = ds.data[el.index];
+                let val;
+                if (chartType === 'scatter') {
+                    const point = raw;
+                    const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
+                    const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
+                    const baseLabel = point.label ? (point.label + ' — ') : '';
+                    val = baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
+                } else {
+                    let v = typeof raw === 'object' ? (raw.y ?? 0) : raw;
+                    if (resultFormat?.multiply) v = v * resultFormat.multiply;
+                    if (ds.currency || resultFormat?.format === 'currency') {
+                        val = this.formatCurrency(v);
+                    } else if (ds.percentage || resultFormat?.format === 'percentage') {
+                        val = v.toFixed(1) + '%';
+                    } else {
+                        val = this.formatNumber(v);
+                    }
+                }
+                const isLine = ds.type === 'line';
+                const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
+                const colorStr = Array.isArray(color) ? color[el.index] : color;
+                html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' + colorStr + ';flex-shrink:0;"></span>' +
+                    (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
+                    '<span style="font-weight:600;">' + val + '</span>' +
+                    '</div>';
+            });
+            const meta = chart.getDatasetMeta(elements[0].datasetIndex);
+            const element = meta.data[elements[0].index];
+            this._pinnedTooltips.set(containerEl, {
+                html,
+                caretX: element.x,
+                caretY: element.y,
+            });
+            this._renderPinnedTooltip(containerEl);
         });
     },
 
@@ -1055,31 +1094,6 @@ window.dashboardRenderer = {
             if (!container) return;
             const tooltipEl = this._setupTooltip(chart, container);
 
-            // Handle pending pin capture
-            if (container._pendingPin) {
-                delete container._pendingPin;
-                if (tooltip && tooltip.opacity >= 0.01 && tooltip.body?.length) {
-                    let html = '';
-                    tooltip.body.forEach((body, i) => {
-                        const dp = tooltip.dataPoints?.[i];
-                        if (!dp) return;
-                        const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3b82f6';
-                        const val = body.lines?.[0] || '';
-                        html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
-                            '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
-                            '<span style="font-weight:600;">' + val + '</span>' +
-                            '</div>';
-                    });
-                    this._pinnedTooltips.set(container, {
-                        html,
-                        caretX: tooltip.caretX,
-                        caretY: tooltip.caretY,
-                    });
-                    this._renderPinnedTooltip(container);
-                    return;
-                }
-            }
-
             // If pinned, always show pinned data regardless of hover
             const pinned = this._pinnedTooltips.get(container);
             if (pinned) {
@@ -1119,6 +1133,7 @@ window.dashboardRenderer = {
                     const val = body.lines?.[0] || '';
                     html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                         '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                        (dp.dataset.type === 'line' ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
                         '<span style="font-weight:600;">' + val + '</span>' +
                         '</div>';
                 });
