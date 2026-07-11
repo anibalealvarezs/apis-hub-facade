@@ -143,7 +143,7 @@
              class="fixed inset-0 flex items-center justify-center bg-black/50"
              @click.self="closePopOut()">
             <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden" style="width: 95vw; height: 95vh;">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800/50">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
                     <div class="flex items-center gap-1 flex-shrink-0">
                         <button @click="openModalSettings()"
