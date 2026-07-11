@@ -799,7 +799,7 @@ window.dashboardRenderer = {
             targetEl.innerHTML = '';
             targetEl.appendChild(canvas);
             const chart = this._chartInstances.get(containerEl);
-            if (chart) chart.resize();
+            if (chart) requestAnimationFrame(() => chart.resize());
             return;
         }
         // HTML widget — clone content into target
@@ -827,7 +827,7 @@ window.dashboardRenderer = {
             containerEl.innerHTML = '';
             containerEl.appendChild(canvas);
             const chart = this._chartInstances.get(containerEl);
-            if (chart) chart.resize();
+            if (chart) requestAnimationFrame(() => chart.resize());
             return;
         }
         // HTML widget — content was cloned, not moved. Just clear the modal.
