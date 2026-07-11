@@ -841,6 +841,7 @@ window.dashboardRenderer = {
         config.options = config.options || {};
         config.options.plugins = config.options.plugins || {};
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
+        config.options.plugins.tooltip.enabled = false;
         config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
 
         const canvas = document.createElement('canvas');
@@ -992,77 +993,83 @@ window.dashboardRenderer = {
     },
 
     _externalTooltipHandler(context) {
-        const {chart, tooltip} = context;
-        const container = chart.canvas.parentNode;
-        if (!container) return;
-        const tooltipEl = this._setupTooltip(chart, container);
+        try {
+            const {chart, tooltip} = context;
+            if (!chart || !chart.canvas) return;
+            const container = chart.canvas.parentNode;
+            if (!container) return;
+            const tooltipEl = this._setupTooltip(chart, container);
 
-        if (!tooltip || tooltip.opacity === 0) {
-            tooltipEl.style.opacity = '0';
-            return;
+            if (!tooltip || tooltip.opacity < 0.01) {
+                tooltipEl.style.opacity = '0';
+                tooltipEl.innerHTML = '';
+                return;
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const bg = isDark ? '#1f2937' : '#ffffff';
+            const textColor = isDark ? '#f3f4f6' : '#111827';
+            const borderColor = isDark ? '#374151' : '#e5e7eb';
+            const mutedColor = isDark ? '#9ca3af' : '#6b7280';
+
+            tooltipEl.style.background = bg;
+            tooltipEl.style.color = textColor;
+            tooltipEl.style.border = '1px solid ' + borderColor;
+            tooltipEl.style.borderRadius = '8px';
+            tooltipEl.style.padding = '8px 12px';
+            tooltipEl.style.fontSize = '12px';
+            tooltipEl.style.lineHeight = '1.5';
+            tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
+            tooltipEl.style.fontFamily = 'inherit';
+
+            let html = '';
+
+            if (tooltip.title?.length) {
+                html += '<div style="font-weight:600;margin-bottom:4px;color:' + mutedColor + ';font-size:11px;">' +
+                    tooltip.title[0] + '</div>';
+            }
+
+            if (tooltip.body?.length) {
+                tooltip.body.forEach((body, i) => {
+                    const dp = tooltip.dataPoints?.[i];
+                    if (!dp) return;
+                    const ds = dp.dataset;
+                    const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
+                    const label = ds.label || '';
+                    const val = body.lines?.[0] || '';
+                    html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                        '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                        '<span style="font-weight:500;">' + this.escapeHtml(label) + ':</span>' +
+                        '<span style="font-weight:600;margin-left:auto;">' + val + '</span>' +
+                        '</div>';
+                });
+            }
+
+            tooltipEl.innerHTML = html;
+
+            const containerRect = container.getBoundingClientRect();
+            const chartRect = chart.canvas.getBoundingClientRect();
+            const offsetLeft = chartRect.left - containerRect.left;
+            const offsetTop = chartRect.top - containerRect.top;
+
+            let left = tooltip.caretX + offsetLeft;
+            let top = tooltip.caretY + offsetTop;
+
+            const tw = tooltipEl.offsetWidth;
+            const th = tooltipEl.offsetHeight;
+            const cw = containerRect.width;
+            const ch = containerRect.height;
+
+            if (left + tw > cw - 8) left = left - tw - 8;
+            else left = Math.max(4, left - tw / 2);
+            top = top - th - 8;
+            if (top < 4) top = tooltip.caretY + offsetTop + 12;
+
+            tooltipEl.style.left = Math.round(left) + 'px';
+            tooltipEl.style.top = Math.round(top) + 'px';
+            tooltipEl.style.opacity = '1';
+        } catch (e) {
+            // silently ignore tooltip errors
         }
-
-        const isDark = document.documentElement.classList.contains('dark');
-        const bg = isDark ? '#1f2937' : '#ffffff';
-        const textColor = isDark ? '#f3f4f6' : '#111827';
-        const borderColor = isDark ? '#374151' : '#e5e7eb';
-        const mutedColor = isDark ? '#9ca3af' : '#6b7280';
-
-        tooltipEl.style.background = bg;
-        tooltipEl.style.color = textColor;
-        tooltipEl.style.border = '1px solid ' + borderColor;
-        tooltipEl.style.borderRadius = '8px';
-        tooltipEl.style.padding = '8px 12px';
-        tooltipEl.style.fontSize = '12px';
-        tooltipEl.style.lineHeight = '1.5';
-        tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
-        tooltipEl.style.fontFamily = 'inherit';
-
-        let html = '';
-
-        if (tooltip.title?.length) {
-            html += '<div style="font-weight:600;margin-bottom:4px;color:' + mutedColor + ';font-size:11px;">' +
-                tooltip.title[0] + '</div>';
-        }
-
-        if (tooltip.body?.length) {
-            tooltip.body.forEach((body, i) => {
-                const dp = tooltip.dataPoints?.[i];
-                if (!dp) return;
-                const ds = dp.dataset;
-                const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
-                const label = ds.label || '';
-                const val = body.lines?.[0] || '';
-                html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
-                    '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
-                    '<span style="font-weight:500;">' + this.escapeHtml(label) + ':</span>' +
-                    '<span style="font-weight:600;margin-left:auto;">' + val + '</span>' +
-                    '</div>';
-            });
-        }
-
-        tooltipEl.innerHTML = html;
-
-        const containerRect = container.getBoundingClientRect();
-        const chartRect = chart.canvas.getBoundingClientRect();
-        const offsetLeft = chartRect.left - containerRect.left;
-        const offsetTop = chartRect.top - containerRect.top;
-
-        let left = tooltip.caretX + offsetLeft;
-        let top = tooltip.caretY + offsetTop;
-
-        const tw = tooltipEl.offsetWidth;
-        const th = tooltipEl.offsetHeight;
-        const cw = containerRect.width;
-        const ch = containerRect.height;
-
-        if (left + tw > cw - 8) left = left - tw - 8;
-        else left = Math.max(4, left - tw / 2);
-        top = top - th - 8;
-        if (top < 4) top = tooltip.caretY + offsetTop + 12;
-
-        tooltipEl.style.left = Math.round(left) + 'px';
-        tooltipEl.style.top = Math.round(top) + 'px';
-        tooltipEl.style.opacity = '1';
     },
 };
