@@ -1068,8 +1068,10 @@ window.dashboardRenderer = {
                 if (this._popOutObserver) this._popOutObserver.disconnect();
                 this._popOutObserver = new ResizeObserver(() => { chart.resize(); });
                 this._popOutObserver.observe(targetEl);
-                // Force a layout pass before ResizeObserver's initial callback
-                requestAnimationFrame(() => { chart.resize(); });
+                // Resize synchronously after the DOM move — Chart.js reads
+                // canvas.parentElement dimensions immediately, so the chart
+                // renders at the correct modal container size on first paint.
+                chart.resize();
             }
             return;
         }
