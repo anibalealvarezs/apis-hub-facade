@@ -742,7 +742,34 @@ window.dashboardRenderer = {
                 },
             },
         };
-        this._setAnimation(config, true);
+        const hasLineDs = mappedData.datasets.some(ds => ds.type === 'line');
+        if (hasLineDs) {
+            config.options = config.options || {};
+            config.options.animation = {
+                x: {
+                    type: 'number',
+                    easing: 'easeOutQuart',
+                    duration: 1000,
+                    from(ctx) {
+                        if (ctx.type !== 'data' || ctx.mode !== 'default') return undefined;
+                        const ds = ctx.chart.data.datasets[ctx.datasetIndex];
+                        if (ds?.type === 'line') return NaN;
+                        return ctx.raw?.x;
+                    },
+                },
+                y: {
+                    type: 'number',
+                    easing: 'easeOutQuart',
+                    duration: 1000,
+                    from(ctx) {
+                        if (ctx.type !== 'data' || ctx.mode !== 'default') return undefined;
+                        const ds = ctx.chart.data.datasets[ctx.datasetIndex];
+                        if (ds?.type === 'line') return 0;
+                        return ctx.raw?.y;
+                    },
+                },
+            };
+        }
         this.renderChart(containerEl, config);
     },
 
@@ -816,6 +843,7 @@ window.dashboardRenderer = {
                 duration: 1000,
                 easing: 'easeOutQuart',
                 delay(ctx) {
+                    if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
                     return ctx.dataIndex * 80;
                 },
             };
