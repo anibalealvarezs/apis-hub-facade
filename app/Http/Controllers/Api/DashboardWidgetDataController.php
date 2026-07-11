@@ -306,24 +306,43 @@ class DashboardWidgetDataController extends Controller
                 }
 
                 // Filter points for display only; regression stays based on all data
-                // Use metric-aware X threshold: volume metrics (impressions, clicks, etc.)
-                // get a 10th-percentile cutoff; other metrics get a conservative 2nd percentile.
+                // Two-layer filter for volume metrics (impressions, clicks, etc.):
+                //   1. Hard floor — never display X below this threshold.
+                //   2. Dynamic percentile — for datasets large enough, cut the bottom 20%.
+                // For bounded metrics (position, ratio), use a conservative 2nd percentile.
                 $volumeMetrics = ['impressions', 'clicks', 'reach', 'engaged_users', 'sessions', 'new_users', 'pageviews', 'link_clicks', 'followers'];
                 $xMetric = $resolvedControls['metrics'][1] ?? '';
                 $isVolumeMetric = in_array($xMetric, $volumeMetrics);
+                $hardFloor = null;
                 $xThreshold = null;
                 $totalN = count($rawX);
-                $minPoints = $isVolumeMetric ? 10 : 20;
-                if ($totalN >= $minPoints) {
+
+                if ($isVolumeMetric) {
+                    if ($xMetric === 'clicks') {
+                        $hardFloor = 3;
+                    } else {
+                        $hardFloor = 5;
+                    }
+                    $minPoints = 8;
+                    if ($totalN >= $minPoints) {
+                        $sortedX = $rawX;
+                        sort($sortedX);
+                        $pctIdx = max(1, (int) floor($totalN * 0.20));
+                        $xThreshold = $sortedX[$pctIdx];
+                    }
+                } elseif ($totalN >= 20) {
                     $sortedX = $rawX;
                     sort($sortedX);
-                    $pct = $isVolumeMetric ? 0.10 : 0.02;
-                    $pctIdx = (int) floor($totalN * $pct);
+                    $pctIdx = max(1, (int) floor($totalN * 0.02));
                     $xThreshold = $sortedX[$pctIdx];
                 }
+
                 $points = [];
                 foreach ($rawX as $i => $x) {
                     $y = $rawY[$i];
+                    if ($hardFloor !== null && $x < $hardFloor) {
+                        continue;
+                    }
                     if ($xThreshold !== null && $x <= $xThreshold) {
                         continue;
                     }
