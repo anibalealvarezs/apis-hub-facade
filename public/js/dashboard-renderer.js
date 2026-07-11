@@ -777,12 +777,15 @@ window.dashboardRenderer = {
 
         // Constrain axes to scatter data only (ignore trend line endpoints),
         // with 10 % breathing room so edge points aren't clipped by the grid border.
+        // Remove ticks and grid lines in the grace area via afterBuildTicks.
         let scatterPoints = mappedData.datasets?.find(d => d.type === 'scatter')?.data;
         if (scatterPoints && scatterPoints.length > 0) {
             const xs = scatterPoints.map(p => p.x);
             const ys = scatterPoints.map(p => p.y);
-            let xMin = Math.min(...xs), xMax = Math.max(...xs);
-            let yMin = Math.min(...ys), yMax = Math.max(...ys);
+            const dataMinX = Math.min(...xs), dataMaxX = Math.max(...xs);
+            const dataMinY = Math.min(...ys), dataMaxY = Math.max(...ys);
+            let xMin = dataMinX, xMax = dataMaxX;
+            let yMin = dataMinY, yMax = dataMaxY;
             const xRange = xMax - xMin || 1;
             const yRange = yMax - yMin || 1;
             xMin -= xRange * 0.1;
@@ -794,8 +797,14 @@ window.dashboardRenderer = {
             if (yScaleOpts.suggestedMax != null) yMax = Math.min(yMax, yScaleOpts.suggestedMax);
             config.options.scales.x.min = xMin;
             config.options.scales.x.max = xMax;
+            config.options.scales.x.afterBuildTicks = (axis) => {
+                axis.ticks = axis.ticks.filter(t => t.value >= dataMinX && t.value <= dataMaxX);
+            };
             config.options.scales.y.min = yMin;
             config.options.scales.y.max = yMax;
+            config.options.scales.y.afterBuildTicks = (axis) => {
+                axis.ticks = axis.ticks.filter(t => t.value >= dataMinY && t.value <= dataMaxY);
+            };
         }
 
         // Split cluster point ([[[others]]]) into its own hidden dataset for show/hide toggle
