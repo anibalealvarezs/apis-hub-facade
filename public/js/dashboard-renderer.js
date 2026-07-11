@@ -1068,6 +1068,8 @@ window.dashboardRenderer = {
                 if (this._popOutObserver) this._popOutObserver.disconnect();
                 this._popOutObserver = new ResizeObserver(() => { chart.resize(); });
                 this._popOutObserver.observe(targetEl);
+                // Force a layout pass before ResizeObserver's initial callback
+                requestAnimationFrame(() => { chart.resize(); });
             }
             return;
         }
