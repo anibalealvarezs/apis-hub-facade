@@ -306,13 +306,19 @@ class DashboardWidgetDataController extends Controller
                 }
 
                 // Filter points for display only; regression stays based on all data
-                // Compute a dynamic X threshold to remove extremely low-frequency outliers
+                // Use metric-aware X threshold: volume metrics (impressions, clicks, etc.)
+                // get a 10th-percentile cutoff; other metrics get a conservative 2nd percentile.
+                $volumeMetrics = ['impressions', 'clicks', 'reach', 'engaged_users', 'sessions', 'new_users', 'pageviews', 'link_clicks', 'followers'];
+                $xMetric = $resolvedControls['metrics'][1] ?? '';
+                $isVolumeMetric = in_array($xMetric, $volumeMetrics);
                 $xThreshold = null;
                 $totalN = count($rawX);
-                if ($totalN >= 20) {
+                $minPoints = $isVolumeMetric ? 10 : 20;
+                if ($totalN >= $minPoints) {
                     $sortedX = $rawX;
                     sort($sortedX);
-                    $pctIdx = (int) floor($totalN * 0.02);
+                    $pct = $isVolumeMetric ? 0.10 : 0.02;
+                    $pctIdx = (int) floor($totalN * $pct);
                     $xThreshold = $sortedX[$pctIdx];
                 }
                 $points = [];
