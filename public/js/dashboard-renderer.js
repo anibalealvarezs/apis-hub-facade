@@ -774,7 +774,64 @@ window.dashboardRenderer = {
                 },
             };
         }
+
+        // Constrain axes to scatter data only (ignore trend line endpoints)
+        let scatterPoints = mappedData.datasets?.find(d => d.type === 'scatter')?.data;
+        if (scatterPoints && scatterPoints.length > 0) {
+            const xs = scatterPoints.map(p => p.x);
+            const ys = scatterPoints.map(p => p.y);
+            config.options.scales.x.min = Math.min(...xs);
+            config.options.scales.x.max = Math.max(...xs);
+            config.options.scales.y.min = Math.min(...ys);
+            config.options.scales.y.max = Math.max(...ys);
+        }
+
+        // Split cluster point ([[[others]]]) into its own hidden dataset for show/hide toggle
+        const mainScatterDs = mappedData.datasets?.find(d => d.type === 'scatter');
+        let clusterPoint = null;
+        if (mainScatterDs) {
+            const ci = mainScatterDs.data.findIndex(p => p._isCluster);
+            if (ci >= 0) {
+                clusterPoint = mainScatterDs.data.splice(ci, 1)[0];
+                delete clusterPoint._isCluster;
+                mappedData.datasets.push({
+                    type: 'scatter',
+                    label: 'Clustered',
+                    data: [clusterPoint],
+                    backgroundColor: 'rgba(107, 114, 128, 0.5)',
+                    borderColor: 'rgba(107, 114, 128, 1)',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 14,
+                });
+            }
+        }
         this.renderChart(containerEl, config);
+
+        // Add show/hide toggle for the cluster point
+        if (clusterPoint && mainScatterDs) {
+            const toggleId = 'cluster-toggle-' + (containerEl._clusterToggleCount = (containerEl._clusterToggleCount || 0) + 1);
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;';
+            wrapper.innerHTML = '<label for="' + toggleId + '" style="font-size:11px;color:#9ca3af;cursor:pointer;user-select:none;">Show clustered</label>';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = toggleId;
+            input.checked = true;
+            input.style.cssText = 'cursor:pointer;accent-color:#6b7280;';
+            wrapper.prepend(input);
+            containerEl.appendChild(wrapper);
+
+            input.addEventListener('change', () => {
+                const chart = Chart.getChart(containerEl.querySelector('canvas'));
+                if (!chart || !chart.data || !chart.data.datasets) return;
+                const ds = chart.data.datasets.find(d => d.type === 'scatter' && d.label === 'Clustered');
+                if (!ds) return;
+                const meta = chart.getDatasetMeta(chart.data.datasets.indexOf(ds));
+                meta.hidden = !input.checked;
+                chart.update();
+            });
+        }
     },
 
     // ─── Combo Chart (MACD) ───
