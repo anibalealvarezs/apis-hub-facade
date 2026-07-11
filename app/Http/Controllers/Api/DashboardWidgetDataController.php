@@ -233,18 +233,27 @@ class DashboardWidgetDataController extends Controller
 
                 // Remove data points where position > 30 (poor-ranking noise)
                 // Applied before regression so the trend line also excludes them.
+                // Also filter labels to keep indices aligned with filtered x/y arrays.
                 if ($resolvedControls['metrics'][0] === 'position') {
-                    $filteredX = []; $filteredY = [];
+                    $filteredX = []; $filteredY = []; $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
-                        if ($rawY[$i] <= 30) { $filteredX[] = $x; $filteredY[] = $rawY[$i]; }
+                        if ($rawY[$i] <= 30) {
+                            $filteredX[] = $x; $filteredY[] = $rawY[$i];
+                            if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
+                        }
                     }
                     $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
+                    if (!empty($filteredLabels)) $scatter['labels'] = $filteredLabels;
                 } elseif ($resolvedControls['metrics'][1] === 'position') {
-                    $filteredX = []; $filteredY = [];
+                    $filteredX = []; $filteredY = []; $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
-                        if ($x <= 30) { $filteredX[] = $x; $filteredY[] = $rawY[$i]; }
+                        if ($x <= 30) {
+                            $filteredX[] = $x; $filteredY[] = $rawY[$i];
+                            if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
+                        }
                     }
                     $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
+                    if (!empty($filteredLabels)) $scatter['labels'] = $filteredLabels;
                 }
 
                 // Build regression from filtered data
@@ -353,13 +362,15 @@ class DashboardWidgetDataController extends Controller
                     $xThreshold = $sortedX[$pctIdx];
                 }
 
-                // Identify the histogram cluster point (lowest X) and relabel to [[[others]]]
+                // Identify the histogram cluster point (labeled "others" by Python's
+                // _histogram_elbow_grouping) and relabel to [[[others]]] for the frontend.
+                // Python handles the grouping logic; we just need to detect which point
+                // is the centroid so the frontend can split it into a toggleable dataset.
                 $clusterIndex = null;
                 $isHistogram = ($resolvedControls['edge_case_grouping'] ?? null) === 'histogram';
-                if ($isHistogram && $totalN > 0) {
-                    $minX = min($rawX);
-                    foreach ($rawX as $i => $x) {
-                        if ($x === $minX) {
+                if ($isHistogram && isset($scatter['labels'])) {
+                    foreach ($scatter['labels'] as $i => $label) {
+                        if ($label === 'others') {
                             $clusterIndex = $i;
                             break;
                         }
