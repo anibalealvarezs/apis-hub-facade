@@ -16,6 +16,12 @@ class KpiPayloadBuilder
     {
         $ast = self::buildAstFromState($calculationType, $state);
 
+        $groupColumn = self::resolveGroupColumn($state);
+        \Illuminate\Support\Facades\Log::info('KpiPayloadBuilder group_column', [
+            'group_column' => $groupColumn,
+            'independent_metric' => collect($state['independent_variables'] ?? [])->first()['independent_metric'] ?? null,
+        ]);
+
         return [
             'ast' => $ast,
             'filters' => [
@@ -32,18 +38,6 @@ class KpiPayloadBuilder
             'max_ratio' => $state['max_ratio'] ?? null,
             $calculationType => true,
         ];
-    }
-
-    public static function buildWithGroupColumnDebug(string $calculationType, array $state, array $runtimeOverrides = []): array
-    {
-        $payload = self::build($calculationType, $state, $runtimeOverrides);
-        $groupColumn = self::resolveGroupColumn($state);
-        \Illuminate\Support\Facades\Log::info('KPI payload group_column test', [
-            'group_column' => $groupColumn,
-            'has_group_column_in_payload' => isset($payload['edge_case_handling']['group_column']),
-            'payload_edge_case' => $payload['edge_case_handling'],
-        ]);
-        return $payload;
     }
 
     private static function resolveGroupColumn(array $state): ?string
