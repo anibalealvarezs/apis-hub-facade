@@ -6,6 +6,7 @@
 window.dashboardRenderer = {
     _chartInstances: new Map(),
     _widgetData: new Map(),
+    _pinnedTooltips: new Map(),
     METRIC_FORMATS: {
         'spend': { label: 'Spend', format: 'currency', prefix: '$' },
         'cpc': { label: 'CPC', format: 'currency', prefix: '$' },
@@ -851,6 +852,7 @@ window.dashboardRenderer = {
     },
 
     renderChart(containerEl, config) {
+        this._pinnedTooltips.delete(containerEl);
         const isDark = document.documentElement.classList.contains('dark');
         if (config.options && config.options.scales) {
             for (const axis of Object.values(config.options.scales)) {
@@ -882,12 +884,38 @@ window.dashboardRenderer = {
             script.onload = () => {
                 const chart = new Chart(canvas, config);
                 this._chartInstances.set(containerEl, chart);
+                this._attachTooltipPin(chart, canvas, containerEl);
             };
             document.head.appendChild(script);
         } else {
             const chart = new Chart(canvas, config);
             this._chartInstances.set(containerEl, chart);
+            this._attachTooltipPin(chart, canvas, containerEl);
         }
+    },
+
+    _attachTooltipPin(chart, canvas, containerEl) {
+        canvas.addEventListener('click', (e) => {
+            const pinned = this._pinnedTooltips.get(containerEl);
+            if (pinned) {
+                this._pinnedTooltips.delete(containerEl);
+                chart.setActiveElements([]);
+                chart.draw();
+                const tooltipEl = containerEl.querySelector('.chart-tooltip');
+                if (tooltipEl) {
+                    tooltipEl.style.pointerEvents = 'none';
+                    tooltipEl.style.opacity = '0';
+                    tooltipEl.innerHTML = '';
+                }
+                return;
+            }
+            const elements = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+            if (elements.length > 0) {
+                containerEl._pendingPin = true;
+                chart.setActiveElements(elements.map(el => ({ datasetIndex: el.datasetIndex, index: el.index })));
+                chart.draw();
+            }
+        });
     },
 
     /**
@@ -1028,9 +1056,31 @@ window.dashboardRenderer = {
             if (!container) return;
             const tooltipEl = this._setupTooltip(chart, container);
 
+            // Handle pending pin capture
+            if (container._pendingPin) {
+                delete container._pendingPin;
+                if (tooltip && tooltip.opacity >= 0.01 && tooltip.body?.length) {
+                    this._pinnedTooltips.set(container, {
+                        html: tooltipEl.innerHTML,
+                        caretX: tooltip.caretX,
+                        caretY: tooltip.caretY,
+                    });
+                    this._renderPinnedTooltip(container);
+                    return;
+                }
+            }
+
+            // If pinned, always show pinned data regardless of hover
+            const pinned = this._pinnedTooltips.get(container);
+            if (pinned) {
+                this._renderPinnedTooltip(container);
+                return;
+            }
+
             if (!tooltip || tooltip.opacity < 0.01) {
                 tooltipEl.style.opacity = '0';
                 tooltipEl.innerHTML = '';
+                tooltipEl.style.pointerEvents = 'none';
                 return;
             }
 
@@ -1038,7 +1088,6 @@ window.dashboardRenderer = {
             const bg = isDark ? '#1f2937' : '#ffffff';
             const textColor = isDark ? '#f3f4f6' : '#111827';
             const borderColor = isDark ? '#374151' : '#e5e7eb';
-            const mutedColor = isDark ? '#9ca3af' : '#6b7280';
 
             tooltipEl.style.background = bg;
             tooltipEl.style.color = textColor;
@@ -1066,6 +1115,7 @@ window.dashboardRenderer = {
             }
 
             tooltipEl.innerHTML = html;
+            tooltipEl.style.pointerEvents = 'none';
 
             const containerRect = container.getBoundingClientRect();
             const chartRect = chart.canvas.getBoundingClientRect();
@@ -1090,6 +1140,55 @@ window.dashboardRenderer = {
             tooltipEl.style.opacity = '1';
         } catch (e) {
             // silently ignore tooltip errors
+        }
+    },
+
+    _renderPinnedTooltip(container) {
+        const pinned = this._pinnedTooltips.get(container);
+        if (!pinned) return;
+        const tooltipEl = container.querySelector('.chart-tooltip');
+        if (!tooltipEl) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const bg = isDark ? '#1f2937' : '#ffffff';
+        const textColor = isDark ? '#f3f4f6' : '#111827';
+        const borderColor = isDark ? '#374151' : '#e5e7eb';
+
+        tooltipEl.style.background = bg;
+        tooltipEl.style.color = textColor;
+        tooltipEl.style.border = '1px solid ' + borderColor;
+        tooltipEl.style.borderRadius = '8px';
+        tooltipEl.style.padding = '8px 12px';
+        tooltipEl.style.fontSize = '12px';
+        tooltipEl.style.lineHeight = '1.5';
+        tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
+        tooltipEl.style.fontFamily = 'inherit';
+        tooltipEl.style.pointerEvents = 'auto';
+        tooltipEl.innerHTML = pinned.html;
+
+        const containerRect = container.getBoundingClientRect();
+        const canvas = container.querySelector('canvas');
+        if (canvas) {
+            const chartRect = canvas.getBoundingClientRect();
+            const offsetLeft = chartRect.left - containerRect.left;
+            const offsetTop = chartRect.top - containerRect.top;
+
+            let left = pinned.caretX + offsetLeft;
+            let top = pinned.caretY + offsetTop;
+
+            const tw = tooltipEl.offsetWidth;
+            const th = tooltipEl.offsetHeight;
+            const cw = containerRect.width;
+            const ch = containerRect.height;
+
+            if (left + tw > cw - 8) left = left - tw - 8;
+            else left = Math.max(4, left - tw / 2);
+            top = top - th - 8;
+            if (top < 4) top = pinned.caretY + offsetTop + 12;
+
+            tooltipEl.style.left = Math.round(left) + 'px';
+            tooltipEl.style.top = Math.round(top) + 'px';
+            tooltipEl.style.opacity = '1';
         }
     },
 };
