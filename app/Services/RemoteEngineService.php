@@ -249,6 +249,38 @@ class RemoteEngineService
 
         \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => isset($result['data']) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
 
+        // Log full response data structure — check for intermediate/raw fields
+        if (is_array($result) && isset($result['data'])) {
+            $allDataKeys = array_keys($result['data']);
+            $extraKeys = array_diff($allDataKeys, ['baseline_intercept','coefficients','r_squared','data_points','scatter_data']);
+            if (!empty($extraKeys)) {
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI extra data keys', ['keys' => array_values($extraKeys)]);
+            }
+            // Log what data_points contains (it might hold raw keyword data)
+            if (isset($result['data']['data_points'])) {
+                $dp = $result['data']['data_points'];
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI data_points detail', [
+                    'type' => gettype($dp),
+                    'value' => is_scalar($dp) ? $dp : (is_array($dp) ? 'array(len=' . count($dp) . ')' : 'object'),
+                ]);
+            }
+            // Log the FULL scatter_data structure for completeness
+            if (isset($result['data']['scatter_data'])) {
+                $sd = $result['data']['scatter_data'];
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI scatter_data structure', [
+                    'keys' => array_keys($sd),
+                    'x_type' => gettype($sd['x'] ?? null),
+                    'x_len' => is_array($sd['x'] ?? null) ? count($sd['x']) : 0,
+                    'y_type' => gettype($sd['y'] ?? null),
+                    'y_len' => is_array($sd['y'] ?? null) ? count($sd['y']) : 0,
+                    'labels_type' => gettype($sd['labels'] ?? null),
+                    'labels_len' => is_array($sd['labels'] ?? null) ? count($sd['labels']) : 0,
+                    'x_label' => $sd['x_label'] ?? null,
+                    'has_x_label_array' => isset($sd['x_label']) && is_array($sd['x_label']),
+                ]);
+            }
+        }
+
         return $result;
     }
 
