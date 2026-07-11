@@ -1028,10 +1028,6 @@
                             this.popOutActive = false;
                             this.popOutWidgetId = null;
                             this.popOutTitle = '';
-                            card.style.transition = '';
-                            card.style.transform = '';
-                            card.style.opacity = '';
-                            card.style.transformOrigin = '';
                         }, {once: true});
                     } else {
                         this._popFromRect = null;
