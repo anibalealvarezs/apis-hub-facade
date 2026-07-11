@@ -231,7 +231,23 @@ class DashboardWidgetDataController extends Controller
                 $maxRatio = $resolvedControls['max_ratio'] ?? null;
                 $modelType = $data['model_type'] ?? 'linear';
 
-                // Build regression from ALL data (not filtered)
+                // Remove data points where position > 30 (poor-ranking noise)
+                // Applied before regression so the trend line also excludes them.
+                if ($resolvedControls['metrics'][0] === 'position') {
+                    $filteredX = []; $filteredY = [];
+                    foreach ($rawX as $i => $x) {
+                        if ($rawY[$i] <= 30) { $filteredX[] = $x; $filteredY[] = $rawY[$i]; }
+                    }
+                    $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
+                } elseif ($resolvedControls['metrics'][1] === 'position') {
+                    $filteredX = []; $filteredY = [];
+                    foreach ($rawX as $i => $x) {
+                        if ($x <= 30) { $filteredX[] = $x; $filteredY[] = $rawY[$i]; }
+                    }
+                    $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
+                }
+
+                // Build regression from filtered data
                 $b = 0;
                 $m = 0;
                 $rSquared = null;
@@ -337,21 +353,42 @@ class DashboardWidgetDataController extends Controller
                     $xThreshold = $sortedX[$pctIdx];
                 }
 
+                // Identify the histogram cluster point (lowest X) and relabel to [[[others]]]
+                $clusterIndex = null;
+                $isHistogram = ($resolvedControls['edge_case_grouping'] ?? null) === 'histogram';
+                if ($isHistogram && $totalN > 0) {
+                    $minX = min($rawX);
+                    foreach ($rawX as $i => $x) {
+                        if ($x === $minX) {
+                            $clusterIndex = $i;
+                            break;
+                        }
+                    }
+                }
+
                 $points = [];
                 foreach ($rawX as $i => $x) {
                     $y = $rawY[$i];
-                    if ($hardFloor !== null && $x < $hardFloor) {
-                        continue;
-                    }
-                    if ($xThreshold !== null && $x <= $xThreshold) {
-                        continue;
+                    $isCluster = ($clusterIndex !== null && $i === $clusterIndex);
+
+                    // Apply volume filter only to non-cluster points
+                    if (!$isCluster) {
+                        if ($hardFloor !== null && $x < $hardFloor) {
+                            continue;
+                        }
+                        if ($xThreshold !== null && $x <= $xThreshold) {
+                            continue;
+                        }
                     }
                     if ($maxRatio !== null && ($y > $maxRatio || $y < 0)) {
                         continue;
                     }
                     $point = ['x' => $x, 'y' => $y];
                     if (isset($scatter['labels'][$i])) {
-                        $point['label'] = $scatter['labels'][$i];
+                        $point['label'] = $isCluster ? '[[[others]]]' : $scatter['labels'][$i];
+                    }
+                    if ($isCluster) {
+                        $point['_isCluster'] = true;
                     }
                     $points[] = $point;
                 }
