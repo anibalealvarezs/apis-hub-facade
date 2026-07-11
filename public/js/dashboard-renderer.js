@@ -4,6 +4,8 @@
  */
 
 window.dashboardRenderer = {
+    _chartInstances: new Map(),
+    _widgetData: new Map(),
     METRIC_FORMATS: {
         'spend': { label: 'Spend', format: 'currency', prefix: '$' },
         'cpc': { label: 'CPC', format: 'currency', prefix: '$' },
@@ -140,21 +142,8 @@ window.dashboardRenderer = {
      */
     render(containerEl, json) {
         const { widget_type, data, controls } = json;
-
-        switch (widget_type) {
-            case 'tile':       this.renderTile(containerEl, data, controls); break;
-            case 'line_chart': this.renderLineChart(containerEl, data, controls); break;
-            case 'bar_chart':  this.renderBarChart(containerEl, data, controls); break;
-            case 'table':      this.renderTable(containerEl, data, controls); break;
-            case 'gauge':      this.renderGauge(containerEl, data, controls); break;
-            case 'sparkline':  this.renderSparkline(containerEl, data, controls); break;
-            case 'anomaly_list':  this.renderAnomalyList(containerEl, data, controls); break;
-            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data, controls); break;
-            case 'scatter_plot': this.renderScatterPlot(containerEl, data, controls); break;
-            case 'combo_chart': this.renderComboChart(containerEl, data, controls); break;
-            default:
-                containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
-        }
+        this._widgetData.set(containerEl, json);
+        this._renderWidget(widget_type, containerEl, data, controls);
     },
 
     // ─── Loading / Error States ───
@@ -785,13 +774,80 @@ window.dashboardRenderer = {
         containerEl.appendChild(canvas);
 
         if (typeof Chart === 'undefined') {
-            // Load Chart.js dynamically if not available
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
-            script.onload = () => new Chart(canvas, config);
+            script.onload = () => {
+                const chart = new Chart(canvas, config);
+                this._chartInstances.set(containerEl, chart);
+            };
             document.head.appendChild(script);
         } else {
-            new Chart(canvas, config);
+            const chart = new Chart(canvas, config);
+            this._chartInstances.set(containerEl, chart);
+        }
+    },
+
+    /**
+     * Pop a widget's canvas/chart into a different container (fullscreen modal).
+     */
+    popOutWidget(containerEl, targetEl) {
+        const json = this._widgetData.get(containerEl);
+        if (!json) return;
+
+        const canvas = containerEl.querySelector('canvas');
+        if (canvas) {
+            targetEl.innerHTML = '';
+            targetEl.appendChild(canvas);
+            const chart = this._chartInstances.get(containerEl);
+            if (chart) chart.resize();
+            return;
+        }
+        // HTML widget — clone content into target
+        targetEl.innerHTML = containerEl.innerHTML;
+    },
+
+    /**
+     * Pop the widget back to its original container.
+     * If the container was already re-rendered while popped out, discard the modal's canvas.
+     */
+    popInWidget(containerEl, targetEl) {
+        const canvas = targetEl.querySelector('canvas');
+        if (canvas) {
+            const existingCanvas = containerEl.querySelector('canvas');
+            if (existingCanvas) {
+                // Grid was reloaded while popped out — discard modal's stale chart
+                const chart = this._chartInstances.get(containerEl);
+                if (chart) {
+                    chart.destroy();
+                    this._chartInstances.delete(containerEl);
+                }
+                targetEl.innerHTML = '';
+                return;
+            }
+            containerEl.innerHTML = '';
+            containerEl.appendChild(canvas);
+            const chart = this._chartInstances.get(containerEl);
+            if (chart) chart.resize();
+            return;
+        }
+        // HTML widget — content was cloned, not moved. Just clear the modal.
+        targetEl.innerHTML = '';
+    },
+
+    _renderWidget(widget_type, containerEl, data, controls) {
+        switch (widget_type) {
+            case 'tile':       this.renderTile(containerEl, data, controls); break;
+            case 'line_chart': this.renderLineChart(containerEl, data, controls); break;
+            case 'bar_chart':  this.renderBarChart(containerEl, data, controls); break;
+            case 'table':      this.renderTable(containerEl, data); break;
+            case 'gauge':      this.renderGauge(containerEl, data, controls); break;
+            case 'sparkline':  this.renderSparkline(containerEl, data); break;
+            case 'anomaly_list':  this.renderAnomalyList(containerEl, data); break;
+            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data, controls); break;
+            case 'scatter_plot': this.renderScatterPlot(containerEl, data, controls); break;
+            case 'combo_chart': this.renderComboChart(containerEl, data, controls); break;
+            default:
+                containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
         }
     },
 

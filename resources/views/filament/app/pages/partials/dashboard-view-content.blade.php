@@ -102,6 +102,14 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                     </button>
+                                    {{-- Expand button (fullscreen pop-out) --}}
+                                    <button @click="openPopOut()"
+                                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            title="Expand to Fullscreen">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         @endif
@@ -120,6 +128,35 @@
                 <p class="text-gray-500 dark:text-gray-400 text-lg">No widgets on this dashboard yet</p>
             </div>
         @endif
+
+        {{-- Fullscreen Pop-Out Modal --}}
+        <div x-show="popOutActive"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             style="display: none; z-index: 999998;"
+             class="fixed inset-0 flex items-center justify-center bg-black/50"
+             @click.self="closePopOut()">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button @click="closePopOut()"
+                                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Restore to Dashboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div x-ref="popOutContent" class="flex-grow p-4 relative overflow-hidden">
+                </div>
+            </div>
+        </div>
 
         {{-- Settings Modal (teleported to body to avoid z-index issues) --}}
         <template x-teleport="body">
@@ -726,6 +763,44 @@
                         if (validAssets.length > 0) return validAssets;
                         if (allowedAssets.length > 0) return [allowedAssets[0]];
                         return [];
+                    },
+
+                    // ─── Fullscreen Pop-Out ───
+                    popOutActive: false,
+                    popOutTitle: '',
+                    popOutWidgetId: null,
+
+                    openPopOut(widgetId, title) {
+                        const contentEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"] .widget-content`);
+                        if (!contentEl) return;
+
+                        this.popOutTitle = title;
+                        this.popOutWidgetId = widgetId;
+                        this.popOutActive = true;
+
+                        this.$nextTick(() => {
+                            const renderer = window.dashboardRenderer;
+                            if (!renderer) return;
+                            const target = this.$refs.popOutContent;
+                            if (!target) return;
+                            renderer.popOutWidget(contentEl, target);
+                        });
+                    },
+
+                    closePopOut() {
+                        if (this.popOutWidgetId) {
+                            const contentEl = document.querySelector(`.grid-stack-item[gs-id="${this.popOutWidgetId}"] .widget-content`);
+                            const renderer = window.dashboardRenderer;
+                            if (renderer && contentEl) {
+                                const target = this.$refs.popOutContent;
+                                if (target) {
+                                    renderer.popInWidget(contentEl, target);
+                                }
+                            }
+                        }
+                        this.popOutActive = false;
+                        this.popOutWidgetId = null;
+                        this.popOutTitle = '';
                     }
                 };
             };
@@ -835,6 +910,21 @@
                         const dbView = document.getElementById('dashboard-view-container');
                         if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
                             dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
+                        }
+                    },
+
+                    openPopOut() {
+                        const dbView = document.getElementById('dashboard-view-container');
+                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
+                            const title = this.$el.closest('.grid-stack-item-content')?.querySelector('h3')?.textContent?.trim() || '';
+                            dbView.__x.getUnobservedData().openPopOut(this.widgetId, title);
+                        }
+                    },
+
+                    closePopOut() {
+                        const dbView = document.getElementById('dashboard-view-container');
+                        if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
+                            dbView.__x.getUnobservedData().closePopOut();
                         }
                     },
 
