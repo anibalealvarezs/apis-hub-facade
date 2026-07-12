@@ -164,7 +164,15 @@
              style="width: 95vw; height: 95vh; max-width: 1400px;">
             <div
                 class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
-                <h3 class="text-base font-bold text-gray-900 dark:text-white truncate pr-4" x-text="popOutTitle"></h3>
+                <div class="flex items-center gap-2 min-w-0 pr-4">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" x-text="popOutTitle"></h3>
+                    <template x-for="(badge, index) in popOutBadges" :key="index">
+                        <span class="inline-flex items-center rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm whitespace-nowrap" style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
+                            <span class="font-semibold mr-1" x-text="badge.label + ':'"></span>
+                            <span x-text="badge.text"></span>
+                        </span>
+                    </template>
+                </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
                     <button @click="openModalSettings()"
                             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -936,6 +944,7 @@
                 // ─── Fullscreen Pop-Out ───
                 popOutActive: false,
                 popOutTitle: '',
+                popOutBadges: [],
                 popOutWidgetId: null,
 
                 openPopOut(widgetId) {
@@ -948,6 +957,20 @@
 
                     this.popOutTitle = title;
                     this.popOutWidgetId = widgetId;
+
+                    const headerDataEl = widgetEl?.querySelector('[data-widget-id]');
+                    if (headerDataEl && window.Alpine) {
+                        try {
+                            const data = window.Alpine.$data(headerDataEl);
+                            if (data && typeof data.getBadges === 'function') {
+                                this.popOutBadges = data.getBadges();
+                            }
+                        } catch (e) {
+                            this.popOutBadges = [];
+                        }
+                    } else {
+                        this.popOutBadges = [];
+                    }
                     this._popFromRect = rect;
                     this._popOutAnimating = true;
                     this.popOutActive = true;
@@ -1171,25 +1194,40 @@
                 },
 
                 getBadges() {
-                    if (Object.keys(this.seriesOptions).length === 0) return [];
                     let badges = [];
-                    for (const [key, data] of Object.entries(this.seriesOptions)) {
-                        const selected = this.controls.series_assets[key] || [];
-                        let label = data.label.replace(/ \(.+\)/, '');
-                        let text = '';
-                        if (selected.length === 0 || selected.length === Object.keys(data.options).length) {
-                            text = 'All Assets';
-                        } else {
-                            let names = selected.map(id => data.options[id]).filter(Boolean);
-                            if (names.length <= 2) {
-                                text = names.join(', ');
-                            } else {
-                                text = names.slice(0, 2).join(', ') + ' + ' + (names.length - 2) + ' more';
-                            }
+                    for (const [key, vConfig] of Object.entries(this.variables)) {
+                        const metricKey = this.controls.metrics?.[vConfig.index];
+                        const metricLabel = metricKey && vConfig.metrics?.[metricKey]
+                            ? vConfig.metrics[metricKey] : metricKey || '';
+                        const channelName = vConfig.channel_name || '';
+                        const assetText = this._getAssetText(key);
+                        let text = metricLabel;
+                        if (assetText && assetText !== 'All') {
+                            text += ' · ' + assetText;
                         }
-                        badges.push({label: label, text: text});
+                        if (text) {
+                            badges.push({label: channelName, text: text});
+                        }
+                    }
+                    if (badges.length === 0) {
+                        for (const [key, data] of Object.entries(this.seriesOptions)) {
+                            const selected = this.controls.series_assets[key] || [];
+                            let label = data.label.replace(/ \(.+\)/, '');
+                            let text = this._getAssetText(key);
+                            if (text) badges.push({label, text});
+                        }
                     }
                     return badges;
+                },
+
+                _getAssetText(key) {
+                    const data = this.seriesOptions[key];
+                    if (!data) return '';
+                    const selected = this.controls.series_assets[key] || [];
+                    if (selected.length === 0 || selected.length === Object.keys(data.options).length) return '';
+                    const names = selected.map(id => data.options[id]).filter(Boolean);
+                    if (names.length <= 2) return names.join(', ');
+                    return names.slice(0, 2).join(', ') + ' +' + (names.length - 2) + ' more';
                 }
             };
         };
