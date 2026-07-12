@@ -942,6 +942,28 @@ window.dashboardRenderer = {
         }
     },
 
+    _ensureZoomPlugin(callback) {
+        if (typeof Chart === 'undefined') {
+            callback();
+            return;
+        }
+        if (Chart.registry.plugins.get('zoom')) {
+            callback();
+            return;
+        }
+        const existing = document.querySelector('script[src*="chartjs-plugin-zoom"]');
+        if (existing) {
+            existing.addEventListener('load', callback, { once: true });
+            existing.addEventListener('error', callback, { once: true });
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js';
+        script.onload = callback;
+        script.onerror = callback;
+        document.head.appendChild(script);
+    },
+
     renderChart(containerEl, config) {
         this._pinnedTooltips.delete(containerEl);
         const isDark = document.documentElement.classList.contains('dark');
@@ -964,24 +986,41 @@ window.dashboardRenderer = {
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
         config.options.plugins.tooltip.enabled = false;
         config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
+        config.options.plugins.zoom = {
+            zoom: {
+                wheel: { enabled: true, speed: 0.05 },
+                pinch: { enabled: true },
+                mode: 'xy',
+            },
+            pan: {
+                enabled: true,
+                mode: 'xy',
+                threshold: 10,
+            },
+        };
 
         const canvas = document.createElement('canvas');
         containerEl.innerHTML = '';
         containerEl.appendChild(canvas);
 
+        const createChart = () => {
+            const chart = new Chart(canvas, config);
+            this._chartInstances.set(containerEl, chart);
+            this._attachTooltipPin(chart, canvas, containerEl);
+            canvas.addEventListener('dblclick', () => {
+                if (chart.options?.plugins?.zoom) chart.resetZoom();
+            });
+        };
+
         if (typeof Chart === 'undefined') {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
             script.onload = () => {
-                const chart = new Chart(canvas, config);
-                this._chartInstances.set(containerEl, chart);
-                this._attachTooltipPin(chart, canvas, containerEl);
+                this._ensureZoomPlugin(createChart);
             };
             document.head.appendChild(script);
         } else {
-            const chart = new Chart(canvas, config);
-            this._chartInstances.set(containerEl, chart);
-            this._attachTooltipPin(chart, canvas, containerEl);
+            this._ensureZoomPlugin(createChart);
         }
     },
 
