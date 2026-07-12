@@ -15,41 +15,6 @@ class DashboardView extends Page
 
     use \App\Filament\App\Resources\DashboardResource\Traits\LoadsDashboardViewData;
 
-    public function getAllAssetGroups(): array
-    {
-        $project = \Filament\Facades\Filament::getTenant();
-        if (!$project) return [];
-
-        $groups = \App\Models\AssetGroup::where('project_id', $project->id)->get();
-        $result = [];
-        foreach ($groups as $group) {
-            $result[$group->id] = $group->name;
-        }
-        return $result;
-    }
-
-    public function getChannelAssetGroupMap(): array
-    {
-        $project = \Filament\Facades\Filament::getTenant();
-        if (!$project) return [];
-
-        $groups = \App\Models\AssetGroup::where('project_id', $project->id)
-            ->with('items')
-            ->get();
-
-        $map = [];
-        foreach ($groups as $group) {
-            $activeAssets = $group->active_items;
-            foreach ($activeAssets->groupBy('channel') as $channel => $items) {
-                if (!isset($map[$channel])) {
-                    $map[$channel] = [];
-                }
-                $map[$channel][(string) $group->id] = $items->pluck('asset_id')->map(fn ($v) => (string) $v)->values()->toArray();
-            }
-        }
-        return $map;
-    }
-
     public function mount(Dashboard $record): void
     {
         $this->loadDashboardViewData($record);

@@ -20,6 +20,41 @@ trait LoadsDashboardViewData
     public array $widgets = [];
     public array $allChannels = [];
 
+    public function getAllAssetGroups(): array
+    {
+        $project = Filament::getTenant();
+        if (!$project) return [];
+
+        $groups = \App\Models\AssetGroup::where('project_id', $project->id)->get();
+        $result = [];
+        foreach ($groups as $group) {
+            $result[$group->id] = $group->name;
+        }
+        return $result;
+    }
+
+    public function getChannelAssetGroupMap(): array
+    {
+        $project = Filament::getTenant();
+        if (!$project) return [];
+
+        $groups = \App\Models\AssetGroup::where('project_id', $project->id)
+            ->with('items')
+            ->get();
+
+        $map = [];
+        foreach ($groups as $group) {
+            $activeAssets = $group->active_items;
+            foreach ($activeAssets->groupBy('channel') as $channel => $items) {
+                if (!isset($map[$channel])) {
+                    $map[$channel] = [];
+                }
+                $map[$channel][(string) $group->id] = $items->pluck('asset_id')->map(fn ($v) => (string) $v)->values()->toArray();
+            }
+        }
+        return $map;
+    }
+
     public function loadDashboardViewData(Dashboard $record): void
     {
         $this->dashboard = $record;
