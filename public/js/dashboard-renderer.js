@@ -988,7 +988,7 @@ window.dashboardRenderer = {
         config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
         config.options.plugins.zoom = {
             zoom: {
-                wheel: { enabled: true, speed: 0.05 },
+                wheel: { enabled: true, speed: 0.05, modifierKey: 'ctrl' },
                 pinch: { enabled: true },
                 mode: 'xy',
             },
