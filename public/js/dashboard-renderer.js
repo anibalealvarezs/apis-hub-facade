@@ -987,10 +987,12 @@ window.dashboardRenderer = {
 
     _attachTooltipPin(chart, canvas, containerEl) {
         canvas.addEventListener('click', (e) => {
-            const pinned = this._pinnedTooltips.get(containerEl);
+            // Resolve container from canvas current parent — handles popOut/popIn
+            const container = canvas.parentNode || containerEl;
+            const pinned = this._pinnedTooltips.get(container);
             if (pinned) {
-                this._pinnedTooltips.delete(containerEl);
-                const tooltipEl = containerEl.querySelector('.chart-tooltip');
+                this._pinnedTooltips.delete(container);
+                const tooltipEl = container.querySelector('.chart-tooltip');
                 if (tooltipEl) {
                     tooltipEl.style.pointerEvents = 'none';
                     tooltipEl.style.opacity = '0';
@@ -1000,7 +1002,7 @@ window.dashboardRenderer = {
             }
             const elements = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
             if (elements.length === 0) return;
-            const widgetJson = this._widgetData.get(containerEl);
+            const widgetJson = this._widgetData.get(container);
             const controls = widgetJson?.controls;
             const resultFormat = this.getKpiResultFormat(controls);
             const chartType = chart.config.type;
@@ -1039,12 +1041,12 @@ window.dashboardRenderer = {
             });
             const meta = chart.getDatasetMeta(elements[0].datasetIndex);
             const element = meta.data[elements[0].index];
-            this._pinnedTooltips.set(containerEl, {
+            this._pinnedTooltips.set(container, {
                 html,
                 caretX: element.x,
                 caretY: element.y,
             });
-            this._renderPinnedTooltip(containerEl);
+            this._renderPinnedTooltip(container);
         });
     },
 
@@ -1055,12 +1057,23 @@ window.dashboardRenderer = {
         const json = this._widgetData.get(containerEl);
         if (!json) return;
 
+        // Transfer widget data and pinned tooltip to the modal container
+        this._widgetData.set(targetEl, json);
+        if (this._pinnedTooltips.has(containerEl)) {
+            this._pinnedTooltips.set(targetEl, this._pinnedTooltips.get(containerEl));
+            this._pinnedTooltips.delete(containerEl);
+        }
+
         const canvas = containerEl.querySelector('canvas');
         if (canvas) {
             const tooltipEl = containerEl.querySelector('.chart-tooltip');
             targetEl.innerHTML = '';
             targetEl.appendChild(canvas);
             if (tooltipEl) targetEl.appendChild(tooltipEl);
+            // Move remaining children (cluster toggle, etc.) into the modal
+            while (containerEl.children.length > 0) {
+                targetEl.appendChild(containerEl.children[0]);
+            }
             const chart = this._chartInstances.get(containerEl);
             if (chart) {
                 this._chartInstances.set(targetEl, chart);
@@ -1072,6 +1085,10 @@ window.dashboardRenderer = {
                 // canvas.parentElement dimensions immediately, so the chart
                 // renders at the correct modal container size on first paint.
                 chart.resize();
+                // Re-render pinned tooltip in the new container if one was pinned
+                if (this._pinnedTooltips.has(targetEl)) {
+                    this._renderPinnedTooltip(targetEl);
+                }
             }
             return;
         }
@@ -1105,11 +1122,28 @@ window.dashboardRenderer = {
             containerEl.innerHTML = '';
             containerEl.appendChild(canvas);
             if (tooltipEl) containerEl.appendChild(tooltipEl);
+            // Move remaining children (cluster toggle, etc.) back to the widget
+            while (targetEl.children.length > 0) {
+                containerEl.appendChild(targetEl.children[0]);
+            }
+            // Transfer widget data and pinned tooltip back to original container
+            if (this._widgetData.has(targetEl)) {
+                this._widgetData.set(containerEl, this._widgetData.get(targetEl));
+                this._widgetData.delete(targetEl);
+            }
+            if (this._pinnedTooltips.has(targetEl)) {
+                this._pinnedTooltips.set(containerEl, this._pinnedTooltips.get(targetEl));
+                this._pinnedTooltips.delete(targetEl);
+            }
             const chart = this._chartInstances.get(targetEl);
             if (chart) {
                 this._chartInstances.set(containerEl, chart);
                 this._chartInstances.delete(targetEl);
                 chart.resize();
+                // Re-render pinned tooltip in the original container if one was pinned
+                if (this._pinnedTooltips.has(containerEl)) {
+                    this._renderPinnedTooltip(containerEl);
+                }
             }
             return;
         }
