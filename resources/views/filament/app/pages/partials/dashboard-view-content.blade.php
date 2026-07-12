@@ -761,7 +761,11 @@
                     if (!el) return Promise.resolve();
                     el.innerHTML = '';
                     if (this.loadedCount > 0) this.loadedCount--;
-                    return this.renderWidget(widgetId, el, controls) || Promise.resolve();
+                    const result = this.renderWidget(widgetId, el, controls) || Promise.resolve();
+                    if (this.popOutActive && this.popOutWidgetId === widgetId) {
+                        Promise.resolve(result).then(() => this.$nextTick(() => this.syncPopOutBadges()));
+                    }
+                    return result;
                 },
 
                 settingsWidgetId: null,
@@ -869,6 +873,7 @@
                     if (this.popOutActive && this.popOutWidgetId === widgetId) {
                         Promise.resolve(reloadPromise).then(() => {
                             this.$nextTick(() => {
+                                this.syncPopOutBadges();
                                 const renderer = window.dashboardRenderer;
                                 if (!renderer) return;
                                 const target = this.$refs.popOutContent;
@@ -947,6 +952,22 @@
                 popOutBadges: [],
                 popOutWidgetId: null,
 
+                syncPopOutBadges() {
+                    if (!this.popOutWidgetId) { this.popOutBadges = []; return; }
+                    const widgetEl = document.querySelector(`.grid-stack-item[gs-id="${this.popOutWidgetId}"]`);
+                    const headerDataEl = widgetEl?.querySelector('[data-widget-id]');
+                    if (headerDataEl && window.Alpine) {
+                        try {
+                            const data = window.Alpine.$data(headerDataEl);
+                            if (data && typeof data.getBadges === 'function') {
+                                this.popOutBadges = data.getBadges();
+                                return;
+                            }
+                        } catch (e) {}
+                    }
+                    this.popOutBadges = [];
+                },
+
                 openPopOut(widgetId) {
                     if (this._popOutAnimating) return;
 
@@ -957,20 +978,7 @@
 
                     this.popOutTitle = title;
                     this.popOutWidgetId = widgetId;
-
-                    const headerDataEl = widgetEl?.querySelector('[data-widget-id]');
-                    if (headerDataEl && window.Alpine) {
-                        try {
-                            const data = window.Alpine.$data(headerDataEl);
-                            if (data && typeof data.getBadges === 'function') {
-                                this.popOutBadges = data.getBadges();
-                            }
-                        } catch (e) {
-                            this.popOutBadges = [];
-                        }
-                    } else {
-                        this.popOutBadges = [];
-                    }
+                    this.syncPopOutBadges();
                     this._popFromRect = rect;
                     this._popOutAnimating = true;
                     this.popOutActive = true;
