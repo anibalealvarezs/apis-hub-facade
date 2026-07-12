@@ -364,6 +364,12 @@
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Filter out ratio
                                                 values above this threshold.</p>
                                         </div>
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" x-model="settingsControls.remove_unknown"
+                                                   class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Exclude unknown keyword</span>
+                                        </label>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Remove the <code>unknown</code> query from the chart and recalculate the regression line without it.</p>
                                     </div>
                                 </div>
                             </template>

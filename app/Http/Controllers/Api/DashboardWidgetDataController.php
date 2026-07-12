@@ -446,8 +446,13 @@ class DashboardWidgetDataController extends Controller
 
                     $alwaysKeep = [];
                     $filterable = [];
+                    $removeUnknown = !empty($resolvedControls['remove_unknown']);
                     foreach ($points as $p) {
-                        if (!empty($p['_isCluster']) || (isset($p['label']) && $p['label'] === 'unknown')) {
+                        $isUnknown = isset($p['label']) && $p['label'] === 'unknown';
+                        if ($removeUnknown && $isUnknown) {
+                            continue;
+                        }
+                        if (!empty($p['_isCluster']) || $isUnknown) {
                             $alwaysKeep[] = $p;
                         } else {
                             $filterable[] = $p;
@@ -586,6 +591,10 @@ class DashboardWidgetDataController extends Controller
 
         if (isset($controls['max_ratio'])) {
             $controlsToMerge['max_ratio'] = $controls['max_ratio'] !== null ? (float) $controls['max_ratio'] : null;
+        }
+
+        if (isset($controls['remove_unknown'])) {
+            $controlsToMerge['remove_unknown'] = filter_var($controls['remove_unknown'], FILTER_VALIDATE_BOOLEAN);
         }
 
         // If independent variables are present and missing channels/assets, override them with controls

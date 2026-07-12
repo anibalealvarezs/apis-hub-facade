@@ -104,7 +104,7 @@ window.dashboardRenderer = {
         try {
             const body = { tenant };
             if (controls) {
-                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio'];
+                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown'];
                 const overrides = {};
                 for (const key of overrideKeys) {
                     if (controls[key] !== undefined) overrides[key] = controls[key];
