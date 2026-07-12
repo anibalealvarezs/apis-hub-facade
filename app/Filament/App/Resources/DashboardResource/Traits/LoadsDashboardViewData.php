@@ -202,6 +202,41 @@ trait LoadsDashboardViewData
                 }
             }
 
+            // Apply dashboard-level asset group filter to resolved series assets.
+            // This prevents JS applyAssetGroup() from detecting changes and
+            // triggering an unnecessary widget reload on page init.
+            $dashboardAssetGroup = $this->dashboard->controls['asset_group'] ?? null;
+            if ($dashboardAssetGroup && method_exists($this, 'getChannelAssetGroupMap')) {
+                $channelGroupMap = $this->getChannelAssetGroupMap();
+                if (!empty($channelGroupMap)) {
+                    foreach ($resolved['series_assets'] ?? [] as $assetKey => $assetIds) {
+                        $channel = null;
+                        if ($widgetArray['source_type'] === 'kpi') {
+                            if ($assetKey === 'dependent') {
+                                $channel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? null;
+                            } elseif (str_starts_with($assetKey, 'independent_')) {
+                                $idx = substr($assetKey, strlen('independent_'));
+                                $channel = $uiState['independent_variables'][$idx]['independent_channel'] ?? null;
+                            }
+                        } else {
+                            if (is_numeric($assetKey)) {
+                                $idx = (int) $assetKey;
+                                $channel = $resolved['series_channels'][$idx] ?? $resolved['channel'] ?? null;
+                            }
+                        }
+                        if ($channel && isset($channelGroupMap[$channel][$dashboardAssetGroup])) {
+                            $allowedAssets = $channelGroupMap[$channel][$dashboardAssetGroup];
+                            $validAssets = array_intersect($assetIds, $allowedAssets);
+                            if (!empty($validAssets)) {
+                                $resolved['series_assets'][$assetKey] = array_values($validAssets);
+                            } elseif (!empty($allowedAssets)) {
+                                $resolved['series_assets'][$assetKey] = [reset($allowedAssets)];
+                            }
+                        }
+                    }
+                }
+            }
+
             // Expose KPI-level defaults (from _ui_state) before dashboard-level controls
             if ($widgetArray['source_type'] === 'kpi') {
                 $widgetControls = $widgetModel->controls ?? [];
