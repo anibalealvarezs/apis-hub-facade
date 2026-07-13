@@ -269,7 +269,7 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
-                'default_granularity' => 'page',
+                'default_granularity' => 'dimensions.page',
                 'default_zero_handling' => 'remove',
                 'default_edge_case_handling' => [
                     'weighted' => true,
@@ -542,7 +542,7 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
-                'default_granularity' => 'page',
+                'default_granularity' => 'dimensions.page',
                 'default_zero_handling' => 'remove',
                 'default_edge_case_handling' => [
                     'weighted' => true,
@@ -674,7 +674,7 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
-                'default_granularity' => 'page',
+                'default_granularity' => 'dimensions.page',
                 'default_zero_handling' => 'remove',
                 'default_edge_case_handling' => [
                     'weighted' => true,
@@ -737,7 +737,7 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
-                'default_granularity' => 'page',
+                'default_granularity' => 'dimensions.page',
                 'default_zero_handling' => 'remove',
                 'default_edge_case_handling' => [
                     'weighted' => true,
@@ -769,7 +769,7 @@ class PredefinedKpiRegistry
                 'calculation_type' => 'calculate_regression',
                 'compatible_widgets' => ['gauge', 'tile', 'table', 'scatter_plot'],
                 'optimal_widgets' => ['scatter_plot'],
-                'default_granularity' => 'page',
+                'default_granularity' => 'dimensions.page',
                 'default_zero_handling' => 'remove',
                 'default_edge_case_handling' => [
                     'weighted' => true,
