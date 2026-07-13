@@ -559,7 +559,6 @@ class DashboardWidgetDataController extends Controller
         }
 
         $uiState = $kpi->filters['_ui_state'] ?? [];
-        \Illuminate\Support\Facades\Log::info('UI State:', $uiState);
         $controlsToMerge = [];
         if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
         if (!empty($controls['assets'])) $controlsToMerge['dependent_asset_filter'] = $controls['assets'];

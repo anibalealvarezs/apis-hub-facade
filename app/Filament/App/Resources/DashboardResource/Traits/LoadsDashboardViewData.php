@@ -79,7 +79,7 @@ trait LoadsDashboardViewData
                 $kpi = CustomKpi::find($widgetModel->source_config['custom_kpi_id']);
                 if ($kpi) {
                     $uiState = $kpi->filters['_ui_state'] ?? [];
-                    \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] KPI ID: ' . $kpi->id . ' | independent_variables:', [$uiState['independent_variables'] ?? []]);
+
                     $templateKey = $uiState['template_key'] ?? null;
                     if ($templateKey) {
                         $predefined = PredefinedKpiRegistry::getPredefinedKpis();
@@ -180,9 +180,7 @@ trait LoadsDashboardViewData
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
-                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] About to iterate independent_variables. Count: ' . count($uiState['independent_variables']));
                 foreach ($uiState['independent_variables'] as $key => $var) {
-                    \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] Var key=' . $key . ' channel=' . ($var['independent_channel'] ?? 'NULL') . ' metric=' . ($var['independent_metric'] ?? 'NULL'));
                     if (! empty($var['independent_channel'])) {
                         $idxKey = 'independent_' . $key;
                         $indAssetIds = null;
