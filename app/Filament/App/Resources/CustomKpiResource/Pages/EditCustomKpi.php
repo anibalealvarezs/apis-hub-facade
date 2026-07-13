@@ -28,7 +28,12 @@ class EditCustomKpi extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data = array_merge($this->form->getRawState(), $data);
+        $rawState = $this->form->getRawState();
+
+        \Illuminate\Support\Facades\Log::debug('[EditKPI] RawState independent_variables:', [$rawState['independent_variables'] ?? []]);
+        \Illuminate\Support\Facades\Log::debug('[EditKPI] $data independent_variables:', [$data['independent_variables'] ?? []]);
+
+        $data = array_merge($rawState, $data);
         $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'] ?? '', $data);
         
         $filters = $data['filters'] ?? [];
