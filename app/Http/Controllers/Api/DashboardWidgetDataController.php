@@ -45,6 +45,16 @@ class DashboardWidgetDataController extends Controller
 
         $resolvedControls = $this->widgetDataService->resolveControls($dashboard, $widget);
 
+        \Illuminate\Support\Facades\Log::info('[STEP show] Widget ' . $widget->id . ' after resolveControls', [
+            'widget_id' => $widget->id,
+            'metrics' => $resolvedControls['metrics'] ?? '__NOT_SET__',
+            'channel' => $resolvedControls['channel'] ?? '__NOT_SET__',
+            'granularity' => $resolvedControls['granularity'] ?? '__NOT_SET__',
+            'series_assets' => $resolvedControls['series_assets'] ?? '__NOT_SET__',
+            'assets' => $resolvedControls['assets'] ?? '__NOT_SET__',
+            'has_request_controls' => isset($validated['controls']),
+        ]);
+
         // Merge runtime overrides from the request (on-the-go UX)
         if (isset($validated['controls'])) {
             if (array_key_exists('granularity', $validated['controls']) && empty($validated['controls']['granularity'])) {
@@ -52,6 +62,15 @@ class DashboardWidgetDataController extends Controller
             }
             $resolvedControls = array_merge($resolvedControls, $validated['controls']);
         }
+
+        \Illuminate\Support\Facades\Log::info('[STEP show] Widget ' . $widget->id . ' after merge with request controls', [
+            'widget_id' => $widget->id,
+            'metrics' => $resolvedControls['metrics'] ?? '__NOT_SET__',
+            'request_metrics' => $validated['controls']['metrics'] ?? '__NOT_SET__',
+            'channel' => $resolvedControls['channel'] ?? '__NOT_SET__',
+            'granularity' => $resolvedControls['granularity'] ?? '__NOT_SET__',
+            'series_assets' => $resolvedControls['series_assets'] ?? '__NOT_SET__',
+        ]);
 
         if (!$dashboard->is_public && $user && !empty($resolvedControls['channel'])) {
             $isProjectUser = \Illuminate\Support\Facades\DB::table('model_has_roles')
@@ -90,7 +109,14 @@ class DashboardWidgetDataController extends Controller
                 $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
                 $runtimeMetrics = $resolvedControls['metrics'] ?? [];
 
-                \Illuminate\Support\Facades\Log::debug('[Controller lines 88-101] Widget: ' . $widget->id . ' | entry runtimeMetrics: ' . json_encode($runtimeMetrics) . ' | kpiIndependentVariables: ' . json_encode(collect($kpiUiState['independent_variables'] ?? [])->map(fn($v) => ['metric' => $v['independent_metric'] ?? null, 'channel' => $v['independent_channel'] ?? null])->values()->toArray()) . ' | kpiDependentMetric: ' . ($kpiUiState['dependent_metric'] ?? '__NONE__'));
+                \Illuminate\Support\Facades\Log::info('[STEP show] Post-process controls metrics check', [
+                    'widget_id' => $widget->id,
+                    'runtimeMetrics_entry' => $runtimeMetrics,
+                    'kpi_dependent_metric' => $kpiUiState['dependent_metric'] ?? '__NONE__',
+                    'kpi_independent_vars' => collect($kpiUiState['independent_variables'] ?? [])->map(fn($v) => ['metric' => $v['independent_metric'] ?? '__EMPTY__', 'channel' => $v['independent_channel'] ?? '__EMPTY__'])->values()->toArray(),
+                    'need_dependent_fallback' => empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric']),
+                    'need_independent_fallback' => empty($runtimeMetrics[1]) && isset($kpiUiState['independent_variables']),
+                ]);
 
                 if (empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric'])) {
                     $resolvedControls['metrics'][0] = $kpiUiState['dependent_metric'];
@@ -102,7 +128,11 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
 
-                \Illuminate\Support\Facades\Log::debug('[Controller lines 88-101] AFTER fallback | runtimeMetrics: ' . json_encode($runtimeMetrics) . ' | resolvedControls metrics: ' . json_encode($resolvedControls['metrics'] ?? []));
+                \Illuminate\Support\Facades\Log::info('[STEP show] Post-process controls metrics after fallback', [
+                    'widget_id' => $widget->id,
+                    'runtimeMetrics_original' => $runtimeMetrics,
+                    'resolvedControls_metrics' => $resolvedControls['metrics'] ?? [],
+                ]);
             }
 
             $effectiveWidgetType = $widget->widget_type;
@@ -534,6 +564,15 @@ class DashboardWidgetDataController extends Controller
                 ];
             }
 
+            \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
+                'widget_id' => $widget->id,
+                'widget_type' => $effectiveWidgetType,
+                'source_type' => $widget->source_type,
+                'has_scatter_data' => isset($data['scatter_data']) || isset($data['datasets']),
+                'data_keys' => is_array($data) ? array_keys($data) : gettype($data),
+                'controls_metrics' => $resolvedControls['metrics'] ?? [],
+            ]);
+
             return response()->json([
                 'success' => true,
                 'widget_type' => $effectiveWidgetType,
@@ -542,6 +581,11 @@ class DashboardWidgetDataController extends Controller
                 'controls' => $resolvedControls,
             ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[STEP show] Exception', [
+                'widget_id' => $widget->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             report($e);
             return response()->json([
                 'success' => false,
@@ -557,13 +601,53 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('Widget has no associated KPI');
         }
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Enter', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'calculation_type' => $kpi->calculation_type,
+            'controls_metrics' => $controls['metrics'] ?? [],
+            'controls_channel' => $controls['channel'] ?? '__NONE__',
+            'controls_granularity' => $controls['granularity'] ?? '__NONE__',
+            'controls_series_assets' => $controls['series_assets'] ?? [],
+            'controls_date_start' => $controls['date_start'] ?? null,
+            'controls_date_end' => $controls['date_end'] ?? null,
+        ]);
+
         $controlsHash = $this->widgetDataService->computeControlsHash($controls);
         $cached = $this->widgetDataService->getCachedResult($kpi->id, $controlsHash);
+
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache check', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'controls_hash' => $controlsHash,
+            'cache_hit' => $cached ? true : false,
+        ]);
+
         if ($cached) {
+            $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
+            \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
+                'widget_id' => $widget->id,
+                'kpi_id' => $kpi->id,
+                'controls_hash' => $controlsHash,
+                'data_keys' => $cachedDataKeys,
+                'has_scatter' => isset($cached->result['data']['scatter_data']),
+                '_debug' => $cached->result['data']['_debug'] ?? null,
+            ]);
             return $cached->result;
         }
 
         $uiState = $kpi->filters['_ui_state'] ?? [];
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Raw _ui_state from KPI DB', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'dependent_metric' => $uiState['dependent_metric'] ?? '__EMPTY__',
+            'independent_variables' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+                'independent_metric' => $v['independent_metric'] ?? '__EMPTY__',
+                'independent_channel' => $v['independent_channel'] ?? '__EMPTY__',
+                'independent_asset_filter' => $v['independent_asset_filter'] ?? '__EMPTY__',
+            ])->values()->toArray(),
+            'granularity' => $uiState['granularity'] ?? '__EMPTY__',
+        ]);
         $controlsToMerge = [];
         if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
         if (!empty($controls['assets'])) $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
@@ -625,6 +709,16 @@ class DashboardWidgetDataController extends Controller
         $runtimeMetrics = $controls['metrics'] ?? [];
         $metricIndex = 0;
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Runtime metric override', [
+            'widget_id' => $widget->id,
+            'runtimeMetrics_raw' => $runtimeMetrics,
+            'dependent_before' => $uiState['dependent_metric'] ?? '__EMPTY__',
+            'independent_vars_before' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+                'metric' => $v['independent_metric'] ?? '__EMPTY__',
+                'channel' => $v['independent_channel'] ?? '__EMPTY__',
+            ])->values()->toArray(),
+        ]);
+
         if (!empty($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
         }
@@ -639,33 +733,71 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] After runtime metric override', [
+            'widget_id' => $widget->id,
+            'dependent_after' => $uiState['dependent_metric'] ?? '__EMPTY__',
+            'independent_vars_after' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+                'metric' => $v['independent_metric'] ?? '__EMPTY__',
+                'channel' => $v['independent_channel'] ?? '__EMPTY__',
+            ])->values()->toArray(),
+        ]);
+
         // Auto-resolve missing independent variable metrics
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
                 if (empty($var['independent_metric']) && !empty($var['independent_channel'])) {
                     $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($var['independent_channel']);
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Auto-resolving missing metric', [
+                        'widget_id' => $widget->id,
+                        'var_key' => $key,
+                        'channel' => $var['independent_channel'],
+                        'available_metrics' => $channelMetrics ? array_keys($channelMetrics) : [],
+                    ]);
                     if (!empty($channelMetrics)) {
                         $metricKeys = array_keys($channelMetrics);
                         $uiState['independent_variables'][$key]['independent_metric'] = $metricKeys[0];
                     }
+                } else {
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Skipping auto-resolve', [
+                        'widget_id' => $widget->id,
+                        'var_key' => $key,
+                        'metric_already_set' => !empty($var['independent_metric']),
+                        'has_channel' => !empty($var['independent_channel']),
+                        'current_metric' => $var['independent_metric'] ?? '__EMPTY__',
+                        'current_channel' => $var['independent_channel'] ?? '__EMPTY__',
+                    ]);
                 }
             }
         }
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] After auto-resolve', [
+            'widget_id' => $widget->id,
+            'dependent_metric' => $uiState['dependent_metric'] ?? '__EMPTY__',
+            'independent_vars' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+                'metric' => $v['independent_metric'] ?? '__EMPTY__',
+                'channel' => $v['independent_channel'] ?? '__EMPTY__',
+                'asset_filter' => $v['independent_asset_filter'] ?? '__EMPTY__',
+            ])->values()->toArray(),
+        ]);
+
         $mergedState = array_merge($uiState, $controlsToMerge);
 
-        \Illuminate\Support\Facades\Log::info('Merged state after auto-resolution', [
+        \Illuminate\Support\Facades\Log::info('Merged state after auto-resolution (enriched)', [
             'dependent_metric' => $mergedState['dependent_metric'] ?? null,
             'dependent_channel' => $mergedState['dependent_channel'] ?? null,
             'independent_vars' => collect($mergedState['independent_variables'] ?? [])->map(fn($v) => [
                 'channel' => $v['independent_channel'] ?? null,
                 'metric' => $v['independent_metric'] ?? null,
                 'group' => $v['independent_asset_group'] ?? null,
+                'asset_filter' => $v['independent_asset_filter'] ?? null,
             ])->values()->toArray(),
             'granularity' => $mergedState['granularity'] ?? null,
             'zero_handling' => $mergedState['zero_handling'] ?? null,
             'grouping' => $mergedState['edge_case_grouping'] ?? null,
             'weighted' => $mergedState['edge_case_weighted'] ?? null,
+            'series_assets' => $controls['series_assets'] ?? [],
+            'request_metrics' => $controls['metrics'] ?? [],
+            'widget_id' => $widget->id,
         ]);
 
         if (empty($mergedState['dependent_metric'])) {
@@ -701,6 +833,15 @@ class DashboardWidgetDataController extends Controller
             'max_ratio' => $payload['max_ratio'] ?? null,
         ]);
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] About to call engine', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'calculation_type' => $kpi->calculation_type,
+            'payload_ast' => $payload['ast'] ?? null,
+            'payload_filters' => $payload['filters'] ?? null,
+            'payload_calc' => $payload['calculate_regression'] ?? $payload['calculate_elasticity'] ?? null,
+        ]);
+
         $result = $this->remoteEngineService->computeKpi($project, $payload);
 
         \Illuminate\Support\Facades\Log::info('Raw result from remote node', [
@@ -711,6 +852,11 @@ class DashboardWidgetDataController extends Controller
             'scatter_max_x_label' => isset($result['data']['scatter_data']['x']) && isset($result['data']['scatter_data']['labels'])
                 ? ($result['data']['scatter_data']['labels'][array_search(max($result['data']['scatter_data']['x']), $result['data']['scatter_data']['x'])] ?? 'unknown')
                 : null,
+            'granularity' => $controls['granularity'] ?? null,
+            'widget_id' => $widget->id,
+            'controls_metrics' => $controls['metrics'] ?? [],
+            'controls_hash' => $controlsHash,
+            '_debug' => $result['data']['_debug'] ?? null,
         ]);
 
         // Trace all occurrences of "unknown" in the scatter data (value could be duplicated)
@@ -745,6 +891,15 @@ class DashboardWidgetDataController extends Controller
         }
 
         $resultData = $result['data'] ?? [];
+
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Caching result', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'controls_hash' => $controlsHash,
+            'has_scatter' => isset($resultData['scatter_data']),
+            'data_keys' => array_keys($resultData),
+            '_debug' => $resultData['_debug'] ?? null,
+        ]);
 
         $this->widgetDataService->cacheResult(
             $kpi->id, $project->id, $controlsHash, $resultData
