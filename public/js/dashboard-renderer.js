@@ -640,10 +640,10 @@ window.dashboardRenderer = {
         const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
         const yFmt = resultFormat || (controls?.metrics?.[0] ? (this.METRIC_FORMATS[controls.metrics[0]] || null) : null);
 
-        console.log('[ScatterPlot] controls:', controls);
+        /* console.log('[ScatterPlot] controls:', controls);
         console.log('[ScatterPlot] metrics:', controls?.metrics);
         console.log('[ScatterPlot] resultFormat:', resultFormat);
-        console.log('[ScatterPlot] xFmt:', xFmt, '| yFmt:', yFmt);
+        console.log('[ScatterPlot] xFmt:', xFmt, '| yFmt:', yFmt); */
 
         const formatPoint = (v, fmt, axis) => {
             if (!fmt) {
