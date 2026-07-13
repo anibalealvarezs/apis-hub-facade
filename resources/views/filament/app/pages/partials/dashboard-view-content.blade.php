@@ -558,13 +558,16 @@
                 assetGroups: @json($this->getAllAssetGroups()),
                 channelAssetGroupMap: @json($this->getChannelAssetGroupMap()),
                 selectedAssetGroup: '{{ $dc['asset_group'] ?? '' }}',
+                _dashboardConfiguredGroup: '{{ $dc['asset_group'] ?? '' }}',
                 init() {
                     const groupKeys = Object.keys(this.assetGroups || {});
                     if (!this.selectedAssetGroup && groupKeys.length > 0) {
                         this.selectedAssetGroup = groupKeys[0];
                     }
                     this.$nextTick(() => {
-                        if (this.selectedAssetGroup) {
+                        // Only apply asset group on init if the dashboard had no configured group.
+                        // When a group was configured, PHP already filtered widget data server-side.
+                        if (this.selectedAssetGroup && !this._dashboardConfiguredGroup) {
                             this.applyAssetGroup();
                         }
                         const tryInit = () => {
