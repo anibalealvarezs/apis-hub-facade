@@ -764,6 +764,10 @@
                     if (!el) return Promise.resolve();
                     el.innerHTML = '';
                     if (this.loadedCount > 0) this.loadedCount--;
+                    // Sync controls back to the widget header Alpine component
+                    window.dispatchEvent(new CustomEvent('reload-widget', {
+                        detail: { id: widgetId, controls: controls }
+                    }));
                     const result = this.renderWidget(widgetId, el, controls) || Promise.resolve();
                     if (this.popOutActive && this.popOutWidgetId === widgetId) {
                         Promise.resolve(result).then(() => this.$nextTick(() => this.syncPopOutBadges()));
