@@ -55,10 +55,23 @@ class KpiPayloadBuilder
 
     public static function buildAstFromState(string $calculationType, array $state): array
     {
+        $depChannel = $state['dependent_channel'] ?? '';
+        $depMetric = $state['dependent_metric'] ?? '';
+        $depFullMetric = $depChannel . '.' . $depMetric;
         $dependentNode = [
             'type' => 'metric',
-            'metric' => ($state['dependent_channel'] ?? '') . '.' . ($state['dependent_metric'] ?? ''),
+            'metric' => $depFullMetric,
         ];
+        \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building AST dependent node', [
+            'channel' => $depChannel,
+            'metric' => $depMetric,
+            'full_metric' => $depFullMetric,
+            'has_asset_group' => !empty($state['dependent_asset_group']),
+            'has_asset_filter' => !empty($state['dependent_asset_filter']),
+            'asset_group' => $state['dependent_asset_group'] ?? null,
+            'asset_filter' => $state['dependent_asset_filter'] ?? null,
+            'granularity' => $state['granularity'] ?? 'daily',
+        ]);
 
         if (!empty($state['dependent_asset_group'])) {
             $group = \App\Models\AssetGroup::find($state['dependent_asset_group']);
@@ -93,17 +106,32 @@ class KpiPayloadBuilder
             'calculate_trend_ema', 'calculate_trend_holt_winters', 
             'calculate_trend_logarithmic'
         ])) {
+            \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Univariate AST (no independent vars)', [
+                'calculation_type' => $calculationType,
+                'dependent_node' => $dependentNode,
+            ]);
             return $dependentNode;
         }
 
         // For Bivariate, we need to build the right side (independent variables)
         $independents = array_values($state['independent_variables'] ?? []);
+        \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Bivariate AST building', [
+            'calculation_type' => $calculationType,
+            'independent_vars_count' => count($independents),
+            'independent_vars_raw' => $independents,
+        ]);
         if (empty($independents)) {
             return $dependentNode; // Fallback
         }
 
         // Build right node (might be nested if multiple variables, usually added together)
         $rightNode = self::buildIndependentNodes($independents, $state['granularity'] ?? 'daily');
+
+        \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Full AST tree', [
+            'operator' => '/',
+            'left' => $dependentNode,
+            'right' => $rightNode,
+        ]);
 
         // Operator is usually division for regression/elasticity (dependent / independent)
         return [
@@ -118,10 +146,22 @@ class KpiPayloadBuilder
     {
         if (count($variables) === 1) {
             $var = $variables[0];
+            $indChannel = $var['independent_channel'] ?? '';
+            $indMetric = $var['independent_metric'] ?? '';
+            $indFullMetric = $indChannel . '.' . $indMetric;
             $node = [
                 'type' => 'metric',
-                'metric' => ($var['independent_channel'] ?? '') . '.' . ($var['independent_metric'] ?? ''),
+                'metric' => $indFullMetric,
             ];
+            \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building independent node (single)', [
+                'channel' => $indChannel,
+                'metric' => $indMetric,
+                'full_metric' => $indFullMetric,
+                'has_asset_group' => !empty($var['independent_asset_group']),
+                'has_asset_filter' => !empty($var['independent_asset_filter']),
+                'asset_group' => $var['independent_asset_group'] ?? null,
+                'asset_filter' => $var['independent_asset_filter'] ?? null,
+            ]);
             
             if (!empty($var['independent_asset_group'])) {
                 $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
@@ -129,11 +169,18 @@ class KpiPayloadBuilder
                 
                 if (!empty($assets)) {
                     $node['filters'] = ['asset_platform_id' => array_values($assets)];
+                    \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Independent asset group resolved', [
+                        'group_id' => $var['independent_asset_group'],
+                        'resolved_assets' => array_values($assets),
+                    ]);
                 } else {
                     $node['filters'] = ['asset_platform_id' => ['__empty_group__']];
                 }
             } elseif (!empty($var['independent_asset_filter'])) {
                 $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
+                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Independent asset filter applied', [
+                    'asset_filter' => $var['independent_asset_filter'],
+                ]);
             }
 
             if (($var['independent_channel'] ?? '') === 'google_search_console'
@@ -142,6 +189,9 @@ class KpiPayloadBuilder
                 && !isset($node['filters']['dimensions.searchAppearance'])
             ) {
                 $node['filters']['dimensions.searchAppearance'] = 'standard';
+                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Added GSC searchAppearance=standard filter', [
+                    'node_metric' => $indFullMetric,
+                ]);
             }
             
             return $node;

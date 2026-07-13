@@ -29,7 +29,29 @@ class RemoteEngineService
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
+        $handlerStack = \GuzzleHttp\HandlerStack::create();
+        $handlerStack->push(\GuzzleHttp\Middleware::mapRequest(function (\Psr\Http\Message\RequestInterface $request) {
+            $body = (string) $request->getBody();
+            $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000) . '...[truncated]' : $body;
+            \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Outgoing request', [
+                'method' => $request->getMethod(),
+                'uri' => (string) $request->getUri(),
+                'headers' => $request->getHeaders(),
+                'body' => $truncated,
+            ]);
+            return $request;
+        }));
+        $handlerStack->push(\GuzzleHttp\Middleware::mapResponse(function (\Psr\Http\Message\ResponseInterface $response) {
+            $body = (string) $response->getBody();
+            $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000) . '...[truncated]' : $body;
+            \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Incoming response', [
+                'status' => $response->getStatusCode(),
+                'body' => $truncated,
+            ]);
+            return $response;
+        }));
         $guzzleClient = new \GuzzleHttp\Client([
+            'handler' => $handlerStack,
             'timeout' => $timeout,
             'connect_timeout' => $timeout,
         ]);
