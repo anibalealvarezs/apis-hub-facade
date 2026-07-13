@@ -8,34 +8,34 @@ window.dashboardRenderer = {
     _widgetData: new Map(),
     _pinnedTooltips: new Map(),
     METRIC_FORMATS: {
-        'spend': { label: 'Spend', format: 'currency', prefix: '$' },
-        'cpc': { label: 'CPC', format: 'currency', prefix: '$' },
-        'cpm': { label: 'CPM', format: 'currency', prefix: '$' },
-        'revenue': { label: 'Revenue', format: 'currency', prefix: '$' },
-        'purchase_roas': { label: 'ROAS', format: 'currency', prefix: '$' },
-        'aov': { label: 'AOV', format: 'currency', prefix: '$' },
-        'cost_per_result': { label: 'Cost/Result', format: 'currency', prefix: '$' },
-        'ctr': { label: 'CTR', format: 'percentage', multiply: 100 },
-        'bounce_rate': { label: 'Bounce Rate', format: 'percentage', multiply: 100 },
-        'clicks': { label: 'Clicks', format: 'number' },
-        'impressions': { label: 'Impressions', format: 'number' },
-        'reach': { label: 'Reach', format: 'number' },
-        'conversions': { label: 'Conversions', format: 'number' },
-        'results': { label: 'Results', format: 'number' },
-        'sessions': { label: 'Sessions', format: 'number' },
-        'pageviews': { label: 'Pageviews', format: 'number' },
-        'new_users': { label: 'New Users', format: 'number' },
-        'followers': { label: 'Followers', format: 'number' },
-        'engaged_users': { label: 'Engaged Users', format: 'number' },
-        'orders': { label: 'Orders', format: 'number' },
-        'sends': { label: 'Sends', format: 'number' },
-        'opens': { label: 'Opens', format: 'number' },
-        'bounces': { label: 'Bounces', format: 'number' },
-        'link_clicks': { label: 'Link Clicks', format: 'number' },
-        'engagements': { label: 'Engagements', format: 'number' },
-        'total_interactions': { label: 'Total Interactions', format: 'number' },
-        'average_session_duration': { label: 'Avg Session', format: 'number', suffix: 's' },
-        'position': { label: 'Avg Position', format: 'number' },
+        'spend': {label: 'Spend', format: 'currency', prefix: '$'},
+        'cpc': {label: 'CPC', format: 'currency', prefix: '$'},
+        'cpm': {label: 'CPM', format: 'currency', prefix: '$'},
+        'revenue': {label: 'Revenue', format: 'currency', prefix: '$'},
+        'purchase_roas': {label: 'ROAS', format: 'currency', prefix: '$'},
+        'aov': {label: 'AOV', format: 'currency', prefix: '$'},
+        'cost_per_result': {label: 'Cost/Result', format: 'currency', prefix: '$'},
+        'ctr': {label: 'CTR', format: 'percentage', multiply: 100},
+        'bounce_rate': {label: 'Bounce Rate', format: 'percentage', multiply: 100},
+        'clicks': {label: 'Clicks', format: 'number'},
+        'impressions': {label: 'Impressions', format: 'number'},
+        'reach': {label: 'Reach', format: 'number'},
+        'conversions': {label: 'Conversions', format: 'number'},
+        'results': {label: 'Results', format: 'number'},
+        'sessions': {label: 'Sessions', format: 'number'},
+        'pageviews': {label: 'Pageviews', format: 'number'},
+        'new_users': {label: 'New Users', format: 'number'},
+        'followers': {label: 'Followers', format: 'number'},
+        'engaged_users': {label: 'Engaged Users', format: 'number'},
+        'orders': {label: 'Orders', format: 'number'},
+        'sends': {label: 'Sends', format: 'number'},
+        'opens': {label: 'Opens', format: 'number'},
+        'bounces': {label: 'Bounces', format: 'number'},
+        'link_clicks': {label: 'Link Clicks', format: 'number'},
+        'engagements': {label: 'Engagements', format: 'number'},
+        'total_interactions': {label: 'Total Interactions', format: 'number'},
+        'average_session_duration': {label: 'Avg Session', format: 'number', suffix: 's'},
+        'position': {label: 'Avg Position', format: 'number'},
     },
 
     // Ratio KPIs produce a result whose type differs from the raw dependent metric.
@@ -51,37 +51,37 @@ window.dashboardRenderer = {
         if (m1) {
             // Known ratio → output type
             const ratioFormats = {
-                'clicks/impressions': { label: 'CTR', format: 'percentage', multiply: 100 },
-                'conversions/impressions': { label: 'Conv. Rate', format: 'percentage', multiply: 100 },
-                'conversions/clicks': { label: 'Conv. Rate', format: 'percentage', multiply: 100 },
-                'results/impressions': { label: 'Result Rate', format: 'percentage', multiply: 100 },
-                'results/clicks': { label: 'Result Rate', format: 'percentage', multiply: 100 },
-                'sessions/clicks': { label: 'Session Rate', format: 'percentage', multiply: 100 },
-                'sessions/link_clicks': { label: 'Session Rate', format: 'percentage', multiply: 100 },
-                'bounce_rate/clicks': { label: 'Bounce Rate', format: 'number' },
-                'spend/clicks': { label: 'CPC', format: 'currency', prefix: '$' },
-                'spend/impressions': { label: 'CPM', format: 'currency', prefix: '$' },
-                'spend/conversions': { label: 'CPA', format: 'currency', prefix: '$' },
-                'spend/results': { label: 'Cost/Result', format: 'currency', prefix: '$' },
-                'spend/sessions': { label: 'Cost/Session', format: 'currency', prefix: '$' },
-                'revenue/spend': { label: 'ROAS', format: 'currency', prefix: '$' },
-                'revenue/clicks': { label: 'RPC', format: 'currency', prefix: '$' },
-                'impressions/spend': { label: 'Impr./$', format: 'number' },
-                'sessions/spend': { label: 'Sessions/$', format: 'number' },
-                'new_users/spend': { label: 'New Users/$', format: 'number' },
-                'engaged_users/reach': { label: 'Eng. Rate', format: 'percentage', multiply: 100 },
-                'average_session_duration/clicks': { label: 'Session/Click', format: 'number', suffix: 's' },
-                'clicks/position': { label: 'Clicks/Pos.', format: 'number' },
+                'clicks/impressions': {label: 'CTR', format: 'percentage', multiply: 100},
+                'conversions/impressions': {label: 'Conv. Rate', format: 'percentage', multiply: 100},
+                'conversions/clicks': {label: 'Conv. Rate', format: 'percentage', multiply: 100},
+                'results/impressions': {label: 'Result Rate', format: 'percentage', multiply: 100},
+                'results/clicks': {label: 'Result Rate', format: 'percentage', multiply: 100},
+                'sessions/clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
+                'sessions/link_clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
+                'bounce_rate/clicks': {label: 'Bounce Rate', format: 'number'},
+                'spend/clicks': {label: 'CPC', format: 'currency', prefix: '$'},
+                'spend/impressions': {label: 'CPM', format: 'currency', prefix: '$'},
+                'spend/conversions': {label: 'CPA', format: 'currency', prefix: '$'},
+                'spend/results': {label: 'Cost/Result', format: 'currency', prefix: '$'},
+                'spend/sessions': {label: 'Cost/Session', format: 'currency', prefix: '$'},
+                'revenue/spend': {label: 'ROAS', format: 'currency', prefix: '$'},
+                'revenue/clicks': {label: 'RPC', format: 'currency', prefix: '$'},
+                'impressions/spend': {label: 'Impr./$', format: 'number'},
+                'sessions/spend': {label: 'Sessions/$', format: 'number'},
+                'new_users/spend': {label: 'New Users/$', format: 'number'},
+                'engaged_users/reach': {label: 'Eng. Rate', format: 'percentage', multiply: 100},
+                'average_session_duration/clicks': {label: 'Session/Click', format: 'number', suffix: 's'},
+                'clicks/position': {label: 'Clicks/Pos.', format: 'number'},
             };
             const key = m0 + '/' + m1;
             if (ratioFormats[key]) return ratioFormats[key];
 
             // Fallback heuristic
             if (f0?.format === 'currency' && f1?.format === 'number') {
-                return { label: f0.label, format: 'currency', prefix: '$' };
+                return {label: f0.label, format: 'currency', prefix: '$'};
             }
             if (f0?.format === 'number' && f1?.format === 'number') {
-                return { label: f0.label + '/' + f1.label, format: 'percentage', multiply: 100 };
+                return {label: f0.label + '/' + f1.label, format: 'percentage', multiply: 100};
             }
             return f0 || null;
         }
@@ -102,7 +102,7 @@ window.dashboardRenderer = {
         containerEl.innerHTML = this.loadingSkeleton();
 
         try {
-            const body = { tenant };
+            const body = {tenant};
             if (controls) {
                 const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'series_assets', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown'];
                 const overrides = {};
@@ -113,7 +113,10 @@ window.dashboardRenderer = {
             }
             const response = await fetch('/api/dashboard/widget/' + widgetId + '/data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
                 body: JSON.stringify(body),
             });
 
@@ -142,7 +145,7 @@ window.dashboardRenderer = {
      * Main render dispatcher.
      */
     render(containerEl, json) {
-        const { widget_type, data, controls } = json;
+        const {widget_type, data, controls} = json;
         this._widgetData.set(containerEl, json);
         this._renderWidget(widget_type, containerEl, data, controls);
     },
@@ -257,20 +260,20 @@ window.dashboardRenderer = {
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
             pointRadius: 5,
             pointHoverRadius: 9,
-            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
-            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
+            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
+            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
 
         const config = {
             type: 'line',
-            data: { labels, datasets: mappedDatasets },
+            data: {labels, datasets: mappedDatasets},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 12, padding: 12 } },
+                    legend: {display: datasets.length > 1, position: 'bottom', labels: {boxWidth: 12, padding: 12}},
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -284,10 +287,10 @@ window.dashboardRenderer = {
                     },
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
-                    y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
+                    x: {grid: {display: false}, ticks: {maxTicksLimit: 8, font: {size: 10}}},
+                    y: {beginAtZero: !reverseY, reverse: reverseY, ticks: {font: {size: 10}}},
                 },
-                elements: { line: { tension: 0.3 } },
+                elements: {line: {tension: 0.3}},
             },
         };
         this._setAnimation(config, true);
@@ -316,12 +319,12 @@ window.dashboardRenderer = {
 
         const config = {
             type: 'bar',
-            data: { labels, datasets: mappedDatasets },
+            data: {labels, datasets: mappedDatasets},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 12, padding: 12 } },
+                    legend: {display: datasets.length > 1, position: 'bottom', labels: {boxWidth: 12, padding: 12}},
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -335,8 +338,8 @@ window.dashboardRenderer = {
                     },
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                    y: { beginAtZero: !reverseY, reverse: reverseY, ticks: { font: { size: 10 } } },
+                    x: {grid: {display: false}, ticks: {font: {size: 10}}},
+                    y: {beginAtZero: !reverseY, reverse: reverseY, ticks: {font: {size: 10}}},
                 },
             },
         };
@@ -369,8 +372,8 @@ window.dashboardRenderer = {
                 const val = row[key] ?? row[col] ?? '';
                 const formatted = col.format === 'currency' ? this.formatCurrency(val)
                     : col.format === 'percentage' ? (val != null ? Number(val).toFixed(1) + '%' : '')
-                    : col.format === 'number' ? this.formatNumber(val)
-                    : val;
+                        : col.format === 'number' ? this.formatNumber(val)
+                            : val;
                 html += `<td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
@@ -394,9 +397,9 @@ window.dashboardRenderer = {
         const max = data?.max ?? 100;
         const label = data?.label ?? '';
         const thresholds = data?.thresholds ?? [
-            { from: 0, to: 33, color: '#ef4444' },
-            { from: 33, to: 66, color: '#f59e0b' },
-            { from: 66, to: 100, color: '#22c55e' },
+            {from: 0, to: 33, color: '#EF4444'},
+            {from: 33, to: 66, color: '#F59E0B'},
+            {from: 66, to: 100, color: '#22C55E'},
         ];
 
         const rawValue = value;
@@ -404,9 +407,12 @@ window.dashboardRenderer = {
 
         const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
-        let color = thresholds[0]?.color ?? '#22c55e';
+        let color = thresholds[0]?.color ?? '#22C55E';
         for (const t of thresholds) {
-            if (pct >= t.from && pct <= t.to) { color = t.color; break; }
+            if (pct >= t.from && pct <= t.to) {
+                color = t.color;
+                break;
+            }
         }
 
         containerEl.innerHTML = `
@@ -440,7 +446,7 @@ window.dashboardRenderer = {
         const current = points[points.length - 1];
         const first = points[0];
         const trend = current >= first ? 'up' : 'down';
-        const color = trend === 'up' ? '#22c55e' : '#ef4444';
+        const color = trend === 'up' ? '#22C55E' : '#EF4444';
 
         const min = Math.min(...points);
         const max = Math.max(...points);
@@ -494,8 +500,8 @@ window.dashboardRenderer = {
             const severityLabel = severity >= 0.9 ? 'Critical' : severity >= 0.7 ? 'High' : severity >= 0.4 ? 'Medium' : 'Low';
             const color = severity >= 0.9 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                 : severity >= 0.7 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                : severity >= 0.4 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+                    : severity >= 0.4 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 
             html += `<div class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                 <div class="flex items-center justify-between">
@@ -543,7 +549,7 @@ window.dashboardRenderer = {
                 ctx.save();
                 ctx.setLineDash([4, 4]);
                 ctx.lineWidth = 1.5;
-                ctx.strokeStyle = '#ef4444';
+                ctx.strokeStyle = '#EF4444';
 
                 labels.forEach((label, i) => {
                     if (anomalySet.has(label)) {
@@ -568,20 +574,20 @@ window.dashboardRenderer = {
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
             pointRadius: 5,
             pointHoverRadius: 9,
-            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
-            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3b82f6',
+            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
+            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
 
         const config = {
             type: 'line',
-            data: { labels, datasets: mappedDatasets },
+            data: {labels, datasets: mappedDatasets},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {display: false},
                     tooltip: {
                         callbacks: {
                             label(ctx) {
@@ -596,14 +602,14 @@ window.dashboardRenderer = {
                 },
                 scales: {
                     x: {
-                        grid: { display: false },
-                        ticks: { maxTicksLimit: 10, font: { size: 10 } },
+                        grid: {display: false},
+                        ticks: {maxTicksLimit: 10, font: {size: 10}},
                     },
                     y: {
                         beginAtZero: !reverseY,
                         reverse: reverseY,
                         ticks: {
-                            font: { size: 10 },
+                            font: {size: 10},
                             callback(val) {
                                 if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
                                 if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
@@ -641,16 +647,19 @@ window.dashboardRenderer = {
 
         const formatPoint = (v, fmt, axis) => {
             if (!fmt) {
-                const r = v.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                if (v === 0 || (v > 0 && v < 1)) console.log(`[formatPoint][${axis}] v=${v}, fmt=null →`, r);
+                const r = v.toLocaleString('en-US', {maximumFractionDigits: 2});
+                /* if (v === 0 || (v > 0 && v < 1)) console.log(`[formatPoint][${axis}] v=${v}, fmt=null →`, r); */
                 return r;
             }
             let val = fmt.multiply ? v * fmt.multiply : v;
             let r;
-            if (fmt.format === 'currency') r = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (fmt.format === 'currency') r = '$' + val.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
             else if (fmt.format === 'percentage') r = val.toFixed(1) + '%';
-            else r = val.toLocaleString('en-US', { maximumFractionDigits: 2 });
-            console.log(`[formatPoint][${axis}] v=${v}, fmt=${JSON.stringify(fmt)}, val=${val} →`, r);
+            else r = val.toLocaleString('en-US', {maximumFractionDigits: 2});
+            /* console.log(`[formatPoint][${axis}] v=${v}, fmt=${JSON.stringify(fmt)}, val=${val} →`, r); */
             return r;
         };
 
@@ -693,7 +702,12 @@ window.dashboardRenderer = {
             scatterDataset.borderWidth = 1;
         }
 
-        const yScaleOpts = { type: 'linear', title: { display: true, text: yAxisLabel }, reverse: reverseY, ticks: { callback: (v) => formatPoint(v, yFmt, 'Y') } };
+        const yScaleOpts = {
+            type: 'linear',
+            title: {display: true, text: yAxisLabel},
+            reverse: reverseY,
+            ticks: {callback: (v) => formatPoint(v, yFmt, 'Y')}
+        };
 
         const xMetricName = this.getMetricName(controls?.metrics?.[1]);
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
@@ -716,14 +730,14 @@ window.dashboardRenderer = {
                 responsive: true,
                 maintainAspectRatio: false,
                 onHover(e) {
-                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
                     e.native.target.style.cursor = found.length ? 'pointer' : 'default';
                 },
                 scales: {
                     x: {
                         type: 'linear',
                         position: 'bottom',
-                        title: { display: true, text: xAxisLabel },
+                        title: {display: true, text: xAxisLabel},
                         reverse: reverseX,
                         ticks: {
                             callback: (v) => formatPoint(v, xFmt, 'X'),
@@ -732,7 +746,7 @@ window.dashboardRenderer = {
                     y: yScaleOpts,
                 },
                 plugins: {
-                    legend: { display: true, position: 'bottom' },
+                    legend: {display: true, position: 'bottom'},
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -802,9 +816,9 @@ window.dashboardRenderer = {
                 const values = filtered.map(t => t.value);
                 if (values.length > 0) {
                     const maxVal = Math.max(...values);
-                    if (maxVal < dataMaxX) filtered.push({ value: dataMaxX });
+                    if (maxVal < dataMaxX) filtered.push({value: dataMaxX});
                     const minVal = Math.min(...values);
-                    if (minVal > dataMinX) filtered.push({ value: dataMinX });
+                    if (minVal > dataMinX) filtered.push({value: dataMinX});
                 }
                 axis.ticks = filtered;
             };
@@ -817,14 +831,14 @@ window.dashboardRenderer = {
                 const values = filtered.map(t => t.value);
                 // Keep the 0 reference tick if it falls within the visible axis range (Bug 1 fix)
                 if (0 >= yMin && 0 <= yMax && !values.includes(0)) {
-                    filtered.push({ value: 0 });
+                    filtered.push({value: 0});
                     values.push(0);
                 }
                 if (values.length > 0) {
                     const maxVal = Math.max(...values);
-                    if (maxVal < dataMaxY) filtered.push({ value: dataMaxY });
+                    if (maxVal < dataMaxY) filtered.push({value: dataMaxY});
                     const minVal = Math.min(...values);
-                    if (minVal > dataMinY) filtered.push({ value: dataMinY });
+                    if (minVal > dataMinY) filtered.push({value: dataMinY});
                 }
                 axis.ticks = filtered;
             };
@@ -896,15 +910,15 @@ window.dashboardRenderer = {
 
         const config = {
             type: 'bar',
-            data: { ...data, datasets: mappedDatasets },
+            data: {...data, datasets: mappedDatasets},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { grid: { display: false } },
+                    x: {grid: {display: false}},
                 },
                 plugins: {
-                    legend: { display: true, position: 'bottom' },
+                    legend: {display: true, position: 'bottom'},
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -966,8 +980,8 @@ window.dashboardRenderer = {
         }
         const existing = document.querySelector('script[src*="chartjs-plugin-zoom"]');
         if (existing) {
-            existing.addEventListener('load', callback, { once: true });
-            existing.addEventListener('error', callback, { once: true });
+            existing.addEventListener('load', callback, {once: true});
+            existing.addEventListener('error', callback, {once: true});
             return;
         }
         const script = document.createElement('script');
@@ -983,7 +997,7 @@ window.dashboardRenderer = {
         if (config.options && config.options.scales) {
             for (const axis of Object.values(config.options.scales)) {
                 if (axis.ticks) {
-                    axis.ticks.color = isDark ? '#a1a1aa' : '#71717a';
+                    axis.ticks.color = isDark ? '#A1A1AA' : '#71717A';
                 }
                 if (axis.grid) {
                     axis.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
@@ -991,7 +1005,7 @@ window.dashboardRenderer = {
             }
         }
         if (config.options?.plugins?.legend?.labels) {
-            config.options.plugins.legend.labels.color = isDark ? '#d4d4d8' : '#52525b';
+            config.options.plugins.legend.labels.color = isDark ? '#D4D4D8' : '#52525B';
         }
 
         config.options = config.options || {};
@@ -1001,8 +1015,8 @@ window.dashboardRenderer = {
         config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
         config.options.plugins.zoom = {
             zoom: {
-                wheel: { enabled: true, speed: 0.05, modifierKey: 'ctrl' },
-                pinch: { enabled: true },
+                wheel: {enabled: true, speed: 0.05, modifierKey: 'ctrl'},
+                pinch: {enabled: true},
                 mode: 'xy',
             },
             pan: {
@@ -1052,7 +1066,7 @@ window.dashboardRenderer = {
                 }
                 return;
             }
-            const elements = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+            const elements = chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
             if (elements.length === 0) return;
             const widgetJson = this._widgetData.get(container);
             const controls = widgetJson?.controls;
@@ -1083,7 +1097,7 @@ window.dashboardRenderer = {
                     }
                 }
                 const isLine = ds.type === 'line';
-                const color = ds.borderColor || ds.backgroundColor || '#3b82f6';
+                const color = ds.borderColor || ds.backgroundColor || '#3B82F6';
                 const colorStr = Array.isArray(color) ? color[el.index] : color;
                 html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                     '<span style="width:8px;height:8px;border-radius:50%;background:' + colorStr + ';flex-shrink:0;"></span>' +
@@ -1131,7 +1145,9 @@ window.dashboardRenderer = {
                 this._chartInstances.set(targetEl, chart);
                 this._chartInstances.delete(containerEl);
                 if (this._popOutObserver) this._popOutObserver.disconnect();
-                this._popOutObserver = new ResizeObserver(() => { chart.resize(); });
+                this._popOutObserver = new ResizeObserver(() => {
+                    chart.resize();
+                });
                 this._popOutObserver.observe(targetEl);
                 // Resize synchronously after the DOM move — Chart.js reads
                 // canvas.parentElement dimensions immediately, so the chart
@@ -1205,16 +1221,36 @@ window.dashboardRenderer = {
 
     _renderWidget(widget_type, containerEl, data, controls) {
         switch (widget_type) {
-            case 'tile':       this.renderTile(containerEl, data, controls); break;
-            case 'line_chart': this.renderLineChart(containerEl, data, controls); break;
-            case 'bar_chart':  this.renderBarChart(containerEl, data, controls); break;
-            case 'table':      this.renderTable(containerEl, data); break;
-            case 'gauge':      this.renderGauge(containerEl, data, controls); break;
-            case 'sparkline':  this.renderSparkline(containerEl, data); break;
-            case 'anomaly_list':  this.renderAnomalyList(containerEl, data); break;
-            case 'anomaly_chart': this.renderAnomalyChart(containerEl, data, controls); break;
-            case 'scatter_plot': this.renderScatterPlot(containerEl, data, controls); break;
-            case 'combo_chart': this.renderComboChart(containerEl, data, controls); break;
+            case 'tile':
+                this.renderTile(containerEl, data, controls);
+                break;
+            case 'line_chart':
+                this.renderLineChart(containerEl, data, controls);
+                break;
+            case 'bar_chart':
+                this.renderBarChart(containerEl, data, controls);
+                break;
+            case 'table':
+                this.renderTable(containerEl, data);
+                break;
+            case 'gauge':
+                this.renderGauge(containerEl, data, controls);
+                break;
+            case 'sparkline':
+                this.renderSparkline(containerEl, data);
+                break;
+            case 'anomaly_list':
+                this.renderAnomalyList(containerEl, data);
+                break;
+            case 'anomaly_chart':
+                this.renderAnomalyChart(containerEl, data, controls);
+                break;
+            case 'scatter_plot':
+                this.renderScatterPlot(containerEl, data, controls);
+                break;
+            case 'combo_chart':
+                this.renderComboChart(containerEl, data, controls);
+                break;
             default:
                 containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
         }
@@ -1224,12 +1260,12 @@ window.dashboardRenderer = {
 
     formatNumber(n) {
         if (n == null || isNaN(n)) return '—';
-        return Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 });
+        return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
     },
 
     formatCurrency(n) {
         if (n == null || isNaN(n)) return '—';
-        return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     },
 
     // ─── Metric Display Helpers ───
@@ -1344,9 +1380,9 @@ window.dashboardRenderer = {
             }
 
             const isDark = document.documentElement.classList.contains('dark');
-            const bg = isDark ? '#1f2937' : '#ffffff';
-            const textColor = isDark ? '#f3f4f6' : '#111827';
-            const borderColor = isDark ? '#374151' : '#e5e7eb';
+            const bg = isDark ? '#1F2937' : '#FFF';
+            const textColor = isDark ? '#F3F4F6' : '#111827';
+            const borderColor = isDark ? '#374151' : '#E5E7EB';
 
             tooltipEl.style.background = bg;
             tooltipEl.style.color = textColor;
@@ -1364,7 +1400,7 @@ window.dashboardRenderer = {
                 tooltip.body.forEach((body, i) => {
                     const dp = tooltip.dataPoints?.[i];
                     if (!dp) return;
-                    const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3b82f6';
+                    const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3B82F6';
                     const val = body.lines?.[0] || '';
                     html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                         '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
@@ -1391,9 +1427,9 @@ window.dashboardRenderer = {
         if (!tooltipEl) return;
 
         const isDark = document.documentElement.classList.contains('dark');
-        const bg = isDark ? '#1f2937' : '#ffffff';
-        const textColor = isDark ? '#f3f4f6' : '#111827';
-        const borderColor = isDark ? '#374151' : '#e5e7eb';
+        const bg = isDark ? '#1F2937' : '#FFF';
+        const textColor = isDark ? '#F3F4F6' : '#111827';
+        const borderColor = isDark ? '#374151' : '#E5E7EB';
 
         tooltipEl.style.background = bg;
         tooltipEl.style.color = textColor;
