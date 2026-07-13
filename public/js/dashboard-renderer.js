@@ -796,6 +796,8 @@ window.dashboardRenderer = {
             config.options.scales.x.min = xMin;
             config.options.scales.x.max = xMax;
             config.options.scales.x.afterBuildTicks = (axis) => {
+                // When zoomed (axis range differs from initial), let Chart.js auto-generate ticks
+                if (Math.abs(axis.min - xMin) > 0.001 || Math.abs(axis.max - xMax) > 0.001) return;
                 const filtered = axis.ticks.filter(t => t.value >= dataMinX && t.value <= dataMaxX);
                 const values = filtered.map(t => t.value);
                 if (values.length > 0) {
@@ -809,6 +811,8 @@ window.dashboardRenderer = {
             config.options.scales.y.min = yMin;
             config.options.scales.y.max = yMax;
             config.options.scales.y.afterBuildTicks = (axis) => {
+                // When zoomed (axis range differs from initial), let Chart.js auto-generate ticks
+                if (Math.abs(axis.min - yMin) > 0.001 || Math.abs(axis.max - yMax) > 0.001) return;
                 const filtered = axis.ticks.filter(t => t.value >= dataMinY && t.value <= dataMaxY);
                 const values = filtered.map(t => t.value);
                 // Keep the 0 reference tick if it falls within the visible axis range (Bug 1 fix)
