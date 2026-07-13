@@ -17,7 +17,27 @@ class EditCustomKpi extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         if (!empty($data['filters']['_ui_state'])) {
-            foreach ($data['filters']['_ui_state'] as $key => $val) {
+            $uiState = $data['filters']['_ui_state'];
+
+            // Detect corruption: model-level keys shouldn't be in _ui_state
+            $hasModelKeys = !empty(array_intersect(
+                array_keys($uiState),
+                ['ast', 'id', 'project_id', 'created_at', 'updated_at']
+            ));
+
+            if ($hasModelKeys && !empty($uiState['filters']['_ui_state'])) {
+                // Walk down to the deepest non-corrupted _ui_state
+                $inner = $uiState['filters']['_ui_state'];
+                while (!empty($inner['filters']['_ui_state'])) {
+                    $inner = $inner['filters']['_ui_state'];
+                }
+                // Inner keys (correct UI data) override outer (corrupted), outer extras preserved
+                $uiState = array_merge($uiState, $inner);
+            }
+
+            // Strip model-level keys that were erroneously nested by the old save bug
+            $uiState = \Illuminate\Support\Arr::except($uiState, ['ast', 'filters', 'id', 'project_id', 'created_at', 'updated_at']);
+            foreach ($uiState as $key => $val) {
                 $data[$key] = $val;
             }
         }
@@ -29,15 +49,11 @@ class EditCustomKpi extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $rawState = $this->form->getRawState();
-
-        \Illuminate\Support\Facades\Log::debug('[EditKPI] RawState independent_variables:', [$rawState['independent_variables'] ?? []]);
-        \Illuminate\Support\Facades\Log::debug('[EditKPI] $data independent_variables:', [$data['independent_variables'] ?? []]);
-
         $data = array_merge($rawState, $data);
         $data['ast'] = KpiPayloadBuilder::buildAstFromState($data['calculation_type'] ?? '', $data);
         
         $filters = $data['filters'] ?? [];
-        $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter']);
+        $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter', 'ast', 'filters', 'project_id', 'id']);
         $data['filters'] = $filters;
 
         $allowedColumns = ['name', 'description', 'calculation_type', 'is_active', 'template', 'ast', 'filters', 'project_id'];
