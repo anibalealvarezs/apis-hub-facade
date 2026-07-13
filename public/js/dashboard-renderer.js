@@ -654,8 +654,17 @@ window.dashboardRenderer = {
             return r;
         };
 
-        const yAxisLabel = yFmt?.label || 'Value';
-        const xAxisLabel = xFmt?.label || (controls?.metrics?.[1] || 'X');
+        const formatUnit = (fmt) => {
+            if (!fmt) return '';
+            if (fmt.format === 'percentage') return '%';
+            if (fmt.format === 'currency') return fmt.prefix || '$';
+            if (fmt.suffix) return fmt.suffix;
+            return '';
+        };
+        const yUnit = formatUnit(yFmt);
+        const xUnit = formatUnit(xFmt);
+        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
+        const xAxisLabel = (xFmt?.label || (controls?.metrics?.[1] || 'X')) + (xUnit ? ' (' + xUnit + ')' : '');
 
         const scatterDataset = data.datasets.find(d => d.type === 'scatter');
         if (scatterDataset && scatterDataset.data && scatterDataset.data.length > 0) {
@@ -684,7 +693,7 @@ window.dashboardRenderer = {
             scatterDataset.borderWidth = 1;
         }
 
-        const yScaleOpts = { type: 'linear', title: { display: true, text: data.y_label || yAxisLabel }, reverse: reverseY, ticks: { callback: (v) => formatPoint(v, yFmt, 'Y') } };
+        const yScaleOpts = { type: 'linear', title: { display: true, text: yAxisLabel }, reverse: reverseY, ticks: { callback: (v) => formatPoint(v, yFmt, 'Y') } };
 
         const xMetricName = this.getMetricName(controls?.metrics?.[1]);
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
@@ -714,7 +723,7 @@ window.dashboardRenderer = {
                     x: {
                         type: 'linear',
                         position: 'bottom',
-                        title: { display: true, text: data.x_label || xAxisLabel },
+                        title: { display: true, text: xAxisLabel },
                         reverse: reverseX,
                         ticks: {
                             callback: (v) => formatPoint(v, xFmt, 'X'),
