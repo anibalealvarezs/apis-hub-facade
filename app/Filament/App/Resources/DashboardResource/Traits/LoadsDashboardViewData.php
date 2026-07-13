@@ -115,37 +115,39 @@ trait LoadsDashboardViewData
 
             // Always provide asset filter options when a channel with assets is available
             $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
-                $assets = $getAssetsForChannel($channel);
-                if (! empty($allowedIds)) {
+                $allAssets = $getAssetsForChannel($channel);
+                if (empty($allAssets)) {
+                    $allAssets = [];
+                }
+
+                // Determine default selection from allowed IDs (KPI group / widget config).
+                // Options list always shows ALL channel assets — group filtering happens
+                // client-side via isViewAssetInGroup so switching asset groups works.
+                $defaultAssets = $allAssets;
+                if (!empty($allowedIds)) {
                     $filtered = [];
                     foreach ($allowedIds as $id) {
-                        if (isset($assets[$id])) {
-                            $filtered[$id] = $assets[$id];
+                        if (isset($allAssets[$id])) {
+                            $filtered[$id] = $allAssets[$id];
                         }
                     }
-                    if (empty($filtered)) {
-                        // If all provided IDs were invalid (e.g. channel changed but old assets remained),
-                        // reset to all available channel assets so the user can make a new selection.
-                        $assets = $getAssetsForChannel($channel);
-                    } else {
-                        $assets = $filtered;
+                    if (!empty($filtered)) {
+                        $defaultAssets = $filtered;
                     }
+                    // If all filtered out (e.g. channel changed), keep default as all assets
                 }
-                if (empty($assets)) {
-                    $assets = []; // ensure it's an array
-                }
-                
-                // The view must not select all assets per series by default, but just a single asset per series.
-                if (!empty($assets)) {
-                    reset($assets);
-                    $resolved['series_assets'][$key] = [strval(key($assets))];
+
+                // Default selection: single asset
+                if (!empty($defaultAssets)) {
+                    reset($defaultAssets);
+                    $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
                 } else {
                     $resolved['series_assets'][$key] = [];
                 }
 
                 $widgetArray['series_assets_options'][$key] = [
                     'label' => $label ?? Str::headline($channel),
-                    'options' => (object) $assets,
+                    'options' => (object) $allAssets,
                     'mode' => $kpiAssetMode,
                 ];
             };
