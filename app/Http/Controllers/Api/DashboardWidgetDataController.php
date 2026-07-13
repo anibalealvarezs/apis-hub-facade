@@ -89,6 +89,9 @@ class DashboardWidgetDataController extends Controller
             if ($widget->source_type === 'kpi' && $widget->customKpi) {
                 $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
                 $runtimeMetrics = $resolvedControls['metrics'] ?? [];
+
+                \Illuminate\Support\Facades\Log::debug('[Controller lines 88-101] Widget: ' . $widget->id . ' | entry runtimeMetrics: ' . json_encode($runtimeMetrics) . ' | kpiIndependentVariables: ' . json_encode(collect($kpiUiState['independent_variables'] ?? [])->map(fn($v) => ['metric' => $v['independent_metric'] ?? null, 'channel' => $v['independent_channel'] ?? null])->values()->toArray()) . ' | kpiDependentMetric: ' . ($kpiUiState['dependent_metric'] ?? '__NONE__'));
+
                 if (empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric'])) {
                     $resolvedControls['metrics'][0] = $kpiUiState['dependent_metric'];
                 }
@@ -98,6 +101,8 @@ class DashboardWidgetDataController extends Controller
                         $resolvedControls['metrics'][1] = $firstIvar['independent_metric'];
                     }
                 }
+
+                \Illuminate\Support\Facades\Log::debug('[Controller lines 88-101] AFTER fallback | runtimeMetrics: ' . json_encode($runtimeMetrics) . ' | resolvedControls metrics: ' . json_encode($resolvedControls['metrics'] ?? []));
             }
 
             $effectiveWidgetType = $widget->widget_type;

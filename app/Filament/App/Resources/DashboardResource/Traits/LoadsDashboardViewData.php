@@ -379,11 +379,16 @@ trait LoadsDashboardViewData
             if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
                 $resolved['metrics'] = [];
             }
+            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
             // First pad the array with empty strings up to the number of variables
             for ($i = 0; $i < count($variables); $i++) {
                 if (!isset($resolved['metrics'][$i])) {
                     $resolved['metrics'][$i] = '';
                 }
+            }
+            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] AFTER padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | resolved metrics: ' . json_encode($resolved['metrics']));
+            foreach ($variables as $vConfig) {
+                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] Variable loop | Widget: ' . ($widgetArray['id'] ?? '?') . ' | index: ' . ($vConfig['index'] ?? '?') . ' | selected_metric: ' . ($vConfig['selected_metric'] ?? '__NONE__') . ' | metrics keys: ' . json_encode(array_keys($vConfig['metrics'] ?? [])));
             }
             foreach ($variables as $vConfig) {
                 $idx = $vConfig['index'];

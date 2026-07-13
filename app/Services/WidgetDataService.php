@@ -32,6 +32,8 @@ class WidgetDataService
 
         $widgetControls = $widget->controls ?? [];
 
+        \Illuminate\Support\Facades\Log::debug('[WidgetDataService.resolveControls] Widget ID: ' . $widget->id . ' | Stored controls metrics: ' . json_encode($widgetControls['metrics'] ?? '__NOT_SET__') . ' | Widget type: ' . $widget->widget_type . ' | Source type: ' . $widget->source_type);
+
         $resolved = [];
 
         $inheritableKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'edge_case_weighted', 'edge_case_grouping'];
