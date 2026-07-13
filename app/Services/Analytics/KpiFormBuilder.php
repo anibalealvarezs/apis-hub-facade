@@ -873,7 +873,7 @@ class KpiFormBuilder
                                                 'weekly' => __('Weekly'),
                                                 'monthly' => __('Monthly'),
                                                 'query' => __('Query / Keyword'),
-                                                'page' => __('Page / URL'),
+                                                'dimensions.page' => __('Page / URL'),
                                                 'campaign' => __('Campaign'),
                                                 'adset' => __('Ad Set / Ad Group'),
                                                 'ad' => __('Ad / Creative'),
