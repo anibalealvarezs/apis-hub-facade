@@ -39,6 +39,9 @@ class RemoteEngineService
                 'headers' => $request->getHeaders(),
                 'body' => $truncated,
             ]);
+            if ($request->getBody()->isSeekable()) {
+                $request->getBody()->rewind();
+            }
             return $request;
         }));
         $handlerStack->push(\GuzzleHttp\Middleware::mapResponse(function (\Psr\Http\Message\ResponseInterface $response) {
@@ -48,6 +51,9 @@ class RemoteEngineService
                 'status' => $response->getStatusCode(),
                 'body' => $truncated,
             ]);
+            if ($response->getBody()->isSeekable()) {
+                $response->getBody()->rewind();
+            }
             return $response;
         }));
         $guzzleClient = new \GuzzleHttp\Client([
