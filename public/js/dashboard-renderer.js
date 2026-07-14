@@ -266,6 +266,7 @@ window.dashboardRenderer = {
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
             pointRadius: 6,
             pointHoverRadius: 10,
+            pointHitRadius: 15,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
@@ -278,14 +279,18 @@ window.dashboardRenderer = {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onHover(e) {
+                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
+                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                },
                 plugins: {
                     legend: {display: datasets.length > 1, position: 'bottom', labels: {boxWidth: 12, padding: 12}},
                     tooltip: {
                         callbacks: {
+                            title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label: (ctx) => {
-                                const label = ctx.chart.data.labels?.[ctx.dataIndex] || '';
                                 const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
-                                return (label ? label + ' — ' : '') + valY + ' ' + yMetricName;
+                                return valY + ' ' + yMetricName;
                             },
                         },
                     },
@@ -589,6 +594,7 @@ window.dashboardRenderer = {
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
             pointRadius: 6,
             pointHoverRadius: 10,
+            pointHitRadius: 15,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
@@ -601,14 +607,18 @@ window.dashboardRenderer = {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                onHover(e) {
+                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
+                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                },
                 plugins: {
                     legend: {display: false},
                     tooltip: {
                         callbacks: {
+                            title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label(ctx) {
-                                const label = ctx.chart.data.labels?.[ctx.dataIndex] || '';
                                 const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
-                                return (label ? label + ' — ' : '') + valY + ' ' + yMetricName;
+                                return valY + ' ' + yMetricName;
                             },
                         },
                     },
@@ -763,7 +773,7 @@ window.dashboardRenderer = {
                     y: yScaleOpts,
                 },
                 plugins: {
-                    legend: {display: true, position: 'bottom'},
+                    legend: {display: false},
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
