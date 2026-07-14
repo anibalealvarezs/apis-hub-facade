@@ -1429,17 +1429,44 @@ window.dashboardRenderer = {
             tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
             tooltipEl.style.fontFamily = 'inherit';
 
+            const widgetJson = this._widgetData.get(container);
+            const ctrl = widgetJson?.controls;
+            const rFmt = this.getKpiResultFormat(ctrl);
+            const chartType = chart.config.type;
+            const xMN = this.getMetricName(ctrl?.metrics?.[1]);
+            const yMN = this.getMetricName(ctrl?.metrics?.[0]);
+
             let html = '';
 
             if (tooltip.body?.length) {
                 tooltip.body.forEach((body, i) => {
                     const dp = tooltip.dataPoints?.[i];
                     if (!dp) return;
+                    let val;
+                    if (chartType === 'scatter') {
+                        const point = dp.raw;
+                        const vX = this.formatMetricValue(point.x, ctrl?.metrics?.[1]);
+                        const vY = this.formatMetricValue(point.y, ctrl?.metrics?.[0]);
+                        const baseLabel = point.label ? (point.label + ' — ') : '';
+                        val = baseLabel + '(' + vX + ' ' + xMN + ', ' + vY + ' ' + yMN + ')';
+                    } else {
+                        const label = chart.data.labels?.[dp.dataIndex] || '';
+                        let v = typeof dp.raw === 'object' ? (dp.raw.y ?? 0) : dp.raw;
+                        if (rFmt?.multiply) v = v * rFmt.multiply;
+                        if (dp.dataset.currency || rFmt?.format === 'currency') {
+                            val = this.formatCurrency(v);
+                        } else if (dp.dataset.percentage || rFmt?.format === 'percentage') {
+                            val = v.toFixed(1) + '%';
+                        } else {
+                            val = this.formatNumber(v);
+                        }
+                        val = (label ? label + ' — ' : '') + val + ' ' + yMN;
+                    }
+                    const isLine = dp.dataset.type === 'line';
                     const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3B82F6';
-                    const val = body.lines?.[0] || '';
                     html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                         '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
-                        (dp.dataset.type === 'line' ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
+                        (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
                         '<span style="font-weight:600;">' + val + '</span>' +
                         '</div>';
                 });
