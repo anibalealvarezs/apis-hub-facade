@@ -249,6 +249,12 @@ window.dashboardRenderer = {
         const reverseY = controls?.metrics?.[0] === 'position';
         const resultFormat = this.getKpiResultFormat(controls);
 
+        const yMetric = controls?.metrics?.[0];
+        const yFmt = resultFormat || (yMetric ? (this.METRIC_FORMATS[yMetric] || null) : null);
+        const yUnit = yFmt?.format === 'percentage' ? '%' : yFmt?.format === 'currency' ? (yFmt?.prefix || '$') : yFmt?.suffix || '';
+        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
+        const yMetricName = this.getMetricName(yMetric);
+
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
@@ -258,8 +264,8 @@ window.dashboardRenderer = {
             ...ds,
             currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-            pointRadius: 5,
-            pointHoverRadius: 9,
+            pointRadius: 6,
+            pointHoverRadius: 10,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
@@ -277,18 +283,21 @@ window.dashboardRenderer = {
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
-                                let val = ctx.parsed.y;
-                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val);
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
-                                return this.formatNumber(val);
+                                const label = ctx.chart.data.labels?.[ctx.dataIndex] || '';
+                                const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
+                                return (label ? label + ' — ' : '') + valY + ' ' + yMetricName;
                             },
                         },
                     },
                 },
                 scales: {
                     x: {grid: {display: false}, ticks: {maxTicksLimit: 8, font: {size: 10}}},
-                    y: {beginAtZero: !reverseY, reverse: reverseY, ticks: {font: {size: 10}}},
+                    y: {
+                        beginAtZero: !reverseY,
+                        reverse: reverseY,
+                        title: {display: true, text: yAxisLabel},
+                        ticks: {font: {size: 10}},
+                    },
                 },
                 elements: {line: {tension: 0.3}},
             },
@@ -533,6 +542,12 @@ window.dashboardRenderer = {
 
         const resultFormat = this.getKpiResultFormat(controls);
 
+        const yMetric = controls?.metrics?.[0];
+        const yFmt = resultFormat || (yMetric ? (this.METRIC_FORMATS[yMetric] || null) : null);
+        const yUnit = yFmt?.format === 'percentage' ? '%' : yFmt?.format === 'currency' ? (yFmt?.prefix || '$') : yFmt?.suffix || '';
+        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
+        const yMetricName = this.getMetricName(yMetric);
+
         if (!labels.length || !datasets.length) {
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
@@ -572,8 +587,8 @@ window.dashboardRenderer = {
             ...ds,
             currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-            pointRadius: 5,
-            pointHoverRadius: 9,
+            pointRadius: 6,
+            pointHoverRadius: 10,
             pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
             pointBorderWidth: 2,
@@ -591,11 +606,9 @@ window.dashboardRenderer = {
                     tooltip: {
                         callbacks: {
                             label(ctx) {
-                                let val = ctx.parsed.y;
-                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val);
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
-                                return this.formatNumber(val);
+                                const label = ctx.chart.data.labels?.[ctx.dataIndex] || '';
+                                const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
+                                return (label ? label + ' — ' : '') + valY + ' ' + yMetricName;
                             },
                         },
                     },
@@ -608,6 +621,7 @@ window.dashboardRenderer = {
                     y: {
                         beginAtZero: !reverseY,
                         reverse: reverseY,
+                        title: {display: true, text: yAxisLabel},
                         ticks: {
                             font: {size: 10},
                             callback(val) {
