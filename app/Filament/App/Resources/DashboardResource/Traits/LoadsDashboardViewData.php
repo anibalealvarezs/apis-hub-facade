@@ -413,6 +413,18 @@ trait LoadsDashboardViewData
             $widgetArray['kpi_theory'] = null;
             if ($widgetArray['source_type'] === 'kpi') {
                 $templateKey = $uiState['template_key'] ?? null;
+
+                // Fallback for existing KPIs: try to match by name in the predefined registry
+                if (!$templateKey && isset($kpi) && !empty($kpi->name)) {
+                    $predefinedAll = PredefinedKpiRegistry::getPredefinedKpis();
+                    foreach ($predefinedAll as $key => $def) {
+                        if (($def['name'] ?? '') === $kpi->name) {
+                            $templateKey = $key;
+                            break;
+                        }
+                    }
+                }
+
                 if ($templateKey) {
                     $guidance = KpiReference::getGuidance($templateKey);
                     if (!empty($guidance['type_label']) || !empty($guidance['explanation'])) {

@@ -54,6 +54,9 @@ class EditCustomKpi extends EditRecord
         
         $filters = $data['filters'] ?? [];
         $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter', 'ast', 'filters', 'project_id', 'id']);
+        if (!empty($data['template'])) {
+            $filters['_ui_state']['template_key'] = $data['template'];
+        }
         $data['filters'] = $filters;
 
         $allowedColumns = ['name', 'description', 'calculation_type', 'is_active', 'template', 'ast', 'filters', 'project_id'];
