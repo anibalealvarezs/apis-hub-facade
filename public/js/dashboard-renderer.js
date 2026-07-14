@@ -745,6 +745,7 @@ window.dashboardRenderer = {
                 ...ds,
                 pointRadius: 6,
                 pointHoverRadius: 10,
+                pointHitRadius: 15,
                 pointBorderWidth: 2,
                 pointHoverBorderWidth: 2,
             }));
