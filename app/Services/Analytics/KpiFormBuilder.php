@@ -258,7 +258,21 @@ class KpiFormBuilder
             </div>';
         }
 
-        return $options;
+        // Sort alphabetically by KPI name
+        $names = [];
+        foreach ($kpis as $key => $kpi) {
+            if (isset($options[$key])) {
+                $names[$key] = $kpi['name'];
+            }
+        }
+        asort($names);
+
+        $sorted = [];
+        foreach ($names as $key => $name) {
+            $sorted[$key] = $options[$key];
+        }
+
+        return $sorted;
     }
 
     public static function getMetricOptionsForChannel(?string $channel): array
