@@ -762,7 +762,7 @@ class PredefinedKpiRegistry
             ],
             'toxic_page_detector' => [
                 'name' => 'Toxic Page Detector',
-                'description' => 'Identifies specific landing pages with high propensity for bouncing.',
+                'description' => 'Identifies pages with high bounce rate despite high search visibility (impressions).',
                 'scope' => 'asset',
                 'categories' => ['seo', 'alerts', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'behavior_tracked'],
@@ -787,7 +787,7 @@ class PredefinedKpiRegistry
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks',
+                            'metric' => 'impressions',
                         ],
                     ],
                 ],
