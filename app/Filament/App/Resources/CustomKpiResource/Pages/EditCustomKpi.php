@@ -37,6 +37,10 @@ class EditCustomKpi extends EditRecord
 
             // Strip model-level keys that were erroneously nested by the old save bug
             $uiState = \Illuminate\Support\Arr::except($uiState, ['ast', 'filters', 'id', 'project_id', 'created_at', 'updated_at']);
+            // Map template_key back to the form field name 'template'
+            if (isset($uiState['template_key'])) {
+                $data['template'] = $uiState['template_key'];
+            }
             foreach ($uiState as $key => $val) {
                 $data[$key] = $val;
             }
