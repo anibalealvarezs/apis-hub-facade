@@ -1118,6 +1118,7 @@ window.dashboardRenderer = {
                     const baseLabel = point.label ? (point.label + ' — ') : '';
                     val = baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
                 } else {
+                    const label = chart.data.labels?.[el.index] || '';
                     let v = typeof raw === 'object' ? (raw.y ?? 0) : raw;
                     if (resultFormat?.multiply) v = v * resultFormat.multiply;
                     if (ds.currency || resultFormat?.format === 'currency') {
@@ -1127,6 +1128,7 @@ window.dashboardRenderer = {
                     } else {
                         val = this.formatNumber(v);
                     }
+                    val = (label ? label + ' — ' : '') + val + ' ' + yMetricName;
                 }
                 const isLine = ds.type === 'line';
                 const color = ds.borderColor || ds.backgroundColor || '#3B82F6';
