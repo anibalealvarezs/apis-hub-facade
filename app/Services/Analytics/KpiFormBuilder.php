@@ -803,12 +803,8 @@ class KpiFormBuilder
                                                         return true;
                                                     }
 
-                                                    $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
-                                                    if ($isBivariate) {
-                                                        $independents = $get('independent_variables') ?? [];
-                                                        if (empty($independents)) {
-                                                            return true;
-                                                        }
+                                                    $independents = $get('independent_variables') ?? [];
+                                                    if (!empty($independents)) {
                                                         foreach ($independents as $item) {
                                                             if (empty($item['independent_channel'])) {
                                                                 return true;
