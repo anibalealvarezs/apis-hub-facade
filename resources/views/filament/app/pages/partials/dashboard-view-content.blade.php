@@ -64,7 +64,6 @@
                     @if ($widget['title'] || $widget['name'])
                         <div
                             class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
-                            style="z-index: 1;"
                             x-data="widgetHeader"
                             data-widget-id="{{ $widget['id'] }}"
                             data-controls="{{ json_encode($widget['resolved_controls']) }}"
