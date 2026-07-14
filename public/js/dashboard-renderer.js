@@ -948,14 +948,18 @@ window.dashboardRenderer = {
             config.options.animation = {
                 x: {
                     type: 'number',
-                    easing: 'easeOutQuart',
-                    duration: 1000,
+                    easing: 'linear',
+                    duration: 500,
                     from: NaN,
+                    delay(ctx) {
+                        if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
+                        return ctx.dataIndex * 100;
+                    },
                 },
                 y: {
                     type: 'number',
                     easing: 'easeOutQuart',
-                    duration: 1000,
+                    duration: 500,
                     from: (ctx) => ctx.type === 'data' && ctx.mode === 'default' ? 0 : undefined,
                 },
             };
