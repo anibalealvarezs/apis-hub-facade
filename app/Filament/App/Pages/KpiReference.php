@@ -331,6 +331,12 @@ class KpiReference extends Page
                 'use_case' => __('Locates "low quality" search terms that generate empty traffic, negatively affecting global site metrics and wasting retention efforts.'),
                 'interpretation' => __('High values flag toxic keywords. These should either be de-optimized, or the landing page content must be drastically changed to match the actual user expectation.'),
             ],
+            'toxic_page_detector' => [
+                'type_label' => __('Toxic Page Identifier'),
+                'explanation' => __('Identifies pages with high bounce rate despite high search visibility (impressions). These "toxic pages" attract search visits but fail to engage users, signaling a mismatch between search intent and page content.'),
+                'use_case' => __('Pages that rank well but drive high bounce rates waste your search potential. This KPI flags those specific pages so you can improve the content to match user intent or de-optimize them to preserve your site\'s overall engagement metrics.'),
+                'interpretation' => __('Higher regression values indicate pages where the disconnect between visibility and engagement is strongest — these are your priority pages to fix. A rising trend means the toxicity is spreading across more pages. Investigate whether your content answers the queries driving those impressions.'),
+            ],
             'paid_acquisition_saturation' => [
                 'type_label' => __('Audience Saturation Tracker'),
                 'explanation' => __('Crosses ad spend against New Users acquired to reveal if you are still reaching fresh audiences.'),
