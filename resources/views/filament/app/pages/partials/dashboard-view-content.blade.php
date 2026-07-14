@@ -94,23 +94,21 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
                                              @click.stop="
-                                                 showKpi = !showKpi;
-                                                 if (showKpi) {
-                                                     $nextTick(() => {
-                                                         const r = $el.getBoundingClientRect();
-                                                         const gap = 8;
-                                                         const tw = 384;
-                                                         const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
-                                                         const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
-                                                         pos = v + '-' + h;
-                                                         const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
-                                                         if (v === 'top') {
-                                                             ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                         } else {
-                                                             ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                         }
-                                                     });
+                                                 if (!showKpi) {
+                                                     const r = $el.getBoundingClientRect();
+                                                     const gap = 8;
+                                                     const tw = 384;
+                                                     const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
+                                                     const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
+                                                     pos = v + '-' + h;
+                                                     const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
+                                                     if (v === 'top') {
+                                                         ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                     } else {
+                                                         ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                     }
                                                  }
+                                                 showKpi = !showKpi;
                                              "
                                              class="w-4 h-4 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -196,23 +194,21 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
                                               @click.stop="
-                                                  showDesc = !showDesc;
-                                                  if (showDesc) {
-                                                      $nextTick(() => {
-                                                          const r = $el.getBoundingClientRect();
-                                                          const gap = 8;
-                                                          const tw = 256;
-                                                          const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
-                                                          const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
-                                                          pos = v + '-' + h;
-                                                          const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
-                                                          if (v === 'top') {
-                                                              ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                          } else {
-                                                              ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                          }
-                                                      });
+                                                  if (!showDesc) {
+                                                      const r = $el.getBoundingClientRect();
+                                                      const gap = 8;
+                                                      const tw = 256;
+                                                      const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
+                                                      const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
+                                                      pos = v + '-' + h;
+                                                      const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
+                                                      if (v === 'top') {
+                                                          ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                      } else {
+                                                          ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                      }
                                                   }
+                                                  showDesc = !showDesc;
                                               "
                                              class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
