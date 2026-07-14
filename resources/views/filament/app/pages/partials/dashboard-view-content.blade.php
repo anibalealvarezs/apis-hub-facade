@@ -107,25 +107,54 @@
                                              x-transition:leave-start="opacity-100"
                                              x-transition:leave-end="opacity-0"
                                              @click.stop
-                                             class="absolute bottom-full mb-2 w-80 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
+                                             class="absolute bottom-full mb-2 w-96 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
                                             <div
-                                                class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left space-y-1.5">
-                                                <div class="font-bold text-sm">{{ $widget['kpi_theory']['type_label'] }}</div>
-                                                <p>{{ $widget['kpi_theory']['explanation'] }}</p>
+                                                class="rounded-lg bg-gray-900 dark:bg-gray-800 px-4 py-3 shadow-xl whitespace-normal text-left">
+                                                {{-- Badge / type label --}}
+                                                <div class="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-2.5 py-0.5 mb-2">
+                                                    <svg class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/>
+                                                    </svg>
+                                                    <span class="text-indigo-300 font-semibold text-[11px] leading-4 tracking-wide uppercase">{{ $widget['kpi_theory']['type_label'] }}</span>
+                                                </div>
+
+                                                {{-- Explanation --}}
+                                                <p class="text-xs text-gray-200 leading-relaxed mb-2.5">{{ $widget['kpi_theory']['explanation'] }}</p>
+
+                                                {{-- Divider --}}
+                                                @if (!empty($widget['kpi_theory']['use_case']) || !empty($widget['kpi_theory']['interpretation']))
+                                                    <div class="border-t border-gray-700 dark:border-gray-600 my-2"></div>
+                                                @endif
+
+                                                {{-- Use Case --}}
                                                 @if (!empty($widget['kpi_theory']['use_case']))
-                                                    <div>
-                                                        <span class="font-semibold text-indigo-300">Use Case:</span>
-                                                        <span>{{ $widget['kpi_theory']['use_case'] }}</span>
+                                                    <div class="mb-2 last:mb-0">
+                                                        <div class="flex items-center gap-1.5 mb-0.5">
+                                                            <svg class="w-3 h-3 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                            </svg>
+                                                            <span class="font-semibold text-emerald-300 text-[11px] uppercase tracking-wide">Use Case</span>
+                                                        </div>
+                                                        <p class="text-xs text-gray-300 leading-relaxed pl-5">{{ $widget['kpi_theory']['use_case'] }}</p>
                                                     </div>
                                                 @endif
+
+                                                {{-- Interpretation --}}
                                                 @if (!empty($widget['kpi_theory']['interpretation']))
-                                                    <div>
-                                                        <span class="font-semibold text-indigo-300">Interpretation:</span>
-                                                        <span>{{ $widget['kpi_theory']['interpretation'] }}</span>
+                                                    <div class="mb-2 last:mb-0">
+                                                        <div class="flex items-center gap-1.5 mb-0.5">
+                                                            <svg class="w-3 h-3 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/>
+                                                            </svg>
+                                                            <span class="font-semibold text-amber-300 text-[11px] uppercase tracking-wide">Interpretation</span>
+                                                        </div>
+                                                        <p class="text-xs text-gray-300 leading-relaxed pl-5">{{ $widget['kpi_theory']['interpretation'] }}</p>
                                                     </div>
                                                 @endif
+
+                                                {{-- Arrow --}}
                                                 <div
-                                                    class="absolute -bottom-1 right-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
+                                                    class="absolute -bottom-1 right-3 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-800"></div>
                                             </div>
                                         </div>
                                     </div>
