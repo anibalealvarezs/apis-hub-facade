@@ -103,6 +103,7 @@
                                                          const h = cx < window.innerWidth / 2 ? 'left' : 'right';
                                                          const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
                                                          pos = v + '-' + h;
+                                                         console.log('[KPI pos]', pos, 'cx:', cx, 'cy:', cy, 'vw:', window.innerWidth, 'vh:', window.innerHeight);
                                                      });
                                                  }
                                              "
@@ -195,19 +196,20 @@
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
-                                             @click.stop="
-                                                 showDesc = !showDesc;
-                                                 if (showDesc) {
-                                                     $nextTick(() => {
-                                                         const r = $el.getBoundingClientRect();
-                                                         const cx = r.left + r.width / 2;
-                                                         const cy = r.top + r.height / 2;
-                                                         const h = cx < window.innerWidth / 2 ? 'left' : 'right';
-                                                         const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
-                                                         pos = v + '-' + h;
-                                                     });
-                                                 }
-                                             "
+                                              @click.stop="
+                                                  showDesc = !showDesc;
+                                                  if (showDesc) {
+                                                      $nextTick(() => {
+                                                          const r = $el.getBoundingClientRect();
+                                                          const cx = r.left + r.width / 2;
+                                                          const cy = r.top + r.height / 2;
+                                                          const h = cx < window.innerWidth / 2 ? 'left' : 'right';
+                                                          const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
+                                                          pos = v + '-' + h;
+                                                          console.log('[Desc pos]', pos, 'cx:', cx, 'cy:', cy, 'vw:', window.innerWidth, 'vh:', window.innerHeight);
+                                                      });
+                                                  }
+                                              "
                                              class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
