@@ -107,19 +107,24 @@
                                              x-transition:leave-start="opacity-100 translate-y-0"
                                              x-transition:leave-end="opacity-0 translate-y-1"
                                              @click.stop
-                                             class="absolute bottom-full mb-3 w-screen max-w-sm z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
+                                             class="absolute bottom-full mb-3 w-screen max-w-sm z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                                             <div
-                                                class="rounded-xl bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700/60 px-5 py-4 shadow-2xl whitespace-normal text-left">
+                                                class="rounded-xl bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700/60 px-6 py-4 shadow-2xl whitespace-normal text-left">
                                                 {{-- Header --}}
                                                 <div class="flex items-start gap-3 mb-3">
-                                                    <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center">
-                                                        <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                                                    <div
+                                                        class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center">
+                                                        <svg class="w-4 h-4 text-indigo-400" fill="none"
+                                                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
                                                         </svg>
                                                     </div>
                                                     <div class="min-w-0 flex-1">
-                                                        <div class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ $widget['kpi_theory']['type_label'] }}</div>
-                                                        <div class="text-[10px] text-gray-500 mt-0.5">{{ $widget['kpi_theory']['name'] }}</div>
+                                                        <div
+                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ $widget['kpi_theory']['type_label'] }}</div>
+                                                        <div
+                                                            class="text-[10px] text-gray-500 mt-0.5">{{ $widget['kpi_theory']['name'] }}</div>
                                                     </div>
                                                 </div>
 
@@ -128,10 +133,12 @@
 
                                                 {{-- Use Case --}}
                                                 @if (!empty($widget['kpi_theory']['use_case']))
-                                                    <div class="mb-3 last:mb-0">
+                                                    <div class="mb-4 last:mb-0">
                                                         <div class="flex items-center gap-2 mb-1.5">
-                                                            <div class="w-1 h-4 rounded-full bg-emerald-500/60 flex-shrink-0"></div>
-                                                            <span class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">Use Case</span>
+                                                            <div
+                                                                class="w-1 h-4 rounded-full bg-emerald-500/60 flex-shrink-0"></div>
+                                                            <span
+                                                                class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">Use Case</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ $widget['kpi_theory']['use_case'] }}</p>
                                                     </div>
@@ -141,8 +148,10 @@
                                                 @if (!empty($widget['kpi_theory']['interpretation']))
                                                     <div class="mb-0">
                                                         <div class="flex items-center gap-2 mb-1.5">
-                                                            <div class="w-1 h-4 rounded-full bg-amber-500/60 flex-shrink-0"></div>
-                                                            <span class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">Interpretation</span>
+                                                            <div
+                                                                class="w-1 h-4 rounded-full bg-amber-500/60 flex-shrink-0"></div>
+                                                            <span
+                                                                class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">Interpretation</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ $widget['kpi_theory']['interpretation'] }}</p>
                                                     </div>
@@ -234,7 +243,9 @@
                 <div class="flex items-center gap-2 min-w-0 pr-4">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" x-text="popOutTitle"></h3>
                     <template x-for="(badge, index) in popOutBadges" :key="index">
-                        <span class="inline-flex items-center rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm whitespace-nowrap" style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
+                        <span
+                            class="inline-flex items-center rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm whitespace-nowrap"
+                            style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
                             <span class="font-semibold mr-1" x-text="badge.label + ':'"></span>
                             <span x-text="badge.text"></span>
                         </span>
@@ -444,7 +455,8 @@
                                                    class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
                                             <span class="text-sm font-medium text-gray-900 dark:text-white">Exclude unknown keyword</span>
                                         </label>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Remove the <code>unknown</code> query from the chart and recalculate the regression line without it.</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Remove the <code>unknown</code>
+                                            query from the chart and recalculate the regression line without it.</p>
                                     </div>
                                 </div>
                             </template>
@@ -488,7 +500,7 @@
                                                     </template>
                                                 </div>
                                             </div>
-                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
                                                 {{-- Metric selector --}}
                                                 <template
                                                     x-if="settingsSourceType !== 'kpi' || !vConfig.selected_metric">
@@ -833,7 +845,7 @@
                     if (this.loadedCount > 0) this.loadedCount--;
                     // Sync controls back to the widget header Alpine component
                     window.dispatchEvent(new CustomEvent('reload-widget', {
-                        detail: { id: widgetId, controls: controls }
+                        detail: {id: widgetId, controls: controls}
                     }));
                     const result = this.renderWidget(widgetId, el, controls) || Promise.resolve();
                     if (this.popOutActive && this.popOutWidgetId === widgetId) {
@@ -1027,7 +1039,10 @@
                 popOutWidgetId: null,
 
                 syncPopOutBadges() {
-                    if (!this.popOutWidgetId) { this.popOutBadges = []; return; }
+                    if (!this.popOutWidgetId) {
+                        this.popOutBadges = [];
+                        return;
+                    }
                     const widgetEl = document.querySelector(`.grid-stack-item[gs-id="${this.popOutWidgetId}"]`);
                     const headerDataEl = widgetEl?.querySelector('[data-widget-id]');
                     if (headerDataEl && window.Alpine) {
@@ -1037,7 +1052,8 @@
                                 this.popOutBadges = data.getBadges();
                                 return;
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                        }
                     }
                     this.popOutBadges = [];
                 },
