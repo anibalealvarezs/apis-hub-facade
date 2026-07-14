@@ -64,7 +64,7 @@
                     @if ($widget['title'] || $widget['name'])
                         <div
                             class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
-                            style="z-index: 2;"
+                            style="z-index: 1;"
                             x-data="widgetHeader"
                             data-widget-id="{{ $widget['id'] }}"
                             data-controls="{{ json_encode($widget['resolved_controls']) }}"
@@ -107,7 +107,7 @@
                                              x-transition:leave-start="opacity-100 translate-y-0"
                                              x-transition:leave-end="opacity-0 translate-y-1"
                                              @click.stop
-                                             class="absolute bottom-full mb-3 w-screen max-w-sm z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                                             class="absolute bottom-full mb-3 w-screen max-w-sm z-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                                             <div
                                                 class="rounded-xl bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700/60 px-6 py-4 shadow-2xl whitespace-normal text-left">
                                                 {{-- Header --}}
