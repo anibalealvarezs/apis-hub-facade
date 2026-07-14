@@ -1107,6 +1107,10 @@ window.dashboardRenderer = {
             const chartType = chart.config.type;
             const xMetricName = this.getMetricName(controls?.metrics?.[1]);
             const yMetricName = this.getMetricName(controls?.metrics?.[0]);
+
+            const anomalyDates = widgetJson?.data?.anomaly_dates ?? [];
+            const anomalySet = anomalyDates.length ? new Set(anomalyDates) : null;
+
             let html = '';
             elements.forEach((el) => {
                 const ds = chart.data.datasets[el.datasetIndex];
@@ -1139,6 +1143,15 @@ window.dashboardRenderer = {
                     (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
                     '<span style="font-weight:600;">' + val + '</span>' +
                     '</div>';
+
+                if (anomalySet) {
+                    const dateLabel = chart.data.labels?.[el.index];
+                    if (dateLabel && anomalySet.has(dateLabel)) {
+                        html += '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
+                            '<span style="color:#EF4444;font-weight:600;font-size:11px;">⚠ Anomaly detected</span>' +
+                            '</div>';
+                    }
+                }
             });
             const meta = chart.getDatasetMeta(elements[0].datasetIndex);
             const element = meta.data[elements[0].index];
@@ -1436,6 +1449,9 @@ window.dashboardRenderer = {
             const xMN = this.getMetricName(ctrl?.metrics?.[1]);
             const yMN = this.getMetricName(ctrl?.metrics?.[0]);
 
+            const anomalyDates = widgetJson?.data?.anomaly_dates ?? [];
+            const anomalySet = anomalyDates.length ? new Set(anomalyDates) : null;
+
             let html = '';
 
             if (tooltip.body?.length) {
@@ -1469,6 +1485,15 @@ window.dashboardRenderer = {
                         (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
                         '<span style="font-weight:600;">' + val + '</span>' +
                         '</div>';
+
+                    if (anomalySet) {
+                        const dateLabel = chart.data.labels?.[dp.dataIndex];
+                        if (dateLabel && anomalySet.has(dateLabel)) {
+                            html += '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
+                                '<span style="color:#EF4444;font-weight:600;font-size:11px;">⚠ Anomaly detected</span>' +
+                                '</div>';
+                        }
+                    }
                 });
             }
 
