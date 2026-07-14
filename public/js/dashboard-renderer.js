@@ -58,7 +58,7 @@ window.dashboardRenderer = {
                 'results/clicks': {label: 'Result Rate', format: 'percentage', multiply: 100},
                 'sessions/clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
                 'sessions/link_clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
-                'bounce_rate/clicks': {label: 'Bounce Rate', format: 'number'},
+                'bounce_rate/clicks': {label: 'Bounce Rate', format: 'percentage', multiply: 100},
                 'spend/clicks': {label: 'CPC', format: 'currency', prefix: '$'},
                 'spend/impressions': {label: 'CPM', format: 'currency', prefix: '$'},
                 'spend/conversions': {label: 'CPA', format: 'currency', prefix: '$'},
@@ -633,8 +633,11 @@ window.dashboardRenderer = {
             return;
         }
 
-        const reverseY = controls?.metrics?.[0] === 'position';
-        const reverseX = controls?.metrics?.[1] === 'position';
+        const higherIsWorse = ['position', 'bounce_rate', 'bouncerate', 'cpc', 'cpa', 'cost_per_click'];
+        const reverseYColor = higherIsWorse.includes(controls?.metrics?.[0]);
+        const reverseXColor = higherIsWorse.includes(controls?.metrics?.[1]);
+        const reverseYAxis = controls?.metrics?.[0] === 'position';
+        const reverseXAxis = controls?.metrics?.[1] === 'position';
 
         const resultFormat = this.getKpiResultFormat(controls);
         const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
@@ -689,7 +692,7 @@ window.dashboardRenderer = {
                 if (maxY > minY) {
                     t = (p.y - minY) / (maxY - minY);
                 }
-                if (reverseY) {
+                if (reverseYColor) {
                     t = 1 - t;
                 }
                 const hue = t * 120; // 0 is red, 120 is green
@@ -705,7 +708,7 @@ window.dashboardRenderer = {
         const yScaleOpts = {
             type: 'linear',
             title: {display: true, text: yAxisLabel},
-            reverse: reverseY,
+            reverse: reverseYAxis,
             ticks: {callback: (v) => formatPoint(v, yFmt, 'Y')}
         };
 
@@ -738,7 +741,7 @@ window.dashboardRenderer = {
                         type: 'linear',
                         position: 'bottom',
                         title: {display: true, text: xAxisLabel},
-                        reverse: reverseX,
+                        reverse: reverseXAxis,
                         ticks: {
                             callback: (v) => formatPoint(v, xFmt, 'X'),
                         },
