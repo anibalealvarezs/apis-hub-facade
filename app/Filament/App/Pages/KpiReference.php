@@ -41,7 +41,7 @@ class KpiReference extends Page
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
         $result = [];
         foreach ($kpis as $key => $kpi) {
-            $guidance = $this->getGuidance($key);
+            $guidance = self::getGuidance($key);
             $categories = $kpi['categories'] ?? [];
             
             // Dynamically inject specific channel categories based on required tags
@@ -148,7 +148,7 @@ class KpiReference extends Page
         ];
     }
 
-    public function getGuidance(string $key): array
+    public static function getGuidance(string $key): array
     {
         $guidance = [
             'true_blended_marginal_cost' => [

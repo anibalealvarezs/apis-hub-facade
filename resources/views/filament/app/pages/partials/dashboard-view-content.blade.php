@@ -87,8 +87,40 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                @if (!empty($widget['description']))
-                                    {{-- Info button (tooltip) --}}
+                                @if (!empty($widget['kpi_theory']))
+                                    {{-- KPI Theory info button (rich HTML tooltip) --}}
+                                    <div class="group relative flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                             stroke-width="2" stroke="currentColor"
+                                             class="w-4 h-4 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-help transition-colors">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                                        </svg>
+                                        <div
+                                            class="pointer-events-none absolute bottom-full mb-2 w-80 opacity-0 transition-opacity group-hover:opacity-100 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
+                                            <div
+                                                class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left space-y-1.5">
+                                                <div class="font-bold text-sm">{{ $widget['kpi_theory']['type_label'] }}</div>
+                                                <p>{{ $widget['kpi_theory']['explanation'] }}</p>
+                                                @if (!empty($widget['kpi_theory']['use_case']))
+                                                    <div>
+                                                        <span class="font-semibold text-indigo-300">Use Case:</span>
+                                                        <span>{{ $widget['kpi_theory']['use_case'] }}</span>
+                                                    </div>
+                                                @endif
+                                                @if (!empty($widget['kpi_theory']['interpretation']))
+                                                    <div>
+                                                        <span class="font-semibold text-indigo-300">Interpretation:</span>
+                                                        <span>{{ $widget['kpi_theory']['interpretation'] }}</span>
+                                                    </div>
+                                                @endif
+                                                <div
+                                                    class="absolute -bottom-1 right-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif (!empty($widget['description']))
+                                    {{-- Info button (simple tooltip) --}}
                                     <div class="group relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"

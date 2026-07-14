@@ -9,6 +9,7 @@ use App\Models\AssetGroup;
 use App\Services\WidgetDataService;
 use App\Services\Analytics\PredefinedKpiRegistry;
 use App\Services\Analytics\KpiFormBuilder;
+use App\Filament\App\Pages\KpiReference;
 use Filament\Facades\Filament;
 use Illuminate\Support\Str;
 use stdClass;
@@ -408,6 +409,28 @@ trait LoadsDashboardViewData
             $widgetArray['metric_options'] = isset($depMetrics) ? (object) $depMetrics : new stdClass();
             $widgetArray['series_assets_options'] = (object) $widgetArray['series_assets_options'];
             $widgetArray['resolved_controls'] = $resolved;
+
+            $widgetArray['kpi_theory'] = null;
+            if ($widgetArray['source_type'] === 'kpi') {
+                $templateKey = $uiState['template_key'] ?? null;
+                if ($templateKey) {
+                    $guidance = KpiReference::getGuidance($templateKey);
+                    if (!empty($guidance['type_label']) || !empty($guidance['explanation'])) {
+                        $predefined = PredefinedKpiRegistry::getPredefinedKpis();
+                        $kpiName = $predefined[$templateKey]['name']
+                            ?? $widgetArray['title']
+                            ?? $widgetArray['name']
+                            ?? '';
+                        $widgetArray['kpi_theory'] = [
+                            'name' => $kpiName,
+                            'type_label' => $guidance['type_label'] ?? '',
+                            'explanation' => $guidance['explanation'] ?? '',
+                            'use_case' => $guidance['use_case'] ?? '',
+                            'interpretation' => $guidance['interpretation'] ?? '',
+                        ];
+                    }
+                }
+            }
         }
     }
 }
