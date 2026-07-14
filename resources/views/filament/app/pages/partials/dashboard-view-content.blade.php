@@ -88,12 +88,24 @@
                             <div class="flex items-center gap-2">
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
-                                    <div x-data="{ showKpi: false }"
+                                    <div x-data="{ showKpi: false, pos: '' }"
                                          @click.outside="showKpi = false"
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
-                                             @click.stop="showKpi = !showKpi"
+                                             @click.stop="
+                                                 showKpi = !showKpi;
+                                                 if (showKpi) {
+                                                     $nextTick(() => {
+                                                         const r = $el.getBoundingClientRect();
+                                                         const cx = r.left + r.width / 2;
+                                                         const cy = r.top + r.height / 2;
+                                                         const h = cx < window.innerWidth / 2 ? 'left' : 'right';
+                                                         const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
+                                                         pos = v + '-' + h;
+                                                     });
+                                                 }
+                                             "
                                              class="w-4 h-4 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
@@ -106,7 +118,13 @@
                                              x-transition:leave-start="opacity-100 translate-y-0"
                                              x-transition:leave-end="opacity-0 translate-y-1"
                                              @click.stop
-                                             class="absolute bottom-full mb-3 w-screen max-w-sm right-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                                             :class="{
+                                                 'bottom-full mb-3 right-0': pos === 'top-right' || !pos,
+                                                 'bottom-full mb-3 left-0': pos === 'top-left',
+                                                 'top-full mt-3 right-0': pos === 'bottom-right',
+                                                 'top-full mt-3 left-0': pos === 'bottom-left',
+                                             }"
+                                             class="absolute w-screen max-w-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                                              style="z-index: 3;"
                                         >
                                             <div
@@ -160,26 +178,67 @@
 
                                                 {{-- Arrow --}}
                                                 <div
-                                                    class="absolute -bottom-[5px] right-4 h-2.5 w-2.5 rotate-45 bg-gray-800 dark:bg-gray-800 border-r border-b border-gray-700/60"></div>
+                                                    :class="{
+                                                        'absolute -bottom-[5px] right-4 rotate-45 border-r border-b border-gray-700/60': pos === 'top-right' || !pos,
+                                                        'absolute -bottom-[5px] left-4 rotate-45 border-l border-b border-gray-700/60': pos === 'top-left',
+                                                        'absolute -top-[5px] right-4 rotate-45 border-t border-l border-gray-700/60': pos === 'bottom-right',
+                                                        'absolute -top-[5px] left-4 rotate-45 border-t border-l border-gray-700/60': pos === 'bottom-left',
+                                                    }"
+                                                    class="h-2.5 w-2.5 bg-gray-800 dark:bg-gray-800"></div>
                                             </div>
                                         </div>
                                     </div>
                                 @elseif (!empty($widget['description']))
                                     {{-- Info button (simple tooltip) --}}
-                                    <div class="group relative flex items-center justify-center">
+                                    <div x-data="{ showDesc: false, pos: '' }"
+                                         @click.outside="showDesc = false"
+                                         class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
-                                             class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help transition-colors">
+                                             @click.stop="
+                                                 showDesc = !showDesc;
+                                                 if (showDesc) {
+                                                     $nextTick(() => {
+                                                         const r = $el.getBoundingClientRect();
+                                                         const cx = r.left + r.width / 2;
+                                                         const cy = r.top + r.height / 2;
+                                                         const h = cx < window.innerWidth / 2 ? 'left' : 'right';
+                                                         const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
+                                                         pos = v + '-' + h;
+                                                     });
+                                                 }
+                                             "
+                                             class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
                                         </svg>
-                                        <div
-                                            class="pointer-events-none absolute bottom-full mb-2 w-64 opacity-0 transition-opacity group-hover:opacity-100 z-50 right-0">
+                                        <div x-show="showDesc"
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="opacity-0 translate-y-1"
+                                             x-transition:enter-end="opacity-100 translate-y-0"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="opacity-100 translate-y-0"
+                                             x-transition:leave-end="opacity-0 translate-y-1"
+                                             @click.stop
+                                             :class="{
+                                                 'bottom-full mb-3 right-0': pos === 'top-right' || !pos,
+                                                 'bottom-full mb-3 left-0': pos === 'top-left',
+                                                 'top-full mt-3 right-0': pos === 'bottom-right',
+                                                 'top-full mt-3 left-0': pos === 'bottom-left',
+                                             }"
+                                             class="absolute w-64 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                                             style="z-index: 3;">
                                             <div
                                                 class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left">
                                                 {{ $widget['description'] }}
                                                 <div
-                                                    class="absolute -bottom-1 right-2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
+                                                    :class="{
+                                                        'absolute -bottom-[5px] right-4 rotate-45 border-r border-b border-gray-700/60': pos === 'top-right' || !pos,
+                                                        'absolute -bottom-[5px] left-4 rotate-45 border-l border-b border-gray-700/60': pos === 'top-left',
+                                                        'absolute -top-[5px] right-4 rotate-45 border-t border-l border-gray-700/60': pos === 'bottom-right',
+                                                        'absolute -top-[5px] left-4 rotate-45 border-t border-l border-gray-700/60': pos === 'bottom-left',
+                                                    }"
+                                                    class="h-2.5 w-2.5 bg-gray-900 dark:bg-gray-700"></div>
                                             </div>
                                         </div>
                                     </div>
