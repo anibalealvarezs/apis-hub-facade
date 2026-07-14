@@ -88,7 +88,7 @@
                             <div class="flex items-center gap-2">
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
-                                    <div x-data="{ showKpi: false, pos: '' }"
+                                    <div x-data="{ showKpi: false, pos: '', ts: {} }"
                                          @click.outside="showKpi = false"
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -98,12 +98,17 @@
                                                  if (showKpi) {
                                                      $nextTick(() => {
                                                          const r = $el.getBoundingClientRect();
-                                                         const cx = r.left + r.width / 2;
-                                                         const cy = r.top + r.height / 2;
-                                                         const h = cx < window.innerWidth / 2 ? 'left' : 'right';
-                                                         const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
+                                                         const gap = 8;
+                                                         const tw = 384;
+                                                         const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
+                                                         const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
                                                          pos = v + '-' + h;
-                                                         console.log('[KPI pos]', pos, 'cx:', cx, 'cy:', cy, 'vw:', window.innerWidth, 'vh:', window.innerHeight);
+                                                         const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
+                                                         if (v === 'top') {
+                                                             ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                         } else {
+                                                             ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                         }
                                                      });
                                                  }
                                              "
@@ -119,14 +124,8 @@
                                              x-transition:leave-start="opacity-100 translate-y-0"
                                              x-transition:leave-end="opacity-0 translate-y-1"
                                              @click.stop
-                                             :class="{
-                                                 'bottom-full mb-3 right-0': pos === 'top-right' || !pos,
-                                                 'bottom-full mb-3 left-0': pos === 'top-left',
-                                                 'top-full mt-3 right-0': pos === 'bottom-right',
-                                                 'top-full mt-3 left-0': pos === 'bottom-left',
-                                             }"
-                                             class="absolute w-screen max-w-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                                             style="z-index: 3;"
+                                             :style="ts"
+                                             class="w-screen max-w-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
                                         >
                                             <div
                                                 class="rounded-xl bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700/60 px-6 py-4 shadow-2xl whitespace-normal text-left">
@@ -191,7 +190,7 @@
                                     </div>
                                 @elseif (!empty($widget['description']))
                                     {{-- Info button (simple tooltip) --}}
-                                    <div x-data="{ showDesc: false, pos: '' }"
+                                    <div x-data="{ showDesc: false, pos: '', ts: {} }"
                                          @click.outside="showDesc = false"
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -201,12 +200,17 @@
                                                   if (showDesc) {
                                                       $nextTick(() => {
                                                           const r = $el.getBoundingClientRect();
-                                                          const cx = r.left + r.width / 2;
-                                                          const cy = r.top + r.height / 2;
-                                                          const h = cx < window.innerWidth / 2 ? 'left' : 'right';
-                                                          const v = cy < window.innerHeight / 2 ? 'bottom' : 'top';
+                                                          const gap = 8;
+                                                          const tw = 256;
+                                                          const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
+                                                          const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
                                                           pos = v + '-' + h;
-                                                          console.log('[Desc pos]', pos, 'cx:', cx, 'cy:', cy, 'vw:', window.innerWidth, 'vh:', window.innerHeight);
+                                                          const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
+                                                          if (v === 'top') {
+                                                              ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                          } else {
+                                                              ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
+                                                          }
                                                       });
                                                   }
                                               "
@@ -222,14 +226,8 @@
                                              x-transition:leave-start="opacity-100 translate-y-0"
                                              x-transition:leave-end="opacity-0 translate-y-1"
                                              @click.stop
-                                             :class="{
-                                                 'bottom-full mb-3 right-0': pos === 'top-right' || !pos,
-                                                 'bottom-full mb-3 left-0': pos === 'top-left',
-                                                 'top-full mt-3 right-0': pos === 'bottom-right',
-                                                 'top-full mt-3 left-0': pos === 'bottom-left',
-                                             }"
-                                             class="absolute w-64 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                                             style="z-index: 3;">
+                                             :style="ts"
+                                             class="w-64 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                                             <div
                                                 class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left">
                                                 {{ $widget['description'] }}

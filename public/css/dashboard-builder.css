@@ -39,6 +39,11 @@
 /* Prevent filament layout shift */
 .grid-stack {
     background: transparent !important;
+    overflow: visible !important;
+}
+
+.grid-stack-item {
+    overflow: visible !important;
 }
 
 /* Explicitly force resize handle to be visible and correctly styled */
