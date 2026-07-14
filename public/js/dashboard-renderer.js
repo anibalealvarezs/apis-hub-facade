@@ -1451,7 +1451,7 @@ window.dashboardRenderer = {
             this._positionTooltip(tooltipEl, container, tooltip.caretX, tooltip.caretY);
             tooltipEl.style.opacity = '1';
         } catch (e) {
-            // silently ignore tooltip errors
+            console.warn('[Tooltip]', e);
         }
     },
 
