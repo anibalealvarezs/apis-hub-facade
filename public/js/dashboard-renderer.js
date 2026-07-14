@@ -949,17 +949,18 @@ window.dashboardRenderer = {
                 x: {
                     type: 'number',
                     easing: 'linear',
-                    duration: 500,
+                    duration: 200,
                     from: NaN,
                     delay(ctx) {
                         if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
-                        return ctx.dataIndex * 100;
+                        const count = ctx.chart.data.datasets[ctx.datasetIndex]?.data?.length || 1;
+                        return ((1000 - 200) / (count - 1 || 1)) * ctx.dataIndex;
                     },
                 },
                 y: {
                     type: 'number',
                     easing: 'easeOutQuart',
-                    duration: 500,
+                    duration: 200,
                     from: (ctx) => ctx.type === 'data' && ctx.mode === 'default' ? 0 : undefined,
                 },
             };
