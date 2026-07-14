@@ -616,7 +616,7 @@ window.dashboardRenderer = {
                     tooltip: {
                         callbacks: {
                             title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
-                            label(ctx) {
+                            label: (ctx) => {
                                 const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
                                 return valY + ' ' + yMetricName;
                             },
