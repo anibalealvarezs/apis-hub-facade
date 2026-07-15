@@ -244,7 +244,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.campaigns]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('campaigns', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -332,7 +332,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.channels]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('channels', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -420,7 +420,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.traffic]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('traffic', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -508,7 +508,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.acquisition]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('acquisition', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -596,7 +596,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.events]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('events', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -684,7 +684,7 @@
                             </td>
                             <template x-for="m in (tabConfig[ss.adtouchpoints]?.metrics || [])" :key="m">
                                 <td class="metric-cell">
-                                    <div class="metric-val-main" x-text="formatNumber(row[m])"></div>
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
                                         <div class="progress-bar-fill"
                                              :style="`width: ${(row[m] / sectionMaxMetric('adtouchpoints', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
@@ -1348,6 +1348,30 @@
                         formatNumber(num) {
                             if (num === undefined || num === null) return '0';
                             return new Intl.NumberFormat('en-US').format(num);
+                        },
+
+                        formatMetricValue(key, value) {
+                            if (key === 'averageSessionDuration') {
+                                return this.formatDuration(value);
+                            }
+                            if (key === 'bounceRate') {
+                                return this.formatPercent(value);
+                            }
+                            return this.formatNumber(value);
+                        },
+
+                        formatDuration(seconds) {
+                            if (!seconds || seconds < 0) return '00:00';
+                            const totalSeconds = Math.floor(seconds);
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const secs = totalSeconds % 60;
+                            const paddedMinutes = String(minutes).padStart(2, '0');
+                            const paddedSeconds = String(secs).padStart(2, '0');
+                            if (hours > 0) {
+                                return `${String(hours).padStart(2, '0')}:${paddedMinutes}:${paddedSeconds}`;
+                            }
+                            return `${paddedMinutes}:${paddedSeconds}`;
                         },
 
                         formatPercent(num) {
