@@ -589,6 +589,8 @@ window.dashboardRenderer = {
         let changePct = 0;
         if (first !== 0) changePct = ((current - first) / Math.abs(first)) * 100;
 
+        const gradientId = 'spark-fill-' + Math.random().toString(36).substr(2, 9);
+
         containerEl.innerHTML = `
             <div class="flex items-stretch gap-3 p-4 h-full">
                 <div class="flex-shrink-0 text-right self-center flex flex-col">
@@ -597,12 +599,12 @@ window.dashboardRenderer = {
                 </div>
                 <svg viewBox="0 0 ${w} ${h}" class="flex-1 h-full" preserveAspectRatio="none">
                     <defs>
-                        <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
                             <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
                         </linearGradient>
                     </defs>
-                    <path d="${areaD}" fill="url(#spark-fill)"/>
+                    <path d="${areaD}" fill="url(#${gradientId})"/>
                     <path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>`;
