@@ -587,6 +587,35 @@ class DashboardWidgetDataController extends Controller
                     'rows' => $rows,
                     'total' => $n,
                 ];
+            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart', 'sparkline']) && isset($data['trend'])) {
+                $trend = $data['trend'];
+                $slope = $data['slope'] ?? null;
+                $intercept = $data['intercept'] ?? null;
+                $labels = [];
+                $values = [];
+                foreach ($trend as $point) {
+                    $labels[] = $point['date'] ?? $point['label'] ?? '';
+                    $values[] = $point['value'] ?? $point['y'] ?? 0;
+                }
+                $data = [
+                    'labels' => $labels,
+                    'datasets' => [
+                        [
+                            'label' => $widget->name ?: 'Metric',
+                            'data' => $values,
+                            'borderColor' => '#3b82f6',
+                            'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                            'fill' => true,
+                            'tension' => 0.3,
+                        ],
+                    ],
+                ];
+                if ($slope !== null) {
+                    $data['coefficients'] = [$slope];
+                }
+                if ($intercept !== null) {
+                    $data['baseline_intercept'] = $intercept;
+                }
             }
 
             // If tile or gauge and data is still in series format, aggregate to a single value
