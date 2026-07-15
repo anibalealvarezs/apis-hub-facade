@@ -562,6 +562,44 @@ class DashboardWidgetDataController extends Controller
                     'coefficients' => [$m],
                     'baseline_intercept' => $b,
                 ];
+            } elseif ($effectiveWidgetType === 'table' && isset($data['scatter_data'])) {
+                $scatter = $data['scatter_data'];
+                $x = $scatter['x'] ?? [];
+                $y = $scatter['y'] ?? [];
+                $labels = $scatter['labels'] ?? [];
+                $n = count($x);
+
+                $rows = [];
+                for ($i = 0; $i < $n; $i++) {
+                    $rows[] = [
+                        'label' => $labels[$i] ?? "#{$i}",
+                        'x' => $x[$i] ?? 0,
+                        'y' => $y[$i] ?? 0,
+                    ];
+                }
+
+                $data = [
+                    'columns' => [
+                        ['key' => 'label', 'label' => 'Name'],
+                        ['key' => 'x', 'label' => $scatter['x_label'] ?? 'X', 'format' => 'number'],
+                        ['key' => 'y', 'label' => $scatter['y_label'] ?? 'Value', 'format' => 'number'],
+                    ],
+                    'rows' => $rows,
+                    'total' => $n,
+                ];
+            }
+
+            // If tile or gauge and data is still in series format, aggregate to a single value
+            if (in_array($effectiveWidgetType, ['tile', 'gauge']) && !isset($data['value'])) {
+                if (isset($data['series']['values'])) {
+                    $primaryValues = $data['series']['values'];
+                    if (is_array($primaryValues) && count($primaryValues) > 0) {
+                        $avgValue = (float) (array_sum($primaryValues) / count($primaryValues));
+                        $data['value'] = $avgValue;
+                        $data['current'] = $avgValue;
+                        $data['previous'] = null;
+                    }
+                }
             }
 
             \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
