@@ -587,7 +587,9 @@ class DashboardWidgetDataController extends Controller
                     'rows' => $rows,
                     'total' => $n,
                 ];
-            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart', 'sparkline']) && isset($data['trend'])) {
+            } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
+                $data['values'] = array_column($data['trend'], 'value');
+            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart']) && isset($data['trend'])) {
                 $trend = $data['trend'];
                 $slope = $data['slope'] ?? null;
                 $intercept = $data['intercept'] ?? null;
