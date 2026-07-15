@@ -580,7 +580,7 @@ window.dashboardRenderer = {
 
         const pathD = points.map((p, i) => {
             const x = i * stepX;
-            const y = h - ((p - min) / range) * h;
+            const y = lowerIsBetter ? ((p - min) / range) * h : h - ((p - min) / range) * h;
             return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
         }).join(' ');
 
