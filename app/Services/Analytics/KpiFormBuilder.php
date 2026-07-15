@@ -604,12 +604,13 @@ class KpiFormBuilder
                                                 $globalGroup = $get('global_asset_group');
 
                                                 $resolveChannel = function ($placeholder) use ($activeChannels, $registryTags, $globalGroup) {
-                                                    preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
+                                                    preg_match('/__([A-Z_]+)_CHANNEL_(\d+)__/', $placeholder, $matches);
                                                     if (empty($matches[1])) {
                                                         return null;
                                                     }
 
                                                     $requiredTag = strtolower($matches[1]);
+                                                    $index = (int)($matches[2] ?? 1) - 1;
 
                                                     $allowedChannels = $activeChannels;
                                                     if ($globalGroup) {
@@ -619,14 +620,15 @@ class KpiFormBuilder
                                                         }
                                                     }
 
+                                                    $matchingChannels = [];
                                                     foreach ($allowedChannels as $channel) {
                                                         $tags = $registryTags[$channel] ?? [];
                                                         if (in_array($requiredTag, $tags)) {
-                                                            return $channel;
+                                                            $matchingChannels[] = $channel;
                                                         }
                                                     }
 
-                                                    return null;
+                                                    return $matchingChannels[$index] ?? null;
                                                 };
 
                                                 $extractTag = function ($placeholder) {
@@ -663,6 +665,44 @@ class KpiFormBuilder
                                                     if ($globalGroup) {
                                                         $set('dependent_asset_group', $globalGroup);
                                                         $set('dependent_asset_filter', null);
+                                                    }
+                                                    $set('dependent_additional_variables', []);
+                                                } elseif (($ast['left']['type'] ?? '') === 'operator' && ($ast['left']['operator'] ?? '') === '+') {
+                                                    $numeratorVars = [];
+                                                    $unpackNumerator = function ($node) use (&$unpackNumerator, &$numeratorVars, $resolveChannel) {
+                                                        if (($node['type'] ?? '') === 'metric') {
+                                                            $channel = $resolveChannel($node['channel']);
+                                                            if ($channel) {
+                                                                $numeratorVars[] = [
+                                                                    'dependent_channel' => $channel,
+                                                                    'dependent_metric' => $node['metric'] ?? '',
+                                                                ];
+                                                            }
+                                                        } elseif (($node['type'] ?? '') === 'operator' && ($node['operator'] ?? '') === '+') {
+                                                            $unpackNumerator($node['left']);
+                                                            $unpackNumerator($node['right']);
+                                                        }
+                                                    };
+                                                    $unpackNumerator($ast['left']);
+                                                    if (!empty($numeratorVars)) {
+                                                        $first = array_shift($numeratorVars);
+                                                        $set('dependent_channel', $first['dependent_channel']);
+                                                        $set('dependent_metric', $first['dependent_metric']);
+                                                        $findFirstChannel = function ($node) use (&$findFirstChannel) {
+                                                            if (isset($node['channel'])) {
+                                                                return $node['channel'];
+                                                            }
+                                                            if (isset($node['left'])) {
+                                                                return $findFirstChannel($node['left']);
+                                                            }
+                                                            return null;
+                                                        };
+                                                        $set('_required_tag', $extractTag($findFirstChannel($ast['left'])));
+                                                        if ($globalGroup) {
+                                                            $set('dependent_asset_group', $globalGroup);
+                                                            $set('dependent_asset_filter', null);
+                                                        }
+                                                        $set('dependent_additional_variables', array_values($numeratorVars));
                                                     }
                                                 }
 

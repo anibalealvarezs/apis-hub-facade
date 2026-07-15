@@ -102,8 +102,8 @@ class KpiPayloadBuilder
         // For Univariate, AST is just the dependent node
         if (in_array($calculationType, [
             'calculate_autocorrelation', 'calculate_anomaly',
-            'calculate_trend_linear', 'calculate_trend_sma', 
-            'calculate_trend_ema', 'calculate_trend_holt_winters', 
+            'calculate_trend_linear', 'calculate_trend_sma',
+            'calculate_trend_ema', 'calculate_trend_holt_winters',
             'calculate_trend_logarithmic'
         ])) {
             \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Univariate AST (no independent vars)', [
@@ -111,6 +111,12 @@ class KpiPayloadBuilder
                 'dependent_node' => $dependentNode,
             ]);
             return $dependentNode;
+        }
+
+        // Check for additional numerator variables (multi-channel sum in numerator)
+        $additionalNumeratorVars = $state['dependent_additional_variables'] ?? [];
+        if (!empty($additionalNumeratorVars)) {
+            $dependentNode = self::buildNumeratorSum($dependentNode, $additionalNumeratorVars, $granularity);
         }
 
         // For Bivariate, we need to build the right side (independent variables)
@@ -125,7 +131,7 @@ class KpiPayloadBuilder
         }
 
         // Build right node (might be nested if multiple variables, usually added together)
-        $rightNode = self::buildIndependentNodes($independents, $state['granularity'] ?? 'daily');
+        $rightNode = self::buildIndependentNodes($independents, $granularity);
 
         \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Full AST tree', [
             'operator' => '/',
@@ -140,6 +146,38 @@ class KpiPayloadBuilder
             'left' => $dependentNode,
             'right' => $rightNode,
         ];
+    }
+
+    private static function buildNumeratorSum(array $firstNode, array $additionalVars, string $granularity = 'daily'): array
+    {
+        $rest = [];
+        foreach ($additionalVars as $var) {
+            $channel = $var['dependent_channel'] ?? '';
+            $metric = $var['dependent_metric'] ?? '';
+            if (empty($channel) || empty($metric)) {
+                continue;
+            }
+            $rest[] = [
+                'type' => 'metric',
+                'metric' => $channel . '.' . $metric,
+            ];
+        }
+
+        if (empty($rest)) {
+            return $firstNode;
+        }
+
+        $result = $firstNode;
+        foreach ($rest as $node) {
+            $result = [
+                'type' => 'operator',
+                'operator' => '+',
+                'left' => $result,
+                'right' => $node,
+            ];
+        }
+
+        return $result;
     }
 
     private static function buildIndependentNodes(array $variables, string $granularity = 'daily'): array
