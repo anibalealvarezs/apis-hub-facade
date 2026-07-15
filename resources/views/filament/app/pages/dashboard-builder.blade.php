@@ -378,6 +378,31 @@
                             </div>
                         </div>
 
+                        {{-- Card: Chart Type --}}
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                            <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                </svg>
+                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Chart Type</span>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    <template x-for="(label, type) in availableChartTypesForControls" :key="type">
+                                        <button @click="widgetControlsForm.widget_type = type"
+                                                class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-center"
+                                                :class="widgetControlsForm.widget_type === type
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'">
+                                            <div class="w-10 h-7" x-html="getWidgetSvg(type)"></div>
+                                            <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight" x-text="label"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">Changing the chart type affects how data is displayed. Some types may not show all data dimensions.</p>
+                            </div>
+                        </div>
+
                         {{-- Card: Date Range --}}
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
                             <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -1176,6 +1201,43 @@
                         return allTypes;
                     },
 
+                    get availableChartTypesForControls() {
+                        const target = this.widgetControlsTarget;
+                        if (!target || !target.source_type) return {};
+
+                        const allTypes = @json(\App\Services\WidgetTypeRegistry::getWidgetLabels());
+                        let filtered = {};
+
+                        if (target.source_type === 'metric') {
+                            const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
+                            return filtered;
+                        }
+
+                        if (target.source_type === 'kpi') {
+                            const kpiId = target.source_config?.custom_kpi_id;
+                            if (!kpiId) return allTypes;
+
+                            const kpiData = this.kpis[kpiId];
+                            const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
+
+                            if (allowed.length === 0) return allTypes;
+
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
+                            // Always include the current type even if no longer in compat list
+                            if (target.widget_type && !filtered[target.widget_type]) {
+                                filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
+                            }
+                            return filtered;
+                        }
+
+                        return allTypes;
+                    },
+
                     // ─── UI Helpers ───
                     getWidgetDescription(type) {
                         const descs = {
@@ -1376,6 +1438,7 @@
                         this.widgetControlsForm = {
                             title: widget.title || widget.name || '',
                             description: widget.description || '',
+                            widget_type: widget.widget_type || '',
                             date_inherit: !hasDate,
                             date_start: wc.date_start || this.dashboardControls.date_start || '',
                             date_end: wc.date_end || this.dashboardControls.date_end || '',
@@ -1736,6 +1799,7 @@
                             edge_case_grouping: 'none',
                             max_ratio_inherit: true,
                             max_ratio: null,
+                            widget_type: this.widgetControlsTarget?.widget_type || '',
                         };
                     },
 
@@ -1831,6 +1895,14 @@
                         }
 
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
+
+                        // Handle widget type change
+                        const newType = c.widget_type;
+                        const oldType = this.widgetControlsTarget.widget_type;
+                        if (newType && newType !== oldType) {
+                            @this.changeWidgetType(this.widgetControlsTarget.id, newType);
+                        }
+
                         this.showWidgetControls = false;
                         this.reloadGrid();
 
@@ -1840,6 +1912,7 @@
                             this.widgets[idx].controls = payload;
                             this.widgets[idx].title = c.title.trim();
                             this.widgets[idx].description = c.description ? c.description.trim() : null;
+                            this.widgets[idx].widget_type = c.widget_type;
                         }
                     },
 

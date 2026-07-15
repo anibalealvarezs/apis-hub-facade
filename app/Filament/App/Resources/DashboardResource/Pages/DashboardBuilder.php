@@ -70,6 +70,29 @@ class DashboardBuilder extends Page
             ->send();
     }
 
+    // ─── Widget Type Change ───
+
+    public function changeWidgetType(int $widgetId, string $widgetType): void
+    {
+        $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
+            ->findOrFail($widgetId);
+
+        if (!WidgetTypeRegistry::isWidgetTypeCompatible($widget->source_type, $widgetType)) {
+            Notification::make()
+                ->title(__('Invalid widget type for this source type'))
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $widget->update(['widget_type' => $widgetType]);
+
+        Notification::make()
+            ->title(__('Widget type changed to :type', ['type' => WidgetTypeRegistry::getWidgetLabel($widgetType)]))
+            ->success()
+            ->send();
+    }
+
     // ─── Widget Controls ───
 
     public function saveWidgetControls(int $widgetId, array $controls, string $title, ?string $description = null): void
