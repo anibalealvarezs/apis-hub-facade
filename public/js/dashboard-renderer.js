@@ -90,6 +90,8 @@ window.dashboardRenderer = {
     },
     /**
      * Fetch data for a single widget and render into its container.
+     * Data fetch happens immediately; Chart.js rendering is deferred until
+     * the widget container enters the viewport (IntersectionObserver).
      * @param {number} widgetId
      * @param {HTMLElement} containerEl - The element to render into
      * @param {object} controls - Resolved controls for this widget
@@ -131,7 +133,10 @@ window.dashboardRenderer = {
                 throw new Error(json.message || json.error || 'Unknown error');
             }
 
-            this.render(containerEl, json);
+            this._widgetData.set(containerEl, json);
+
+            // Render immediately if already in viewport, otherwise defer
+            this._lazyRenderWhenVisible(containerEl, json);
         } catch (e) {
             if (e.message === 'access_restricted') {
                 containerEl.innerHTML = this.accessRestrictedState();
@@ -139,6 +144,53 @@ window.dashboardRenderer = {
                 containerEl.innerHTML = this.errorState(e.message);
             }
         }
+    },
+
+    /**
+     * Render a widget from cached data, or defer until it enters the viewport.
+     */
+    _lazyRenderWhenVisible(containerEl, json) {
+        if (this._renderObservers?.has(containerEl)) return;
+
+        const rect = containerEl.getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight + 100 && rect.bottom > -100;
+
+        if (isVisible) {
+            this.render(containerEl, json);
+            return;
+        }
+
+        if (!this._renderObservers) this._renderObservers = new Map();
+
+        const observer = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                observer.unobserve(containerEl);
+                this._renderObservers.delete(containerEl);
+                const data = this._widgetData.get(containerEl);
+                if (data) this.render(containerEl, data);
+            }
+        }, { rootMargin: '100px' });
+
+        this._renderObservers.set(containerEl, observer);
+        observer.observe(containerEl);
+    },
+
+    /**
+     * Force-render a widget immediately from cached data, regardless of viewport.
+     * Used by pop-out to ensure the chart exists before moving its canvas.
+     */
+    flushRender(containerEl) {
+        if (containerEl.querySelector('canvas')) return; // already rendered
+
+        const observer = this._renderObservers?.get(containerEl);
+        if (observer) {
+            observer.unobserve(containerEl);
+            this._renderObservers.delete(containerEl);
+        }
+
+        const json = this._widgetData.get(containerEl);
+        if (json) this.render(containerEl, json);
     },
 
     /**
@@ -1171,6 +1223,9 @@ window.dashboardRenderer = {
     popOutWidget(containerEl, targetEl) {
         const json = this._widgetData.get(containerEl);
         if (!json) return;
+
+        // Ensure the chart is rendered before moving its canvas
+        this.flushRender(containerEl);
 
         // Transfer widget data and pinned tooltip to the modal container
         this._widgetData.set(targetEl, json);
