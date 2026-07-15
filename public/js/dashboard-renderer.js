@@ -421,11 +421,13 @@ window.dashboardRenderer = {
 
         if (!columns.length || !rows.length) {
             containerEl.style.padding = '1rem';
+            containerEl.style.overflow = '';
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
         containerEl.style.padding = '0';
+        containerEl.style.overflow = 'hidden';
         containerEl._tableData = data;
 
         if (!containerEl._tableSort) {
@@ -454,8 +456,11 @@ window.dashboardRenderer = {
         columns.forEach(col => {
             const key = col.key || col;
             const isActive = sort.column === key;
+            const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
-            html += `<th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}">${this.escapeHtml(col.label || col)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            const thAlign = isNumeric ? 'text-right' : 'text-left';
+            const thStyle = isNumeric ? 'width:140px;' : '';
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(col.label || col)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
 
@@ -469,12 +474,12 @@ window.dashboardRenderer = {
                 const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
                 const formatted = isNumeric && col.format === 'currency' ? this.formatCurrency(val)
                     : isNumeric && col.format === 'percentage' ? (val != null ? Number(val).toFixed(1) + '%' : '')
-                        : isNumeric && col.format === 'number' ? this.formatNumber(val)
+                        : isNumeric && col.format === 'number' ? this._formatTableNumber(val)
                             : val;
                 const tdClass = isNumeric
                     ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
                     : 'px-3 py-2 text-gray-700 dark:text-gray-300';
-                const tdStyle = isNumeric ? '' : 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                const tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
                 html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
@@ -482,7 +487,7 @@ window.dashboardRenderer = {
         html += '</tbody></table></div>';
 
         if (data.total !== undefined) {
-            html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">${this.formatNumber(data.total)} results</div>`;
+            html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">${this._formatTableNumber(data.total)} results</div>`;
         }
 
         containerEl.innerHTML = html;
@@ -1373,6 +1378,7 @@ window.dashboardRenderer = {
 
     _renderWidget(widget_type, containerEl, data, controls) {
         containerEl.style.padding = '';
+        containerEl.style.overflow = '';
         switch (widget_type) {
             case 'tile':
                 this.renderTile(containerEl, data, controls);
@@ -1414,6 +1420,13 @@ window.dashboardRenderer = {
     formatNumber(n) {
         if (n == null || isNaN(n)) return '—';
         return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
+    },
+
+    _formatTableNumber(n) {
+        if (n == null || isNaN(n)) return '—';
+        const num = Number(n);
+        if (Number.isInteger(num)) return num.toLocaleString('en-US', {maximumFractionDigits: 0});
+        return num.toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4});
     },
 
     formatCurrency(n) {
