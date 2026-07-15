@@ -443,8 +443,9 @@ window.dashboardRenderer = {
                             : val;
                 const tdClass = isNumeric
                     ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
-                    : 'px-3 py-2 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-gray-700 dark:text-gray-300';
-                html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}">${this.escapeHtml(String(formatted))}</td>`;
+                    : 'px-3 py-2 text-gray-700 dark:text-gray-300';
+                const tdStyle = isNumeric ? '' : 'max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
