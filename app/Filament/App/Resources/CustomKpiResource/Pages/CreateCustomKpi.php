@@ -24,7 +24,7 @@ class CreateCustomKpi extends CreateRecord
         // Package the UI state and scope into the filters column
         $filters = $data['filters'] ?? [];
         $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter', 'ast', 'filters', 'project_id']);
-        if (!empty($data['template'])) {
+        if (!empty($data['template']) && !empty($data['keep_template_guidance'])) {
             $filters['_ui_state']['template_key'] = $data['template'];
         }
         $data['filters'] = $filters;

@@ -412,6 +412,13 @@ trait LoadsDashboardViewData
 
             $widgetArray['kpi_theory'] = null;
             if ($widgetArray['source_type'] === 'kpi') {
+                $keepGuidance = $uiState['keep_template_guidance'] ?? null;
+
+                // If user explicitly opted out, skip entirely
+                if ($keepGuidance === false) {
+                    continue;
+                }
+
                 $templateKey = $uiState['template_key'] ?? null;
 
                 // Fallback for existing KPIs: try to match by name in the predefined registry

@@ -738,6 +738,9 @@ class KpiFormBuilder
                                                 }),
                             ])->columnSpan(1),
                         ]),
+                        Toggle::make('keep_template_guidance')
+                            ->label(__('Automatically show template guidance in dashboard tooltips'))
+                            ->helperText(__('When enabled, widgets using this KPI will display the template\'s theoretical guidance in their tooltips. You can change this later.')),
                         Actions::make([
                                 Actions\Action::make('back_template')
                                                 ->label(__('Back'))
@@ -971,6 +974,10 @@ class KpiFormBuilder
                                         return $get($key);
                                     });
                                 }),
+                            Toggle::make('keep_template_guidance')
+                                ->label(__('Show template guidance in dashboard tooltips'))
+                                ->helperText(__('When enabled, widgets using this KPI will display the template\'s theoretical guidance in their tooltips.'))
+                                ->visible(fn (Get $get) => !empty($get('template'))),
                             Actions::make(array_filter([
                                 Actions\Action::make('back_summary')
                                                 ->label(__('Back'))

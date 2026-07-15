@@ -44,6 +44,9 @@ class EditCustomKpi extends EditRecord
             foreach ($uiState as $key => $val) {
                 $data[$key] = $val;
             }
+            if (!isset($data['keep_template_guidance'])) {
+                $data['keep_template_guidance'] = !empty($uiState['template_key']);
+            }
         }
         $data['_builder_step'] = '22_series';
         $data['_step_history'] = json_encode(['1_intent']);
@@ -58,8 +61,10 @@ class EditCustomKpi extends EditRecord
         
         $filters = $data['filters'] ?? [];
         $filters['_ui_state'] = \Illuminate\Support\Arr::except($data, ['name', 'description', 'calculation_type', 'is_active', 'template', 'category_filter', 'ast', 'filters', 'project_id', 'id']);
-        if (!empty($data['template'])) {
+        if (!empty($data['template']) && !empty($data['keep_template_guidance'])) {
             $filters['_ui_state']['template_key'] = $data['template'];
+        } else {
+            unset($filters['_ui_state']['template_key']);
         }
         $data['filters'] = $filters;
 
