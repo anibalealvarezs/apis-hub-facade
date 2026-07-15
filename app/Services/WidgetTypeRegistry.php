@@ -5,7 +5,7 @@ namespace App\Services;
 class WidgetTypeRegistry
 {
     protected static array $compatibility = [
-        'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart'],
+        'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'],
         'metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline'],
     ];
 
