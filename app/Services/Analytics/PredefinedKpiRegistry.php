@@ -161,20 +161,17 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
-            'impression_anomaly_alert' => [
-                'name' => 'Impression Anomaly Alert',
-                'description' => 'Automated Alerting for unexpected spikes in impressions.',
+            'anomaly_alert' => [
+                'name' => 'Anomaly Alert',
+                'description' => 'Flags unusual spikes or drops in any time-series metric that fall outside normal statistical patterns. Adapts to your normal range and alerts when something truly unusual happens.',
                 'scope' => 'asset',
-                'categories' => ['impressions', 'alerts', 'scope_asset', 'org_mkt_marketing', 'source_src'],
-                'required_tags' => ['impressionable'],
+                'categories' => ['alerts', 'anomaly', 'scope_asset', 'org_mkt_marketing', 'source_src'],
                 'calculation_type' => 'calculate_anomaly',
                 'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
                 'optimal_widgets' => ['anomaly_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
-                        'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                        'metric' => 'impressions',
                     ],
                 ],
             ],
@@ -522,23 +519,6 @@ class PredefinedKpiRegistry
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
                         'metric' => 'purchase_roas',
-                    ],
-                ],
-            ],
-            'cpc_anomaly' => [
-                'name' => 'CPC Anomaly Alert',
-                'description' => 'Alerts when your Cost Per Click deviates significantly from normal range. Helps catch auction changes, competitive shifts, or tracking issues early.',
-                'scope' => 'asset',
-                'categories' => ['cost', 'alerts', 'agency', 'scope_asset', 'org_mkt_marketing', 'source_src'],
-                'required_tags' => ['spendable'],
-                'calculation_type' => 'calculate_anomaly',
-                'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
-                'optimal_widgets' => ['anomaly_chart'],
-                'template' => [
-                    'ast' => [
-                        'type' => 'metric',
-                        'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'cpc',
                     ],
                 ],
             ],

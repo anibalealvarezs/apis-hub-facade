@@ -181,11 +181,11 @@ class KpiReference extends Page
                 'use_case' => __('Your CPC was $0.50 last week, $0.55 this week, and $0.58 today. Are these random fluctuations or is there a real upward trend? This KPI cuts through the noise and tells you if your costs are genuinely trending in a direction that needs action.'),
                 'interpretation' => __('An upward signal means your CPC is getting more expensive — your ad costs are creeping up. Consider refreshing creatives, adjusting targeting, or reviewing auction competitiveness. A downward signal means your CPC is improving — your campaigns are becoming more efficient. No clear signal means costs are stable; no immediate action needed.'),
             ],
-            'impression_anomaly_alert' => [
+            'anomaly_alert' => [
                 'type_label' => __('Outlier / Spike Detector'),
-                'explanation' => __('Flags unusually large spikes or drops in your impressions that fall outside normal patterns. Designed to catch unexpected events before they become problems — or opportunities.'),
-                'use_case' => __('Your impressions suddenly jump from 10,000 to 100,000 in one day. Did a post go viral? Or is there a reporting glitch? Or did a competitor stop bidding? This KPI alerts you when something out of the ordinary happens so you can investigate immediately.'),
-                'interpretation' => __('When an anomaly is detected, check what happened on that date: Was there a campaign change? A viral post? A bot attack? A tracking error? Spikes aren\'t always good (bot traffic) and drops aren\'t always bad (better targeting). The KPI says "look here" — your judgement determines what it means.'),
+                'explanation' => __('Flags unusually large spikes or drops in any time-series metric that fall outside normal statistical patterns. Unlike fixed thresholds, this KPI adapts to your normal range and only alerts when something truly unusual happens — whether it\'s impressions, clicks, spend, conversions, CPC, or any metric you care about.'),
+                'use_case' => __('Your impressions normally fluctuate between 8,000 and 12,000 per day, but suddenly jump to 50,000. Or your CPC has been steady at $0.55 and spikes to $1.20. Or conversions drop from 30/day to 5/day overnight. Is this a real anomaly worth investigating or just normal variance? This KPI cuts through the noise and flags events that genuinely need your attention — on whatever metric matters most to you.'),
+                'interpretation' => __('When an anomaly is detected, investigate immediately: Did a campaign change trigger this? Is there a tracking error? A viral post? Bot traffic? A competitor shift? Spikes aren\'t always good (bot attacks inflate impressions) and drops aren\'t always bad (better targeting reduces waste). The KPI says "look here" — your judgement determines what it means.'),
             ],
             'seo_click_momentum' => [
                 'type_label' => __('SEO Traffic Trend'),
@@ -264,12 +264,6 @@ class KpiReference extends Page
                 'explanation' => __('Detects shifts in your Return on Ad Spend momentum before they become obvious in aggregate numbers. Uses MACD analysis on the purchase_roas metric to give you early warning of profitability changes.'),
                 'use_case' => __('Your monthly ROAS reports show a healthy 3.5x, but you feel like something has changed in the last week. Instead of waiting for the month-end report, this KPI tells you right now if your ROAS momentum is shifting — giving you days or weeks of extra reaction time.'),
                 'interpretation' => __('A bullish crossover (MACD line crossing above signal) means your ROAS momentum is building — recent campaigns are becoming more profitable. A bearish crossover (crossing below) means profitability is eroding. Check for creative fatigue, audience saturation, or increased auction costs when you see a bearish signal.'),
-            ],
-            'cpc_anomaly' => [
-                'type_label' => __('Cost Spike Detector'),
-                'explanation' => __('Flags unusual spikes or drops in your Cost Per Click that fall outside normal statistical patterns. Unlike fixed thresholds, this KPI adapts to your normal CPC range and only alerts when something truly unusual happens.'),
-                'use_case' => __('Your CPC is normally around $0.50–$0.70, but it jumped to $1.20 today. Is this a temporary auction fluctuation or the start of a lasting cost increase? This KPI tells you if the spike is statistically anomalous and worth investigating immediately.'),
-                'interpretation' => __('When an anomaly is detected, investigate immediately: Did a competitor enter the auction? Did your ad relevance score drop? Was there a targeting change? CPC spikes are often early indicators of broader auction dynamics shifting. A downward anomaly (CPC dropping unusually low) can also be worth investigating — it might mean your ads are working better, or it could mean you\'ve accidentally narrowed your targeting too much.'),
             ],
             'search_position_efficiency_page' => [
                 'type_label' => __('Snippet Appeal Score (Page)'),
