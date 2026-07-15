@@ -585,12 +585,12 @@ window.dashboardRenderer = {
         if (first !== 0) changePct = ((current - first) / Math.abs(first)) * 100;
 
         containerEl.innerHTML = `
-            <div class="flex items-center gap-3 p-4">
-                <div class="flex-shrink-0 text-right">
+            <div class="flex items-stretch gap-3 p-4 h-full">
+                <div class="flex-shrink-0 text-right self-center">
                     <span class="text-xl font-bold text-gray-900 dark:text-white">${this.formatNumber(current)}</span>
                     <span class="text-xs ${trend === 'up' ? 'text-green-500' : 'text-red-500'} ml-1">${trend === 'up' ? '▲' : '▼'}${Math.abs(changePct).toFixed(0)}%</span>
                 </div>
-                <svg viewBox="0 0 ${w} ${h}" class="flex-1 h-10" preserveAspectRatio="none">
+                <svg viewBox="0 0 ${w} ${h}" class="flex-1 h-full" preserveAspectRatio="none">
                     <defs>
                         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
