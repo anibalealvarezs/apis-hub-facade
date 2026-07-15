@@ -24,6 +24,7 @@ class DashboardService
         $clone = $dashboard->replicate();
         $clone->name = $newName ?? $dashboard->name . ' (Copy)';
         $clone->is_default = false;
+        unset($clone->widgets_count);
         $clone->push();
 
         foreach ($dashboard->widgets as $widget) {
