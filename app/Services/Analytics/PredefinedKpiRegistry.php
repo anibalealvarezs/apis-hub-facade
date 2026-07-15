@@ -31,9 +31,18 @@ class PredefinedKpiRegistry
                         'type' => 'operator',
                         'operator' => '/',
                         'left' => [
-                            'type' => 'metric',
-                            'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend',
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => [
+                                'type' => 'metric',
+                                'channel' => '__SPENDABLE_CHANNEL_1__',
+                                'metric' => 'spend',
+                            ],
+                            'right' => [
+                                'type' => 'metric',
+                                'channel' => '__SPENDABLE_CHANNEL_2__',
+                                'metric' => 'spend',
+                            ],
                         ],
                         'right' => [
                             'type' => 'operator',
