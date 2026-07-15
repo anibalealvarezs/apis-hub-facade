@@ -16,7 +16,7 @@ window.dashboardRenderer = {
         'aov': {label: 'AOV', format: 'currency', prefix: '$'},
         'cost_per_result': {label: 'Cost/Result', format: 'currency', prefix: '$'},
         'ctr': {label: 'CTR', format: 'percentage', multiply: 100},
-        'bounce_rate': {label: 'Bounce Rate', format: 'percentage', multiply: 100},
+        'bounce_rate': {label: 'Bounce Rate', format: 'percentage', multiply: 100, lower_is_better: true},
         'clicks': {label: 'Clicks', format: 'number'},
         'impressions': {label: 'Impressions', format: 'number'},
         'reach': {label: 'Reach', format: 'number'},
@@ -35,7 +35,7 @@ window.dashboardRenderer = {
         'engagements': {label: 'Engagements', format: 'number'},
         'total_interactions': {label: 'Total Interactions', format: 'number'},
         'average_session_duration': {label: 'Avg Session', format: 'number', suffix: 's'},
-        'position': {label: 'Avg Position', format: 'number'},
+        'position': {label: 'Avg Position', format: 'number', lower_is_better: true},
     },
 
     // Ratio KPIs produce a result whose type differs from the raw dependent metric.
@@ -554,7 +554,7 @@ window.dashboardRenderer = {
 
     // ─── Sparkline ───
 
-    renderSparkline(containerEl, data) {
+    renderSparkline(containerEl, data, controls) {
         const points = data?.points ?? data?.values ?? [];
 
         if (!points.length) {
@@ -562,9 +562,14 @@ window.dashboardRenderer = {
             return;
         }
 
+        const metricKey = controls?.metrics?.[0];
+        const metricFmt = metricKey ? this.METRIC_FORMATS[metricKey] : null;
+        const lowerIsBetter = metricFmt?.lower_is_better ?? false;
+
         const current = points[points.length - 1];
         const first = points[0];
-        const trend = current >= first ? 'up' : 'down';
+        const isUp = lowerIsBetter ? current < first : current >= first;
+        const trend = isUp ? 'up' : 'down';
         const color = trend === 'up' ? '#22C55E' : '#EF4444';
 
         const min = Math.min(...points);
@@ -1396,7 +1401,7 @@ window.dashboardRenderer = {
                 this.renderGauge(containerEl, data, controls);
                 break;
             case 'sparkline':
-                this.renderSparkline(containerEl, data);
+                this.renderSparkline(containerEl, data, controls);
                 break;
             case 'anomaly_list':
                 this.renderAnomalyList(containerEl, data);
