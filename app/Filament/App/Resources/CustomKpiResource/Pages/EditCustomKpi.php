@@ -40,12 +40,24 @@ class EditCustomKpi extends EditRecord
             // Map template_key back to the form field name 'template'
             if (isset($uiState['template_key'])) {
                 $data['template'] = $uiState['template_key'];
+            } else {
+                // Backfill for pre-existing KPIs: match by name in the predefined registry
+                $kpi = $this->record;
+                if ($kpi && !empty($kpi->name)) {
+                    $predefinedAll = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+                    foreach ($predefinedAll as $key => $def) {
+                        if (($def['name'] ?? '') === $kpi->name) {
+                            $data['template'] = $key;
+                            break;
+                        }
+                    }
+                }
             }
             foreach ($uiState as $key => $val) {
                 $data[$key] = $val;
             }
             if (!isset($data['keep_template_guidance'])) {
-                $data['keep_template_guidance'] = !empty($uiState['template_key']);
+                $data['keep_template_guidance'] = !empty($data['template']);
             }
         }
         $data['_builder_step'] = '22_series';
