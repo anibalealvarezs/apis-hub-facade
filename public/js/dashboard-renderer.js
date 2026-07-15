@@ -586,9 +586,9 @@ window.dashboardRenderer = {
 
         containerEl.innerHTML = `
             <div class="flex items-stretch gap-3 p-4 h-full">
-                <div class="flex-shrink-0 text-right self-center">
+                <div class="flex-shrink-0 text-right self-center flex flex-col">
                     <span class="text-xl font-bold text-gray-900 dark:text-white">${this.formatNumber(current)}</span>
-                    <span class="text-xs ${trend === 'up' ? 'text-green-500' : 'text-red-500'} ml-1">${trend === 'up' ? '▲' : '▼'}${Math.abs(changePct).toFixed(0)}%</span>
+                    <span class="text-xs ${trend === 'up' ? 'text-green-500' : 'text-red-500'}">${trend === 'up' ? '▲' : '▼'} ${Math.abs(changePct).toFixed(0)}%</span>
                 </div>
                 <svg viewBox="0 0 ${w} ${h}" class="flex-1 h-full" preserveAspectRatio="none">
                     <defs>
