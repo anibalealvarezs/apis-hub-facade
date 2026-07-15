@@ -278,10 +278,16 @@ class KpiReference extends Page
                 'interpretation' => __('High values mean a keyword overperforms its rank (focus on pushing it to #1). Low values mean the keyword underperforms its rank (potentially the wrong intent).'),
             ],
             'seo_structural_inertia' => [
-                'type_label' => __('Growth Trend Baseline'),
-                'explanation' => __('Calculates the underlying growth trend of your organic search presence by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.'),
+                'type_label' => __('Growth Trend Baseline (Impressions)'),
+                'explanation' => __('Calculates the underlying growth trend of your organic search impressions by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.'),
                 'use_case' => __('Your daily search impressions bounce up and down wildly. You need to know if the overall trajectory is positive, ignoring weekend dips or minor Google updates.'),
                 'interpretation' => __('A positive slope (m) confirms accelerating SEO inertia. If the trend is positive despite daily volatility, your strategy is working.'),
+            ],
+            'seo_position_structural_inertia' => [
+                'type_label' => __('Growth Trend Baseline (Position)'),
+                'explanation' => __('Calculates the underlying growth trend of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.'),
+                'use_case' => __('Your average search position fluctuates daily. You need to know if your rankings are genuinely improving or deteriorating over time, ignoring short-term noise.'),
+                'interpretation' => __('A negative slope (m) confirms improving ranking positions (lower is better). If the trend is negative despite daily volatility, your SEO ranking strength is increasing. A positive slope indicates your positions are slipping.'),
             ],
             'fb_algorithmic_inertia' => [
                 'type_label' => __('True Reach Floor'),
