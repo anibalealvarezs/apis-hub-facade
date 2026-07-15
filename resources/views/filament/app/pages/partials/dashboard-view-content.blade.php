@@ -139,9 +139,9 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <div
-                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ $widget['kpi_theory']['type_label'] }}</div>
+                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ $widget['kpi_theory']['name'] }}</div>
                                                         <div
-                                                            class="text-[10px] text-gray-500 mt-0.5">{{ $widget['kpi_theory']['name'] }}</div>
+                                                            class="text-[10px] text-gray-500 mt-0.5">{{ $widget['kpi_theory']['type_label'] }}</div>
                                                     </div>
                                                 </div>
 
