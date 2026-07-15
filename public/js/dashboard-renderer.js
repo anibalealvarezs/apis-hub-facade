@@ -420,19 +420,49 @@ window.dashboardRenderer = {
         const rows = data?.rows ?? [];
 
         if (!columns.length || !rows.length) {
+            containerEl.style.padding = '1rem';
             containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
-        let html = '<div class="overflow-auto max-h-full"><table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">';
-        html += '<thead class="bg-gray-50 dark:bg-gray-800"><tr>';
-        columns.forEach(col => {
-            html += `<th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">${this.escapeHtml(col.label || col)}</th>`;
-        });
-        html += '</tr></thead><tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">';
+        containerEl.style.padding = '0';
+        containerEl._tableData = data;
 
-        rows.forEach(row => {
-            html += '<tr class="hover:bg-gray-50 dark:hover:bg-gray-800">';
+        if (!containerEl._tableSort) {
+            containerEl._tableSort = { column: null, direction: 'asc' };
+        }
+        const sort = containerEl._tableSort;
+
+        let sortedRows = [...rows];
+        if (sort.column) {
+            const colDef = columns.find(c => c.key === sort.column || c === sort.column);
+            const isNumeric = colDef?.format === 'number' || colDef?.format === 'currency' || colDef?.format === 'percentage';
+            sortedRows.sort((a, b) => {
+                let va = a[sort.column], vb = b[sort.column];
+                if (isNumeric) { va = Number(va) || 0; vb = Number(vb) || 0; }
+                else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+                return va < vb ? (sort.direction === 'asc' ? -1 : 1)
+                     : va > vb ? (sort.direction === 'asc' ? 1 : -1) : 0;
+            });
+        }
+
+        let html = '<div class="table-wrap" style="overflow:auto;height:100%;border-radius:inherit;">';
+        html += '<table style="width:100%;table-layout:fixed;border-collapse:collapse;">';
+
+        html += '<thead style="position:sticky;top:0;z-index:1;">';
+        html += '<tr class="bg-gray-50 dark:bg-gray-800">';
+        columns.forEach(col => {
+            const key = col.key || col;
+            const isActive = sort.column === key;
+            const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+            html += `<th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}">${this.escapeHtml(col.label || col)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+        });
+        html += '</tr></thead>';
+
+        html += '<tbody class="bg-white dark:bg-gray-900">';
+        sortedRows.forEach((row, ri) => {
+            const rowClass = ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/30';
+            html += `<tr class="${rowClass} hover:bg-gray-100 dark:hover:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">`;
             columns.forEach(col => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
@@ -444,18 +474,31 @@ window.dashboardRenderer = {
                 const tdClass = isNumeric
                     ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
                     : 'px-3 py-2 text-gray-700 dark:text-gray-300';
-                const tdStyle = isNumeric ? '' : 'max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                const tdStyle = isNumeric ? '' : 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
                 html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
-
         html += '</tbody></table></div>';
+
         if (data.total !== undefined) {
-            html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700">${this.formatNumber(data.total)} results</div>`;
+            html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">${this.formatNumber(data.total)} results</div>`;
         }
 
         containerEl.innerHTML = html;
+
+        containerEl.querySelectorAll('th[data-sort-key]').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.sortKey;
+                if (sort.column === key) {
+                    sort.direction = sort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sort.column = key;
+                    sort.direction = 'asc';
+                }
+                this.renderTable(containerEl, data);
+            });
+        });
     },
 
     // ─── Gauge ───
@@ -1329,6 +1372,7 @@ window.dashboardRenderer = {
     },
 
     _renderWidget(widget_type, containerEl, data, controls) {
+        containerEl.style.padding = '';
         switch (widget_type) {
             case 'tile':
                 this.renderTile(containerEl, data, controls);
