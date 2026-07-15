@@ -36,8 +36,8 @@ class GoogleAnalyticsController extends Controller
     private function metricsForScope(string $scope, bool $includeBounceRate = false): array
     {
         $base = match ($scope) {
-            'traffic_matrix' => ['sessions', 'screenPageViews', 'conversions'],
-            'acquisition_matrix' => ['newUsers', 'activeUsers'],
+            'traffic_matrix' => ['sessions', 'screenPageViews', 'conversions', 'averageSessionDuration'],
+            'acquisition_matrix' => ['newUsers', 'activeUsers', 'totalUsers'],
             'event_matrix' => ['eventCount', 'conversions'],
             'ad_touchpoint_matrix' => ['sessions', 'conversions'],
             default => ['sessions', 'activeUsers'],

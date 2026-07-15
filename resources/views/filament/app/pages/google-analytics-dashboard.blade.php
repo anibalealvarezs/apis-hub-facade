@@ -7,6 +7,8 @@
             --ga4-conversions: #ea4335;
             --ga4-pageViews: #9c27b0;
             --ga4-revenue: #10b981;
+            --ga4-avgSessionDuration: #ff6d6d;
+            --ga4-totalUsers: #00bcd4;
 
             --ga4-text-main: #111827;
             --ga4-text-dim: #6b7280;
@@ -736,8 +738,8 @@
                         isSummaryLoading: false,
                         isChartLoading: false,
 
-                        summary: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0},
-                        previous: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0},
+                        summary: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0},
+                        previous: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0},
                         chartDataRaw: [],
 
                         activeMetrics: {sessions: true, activeUsers: true, newUsers: false, conversions: false},
@@ -781,14 +783,14 @@
                         },
 
                         tabConfig: {
-                            campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
-                            adgroups:   {label: 'Ad Group',    metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
-                            channels:   {label: 'Channel',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
-                            sources:    {label: 'Source/Medium',metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews']},
-                            traffic_pages:     {label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
-                            traffic_countries: {label: 'Country',      metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
-                            traffic_devices:   {label: 'Device',       metrics: ['sessions', 'screenPageViews', 'bounceRate', 'conversions']},
-                            acquisition_channels: {label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers']},
+                            campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
+                            adgroups:   {label: 'Ad Group',    metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
+                            channels:   {label: 'Channel',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
+                            sources:    {label: 'Source/Medium',metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
+                            traffic_pages:     {label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
+                            traffic_countries: {label: 'Country',      metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
+                            traffic_devices:   {label: 'Device',       metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
+                            acquisition_channels: {label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers', 'totalUsers']},
                             events: {label: 'Event Name', metrics: ['eventCount', 'conversions']},
                             adtouchpoints_adgroups: {label: 'Ad Group',   metrics: ['sessions', 'conversions']},
                             adtouchpoints_terms:    {label: 'Manual Term', metrics: ['sessions', 'conversions']},
@@ -797,13 +799,15 @@
                         metricLabels: {
                             sessions: 'Sessions', activeUsers: 'Users', newUsers: 'New',
                             conversions: 'Conv.', screenPageViews: 'Page Views',
-                            bounceRate: 'Bounce Rate', eventCount: 'Event Count'
+                            bounceRate: 'Bounce Rate', eventCount: 'Event Count',
+                            averageSessionDuration: 'Avg. Duration', totalUsers: 'Total Users'
                         },
                         metricColors: {
                             sessions: 'var(--ga4-sessions)', activeUsers: 'var(--ga4-activeUsers)',
                             newUsers: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
                             screenPageViews: 'var(--ga4-pageViews)', bounceRate: 'var(--ga4-revenue)',
-                            eventCount: '#8B5CF6'
+                            eventCount: '#8B5CF6', averageSessionDuration: 'var(--ga4-avgSessionDuration)',
+                            totalUsers: 'var(--ga4-totalUsers)'
                         },
 
                         get isAnySectionLoading() {
@@ -981,8 +985,8 @@
 
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                                this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0};
-                                this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0};
+                                this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
+                                this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
                                 return;
                             }
 
@@ -992,8 +996,8 @@
                                 const data = await response.json();
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                                    this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0};
-                                    this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0};
+                                    this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
+                                    this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
                                 }
                             } catch (error) {
                                 console.error('Error fetching summary:', error);
@@ -1183,7 +1187,8 @@
                                 return {
                                     daily: dateStr,
                                     sessions: 0, activeUsers: 0, newUsers: 0,
-                                    conversions: 0, screenPageViews: 0, bounceRate: 0
+                                    conversions: 0, screenPageViews: 0, bounceRate: 0,
+                                    averageSessionDuration: 0, totalUsers: 0
                                 };
                             });
 
