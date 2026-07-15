@@ -436,11 +436,15 @@ window.dashboardRenderer = {
             columns.forEach(col => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
-                const formatted = col.format === 'currency' ? this.formatCurrency(val)
-                    : col.format === 'percentage' ? (val != null ? Number(val).toFixed(1) + '%' : '')
-                        : col.format === 'number' ? this.formatNumber(val)
+                const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
+                const formatted = isNumeric && col.format === 'currency' ? this.formatCurrency(val)
+                    : isNumeric && col.format === 'percentage' ? (val != null ? Number(val).toFixed(1) + '%' : '')
+                        : isNumeric && col.format === 'number' ? this.formatNumber(val)
                             : val;
-                html += `<td class="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">${this.escapeHtml(String(formatted))}</td>`;
+                const tdClass = isNumeric
+                    ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
+                    : 'px-3 py-2 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-gray-700 dark:text-gray-300';
+                html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
