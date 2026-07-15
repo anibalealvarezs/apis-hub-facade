@@ -992,11 +992,12 @@ window.dashboardRenderer = {
         } else {
             config.options = config.options || {};
             config.options.animation = {
-                duration: 1000,
+                duration: 200,
                 easing: 'easeOutQuart',
                 delay(ctx) {
                     if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
-                    return ctx.dataIndex * 80;
+                    const count = ctx.chart.data.labels?.length || 1;
+                    return ((1000 - 200) / (count - 1 || 1)) * ctx.dataIndex;
                 },
             };
         }
