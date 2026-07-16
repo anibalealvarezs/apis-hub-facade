@@ -614,13 +614,13 @@ class DashboardWidgetDataController extends Controller
                         $prev = ($prev !== null && is_numeric($prev)) ? round((float) $prev * 100, 4) : $prev;
                     }
 
+                    $label = $metricLabels[$metric] ?? ucfirst($metric);
+
                     $rows[] = [
-                        'metric' => $metricLabels[$metric] ?? ucfirst($metric),
+                        'metric' => $isRatio ? $label . ' (%)' : $label,
                         'current' => $current,
                         'previous' => $prev,
                         'change' => $change,
-                        'current_format' => $isRatio ? 'percent' : 'number',
-                        'previous_format' => $isRatio ? 'percent' : 'number',
                     ];
                 }
 
@@ -637,6 +637,7 @@ class DashboardWidgetDataController extends Controller
                 $chartData = $data['chart'];
                 $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
                 $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                $granularity = $resolvedControls['granularity'] ?? 'daily';
 
                 $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
@@ -645,24 +646,63 @@ class DashboardWidgetDataController extends Controller
                     if ($key === $dateKey) continue;
                     $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
                     $isRatio = in_array($cleanKey, $ratioMetrics);
+                    $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
                     $columns[] = [
                         'key' => $key,
-                        'label' => $metricLabels[$cleanKey] ?? ucfirst($cleanKey),
-                        'format' => $isRatio ? 'percent' : 'number',
+                        'label' => $isRatio ? $label . ' (%)' : $label,
+                        'format' => 'number',
                     ];
                 }
 
-                $rows = [];
+                $rawRows = [];
                 foreach ($chartData as $row) {
-                    $row['date'] = $row[$dateKey] ?? '';
-                    unset($row[$dateKey]);
+                    $rawRow = ['date' => $row[$dateKey] ?? ''];
                     foreach ($row as $k => $v) {
-                        if ($k === 'date') continue;
-                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                        if (in_array($ck, $ratioMetrics) && is_numeric($v)) {
-                            $row[$k] = round((float) $v * 100, 4);
+                        if ($k === $dateKey) continue;
+                        $rawRow[$k] = is_numeric($v) ? (float) $v : $v;
+                    }
+                    $rawRows[] = $rawRow;
+                }
+
+                if (in_array($granularity, ['weekly', 'monthly']) && count($rawRows) > 1) {
+                    $groups = [];
+                    foreach ($rawRows as $row) {
+                        $date = $row['date'];
+                        $key = $granularity === 'weekly'
+                            ? \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d')
+                            : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+
+                        if (!isset($groups[$key])) {
+                            $groups[$key] = ['date' => $key, 'metrics' => []];
+                        }
+
+                        foreach ($row as $k => $v) {
+                            if ($k === 'date' || !is_numeric($v)) continue;
+                            if (!isset($groups[$key]['metrics'][$k])) {
+                                $groups[$key]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                            }
+                            $groups[$key]['metrics'][$k]['sum'] += (float) $v;
+                            $groups[$key]['metrics'][$k]['count']++;
                         }
                     }
+
+                    $rawRows = [];
+                    foreach ($groups as $group) {
+                        $agg = ['date' => $group['date']];
+                        foreach ($group['metrics'] as $k => $m) {
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $agg[$k] = in_array($ck, $ratioMetrics) && $m['count'] > 0
+                                ? $m['sum'] / $m['count']
+                                : $m['sum'];
+                        }
+                        $rawRows[] = $agg;
+                    }
+
+                    usort($rawRows, fn($a, $b) => $a['date'] <=> $b['date']);
+                }
+
+                $rows = [];
+                foreach ($rawRows as $row) {
                     $rows[] = $row;
                 }
 
