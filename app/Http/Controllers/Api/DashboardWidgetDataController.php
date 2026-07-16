@@ -710,6 +710,128 @@ class DashboardWidgetDataController extends Controller
                     'columns' => $columns,
                     'rows' => $rows,
                 ];
+            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart']) && isset($data['chart']) && is_array($data['chart']) && !empty($data['chart'])) {
+                $chartData = $data['chart'];
+                $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                $granularity = $resolvedControls['granularity'] ?? 'daily';
+                $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
+
+                $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn($k) => $k !== $dateKey));
+
+                if (in_array($granularity, ['weekly', 'monthly']) && count($chartData) > 1) {
+                    $groups = [];
+                    foreach ($chartData as $row) {
+                        $date = $row[$dateKey] ?? '';
+                        $gKey = $granularity === 'weekly'
+                            ? \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d')
+                            : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+
+                        if (!isset($groups[$gKey])) {
+                            $groups[$gKey] = ['date' => $gKey, 'metrics' => []];
+                        }
+
+                        foreach ($row as $k => $v) {
+                            if ($k === $dateKey || !is_numeric($v)) continue;
+                            if (!isset($groups[$gKey]['metrics'][$k])) {
+                                $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                            }
+                            $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
+                            $groups[$gKey]['metrics'][$k]['count']++;
+                        }
+                    }
+
+                    $aggregated = [];
+                    foreach ($groups as $group) {
+                        $row = [$dateKey => $group['date']];
+                        foreach ($group['metrics'] as $k => $m) {
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $row[$k] = in_array($ck, $ratioMetrics) && $m['count'] > 0
+                                ? $m['sum'] / $m['count']
+                                : $m['sum'];
+                        }
+                        $aggregated[] = $row;
+                    }
+
+                    usort($aggregated, fn($a, $b) => $a[$dateKey] <=> $b[$dateKey]);
+                    $chartData = $aggregated;
+                }
+
+                $labels = array_map(fn($row) => $row[$dateKey] ?? '', $chartData);
+
+                $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
+
+                if ($effectiveWidgetType === 'sparkline') {
+                    $firstKey = $metricKeys[0] ?? null;
+                    $values = $firstKey ? array_map(fn($row) => (float) ($row[$firstKey] ?? 0), $chartData) : [];
+
+                    if ($firstKey) {
+                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
+                        if (in_array($ck, $ratioMetrics)) {
+                            $values = array_map(fn($v) => round($v * 100, 4), $values);
+                        }
+                    }
+
+                    $data = ['values' => $values];
+                } else {
+                    $datasets = [];
+                    foreach ($metricKeys as $idx => $key) {
+                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                        $isRatio = in_array($cleanKey, $ratioMetrics);
+                        $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
+                        $values = array_map(fn($row) => (float) ($row[$key] ?? 0), $chartData);
+
+                        if ($isRatio) {
+                            $values = array_map(fn($v) => round($v * 100, 4), $values);
+                        }
+
+                        $color = $palette[$idx % count($palette)];
+
+                        $dataset = [
+                            'label' => $isRatio ? $label . ' (%)' : $label,
+                            'data' => $values,
+                            'borderColor' => $color,
+                            'backgroundColor' => $color . '1a',
+                            'tension' => 0.3,
+                            'pointRadius' => 2,
+                            'yAxisID' => 'y-' . $cleanKey,
+                            'fill' => false,
+                        ];
+
+                        if ($effectiveWidgetType === 'bar_chart') {
+                            $dataset['type'] = 'bar';
+                            $dataset['backgroundColor'] = $color . '80';
+                        }
+
+                        $datasets[] = $dataset;
+                    }
+
+                    $scales = [];
+                    foreach ($metricKeys as $idx => $key) {
+                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                        $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
+                        $isRatio = in_array($cleanKey, $ratioMetrics);
+
+                        $scales['y-' . $cleanKey] = [
+                            'type' => 'linear',
+                            'display' => true,
+                            'position' => $idx % 2 === 0 ? 'left' : 'right',
+                            'title' => [
+                                'display' => true,
+                                'text' => $isRatio ? $label . ' (%)' : $label,
+                            ],
+                            'grid' => [
+                                'drawOnChartArea' => $idx === 0,
+                            ],
+                        ];
+                    }
+
+                    $data = [
+                        'labels' => $labels,
+                        'datasets' => $datasets,
+                        'scales' => $scales,
+                    ];
+                }
             } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
                 $data['values'] = array_column($data['trend'], 'value');
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart']) && isset($data['trend'])) {
