@@ -988,6 +988,7 @@ class DashboardWidgetDataController extends Controller
         }
 
         $assetFilter = $this->extractAssetFilter($controls);
+        $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -1016,6 +1017,7 @@ class DashboardWidgetDataController extends Controller
         }
 
         $assetFilter = $this->extractAssetFilter($controls);
+        $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -1055,6 +1057,58 @@ class DashboardWidgetDataController extends Controller
         }
 
         return null;
+    }
+
+    protected function resolveChanneledAccountId(Project $project, string $channel, ?string $asset): ?string
+    {
+        if ($asset === null || is_numeric($asset)) {
+            return $asset;
+        }
+
+        if ($channel !== 'google_search_console') {
+            return $asset;
+        }
+
+        $config = $project->sync_config['google_search_console']['assets']['sites']
+            ?? $project->sync_config['google_search_console']['sites']
+            ?? [];
+
+        $siteUrl = null;
+        foreach ($config as $site) {
+            $candidate = $site['url'] ?? $site['id'] ?? null;
+            if ($candidate === $asset) {
+                $siteUrl = $candidate;
+                break;
+            }
+        }
+
+        if (!$siteUrl) {
+            return $asset;
+        }
+
+        $hash = md5($siteUrl);
+
+        try {
+            $service = app(\App\Services\RemoteEngineService::class);
+            $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+
+            if (isset($response['data']) && is_array($response['data'])) {
+                foreach ($response['data'] as $page) {
+                    $platformId = rtrim((string) ($page['platformId'] ?? $page['platform_id'] ?? ''), '/');
+                    if ($platformId === $hash) {
+                        return (string) $page['id'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[resolveChanneledAccountId] Failed to resolve', [
+                'channel' => $channel,
+                'asset' => $asset,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $asset;
     }
 
     protected function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
