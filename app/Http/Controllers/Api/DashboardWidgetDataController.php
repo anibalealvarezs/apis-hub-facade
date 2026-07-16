@@ -1280,7 +1280,17 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for metric widget');
         }
 
-        $assetFilter = $this->extractAssetFilter($controls);
+        $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
+        
+        if ($assetFilter === '___EMPTY_GROUP___') {
+            return [
+                'columns' => [],
+                'rows' => [],
+                'chart' => [],
+                'summary' => [],
+            ];
+        }
+
         $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
@@ -1313,7 +1323,15 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for entity widget');
         }
 
-        $assetFilter = $this->extractAssetFilter($controls);
+        $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
+        
+        if ($assetFilter === '___EMPTY_GROUP___') {
+            return [
+                'columns' => [],
+                'rows' => [],
+            ];
+        }
+
         $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
@@ -1331,29 +1349,95 @@ class DashboardWidgetDataController extends Controller
         return $this->forwardToChannelEndpoint($channel, 'table', $payload);
     }
 
-    protected function extractAssetFilter(array $controls): ?string
+    protected function extractAssetFilter(array $controls, Project $project, string $channel): ?string
     {
         if (!empty($controls['asset'])) {
+            $valid = $this->getValidAssetsForChannel($project, $channel);
+            if (!in_array((string)$controls['asset'], $valid)) {
+                return '___EMPTY_GROUP___';
+            }
             return $controls['asset'];
         }
 
-        if (!empty($controls['assets'][0])) {
-            return $controls['assets'][0];
+        $requestedAssets = [];
+        if (!empty($controls['assets']) && is_array($controls['assets'])) {
+            $requestedAssets = $controls['assets'];
+        } elseif (!empty($controls['asset_group'])) {
+            $group = \App\Models\AssetGroup::find($controls['asset_group']);
+            if ($group) {
+                $requestedAssets = $group->items()
+                    ->where('channel', $channel)
+                    ->pluck('asset_id')
+                    ->toArray();
+                
+                if (empty($requestedAssets)) {
+                    return '___EMPTY_GROUP___';
+                }
+            }
+        }
+
+        if (!empty($requestedAssets)) {
+            $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+            $filtered = array_intersect($requestedAssets, $validForChannel);
+            
+            if (empty($filtered)) {
+                return '___EMPTY_GROUP___';
+            }
+            
+            return array_values($filtered)[0];
         }
 
         $seriesAssets = $controls['series_assets'] ?? null;
         if (is_array($seriesAssets)) {
             if (!empty($seriesAssets['dependent'][0])) {
+                $valid = $this->getValidAssetsForChannel($project, $channel);
+                if (!in_array((string)$seriesAssets['dependent'][0], $valid)) return '___EMPTY_GROUP___';
                 return $seriesAssets['dependent'][0];
             }
             if (!empty($seriesAssets[0])) {
-                return is_array($seriesAssets[0])
-                    ? ($seriesAssets[0][0] ?? null)
-                    : $seriesAssets[0];
+                $asset = is_array($seriesAssets[0]) ? ($seriesAssets[0][0] ?? null) : $seriesAssets[0];
+                if ($asset) {
+                    $valid = $this->getValidAssetsForChannel($project, $channel);
+                    if (!in_array((string)$asset, $valid)) return '___EMPTY_GROUP___';
+                    return $asset;
+                }
             }
         }
 
         return null;
+    }
+
+    protected function getValidAssetsForChannel(Project $project, string $channel): array
+    {
+        $config = $project->sync_config[$channel] ?? [];
+        $assets = [];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
+
+        foreach ($assetKeys as $assetKey) {
+            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+                foreach ($config[$assetKey] as $item) {
+                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                        $id = $item['id'] ?? $item['url'] ?? '';
+                        if ($id) $assets[] = (string)$id;
+                    }
+                }
+            }
+        }
+
+        if (!empty($config['assets']) && is_array($config['assets'])) {
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                    foreach ($config['assets'][$assetKey] as $item) {
+                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                            $id = $item['id'] ?? $item['url'] ?? '';
+                            if ($id) $assets[] = (string)$id;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $assets;
     }
 
     protected function resolveChanneledAccountId(Project $project, string $channel, ?string $asset): ?string
