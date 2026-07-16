@@ -358,8 +358,8 @@ class DashboardWidgetDataController extends Controller
                     'slope_m' => $m,
                     'intercept_b' => $b,
                     'r_squared' => $rSquared,
-                    'minX' => min($rawX),
-                    'maxX' => max($rawX),
+                    'minX' => $n > 0 ? min($rawX) : null,
+                    'maxX' => $n > 0 ? max($rawX) : null,
                     'sumX' => $sumX ?? null,
                     'sumY' => $sumY ?? null,
                 ]);
