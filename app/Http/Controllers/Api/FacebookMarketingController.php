@@ -14,7 +14,7 @@ class FacebookMarketingController extends Controller
     {
         \Illuminate\Support\Facades\Log::info("FBM Raw Request: ", $request->all());
         return $request->validate([
-            'tenant' => 'required|string',
+            'tenant' => 'required|integer',
             'account' => 'required|array',
             'account.*' => 'nullable', // Temporarily remove strict type check to bypass 422
             'dateStart' => 'required|date',
@@ -221,7 +221,7 @@ class FacebookMarketingController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+'tenant' => 'required|integer',
                 'series' => 'required|array',
                 'series.dates' => 'required|array',
                 'series.values' => 'required|array',

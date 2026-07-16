@@ -13,7 +13,7 @@ class FacebookOrganicController extends Controller
     private function validateRequest(Request $request): array
     {
         return $request->validate([
-            'tenant' => 'required|string',
+            'tenant' => 'required|integer',
             'account' => 'required|array',
             'account.*' => 'nullable',
             'dateStart' => 'required|date',
@@ -686,7 +686,7 @@ class FacebookOrganicController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+                'tenant' => 'required|integer',
                 'series' => 'required|array',
                 'series.dates' => 'required|array',
                 'series.values' => 'required|array',
@@ -869,7 +869,7 @@ class FacebookOrganicController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+                'tenant' => 'required|integer',
                 'postId' => 'required|string',
             ]);
 

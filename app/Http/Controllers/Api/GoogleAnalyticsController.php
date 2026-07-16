@@ -13,7 +13,7 @@ class GoogleAnalyticsController extends Controller
     private function validateRequest(Request $request): array
     {
         return $request->validate([
-            'tenant' => 'required|string',
+            'tenant' => 'required|integer',
             'account' => 'required|string',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
@@ -169,7 +169,7 @@ class GoogleAnalyticsController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+'tenant' => 'required|integer',
             ]);
 
             $tenant = Project::findOrFail($validated['tenant']);
