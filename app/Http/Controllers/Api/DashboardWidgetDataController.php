@@ -587,6 +587,43 @@ class DashboardWidgetDataController extends Controller
                     'rows' => $rows,
                     'total' => $n,
                 ];
+            } elseif ($effectiveWidgetType === 'table' && isset($data['summary']) && is_array($data['summary'])) {
+                $summary = $data['summary'];
+                $previous = $data['previous'] ?? [];
+                $metrics = $resolvedControls['metrics'] ?? array_keys($summary);
+
+                $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+
+                $rows = [];
+                foreach ($metrics as $metric) {
+                    if (!isset($summary[$metric])) {
+                        continue;
+                    }
+                    $current = is_numeric($summary[$metric]) ? (float) $summary[$metric] : $summary[$metric];
+                    $prev = isset($previous[$metric]) && is_numeric($previous[$metric]) ? (float) $previous[$metric] : null;
+
+                    $change = null;
+                    if ($prev !== null && $prev != 0) {
+                        $change = round((($current - $prev) / abs($prev)) * 100, 2);
+                    }
+
+                    $rows[] = [
+                        'metric' => $metricLabels[$metric] ?? ucfirst($metric),
+                        'current' => $current,
+                        'previous' => $prev,
+                        'change' => $change,
+                    ];
+                }
+
+                $data = [
+                    'columns' => [
+                        ['key' => 'metric', 'label' => 'Metric'],
+                        ['key' => 'current', 'label' => 'Current Period', 'format' => 'number'],
+                        ['key' => 'previous', 'label' => 'Previous Period', 'format' => 'number'],
+                        ['key' => 'change', 'label' => 'Change', 'format' => 'percent'],
+                    ],
+                    'rows' => $rows,
+                ];
             } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
                 $data['values'] = array_column($data['trend'], 'value');
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart']) && isset($data['trend'])) {
