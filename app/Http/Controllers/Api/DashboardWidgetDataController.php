@@ -624,6 +624,34 @@ class DashboardWidgetDataController extends Controller
                     ],
                     'rows' => $rows,
                 ];
+            } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart']) && !empty($data['chart'])) {
+                $chartData = $data['chart'];
+                $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+
+                $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
+
+                $columns = [['key' => 'date', 'label' => 'Date']];
+                foreach ($chartData[0] as $key => $val) {
+                    if ($key === $dateKey) continue;
+                    $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                    $columns[] = [
+                        'key' => $key,
+                        'label' => $metricLabels[$cleanKey] ?? ucfirst($cleanKey),
+                        'format' => 'number',
+                    ];
+                }
+
+                $rows = [];
+                foreach ($chartData as $row) {
+                    $row['date'] = $row[$dateKey] ?? '';
+                    unset($row[$dateKey]);
+                    $rows[] = $row;
+                }
+
+                $data = [
+                    'columns' => $columns,
+                    'rows' => $rows,
+                ];
             } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
                 $data['values'] = array_column($data['trend'], 'value');
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'combo_chart']) && isset($data['trend'])) {
@@ -1030,16 +1058,20 @@ class DashboardWidgetDataController extends Controller
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
 
+        $granularity = $controls['granularity'] ?? 'daily';
+
         $payload = [
             'tenant' => $project->id,
             'account' => $assetFilter,
             'dateStart' => $dateStart,
             'dateEnd' => $dateEnd,
-            'granularity' => $controls['granularity'] ?? 'daily',
+            'granularity' => $granularity,
             'metrics' => $metrics,
         ];
 
-        return $this->forwardToChannelEndpoint($channel, 'summary', $payload);
+        $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'summary';
+
+        return $this->forwardToChannelEndpoint($channel, $action, $payload);
     }
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array
