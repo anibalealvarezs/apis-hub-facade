@@ -987,7 +987,7 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for metric widget');
         }
 
-        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? $controls['series_assets']['dependent'][0] ?? null;
+        $assetFilter = $this->extractAssetFilter($controls);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -1015,7 +1015,7 @@ class DashboardWidgetDataController extends Controller
             throw new \RuntimeException('No channel configured for entity widget');
         }
 
-        $assetFilter = $controls['asset'] ?? $controls['assets'][0] ?? $controls['series_assets']['dependent'][0] ?? null;
+        $assetFilter = $this->extractAssetFilter($controls);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -1030,6 +1030,31 @@ class DashboardWidgetDataController extends Controller
         ];
 
         return $this->forwardToChannelEndpoint($channel, 'table', $payload);
+    }
+
+    protected function extractAssetFilter(array $controls): ?string
+    {
+        if (!empty($controls['asset'])) {
+            return $controls['asset'];
+        }
+
+        if (!empty($controls['assets'][0])) {
+            return $controls['assets'][0];
+        }
+
+        $seriesAssets = $controls['series_assets'] ?? null;
+        if (is_array($seriesAssets)) {
+            if (!empty($seriesAssets['dependent'][0])) {
+                return $seriesAssets['dependent'][0];
+            }
+            if (!empty($seriesAssets[0])) {
+                return is_array($seriesAssets[0])
+                    ? ($seriesAssets[0][0] ?? null)
+                    : $seriesAssets[0];
+            }
+        }
+
+        return null;
     }
 
     protected function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
