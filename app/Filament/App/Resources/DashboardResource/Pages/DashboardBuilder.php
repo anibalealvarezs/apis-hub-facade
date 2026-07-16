@@ -162,7 +162,7 @@ class DashboardBuilder extends Page
             if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
                 foreach ($config[$assetKey] as $item) {
                     if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                        $id = $item['id'] ?? $item['url'] ?? '';
+                        $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
                         $name = $item['name'] ?? $item['url'] ?? $id;
                         if ($id) $assets[$id] = $name;
                     }
@@ -175,7 +175,7 @@ class DashboardBuilder extends Page
                 if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                     foreach ($config['assets'][$assetKey] as $item) {
                         if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                            $id = $item['id'] ?? $item['url'] ?? '';
+                            $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
                             $name = $item['name'] ?? $item['url'] ?? $id;
                             if ($id) $assets[$id] = $name;
                         }
