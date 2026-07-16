@@ -593,6 +593,7 @@ class DashboardWidgetDataController extends Controller
                 $metrics = $resolvedControls['metrics'] ?? array_keys($summary);
 
                 $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
 
                 $rows = [];
                 foreach ($metrics as $metric) {
@@ -607,11 +608,19 @@ class DashboardWidgetDataController extends Controller
                         $change = round((($current - $prev) / abs($prev)) * 100, 2);
                     }
 
+                    $isRatio = in_array($metric, $ratioMetrics);
+                    if ($isRatio) {
+                        $current = is_numeric($current) ? round((float) $current * 100, 4) : $current;
+                        $prev = ($prev !== null && is_numeric($prev)) ? round((float) $prev * 100, 4) : $prev;
+                    }
+
                     $rows[] = [
                         'metric' => $metricLabels[$metric] ?? ucfirst($metric),
                         'current' => $current,
                         'previous' => $prev,
                         'change' => $change,
+                        'current_format' => $isRatio ? 'percent' : 'number',
+                        'previous_format' => $isRatio ? 'percent' : 'number',
                     ];
                 }
 
@@ -627,6 +636,7 @@ class DashboardWidgetDataController extends Controller
             } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart']) && !empty($data['chart'])) {
                 $chartData = $data['chart'];
                 $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
 
                 $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
@@ -634,10 +644,11 @@ class DashboardWidgetDataController extends Controller
                 foreach ($chartData[0] as $key => $val) {
                     if ($key === $dateKey) continue;
                     $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                    $isRatio = in_array($cleanKey, $ratioMetrics);
                     $columns[] = [
                         'key' => $key,
                         'label' => $metricLabels[$cleanKey] ?? ucfirst($cleanKey),
-                        'format' => 'number',
+                        'format' => $isRatio ? 'percent' : 'number',
                     ];
                 }
 
@@ -645,6 +656,13 @@ class DashboardWidgetDataController extends Controller
                 foreach ($chartData as $row) {
                     $row['date'] = $row[$dateKey] ?? '';
                     unset($row[$dateKey]);
+                    foreach ($row as $k => $v) {
+                        if ($k === 'date') continue;
+                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                        if (in_array($ck, $ratioMetrics) && is_numeric($v)) {
+                            $row[$k] = round((float) $v * 100, 4);
+                        }
+                    }
                     $rows[] = $row;
                 }
 
