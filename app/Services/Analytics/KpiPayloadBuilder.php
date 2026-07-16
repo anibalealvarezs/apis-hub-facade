@@ -34,7 +34,7 @@ class KpiPayloadBuilder
                 'weighted' => (bool)($state['edge_case_weighted'] ?? true),
                 'grouping' => $state['edge_case_grouping'] ?? 'none',
                 'group_column' => self::resolveGroupColumn($state),
-                'remove_unknown' => (bool)($state['remove_unknown'] ?? false),
+                'remove_unknown' => (bool)($state['remove_unknown'] ?? true),
             ],
             'max_ratio' => $state['max_ratio'] ?? null,
             $calculationType => true,
