@@ -633,13 +633,20 @@ class DashboardWidgetDataController extends Controller
                     ],
                     'rows' => $rows,
                 ];
-            } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart']) && !empty($data['chart'])) {
+            } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
-                $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                $granularity = $resolvedControls['granularity'] ?? 'daily';
-
-                $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
+                
+                if (empty($chartData)) {
+                    $data = [
+                        'columns' => [],
+                        'rows' => [],
+                    ];
+                } else {
+                    $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                    $granularity = $resolvedControls['granularity'] ?? 'daily';
+    
+                    $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
                 $columns = [['key' => 'date', 'label' => 'Date']];
                 foreach ($chartData[0] as $key => $val) {
@@ -734,12 +741,24 @@ class DashboardWidgetDataController extends Controller
                     'columns' => $columns,
                     'rows' => $rows,
                 ];
-            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart']) && isset($data['chart']) && is_array($data['chart']) && !empty($data['chart'])) {
+                }
+            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart']) && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
-                $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                $granularity = $resolvedControls['granularity'] ?? 'daily';
-                $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
+
+                if (empty($chartData)) {
+                    if ($effectiveWidgetType === 'sparkline') {
+                        $data = ['values' => []];
+                    } else {
+                        $data = [
+                            'labels' => [],
+                            'datasets' => [],
+                        ];
+                    }
+                } else {
+                    $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                    $granularity = $resolvedControls['granularity'] ?? 'daily';
+                    $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
                 $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn($k) => $k !== $dateKey));
 
@@ -879,6 +898,7 @@ class DashboardWidgetDataController extends Controller
                         'datasets' => $datasets,
                         'scales' => $scales,
                     ];
+                }
                 }
             } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
                 $data['values'] = array_column($data['trend'], 'value');
@@ -1417,7 +1437,7 @@ class DashboardWidgetDataController extends Controller
             if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
                 foreach ($config[$assetKey] as $item) {
                     if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                        $id = $item['id'] ?? $item['url'] ?? '';
+                        $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
                         if ($id) $assets[] = (string)$id;
                     }
                 }
@@ -1429,7 +1449,7 @@ class DashboardWidgetDataController extends Controller
                 if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                     foreach ($config['assets'][$assetKey] as $item) {
                         if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                            $id = $item['id'] ?? $item['url'] ?? '';
+                            $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
                             if ($id) $assets[] = (string)$id;
                         }
                     }
@@ -1442,7 +1462,29 @@ class DashboardWidgetDataController extends Controller
 
     protected function resolveChanneledAccountId(Project $project, string $channel, ?string $asset): ?string
     {
-        if ($asset === null || is_numeric($asset)) {
+        if ($asset === null) {
+            return $asset;
+        }
+
+        if ($channel === 'google_analytics' && is_numeric($asset)) {
+            static $ga4Mappings = [];
+            if (!isset($ga4Mappings[$project->id])) {
+                $service = app(\App\Services\RemoteEngineService::class);
+                $response = $service->listChanneled($project, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                $ga4Mappings[$project->id] = [];
+                if (isset($response['data']) && is_array($response['data'])) {
+                    foreach ($response['data'] as $prop) {
+                        $pid = $prop['platformId'] ?? $prop['platform_id'] ?? null;
+                        if ($pid) {
+                            $ga4Mappings[$project->id][$pid] = (string) $prop['id'];
+                        }
+                    }
+                }
+            }
+            return $ga4Mappings[$project->id][$asset] ?? $asset;
+        }
+
+        if (is_numeric($asset) && $channel !== 'google_search_console') {
             return $asset;
         }
 
@@ -1510,6 +1552,12 @@ class DashboardWidgetDataController extends Controller
 
         if (!method_exists($controller, $action)) {
             throw new \RuntimeException("Channel {$channel} does not support action {$action}");
+        }
+
+        if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+            if (isset($payload['account']) && !is_array($payload['account'])) {
+                $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
+            }
         }
 
         $request = new Request($payload);
