@@ -341,8 +341,9 @@ window.dashboardRenderer = {
                         callbacks: {
                             title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label: (ctx) => {
+                                const dsLabel = ctx.dataset.label || yMetricName;
                                 const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
-                                return valY + ' ' + yMetricName;
+                                return valY + ' ' + dsLabel;
                             },
                         },
                     },
@@ -729,8 +730,9 @@ window.dashboardRenderer = {
                         callbacks: {
                             title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label: (ctx) => {
+                                const dsLabel = ctx.dataset.label || yMetricName;
                                 const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
-                                return valY + ' ' + yMetricName;
+                                return valY + ' ' + dsLabel;
                             },
                         },
                     },
@@ -1235,7 +1237,7 @@ window.dashboardRenderer = {
                     const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
                     const baseLabel = point.label ? (point.label + ' — ') : '';
                     val = baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
-                } else {
+                    } else {
                     const label = chart.data.labels?.[el.index] || '';
                     let v = typeof raw === 'object' ? (raw.y ?? 0) : raw;
                     if (resultFormat?.multiply) v = v * resultFormat.multiply;
@@ -1246,7 +1248,8 @@ window.dashboardRenderer = {
                     } else {
                         val = this.formatNumber(v);
                     }
-                    val = (label ? label + ' — ' : '') + val + ' ' + yMetricName;
+                    const dsLabel = ds.label || yMetricName;
+                    val = (label ? label + ' — ' : '') + val + ' ' + dsLabel;
                 }
                 const isLine = ds.type === 'line';
                 const color = ds.borderColor || ds.backgroundColor || '#3B82F6';
@@ -1601,7 +1604,8 @@ window.dashboardRenderer = {
                         } else {
                             val = this.formatNumber(v);
                         }
-                        val = (label ? label + ' — ' : '') + val + ' ' + yMN;
+                        const dsLabel = dp.dataset.label || yMN;
+                        val = (label ? label + ' — ' : '') + val + ' ' + dsLabel;
                     }
                     const isLine = dp.dataset.type === 'line';
                     const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3B82F6';

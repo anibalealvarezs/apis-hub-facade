@@ -668,32 +668,56 @@ class DashboardWidgetDataController extends Controller
                     $groups = [];
                     foreach ($rawRows as $row) {
                         $date = $row['date'];
-                        $key = $granularity === 'weekly'
+                        $gKey = $granularity === 'weekly'
                             ? \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d')
                             : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
 
-                        if (!isset($groups[$key])) {
-                            $groups[$key] = ['date' => $key, 'metrics' => []];
+                        if (!isset($groups[$gKey])) {
+                            $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
+                        }
+
+                        $rowImpressions = null;
+                        foreach ($row as $k => $v) {
+                            if ($k === 'date' || !is_numeric($v)) continue;
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            if ($ck === 'impressions') { $rowImpressions = (float) $v; break; }
                         }
 
                         foreach ($row as $k => $v) {
                             if ($k === 'date' || !is_numeric($v)) continue;
-                            if (!isset($groups[$key]['metrics'][$k])) {
-                                $groups[$key]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            if (!isset($groups[$gKey]['metrics'][$k])) {
+                                $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
                             }
-                            $groups[$key]['metrics'][$k]['sum'] += (float) $v;
-                            $groups[$key]['metrics'][$k]['count']++;
+                            $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
+                            $groups[$gKey]['metrics'][$k]['count']++;
+                            if ($ck === 'impressions') {
+                                $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
+                            }
+                            if ($ck === 'clicks') {
+                                $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
+                            }
+                            if ($ck === 'position' && $rowImpressions !== null) {
+                                $groups[$gKey]['companion']['weighted_position_sum'] = ($groups[$gKey]['companion']['weighted_position_sum'] ?? 0) + (float) $v * $rowImpressions;
+                            }
                         }
                     }
 
                     $rawRows = [];
                     foreach ($groups as $group) {
                         $agg = ['date' => $group['date']];
+                        $comp = $group['companion'] ?? [];
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $agg[$k] = in_array($ck, $ratioMetrics) && $m['count'] > 0
-                                ? $m['sum'] / $m['count']
-                                : $m['sum'];
+                            if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
+                            } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $agg[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
+                            } elseif (in_array($ck, $ratioMetrics) && $m['count'] > 0) {
+                                $agg[$k] = $m['sum'] / $m['count'];
+                            } else {
+                                $agg[$k] = $m['sum'];
+                            }
                         }
                         $rawRows[] = $agg;
                     }
@@ -728,27 +752,51 @@ class DashboardWidgetDataController extends Controller
                             : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
 
                         if (!isset($groups[$gKey])) {
-                            $groups[$gKey] = ['date' => $gKey, 'metrics' => []];
+                            $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
+                        }
+
+                        $rowImpressions = null;
+                        foreach ($row as $k => $v) {
+                            if ($k === $dateKey || !is_numeric($v)) continue;
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            if ($ck === 'impressions') { $rowImpressions = (float) $v; break; }
                         }
 
                         foreach ($row as $k => $v) {
                             if ($k === $dateKey || !is_numeric($v)) continue;
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
                             if (!isset($groups[$gKey]['metrics'][$k])) {
                                 $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
                             }
                             $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
                             $groups[$gKey]['metrics'][$k]['count']++;
+                            if ($ck === 'impressions') {
+                                $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
+                            }
+                            if ($ck === 'clicks') {
+                                $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
+                            }
+                            if ($ck === 'position' && $rowImpressions !== null) {
+                                $groups[$gKey]['companion']['weighted_position_sum'] = ($groups[$gKey]['companion']['weighted_position_sum'] ?? 0) + (float) $v * $rowImpressions;
+                            }
                         }
                     }
 
                     $aggregated = [];
                     foreach ($groups as $group) {
                         $row = [$dateKey => $group['date']];
+                        $comp = $group['companion'] ?? [];
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $row[$k] = in_array($ck, $ratioMetrics) && $m['count'] > 0
-                                ? $m['sum'] / $m['count']
-                                : $m['sum'];
+                            if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
+                            } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $row[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
+                            } elseif (in_array($ck, $ratioMetrics) && $m['count'] > 0) {
+                                $row[$k] = $m['sum'] / $m['count'];
+                            } else {
+                                $row[$k] = $m['sum'];
+                            }
                         }
                         $aggregated[] = $row;
                     }
