@@ -1357,8 +1357,16 @@
                         const savedDependency = explicitSavedDependency || this.widgetControlsForm.dependency;
                         const savedGranularity = explicitSavedGranularity || this.widgetControlsForm.granularity;
                         
+                        console.log('updateDependenciesAndGranularities - input:');
+                        console.log('ch:', ch);
+                        console.log('explicitSavedDependency:', explicitSavedDependency);
+                        console.log('explicitSavedGranularity:', explicitSavedGranularity);
+                        console.log('savedDependency:', savedDependency);
+                        console.log('savedGranularity:', savedGranularity);
+                        
                         @this.getDependenciesForChannel(ch).then(deps => {
                             this.availableDependencies = deps || {};
+                            console.log('getDependenciesForChannel resolved:', deps);
                             
                             this.$nextTick(() => {
                                 if (Object.keys(this.availableDependencies).length > 0) {
@@ -1370,6 +1378,8 @@
                                 } else {
                                     this.widgetControlsForm.dependency = null;
                                 }
+                                
+                                console.log('Dependency after $nextTick:', this.widgetControlsForm.dependency);
                                 
                                 this.updateGranularities(ch, savedGranularity);
                             });
@@ -1386,8 +1396,15 @@
                         
                         const savedGranularity = explicitSavedGranularity || this.widgetControlsForm.granularity;
                         
+                        console.log('updateGranularities - input:');
+                        console.log('explicitSavedGranularity:', explicitSavedGranularity);
+                        console.log('savedGranularity:', savedGranularity);
+                        console.log('this.widgetControlsForm.dependency (passed to Livewire):', this.widgetControlsForm.dependency);
+                        
                         @this.getGranularitiesForChannel(ch, this.widgetControlsForm.dependency).then(grans => {
                             this.availableGranularities = grans || {};
+                            console.log('getGranularitiesForChannel resolved:', grans);
+                            
                             this.$nextTick(() => {
                                 if (Object.keys(this.availableGranularities).length > 0) {
                                     if (savedGranularity && this.availableGranularities[savedGranularity]) {
@@ -1396,6 +1413,7 @@
                                         this.widgetControlsForm.granularity = 'daily';
                                     }
                                 }
+                                console.log('Granularity after $nextTick:', this.widgetControlsForm.granularity);
                             });
                         });
                     },
@@ -1531,6 +1549,10 @@
                         this.widgetControlsTarget = widget;
                         const wc = widget.controls || {};
 
+                        console.log('--- OPEN WIDGET CONTROLS START ---');
+                        console.log('Widget target:', widget);
+                        console.log('Widget controls (wc):', wc);
+
                         const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
                         const hasZero = wc.zero_handling !== undefined;
 
@@ -1538,10 +1560,10 @@
                             title: widget.title || widget.name || '',
                             description: widget.description || '',
                             widget_type: widget.widget_type || '',
-                            date_inherit: !hasDate,
+                            date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                             date_start: wc.date_start || this.dashboardControls.date_start || '',
                             date_end: wc.date_end || this.dashboardControls.date_end || '',
-                            zero_inherit: !hasZero,
+                            zero_inherit: wc.zero_handling === undefined,
                             zero_handling: wc.zero_handling || this.dashboardControls.zero_handling || 'remove',
                             granularity_inherit: wc.granularity === undefined,
                             granularity: wc.granularity || this.dashboardControls.granularity || 'daily',
@@ -1682,9 +1704,9 @@
                                 this.loadWidgetMetrics(savedMetrics);
                             });
                         } else {
-                            this.loadWidgetMetrics(savedMetrics);
-                        }
-
+                        console.log('Before updateDependenciesAndGranularities:');
+                        console.log('wc.dependency:', wc.dependency);
+                        console.log('wc.granularity:', wc.granularity);
                         this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                         this.showWidgetControls = true;
                     },
