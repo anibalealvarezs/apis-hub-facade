@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
 
-    <div x-data="dashboardBuilder()" class="space-y-4">
+    <div x-data="dashboardBuilder" class="space-y-4">
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div class="flex items-center gap-2">
@@ -1139,10 +1139,11 @@
     @endpush
 
     <script>
-        window.dashboardBuilder = function () {
-            const dashboardControls = @json($this->getDashboardControls());
-            return {
-                // ─── Grid State ───
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dashboardBuilder', () => {
+                const dashboardControls = @json($this->getDashboardControls());
+                return {
+                    // ─── Grid State ───
                     widgets: @json($this->widgets ?? []),
                     gridLayout: @json($this->gridState ?? []),
                     grid: null,
@@ -2200,8 +2201,9 @@
                         });
                     })
                         ;
-                    },
+                    }
                 };
-            };
-        </script>
+            });
+        });
+    </script>
 </x-filament-panels::page>

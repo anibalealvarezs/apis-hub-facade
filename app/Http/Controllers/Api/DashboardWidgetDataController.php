@@ -55,12 +55,13 @@ class DashboardWidgetDataController extends Controller
             'has_request_controls' => isset($validated['controls']),
         ]);
 
-        // Merge runtime overrides from the request (on-the-go UX)
         if (isset($validated['controls'])) {
             if (array_key_exists('granularity', $validated['controls']) && empty($validated['controls']['granularity'])) {
                 unset($validated['controls']['granularity']);
             }
-            $resolvedControls = array_merge($resolvedControls, $validated['controls']);
+            foreach ($validated['controls'] as $k => $v) {
+                $resolvedControls[$k] = $v;
+            }
         }
 
         \Illuminate\Support\Facades\Log::info('[STEP show] Widget ' . $widget->id . ' after merge with request controls', [
@@ -708,8 +709,11 @@ class DashboardWidgetDataController extends Controller
                             if ($ck === 'clicks') {
                                 $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
                             }
-                            if ($ck === 'position' && $rowImpressions !== null) {
-                                $groups[$gKey]['companion']['weighted_position_sum'] = ($groups[$gKey]['companion']['weighted_position_sum'] ?? 0) + (float) $v * $rowImpressions;
+                            if (str_contains($ck, 'position') && $rowImpressions !== null) {
+                                if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
+                                    $groups[$gKey]['companion']['weighted_position_sum'] = [];
+                                }
+                                $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
                             }
                         }
                     }
@@ -722,9 +726,10 @@ class DashboardWidgetDataController extends Controller
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                            } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $agg[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
-                            } elseif ((in_array($ck, $ratioMetrics) || $ck === 'position') && $m['count'] > 0) {
+                            } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
+                                $agg[$k] = $weightedSum / $comp['impressions_sum'];
+                            } elseif ((in_array($ck, $ratioMetrics) || str_contains($ck, 'position')) && $m['count'] > 0) {
                                 $agg[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $agg[$k] = $m['sum'];
@@ -807,8 +812,11 @@ class DashboardWidgetDataController extends Controller
                             if ($ck === 'clicks') {
                                 $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
                             }
-                            if ($ck === 'position' && $rowImpressions !== null) {
-                                $groups[$gKey]['companion']['weighted_position_sum'] = ($groups[$gKey]['companion']['weighted_position_sum'] ?? 0) + (float) $v * $rowImpressions;
+                            if (str_contains($ck, 'position') && $rowImpressions !== null) {
+                                if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
+                                    $groups[$gKey]['companion']['weighted_position_sum'] = [];
+                                }
+                                $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
                             }
                         }
                     }
@@ -821,9 +829,10 @@ class DashboardWidgetDataController extends Controller
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                            } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $row[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
-                            } elseif ((in_array($ck, $ratioMetrics) || $ck === 'position') && $m['count'] > 0) {
+                            } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
+                                $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
+                                $row[$k] = $weightedSum / $comp['impressions_sum'];
+                            } elseif ((in_array($ck, $ratioMetrics) || str_contains($ck, 'position')) && $m['count'] > 0) {
                                 $row[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $row[$k] = $m['sum'];
@@ -1315,6 +1324,21 @@ class DashboardWidgetDataController extends Controller
         $config = $widget->source_config ?? [];
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
         $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
+
+        // Ensure we fetch impressions and clicks for weighted average calculations (e.g. CTR, Position)
+        // The display filtering is handled upstream by checking the original controls['metrics'] array.
+        $needsImpressions = false;
+        foreach ($metrics as $m) {
+            if (str_contains($m, 'position') || $m === 'ctr') {
+                $needsImpressions = true;
+            }
+        }
+        if ($needsImpressions && !in_array('impressions', $metrics)) {
+            $metrics[] = 'impressions';
+        }
+        if (in_array('ctr', $metrics) && !in_array('clicks', $metrics)) {
+            $metrics[] = 'clicks';
+        }
 
         if (!$channel) {
             throw new \RuntimeException('No channel configured for metric widget');
