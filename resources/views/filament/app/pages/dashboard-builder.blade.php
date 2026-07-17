@@ -1365,20 +1365,17 @@
                         console.log('savedGranularity:', savedGranularity);
                         
                         @this.getDependenciesForChannel(ch).then(deps => {
+                            const willSetDependency = (savedDependency && deps && deps[savedDependency])
+                                ? savedDependency
+                                : (deps && Object.keys(deps).length > 0 ? Object.keys(deps)[0] : null);
+                            
+                            // Force Alpine reactivity transition
+                            this.widgetControlsForm.dependency = '';
                             this.availableDependencies = deps || {};
                             console.log('getDependenciesForChannel resolved:', deps);
                             
                             this.$nextTick(() => {
-                                if (Object.keys(this.availableDependencies).length > 0) {
-                                    if (savedDependency && this.availableDependencies[savedDependency]) {
-                                        this.widgetControlsForm.dependency = savedDependency;
-                                    } else if (!this.widgetControlsForm.dependency || !this.availableDependencies[this.widgetControlsForm.dependency]) {
-                                        this.widgetControlsForm.dependency = Object.keys(this.availableDependencies)[0];
-                                    }
-                                } else {
-                                    this.widgetControlsForm.dependency = null;
-                                }
-                                
+                                this.widgetControlsForm.dependency = willSetDependency;
                                 console.log('Dependency after $nextTick:', this.widgetControlsForm.dependency);
                                 
                                 this.updateGranularities(ch, savedGranularity);
@@ -1402,16 +1399,18 @@
                         console.log('this.widgetControlsForm.dependency (passed to Livewire):', this.widgetControlsForm.dependency);
                         
                         @this.getGranularitiesForChannel(ch, this.widgetControlsForm.dependency).then(grans => {
+                            const willSetGranularity = (savedGranularity && grans && grans[savedGranularity])
+                                ? savedGranularity
+                                : (grans && Object.keys(grans).length > 0 ? 'daily' : null);
+                                
+                            // Force Alpine reactivity transition
+                            this.widgetControlsForm.granularity = '';
                             this.availableGranularities = grans || {};
                             console.log('getGranularitiesForChannel resolved:', grans);
                             
                             this.$nextTick(() => {
-                                if (Object.keys(this.availableGranularities).length > 0) {
-                                    if (savedGranularity && this.availableGranularities[savedGranularity]) {
-                                        this.widgetControlsForm.granularity = savedGranularity;
-                                    } else if (!this.widgetControlsForm.granularity || !this.availableGranularities[this.widgetControlsForm.granularity]) {
-                                        this.widgetControlsForm.granularity = 'daily';
-                                    }
+                                if (willSetGranularity) {
+                                    this.widgetControlsForm.granularity = willSetGranularity;
                                 }
                                 console.log('Granularity after $nextTick:', this.widgetControlsForm.granularity);
                             });
