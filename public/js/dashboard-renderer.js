@@ -47,8 +47,9 @@ window.dashboardRenderer = {
         const f0 = this.METRIC_FORMATS[m0];
         const f1 = m1 ? this.METRIC_FORMATS[m1] : null;
 
-        // Both metrics exist → the KPI computes a ratio (dependent / independent)
-        if (m1) {
+        // If multiple metrics exist AND this is a KPI widget, apply ratio heuristics.
+        // For non-KPI widgets, multiple metrics just mean multiple chart series.
+        if (m1 && controls?.source_type === 'kpi') {
             // Known ratio → output type
             const ratioFormats = {
                 'clicks/impressions': {label: 'CTR', format: 'percentage', multiply: 100},
@@ -197,7 +198,10 @@ window.dashboardRenderer = {
      * Main render dispatcher.
      */
     render(containerEl, json) {
-        const {widget_type, data, controls} = json;
+        const {widget_type, source_type, data, controls} = json;
+        if (controls && source_type) {
+            controls.source_type = source_type;
+        }
         this._widgetData.set(containerEl, json);
         this._renderWidget(widget_type, containerEl, data, controls);
     },
