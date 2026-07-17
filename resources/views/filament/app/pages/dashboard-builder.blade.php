@@ -1355,6 +1355,7 @@
                         }
                         
                         const savedDependency = this.widgetControlsForm.dependency;
+                        const savedGranularity = this.widgetControlsForm.granularity;
                         
                         @this.getDependenciesForChannel(ch).then(deps => {
                             this.availableDependencies = deps || {};
@@ -1370,12 +1371,12 @@
                                     this.widgetControlsForm.dependency = null;
                                 }
                                 
-                                this.updateGranularities(ch);
+                                this.updateGranularities(ch, savedGranularity);
                             });
                         });
                     },
                     
-                    updateGranularities(ch) {
+                    updateGranularities(ch, explicitSavedGranularity = null) {
                         if (!ch) {
                             ch = (this.widgetControlsTarget?.source_type === 'kpi')
                                 ? (this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel)
@@ -1383,7 +1384,7 @@
                         }
                         if (!ch) return;
                         
-                        const savedGranularity = this.widgetControlsForm.granularity;
+                        const savedGranularity = explicitSavedGranularity || this.widgetControlsForm.granularity;
                         
                         @this.getGranularitiesForChannel(ch, this.widgetControlsForm.dependency).then(grans => {
                             this.availableGranularities = grans || {};
