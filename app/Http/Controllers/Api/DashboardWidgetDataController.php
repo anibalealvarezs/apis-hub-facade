@@ -1317,6 +1317,7 @@ class DashboardWidgetDataController extends Controller
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
 
         $granularity = $controls['granularity'] ?? 'daily';
+        $dependency = $controls['dependency'] ?? null;
 
         $payload = [
             'tenant' => $project->id,
@@ -1326,6 +1327,10 @@ class DashboardWidgetDataController extends Controller
             'granularity' => $granularity,
             'metrics' => $metrics,
         ];
+        
+        if ($dependency !== null) {
+            $payload['dependency'] = $dependency;
+        }
 
         $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'table';
 

@@ -491,17 +491,50 @@
                                          x-text="'Inherited: ' + (inheritedControlLabel('granularity', widgetKpiConfig?.granularity ?? dashboardControls.granularity) || 'Default')"></div>
                                 </template>
                                 <template x-if="!widgetControlsForm.granularity_inherit">
-                                    <select x-model="widgetControlsForm.granularity"
-                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                        <option value="query">Query</option>
-                                        <option value="dimensions.page">Page</option>
-                                        <option value="country">Country</option>
-                                        <option value="device">Device</option>
-                                        <option value="post">Post</option>
-                                    </select>
+                                    <div class="space-y-4">
+                                        <!-- Dependency/Matrix Selector -->
+                                        <template x-if="widgetControlsTarget?.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
+                                                <select x-model="widgetControlsForm.dependency" @change="updateGranularities()"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <template x-for="(label, key) in availableDependencies" :key="key">
+                                                        <option :value="key" x-text="label"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                        </template>
+                                        
+                                        <!-- Granularity Selector -->
+                                        <div>
+                                            <template x-if="widgetControlsTarget?.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
+                                            </template>
+                                            <template x-if="widgetControlsTarget?.source_type === 'metric'">
+                                                <select x-model="widgetControlsForm.granularity"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <template x-for="(label, key) in availableGranularities" :key="key">
+                                                        <option :value="key" x-text="label"></option>
+                                                    </template>
+                                                </select>
+                                            </template>
+                                            
+                                            <!-- Fallback for KPIs -->
+                                            <template x-if="widgetControlsTarget?.source_type !== 'metric'">
+                                                <select x-model="widgetControlsForm.granularity"
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="query">Query</option>
+                                                    <option value="dimensions.page">Page</option>
+                                                    <option value="country">Country</option>
+                                                    <option value="device">Device</option>
+                                                    <option value="post">Post</option>
+                                                </select>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </template>
                             </div>
                         </div>
@@ -1112,6 +1145,8 @@
                     allChannelMetrics: {},
                     dashboardAssets: {},
                     dashboardMetrics: {},
+                    availableDependencies: {},
+                    availableGranularities: {},
 
                     // ─── Dashboard Controls ──
                     showDashboardControls: false,
@@ -1133,6 +1168,7 @@
                         asset: '',
                         assets: [],
                         granularity: dashboardControls.granularity || 'daily',
+                        dependency: null,
                         metrics: [],
                         series_assets: {},
                         series_asset_groups: {},
@@ -1300,6 +1336,56 @@
                             });
                         });
                     },
+                    
+                    updateDependenciesAndGranularities() {
+                        const widget = this.widgetControlsTarget;
+                        if (!widget) return;
+                        
+                        let ch = '';
+                        if (widget.source_type === 'kpi') {
+                            ch = this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel;
+                        } else {
+                            ch = this.widgetControlsForm.raw_series?.[0]?.channel || '';
+                        }
+                        
+                        if (!ch) {
+                            this.availableDependencies = {};
+                            this.availableGranularities = {};
+                            return;
+                        }
+                        
+                        @this.getDependenciesForChannel(ch).then(deps => {
+                            this.availableDependencies = deps || {};
+                            
+                            if (Object.keys(this.availableDependencies).length > 0) {
+                                if (!this.widgetControlsForm.dependency || !this.availableDependencies[this.widgetControlsForm.dependency]) {
+                                    this.widgetControlsForm.dependency = Object.keys(this.availableDependencies)[0];
+                                }
+                            } else {
+                                this.widgetControlsForm.dependency = null;
+                            }
+                            
+                            this.updateGranularities(ch);
+                        });
+                    },
+                    
+                    updateGranularities(ch) {
+                        if (!ch) {
+                            ch = (this.widgetControlsTarget?.source_type === 'kpi')
+                                ? (this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel)
+                                : (this.widgetControlsForm.raw_series?.[0]?.channel || '');
+                        }
+                        if (!ch) return;
+                        
+                        @this.getGranularitiesForChannel(ch, this.widgetControlsForm.dependency).then(grans => {
+                            this.availableGranularities = grans || {};
+                            if (Object.keys(this.availableGranularities).length > 0) {
+                                if (!this.widgetControlsForm.granularity || !this.availableGranularities[this.widgetControlsForm.granularity]) {
+                                    this.widgetControlsForm.granularity = 'daily';
+                                }
+                            }
+                        });
+                    },
 
                     // ─── Grid ──
                     initGrid() {
@@ -1446,6 +1532,7 @@
                             zero_handling: wc.zero_handling || this.dashboardControls.zero_handling || 'remove',
                             granularity_inherit: wc.granularity === undefined,
                             granularity: wc.granularity || this.dashboardControls.granularity || 'daily',
+                            dependency: wc.dependency || null,
                             channel: wc.channel || '',
                             assets: wc.assets || [],
                             metrics: wc.metrics || [],
@@ -1585,6 +1672,7 @@
                             this.loadWidgetMetrics(savedMetrics);
                         }
 
+                        this.updateDependenciesAndGranularities();
                         this.showWidgetControls = true;
                     },
 
@@ -1646,6 +1734,11 @@
 
                     onWidgetRawChannelChange(index) {
                         const ch = this.widgetControlsForm.raw_series[index].channel;
+                        
+                        if (index === 0) {
+                            this.updateDependenciesAndGranularities();
+                        }
+                        
                         if (ch && !this.allChannelAssets[ch]) {
                             @this.getAssetsForChannel(ch).then(assets => {
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
@@ -1791,6 +1884,7 @@
                             channel: '',
                             assets: [],
                             granularity: 'daily',
+                            dependency: null,
                             metrics: [],
                             series_assets: {},
                             series_asset_groups: {},
@@ -1840,6 +1934,9 @@
 
                         if (!c.granularity_inherit) {
                             payload.granularity = c.granularity;
+                            if (c.dependency) {
+                                payload.dependency = c.dependency;
+                            }
                         }
 
                         if (!c.edge_case_inherit) {

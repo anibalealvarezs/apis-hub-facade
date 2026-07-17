@@ -232,6 +232,16 @@ class DashboardBuilder extends Page
         return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel);
     }
 
+    public function getGranularitiesForChannel(string $channel, ?string $dependency = null): array
+    {
+        return \App\Services\Analytics\ChannelGranularityRegistry::getGranularitiesForChannel($channel, $dependency);
+    }
+
+    public function getDependenciesForChannel(string $channel): array
+    {
+        return \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($channel);
+    }
+
     public function getKpisForWidgetPicker(): array
     {
         $project = \Filament\Facades\Filament::getTenant();

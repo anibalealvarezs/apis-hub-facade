@@ -27,6 +27,33 @@ class ChannelGranularityRegistry
         return array_merge($commonTimely, $dimensions);
     }
 
+    public static function getDependenciesForChannel(string $channel): array
+    {
+        return match ($channel) {
+            'google_search_console' => [
+                'non-searchAppearance' => __('Standard Search (Non-Appearance)'),
+                'searchAppearance' => __('Search Appearance'),
+            ],
+            'facebook_organic' => [
+                'facebook_page' => __('Facebook Page'),
+                'instagram_account' => __('Instagram Account'),
+            ],
+            'facebook_marketing' => [
+                'account_level' => __('Account Level'),
+                'campaign_level' => __('Campaign Level'),
+                'adset_level' => __('Ad Set Level'),
+                'ad_level' => __('Ad Level'),
+            ],
+            'google_analytics' => [
+                'traffic_matrix' => __('Traffic Matrix (Session)'),
+                'acquisition_matrix' => __('Acquisition Matrix (First User)'),
+                'event_matrix' => __('Event Matrix'),
+                'ad_touchpoint_matrix' => __('Ad Touchpoint Matrix'),
+            ],
+            default => [],
+        };
+    }
+
     private static function getGscDimensions(?string $dependency): array
     {
         $dependency = $dependency ?? 'non-searchAppearance';
