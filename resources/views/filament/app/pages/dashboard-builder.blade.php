@@ -655,13 +655,11 @@
                                             </div>
                                             
                                             <div class="my-2">
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                <select :value="series.metric"
-                                                        @change="series.metric = $event.target.value"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                    <option value="">Select a metric...</option>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
+                                                <select x-model="series.metrics" multiple
+                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 custom-scrollbar h-32">
                                                     <template x-for="(label, key) in allChannelMetrics[series.channel] || {}" :key="key">
-                                                        <option :value="key" :selected="key == series.metric" x-text="label"></option>
+                                                        <option :value="key" x-text="label"></option>
                                                     </template>
                                                 </select>
                                                 <template x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
@@ -715,7 +713,7 @@
                             
                             {{-- Add Series Button Card --}}
                             <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
-                                <button x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metric: '', assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);" 
+                                <button x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metrics: [], assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);" 
                                         class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
                                     <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
                                         <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1582,16 +1580,22 @@
 
                         if (widget.source_type !== 'kpi') {
                             if (wc.metrics && wc.metrics.length > 0) {
+                                const groupedSeries = [];
                                 wc.metrics.forEach((m, i) => {
-                                    this.widgetControlsForm.raw_series.push({
-                                        channel: (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || ''),
-                                        metric: m,
-                                        assets: (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : [])
-                                    });
+                                    const channel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
+                                    const assets = (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : []);
+                                    
+                                    const existing = groupedSeries.find(s => s.channel === channel && JSON.stringify(s.assets) === JSON.stringify(assets));
+                                    if (existing) {
+                                        if (m) existing.metrics.push(m);
+                                    } else {
+                                        groupedSeries.push({ channel, metrics: m ? [m] : [], assets });
+                                    }
                                 });
+                                this.widgetControlsForm.raw_series = groupedSeries;
                             }
                             if (this.widgetControlsForm.raw_series.length === 0) {
-                                this.widgetControlsForm.raw_series.push({ channel: '', metric: '', assets: [] });
+                                this.widgetControlsForm.raw_series.push({ channel: '', metrics: [], assets: [] });
                             }
                             
                             // Pre-load assets and metrics for channels used in raw series
@@ -2006,16 +2010,20 @@
                             
                             let validIdx = 0;
                             c.raw_series.forEach((s) => {
-                                payload.metrics.push(s.metric || '');
+                                const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0) ? s.metrics : [''];
                                 
-                                let channelAssets = this.allChannelAssets[s.channel] || {};
-                                let validAssets = [...(s.assets || [])].filter(id => {
-                                    return channelAssets[id] !== undefined;
+                                metricsToSave.forEach(m => {
+                                    payload.metrics.push(m);
+                                    
+                                    let channelAssets = this.allChannelAssets[s.channel] || {};
+                                    let validAssets = [...(s.assets || [])].filter(id => {
+                                        return channelAssets[id] !== undefined;
+                                    });
+                                    
+                                    payload.series_assets[validIdx] = validAssets;
+                                    payload.series_channels[validIdx] = s.channel || '';
+                                    validIdx++;
                                 });
-                                
-                                payload.series_assets[validIdx] = validAssets;
-                                payload.series_channels[validIdx] = s.channel || '';
-                                validIdx++;
                             });
                             if (payload.series_channels['0']) {
                                 payload.channel = payload.series_channels['0'];

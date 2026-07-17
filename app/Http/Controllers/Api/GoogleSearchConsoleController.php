@@ -20,7 +20,28 @@ class GoogleSearchConsoleController extends Controller
             'activeTab' => 'nullable|string|in:queries,pages,countries,devices,appearances',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'string'
         ]);
+    }
+
+    private function getRequestedAggregations(Request $request): array
+    {
+        $availableAggs = ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'];
+        $requestedMetrics = $request->input('metrics');
+        
+        $aggregations = [];
+        if (empty($requestedMetrics)) {
+            return $availableAggs;
+        }
+        
+        foreach ((array)$requestedMetrics as $m) {
+            if (isset($availableAggs[$m])) {
+                $aggregations[$m] = $availableAggs[$m];
+            }
+        }
+        
+        return empty($aggregations) ? $availableAggs : $aggregations;
     }
 
     private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
@@ -68,16 +89,18 @@ class GoogleSearchConsoleController extends Controller
             $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
+            $aggs = $this->getRequestedAggregations($request);
+
             $payloads = [
                 'summary' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => [],
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd']
                 ],
                 'previous' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => [],
                     'filters' => $baseFilters,
                     'startDate' => $prevStart->format('Y-m-d'),
@@ -115,9 +138,11 @@ class GoogleSearchConsoleController extends Controller
             $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
+            $aggs = $this->getRequestedAggregations($request);
+
             $payloads = [
                 'chart' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => ['daily'], // or 'date' if daily fails
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
@@ -150,9 +175,10 @@ class GoogleSearchConsoleController extends Controller
             $service = app(RemoteEngineService::class);
 
             $tab = $validated['activeTab'] ?? 'queries';
+            $aggs = $this->getRequestedAggregations($request);
 
             $tabPayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => $aggs,
                 'filters' => [
                     // The dashboard account selector sends channeled_account IDs, not page IDs.
                     'channeledAccount' => (string)$validated['account'],
