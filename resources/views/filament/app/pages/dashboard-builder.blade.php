@@ -1704,6 +1704,9 @@
                                 this.loadWidgetMetrics(savedMetrics);
                             });
                         } else {
+                            this.loadWidgetMetrics(savedMetrics);
+                        }
+
                         console.log('Before updateDependenciesAndGranularities:');
                         console.log('wc.dependency:', wc.dependency);
                         console.log('wc.granularity:', wc.granularity);
