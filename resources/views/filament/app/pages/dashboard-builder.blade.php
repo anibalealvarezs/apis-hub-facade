@@ -1337,7 +1337,7 @@
                         });
                     },
                     
-                    updateDependenciesAndGranularities() {
+                    updateDependenciesAndGranularities(explicitSavedDependency = null, explicitSavedGranularity = null) {
                         const widget = this.widgetControlsTarget;
                         if (!widget) return;
                         
@@ -1354,8 +1354,8 @@
                             return;
                         }
                         
-                        const savedDependency = this.widgetControlsForm.dependency;
-                        const savedGranularity = this.widgetControlsForm.granularity;
+                        const savedDependency = explicitSavedDependency || this.widgetControlsForm.dependency;
+                        const savedGranularity = explicitSavedGranularity || this.widgetControlsForm.granularity;
                         
                         @this.getDependenciesForChannel(ch).then(deps => {
                             this.availableDependencies = deps || {};
@@ -1685,7 +1685,7 @@
                             this.loadWidgetMetrics(savedMetrics);
                         }
 
-                        this.updateDependenciesAndGranularities();
+                        this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                         this.showWidgetControls = true;
                     },
 
