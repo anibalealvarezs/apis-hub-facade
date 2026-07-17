@@ -637,6 +637,19 @@ class DashboardWidgetDataController extends Controller
             } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
                 
+                $kpiMetrics = [];
+                if ($effectiveWidgetType === 'table' || $widget->source_type === 'kpi') {
+                    if ($widget->source_type === 'kpi') {
+                        $uiState = $widget->customKpi->filters['_ui_state'] ?? [];
+                        $kpiMetrics['dependent'] = $uiState['dependent_metric'] ?? '';
+                        if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                            foreach ($uiState['independent_variables'] as $i => $var) {
+                                $kpiMetrics['independent_' . $i] = $var['independent_metric'] ?? '';
+                            }
+                        }
+                    }
+                }
+
                 if (empty($chartData)) {
                     $data = [
                         'columns' => [],
@@ -698,6 +711,7 @@ class DashboardWidgetDataController extends Controller
                         foreach ($row as $k => $v) {
                             if ($k === 'date' || !is_numeric($v)) continue;
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
                             if (!isset($groups[$gKey]['metrics'][$k])) {
                                 $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
                             }
@@ -709,7 +723,7 @@ class DashboardWidgetDataController extends Controller
                             if ($ck === 'clicks') {
                                 $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
                             }
-                            if (str_contains($ck, 'position') && $rowImpressions !== null) {
+                            if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
                                 if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
                                     $groups[$gKey]['companion']['weighted_position_sum'] = [];
                                 }
@@ -724,12 +738,15 @@ class DashboardWidgetDataController extends Controller
                         $comp = $group['companion'] ?? [];
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position');
+
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                            } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
+                            } elseif (str_contains($actualMetric, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
                                 $agg[$k] = $weightedSum / $comp['impressions_sum'];
-                            } elseif ((in_array($ck, $ratioMetrics) || str_contains($ck, 'position')) && $m['count'] > 0) {
+                            } elseif ($isRatioOrPosition && $m['count'] > 0) {
                                 $agg[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $agg[$k] = $m['sum'];
@@ -801,6 +818,8 @@ class DashboardWidgetDataController extends Controller
                         foreach ($row as $k => $v) {
                             if ($k === $dateKey || !is_numeric($v)) continue;
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                            
                             if (!isset($groups[$gKey]['metrics'][$k])) {
                                 $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
                             }
@@ -812,7 +831,7 @@ class DashboardWidgetDataController extends Controller
                             if ($ck === 'clicks') {
                                 $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
                             }
-                            if (str_contains($ck, 'position') && $rowImpressions !== null) {
+                            if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
                                 if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
                                     $groups[$gKey]['companion']['weighted_position_sum'] = [];
                                 }
@@ -827,12 +846,15 @@ class DashboardWidgetDataController extends Controller
                         $comp = $group['companion'] ?? [];
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position');
+
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
                             } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
                                 $row[$k] = $weightedSum / $comp['impressions_sum'];
-                            } elseif ((in_array($ck, $ratioMetrics) || str_contains($ck, 'position')) && $m['count'] > 0) {
+                            } elseif ($isRatioOrPosition && $m['count'] > 0) {
                                 $row[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $row[$k] = $m['sum'];

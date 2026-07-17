@@ -955,6 +955,9 @@
                     this.settingsOriginalControls = JSON.parse(JSON.stringify(controls || {}));
                     this.settingsControls = controls || {};
                     if (!this.settingsControls.metrics) this.settingsControls.metrics = [];
+                    if (!Array.isArray(this.settingsControls.metrics)) {
+                        this.settingsControls.metrics = Object.values(this.settingsControls.metrics);
+                    }
                     if (!this.settingsControls.series_assets) this.settingsControls.series_assets = {};
                     if (!this.settingsControls.hasOwnProperty('remove_unknown')) this.settingsControls.remove_unknown = true;
                     this.settingsSeriesOptions = seriesOptions || {};
