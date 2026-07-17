@@ -237,6 +237,16 @@ class DashboardBuilder extends Page
         return \App\Services\Analytics\ChannelGranularityRegistry::getGranularitiesForChannel($channel, $dependency);
     }
 
+    public function getChannelAssetModesMap(): array
+    {
+        $validChannels = array_keys(\App\Services\Analytics\ChannelCapabilityRegistry::getTags());
+        $map = [];
+        foreach ($validChannels as $channel) {
+            $map[$channel] = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel);
+        }
+        return $map;
+    }
+
     public function getDependenciesForChannel(string $channel): array
     {
         return \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($channel);

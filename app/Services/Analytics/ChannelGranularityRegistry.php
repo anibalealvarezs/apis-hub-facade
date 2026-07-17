@@ -141,4 +141,13 @@ class ChannelGranularityRegistry
             default => [],
         };
     }
+
+    public static function allowsMultipleAssets(string $channel): bool
+    {
+        return match ($channel) {
+            'facebook_marketing' => true,
+            // 'klaviyo', 'shopify', 'mailchimp' etc... add here if they should allow multiple
+            default => false,
+        };
+    }
 }

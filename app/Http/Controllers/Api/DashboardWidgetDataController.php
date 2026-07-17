@@ -1450,8 +1450,9 @@ class DashboardWidgetDataController extends Controller
         return $this->forwardToChannelEndpoint($channel, 'table', $payload);
     }
 
-    protected function extractAssetFilter(array $controls, Project $project, string $channel): ?string
+    protected function extractAssetFilter(array $controls, Project $project, string $channel): array|string|null
     {
+        $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel);
         if (!empty($controls['asset'])) {
             $valid = $this->getValidAssetsForChannel($project, $channel);
             if (!in_array((string)$controls['asset'], $valid)) {
@@ -1485,22 +1486,25 @@ class DashboardWidgetDataController extends Controller
                 return '___EMPTY_GROUP___';
             }
             
-            return array_values($filtered)[0];
+            $filtered = array_values($filtered);
+            return $allowsMultiple ? $filtered : $filtered[0];
         }
 
         $seriesAssets = $controls['series_assets'] ?? null;
         if (is_array($seriesAssets)) {
             if (!empty($seriesAssets['dependent'][0])) {
                 $valid = $this->getValidAssetsForChannel($project, $channel);
-                if (!in_array((string)$seriesAssets['dependent'][0], $valid)) return '___EMPTY_GROUP___';
-                return $seriesAssets['dependent'][0];
+                $dependentAssets = array_values(array_intersect((array)$seriesAssets['dependent'], $valid));
+                if (empty($dependentAssets)) return '___EMPTY_GROUP___';
+                return $allowsMultiple ? $dependentAssets : $dependentAssets[0];
             }
             if (!empty($seriesAssets[0])) {
                 $asset = is_array($seriesAssets[0]) ? ($seriesAssets[0][0] ?? null) : $seriesAssets[0];
                 if ($asset) {
                     $valid = $this->getValidAssetsForChannel($project, $channel);
-                    if (!in_array((string)$asset, $valid)) return '___EMPTY_GROUP___';
-                    return $asset;
+                    $dependentAssets = array_values(array_intersect((array)$seriesAssets[0], $valid));
+                    if (empty($dependentAssets)) return '___EMPTY_GROUP___';
+                    return $allowsMultiple ? $dependentAssets : $dependentAssets[0];
                 }
             }
         }
@@ -1541,10 +1545,18 @@ class DashboardWidgetDataController extends Controller
         return $assets;
     }
 
-    protected function resolveChanneledAccountId(Project $project, string $channel, ?string $asset): ?string
+    protected function resolveChanneledAccountId(Project $project, string $channel, array|string|null $asset): array|string|null
     {
         if ($asset === null) {
             return $asset;
+        }
+
+        if (is_array($asset)) {
+            $resolvedArray = [];
+            foreach ($asset as $a) {
+                $resolvedArray[] = $this->resolveChanneledAccountId($project, $channel, $a);
+            }
+            return $resolvedArray;
         }
 
         if ($channel === 'google_analytics' && is_numeric($asset)) {
