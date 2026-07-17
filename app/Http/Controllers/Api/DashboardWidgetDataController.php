@@ -1327,7 +1327,13 @@ class DashboardWidgetDataController extends Controller
             'metrics' => $metrics,
         ];
 
-        $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'summary';
+        $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'table';
+
+        if ($action === 'table') {
+            $payload['activeTab'] = $granularity;
+            // Map common dimensions to GoogleAnalyticsController's expected tabs if needed,
+            // but ideally the controllers should handle the raw dimensions directly.
+        }
 
         return $this->forwardToChannelEndpoint($channel, $action, $payload);
     }

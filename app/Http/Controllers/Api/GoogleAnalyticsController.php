@@ -20,6 +20,8 @@ class GoogleAnalyticsController extends Controller
             'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'string',
         ]);
     }
 
@@ -68,42 +70,51 @@ class GoogleAnalyticsController extends Controller
     /**
      * For dual-scope tabs, returns [trafficQuery, acquisitionQuery].
      */
-    private function dualScopeQueries(string $tab): array
+    private function dualScopeQueries(string $tab, array $requestedMetrics = []): array
     {
         $trafficMetrics = $this->metricsForScope('traffic_matrix');
+        if (!empty($requestedMetrics)) {
+            $trafficMetrics = array_values(array_intersect($trafficMetrics, $requestedMetrics));
+        }
+
         $acqMetrics = $this->metricsForScope('acquisition_matrix');
+        if (!empty($requestedMetrics)) {
+            $acqMetrics = array_values(array_intersect($acqMetrics, $requestedMetrics));
+        }
+
+        $queries = [];
 
         switch ($tab) {
             case 'campaigns':
-                return [
-                    ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['channeledCampaign']],
-                    ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['channeledCampaign']],
-                ];
+                if (!empty($trafficMetrics)) $queries[] = ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['channeledCampaign']];
+                if (!empty($acqMetrics)) $queries[] = ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['channeledCampaign']];
+                break;
             case 'adgroups':
-                return [
-                    ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['channeledAdGroup']],
-                    ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['channeledAdGroup']],
-                ];
+                if (!empty($trafficMetrics)) $queries[] = ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['channeledAdGroup']];
+                if (!empty($acqMetrics)) $queries[] = ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['channeledAdGroup']];
+                break;
             case 'channels':
-                return [
-                    ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['dimensions.sessionDefaultChannelGroup']],
-                    ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['dimensions.firstUserDefaultChannelGroup']],
-                ];
+                if (!empty($trafficMetrics)) $queries[] = ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['dimensions.sessionDefaultChannelGroup']];
+                if (!empty($acqMetrics)) $queries[] = ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['dimensions.firstUserDefaultChannelGroup']];
+                break;
             case 'sources':
-                return [
-                    ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['dimensions.sessionSourceMedium']],
-                    ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['dimensions.firstUserSourceMedium']],
-                ];
-            default:
-                return [];
+                if (!empty($trafficMetrics)) $queries[] = ['scope' => 'traffic_matrix', 'metrics' => $trafficMetrics, 'groupBy' => ['dimensions.sessionSourceMedium']];
+                if (!empty($acqMetrics)) $queries[] = ['scope' => 'acquisition_matrix', 'metrics' => $acqMetrics, 'groupBy' => ['dimensions.firstUserSourceMedium']];
+                break;
         }
+
+        return $queries;
     }
 
-    private function singleScopeQuery(string $tab): array
+    private function singleScopeQuery(string $tab, array $requestedMetrics = []): array
     {
         $scope = $this->scopeForTab($tab);
         $includeBounceRate = in_array($tab, ['traffic_pages', 'traffic_countries', 'traffic_devices']);
         $metrics = $this->metricsForScope($scope, $includeBounceRate);
+
+        if (!empty($requestedMetrics)) {
+            $metrics = array_values(array_intersect($metrics, $requestedMetrics));
+        }
 
         $groupBy = match ($tab) {
             'traffic_pages' => ['dimensions.landing_page'],
@@ -209,53 +220,54 @@ class GoogleAnalyticsController extends Controller
 
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            $trafficMetrics = $this->metricsForScope('traffic_matrix');
-            $acqMetrics = $this->metricsForScope('acquisition_matrix');
+            $requestedMetrics = $validated['metrics'] ?? [];
+            if (empty($requestedMetrics)) {
+                $requestedMetrics = array_merge(
+                    $this->metricsForScope('traffic_matrix'),
+                    $this->metricsForScope('acquisition_matrix')
+                );
+            }
+            
+            $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $payloads = [];
+            $unassignedMetrics = $requestedMetrics;
 
-            $payloads = [
-                'summary_traffic' => [
-                    'aggregations' => $this->buildAggregations($trafficMetrics),
-                    'groupBy' => [],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'traffic_matrix']),
-                    'startDate' => $validated['dateStart'],
-                    'endDate' => $validated['dateEnd'],
-                ],
-                'summary_acquisition' => [
-                    'aggregations' => $this->buildAggregations($acqMetrics),
-                    'groupBy' => [],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'acquisition_matrix']),
-                    'startDate' => $validated['dateStart'],
-                    'endDate' => $validated['dateEnd'],
-                ],
-                'previous_traffic' => [
-                    'aggregations' => $this->buildAggregations($trafficMetrics),
-                    'groupBy' => [],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'traffic_matrix']),
-                    'startDate' => $prevStart->format('Y-m-d'),
-                    'endDate' => $prevEnd->format('Y-m-d'),
-                ],
-                'previous_acquisition' => [
-                    'aggregations' => $this->buildAggregations($acqMetrics),
-                    'groupBy' => [],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'acquisition_matrix']),
-                    'startDate' => $prevStart->format('Y-m-d'),
-                    'endDate' => $prevEnd->format('Y-m-d'),
-                ],
-            ];
+            foreach ($scopesToQuery as $scope) {
+                if (empty($unassignedMetrics)) break;
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+                $scopeMetrics = $this->metricsForScope($scope);
+                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+
+                if (!empty($intersect)) {
+                    $payloads["summary_{$scope}"] = [
+                        'aggregations' => $this->buildAggregations($intersect),
+                        'groupBy' => [],
+                        'filters' => array_merge($baseFilters, ['dimensions.scope' => $scope]),
+                        'startDate' => $validated['dateStart'],
+                        'endDate' => $validated['dateEnd'],
+                    ];
+                    $payloads["previous_{$scope}"] = [
+                        'aggregations' => $this->buildAggregations($intersect),
+                        'groupBy' => [],
+                        'filters' => array_merge($baseFilters, ['dimensions.scope' => $scope]),
+                        'startDate' => $prevStart->format('Y-m-d'),
+                        'endDate' => $prevEnd->format('Y-m-d'),
+                    ];
+                    $unassignedMetrics = array_diff($unassignedMetrics, $intersect);
+                }
+            }
+
+            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
 
             $summary = [];
             $previous = [];
 
-            foreach (['summary_traffic', 'summary_acquisition'] as $key) {
-                if (isset($results[$key]['data'][0])) {
-                    $summary = array_merge($summary, $results[$key]['data'][0]);
+            foreach ($scopesToQuery as $scope) {
+                if (isset($results["summary_{$scope}"]['data'][0])) {
+                    $summary = array_merge($summary, $results["summary_{$scope}"]['data'][0]);
                 }
-            }
-            foreach (['previous_traffic', 'previous_acquisition'] as $key) {
-                if (isset($results[$key]['data'][0])) {
-                    $previous = array_merge($previous, $results[$key]['data'][0]);
+                if (isset($results["previous_{$scope}"]['data'][0])) {
+                    $previous = array_merge($previous, $results["previous_{$scope}"]['data'][0]);
                 }
             }
 
@@ -279,33 +291,42 @@ class GoogleAnalyticsController extends Controller
 
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            $trafficMetrics = $this->metricsForScope('traffic_matrix');
-            $acqMetrics = $this->metricsForScope('acquisition_matrix');
+            $requestedMetrics = $validated['metrics'] ?? [];
+            if (empty($requestedMetrics)) {
+                $requestedMetrics = array_merge(
+                    $this->metricsForScope('traffic_matrix'),
+                    $this->metricsForScope('acquisition_matrix')
+                );
+            }
 
-            $payloads = [
-                'chart_traffic' => [
-                    'aggregations' => $this->buildAggregations($trafficMetrics),
-                    'groupBy' => ['daily'],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'traffic_matrix']),
-                    'startDate' => $validated['dateStart'],
-                    'endDate' => $validated['dateEnd'],
-                    'limit' => 1000,
-                ],
-                'chart_acquisition' => [
-                    'aggregations' => $this->buildAggregations($acqMetrics),
-                    'groupBy' => ['daily'],
-                    'filters' => array_merge($baseFilters, ['dimensions.scope' => 'acquisition_matrix']),
-                    'startDate' => $validated['dateStart'],
-                    'endDate' => $validated['dateEnd'],
-                    'limit' => 1000,
-                ],
-            ];
+            $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $payloads = [];
+            $unassignedMetrics = $requestedMetrics;
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            foreach ($scopesToQuery as $scope) {
+                if (empty($unassignedMetrics)) break;
+
+                $scopeMetrics = $this->metricsForScope($scope);
+                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+
+                if (!empty($intersect)) {
+                    $payloads["chart_{$scope}"] = [
+                        'aggregations' => $this->buildAggregations($intersect),
+                        'groupBy' => ['daily'],
+                        'filters' => array_merge($baseFilters, ['dimensions.scope' => $scope]),
+                        'startDate' => $validated['dateStart'],
+                        'endDate' => $validated['dateEnd'],
+                        'limit' => 1000,
+                    ];
+                    $unassignedMetrics = array_diff($unassignedMetrics, $intersect);
+                }
+            }
+
+            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
 
             $mergedByDate = [];
-            foreach (['chart_traffic', 'chart_acquisition'] as $key) {
-                $rows = $results[$key]['data'] ?? [];
+            foreach ($scopesToQuery as $scope) {
+                $rows = $results["chart_{$scope}"]['data'] ?? [];
                 foreach ($rows as $row) {
                     $dateKey = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
                     if (!$dateKey) continue;
@@ -340,33 +361,60 @@ class GoogleAnalyticsController extends Controller
             $tab = $validated['activeTab'] ?? 'campaigns';
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            if ($this->isDualScopeTab($tab)) {
-                $queries = $this->dualScopeQueries($tab);
-                $payloads = [];
-                foreach ($queries as $idx => $q) {
-                    $payloads["q{$idx}"] = [
-                        'aggregations' => $this->buildAggregations($q['metrics']),
-                        'groupBy' => $q['groupBy'],
-                        'filters' => array_merge($baseFilters, ['dimensions.scope' => $q['scope']]),
-                        'startDate' => $validated['dateStart'],
-                        'endDate' => $validated['dateEnd'],
-                        'limit' => 5000,
-                    ];
+            $requestedMetrics = $validated['metrics'] ?? [];
+            $queries = [];
+
+            $isLegacyTab = in_array($tab, [
+                'campaigns', 'adgroups', 'channels', 'sources',
+                'traffic_pages', 'traffic_countries', 'traffic_devices', 'acquisition_channels',
+                'events', 'adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content'
+            ]);
+
+            if ($isLegacyTab) {
+                if ($this->isDualScopeTab($tab)) {
+                    $queries = $this->dualScopeQueries($tab, $requestedMetrics);
+                } else {
+                    $q = $this->singleScopeQuery($tab, $requestedMetrics);
+                    if (!empty($q['metrics'])) {
+                        $queries[] = $q;
+                    }
                 }
-
-                $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
-
-                $dataSets = [];
-                $groupByKeys = [];
-                foreach ($queries as $idx => $q) {
-                    $dataSets[] = $results["q{$idx}"]['data'] ?? [];
-                    $groupByKeys[] = $q['groupBy'][0];
-                }
-
-                $tableData = $this->mergeMatrixResults($dataSets, $groupByKeys);
             } else {
-                $q = $this->singleScopeQuery($tab);
-                $payload = [
+                // Metric widget dimensional granularity (e.g. 'country')
+                $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+                $unassignedMetrics = $requestedMetrics;
+
+                if (empty($unassignedMetrics)) {
+                    $unassignedMetrics = array_merge(
+                        $this->metricsForScope('traffic_matrix'),
+                        $this->metricsForScope('acquisition_matrix')
+                    );
+                }
+
+                foreach ($scopesToQuery as $scope) {
+                    if (empty($unassignedMetrics)) break;
+
+                    $scopeMetrics = $this->metricsForScope($scope);
+                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+
+                    if (!empty($intersect)) {
+                        $queries[] = [
+                            'scope' => $scope,
+                            'metrics' => $intersect,
+                            'groupBy' => [$tab],
+                        ];
+                        $unassignedMetrics = array_diff($unassignedMetrics, $intersect);
+                    }
+                }
+            }
+
+            if (empty($queries)) {
+                return response()->json(['table' => [], 'debug_results' => null]);
+            }
+
+            $payloads = [];
+            foreach ($queries as $idx => $q) {
+                $payloads["q{$idx}"] = [
                     'aggregations' => $this->buildAggregations($q['metrics']),
                     'groupBy' => $q['groupBy'],
                     'filters' => array_merge($baseFilters, ['dimensions.scope' => $q['scope']]),
@@ -374,21 +422,18 @@ class GoogleAnalyticsController extends Controller
                     'endDate' => $validated['dateEnd'],
                     'limit' => 5000,
                 ];
-
-                $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', ['table' => $payload]);
-                $tableData = $results['table']['data'] ?? [];
-
-                $rawKey = !empty($q['groupBy']) ? $q['groupBy'][0] : 'id';
-                $lookupFull = strtolower($rawKey);
-                $lookupStripped = strtolower(str_replace('dimensions.', '', $rawKey));
-                foreach ($tableData as &$row) {
-                    $rowLower = array_change_key_case($row, CASE_LOWER);
-                    $val = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? $rowLower['id'] ?? 'Unknown';
-                    if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
-                    $row['id'] = $val;
-                    $row['name'] = $val;
-                }
             }
+
+            $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+
+            $dataSets = [];
+            $groupByKeys = [];
+            foreach ($queries as $idx => $q) {
+                $dataSets[] = $results["q{$idx}"]['data'] ?? [];
+                $groupByKeys[] = $q['groupBy'][0];
+            }
+
+            $tableData = empty($dataSets) ? [] : $this->mergeMatrixResults($dataSets, $groupByKeys);
 
             return response()->json([
                 'table' => $tableData,

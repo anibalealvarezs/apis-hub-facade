@@ -149,6 +149,8 @@ class GoogleSearchConsoleController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
+            $tab = $validated['activeTab'] ?? 'queries';
+
             $tabPayload = [
                 'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
                 'filters' => [
@@ -161,13 +163,19 @@ class GoogleSearchConsoleController extends Controller
                 'limit' => 5000 // reasonable limit for frontend rendering
             ];
 
-            if ($validated['activeTab'] === 'queries') $tabPayload['groupBy'] = ['query'];
-            elseif ($validated['activeTab'] === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
-            elseif ($validated['activeTab'] === 'countries') $tabPayload['groupBy'] = ['country'];
-            elseif ($validated['activeTab'] === 'devices') $tabPayload['groupBy'] = ['device'];
-            elseif ($validated['activeTab'] === 'appearances') {
+            if ($tab === 'queries') $tabPayload['groupBy'] = ['query'];
+            elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
+            elseif ($tab === 'countries') $tabPayload['groupBy'] = ['country'];
+            elseif ($tab === 'devices') $tabPayload['groupBy'] = ['device'];
+            elseif ($tab === 'appearances') {
                 $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
                 $tabPayload['filters']['dimensions.searchAppearance'] = ['operator' => 'not_equal', 'value' => 'standard'];
+            } else {
+                // Metric widget custom dimension
+                $tabPayload['groupBy'] = [$tab];
+                if ($tab === 'dimensions.searchAppearance' || $tab === 'searchAppearance') {
+                    $tabPayload['filters']['dimensions.searchAppearance'] = ['operator' => 'not_equal', 'value' => 'standard'];
+                }
             }
 
             $payloads = ['table' => $tabPayload];
@@ -180,15 +188,16 @@ class GoogleSearchConsoleController extends Controller
             $tableData = $results['table']['data'] ?? [];
 
             // Normalize ID for frontend
+            $rawKey = $tabPayload['groupBy'][0] ?? 'id';
+            $lookupFull = strtolower($rawKey);
+            $lookupStripped = strtolower(str_replace('dimensions.', '', $rawKey));
+            
             foreach ($tableData as &$row) {
-                if (isset($row['query'])) { $row['id'] = $row['query']; }
-                elseif (isset($row['dimensions.page'])) { $row['id'] = $row['dimensions.page']; }
-                elseif (isset($row['page'])) { $row['id'] = $row['page']; }
-                elseif (isset($row['country'])) { $row['id'] = $row['country']; }
-                elseif (isset($row['device'])) { $row['id'] = $row['device']; }
-                elseif (isset($row['dimensions.searchAppearance'])) { $row['id'] = $row['dimensions.searchAppearance']; }
-                elseif (isset($row['searchAppearance'])) { $row['id'] = $row['searchAppearance']; }
-                else { $row['id'] = 'Unknown'; }
+                $rowLower = array_change_key_case($row, CASE_LOWER);
+                $val = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? $rowLower['id'] ?? 'Unknown';
+                if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
+                $row['id'] = $val;
+                $row['name'] = $val;
             }
 
             return response()->json([
