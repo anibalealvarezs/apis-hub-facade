@@ -329,6 +329,42 @@ window.dashboardRenderer = {
             pointHoverBorderWidth: 2,
         }));
 
+        let chartScales = {
+            x: {grid: {display: false}, ticks: {maxTicksLimit: 8, font: {size: 10}}}
+        };
+
+        if (datasets.length === 1) {
+            chartScales.y = {
+                beginAtZero: !reverseY,
+                reverse: reverseY,
+                title: {display: true, text: yAxisLabel},
+                ticks: {font: {size: 10}},
+            };
+            mappedDatasets[0].yAxisID = 'y';
+        } else {
+            if (data?.scales) {
+                for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    chartScales[axisId] = {
+                        ...axisConf,
+                        title: {display: false},
+                        ticks: {display: false},
+                    };
+                }
+            } else {
+                mappedDatasets.forEach((ds, idx) => {
+                    if (ds.yAxisID) {
+                        chartScales[ds.yAxisID] = {
+                            type: 'linear',
+                            display: true,
+                            title: {display: false},
+                            ticks: {display: false},
+                            grid: {drawOnChartArea: idx === 0}
+                        };
+                    }
+                });
+            }
+        }
+
         const config = {
             type: 'line',
             data: {labels, datasets: mappedDatasets},
@@ -352,15 +388,7 @@ window.dashboardRenderer = {
                         },
                     },
                 },
-                scales: {
-                    x: {grid: {display: false}, ticks: {maxTicksLimit: 8, font: {size: 10}}},
-                    y: {
-                        beginAtZero: !reverseY,
-                        reverse: reverseY,
-                        title: {display: true, text: yAxisLabel},
-                        ticks: {font: {size: 10}},
-                    },
-                },
+                scales: chartScales,
                 elements: {line: {tension: 0.3}},
             },
         };
@@ -388,6 +416,41 @@ window.dashboardRenderer = {
             percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
         }));
 
+        let chartScales = {
+            x: {grid: {display: false}, ticks: {font: {size: 10}}}
+        };
+
+        if (datasets.length === 1) {
+            chartScales.y = {
+                beginAtZero: !reverseY,
+                reverse: reverseY,
+                ticks: {font: {size: 10}}
+            };
+            mappedDatasets[0].yAxisID = 'y';
+        } else {
+            if (data?.scales) {
+                for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    chartScales[axisId] = {
+                        ...axisConf,
+                        title: {display: false},
+                        ticks: {display: false},
+                    };
+                }
+            } else {
+                mappedDatasets.forEach((ds, idx) => {
+                    if (ds.yAxisID) {
+                        chartScales[ds.yAxisID] = {
+                            type: 'linear',
+                            display: true,
+                            title: {display: false},
+                            ticks: {display: false},
+                            grid: {drawOnChartArea: idx === 0}
+                        };
+                    }
+                });
+            }
+        }
+
         const config = {
             type: 'bar',
             data: {labels, datasets: mappedDatasets},
@@ -408,10 +471,7 @@ window.dashboardRenderer = {
                         },
                     },
                 },
-                scales: {
-                    x: {grid: {display: false}, ticks: {font: {size: 10}}},
-                    y: {beginAtZero: !reverseY, reverse: reverseY, ticks: {font: {size: 10}}},
-                },
+                scales: chartScales,
             },
         };
         this._setAnimation(config, false);
