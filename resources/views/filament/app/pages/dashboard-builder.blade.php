@@ -2027,16 +2027,16 @@
                                 
                                 metricsToSave.forEach(m => {
                                     payload.metrics.push(m);
-                                    
-                                    let channelAssets = this.allChannelAssets[s.channel] || {};
-                                    let validAssets = [...(s.assets || [])].filter(id => {
-                                        return channelAssets[id] !== undefined;
-                                    });
-                                    
-                                    payload.series_assets[validIdx] = validAssets;
-                                    payload.series_channels[validIdx] = s.channel || '';
-                                    validIdx++;
                                 });
+                                
+                                let channelAssets = this.allChannelAssets[s.channel] || {};
+                                let validAssets = [...(s.assets || [])].filter(id => {
+                                    return channelAssets[id] !== undefined;
+                                });
+                                
+                                payload.series_assets[validIdx] = validAssets;
+                                payload.series_channels[validIdx] = s.channel || '';
+                                validIdx++;
                             });
                             if (payload.series_channels['0']) {
                                 payload.channel = payload.series_channels['0'];

@@ -213,31 +213,24 @@ trait LoadsDashboardViewData
 
             // Fallback for non-KPI widgets with a channel
             if (empty($widgetArray['series_assets_options'])) {
-                if (empty($resolved['series_channels']) && empty($resolved['channel'])) {
-                    $firstChannel = !empty($this->allChannels) ? array_key_first($this->allChannels) : null;
-                    if ($firstChannel) {
-                        $resolved['channel'] = $firstChannel;
-                    }
+                $primaryChannel = $resolved['channel'] ?? null;
+                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
+                    $primaryChannel = reset($resolved['series_channels']);
                 }
-                
-                if (!empty($resolved['series_channels'])) {
-                    foreach ($resolved['series_channels'] as $idx => $chan) {
-                        $rawAssetIds = null;
-                        if (!empty($resolved['raw_series'][$idx]['assets'])) {
-                            $rawAssetIds = $resolved['raw_series'][$idx]['assets'];
-                        } elseif (!empty($resolved['series_assets'][$idx])) {
-                            $rawAssetIds = $resolved['series_assets'][$idx];
-                        }
-                        $provideAssetFilters($chan, strval($idx), null, $rawAssetIds);
-                    }
-                } elseif (!empty($resolved['channel'])) {
+                if (empty($primaryChannel) && !empty($this->allChannels)) {
+                    $primaryChannel = array_key_first($this->allChannels);
+                }
+
+                if (!empty($primaryChannel)) {
                     $rawAssetIds = null;
                     if (!empty($resolved['assets'])) {
                         $rawAssetIds = $resolved['assets'];
                     } elseif (!empty($resolved['series_assets']['0'])) {
                         $rawAssetIds = $resolved['series_assets']['0'];
+                    } elseif (!empty($resolved['raw_series'][0]['assets'])) {
+                        $rawAssetIds = $resolved['raw_series'][0]['assets'];
                     }
-                    $provideAssetFilters($resolved['channel'], '0', null, $rawAssetIds);
+                    $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds);
                 }
             }
 
@@ -355,23 +348,18 @@ trait LoadsDashboardViewData
                     }
                 }
             } else {
-                // Raw metrics variables mapping
-                if (!empty($resolved['series_channels'])) {
-                    foreach ($resolved['series_channels'] as $idx => $chan) {
-                        $metrics = !empty($chan) ? KpiFormBuilder::getMetricOptionsForChannel($chan) : [];
-                        $variables[strval($idx)] = [
-                            'index' => $varIndex++,
-                            'channel' => $chan,
-                            'channel_name' => !empty($chan) ? KpiFormBuilder::getChannelDisplayName($chan) : '',
-                            'metrics' => $metrics,
-                        ];
-                    }
-                } elseif (!empty($resolved['channel'])) {
-                    $metrics = !empty($resolved['channel']) ? KpiFormBuilder::getMetricOptionsForChannel($resolved['channel']) : [];
+                // Raw metrics variables mapping - enforce single series for non-KPI widgets
+                $primaryChannel = $resolved['channel'] ?? null;
+                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
+                    $primaryChannel = reset($resolved['series_channels']);
+                }
+                
+                if (!empty($primaryChannel)) {
+                    $metrics = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel);
                     $variables['0'] = [
                         'index' => $varIndex++,
-                        'channel' => $resolved['channel'],
-                        'channel_name' => KpiFormBuilder::getChannelDisplayName($resolved['channel']),
+                        'channel' => $primaryChannel,
+                        'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
                         'metrics' => $metrics,
                     ];
                 }
