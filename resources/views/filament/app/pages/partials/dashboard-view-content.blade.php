@@ -575,12 +575,26 @@
                                                 <template x-if="settingsSourceType !== 'kpi'">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
-                                                        <select x-model="settingsControls.metrics" multiple
-                                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 custom-scrollbar h-32">
-                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                <option :value="key" x-text="label" :selected="(settingsControls.metrics || []).includes(key)"></option>
-                                                            </template>
-                                                        </select>
+                                                        <div class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                            <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
+                                                                <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                                    <div @click="if ((settingsControls.metrics || []).includes(key)) { settingsControls.metrics = settingsControls.metrics.filter(m => m !== key); } else { settingsControls.metrics = [...(settingsControls.metrics || []), key]; }"
+                                                                         class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
+                                                                         :class="(settingsControls.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                             :class="(settingsControls.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg x-show="(settingsControls.metrics || []).includes(key)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium" :class="(settingsControls.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="label"></span>
+                                                                    </div>
+                                                                </template>
+                                                                <template x-if="!vConfig.metrics || Object.keys(vConfig.metrics).length === 0">
+                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">No metrics available.</p>
+                                                                </template>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </template>
 
