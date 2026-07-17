@@ -40,6 +40,11 @@ class GoogleSearchConsoleController extends Controller
                 $aggregations[$m] = $availableAggs[$m];
             }
         }
+
+        // Force include impressions if position or ctr is requested, to allow weighted average calculation
+        if ((isset($aggregations['position']) || isset($aggregations['ctr'])) && !isset($aggregations['impressions'])) {
+            $aggregations['impressions'] = $availableAggs['impressions'];
+        }
         
         return empty($aggregations) ? $availableAggs : $aggregations;
     }

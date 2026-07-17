@@ -557,20 +557,28 @@
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
-                                                {{-- Metric selector --}}
-                                                <template
-                                                    x-if="settingsSourceType !== 'kpi' || !vConfig.selected_metric">
+                                                {{-- Metric selector (KPI Widgets) --}}
+                                                <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric">
                                                     <div class="my-2">
-                                                        <label
-                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                                         <select x-model="settingsControls.metrics[vConfig.index]"
                                                                 class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                            <option value=""
-                                                                    x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
-                                                            <template x-for="(label, key) in vConfig.metrics"
-                                                                      :key="key">
-                                                                <option :value="key" x-text="label"
-                                                                        :selected="settingsControls.metrics[vConfig.index] == key"></option>
+                                                            <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
+                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                                <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] == key"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+
+                                                {{-- Metric selector (Metric Widgets) --}}
+                                                <template x-if="settingsSourceType !== 'kpi'">
+                                                    <div class="my-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
+                                                        <select x-model="settingsControls.metrics" multiple
+                                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 custom-scrollbar h-32">
+                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
+                                                                <option :value="key" x-text="label" :selected="(settingsControls.metrics || []).includes(key)"></option>
                                                             </template>
                                                         </select>
                                                     </div>

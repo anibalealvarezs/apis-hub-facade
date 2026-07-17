@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
 
-    <div x-data="dashboardBuilder()" class="space-y-4">
+    <div x-data="dashboardBuilder" class="space-y-4">
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
             <div class="flex items-center gap-2">
@@ -1125,9 +1125,11 @@
         </style>
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
+    @endpush
 
-        <script>
-            function dashboardBuilder() {
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dashboardBuilder', () => {
                 const dashboardControls = @json($this->getDashboardControls());
                 return {
                     // ─── Grid State ───
@@ -1777,6 +1779,7 @@
                         const ch = this.widgetControlsForm.raw_series[index].channel;
                         
                         if (index === 0) {
+                            this.widgetControlsForm.channel = ch;
                             this.updateDependenciesAndGranularities();
                         }
                         
@@ -1975,9 +1978,9 @@
 
                         if (!c.granularity_inherit) {
                             payload.granularity = c.granularity;
-                            if (c.dependency) {
-                                payload.dependency = c.dependency;
-                            }
+                        }
+                        if (c.dependency) {
+                            payload.dependency = c.dependency;
                         }
 
                         if (!c.edge_case_inherit) {
@@ -2189,7 +2192,7 @@
                         ;
                     },
                 };
-            }
-        </script>
-    @endpush
+            });
+        });
+    </script>
 </x-filament-panels::page>

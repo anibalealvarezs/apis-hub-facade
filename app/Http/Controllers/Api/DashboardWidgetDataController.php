@@ -648,10 +648,14 @@ class DashboardWidgetDataController extends Controller
     
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
+                $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+
                 $columns = [['key' => 'date', 'label' => 'Date']];
                 foreach ($chartData[0] as $key => $val) {
                     if ($key === $dateKey) continue;
                     $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                    if ($metricsFilter && !in_array($cleanKey, $metricsFilter)) continue;
+
                     $isRatio = in_array($cleanKey, $ratioMetrics);
                     $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
                     $columns[] = [
@@ -720,7 +724,7 @@ class DashboardWidgetDataController extends Controller
                                 $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
                             } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $agg[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
-                            } elseif (in_array($ck, $ratioMetrics) && $m['count'] > 0) {
+                            } elseif ((in_array($ck, $ratioMetrics) || $ck === 'position') && $m['count'] > 0) {
                                 $agg[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $agg[$k] = $m['sum'];
@@ -760,7 +764,15 @@ class DashboardWidgetDataController extends Controller
                     $granularity = $resolvedControls['granularity'] ?? 'daily';
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
-                $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn($k) => $k !== $dateKey));
+                    $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn($k) => $k !== $dateKey));
+                    $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+                    if ($metricsFilter) {
+                        $metricKeys = array_filter($metricKeys, function($key) use ($metricsFilter) {
+                            $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                            return in_array($cleanKey, $metricsFilter);
+                        });
+                        $metricKeys = array_values($metricKeys);
+                    }
 
                 if (in_array($granularity, ['weekly', 'monthly']) && count($chartData) > 1) {
                     $groups = [];
@@ -811,7 +823,7 @@ class DashboardWidgetDataController extends Controller
                                 $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
                             } elseif ($ck === 'position' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $row[$k] = ($comp['weighted_position_sum'] ?? 0) / $comp['impressions_sum'];
-                            } elseif (in_array($ck, $ratioMetrics) && $m['count'] > 0) {
+                            } elseif ((in_array($ck, $ratioMetrics) || $ck === 'position') && $m['count'] > 0) {
                                 $row[$k] = $m['sum'] / $m['count'];
                             } else {
                                 $row[$k] = $m['sum'];
@@ -935,7 +947,15 @@ class DashboardWidgetDataController extends Controller
 
             // If tile or gauge and data is still in series format, aggregate to a single value
             if (in_array($effectiveWidgetType, ['tile', 'gauge']) && !isset($data['value'])) {
-                if (isset($data['series']['values'])) {
+                if (isset($data['summary'])) {
+                    $metrics = $resolvedControls['metrics'] ?? [];
+                    $metric = count($metrics) > 0 ? $metrics[0] : array_key_first($data['summary']);
+                    if ($metric && isset($data['summary'][$metric])) {
+                        $data['value'] = (float) $data['summary'][$metric];
+                        $data['current'] = $data['value'];
+                        $data['previous'] = isset($data['previous'][$metric]) ? (float) $data['previous'][$metric] : null;
+                    }
+                } elseif (isset($data['series']['values'])) {
                     $primaryValues = $data['series']['values'];
                     if (is_array($primaryValues) && count($primaryValues) > 0) {
                         $avgValue = (float) (array_sum($primaryValues) / count($primaryValues));
@@ -1332,7 +1352,11 @@ class DashboardWidgetDataController extends Controller
             $payload['dependency'] = $dependency;
         }
 
-        $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'table';
+        if (in_array($widget->type, ['tile', 'gauge'])) {
+            $action = 'summary';
+        } else {
+            $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'table';
+        }
 
         if ($action === 'table') {
             $payload['activeTab'] = $granularity;
