@@ -1137,11 +1137,10 @@
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
     @endpush
-
+    @script
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('dashboardBuilder', () => {
-                const dashboardControls = @json($this->getDashboardControls());
+        Alpine.data('dashboardBuilder', () => {
+            const dashboardControls = @json($this->getDashboardControls());
                 return {
                     // ─── Grid State ───
                     widgets: @json($this->widgets ?? []),
@@ -2202,8 +2201,8 @@
                     })
                         ;
                     }
-                };
-            });
+            };
         });
     </script>
+    @endscript
 </x-filament-panels::page>
