@@ -1354,18 +1354,24 @@
                             return;
                         }
                         
+                        const savedDependency = this.widgetControlsForm.dependency;
+                        
                         @this.getDependenciesForChannel(ch).then(deps => {
                             this.availableDependencies = deps || {};
                             
-                            if (Object.keys(this.availableDependencies).length > 0) {
-                                if (!this.widgetControlsForm.dependency || !this.availableDependencies[this.widgetControlsForm.dependency]) {
-                                    this.widgetControlsForm.dependency = Object.keys(this.availableDependencies)[0];
+                            this.$nextTick(() => {
+                                if (Object.keys(this.availableDependencies).length > 0) {
+                                    if (savedDependency && this.availableDependencies[savedDependency]) {
+                                        this.widgetControlsForm.dependency = savedDependency;
+                                    } else if (!this.widgetControlsForm.dependency || !this.availableDependencies[this.widgetControlsForm.dependency]) {
+                                        this.widgetControlsForm.dependency = Object.keys(this.availableDependencies)[0];
+                                    }
+                                } else {
+                                    this.widgetControlsForm.dependency = null;
                                 }
-                            } else {
-                                this.widgetControlsForm.dependency = null;
-                            }
-                            
-                            this.updateGranularities(ch);
+                                
+                                this.updateGranularities(ch);
+                            });
                         });
                     },
                     
@@ -1377,13 +1383,19 @@
                         }
                         if (!ch) return;
                         
+                        const savedGranularity = this.widgetControlsForm.granularity;
+                        
                         @this.getGranularitiesForChannel(ch, this.widgetControlsForm.dependency).then(grans => {
                             this.availableGranularities = grans || {};
-                            if (Object.keys(this.availableGranularities).length > 0) {
-                                if (!this.widgetControlsForm.granularity || !this.availableGranularities[this.widgetControlsForm.granularity]) {
-                                    this.widgetControlsForm.granularity = 'daily';
+                            this.$nextTick(() => {
+                                if (Object.keys(this.availableGranularities).length > 0) {
+                                    if (savedGranularity && this.availableGranularities[savedGranularity]) {
+                                        this.widgetControlsForm.granularity = savedGranularity;
+                                    } else if (!this.widgetControlsForm.granularity || !this.availableGranularities[this.widgetControlsForm.granularity]) {
+                                        this.widgetControlsForm.granularity = 'daily';
+                                    }
                                 }
-                            }
+                            });
                         });
                     },
 
