@@ -499,7 +499,7 @@ window.dashboardRenderer = {
             // Default sort by first column: DESC for time-based, ASC for dimensions
             const firstCol = columns[0];
             const firstKey = firstCol?.key || firstCol;
-            const timeKeys = ['date', 'daily', 'weekly', 'monthly'];
+            const timeKeys = ['date', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually'];
             const isTimeBased = timeKeys.includes(firstKey);
             containerEl._tableSort = { column: firstKey, direction: isTimeBased ? 'desc' : 'asc' };
         }

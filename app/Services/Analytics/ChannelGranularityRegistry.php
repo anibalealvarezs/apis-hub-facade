@@ -14,6 +14,10 @@ class ChannelGranularityRegistry
             'daily' => __('Daily'),
             'weekly' => __('Weekly'),
             'monthly' => __('Monthly'),
+            'quarterly' => __('Quarterly'),
+            'semiannual' => __('Semiannual'),
+            'annually' => __('Annually'),
+            'lifetime' => __('Lifetime'),
         ];
 
         $dimensions = match ($channel) {

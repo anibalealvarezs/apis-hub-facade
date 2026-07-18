@@ -768,7 +768,7 @@ class DashboardWidgetDataController extends Controller
                     'rows' => $rows,
                 ];
                 }
-            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart']) && isset($data['chart']) && is_array($data['chart'])) {
+            } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'tile', 'gauge']) && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
 
                 if (empty($chartData)) {
@@ -871,7 +871,41 @@ class DashboardWidgetDataController extends Controller
 
                 $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
-                if ($effectiveWidgetType === 'sparkline') {
+                if (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
+                    $firstKey = $metricKeys[0] ?? null;
+                    if ($firstKey && !empty($chartData)) {
+                        // Chart data is sorted ascending by date, so the last element is the most recent period (e.g. last day)
+                        $lastRow = end($chartData);
+                        $value = (float) ($lastRow[$firstKey] ?? 0);
+                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
+                        if (in_array($ck, $ratioMetrics)) {
+                            $value = round($value * 100, 4);
+                        }
+                        
+                        // We also get the previous value if there is more than 1 point
+                        $prevValue = null;
+                        if (count($chartData) > 1) {
+                            $prevRow = $chartData[count($chartData) - 2];
+                            $prevValue = (float) ($prevRow[$firstKey] ?? 0);
+                            if (in_array($ck, $ratioMetrics)) {
+                                $prevValue = round($prevValue * 100, 4);
+                            }
+                        }
+                        
+                        $data = [
+                            'value' => $value,
+                            'current' => $value,
+                            'previous' => $prevValue,
+                            'label' => $metricLabels[$ck] ?? ucfirst($ck)
+                        ];
+                    } else {
+                        $data = [
+                            'value' => 0,
+                            'current' => 0,
+                            'previous' => null,
+                        ];
+                    }
+                } elseif ($effectiveWidgetType === 'sparkline') {
                     $firstKey = $metricKeys[0] ?? null;
                     $values = $firstKey ? array_map(fn($row) => (float) ($row[$firstKey] ?? 0), $chartData) : [];
 
@@ -1398,10 +1432,13 @@ class DashboardWidgetDataController extends Controller
             $payload['dependency'] = $dependency;
         }
 
-        if (in_array($widget->type, ['tile', 'gauge'])) {
-            $action = 'summary';
+        $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually'];
+        if (in_array($granularity, $timeGranularities)) {
+            $action = 'chart';
+        } elseif ($granularity === 'lifetime') {
+            $action = in_array($widget->type, ['tile', 'gauge']) ? 'summary' : 'table';
         } else {
-            $action = in_array($granularity, ['daily', 'weekly', 'monthly']) ? 'chart' : 'table';
+            $action = in_array($widget->type, ['tile', 'gauge']) ? 'summary' : 'table';
         }
 
         if ($action === 'table') {
