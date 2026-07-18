@@ -234,15 +234,22 @@ class GoogleAnalyticsController extends Controller
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
+            $allKnownMetrics = array_unique(array_merge(
+                $this->metricsForScope('traffic_matrix', true),
+                $this->metricsForScope('acquisition_matrix'),
+                $this->metricsForScope('event_matrix'),
+                $this->metricsForScope('ad_touchpoint_matrix')
+            ));
+
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
 
                 $scopeMetrics = $this->metricsForScope($scope);
-                // Assign unassigned metrics directly if a dependency was explicitly set, or as a fallback to traffic_matrix
-                if ($dependency === $scope || $scope === 'traffic_matrix') {
-                    $intersect = $unassignedMetrics; 
-                } else {
-                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                
+                if ($dependency === $scope || (!$dependency && $scope === 'traffic_matrix')) {
+                    $customMetrics = array_diff($unassignedMetrics, $allKnownMetrics);
+                    $intersect = array_merge($intersect, $customMetrics);
                 }
 
                 if (!empty($intersect)) {
@@ -311,14 +318,22 @@ class GoogleAnalyticsController extends Controller
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
+            $allKnownMetrics = array_unique(array_merge(
+                $this->metricsForScope('traffic_matrix', true),
+                $this->metricsForScope('acquisition_matrix'),
+                $this->metricsForScope('event_matrix'),
+                $this->metricsForScope('ad_touchpoint_matrix')
+            ));
+
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
 
                 $scopeMetrics = $this->metricsForScope($scope);
-                if ($dependency === $scope || $scope === 'traffic_matrix') {
-                    $intersect = $unassignedMetrics;
-                } else {
-                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                
+                if ($dependency === $scope || (!$dependency && $scope === 'traffic_matrix')) {
+                    $customMetrics = array_diff($unassignedMetrics, $allKnownMetrics);
+                    $intersect = array_merge($intersect, $customMetrics);
                 }
 
                 if (!empty($intersect)) {
@@ -404,14 +419,22 @@ class GoogleAnalyticsController extends Controller
                     );
                 }
 
+                $allKnownMetrics = array_unique(array_merge(
+                    $this->metricsForScope('traffic_matrix', true),
+                    $this->metricsForScope('acquisition_matrix'),
+                    $this->metricsForScope('event_matrix'),
+                    $this->metricsForScope('ad_touchpoint_matrix')
+                ));
+
                 foreach ($scopesToQuery as $scope) {
                     if (empty($unassignedMetrics)) break;
 
                     $scopeMetrics = $this->metricsForScope($scope);
-                    if ($dependency === $scope || $scope === 'traffic_matrix') {
-                        $intersect = $unassignedMetrics;
-                    } else {
-                        $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                    
+                    if ($dependency === $scope || (!$dependency && $scope === 'traffic_matrix')) {
+                        $customMetrics = array_diff($unassignedMetrics, $allKnownMetrics);
+                        $intersect = array_merge($intersect, $customMetrics);
                     }
                     if (!empty($intersect)) {
                         $queries[] = [
