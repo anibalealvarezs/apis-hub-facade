@@ -1434,8 +1434,8 @@ class DashboardWidgetDataController extends Controller
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
 
-        $granularity = $controls['granularity'] ?? 'daily';
-        $dependency = $controls['dependency'] ?? null;
+        $granularity = $controls['granularity'] ?? $config['granularity'] ?? 'daily';
+        $dependency = $controls['dependency'] ?? $config['dependency'] ?? null;
 
         $payload = [
             'tenant' => $project->id,
