@@ -230,7 +230,7 @@ class GoogleAnalyticsController extends Controller
             }
             
             $dependency = $validated['dependency'] ?? null;
-            $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
+            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -307,7 +307,7 @@ class GoogleAnalyticsController extends Controller
             }
 
             $dependency = $validated['dependency'] ?? null;
-            $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
+            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -394,7 +394,7 @@ class GoogleAnalyticsController extends Controller
                 }
             } else {
                 // Metric widget dimensional granularity (e.g. 'country')
-                $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
+                $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
                 $unassignedMetrics = $requestedMetrics;
 
                 if (empty($unassignedMetrics)) {

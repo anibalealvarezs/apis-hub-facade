@@ -1451,12 +1451,14 @@ class DashboardWidgetDataController extends Controller
         }
 
         $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually'];
-        if (in_array($granularity, $timeGranularities)) {
+        if (in_array($widget->widget_type, ['tile', 'gauge'])) {
+            $action = 'chart';
+        } elseif (in_array($granularity, $timeGranularities)) {
             $action = 'chart';
         } elseif ($granularity === 'lifetime') {
-            $action = in_array($widget->type, ['tile', 'gauge']) ? 'summary' : 'table';
+            $action = 'table';
         } else {
-            $action = in_array($widget->type, ['tile', 'gauge']) ? 'summary' : 'table';
+            $action = 'table';
         }
 
         if ($action === 'table') {
