@@ -892,12 +892,30 @@ class DashboardWidgetDataController extends Controller
                             }
                         }
                         
+                        $allValues = array_map(fn($row) => (float) ($row[$firstKey] ?? 0), $chartData);
+                        if (in_array($ck, $ratioMetrics)) {
+                            $allValues = array_map(fn($v) => round($v * 100, 4), $allValues);
+                        }
+
                         $data = [
                             'value' => $value,
                             'current' => $value,
                             'previous' => $prevValue,
                             'label' => $metricLabels[$ck] ?? ucfirst($ck)
                         ];
+
+                        if (!empty($allValues)) {
+                            $maxValue = max($allValues);
+                            $minValue = min($allValues);
+                            
+                            if (str_contains($ck, 'position')) {
+                                $data['min'] = $maxValue;
+                                $data['max'] = $minValue > 0 ? $minValue : 1;
+                            } else {
+                                $data['min'] = 0;
+                                $data['max'] = $maxValue > 0 ? $maxValue : 1; // Prevent division by zero
+                            }
+                        }
                     } else {
                         $data = [
                             'value' => 0,
