@@ -683,9 +683,7 @@
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets (Leave empty for All Assets)</label>
                                                     <template x-if="series.channel">
                                                         <div class="flex gap-3">
-                                                            <template x-if="channelAssetModesMap[series.channel] !== false">
-                                                                <button @click="selectAllRawAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
-                                                            </template>
+                                                            <button @click="selectAllRawAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -791,9 +789,7 @@
                                                 <div class="flex items-center justify-between mt-2">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="widgetKpiConfig.dependent_asset_group">(Limited to KPI Group)</span><span x-show="!widgetKpiConfig.dependent_asset_group">(Leave empty for All Assets)</span></label>
                                                     <div class="flex gap-3">
-                                                        <template x-if="widgetKpiConfig && channelAssetModesMap[widgetKpiConfig.dependent_channel] !== false">
-                                                            <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel, widgetKpiConfig.dependent_asset_group)" :disabled="widgetControlsForm.series_asset_groups.dependent" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
-                                                        </template>
+                                                        <button @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel, widgetKpiConfig.dependent_asset_group)" :disabled="widgetControlsForm.series_asset_groups.dependent" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
                                                         <button @click="clearAllKpiAssets('dependent')" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                     </div>
                                                 </div>
@@ -887,9 +883,7 @@
                                                     <div class="flex items-center justify-between mt-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="varCfg.independent_asset_group">(Limited to KPI Group)</span><span x-show="!varCfg.independent_asset_group">(Leave empty for All Assets)</span></label>
                                                         <div class="flex gap-3">
-                                                            <template x-if="varCfg && channelAssetModesMap[varCfg.independent_channel] !== false">
-                                                                <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
-                                                            </template>
+                                                            <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
                                                         </div>
                                                     </div>
                                                     <div class="relative">
@@ -1155,7 +1149,6 @@
                     widgetLabels: @json(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
 
                     // ─── Channels & Assets ───
-                    channelAssetModesMap: @json($this->getChannelAssetModesMap()),
                     channels: @json($this->getActiveChannels()),
                     allChannelAssets: {},
                     allChannelAssetGroups: {},
@@ -1820,15 +1813,6 @@
                     toggleRawAsset(index, id) {
                         const current = this.widgetControlsForm.raw_series[index].assets || [];
                         const strId = String(id);
-                        
-                        const channel = this.widgetControlsForm.raw_series[index].channel;
-                        const allowsMultiple = channel && this.channelAssetModesMap ? this.channelAssetModesMap[channel] !== false : true;
-
-                        if (!allowsMultiple) {
-                            this.widgetControlsForm.raw_series[index].assets = [strId];
-                            return;
-                        }
-
                         if (current.includes(strId)) {
                             if (current.length <= 1) return;
                             this.widgetControlsForm.raw_series[index].assets = current.filter(a => a !== strId);
@@ -1872,17 +1856,8 @@
                         const current = this.widgetControlsForm.series_assets[seriesKey] || [];
                         const strId = String(id);
                         
-                        let channel = null;
-                        if (seriesKey === 'dependent') {
-                            channel = this.widgetKpiConfig?.dependent_channel;
-                        } else if (seriesKey.startsWith('independent_')) {
-                            const idx = seriesKey.split('_')[1];
-                            channel = this.widgetKpiConfig?.independent_variables?.[idx]?.independent_channel;
-                        }
-                        
-                        const allowsMultiple = channel && this.channelAssetModesMap ? this.channelAssetModesMap[channel] !== false : true;
-
-                        if (!allowsMultiple) {
+                        // Enforce single selection mode if kpiSeriesAssetMode === 'single'
+                        if (this.kpiSeriesAssetMode === 'single') {
                             this.widgetControlsForm.series_assets[seriesKey] = [strId];
                             return;
                         }

@@ -147,10 +147,15 @@ trait LoadsDashboardViewData
                     $resolved['series_assets'][$key] = [];
                 }
 
+                $computedMode = $kpiAssetMode;
+                if (!\App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
+                    $computedMode = 'single';
+                }
+
                 $widgetArray['series_assets_options'][$key] = [
                     'label' => $label ?? Str::headline($channel),
                     'options' => (object) $allAssets,
-                    'mode' => $kpiAssetMode,
+                    'mode' => $computedMode,
                 ];
             };
 
