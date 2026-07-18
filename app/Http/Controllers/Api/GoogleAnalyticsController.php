@@ -51,6 +51,36 @@ class GoogleAnalyticsController extends Controller
         return $base;
     }
 
+    private function mapToGa4(string $metric): string
+    {
+        return match ($metric) {
+            'pageviews' => 'screenPageViews',
+            'bounce_rate' => 'bounceRate',
+            'new_users' => 'newUsers',
+            'average_session_duration' => 'averageSessionDuration',
+            'revenue' => 'totalRevenue',
+            'events' => 'eventCount',
+            'active_users' => 'activeUsers',
+            'total_users' => 'totalUsers',
+            default => $metric,
+        };
+    }
+
+    private function mapFromGa4(string $metric): string
+    {
+        return match ($metric) {
+            'screenPageViews' => 'pageviews',
+            'bounceRate' => 'bounce_rate',
+            'newUsers' => 'new_users',
+            'averageSessionDuration' => 'average_session_duration',
+            'totalRevenue' => 'revenue',
+            'eventCount' => 'events',
+            'activeUsers' => 'active_users',
+            'totalUsers' => 'total_users',
+            default => $metric,
+        };
+    }
+
     private function buildAggregations(array $metrics): array
     {
         $agg = [];
@@ -222,6 +252,7 @@ class GoogleAnalyticsController extends Controller
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $requestedMetrics = $validated['metrics'] ?? [];
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
             $dependency = $validated['dependency'] ?? null;
             
             if (empty($requestedMetrics)) {
@@ -287,10 +318,14 @@ class GoogleAnalyticsController extends Controller
 
             foreach ($scopesToQuery as $scope) {
                 if (isset($results["summary_{$scope}"]['data'][0])) {
-                    $summary = array_merge($summary, $results["summary_{$scope}"]['data'][0]);
+                    foreach ($results["summary_{$scope}"]['data'][0] as $k => $v) {
+                        $summary[$this->mapFromGa4($k)] = $v;
+                    }
                 }
                 if (isset($results["previous_{$scope}"]['data'][0])) {
-                    $previous = array_merge($previous, $results["previous_{$scope}"]['data'][0]);
+                    foreach ($results["previous_{$scope}"]['data'][0] as $k => $v) {
+                        $previous[$this->mapFromGa4($k)] = $v;
+                    }
                 }
             }
 
@@ -315,6 +350,7 @@ class GoogleAnalyticsController extends Controller
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $requestedMetrics = $validated['metrics'] ?? [];
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
             $dependency = $validated['dependency'] ?? null;
             
             if (empty($requestedMetrics)) {
@@ -366,7 +402,9 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\Log::error("GA4 Chart Payload:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            \Illuminate\Support\Facades\Log::error("GA4 Chart Results:", $results);
 
             $mergedByDate = [];
             foreach ($scopesToQuery as $scope) {
@@ -379,7 +417,8 @@ class GoogleAnalyticsController extends Controller
                     }
                     foreach ($row as $k => $v) {
                         if (!in_array($k, ['daily', 'date', 'metric_date'])) {
-                            $mergedByDate[$dateKey][$k] = ($mergedByDate[$dateKey][$k] ?? 0) + (float) $v;
+                            $mappedKey = $this->mapFromGa4($k);
+                            $mergedByDate[$dateKey][$mappedKey] = ($mergedByDate[$dateKey][$mappedKey] ?? 0) + (float) $v;
                         }
                     }
                 }
@@ -407,6 +446,7 @@ class GoogleAnalyticsController extends Controller
 
             $dependency = $validated['dependency'] ?? null;
             $requestedMetrics = $validated['metrics'] ?? [];
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
             $queries = [];
 
             $isLegacyTab = in_array($tab, [
@@ -499,9 +539,18 @@ class GoogleAnalyticsController extends Controller
             }
 
             $tableData = empty($dataSets) ? [] : $this->mergeMatrixResults($dataSets, $groupByKeys);
+            
+            $mappedTableData = [];
+            foreach ($tableData as $row) {
+                $mappedRow = [];
+                foreach ($row as $k => $v) {
+                    $mappedRow[$this->mapFromGa4($k)] = $v;
+                }
+                $mappedTableData[] = $mappedRow;
+            }
 
             return response()->json([
-                'table' => $tableData,
+                'table' => $mappedTableData,
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Exception $e) {
