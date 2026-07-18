@@ -22,6 +22,7 @@ class GoogleAnalyticsController extends Controller
             'activeFilters.*' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
+            'dependency' => 'nullable|string',
         ]);
     }
 
@@ -228,7 +229,8 @@ class GoogleAnalyticsController extends Controller
                 );
             }
             
-            $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $dependency = $validated['dependency'] ?? null;
+            $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -236,7 +238,12 @@ class GoogleAnalyticsController extends Controller
                 if (empty($unassignedMetrics)) break;
 
                 $scopeMetrics = $this->metricsForScope($scope);
-                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                // Assign unassigned metrics directly if a dependency was explicitly set, or as a fallback to traffic_matrix
+                if ($dependency === $scope || $scope === 'traffic_matrix') {
+                    $intersect = $unassignedMetrics; 
+                } else {
+                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                }
 
                 if (!empty($intersect)) {
                     $payloads["summary_{$scope}"] = [
@@ -299,7 +306,8 @@ class GoogleAnalyticsController extends Controller
                 );
             }
 
-            $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $dependency = $validated['dependency'] ?? null;
+            $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -307,7 +315,11 @@ class GoogleAnalyticsController extends Controller
                 if (empty($unassignedMetrics)) break;
 
                 $scopeMetrics = $this->metricsForScope($scope);
-                $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                if ($dependency === $scope || $scope === 'traffic_matrix') {
+                    $intersect = $unassignedMetrics;
+                } else {
+                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                }
 
                 if (!empty($intersect)) {
                     $payloads["chart_{$scope}"] = [
@@ -361,6 +373,7 @@ class GoogleAnalyticsController extends Controller
             $tab = $validated['activeTab'] ?? 'campaigns';
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
+            $dependency = $validated['dependency'] ?? null;
             $requestedMetrics = $validated['metrics'] ?? [];
             $queries = [];
 
@@ -381,7 +394,7 @@ class GoogleAnalyticsController extends Controller
                 }
             } else {
                 // Metric widget dimensional granularity (e.g. 'country')
-                $scopesToQuery = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+                $scopesToQuery = $dependency ? [$dependency] : ['acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'traffic_matrix'];
                 $unassignedMetrics = $requestedMetrics;
 
                 if (empty($unassignedMetrics)) {
@@ -395,8 +408,11 @@ class GoogleAnalyticsController extends Controller
                     if (empty($unassignedMetrics)) break;
 
                     $scopeMetrics = $this->metricsForScope($scope);
-                    $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
-
+                    if ($dependency === $scope || $scope === 'traffic_matrix') {
+                        $intersect = $unassignedMetrics;
+                    } else {
+                        $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
+                    }
                     if (!empty($intersect)) {
                         $queries[] = [
                             'scope' => $scope,
