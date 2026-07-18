@@ -252,8 +252,13 @@ class GoogleAnalyticsController extends Controller
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
+
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+            
             $dependency = $validated['dependency'] ?? null;
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Resolved dependency:", ['dependency' => $dependency]);
             
             if (empty($requestedMetrics)) {
                 if ($dependency) {
@@ -311,7 +316,9 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final payloads for engine:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Raw engine results:", $results);
 
             $summary = [];
             $previous = [];
@@ -328,6 +335,9 @@ class GoogleAnalyticsController extends Controller
                     }
                 }
             }
+
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final mapped summary result:", $summary);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final mapped previous result:", $previous);
 
             return response()->json([
                 'summary' => $summary,
@@ -350,8 +360,13 @@ class GoogleAnalyticsController extends Controller
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
+
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+
             $dependency = $validated['dependency'] ?? null;
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Resolved dependency:", ['dependency' => $dependency]);
             
             if (empty($requestedMetrics)) {
                 if ($dependency) {
@@ -424,6 +439,8 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Final mapped chart result:", array_values($mergedByDate));
+
             return response()->json([
                 'chart' => array_values($mergedByDate),
                 'debug_results' => config('app.debug') ? $results : null,
@@ -446,7 +463,12 @@ class GoogleAnalyticsController extends Controller
 
             $dependency = $validated['dependency'] ?? null;
             $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
+            
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Resolved dependency:", ['dependency' => $dependency]);
+            
             $queries = [];
 
             $isLegacyTab = in_array($tab, [
@@ -530,6 +552,7 @@ class GoogleAnalyticsController extends Controller
             }
 
             $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Raw engine results:", $results);
 
             $dataSets = [];
             $groupByKeys = [];
@@ -548,6 +571,8 @@ class GoogleAnalyticsController extends Controller
                 }
                 $mappedTableData[] = $mappedRow;
             }
+
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Final mapped table result:", $mappedTableData);
 
             return response()->json([
                 'table' => $mappedTableData,
