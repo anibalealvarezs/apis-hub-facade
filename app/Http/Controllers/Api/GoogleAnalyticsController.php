@@ -269,6 +269,16 @@ class GoogleAnalyticsController extends Controller
                         $this->metricsForScope('acquisition_matrix')
                     );
                 }
+            } else {
+                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
+                    $this->metricsForScope('traffic_matrix', true),
+                    $this->metricsForScope('acquisition_matrix'),
+                    $this->metricsForScope('event_matrix'),
+                    $this->metricsForScope('ad_touchpoint_matrix')
+                );
+                
+                $intersect = array_intersect($requestedMetrics, $validForScope);
+                $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
             
             $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
@@ -377,6 +387,16 @@ class GoogleAnalyticsController extends Controller
                         $this->metricsForScope('acquisition_matrix')
                     );
                 }
+            } else {
+                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
+                    $this->metricsForScope('traffic_matrix', true),
+                    $this->metricsForScope('acquisition_matrix'),
+                    $this->metricsForScope('event_matrix'),
+                    $this->metricsForScope('ad_touchpoint_matrix')
+                );
+                
+                $intersect = array_intersect($requestedMetrics, $validForScope);
+                $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
             $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
             $payloads = [];
@@ -500,6 +520,16 @@ class GoogleAnalyticsController extends Controller
                             $this->metricsForScope('acquisition_matrix')
                         );
                     }
+                } else {
+                    $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
+                        $this->metricsForScope('traffic_matrix', true),
+                        $this->metricsForScope('acquisition_matrix'),
+                        $this->metricsForScope('event_matrix'),
+                        $this->metricsForScope('ad_touchpoint_matrix')
+                    );
+                    
+                    $intersect = array_intersect($unassignedMetrics, $validForScope);
+                    $unassignedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
                 }
 
                 $allKnownMetrics = array_unique(array_merge(
