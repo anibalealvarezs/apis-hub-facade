@@ -444,19 +444,29 @@
                                     <div class="p-6">
                                         <select x-model="settingsControls.granularity"
                                                 class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                            <option value="">Dashboard Default</option>
-                                            <option value="daily">Daily</option>
-                                            <option value="weekly">Weekly</option>
-                                            <option value="monthly">Monthly</option>
-                                            <option value="quarterly">Quarterly</option>
-                                            <option value="semiannual">Semiannual</option>
-                                            <option value="annually">Annually</option>
-                                            <option value="lifetime">Lifetime</option>
-                                            <option value="query">Query (SEO)</option>
-                                            <option value="dimensions.page">Page (SEO)</option>
-                                            <option value="country">Country</option>
-                                            <option value="device">Device</option>
-                                            <option value="post">Post / Media</option>
+                                            <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
+                                                <optgroup label="Time Granularities">
+                                                    <option value="">Dashboard Default</option>
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="quarterly">Quarterly</option>
+                                                    <option value="semiannual">Semiannual</option>
+                                                    <option value="annually">Annually</option>
+                                                    <option value="lifetime">Lifetime</option>
+                                                </optgroup>
+                                            </template>
+                                            <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
+                                                <optgroup label="Dimension">
+                                                    <option :value="settingsBuilderControls.granularity" x-text="{
+                                                        'query': 'Query (SEO)',
+                                                        'dimensions.page': 'Page (SEO)',
+                                                        'country': 'Country',
+                                                        'device': 'Device',
+                                                        'post': 'Post / Media'
+                                                    }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))"></option>
+                                                </optgroup>
+                                            </template>
                                         </select>
                                     </div>
                                 </div>
