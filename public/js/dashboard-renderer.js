@@ -536,8 +536,8 @@ window.dashboardRenderer = {
 
         html += '<tbody class="bg-white dark:bg-gray-900">';
         sortedRows.forEach((row, ri) => {
-            const rowClass = ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/30';
-            html += `<tr class="${rowClass} hover:bg-gray-100 dark:hover:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">`;
+            const rowClass = ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-white/[0.02]';
+            html += `<tr class="${rowClass} border-t border-gray-200 dark:border-gray-700">`;
             columns.forEach(col => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
