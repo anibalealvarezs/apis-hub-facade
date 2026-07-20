@@ -705,13 +705,25 @@ class DashboardWidgetDataController extends Controller
                     $rawRows[] = $rawRow;
                 }
 
-                if (in_array($granularity, ['weekly', 'monthly']) && count($rawRows) > 1) {
+                if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rawRows) > 1) {
                     $groups = [];
                     foreach ($rawRows as $row) {
                         $date = $row['date'];
-                        $gKey = $granularity === 'weekly'
-                            ? \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d')
-                            : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                        if ($granularity === 'weekly') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d');
+                        } elseif ($granularity === 'monthly') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                        } elseif ($granularity === 'quarterly') {
+                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y-m-d');
+                        } elseif ($granularity === 'semiannual') {
+                            $gKey = \Carbon\Carbon::parse($date)->month <= 6 ? \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d') : \Carbon\Carbon::parse($date)->startOfYear()->addMonths(6)->format('Y-m-d');
+                        } elseif ($granularity === 'annually') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d');
+                        } elseif ($granularity === 'lifetime') {
+                            $gKey = 'Lifetime';
+                        } else {
+                            $gKey = $date;
+                        }
 
                         if (!isset($groups[$gKey])) {
                             $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
@@ -755,7 +767,7 @@ class DashboardWidgetDataController extends Controller
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
                             $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position');
+                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
 
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
@@ -855,13 +867,25 @@ class DashboardWidgetDataController extends Controller
                         $metricKeys = array_values($metricKeys);
                     }
 
-                if (in_array($granularity, ['weekly', 'monthly']) && count($chartData) > 1) {
+                if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($chartData) > 1) {
                     $groups = [];
                     foreach ($chartData as $row) {
                         $date = $row[$dateKey] ?? '';
-                        $gKey = $granularity === 'weekly'
-                            ? \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d')
-                            : \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                        if ($granularity === 'weekly') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d');
+                        } elseif ($granularity === 'monthly') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                        } elseif ($granularity === 'quarterly') {
+                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y-m-d');
+                        } elseif ($granularity === 'semiannual') {
+                            $gKey = \Carbon\Carbon::parse($date)->month <= 6 ? \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d') : \Carbon\Carbon::parse($date)->startOfYear()->addMonths(6)->format('Y-m-d');
+                        } elseif ($granularity === 'annually') {
+                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d');
+                        } elseif ($granularity === 'lifetime') {
+                            $gKey = 'Lifetime';
+                        } else {
+                            $gKey = $date;
+                        }
 
                         if (!isset($groups[$gKey])) {
                             $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
@@ -906,7 +930,7 @@ class DashboardWidgetDataController extends Controller
                         foreach ($group['metrics'] as $k => $m) {
                             $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
                             $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position');
+                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
 
                             if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                                 $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
@@ -1511,13 +1535,11 @@ class DashboardWidgetDataController extends Controller
             $payload['dependency'] = $dependency;
         }
 
-        $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually'];
+        $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
         if (in_array($widget->widget_type, ['tile', 'gauge'])) {
             $action = 'chart';
         } elseif (in_array($granularity, $timeGranularities)) {
             $action = 'chart';
-        } elseif ($granularity === 'lifetime') {
-            $action = 'table';
         } else {
             $action = 'table';
         }
