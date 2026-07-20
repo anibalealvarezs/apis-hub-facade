@@ -610,9 +610,13 @@ class DashboardWidgetDataController extends Controller
                     }
 
                     $isRatio = in_array($metric, $ratioMetrics);
+                    $isTime = in_array($metric, ['average_session_duration', 'post_video_avg_time_watched']);
                     if ($isRatio) {
                         $current = is_numeric($current) ? round((float) $current * 100, 4) : $current;
                         $prev = ($prev !== null && is_numeric($prev)) ? round((float) $prev * 100, 4) : $prev;
+                    } elseif ($isTime) {
+                        $current = is_numeric($current) ? gmdate('H:i:s', (int) $current) : $current;
+                        $prev = ($prev !== null && is_numeric($prev)) ? gmdate('H:i:s', (int) $prev) : $prev;
                     }
 
                     $label = $metricLabels[$metric] ?? ucfirst($metric);
@@ -671,20 +675,32 @@ class DashboardWidgetDataController extends Controller
                     if ($metricsFilter && !in_array($cleanKey, $metricsFilter)) continue;
 
                     $isRatio = in_array($cleanKey, $ratioMetrics);
+                    $isTime = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
                     $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
                     $columns[] = [
                         'key' => $key,
                         'label' => $isRatio ? $label . ' (%)' : $label,
-                        'format' => 'number',
+                        'format' => $isRatio ? 'percentage' : ($isTime ? 'string' : 'number'),
                     ];
                 }
+
+                $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
 
                 $rawRows = [];
                 foreach ($chartData as $row) {
                     $rawRow = ['date' => $row[$dateKey] ?? ''];
                     foreach ($row as $k => $v) {
                         if ($k === $dateKey) continue;
-                        $rawRow[$k] = is_numeric($v) ? (float) $v : $v;
+                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                        
+                        $val = is_numeric($v) ? (float) $v : $v;
+                        if (is_numeric($val) && in_array($cleanKey, $ratioMetrics)) {
+                            $val = round($val * 100, 4);
+                        } elseif (is_numeric($val) && in_array($cleanKey, $timeMetrics)) {
+                            $val = gmdate('H:i:s', (int) $val);
+                        }
+                        
+                        $rawRow[$k] = $val;
                     }
                     $rawRows[] = $rawRow;
                 }
@@ -1034,9 +1050,11 @@ class DashboardWidgetDataController extends Controller
                     $metrics = $resolvedControls['metrics'] ?? [];
                     $metric = count($metrics) > 0 ? $metrics[0] : array_key_first($data['summary']);
                     if ($metric && isset($data['summary'][$metric])) {
-                        $data['value'] = (float) $data['summary'][$metric];
+                        $val = $data['summary'][$metric];
+                        $data['value'] = is_numeric($val) ? (float) $val : $val;
                         $data['current'] = $data['value'];
-                        $data['previous'] = isset($data['previous'][$metric]) ? (float) $data['previous'][$metric] : null;
+                        $prevVal = $data['previous'][$metric] ?? null;
+                        $data['previous'] = ($prevVal !== null && is_numeric($prevVal)) ? (float) $prevVal : $prevVal;
                     }
                 } elseif (isset($data['series']['values'])) {
                     $primaryValues = $data['series']['values'];

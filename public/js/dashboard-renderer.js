@@ -1497,11 +1497,13 @@ window.dashboardRenderer = {
     // ─── Formatters ───
 
     formatNumber(n) {
+        if (typeof n === 'string' && n.includes(':')) return n;
         if (n == null || isNaN(n)) return '—';
         return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
     },
 
     _formatTableNumber(n) {
+        if (typeof n === 'string' && n.includes(':')) return n;
         if (n == null || isNaN(n)) return '—';
         const num = Number(n);
         if (Number.isInteger(num)) return num.toLocaleString('en-US', {maximumFractionDigits: 0});
