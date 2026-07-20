@@ -239,6 +239,18 @@
                                         </div>
                                     </div>
                                 @endif
+                                <template x-if="sourceType !== 'kpi' && isTimeGranularity">
+                                    <select x-model="controls.granularity" @change="updateWidget()"
+                                            class="text-xs border-0 bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer font-medium focus:ring-0 py-1 pl-2 pr-6" style="background-position: right 0.2rem center; background-size: 1em;">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="semiannual">Semiannual</option>
+                                        <option value="annually">Annually</option>
+                                        <option value="lifetime">Lifetime</option>
+                                    </select>
+                                </template>
                                 {{-- Settings button (gear icon) --}}
                                 <button @click="openDashboardSettings()"
                                         class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -450,7 +462,9 @@
                                             <option value="weekly">Weekly</option>
                                             <option value="monthly">Monthly</option>
                                             <option value="quarterly">Quarterly</option>
-                                            <option value="yearly">Yearly</option>
+                                            <option value="semiannual">Semiannual</option>
+                                            <option value="annually">Annually</option>
+                                            <option value="lifetime">Lifetime</option>
                                             <option value="query">Query (SEO)</option>
                                             <option value="dimensions.page">Page (SEO)</option>
                                             <option value="country">Country</option>
@@ -1288,6 +1302,7 @@
                 variables: {},
                 sourceType: '',
                 searchQueries: {},
+                isTimeGranularity: false,
 
                 init() {
                     const el = this.$el;
@@ -1298,6 +1313,9 @@
                     this.metricOptions = JSON.parse(el.dataset.metricOptions || '{}');
                     this.sourceType = el.dataset.sourceType || '';
                     this.variables = JSON.parse(el.dataset.variables || '{}');
+                    
+                    this.isTimeGranularity = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(this.builderControls.granularity);
+                    
                     if (!this.controls.metrics) this.controls.metrics = [];
                     if (!Array.isArray(this.controls.metrics)) {
                         this.controls.metrics = Object.values(this.controls.metrics);

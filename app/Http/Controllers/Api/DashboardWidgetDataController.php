@@ -1168,7 +1168,7 @@ class DashboardWidgetDataController extends Controller
         if (!empty($controls['date_end'])) $controlsToMerge['end_date'] = $controls['date_end'];
         if (!empty($controls['granularity'])) {
             $fixedGranularity = $uiState['granularity'] ?? null;
-            if (!$fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])) {
+            if (!$fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'])) {
                 $controlsToMerge['granularity'] = $controls['granularity'];
             }
         }
