@@ -784,6 +784,49 @@ class DashboardWidgetDataController extends Controller
                     'rows' => $rows,
                 ];
                 }
+            } elseif ($effectiveWidgetType === 'table' && isset($data['table']) && is_array($data['table'])) {
+                $tableData = $data['table'];
+                if (empty($tableData)) {
+                    $data = [
+                        'columns' => [],
+                        'rows' => [],
+                    ];
+                } else {
+                    $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                    $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                    $columns = [];
+                    foreach (array_keys($tableData[0]) as $key) {
+                        $label = $metricLabels[$key] ?? ucfirst(str_replace('_', ' ', $key));
+                        $isRatio = in_array($key, $ratioMetrics);
+                        $isTime = in_array($key, $timeMetrics);
+                        $columns[] = [
+                            'key' => $key,
+                            'label' => $isRatio ? $label . ' (%)' : $label,
+                            'format' => $isRatio ? 'percentage' : ($isTime ? 'string' : (is_numeric($tableData[0][$key]) ? 'number' : 'string')),
+                        ];
+                    }
+                    $rows = [];
+                    foreach ($tableData as $row) {
+                        $mappedRow = [];
+                        foreach ($row as $k => $v) {
+                            $isRatio = in_array($k, $ratioMetrics);
+                            $isTime = in_array($k, $timeMetrics);
+                            $val = is_numeric($v) ? (float) $v : $v;
+                            if (is_numeric($val) && $isRatio) {
+                                $val = round($val * 100, 4);
+                            } elseif (is_numeric($val) && $isTime) {
+                                $val = gmdate('H:i:s', (int) $val);
+                            }
+                            $mappedRow[$k] = $val;
+                        }
+                        $rows[] = $mappedRow;
+                    }
+                    $data = [
+                        'columns' => $columns,
+                        'rows' => $rows,
+                    ];
+                }
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'tile', 'gauge']) && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
 

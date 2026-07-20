@@ -1336,8 +1336,8 @@
                                 .filter(id => validIds.includes(id));
                         }
                     }
-                    this.granularityOnTheGo = !this.controls.granularity || this.controls.granularity === '';
-                    if (!this.controls.granularity) this.controls.granularity = '';
+                    this.granularityOnTheGo = this.controls.hasOwnProperty('granularity') && this.controls.granularity !== '__NOT_SET__';
+                    if (!this.controls.granularity || this.controls.granularity === '__NOT_SET__') this.controls.granularity = '';
                     for (const key in this.seriesOptions) {
                         this.searchQueries[key] = '';
                     }
