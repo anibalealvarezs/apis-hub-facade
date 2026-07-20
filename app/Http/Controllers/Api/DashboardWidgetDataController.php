@@ -694,12 +694,6 @@ class DashboardWidgetDataController extends Controller
                         $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
                         
                         $val = is_numeric($v) ? (float) $v : $v;
-                        if (is_numeric($val) && in_array($cleanKey, $ratioMetrics)) {
-                            $val = round($val * 100, 4);
-                        } elseif (is_numeric($val) && in_array($cleanKey, $timeMetrics)) {
-                            $val = gmdate('H:i:s', (int) $val);
-                        }
-                        
                         $rawRow[$k] = $val;
                     }
                     $rawRows[] = $rawRow;
@@ -790,7 +784,17 @@ class DashboardWidgetDataController extends Controller
 
                 $rows = [];
                 foreach ($rawRows as $row) {
-                    $rows[] = $row;
+                    $formattedRow = $row;
+                    foreach ($row as $k => $v) {
+                        if ($k === 'date' || !is_numeric($v)) continue;
+                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                        if (in_array($cleanKey, $ratioMetrics)) {
+                            $formattedRow[$k] = round($v * 100, 4);
+                        } elseif (in_array($cleanKey, $timeMetrics)) {
+                            $formattedRow[$k] = gmdate('H:i:s', (int) $v);
+                        }
+                    }
+                    $rows[] = $formattedRow;
                 }
 
                 $data = [
