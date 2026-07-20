@@ -710,15 +710,17 @@ class DashboardWidgetDataController extends Controller
                     foreach ($rawRows as $row) {
                         $date = $row['date'];
                         if ($granularity === 'weekly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d');
+                            $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
+                            $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+                            $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
                         } elseif ($granularity === 'monthly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
                         } elseif ($granularity === 'quarterly') {
-                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
                         } elseif ($granularity === 'semiannual') {
-                            $gKey = \Carbon\Carbon::parse($date)->month <= 6 ? \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d') : \Carbon\Carbon::parse($date)->startOfYear()->addMonths(6)->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
                         } elseif ($granularity === 'annually') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
                         } elseif ($granularity === 'lifetime') {
                             $gKey = 'Lifetime';
                         } else {
@@ -872,15 +874,17 @@ class DashboardWidgetDataController extends Controller
                     foreach ($chartData as $row) {
                         $date = $row[$dateKey] ?? '';
                         if ($granularity === 'weekly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY)->format('Y-m-d');
+                            $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
+                            $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+                            $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
                         } elseif ($granularity === 'monthly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
                         } elseif ($granularity === 'quarterly') {
-                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
                         } elseif ($granularity === 'semiannual') {
-                            $gKey = \Carbon\Carbon::parse($date)->month <= 6 ? \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d') : \Carbon\Carbon::parse($date)->startOfYear()->addMonths(6)->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
                         } elseif ($granularity === 'annually') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y-m-d');
+                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
                         } elseif ($granularity === 'lifetime') {
                             $gKey = 'Lifetime';
                         } else {
