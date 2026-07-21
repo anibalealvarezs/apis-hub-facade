@@ -134,7 +134,7 @@ class RemoteEngineService
         return $this->execute($project, function (ApisHubApi $client) use ($channels) {
             $channelStr = implode(',', $channels);
             return $client->resetHistoricalResync($channelStr);
-        });
+        }, 10);
     }
 
     /**
@@ -144,7 +144,7 @@ class RemoteEngineService
     {
         return $this->execute($project, function (ApisHubApi $client) use ($channel, $assetId) {
             return $client->resetHistoricalResync($channel, $assetId);
-        });
+        }, 10);
     }
 
     /**
