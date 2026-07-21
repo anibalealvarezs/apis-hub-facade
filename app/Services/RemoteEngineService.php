@@ -127,37 +127,24 @@ class RemoteEngineService
     }
 
     /**
-     * Trigger a historical synchronization resync via background job.
+     * Trigger a historical synchronization resync via node API.
      */
     public function triggerHistoricalResync(Project $project, array $channels)
     {
-        try {
-            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channels);
-
-            return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
-
-        } catch (\Throwable $e) {
-            Log::error("Nuclear Resync Job dispatch failed for {$project->name}: " . $e->getMessage());
-
-            return ['status' => 'error', 'message' => $e->getMessage()];
-        }
+        return $this->execute($project, function (ApisHubApi $client) use ($channels) {
+            $channelStr = implode(',', $channels);
+            return $client->resetHistoricalResync($channelStr);
+        });
     }
 
     /**
-     * Trigger a single-asset historical synchronization resync via background job.
+     * Trigger a single-asset historical synchronization resync via node API.
      */
     public function triggerAssetHistoricalResync(Project $project, string $channel, string $assetId)
     {
-        try {
-            \App\Jobs\NuclearResyncProjectJob::dispatch($project, [$channel], $assetId);
-
-            return ['status' => 'success', 'message' => 'Single asset nuclear resync initiated via background job.'];
-
-        } catch (\Throwable $e) {
-            Log::error("Asset Nuclear Resync Job dispatch failed for {$project->name} ({$channel}/{$assetId}): " . $e->getMessage());
-
-            return ['status' => 'error', 'message' => $e->getMessage()];
-        }
+        return $this->execute($project, function (ApisHubApi $client) use ($channel, $assetId) {
+            return $client->resetHistoricalResync($channel, $assetId);
+        });
     }
 
     /**
