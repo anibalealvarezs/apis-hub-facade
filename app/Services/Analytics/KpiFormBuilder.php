@@ -353,7 +353,7 @@ class KpiFormBuilder
             ) {
                 if (! empty($data['enabled']) && empty($data['lost_access'])) {
                     $id = $data['id'] ?? $data['url'] ?? $data['platformId'] ?? '';
-                    $name = $data['name'] ?? $data['url'] ?? $data['platformId'] ?? $id;
+                    $name = $data['name'] ?? $data['page_name'] ?? $data['pageName'] ?? $data['title'] ?? $data['account_name'] ?? $data['accountName'] ?? $data['username'] ?? $data['url'] ?? $data['platformId'] ?? $id;
                     if ($id) {
                         $assets[$id] = [
                             'name' => $name,
