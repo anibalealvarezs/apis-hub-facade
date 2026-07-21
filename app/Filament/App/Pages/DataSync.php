@@ -255,4 +255,31 @@ class DataSync extends Page
                 }),
         ];
     }
+
+    public function resyncAsset(string $channel, string $assetId): void
+    {
+        if (! auth()->user()->can('edit_preferences')) {
+            Notification::make()->title(__('Permission Denied'))->danger()->send();
+            return;
+        }
+
+        $tenant = Filament::getTenant();
+        $service = app(RemoteEngineService::class);
+
+        $response = $service->triggerAssetHistoricalResync($tenant, $channel, $assetId);
+
+        if (($response['status'] ?? '') === 'error') {
+            Notification::make()
+                ->title(__('Error initiating resync for asset: ') . ($response['message'] ?? 'Unknown error'))
+                ->danger()
+                ->send();
+        } else {
+            Notification::make()
+                ->title(__('Historical resync initiated for asset ') . $assetId . __('...'))
+                ->success()
+                ->send();
+
+            $this->refreshData(true);
+        }
+    }
 }

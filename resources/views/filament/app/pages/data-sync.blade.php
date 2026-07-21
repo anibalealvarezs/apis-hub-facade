@@ -191,7 +191,8 @@
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Completed') }}</th>
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Processing') }}</th>
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Scheduled') }}</th>
-                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">{{ __('Failed') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center">{{ __('Failed') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">{{ __('Actions') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -219,6 +220,7 @@
                                                         $aPct = $aTotal > 0 ? min(100, round(($aComp / $aTotal) * 100)) : 100;
 
                                                         $rowClass = $aFail > 0 ? 'bg-danger-50/50 dark:bg-danger-500/5 hover:bg-danger-50 dark:hover:bg-danger-500/10' : 'hover:bg-gray-100/50 dark:hover:bg-white/5';
+                                                        $channelName = $channelData['channel'] ?? $channelKey;
                                                     @endphp
                                                     <tr class="{{ $rowClass }} transition-colors">
                                                         <td class="px-4 py-3">
@@ -304,6 +306,22 @@
                                                                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-danger-100 dark:bg-danger-500/20 text-danger-700 dark:text-danger-400 font-bold text-xs">
                                                                     {{ $aFail }}
                                                                 </span>
+                                                            @else
+                                                                <span class="text-gray-300 dark:text-gray-600">-</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            @if($aFail > 0 && auth()->user()->can('edit_preferences'))
+                                                                <x-filament::button
+                                                                    wire:click="resyncAsset('{{ $channelName }}', '{{ $assetId }}')"
+                                                                    wire:confirm="{{ __('Are you sure you want to perform a nuclear resync for asset :asset?', ['asset' => $assetStats['name'] ?? $assetId]) }}"
+                                                                    color="danger"
+                                                                    size="xs"
+                                                                    icon="heroicon-o-fire"
+                                                                    tooltip="{{ __('Reset jobs for this asset and force a historical resync') }}"
+                                                                >
+                                                                    {{ __('Resync') }}
+                                                                </x-filament::button>
                                                             @else
                                                                 <span class="text-gray-300 dark:text-gray-600">-</span>
                                                             @endif

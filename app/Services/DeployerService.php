@@ -251,6 +251,27 @@ EOT;
     }
 
     /**
+     * Trigger a nuclear historical resync for a single asset over SSH.
+     * 
+     * @param Project $project
+     * @param string $channel
+     * @param string $assetId
+     */
+    public function nuclearResyncAsset(Project $project, string $channel, string $assetId)
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        
+        $channelArg = '--channel=' . $channel;
+        $assetArg = '--asset=' . escapeshellarg($assetId);
+        $commands = [
+            "cd {$path}",
+            "bash bin/nuclear-sync.sh {$channelArg} {$assetArg}",
+        ];
+
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
      * Start the containers for a project (resume).
      */
     public function startContainers(Project $project)
