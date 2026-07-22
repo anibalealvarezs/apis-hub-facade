@@ -1389,16 +1389,16 @@
                             }
                         });
 
-                        // Intercept Livewire v3 JS router directly
-                        if (window.Livewire && window.Livewire.navigate) {
-                            const originalNavigate = window.Livewire.navigate;
-                            window.Livewire.navigate = function(url, options) {
-                                console.log('[DEBUG NavGuard] Livewire.navigate intercepted for url:', url);
+                        // Intercept Livewire/Alpine SPA router directly
+                        if (window.Alpine && window.Alpine.navigate) {
+                            const origAlpineNav = window.Alpine.navigate;
+                            window.Alpine.navigate = function(url, options) {
+                                console.log('[DEBUG NavGuard] window.Alpine.navigate called for url:', url);
                                 if (!getOrAskUserDecision()) {
-                                    console.log('[DEBUG NavGuard] Livewire.navigate blocked!');
+                                    console.log('[DEBUG NavGuard] window.Alpine.navigate BLOCKED!');
                                     return false;
                                 }
-                                return originalNavigate.call(window.Livewire, url, options);
+                                return origAlpineNav.apply(this, arguments);
                             };
                         }
 
