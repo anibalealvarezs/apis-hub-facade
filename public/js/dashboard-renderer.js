@@ -1069,20 +1069,18 @@ window.dashboardRenderer = {
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
             badgeHtml = `
-                <div class="r2-summary-badge flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none mb-2 flex-shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="font-semibold text-gray-700 dark:text-gray-300">Model Fit (R²):</span>
-                        <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}% explained variance)</span>
-                    </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider" style="background-color: ${r2Color}">${fitRating}</span>
+                <div class="r2-summary-badge absolute top-3 right-3 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/85 dark:bg-gray-800/85 backdrop-blur-md border border-gray-200/80 dark:border-gray-700/80 shadow-md text-xs select-none pointer-events-auto transition-all">
+                    <span class="font-medium text-gray-600 dark:text-gray-300">Model Fit (R²):</span>
+                    <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider shadow-xs" style="background-color: ${r2Color}">${fitRating}</span>
                 </div>`;
         }
 
-        containerEl.style.display = 'flex';
-        containerEl.style.flexDirection = 'column';
+        containerEl.style.position = 'relative';
+        containerEl.style.width = '100%';
         containerEl.style.height = '100%';
         containerEl.style.overflow = 'hidden';
-        containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap flex-1 min-h-0 relative w-full h-full"></div>';
+        containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap w-full h-full relative"></div>';
 
         const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
         this.renderChart(canvasWrap, config);
