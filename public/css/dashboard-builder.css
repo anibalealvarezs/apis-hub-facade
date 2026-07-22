@@ -27,9 +27,11 @@
 .grid-stack-item .grid-stack-item-content {
     cursor: default;
 }
+.grid-stack-item .grid-stack-item-content .widget-header,
 .grid-stack-item .grid-stack-item-content .rounded-t-lg {
     cursor: grab;
 }
+.grid-stack-item.ui-draggable-dragging .grid-stack-item-content .widget-header,
 .grid-stack-item.ui-draggable-dragging .grid-stack-item-content .rounded-t-lg {
     cursor: grabbing;
 }

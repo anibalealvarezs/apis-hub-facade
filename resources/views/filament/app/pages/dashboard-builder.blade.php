@@ -87,7 +87,7 @@
                                 <div class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
                                     {{-- Widget Header --}}
                                     <div
-                                        class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
+                                        class="widget-header rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
@@ -1446,7 +1446,44 @@
                             acceptWidgets: true,
                             removable: false,
                             resizable: {handles: 'se'},
-                            draggable: {handle: '.grid-stack-item-content .rounded-t-lg'},
+                            draggable: {
+                                handle: '.widget-header',
+                                scroll: true
+                            },
+                        });
+
+                        let autoScrollTimer = null;
+                        this.grid.on('dragstart', (event, el) => {
+                            let lastEvt = null;
+                            const onPointerMove = (e) => { lastEvt = e; };
+                            window.addEventListener('pointermove', onPointerMove);
+                            window.addEventListener('mousemove', onPointerMove);
+
+                            autoScrollTimer = setInterval(() => {
+                                if (!lastEvt) return;
+                                const clientY = lastEvt.clientY;
+                                const threshold = 100;
+                                const viewportHeight = window.innerHeight;
+
+                                if (clientY < threshold) {
+                                    const speed = Math.max(5, Math.round((threshold - clientY) / 2));
+                                    window.scrollBy({ top: -speed, behavior: 'instant' });
+                                } else if (clientY > viewportHeight - threshold) {
+                                    const speed = Math.max(5, Math.round((clientY - (viewportHeight - threshold)) / 2));
+                                    window.scrollBy({ top: speed, behavior: 'instant' });
+                                }
+                            }, 16);
+
+                            const cleanup = () => {
+                                if (autoScrollTimer) {
+                                    clearInterval(autoScrollTimer);
+                                    autoScrollTimer = null;
+                                }
+                                window.removeEventListener('pointermove', onPointerMove);
+                                window.removeEventListener('mousemove', onPointerMove);
+                            };
+
+                            this.grid.once('dragstop', cleanup);
                         });
 
                         this.grid.on('change', (event, items) => {

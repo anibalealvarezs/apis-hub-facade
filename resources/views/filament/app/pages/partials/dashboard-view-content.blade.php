@@ -754,6 +754,7 @@
                             if (typeof GridStack !== 'undefined') {
                                 GridStack.init({
                                     staticGrid: true,
+                                    float: true,
                                     column: 12,
                                     cellHeight: 100,
                                     margin: 12,
