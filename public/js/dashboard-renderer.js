@@ -48,7 +48,9 @@ window.dashboardRenderer = {
         const f1 = m1 ? this.METRIC_FORMATS[m1] : null;
 
         // Regression and scatter plot models preserve the raw dependent metric formatting
-        const isRegressionOrScatter = controls?.calculation_type === 'calculate_regression' || controls?.widget_type === 'scatter_plot';
+        const calcType = controls?.calculation_type || controls?.calculationType || '';
+        const widgetType = controls?.widget_type || controls?.widgetType || '';
+        const isRegressionOrScatter = calcType === 'calculate_regression' || widgetType === 'scatter_plot';
         if (isRegressionOrScatter) {
             return f0 || null;
         }
@@ -203,9 +205,11 @@ window.dashboardRenderer = {
      * Main render dispatcher.
      */
     render(containerEl, json) {
-        const {widget_type, source_type, data, controls} = json;
-        if (controls && source_type) {
-            controls.source_type = source_type;
+        const {widget_type, source_type, calculation_type, data, controls} = json;
+        if (controls) {
+            if (source_type) controls.source_type = source_type;
+            if (widget_type) controls.widget_type = widget_type;
+            if (calculation_type) controls.calculation_type = calculation_type;
         }
         this._widgetData.set(containerEl, json);
         this._renderWidget(widget_type, containerEl, data, controls);
