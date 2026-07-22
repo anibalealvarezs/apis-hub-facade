@@ -1480,11 +1480,13 @@ window.dashboardRenderer = {
 
         const canvas = containerEl.querySelector('canvas');
         if (canvas) {
-            const tooltipEl = containerEl.querySelector('.chart-tooltip');
+            targetEl.style.position = 'relative';
+            targetEl.style.width = '100%';
+            targetEl.style.height = '100%';
+            targetEl.style.overflow = 'hidden';
             targetEl.innerHTML = '';
-            targetEl.appendChild(canvas);
-            if (tooltipEl) targetEl.appendChild(tooltipEl);
-            // Move remaining children (cluster toggle, etc.) into the modal
+            
+            // Move entire child tree (canvasWrap + r2 badge + tooltip + toggles) into modal
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
             }
@@ -1497,11 +1499,7 @@ window.dashboardRenderer = {
                     chart.resize();
                 });
                 this._popOutObserver.observe(targetEl);
-                // Resize synchronously after the DOM move — Chart.js reads
-                // canvas.parentElement dimensions immediately, so the chart
-                // renders at the correct modal container size on first paint.
                 chart.resize();
-                // Re-render pinned tooltip in the new container if one was pinned
                 if (this._pinnedTooltips.has(targetEl)) {
                     this._renderPinnedTooltip(targetEl);
                 }
@@ -1534,11 +1532,13 @@ window.dashboardRenderer = {
                 targetEl.innerHTML = '';
                 return;
             }
-            const tooltipEl = targetEl.querySelector('.chart-tooltip');
+            containerEl.style.position = 'relative';
+            containerEl.style.width = '100%';
+            containerEl.style.height = '100%';
+            containerEl.style.overflow = 'hidden';
             containerEl.innerHTML = '';
-            containerEl.appendChild(canvas);
-            if (tooltipEl) containerEl.appendChild(tooltipEl);
-            // Move remaining children (cluster toggle, etc.) back to the widget
+
+            // Move entire child tree back into widget container
             while (targetEl.children.length > 0) {
                 containerEl.appendChild(targetEl.children[0]);
             }
@@ -1556,7 +1556,6 @@ window.dashboardRenderer = {
                 this._chartInstances.set(containerEl, chart);
                 this._chartInstances.delete(targetEl);
                 chart.resize();
-                // Re-render pinned tooltip in the original container if one was pinned
                 if (this._pinnedTooltips.has(containerEl)) {
                     this._renderPinnedTooltip(containerEl);
                 }
