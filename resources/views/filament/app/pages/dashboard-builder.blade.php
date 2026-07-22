@@ -1346,6 +1346,7 @@
 
                         // 1. Native browser tab close / refresh protection
                         window.addEventListener('beforeunload', (e) => {
+                            console.log('[DEBUG NavGuard] beforeunload fired. isDirty:', this.isDirty);
                             if (this.isDirty) {
                                 e.preventDefault();
                                 e.returnValue = 'You have unsaved changes to your dashboard layout.';
@@ -1355,10 +1356,13 @@
 
                         // 2. Livewire v3 SPA Navigation Hook (wire:navigate & Filament header actions)
                         document.addEventListener('livewire:navigating', (e) => {
+                            console.log('[DEBUG NavGuard] livewire:navigating fired. isDirty:', this.isDirty, 'event:', e);
                             if (this.isDirty) {
                                 const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                                console.log('[DEBUG NavGuard] livewire:navigating user decision confirmed:', confirmed);
                                 if (!confirmed) {
                                     e.preventDefault();
+                                    console.log('[DEBUG NavGuard] livewire:navigating event.preventDefault() executed');
                                 } else {
                                     this.isDirty = false;
                                 }
@@ -1367,17 +1371,21 @@
 
                         // 3. Fallback click interceptor for non-Livewire links & buttons
                         const handleNavClick = (e) => {
+                            console.log('[DEBUG NavGuard] click interceptor fired. isDirty:', this.isDirty, 'target:', e.target);
                             if (!this.isDirty) return;
                             const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
+                            console.log('[DEBUG NavGuard] matched clickable element:', el);
                             if (el) {
                                 const href = el.getAttribute('href');
                                 if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
 
                                 const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                                console.log('[DEBUG NavGuard] click user decision confirmed:', confirmed);
                                 if (!confirmed) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.stopImmediatePropagation();
+                                    console.log('[DEBUG NavGuard] click event stopped');
                                     return false;
                                 } else {
                                     this.isDirty = false;
@@ -1552,19 +1560,23 @@
                         });
 
                         this._initialLayoutSignature = JSON.stringify(this.getLayout());
+                        console.log('[DEBUG NavGuard] initGrid set _initialLayoutSignature:', this._initialLayoutSignature);
 
                         this.grid.on('change', (event, items) => {
+                            const currentSignature = JSON.stringify(this.getLayout());
                             if (!this._initialLayoutSignature) {
-                                this._initialLayoutSignature = JSON.stringify(this.getLayout());
+                                this._initialLayoutSignature = currentSignature;
+                                console.log('[DEBUG NavGuard] grid change set initial signature:', currentSignature);
                                 return;
                             }
-                            const currentSignature = JSON.stringify(this.getLayout());
                             this.isDirty = (currentSignature !== this._initialLayoutSignature);
+                            console.log('[DEBUG NavGuard] grid change evaluated. isDirty:', this.isDirty, 'initial:', this._initialLayoutSignature, 'current:', currentSignature);
                         });
 
                         setTimeout(() => {
                             this._initialLayoutSignature = JSON.stringify(this.getLayout());
                             this.isDirty = false;
+                            console.log('[DEBUG NavGuard] 500ms timeout snapshot set _initialLayoutSignature:', this._initialLayoutSignature, 'isDirty reset to false');
                         }, 500);
                     },
 
@@ -1573,6 +1585,7 @@
                         @this.saveLayout(currentLayout).then(() => {
                             this._initialLayoutSignature = JSON.stringify(currentLayout);
                             this.isDirty = false;
+                            console.log('[DEBUG NavGuard] saveLayout saved layout. isDirty reset to false');
                         });
                     },
 
