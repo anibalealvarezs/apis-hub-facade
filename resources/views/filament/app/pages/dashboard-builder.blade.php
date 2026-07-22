@@ -1379,16 +1379,17 @@
                                 const href = el.getAttribute('href');
                                 if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
 
-                                console.log('[DEBUG NavGuard] pointerdown/click captured for link:', href);
                                 const allowed = getOrAskUserDecision();
                                 if (!allowed) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.stopImmediatePropagation();
                                     return false;
-                                } else if (e.type === 'click') {
-                                    // User confirmed: redirect directly via standard window.location
-                                    window.location.href = href;
+                                } else {
+                                    this.isDirty = false;
+                                    if (e.type === 'click' || e.type === 'pointerdown') {
+                                        window.location.assign(href);
+                                    }
                                 }
                             }
                         };
