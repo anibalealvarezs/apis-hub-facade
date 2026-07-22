@@ -1371,36 +1371,16 @@
                             return userDecision;
                         };
 
-                        // Livewire v3 SPA Navigation Event
-                        document.addEventListener('livewire:navigating', (e) => {
-                            console.log('[DEBUG NavGuard] livewire:navigating listener triggered');
+                        // Direct History API Interceptor (blocks Livewire router pushState when user cancels)
+                        const origPushState = window.history.pushState;
+                        window.history.pushState = function(state, title, url) {
+                            console.log('[DEBUG NavGuard] window.history.pushState called for url:', url);
                             if (!getOrAskUserDecision()) {
-                                e.preventDefault();
-                                console.log('[DEBUG NavGuard] livewire:navigating cancelled via e.preventDefault()');
+                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED!');
+                                return;
                             }
-                        });
-
-                        // Alpine SPA Navigation Event (Livewire 3 Alpine integration)
-                        document.addEventListener('alpine:navigating', (e) => {
-                            console.log('[DEBUG NavGuard] alpine:navigating listener triggered');
-                            if (!getOrAskUserDecision()) {
-                                e.preventDefault();
-                                console.log('[DEBUG NavGuard] alpine:navigating cancelled via e.preventDefault()');
-                            }
-                        });
-
-                        // Intercept Livewire/Alpine SPA router directly
-                        if (window.Alpine && window.Alpine.navigate) {
-                            const origAlpineNav = window.Alpine.navigate;
-                            window.Alpine.navigate = function(url, options) {
-                                console.log('[DEBUG NavGuard] window.Alpine.navigate called for url:', url);
-                                if (!getOrAskUserDecision()) {
-                                    console.log('[DEBUG NavGuard] window.Alpine.navigate BLOCKED!');
-                                    return false;
-                                }
-                                return origAlpineNav.apply(this, arguments);
-                            };
-                        }
+                            return origPushState.apply(this, arguments);
+                        };
 
                         // Capture-phase link click interceptor
                         window.addEventListener('click', (e) => {
