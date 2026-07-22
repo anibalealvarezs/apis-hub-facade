@@ -1069,7 +1069,7 @@ window.dashboardRenderer = {
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
             badgeHtml = `
-                <div class="r2-summary-badge absolute top-3 right-3 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/85 dark:bg-gray-800/85 backdrop-blur-md border border-gray-200/80 dark:border-gray-700/80 shadow-md text-xs select-none pointer-events-auto transition-all">
+                <div class="r2-summary-badge absolute z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/80 dark:border-gray-700/80 shadow-md text-xs select-none pointer-events-auto transition-all" style="top: 12px; right: 12px;">
                     <span class="font-medium text-gray-600 dark:text-gray-300">Model Fit (R²):</span>
                     <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider shadow-xs" style="background-color: ${r2Color}">${fitRating}</span>
@@ -1080,7 +1080,7 @@ window.dashboardRenderer = {
         containerEl.style.width = '100%';
         containerEl.style.height = '100%';
         containerEl.style.overflow = 'hidden';
-        containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap w-full h-full relative"></div>';
+        containerEl.innerHTML = '<div class="chart-canvas-wrap w-full h-full relative" style="position: relative; width: 100%; height: 100%;">' + badgeHtml + '</div>';
 
         const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
         this.renderChart(canvasWrap, config);
