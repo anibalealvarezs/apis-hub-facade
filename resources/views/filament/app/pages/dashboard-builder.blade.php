@@ -1397,7 +1397,7 @@
                                 const href = link.getAttribute('href');
                                 if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
                                 
-                                console.log('[DEBUG NavGuard] click interceptor evaluating link');
+                                console.log('[DEBUG NavGuard] click interceptor evaluating link:', href);
                                 if (!getOrAskUserDecision()) {
                                     e.preventDefault();
                                     e.stopPropagation();
