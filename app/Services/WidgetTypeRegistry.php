@@ -26,6 +26,30 @@ class WidgetTypeRegistry
         'anomaly_chart' => 'Anomaly Chart',
     ];
 
+    protected static array $widgetDescriptions = [
+        'tile' => 'Single large number for totals',
+        'line_chart' => 'Track continuous trends over time',
+        'bar_chart' => 'Compare discrete volumes side-by-side',
+        'scatter_plot' => 'Find correlations and trendlines',
+        'combo_chart' => 'Dual-axis bars and lines (e.g. MACD)',
+        'table' => 'Detailed row-by-row data view',
+        'gauge' => 'Percentage or progress to a target',
+        'sparkline' => 'Minimalist trendline without axes',
+        'anomaly_chart' => 'Highlights statistical outliers in red',
+    ];
+
+    protected static array $widgetSvgs = [
+        'tile' => '<svg viewBox="0 0 40 24" class="w-full h-full"><text x="20" y="16" text-anchor="middle" font-weight="bold" font-size="14" class="fill-gray-800 dark:fill-gray-200">12K</text><path d="M 28 8 L 32 4 L 36 8 M 32 4 L 32 16" class="stroke-green-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+        'line_chart' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 18 L 12 11 L 20 15 L 28 6 L 36 8" class="stroke-primary-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="4" cy="18" r="1.5" class="fill-primary-500"/><circle cx="12" cy="11" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="28" cy="6" r="1.5" class="fill-primary-500"/><circle cx="36" cy="8" r="1.5" class="fill-primary-500"/></svg>',
+        'bar_chart' => '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="10" width="6" height="10" rx="1" class="fill-primary-400"/><rect x="17" y="6" width="6" height="14" rx="1" class="fill-primary-600"/><rect x="28" y="14" width="6" height="6" rx="1" class="fill-primary-300"/></svg>',
+        'scatter_plot' => '<svg viewBox="0 0 40 24" class="w-full h-full"><line x1="4" y1="20" x2="36" y2="4" class="stroke-gray-300 dark:stroke-gray-600" stroke-width="1" stroke-dasharray="2 2"/><circle cx="8" cy="17" r="1.5" class="fill-primary-500"/><circle cx="14" cy="13" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="26" cy="8" r="1.5" class="fill-primary-500"/><circle cx="32" cy="6" r="1.5" class="fill-primary-500"/></svg>',
+        'combo_chart' => '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="12" width="4" height="8" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="15" y="8" width="4" height="12" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="24" y="14" width="4" height="6" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="33" y="6" width="4" height="14" rx="0.5" class="fill-primary-400 opacity-60"/><path d="M 4 16 L 14 7 L 24 12 L 36 4" class="stroke-amber-500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+        'table' => '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="3" y="3" width="34" height="18" rx="2" class="stroke-gray-300 dark:stroke-gray-600 fill-none" stroke-width="1.2"/><rect x="3" y="3" width="34" height="5" class="fill-gray-200 dark:fill-gray-700"/><line x1="3" y1="13" x2="37" y2="13" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="1"/><line x1="15" y1="3" x2="15" y2="21" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="1"/><line x1="26" y1="3" x2="26" y2="21" class="stroke-gray-200 dark:stroke-gray-700" stroke-width="1"/></svg>',
+        'gauge' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 6 19 A 14 14 0 0 1 34 19" class="stroke-gray-200 dark:stroke-gray-700 fill-none" stroke-width="3.5" stroke-linecap="round"/><path d="M 6 19 A 14 14 0 0 1 29 9" class="stroke-primary-500 fill-none" stroke-width="3.5" stroke-linecap="round"/><circle cx="20" cy="19" r="2" class="fill-gray-700 dark:fill-gray-300"/><line x1="20" y1="19" x2="27" y2="10" class="stroke-gray-800 dark:stroke-gray-200" stroke-width="1.5" stroke-linecap="round"/></svg>',
+        'sparkline' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 C 10 17, 12 6, 18 10 C 24 14, 28 4, 36 8" class="stroke-primary-500 fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        'anomaly_chart' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 L 12 15 L 20 7 L 28 14 L 36 12" class="stroke-gray-400 dark:stroke-gray-500 fill-none" stroke-width="1.5" stroke-dasharray="2 2"/><circle cx="20" cy="7" r="3.5" class="fill-red-500/20 stroke-red-500" stroke-width="1.2"/><circle cx="20" cy="7" r="1.5" class="fill-red-600"/></svg>',
+    ];
+
     public static function getWidgetTypesForSource(string $sourceType): array
     {
         return static::$compatibility[$sourceType] ?? [];
@@ -46,6 +70,16 @@ class WidgetTypeRegistry
         return static::$widgetLabels;
     }
 
+    public static function getWidgetDescriptions(): array
+    {
+        return static::$widgetDescriptions;
+    }
+
+    public static function getWidgetSvgs(): array
+    {
+        return static::$widgetSvgs;
+    }
+
     public static function getSourceLabel(string $sourceType): string
     {
         return static::$sourceLabels[$sourceType] ?? $sourceType;
@@ -54,5 +88,15 @@ class WidgetTypeRegistry
     public static function getWidgetLabel(string $widgetType): string
     {
         return static::$widgetLabels[$widgetType] ?? $widgetType;
+    }
+
+    public static function getWidgetDescription(string $widgetType): string
+    {
+        return static::$widgetDescriptions[$widgetType] ?? 'Standard widget';
+    }
+
+    public static function getWidgetSvg(string $widgetType): string
+    {
+        return static::$widgetSvgs[$widgetType] ?? static::$widgetSvgs['tile'];
     }
 }
