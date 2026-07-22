@@ -579,6 +579,12 @@ window.dashboardRenderer = {
     // ─── Gauge ───
 
     renderGauge(containerEl, data, controls) {
+        const widgetId = containerEl.dataset.widgetId;
+        if (widgetId && this._chartInstances.has(widgetId)) {
+            this._chartInstances.get(widgetId).destroy();
+            this._chartInstances.delete(widgetId);
+        }
+
         const resultFormat = this.getKpiResultFormat(controls);
 
         let value = data?.value ?? 0;
@@ -604,36 +610,56 @@ window.dashboardRenderer = {
             }
         }
 
-        // Half-circle arc math (radius 60, circumference of semi-circle = Math.PI * 60 = ~188.5)
-        const arcLength = 188.5;
-        const dashOffset = arcLength - (pct / 100) * arcLength;
-        // Needle angle calculation (-90 deg at 0%, +90 deg at 100%)
-        const needleAngle = -90 + (pct / 100) * 180;
+        const remainingPct = 100 - pct;
+        const isDark = document.documentElement.classList.contains('dark');
+        const trackColor = isDark ? '#374151' : '#E5E7EB';
 
         containerEl.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-4 select-none">
-                <div class="relative w-48 h-28 flex flex-col items-center justify-end">
-                    <svg viewBox="0 0 160 95" class="w-full h-full">
-                        <!-- Track Background -->
-                        <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" class="text-gray-200 dark:text-gray-700/60"/>
-                        <!-- Filled Arc Progress -->
-                        <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
-                              stroke-dasharray="${arcLength}" stroke-dashoffset="${dashOffset}"
-                              class="transition-all duration-700 ease-out"/>
-                        <!-- Needle Pivot Circle -->
-                        <circle cx="80" cy="80" r="6" class="fill-gray-800 dark:fill-gray-100 shadow"/>
-                        <!-- Needle Pointer -->
-                        <g transform="rotate(${needleAngle} 80 80)" class="transition-transform duration-700 ease-out">
-                            <line x1="80" y1="80" x2="80" y2="28" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="text-gray-800 dark:text-gray-100"/>
-                        </g>
-                    </svg>
-                    <div class="absolute bottom-0 text-center translate-y-1">
-                        <span class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">${Math.round(pct)}%</span>
+            <div class="flex flex-col items-center justify-center h-full p-4 select-none relative">
+                <div class="relative w-full max-w-[220px] h-[130px] flex items-center justify-center">
+                    <canvas class="w-full h-full"></canvas>
+                    <div class="absolute bottom-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">${Math.round(pct)}%</span>
+                        ${label ? `<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">${this.escapeHtml(label)}</span>` : ''}
                     </div>
                 </div>
-                ${label ? `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-2">${this.escapeHtml(label)}</p>` : ''}
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
             </div>`;
+
+        const canvas = containerEl.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [pct, remainingPct],
+                    backgroundColor: [color, trackColor],
+                    borderWidth: 0,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                rotation: 270,
+                circumference: 180,
+                cutout: '75%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: false,
+                    duration: 800
+                }
+            }
+        });
+
+        if (widgetId) {
+            this._chartInstances.set(widgetId, chart);
+        }
     },
 
     // ─── Sparkline ───
