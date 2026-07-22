@@ -525,12 +525,14 @@ window.dashboardRenderer = {
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
         columns.forEach(col => {
             const key = col.key || col;
+            const rawLabel = col.label || col;
+            const displayLabel = this.getMetricName(rawLabel) || rawLabel;
             const isActive = sort.column === key;
             const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
             const thAlign = isNumeric ? 'text-right' : 'text-left';
             const thStyle = isNumeric ? 'width:140px;' : '';
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(col.label || col)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
 
@@ -962,16 +964,64 @@ window.dashboardRenderer = {
         const xMetricName = this.getMetricName(controls?.metrics?.[1]);
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
 
+        // Extract R2 (coefficient of determination) if present in payload data
+        const r2 = data?.r2 ?? data?.r_squared ?? data?.rSquared ?? null;
+        let r2Color = '#3B82F6'; // Default Blue
+        let fitRating = 'Moderate Fit';
+        
+        if (r2 !== null) {
+            if (r2 >= 0.70) {
+                r2Color = '#10B981'; // Green / High Explanatory Power
+                fitRating = 'Strong Fit';
+            } else if (r2 >= 0.40) {
+                r2Color = '#F59E0B'; // Amber / Moderate Explanatory Power
+                fitRating = 'Moderate Fit';
+            } else {
+                r2Color = '#EF4444'; // Red / Low Explanatory Power
+                fitRating = 'Weak Fit';
+            }
+        }
+
         const mappedData = JSON.parse(JSON.stringify(data));
         if (mappedData.datasets) {
-            mappedData.datasets = mappedData.datasets.map(ds => ({
-                ...ds,
-                pointRadius: 6,
-                pointHoverRadius: 10,
-                pointHitRadius: 15,
-                pointBorderWidth: 2,
-                pointHoverBorderWidth: 2,
-            }));
+            mappedData.datasets = mappedData.datasets.map(ds => {
+                if (ds.type === 'line') {
+                    return {
+                        ...ds,
+                        borderColor: r2Color,
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                    };
+                }
+                return {
+                    ...ds,
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    pointHitRadius: 15,
+                    pointBorderWidth: 2,
+                    pointHoverBorderWidth: 2,
+                };
+            });
+        }
+
+        // Render R2 Header Summary Badge inside container if R2 exists
+        if (r2 !== null) {
+            const badgePct = (r2 * 100).toFixed(1);
+            const headerHtml = `
+                <div class="absolute top-2 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none">
+                    <span class="font-medium text-gray-500 dark:text-gray-400">R²:</span>
+                    <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white" style="background-color: ${r2Color}">${fitRating}</span>
+                </div>`;
+            containerEl.style.position = 'relative';
+            const existingBadge = containerEl.querySelector('.r2-summary-badge');
+            if (existingBadge) existingBadge.remove();
+            
+            const badgeWrap = document.createElement('div');
+            badgeWrap.className = 'r2-summary-badge';
+            badgeWrap.innerHTML = headerHtml;
+            containerEl.appendChild(badgeWrap);
         }
 
         const config = {
@@ -1001,6 +1051,13 @@ window.dashboardRenderer = {
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
+                                const ds = ctx.dataset;
+                                if (ds.type === 'line') {
+                                    if (r2 !== null) {
+                                        return `Trendline (R² = ${r2.toFixed(3)} — ${fitRating})`;
+                                    }
+                                    return 'Linear Regression Trendline';
+                                }
                                 const point = ctx.raw;
                                 const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
                                 const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
