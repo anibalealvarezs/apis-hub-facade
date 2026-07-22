@@ -47,8 +47,13 @@ window.dashboardRenderer = {
         const f0 = this.METRIC_FORMATS[m0];
         const f1 = m1 ? this.METRIC_FORMATS[m1] : null;
 
-        // If multiple metrics exist AND this is a KPI widget, apply ratio heuristics.
-        // For non-KPI widgets, multiple metrics just mean multiple chart series.
+        // Regression and scatter plot models preserve the raw dependent metric formatting
+        const isRegressionOrScatter = controls?.calculation_type === 'calculate_regression' || controls?.widget_type === 'scatter_plot';
+        if (isRegressionOrScatter) {
+            return f0 || null;
+        }
+
+        // If multiple metrics exist AND this is a KPI ratio widget, apply ratio heuristics.
         if (m1 && controls?.source_type === 'kpi') {
             // Known ratio → output type
             const ratioFormats = {
