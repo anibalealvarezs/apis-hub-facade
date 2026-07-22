@@ -1481,9 +1481,12 @@
                                 }
                                 window.removeEventListener('pointermove', onPointerMove);
                                 window.removeEventListener('mousemove', onPointerMove);
+                                if (this.grid) {
+                                    this.grid.off('dragstop', cleanup);
+                                }
                             };
 
-                            this.grid.once('dragstop', cleanup);
+                            this.grid.on('dragstop', cleanup);
                         });
 
                         this.grid.on('change', (event, items) => {
