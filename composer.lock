@@ -75,13 +75,13 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:anibalealvarezs/apis-hub-api.git",
-                "reference": "672b1164204f92bbd77885542cd9f10a56e06e1e"
+                "reference": "908460435bafc5d857c59cd1d84e26960d62327f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-672b1164204f92bbd77885542cd9f10a56e06e1e-zip-cc20da.zip",
-                "reference": "672b1164204f92bbd77885542cd9f10a56e06e1e",
-                "shasum": "572239762281a44c8993bb69a45a624c9704d69c"
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/apis-hub-api/anibalealvarezs-apis-hub-api-908460435bafc5d857c59cd1d84e26960d62327f-zip-c086e9.zip",
+                "reference": "908460435bafc5d857c59cd1d84e26960d62327f",
+                "shasum": "30caeb2e7f603e5526a24fabcf6f7c251e3d0f18"
             },
             "require": {
                 "anibalealvarezs/api-client-skeleton": "^1.0.0",
@@ -142,7 +142,7 @@
             "support": {
                 "issues": "https://github.com/anibalealvarezs/apis-hub-api/issues"
             },
-            "time": "2026-07-21T23:19:29+00:00"
+            "time": "2026-07-22T00:07:11+00:00"
         },
         {
             "name": "anibalealvarezs/facebook-graph-api",
