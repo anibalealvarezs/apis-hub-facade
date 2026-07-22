@@ -1068,13 +1068,20 @@ window.dashboardRenderer = {
         let badgeHtml = '';
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
+            let pillClasses = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/40';
+            if (fitRating === 'Moderate Fit') {
+                pillClasses = 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/40';
+            } else if (fitRating === 'Weak Fit') {
+                pillClasses = 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/40';
+            }
+
             badgeHtml = `
-                <div class="r2-summary-badge flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 shadow-xs text-xs select-none mb-2 flex-shrink-0">
+                <div class="r2-summary-badge flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/70 text-xs select-none mb-2 flex-shrink-0">
                     <div class="flex items-center gap-2">
-                        <span class="font-semibold text-gray-700 dark:text-gray-300">Model Fit (R²):</span>
-                        <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}% explained variance)</span>
+                        <span class="font-medium text-gray-500 dark:text-gray-400">Model Fit (R²):</span>
+                        <span class="font-semibold text-gray-900 dark:text-gray-100">${r2.toFixed(3)} (${badgePct}% variance)</span>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider" style="background-color: ${r2Color}">${fitRating}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${pillClasses}">${fitRating}</span>
                 </div>`;
         }
 
