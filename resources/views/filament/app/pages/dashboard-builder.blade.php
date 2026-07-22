@@ -1353,17 +1353,23 @@
                             }
                         });
 
-                        // Intercept link clicks if there are unsaved changes
-                        document.addEventListener('click', (e) => {
+                        // Intercept Livewire / SPA / native link navigation if there are unsaved changes
+                        const handleNavClick = (e) => {
                             if (!this.isDirty) return;
-                            const anchor = e.target.closest('a');
-                            if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
-                                if (!confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?')) {
+                            const el = e.target.closest('a, button[url], [wire\\:navigate]');
+                            if (el) {
+                                const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                                if (!confirmed) {
                                     e.preventDefault();
                                     e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    return false;
                                 }
                             }
-                        }, true);
+                        };
+
+                        window.addEventListener('click', handleNavClick, true);
+                        document.addEventListener('click', handleNavClick, true);
                     },
 
                     initAllAssets() {
@@ -1529,19 +1535,27 @@
                             this.grid.on('dragstop', cleanup);
                         });
 
+                        this._initialLayoutSignature = JSON.stringify(this.getLayout());
+
                         this.grid.on('change', (event, items) => {
-                            if (!this._isInitializingGrid && items && items.length > 0) {
-                                this.isDirty = true;
+                            if (!this._initialLayoutSignature) {
+                                this._initialLayoutSignature = JSON.stringify(this.getLayout());
+                                return;
                             }
+                            const currentSignature = JSON.stringify(this.getLayout());
+                            this.isDirty = (currentSignature !== this._initialLayoutSignature);
                         });
 
                         setTimeout(() => {
-                            this._isInitializingGrid = false;
+                            this._initialLayoutSignature = JSON.stringify(this.getLayout());
+                            this.isDirty = false;
                         }, 500);
                     },
 
                     saveLayout() {
-                        @this.saveLayout(this.getLayout()).then(() => {
+                        const currentLayout = this.getLayout();
+                        @this.saveLayout(currentLayout).then(() => {
+                            this._initialLayoutSignature = JSON.stringify(currentLayout);
                             this.isDirty = false;
                         });
                     },
