@@ -198,7 +198,7 @@
                         ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\ReplicateAction::make()
                         ->label(__('Duplicate'))
-                        ->excludeAttributes(['id'])
+                        ->excludeAttributes(['id', 'dashboards_count'])
                         ->beforeReplicaSaved(function (CustomKpi $replica) {
                             $replica->name = $replica->name . ' (copy)';
                         })
