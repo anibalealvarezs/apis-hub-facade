@@ -1353,47 +1353,57 @@
                             }
                         });
 
-                        // 2. Single unified navigation guard for Livewire 3 SPA & native links
-                        let isAskingUser = false;
-                        const checkCanNavigate = (source) => {
-                            console.log('[DEBUG NavGuard] checkCanNavigate called from:', source, 'isDirty:', this.isDirty, 'isAskingUser:', isAskingUser);
+                        // 2. Navigation Guard State
+                        let userDecision = null; // null = pending, true = allowed, false = cancelled
+                        
+                        const getOrAskUserDecision = () => {
                             if (!this.isDirty) return true;
-                            if (isAskingUser) return false;
-                            isAskingUser = true;
-                            const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
-                            console.log('[DEBUG NavGuard] confirm result:', confirmed);
-                            isAskingUser = false;
-                            if (confirmed) {
+                            if (userDecision !== null) return userDecision;
+                            
+                            userDecision = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                            console.log('[DEBUG NavGuard] User decision prompted:', userDecision);
+                            
+                            if (userDecision) {
                                 this.isDirty = false;
-                                return true;
+                            } else {
+                                setTimeout(() => { userDecision = null; }, 100);
                             }
-                            return false;
+                            return userDecision;
                         };
 
-                        // Livewire v3 SPA Event
+                        // Livewire v3 SPA Navigation Event
                         document.addEventListener('livewire:navigating', (e) => {
-                            console.log('[DEBUG NavGuard] livewire:navigating event:', e);
-                            if (!checkCanNavigate('livewire:navigating')) {
-                                console.log('[DEBUG NavGuard] livewire:navigating calling e.preventDefault()');
+                            console.log('[DEBUG NavGuard] livewire:navigating listener triggered');
+                            if (!getOrAskUserDecision()) {
                                 e.preventDefault();
+                                console.log('[DEBUG NavGuard] livewire:navigating cancelled via e.preventDefault()');
                             }
                         });
 
-                        // Click capture fallback for links before Livewire router fires
+                        // Alpine SPA Navigation Event (Livewire 3 Alpine integration)
+                        document.addEventListener('alpine:navigating', (e) => {
+                            console.log('[DEBUG NavGuard] alpine:navigating listener triggered');
+                            if (!getOrAskUserDecision()) {
+                                e.preventDefault();
+                                console.log('[DEBUG NavGuard] alpine:navigating cancelled via e.preventDefault()');
+                            }
+                        });
+
+                        // Capture-phase link click interceptor
                         window.addEventListener('click', (e) => {
                             if (!this.isDirty) return;
-                            const link = e.target.closest('a[href]');
-                            console.log('[DEBUG NavGuard] click captured target:', e.target, 'link:', link);
+                            const link = e.target.closest('a[href], button[url], [wire\\:navigate]');
                             if (link) {
                                 const href = link.getAttribute('href');
-                                if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-                                    if (!checkCanNavigate('click')) {
-                                        console.log('[DEBUG NavGuard] click interceptor stopping event');
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        e.stopImmediatePropagation();
-                                        return false;
-                                    }
+                                if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
+                                
+                                console.log('[DEBUG NavGuard] click interceptor evaluating link');
+                                if (!getOrAskUserDecision()) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    console.log('[DEBUG NavGuard] click event stopped completely');
+                                    return false;
                                 }
                             }
                         }, true);
