@@ -1064,22 +1064,28 @@ window.dashboardRenderer = {
             },
         };
 
-        this.renderChart(containerEl, config);
-
-        // Render R2 Header Summary Badge inside container if R2 exists
+        // Prepare header badge HTML if R2 exists
+        let badgeHtml = '';
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
-            const headerHtml = `
-                <div class="r2-summary-badge absolute top-2 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none pointer-events-auto">
-                    <span class="font-medium text-gray-500 dark:text-gray-400">R²:</span>
-                    <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white" style="background-color: ${r2Color}">${fitRating}</span>
+            badgeHtml = `
+                <div class="r2-summary-badge flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none mb-2 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">Model Fit (R²):</span>
+                        <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}% explained variance)</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider" style="background-color: ${r2Color}">${fitRating}</span>
                 </div>`;
-            containerEl.style.position = 'relative';
-            const existingBadge = containerEl.querySelector('.r2-summary-badge');
-            if (existingBadge) existingBadge.remove();
-            containerEl.insertAdjacentHTML('beforeend', headerHtml);
         }
+
+        containerEl.style.display = 'flex';
+        containerEl.style.flexDirection = 'column';
+        containerEl.style.height = '100%';
+        containerEl.style.overflow = 'hidden';
+        containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap flex-1 min-h-0 relative w-full h-full"></div>';
+
+        const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
+        this.renderChart(canvasWrap, config);
         const hasLineDs = mappedData.datasets.some(ds => ds.type === 'line');
         if (hasLineDs) {
             config.options = config.options || {};
