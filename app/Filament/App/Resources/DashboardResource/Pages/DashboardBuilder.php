@@ -429,18 +429,15 @@ class DashboardBuilder extends Page
             Actions\Action::make('settings')
                 ->label(__('Dashboard Settings'))
                 ->icon('heroicon-o-cog-6-tooth')
-                ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard]))
-                ->navigate(false),
+                ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard])),
             Actions\Action::make('view')
                 ->label(__('View Dashboard'))
                 ->icon('heroicon-o-eye')
-                ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard]))
-                ->navigate(false),
+                ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard])),
             Actions\Action::make('back')
                 ->label(__('Back to Dashboards'))
                 ->icon('heroicon-o-arrow-left')
-                ->url(DashboardResource::getUrl('index'))
-                ->navigate(false),
+                ->url(DashboardResource::getUrl('index')),
         ];
     }
 }

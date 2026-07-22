@@ -1389,6 +1389,19 @@
                             }
                         });
 
+                        // Intercept Livewire v3 JS router directly
+                        if (window.Livewire && window.Livewire.navigate) {
+                            const originalNavigate = window.Livewire.navigate;
+                            window.Livewire.navigate = function(url, options) {
+                                console.log('[DEBUG NavGuard] Livewire.navigate intercepted for url:', url);
+                                if (!getOrAskUserDecision()) {
+                                    console.log('[DEBUG NavGuard] Livewire.navigate blocked!');
+                                    return false;
+                                }
+                                return originalNavigate.call(window.Livewire, url, options);
+                            };
+                        }
+
                         // Capture-phase link click interceptor
                         window.addEventListener('click', (e) => {
                             if (!this.isDirty) return;
