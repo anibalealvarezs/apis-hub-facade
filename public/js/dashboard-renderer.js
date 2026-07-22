@@ -604,20 +604,34 @@ window.dashboardRenderer = {
             }
         }
 
+        // Half-circle arc math (radius 60, circumference of semi-circle = Math.PI * 60 = ~188.5)
+        const arcLength = 188.5;
+        const dashOffset = arcLength - (pct / 100) * arcLength;
+        // Needle angle calculation (-90 deg at 0%, +90 deg at 100%)
+        const needleAngle = -90 + (pct / 100) * 180;
+
         containerEl.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-4">
-                <div class="relative w-24 h-24">
-                    <svg viewBox="0 0 120 120" class="transform -rotate-90">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10" class="dark:stroke-gray-700"/>
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="${color}" stroke-width="10"
-                                stroke-dasharray="${(pct / 100) * 326.7} 326.7"
-                                stroke-linecap="round" class="transition-all duration-700"/>
+            <div class="flex flex-col items-center justify-center h-full p-4 select-none">
+                <div class="relative w-48 h-28 flex flex-col items-center justify-end">
+                    <svg viewBox="0 0 160 95" class="w-full h-full">
+                        <!-- Track Background -->
+                        <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" class="text-gray-200 dark:text-gray-700/60"/>
+                        <!-- Filled Arc Progress -->
+                        <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
+                              stroke-dasharray="${arcLength}" stroke-dashoffset="${dashOffset}"
+                              class="transition-all duration-700 ease-out"/>
+                        <!-- Needle Pivot Circle -->
+                        <circle cx="80" cy="80" r="6" class="fill-gray-800 dark:fill-gray-100 shadow"/>
+                        <!-- Needle Pointer -->
+                        <g transform="rotate(${needleAngle} 80 80)" class="transition-transform duration-700 ease-out">
+                            <line x1="80" y1="80" x2="80" y2="28" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="text-gray-800 dark:text-gray-100"/>
+                        </g>
                     </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-xl font-bold text-gray-900 dark:text-white">${Math.round(pct)}%</span>
+                    <div class="absolute bottom-0 text-center translate-y-1">
+                        <span class="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">${Math.round(pct)}%</span>
                     </div>
                 </div>
-                ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">${this.escapeHtml(label)}</p>` : ''}
+                ${label ? `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-2">${this.escapeHtml(label)}</p>` : ''}
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
             </div>`;
     },
