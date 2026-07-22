@@ -1125,6 +1125,46 @@
                 </div>
             </div>
         </div>
+
+        {{-- ============================================================ --}}
+        {{-- UNSAVED LAYOUT CONFIRMATION MODAL                             --}}
+        {{-- ============================================================ --}}
+        <div x-show="showUnsavedNavModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/50" x-on:click="showUnsavedNavModal = false"></div>
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-5 border border-gray-200 dark:border-gray-800">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <x-filament::icon name="heroicon-o-exclamation-triangle" class="w-6 h-6"/>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white leading-6">
+                            {{ __('Unsaved Layout Changes') }}
+                        </h2>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {{ __('You have made changes to the layout of this dashboard. Would you like to save them before leaving?') }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button"
+                            class="px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                            x-on:click="showUnsavedNavModal = false">
+                        {{ __('Keep Editing') }}
+                    </button>
+                    <button type="button"
+                            class="px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                            x-on:click="confirmDiscardAndLeave()">
+                        {{ __('Discard & Leave') }}
+                    </button>
+                    <button type="button"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition-colors"
+                            x-on:click="confirmSaveAndLeave()">
+                        {{ __('Save & Leave') }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -1160,6 +1200,27 @@
                     // ─── Unsaved Layout State ───
                     isDirty: false,
                     _isInitializingGrid: true,
+                    showUnsavedNavModal: false,
+                    pendingNavUrl: null,
+
+                    confirmDiscardAndLeave() {
+                        this.isDirty = false;
+                        this.showUnsavedNavModal = false;
+                        if (this.pendingNavUrl) {
+                            window.location.assign(this.pendingNavUrl);
+                        }
+                    },
+
+                    confirmSaveAndLeave() {
+                        const currentLayout = this.getLayout();
+                        @this.saveLayout(currentLayout).then(() => {
+                            this.isDirty = false;
+                            this.showUnsavedNavModal = false;
+                            if (this.pendingNavUrl) {
+                                window.location.assign(this.pendingNavUrl);
+                            }
+                        });
+                    },
 
                     // ─── Grid State ───
                     widgets: @json($this->widgets ?? []),
@@ -1353,24 +1414,6 @@
                             }
                         });
 
-                        // 2. Navigation Guard State
-                        let userDecision = null; // null = pending, true = allowed, false = cancelled
-                        
-                        const getOrAskUserDecision = () => {
-                            if (!this.isDirty) return true;
-                            if (userDecision !== null) return userDecision;
-                            
-                            userDecision = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
-                            console.log('[DEBUG NavGuard] User decision prompted:', userDecision);
-                            
-                            if (userDecision) {
-                                this.isDirty = false;
-                            } else {
-                                setTimeout(() => { userDecision = null; }, 100);
-                            }
-                            return userDecision;
-                        };
-
                         // Intercept Livewire 3 link prefetch & navigate execution
                         const preventLivewireNav = (e) => {
                             if (!this.isDirty) return;
@@ -1379,18 +1422,16 @@
                                 const href = el.getAttribute('href');
                                 if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
 
-                                const allowed = getOrAskUserDecision();
-                                if (!allowed) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    e.stopImmediatePropagation();
-                                    return false;
-                                } else {
-                                    this.isDirty = false;
-                                    if (e.type === 'click' || e.type === 'pointerdown') {
-                                        window.location.assign(href);
-                                    }
+                                // Always cancel the immediate event and open our modal
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+
+                                if (e.type === 'click' || e.type === 'pointerdown') {
+                                    this.pendingNavUrl = href;
+                                    this.showUnsavedNavModal = true;
                                 }
+                                return false;
                             }
                         };
 
@@ -1411,11 +1452,13 @@
 
                         // Direct History API Interceptor
                         const origPushState = window.history.pushState;
-                        window.history.pushState = function(state, title, url) {
-                            if (!getOrAskUserDecision()) {
+                        window.history.pushState = (state, title, url) => {
+                            if (this.isDirty) {
+                                this.pendingNavUrl = url;
+                                this.showUnsavedNavModal = true;
                                 return;
                             }
-                            return origPushState.apply(this, arguments);
+                            return origPushState.apply(window.history, [state, title, url]);
                         };
                     },
 
