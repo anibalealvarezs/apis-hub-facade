@@ -1389,7 +1389,17 @@
                             }
                         };
 
-                        // Capture early on pointerdown / mousedown BEFORE Livewire prefetch fires on click
+                        // Disable prefetching on hover when layout is dirty
+                        window.addEventListener('mouseover', (e) => {
+                            if (!this.isDirty) return;
+                            const link = e.target.closest('a[wire\\:navigate], a[href]');
+                            if (link && link.hasAttribute('wire:navigate')) {
+                                link.removeAttribute('wire:navigate');
+                                link.setAttribute('data-wire-nav-removed', 'true');
+                            }
+                        }, true);
+
+                        // Capture early on pointerdown / mousedown / click
                         window.addEventListener('pointerdown', preventLivewireNav, true);
                         window.addEventListener('mousedown', preventLivewireNav, true);
                         window.addEventListener('click', preventLivewireNav, true);
@@ -1397,10 +1407,8 @@
                         // Direct History API Interceptor
                         const origPushState = window.history.pushState;
                         window.history.pushState = function(state, title, url) {
-                            console.log('[DEBUG NavGuard] window.history.pushState called for url:', url);
                             if (!getOrAskUserDecision()) {
-                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED!');
-                                throw new Error('LivewireNavigationCancelledByGuard');
+                                return;
                             }
                             return origPushState.apply(this, arguments);
                         };
