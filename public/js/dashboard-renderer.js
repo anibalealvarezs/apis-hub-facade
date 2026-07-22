@@ -1355,7 +1355,8 @@ window.dashboardRenderer = {
         };
 
         const canvas = document.createElement('canvas');
-        containerEl.innerHTML = '';
+        const existingCanvas = containerEl.querySelector('canvas');
+        if (existingCanvas) existingCanvas.remove();
         containerEl.appendChild(canvas);
 
         const createChart = () => {
