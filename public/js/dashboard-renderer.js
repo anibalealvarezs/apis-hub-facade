@@ -1002,8 +1002,8 @@ window.dashboardRenderer = {
                         borderColor: r2Color,
                         borderWidth: 2.5,
                         pointRadius: 0,
-                        pointHoverRadius: 0,
-                        pointHitRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHitRadius: 20,
                     };
                 }
                 return {
@@ -1021,7 +1021,7 @@ window.dashboardRenderer = {
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
             const headerHtml = `
-                <div class="absolute top-2 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none">
+                <div class="absolute top-2 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none">
                     <span class="font-medium text-gray-500 dark:text-gray-400">R²:</span>
                     <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
                     <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white" style="background-color: ${r2Color}">${fitRating}</span>
@@ -1061,12 +1061,16 @@ window.dashboardRenderer = {
                 plugins: {
                     legend: {display: false},
                     tooltip: {
-                        filter: (tooltipItem) => {
-                            // Filter out line dataset from scatter tooltips so line points never show values
-                            return tooltipItem.dataset.type !== 'line';
-                        },
                         callbacks: {
                             label: (ctx) => {
+                                const ds = ctx.dataset;
+                                if (ds.type === 'line') {
+                                    const point = ctx.raw;
+                                    const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
+                                    const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
+                                    const r2Label = r2 !== null ? ` — R² = ${r2.toFixed(3)} (${fitRating})` : '';
+                                    return `Trendline: (${valX} ${xMetricName}, ${valY} ${yMetricName})${r2Label}`;
+                                }
                                 const point = ctx.raw;
                                 const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
                                 const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);

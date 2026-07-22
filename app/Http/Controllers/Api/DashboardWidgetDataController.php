@@ -539,6 +539,7 @@ class DashboardWidgetDataController extends Controller
 
                 $data = [
                     'labels' => [],
+                    'r2' => $rSquared,
                     'datasets' => [
                         [
                             'type' => 'scatter',
@@ -555,6 +556,7 @@ class DashboardWidgetDataController extends Controller
                             'borderWidth' => 2,
                             'fill' => false,
                             'pointRadius' => 0,
+                            'r2' => $rSquared,
                         ],
                     ],
                     'x_label' => null,
