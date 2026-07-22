@@ -974,11 +974,13 @@ window.dashboardRenderer = {
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
 
         // Extract R2 (coefficient of determination) if present in payload data
-        const r2 = data?.r2 ?? data?.r_squared ?? data?.rSquared ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r2 ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r_squared ?? null;
+        const r2Raw = data?.r2 ?? data?.r_squared ?? data?.rSquared ?? data?.regression?.r2 ?? data?.stats?.r2 ?? data?.summary?.r2 ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r2 ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r_squared;
+        const r2 = (r2Raw !== null && r2Raw !== undefined && !isNaN(Number(r2Raw))) ? Number(r2Raw) : null;
+
         let r2Color = '#3B82F6'; // Default Blue
         let fitRating = 'Moderate Fit';
         
-        if (r2 !== null && r2 !== undefined) {
+        if (r2 !== null) {
             if (r2 >= 0.70) {
                 r2Color = '#10B981'; // Green / High Explanatory Power
                 fitRating = 'Strong Fit';
@@ -1000,8 +1002,8 @@ window.dashboardRenderer = {
                         borderColor: r2Color,
                         borderWidth: 2.5,
                         pointRadius: 0,
-                        pointHoverRadius: 4,
-                        pointHitRadius: 25,
+                        pointHoverRadius: 0,
+                        pointHitRadius: 0,
                     };
                 }
                 return {
@@ -1016,12 +1018,12 @@ window.dashboardRenderer = {
         }
 
         // Render R2 Header Summary Badge inside container if R2 exists
-        if (r2 !== null && r2 !== undefined) {
+        if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
             const headerHtml = `
                 <div class="absolute top-2 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm text-xs select-none">
                     <span class="font-medium text-gray-500 dark:text-gray-400">R²:</span>
-                    <span class="font-bold text-gray-900 dark:text-white">${Number(r2).toFixed(3)} (${badgePct}%)</span>
+                    <span class="font-bold text-gray-900 dark:text-white">${r2.toFixed(3)} (${badgePct}%)</span>
                     <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold text-white" style="background-color: ${r2Color}">${fitRating}</span>
                 </div>`;
             containerEl.style.position = 'relative';
@@ -1059,15 +1061,12 @@ window.dashboardRenderer = {
                 plugins: {
                     legend: {display: false},
                     tooltip: {
+                        filter: (tooltipItem) => {
+                            // Filter out line dataset from scatter tooltips so line points never show values
+                            return tooltipItem.dataset.type !== 'line';
+                        },
                         callbacks: {
                             label: (ctx) => {
-                                const ds = ctx.dataset;
-                                if (ds.type === 'line') {
-                                    if (r2 !== null && r2 !== undefined) {
-                                        return `Trendline (R² = ${Number(r2).toFixed(3)} — ${fitRating})`;
-                                    }
-                                    return 'Linear Regression Trendline';
-                                }
                                 const point = ctx.raw;
                                 const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
                                 const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
