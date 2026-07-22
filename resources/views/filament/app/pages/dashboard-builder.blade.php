@@ -23,7 +23,22 @@
                         Share
                     </button>
                 @endcan
-                <x-filament::button x-on:click="$wire.saveLayout(getLayout())" color="primary" icon="heroicon-o-check">
+
+                {{-- Layout Dirty Status Badge --}}
+                <div x-show="isDirty" x-cloak class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20 text-xs font-semibold text-warning-700 dark:text-warning-400">
+                    <span class="w-2 h-2 rounded-full bg-warning-500 animate-pulse"></span>
+                    <span>{{ __('Unsaved layout changes') }}</span>
+                </div>
+                <div x-show="!isDirty" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <x-filament::icon name="heroicon-m-check" class="w-3.5 h-3.5 text-success-500"/>
+                    <span>{{ __('Layout saved') }}</span>
+                </div>
+
+                <x-filament::button 
+                    x-on:click="saveLayout()" 
+                    ::color="isDirty ? 'warning' : 'primary'" 
+                    icon="heroicon-o-check"
+                    ::class="isDirty ? 'ring-2 ring-warning-500/50 shadow-md animate-pulse' : ''">
                     Save Layout
                 </x-filament::button>
             </div>
@@ -1142,6 +1157,10 @@
         Alpine.data('dashboardBuilder', () => {
             const dashboardControls = @json($this->getDashboardControls());
                 return {
+                    // ─── Unsaved Layout State ───
+                    isDirty: false,
+                    _isInitializingGrid: true,
+
                     // ─── Grid State ───
                     widgets: @json($this->widgets ?? []),
                     gridLayout: @json($this->gridState ?? []),
@@ -1324,6 +1343,27 @@
                             }
                             this.initAllAssets();
                         });
+
+                        // Browser tab close / refresh protection
+                        window.addEventListener('beforeunload', (e) => {
+                            if (this.isDirty) {
+                                e.preventDefault();
+                                e.returnValue = 'You have unsaved changes to your dashboard layout.';
+                                return e.returnValue;
+                            }
+                        });
+
+                        // Intercept link clicks if there are unsaved changes
+                        document.addEventListener('click', (e) => {
+                            if (!this.isDirty) return;
+                            const anchor = e.target.closest('a');
+                            if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
+                                if (!confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?')) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                            }
+                        }, true);
                     },
 
                     initAllAssets() {
@@ -1490,7 +1530,19 @@
                         });
 
                         this.grid.on('change', (event, items) => {
-                            // The layout is now captured synchronously by getLayout()
+                            if (!this._isInitializingGrid && items && items.length > 0) {
+                                this.isDirty = true;
+                            }
+                        });
+
+                        setTimeout(() => {
+                            this._isInitializingGrid = false;
+                        }, 500);
+                    },
+
+                    saveLayout() {
+                        @this.saveLayout(this.getLayout()).then(() => {
+                            this.isDirty = false;
                         });
                     },
 
