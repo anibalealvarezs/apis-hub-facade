@@ -1355,11 +1355,13 @@
 
                         // 2. Single unified navigation guard for Livewire 3 SPA & native links
                         let isAskingUser = false;
-                        const checkCanNavigate = () => {
+                        const checkCanNavigate = (source) => {
+                            console.log('[DEBUG NavGuard] checkCanNavigate called from:', source, 'isDirty:', this.isDirty, 'isAskingUser:', isAskingUser);
                             if (!this.isDirty) return true;
                             if (isAskingUser) return false;
                             isAskingUser = true;
                             const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                            console.log('[DEBUG NavGuard] confirm result:', confirmed);
                             isAskingUser = false;
                             if (confirmed) {
                                 this.isDirty = false;
@@ -1370,7 +1372,9 @@
 
                         // Livewire v3 SPA Event
                         document.addEventListener('livewire:navigating', (e) => {
-                            if (!checkCanNavigate()) {
+                            console.log('[DEBUG NavGuard] livewire:navigating event:', e);
+                            if (!checkCanNavigate('livewire:navigating')) {
+                                console.log('[DEBUG NavGuard] livewire:navigating calling e.preventDefault()');
                                 e.preventDefault();
                             }
                         });
@@ -1379,10 +1383,12 @@
                         window.addEventListener('click', (e) => {
                             if (!this.isDirty) return;
                             const link = e.target.closest('a[href]');
+                            console.log('[DEBUG NavGuard] click captured target:', e.target, 'link:', link);
                             if (link) {
                                 const href = link.getAttribute('href');
                                 if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
-                                    if (!checkCanNavigate()) {
+                                    if (!checkCanNavigate('click')) {
+                                        console.log('[DEBUG NavGuard] click interceptor stopping event');
                                         e.preventDefault();
                                         e.stopPropagation();
                                         e.stopImmediatePropagation();
