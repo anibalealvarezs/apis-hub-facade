@@ -1376,8 +1376,8 @@
                         window.history.pushState = function(state, title, url) {
                             console.log('[DEBUG NavGuard] window.history.pushState called for url:', url);
                             if (!getOrAskUserDecision()) {
-                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED!');
-                                return;
+                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED & THROWING PREVENT_NAV!');
+                                throw new Error('LivewireNavigationCancelledByGuard');
                             }
                             return origPushState.apply(this, arguments);
                         };
