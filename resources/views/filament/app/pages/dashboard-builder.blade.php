@@ -1371,35 +1371,39 @@
                             return userDecision;
                         };
 
-                        // Direct History API Interceptor (blocks Livewire router pushState when user cancels)
-                        const origPushState = window.history.pushState;
-                        window.history.pushState = function(state, title, url) {
-                            console.log('[DEBUG NavGuard] window.history.pushState called for url:', url);
-                            if (!getOrAskUserDecision()) {
-                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED & THROWING PREVENT_NAV!');
-                                throw new Error('LivewireNavigationCancelledByGuard');
-                            }
-                            return origPushState.apply(this, arguments);
-                        };
-
-                        // Capture-phase link click interceptor
-                        window.addEventListener('click', (e) => {
+                        // Intercept Livewire 3 link prefetch & navigate execution
+                        const preventLivewireNav = (e) => {
                             if (!this.isDirty) return;
-                            const link = e.target.closest('a[href], button[url], [wire\\:navigate]');
-                            if (link) {
-                                const href = link.getAttribute('href');
+                            const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
+                            if (el) {
+                                const href = el.getAttribute('href');
                                 if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
-                                
-                                console.log('[DEBUG NavGuard] click interceptor evaluating link:', href);
+
+                                console.log('[DEBUG NavGuard] pointerdown/click captured for link:', href);
                                 if (!getOrAskUserDecision()) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.stopImmediatePropagation();
-                                    console.log('[DEBUG NavGuard] click event stopped completely');
                                     return false;
                                 }
                             }
-                        }, true);
+                        };
+
+                        // Capture early on pointerdown / mousedown BEFORE Livewire prefetch fires on click
+                        window.addEventListener('pointerdown', preventLivewireNav, true);
+                        window.addEventListener('mousedown', preventLivewireNav, true);
+                        window.addEventListener('click', preventLivewireNav, true);
+
+                        // Direct History API Interceptor
+                        const origPushState = window.history.pushState;
+                        window.history.pushState = function(state, title, url) {
+                            console.log('[DEBUG NavGuard] window.history.pushState called for url:', url);
+                            if (!getOrAskUserDecision()) {
+                                console.log('[DEBUG NavGuard] window.history.pushState BLOCKED!');
+                                throw new Error('LivewireNavigationCancelledByGuard');
+                            }
+                            return origPushState.apply(this, arguments);
+                        };
                     },
 
                     initAllAssets() {
