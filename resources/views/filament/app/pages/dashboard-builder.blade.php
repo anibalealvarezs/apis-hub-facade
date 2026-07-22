@@ -1344,7 +1344,7 @@
                             this.initAllAssets();
                         });
 
-                        // Browser tab close / refresh protection
+                        // 1. Native browser tab close / refresh protection
                         window.addEventListener('beforeunload', (e) => {
                             if (this.isDirty) {
                                 e.preventDefault();
@@ -1353,23 +1353,39 @@
                             }
                         });
 
-                        // Intercept Livewire / SPA / native link navigation if there are unsaved changes
+                        // 2. Livewire v3 SPA Navigation Hook (wire:navigate & Filament header actions)
+                        document.addEventListener('livewire:navigating', (e) => {
+                            if (this.isDirty) {
+                                const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
+                                if (!confirmed) {
+                                    e.preventDefault();
+                                } else {
+                                    this.isDirty = false;
+                                }
+                            }
+                        });
+
+                        // 3. Fallback click interceptor for non-Livewire links & buttons
                         const handleNavClick = (e) => {
                             if (!this.isDirty) return;
-                            const el = e.target.closest('a, button[url], [wire\\:navigate]');
+                            const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
                             if (el) {
+                                const href = el.getAttribute('href');
+                                if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
+
                                 const confirmed = confirm('You have unsaved changes to your layout. Are you sure you want to leave without saving?');
                                 if (!confirmed) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.stopImmediatePropagation();
                                     return false;
+                                } else {
+                                    this.isDirty = false;
                                 }
                             }
                         };
 
                         window.addEventListener('click', handleNavClick, true);
-                        document.addEventListener('click', handleNavClick, true);
                     },
 
                     initAllAssets() {
