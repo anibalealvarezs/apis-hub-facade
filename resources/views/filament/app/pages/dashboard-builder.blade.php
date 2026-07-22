@@ -1377,14 +1377,18 @@
                             const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
                             if (el) {
                                 const href = el.getAttribute('href');
-                                if (href && (href.startsWith('#') || href.startsWith('javascript:'))) return;
+                                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
 
                                 console.log('[DEBUG NavGuard] pointerdown/click captured for link:', href);
-                                if (!getOrAskUserDecision()) {
+                                const allowed = getOrAskUserDecision();
+                                if (!allowed) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     e.stopImmediatePropagation();
                                     return false;
+                                } else if (e.type === 'click') {
+                                    // User confirmed: redirect directly via standard window.location
+                                    window.location.href = href;
                                 }
                             }
                         };
