@@ -680,8 +680,23 @@ class DashboardWidgetDataController extends Controller
                     ];
                 } else {
                     $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                    $granularity = $resolvedControls['granularity'] ?? 'daily';
+
+                    // Add channel-specific labels not in KpiFormBuilder
+                    $metricLabels += [
+                        // FB Organic fb_pages fixed aggregations
+                        'page_views_total'          => 'Page Views',
+                        'video_views'               => 'Video Views',
+                        'follows_and_unfollows'     => 'Follows & Unfollows',
+                        'engaged_users'             => 'Engaged Users',
+                        // FB Marketing trend-prefixed clean keys
+                        'frequency'                 => 'Frequency',
+                        'link_clicks'               => 'Link Clicks',
+                        'purchase_roas'             => 'ROAS',
+                    ];
+
+                    $ratioMetrics    = ['ctr', 'bounce_rate', 'result_rate'];
+                    $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas'];
+                    $granularity     = $resolvedControls['granularity'] ?? 'daily';
     
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : (isset($chartData[0]['metric_date']) ? 'metric_date' : 'date');
 
@@ -705,13 +720,20 @@ class DashboardWidgetDataController extends Controller
                     $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
                     if ($metricsFilter && !in_array($cleanKey, $metricsFilter)) continue;
 
-                    $isRatio = in_array($cleanKey, $ratioMetrics);
-                    $isTime = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
-                    $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
+                    $isRatio    = in_array($cleanKey, $ratioMetrics);
+                    $isCurrency = in_array($cleanKey, $currencyMetrics);
+                    $isTime     = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
+                    $label      = $metricLabels[$cleanKey] ?? ucwords(str_replace('_', ' ', $cleanKey));
+
+                    $format = 'number';
+                    if ($isRatio)    $format = 'percentage';
+                    elseif ($isCurrency) $format = 'currency';
+                    elseif ($isTime) $format = 'string';
+
                     $columns[] = [
-                        'key' => $key,
-                        'label' => $isRatio ? $label . ' (%)' : $label,
-                        'format' => $isRatio ? 'percentage' : ($isTime ? 'string' : 'number'),
+                        'key'    => $key,
+                        'label'  => $isRatio ? $label . ' (%)' : $label,
+                        'format' => $format,
                     ];
                 }
 
