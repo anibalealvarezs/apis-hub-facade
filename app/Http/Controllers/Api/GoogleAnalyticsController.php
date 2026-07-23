@@ -266,9 +266,7 @@ class GoogleAnalyticsController extends Controller
                 } else {
                     $requestedMetrics = array_merge(
                         $this->metricsForScope('traffic_matrix', true),
-                        $this->metricsForScope('acquisition_matrix'),
-                        $this->metricsForScope('event_matrix'),
-                        $this->metricsForScope('ad_touchpoint_matrix')
+                        $this->metricsForScope('acquisition_matrix')
                     );
                 }
             } else {
@@ -300,7 +298,7 @@ class GoogleAnalyticsController extends Controller
                 if ($dependency) {
                     $intersect = $unassignedMetrics;
                 } else {
-                    $scopeMetrics = $this->metricsForScope($scope, $scope === 'traffic_matrix');
+                    $scopeMetrics = $this->metricsForScope($scope);
                     $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
                     
                     if ($scope === 'traffic_matrix') {
