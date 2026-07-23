@@ -1832,6 +1832,37 @@ class DashboardWidgetDataController extends Controller
                     $payload['account'] = array_values(array_unique($flat));
                 }
             }
+
+            if ($channel === 'facebook_organic' && !empty($payload['account'])) {
+                $project = Project::find($payload['tenant']);
+                if ($project) {
+                    $pages = $project->sync_config['facebook_organic']['assets']['pages']
+                        ?? $project->sync_config['facebook_organic']['pages']
+                        ?? [];
+                    $mapped = [];
+                    foreach ($payload['account'] as $accId) {
+                        $strAccId = (string) $accId;
+                        if (str_contains($strAccId, '|')) {
+                            $mapped[] = $strAccId;
+                            continue;
+                        }
+                        $foundCompound = null;
+                        foreach ($pages as $page) {
+                            $pid = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id'] ?? '');
+                            if ($pid === $strAccId) {
+                                $fbAccountId = $page['fbAccountId'] ?? $page['fb_account_id'] ?? 'NONE';
+                                $igAccountId = $page['igAccountId'] ?? $page['ig_account_id'] ?? 'NONE';
+                                $fbPlatformId = $pid;
+                                $fbPageId = $page['pageId'] ?? $page['page_id'] ?? 'NONE';
+                                $foundCompound = "{$fbAccountId}|{$igAccountId}|{$fbPlatformId}|{$fbPageId}";
+                                break;
+                            }
+                        }
+                        $mapped[] = $foundCompound ?? "NONE|NONE|{$strAccId}|NONE";
+                    }
+                    $payload['account'] = array_values(array_unique($mapped));
+                }
+            }
         }
 
         $request = new Request($payload);
