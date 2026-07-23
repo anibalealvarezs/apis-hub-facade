@@ -979,14 +979,29 @@
                             };
                         },
 
+                        normalizeSummaryMetrics(obj) {
+                            if (!obj) return {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
+                            return {
+                                sessions: obj.sessions ?? 0,
+                                activeUsers: obj.activeUsers ?? obj.active_users ?? 0,
+                                newUsers: obj.newUsers ?? obj.new_users ?? 0,
+                                conversions: obj.conversions ?? 0,
+                                screenPageViews: obj.screenPageViews ?? obj.pageviews ?? 0,
+                                averageSessionDuration: obj.averageSessionDuration ?? obj.average_session_duration ?? 0,
+                                totalUsers: obj.totalUsers ?? obj.total_users ?? 0,
+                                bounceRate: obj.bounceRate ?? obj.bounce_rate ?? 0,
+                                events: obj.events ?? 0,
+                            };
+                        },
+
                         async fetchSummary() {
                             if (!this.account || !this.dateStart || !this.dateEnd) return;
                             const cacheKey = this.getCacheKey('summary');
 
                             if (sessionStorage.getItem(cacheKey)) {
                                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                                this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
-                                this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
+                                this.summary = this.normalizeSummaryMetrics(data.summary);
+                                this.previous = this.normalizeSummaryMetrics(data.previous);
                                 return;
                             }
 
@@ -996,8 +1011,8 @@
                                 const data = await response.json();
                                 if (!data.error) {
                                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                                    this.summary = data.summary || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
-                                    this.previous = data.previous || {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0};
+                                    this.summary = this.normalizeSummaryMetrics(data.summary);
+                                    this.previous = this.normalizeSummaryMetrics(data.previous);
                                 }
                             } catch (error) {
                                 console.error('Error fetching summary:', error);
