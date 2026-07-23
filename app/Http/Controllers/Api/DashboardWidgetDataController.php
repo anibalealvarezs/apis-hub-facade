@@ -1932,15 +1932,31 @@ class DashboardWidgetDataController extends Controller
                     $page = $pidToPage[$strAccId] ?? null;
 
                     if ($activeTab === 'instagram') {
-                        // Use the IG channeledAccount ID linked to this FB page.
-                        $igId = (string) ($page['igAccountId'] ?? $page['ig_account_id'] ?? '');
-                        // igId should be a small internal integer, not 'NONE' or empty.
-                        $igId = ($igId !== '' && $igId !== 'NONE' && $igId !== '0') ? $igId : null;
-                        if ($igId) {
-                            $mapped[] = "NONE|{$igId}|{$strAccId}|NONE";
+                        $igPlatformId = (string) ($page['ig_account'] ?? $page['igAccountId'] ?? $page['ig_account_id'] ?? '');
+                        if ($igPlatformId !== '') {
+                            // Resolve IG platform ID to internal channeled account ID
+                            $igId = null;
+                            if ($project) {
+                                $service = app(\App\Services\RemoteEngineService::class);
+                                $response = $service->listChanneled($project, 'facebook_organic', 'ig_account', ['limit' => 1000, 'enabled' => 1]);
+                                if (isset($response['data']) && is_array($response['data'])) {
+                                    foreach ($response['data'] as $acc) {
+                                        $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                                        if ($pid === $igPlatformId) {
+                                            $igId = (string) $acc['id'];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if ($igId) {
+                                $mapped[] = "NONE|{$igId}|{$strAccId}|NONE";
+                            } else {
+                                // Fallback to IG platform ID if internal ID resolution failed
+                                $mapped[] = "NONE|{$igPlatformId}|{$strAccId}|NONE";
+                            }
                         } else {
-                            // No IG account linked in sync_config — skip this asset.
-                            \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] No linked IG channeledAccount for FB page platform ID: ' . $strAccId . '. Page config: ' . json_encode($page));
+                            \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] No linked IG platform ID found in sync_config for FB page: ' . $strAccId);
                         }
                     } else {
                         if ($page) {
