@@ -69,14 +69,14 @@ class GoogleAnalyticsController extends Controller
     private function mapFromGa4(string $metric): string
     {
         return match ($metric) {
-            'screenPageViews' => 'pageviews',
-            'bounceRate' => 'bounce_rate',
-            'newUsers' => 'new_users',
-            'averageSessionDuration' => 'average_session_duration',
+            'screenPageViews' => 'screenPageViews',
+            'bounceRate' => 'bounceRate',
+            'newUsers' => 'newUsers',
+            'averageSessionDuration' => 'averageSessionDuration',
             'totalRevenue' => 'revenue',
             'eventCount' => 'events',
-            'activeUsers' => 'active_users',
-            'totalUsers' => 'total_users',
+            'activeUsers' => 'activeUsers',
+            'totalUsers' => 'totalUsers',
             default => $metric,
         };
     }
