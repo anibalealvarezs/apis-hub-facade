@@ -251,27 +251,32 @@ class GoogleAnalyticsController extends Controller
 
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            $hasExplicitMetrics = !empty($validated['metrics']) && is_array($validated['metrics']);
-            $requestedMetrics = $hasExplicitMetrics ? array_map([$this, 'mapToGa4'], $validated['metrics']) : [];
-            $dependency = $validated['dependency'] ?? null;
+            $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
 
-            if (!$hasExplicitMetrics) {
-                // Data Explorer request: Query standard default metrics
-                $requestedMetrics = $dependency
-                    ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix')
-                    : array_merge(
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+            
+            $dependency = $validated['dependency'] ?? null;
+            \Illuminate\Support\Facades\Log::error("GA4 Summary: Resolved dependency:", ['dependency' => $dependency]);
+            
+            if (empty($requestedMetrics)) {
+                if ($dependency) {
+                    $requestedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
+                } else {
+                    $requestedMetrics = array_merge(
                         $this->metricsForScope('traffic_matrix', true),
                         $this->metricsForScope('acquisition_matrix')
                     );
+                }
             } else {
-                // Dashboard Widget request: Filter requested metrics by scope/dependency if provided
                 $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
                     $this->metricsForScope('traffic_matrix', true),
                     $this->metricsForScope('acquisition_matrix'),
                     $this->metricsForScope('event_matrix'),
                     $this->metricsForScope('ad_touchpoint_matrix')
                 );
-
+                
                 $intersect = array_intersect($requestedMetrics, $validForScope);
                 if (!empty($intersect)) {
                     $requestedMetrics = array_values($intersect);
@@ -366,27 +371,32 @@ class GoogleAnalyticsController extends Controller
 
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            $hasExplicitMetrics = !empty($validated['metrics']) && is_array($validated['metrics']);
-            $requestedMetrics = $hasExplicitMetrics ? array_map([$this, 'mapToGa4'], $validated['metrics']) : [];
-            $dependency = $validated['dependency'] ?? null;
+            $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
 
-            if (!$hasExplicitMetrics) {
-                // Data Explorer request: Query standard default metrics
-                $requestedMetrics = $dependency
-                    ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix')
-                    : array_merge(
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+
+            $dependency = $validated['dependency'] ?? null;
+            \Illuminate\Support\Facades\Log::error("GA4 Chart: Resolved dependency:", ['dependency' => $dependency]);
+            
+            if (empty($requestedMetrics)) {
+                if ($dependency) {
+                    $requestedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
+                } else {
+                    $requestedMetrics = array_merge(
                         $this->metricsForScope('traffic_matrix', true),
                         $this->metricsForScope('acquisition_matrix')
                     );
+                }
             } else {
-                // Dashboard Widget request: Filter requested metrics by scope/dependency if provided
                 $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
                     $this->metricsForScope('traffic_matrix', true),
                     $this->metricsForScope('acquisition_matrix'),
                     $this->metricsForScope('event_matrix'),
                     $this->metricsForScope('ad_touchpoint_matrix')
                 );
-
+                
                 $intersect = array_intersect($requestedMetrics, $validForScope);
                 if (!empty($intersect)) {
                     $requestedMetrics = array_values($intersect);
@@ -475,9 +485,13 @@ class GoogleAnalyticsController extends Controller
             $tab = $validated['activeTab'] ?? 'campaigns';
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
-            $hasExplicitMetrics = !empty($validated['metrics']) && is_array($validated['metrics']);
-            $requestedMetrics = $hasExplicitMetrics ? array_map([$this, 'mapToGa4'], $validated['metrics']) : [];
             $dependency = $validated['dependency'] ?? null;
+            $requestedMetrics = $validated['metrics'] ?? [];
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
+            
+            $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
+            \Illuminate\Support\Facades\Log::error("GA4 Table: Resolved dependency:", ['dependency' => $dependency]);
             
             $queries = [];
 
@@ -501,7 +515,7 @@ class GoogleAnalyticsController extends Controller
                 $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
                 $unassignedMetrics = $requestedMetrics;
 
-                if (!$hasExplicitMetrics) {
+                if (empty($unassignedMetrics)) {
                     if ($dependency) {
                         $unassignedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
                     } else {
