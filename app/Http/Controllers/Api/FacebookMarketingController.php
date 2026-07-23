@@ -22,6 +22,8 @@ class FacebookMarketingController extends Controller
             'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'nullable|string',
         ]);
     }
 
@@ -175,7 +177,7 @@ class FacebookMarketingController extends Controller
 
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
-            $aggregations = [
+            $defaultAggregations = [
                 'trend_total_spend' => 'spend',
                 'trend_total_clicks' => 'clicks',
                 'trend_total_impressions' => 'impressions',
@@ -189,6 +191,20 @@ class FacebookMarketingController extends Controller
                 'trend_average_cost_per_result' => 'cost_per_result',
                 'trend_average_result_rate' => 'result_rate'
             ];
+
+            $aggregations = $defaultAggregations;
+            if (!empty($validated['metrics']) && is_array($validated['metrics'])) {
+                $requestedMetrics = array_flip($validated['metrics']);
+                $filteredAggregations = [];
+                foreach ($defaultAggregations as $alias => $rawMetric) {
+                    if (isset($requestedMetrics[$rawMetric]) || isset($requestedMetrics[$alias])) {
+                        $filteredAggregations[$alias] = $rawMetric;
+                    }
+                }
+                if (!empty($filteredAggregations)) {
+                    $aggregations = $filteredAggregations;
+                }
+            }
 
             $payloads = [
                 'chart' => [

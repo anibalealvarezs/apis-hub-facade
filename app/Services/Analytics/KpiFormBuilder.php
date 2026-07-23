@@ -348,6 +348,24 @@ class KpiFormBuilder
             }
         }
 
+        // Scope-specific metrics override for Facebook Marketing
+        if ($channel === 'facebook_marketing') {
+            return [
+                'spend' => __('Spend'),
+                'clicks' => __('Clicks'),
+                'impressions' => __('Impressions'),
+                'reach' => __('Reach'),
+                'frequency' => __('Frequency'),
+                'cpm' => __('CPM'),
+                'ctr' => __('CTR'),
+                'cpc' => __('CPC'),
+                'results' => __('Results'),
+                'purchase_roas' => __('ROAS'),
+                'cost_per_result' => __('Cost per Result'),
+                'result_rate' => __('Result Rate'),
+            ];
+        }
+
         $options = [];
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags()[$channel] ?? [];
 
