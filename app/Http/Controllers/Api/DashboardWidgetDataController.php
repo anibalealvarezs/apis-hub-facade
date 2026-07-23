@@ -1750,6 +1750,28 @@ class DashboardWidgetDataController extends Controller
             return $ga4Mappings[$project->id][$asset] ?? $asset;
         }
 
+        if ($channel === 'facebook_marketing') {
+            static $fbmMappings = [];
+            if (!isset($fbmMappings[$project->id])) {
+                $service = app(\App\Services\RemoteEngineService::class);
+                $response = $service->listChanneled($project, 'facebook_marketing', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                $fbmMappings[$project->id] = [];
+                if (isset($response['data']) && is_array($response['data'])) {
+                    foreach ($response['data'] as $acc) {
+                        $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                        if ($pid) {
+                            $fbmMappings[$project->id][$pid] = (string) $acc['id'];
+                            $cleanPid = str_replace('act_', '', $pid);
+                            $fbmMappings[$project->id][$cleanPid] = (string) $acc['id'];
+                            $fbmMappings[$project->id]['act_' . $cleanPid] = (string) $acc['id'];
+                        }
+                    }
+                }
+            }
+            $strAsset = (string) $asset;
+            return $fbmMappings[$project->id][$strAsset] ?? $asset;
+        }
+
         if (is_numeric($asset) && $channel !== 'google_search_console') {
             return $asset;
         }
@@ -1861,6 +1883,31 @@ class DashboardWidgetDataController extends Controller
                         $mapped[] = $foundCompound ?? "NONE|NONE|{$strAccId}|NONE";
                     }
                     $payload['account'] = array_values(array_unique($mapped));
+                }
+            }
+
+            if ($channel === 'facebook_marketing' && !empty($payload['account'])) {
+                $project = Project::find($payload['tenant']);
+                if ($project) {
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'facebook_marketing', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    $pidToId = [];
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $acc) {
+                            $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                            if ($pid) {
+                                $intId = (string) $acc['id'];
+                                $pidToId[$pid] = $intId;
+                                $clean = str_replace('act_', '', $pid);
+                                $pidToId[$clean] = $intId;
+                                $pidToId['act_' . $clean] = $intId;
+                            }
+                        }
+                    }
+                    $payload['account'] = array_values(array_unique(array_map(
+                        fn($a) => $pidToId[(string)$a] ?? (string)$a,
+                        $payload['account']
+                    )));
                 }
             }
         }
