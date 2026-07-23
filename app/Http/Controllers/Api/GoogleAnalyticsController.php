@@ -483,12 +483,14 @@ class GoogleAnalyticsController extends Controller
 
             $dependency = $validated['dependency'] ?? null;
             $requestedMetrics = $validated['metrics'] ?? [];
-            \Illuminate\Support\Facades\Log::error("GA4 Table: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
+            \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Request]:", [
+                'tab' => $tab,
+                'account' => $validated['account'],
+                'metrics_raw' => $validated['metrics'] ?? null,
+                'dependency' => $dependency
+            ]);
             
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
-            \Illuminate\Support\Facades\Log::error("GA4 Table: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
-            \Illuminate\Support\Facades\Log::error("GA4 Table: Resolved dependency:", ['dependency' => $dependency]);
-            
             $queries = [];
 
             $isLegacyTab = in_array($tab, [
@@ -507,7 +509,6 @@ class GoogleAnalyticsController extends Controller
                     }
                 }
             } else {
-                // Metric widget dimensional granularity (e.g. 'country')
                 $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
                 $unassignedMetrics = $requestedMetrics;
 
@@ -565,6 +566,8 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Queries Built]:", ['queries' => $queries]);
+
             if (empty($queries)) {
                 return response()->json(['table' => [], 'debug_results' => null]);
             }
@@ -581,8 +584,9 @@ class GoogleAnalyticsController extends Controller
                 ];
             }
 
+            \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Payloads]:", ['payloads' => $payloads]);
             $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
-            \Illuminate\Support\Facades\Log::error("GA4 Table: Raw engine results:", $results);
+            \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Raw Response]:", ['results' => $results]);
 
             $dataSets = [];
             $groupByKeys = [];
@@ -602,7 +606,10 @@ class GoogleAnalyticsController extends Controller
                 $mappedTableData[] = $mappedRow;
             }
 
-            \Illuminate\Support\Facades\Log::error("GA4 Table: Final mapped table result:", $mappedTableData);
+            \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Final Mapped Output]:", [
+                'count' => count($mappedTableData),
+                'first_row' => $mappedTableData[0] ?? null
+            ]);
 
             return response()->json([
                 'table' => $mappedTableData,
