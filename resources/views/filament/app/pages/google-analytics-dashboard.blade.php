@@ -126,14 +126,61 @@
                                              x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isAnySectionLoading }"/>
                     <span>{{ __('Update') }}</span>
                 </button>
-                <select wire:model.live="selectedAccount"
-                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition duration-75 shadow-sm"
-                        style="max-width:250px;">
-                    <option value="" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ __('Select Property...') }}</option>
-                    @foreach($accounts as $id => $url)
-                        <option value="{{ $id }}" class="bg-white dark:bg-gray-800 text-gray-950 dark:text-white">{{ $url }}</option>
-                    @endforeach
-                </select>
+                <div class="relative" x-data="{ open: false, searchAccount: '' }" @click.outside="open = false">
+                    <button @click="open = !open" type="button"
+                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px]"
+                            style="max-width:250px;">
+                        <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                              x-text="!selectedAccount ? '{{ __('Select Property...') }}' : (accountNames[selectedAccount] || selectedAccount)"></span>
+                        <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
+                    </button>
+
+                    <div x-show="open" x-transition style="display: none; min-width: 320px;"
+                         class="absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+
+                        <!-- Search Header -->
+                        <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
+                                    <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                                </div>
+                                <input type="text" x-model="searchAccount"
+                                       class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-9 p-2"
+                                       style="padding-left: 2.75rem;"
+                                       placeholder="{{ __('Search properties...') }}">
+                            </div>
+                        </div>
+
+                        <!-- Accounts List -->
+                        <div class="p-2 flex flex-col gap-1 overflow-y-auto max-h-96">
+                            @if(count($accounts) === 0)
+                                <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">{{ __('No properties available.') }}</div>
+                            @endif
+                            @foreach($accounts as $id => $url)
+                                <div
+                                    x-show="searchAccount === '' || '{{ strtolower(addslashes($url)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())"
+                                    @click="selectedAccount = '{{ $id }}'; $wire.set('selectedAccount', '{{ $id }}'); open = false;"
+                                    class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"
+                                    :class="selectedAccount == '{{ $id }}' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
+                                    <div
+                                        class="w-5 h-5 mr-3 shrink-0 flex items-center justify-center rounded-full border-2 transition-colors duration-150"
+                                        :class="selectedAccount == '{{ $id }}' ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600'">
+                                        <svg x-show="selectedAccount == '{{ $id }}'" class="w-3 h-3 text-white"
+                                             fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="m4.5 12.75 6 6 9-13.5"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex flex-col overflow-hidden">
+                                        <span class="truncate font-medium"
+                                              :class="selectedAccount == '{{ $id }}' ? 'text-primary-700 dark:text-primary-300' : ''"
+                                              title="{{ $url }}">{{ $url }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
                 <input type="date" x-model.lazy="dateStart"
                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5 transition duration-75 shadow-sm">
                 <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
