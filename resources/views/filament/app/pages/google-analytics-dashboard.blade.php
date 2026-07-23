@@ -174,6 +174,15 @@
                     <span x-text="formatVariance(variance.newUsers)"></span>
                 </div>
             </div>
+            <div class="card-stat-ga4" :class="activeMetrics.screenPageViews ? 'active' : ''" @click="toggleMetric('screenPageViews')"
+                 style="--color: #a855f7;">
+                <div class="ga4-label">{{ __('Pageviews') }}</div>
+                <div class="card-metric-value" x-text="formatNumber(summary.screenPageViews)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.screenPageViews)">
+                    <span x-text="getVarianceIcon(variance.screenPageViews)"></span>
+                    <span x-text="formatVariance(variance.screenPageViews)"></span>
+                </div>
+            </div>
             <div class="card-stat-ga4" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
                  style="--color: var(--ga4-conversions);">
                 <div class="ga4-label">{{ __('Conversions') }}</div>
@@ -181,6 +190,42 @@
                 <div class="card-metric-trend" :class="getVarianceClass(variance.conversions)">
                     <span x-text="getVarianceIcon(variance.conversions)"></span>
                     <span x-text="formatVariance(variance.conversions)"></span>
+                </div>
+            </div>
+            <div class="card-stat-ga4" :class="activeMetrics.averageSessionDuration ? 'active' : ''" @click="toggleMetric('averageSessionDuration')"
+                 style="--color: #06b6d4;">
+                <div class="ga4-label">{{ __('Avg Duration') }}</div>
+                <div class="card-metric-value" x-text="formatDuration(summary.averageSessionDuration)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.averageSessionDuration)">
+                    <span x-text="getVarianceIcon(variance.averageSessionDuration)"></span>
+                    <span x-text="formatVariance(variance.averageSessionDuration)"></span>
+                </div>
+            </div>
+            <div class="card-stat-ga4" :class="activeMetrics.bounceRate ? 'active' : ''" @click="toggleMetric('bounceRate')"
+                 style="--color: #ec4899;">
+                <div class="ga4-label">{{ __('Bounce Rate') }}</div>
+                <div class="card-metric-value" x-text="formatPercent(summary.bounceRate)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.bounceRate, true)">
+                    <span x-text="getVarianceIcon(variance.bounceRate, true)"></span>
+                    <span x-text="formatVariance(variance.bounceRate)"></span>
+                </div>
+            </div>
+            <div class="card-stat-ga4" :class="activeMetrics.totalUsers ? 'active' : ''" @click="toggleMetric('totalUsers')"
+                 style="--color: #6366f1;">
+                <div class="ga4-label">{{ __('Total Users') }}</div>
+                <div class="card-metric-value" x-text="formatNumber(summary.totalUsers)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.totalUsers)">
+                    <span x-text="getVarianceIcon(variance.totalUsers)"></span>
+                    <span x-text="formatVariance(variance.totalUsers)"></span>
+                </div>
+            </div>
+            <div class="card-stat-ga4" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')"
+                 style="--color: #10b981;">
+                <div class="ga4-label">{{ __('Revenue') }}</div>
+                <div class="card-metric-value" x-text="'$' + formatDecimals(summary.revenue)"></div>
+                <div class="card-metric-trend" :class="getVarianceClass(variance.revenue)">
+                    <span x-text="getVarianceIcon(variance.revenue)"></span>
+                    <span x-text="formatVariance(variance.revenue)"></span>
                 </div>
             </div>
         </div>
@@ -738,11 +783,21 @@
                         isSummaryLoading: false,
                         isChartLoading: false,
 
-                        summary: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0},
-                        previous: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0},
+                        summary: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0, bounceRate: 0, revenue: 0},
+                        previous: {sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0, bounceRate: 0, revenue: 0},
                         chartDataRaw: [],
 
-                        activeMetrics: {sessions: true, activeUsers: true, newUsers: false, conversions: false},
+                        activeMetrics: {
+                            sessions: true,
+                            activeUsers: true,
+                            newUsers: false,
+                            conversions: false,
+                            screenPageViews: false,
+                            averageSessionDuration: false,
+                            bounceRate: false,
+                            totalUsers: false,
+                            revenue: false,
+                        },
 
                         sd: {
                             campaigns: [],
@@ -783,18 +838,18 @@
                         },
 
                         tabConfig: {
-                            campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
-                            adgroups:   {label: 'Ad Group',    metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
-                            channels:   {label: 'Channel',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
-                            sources:    {label: 'Source/Medium',metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers']},
-                            traffic_pages:     {label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
-                            traffic_countries: {label: 'Country',      metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
-                            traffic_devices:   {label: 'Device',       metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions']},
-                            acquisition_channels: {label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers', 'totalUsers']},
+                            campaigns: {label: 'Campaign',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue']},
+                            adgroups:   {label: 'Ad Group',    metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue']},
+                            channels:   {label: 'Channel',     metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue']},
+                            sources:    {label: 'Source/Medium',metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue']},
+                            traffic_pages:     {label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue']},
+                            traffic_countries: {label: 'Country',      metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue']},
+                            traffic_devices:   {label: 'Device',       metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue']},
+                            acquisition_channels: {label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers', 'totalUsers', 'revenue']},
                             events: {label: 'Event Name', metrics: ['eventCount', 'conversions']},
-                            adtouchpoints_adgroups: {label: 'Ad Group',   metrics: ['sessions', 'conversions']},
-                            adtouchpoints_terms:    {label: 'Manual Term', metrics: ['sessions', 'conversions']},
-                            adtouchpoints_content:  {label: 'Ad Content',  metrics: ['sessions', 'conversions']},
+                            adtouchpoints_adgroups: {label: 'Ad Group',   metrics: ['sessions', 'conversions', 'revenue']},
+                            adtouchpoints_terms:    {label: 'Manual Term', metrics: ['sessions', 'conversions', 'revenue']},
+                            adtouchpoints_content:  {label: 'Ad Content',  metrics: ['sessions', 'conversions', 'revenue']},
                         },
                         metricLabels: {
                             sessions: 'Sessions', activeUsers: 'Users', newUsers: 'New',
@@ -1085,6 +1140,10 @@
                                 newUsers: calc(this.summary.newUsers, this.previous.newUsers),
                                 conversions: calc(this.summary.conversions, this.previous.conversions),
                                 screenPageViews: calc(this.summary.screenPageViews, this.previous.screenPageViews),
+                                averageSessionDuration: calc(this.summary.averageSessionDuration, this.previous.averageSessionDuration),
+                                bounceRate: calc(this.summary.bounceRate, this.previous.bounceRate),
+                                totalUsers: calc(this.summary.totalUsers, this.previous.totalUsers),
+                                revenue: calc(this.summary.revenue, this.previous.revenue),
                             };
                         },
 
@@ -1164,10 +1223,35 @@
                                             grid: {drawOnChartArea: false, drawBorder: false},
                                             ticks: {color: '#FBBC04'}
                                         },
+                                        yScreenPageViews: {
+                                            type: 'linear', position: 'left', display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#a855f7'}
+                                        },
                                         yConversions: {
                                             type: 'linear', position: 'right', display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
                                             ticks: {color: '#EA4335'}
+                                        },
+                                        yAverageSessionDuration: {
+                                            type: 'linear', position: 'left', display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#06b6d4'}
+                                        },
+                                        yBounceRate: {
+                                            type: 'linear', position: 'right', display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#ec4899'}
+                                        },
+                                        yTotalUsers: {
+                                            type: 'linear', position: 'left', display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#6366f1'}
+                                        },
+                                        yRevenue: {
+                                            type: 'linear', position: 'right', display: false,
+                                            grid: {drawOnChartArea: false, drawBorder: false},
+                                            ticks: {color: '#10b981'}
                                         }
                                     }
                                 }
@@ -1203,7 +1287,7 @@
                                     daily: dateStr,
                                     sessions: 0, activeUsers: 0, newUsers: 0,
                                     conversions: 0, screenPageViews: 0, bounceRate: 0,
-                                    averageSessionDuration: 0, totalUsers: 0
+                                    averageSessionDuration: 0, totalUsers: 0, revenue: 0
                                 };
                             });
 
@@ -1255,6 +1339,20 @@
                                 });
                             }
 
+                            if (this.activeMetrics.screenPageViews) {
+                                datasets.push({
+                                    label: 'Pageviews',
+                                    data: chartData.map(r => r.screenPageViews),
+                                    borderColor: '#a855f7',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yScreenPageViews',
+                                    tension: 0.4
+                                });
+                            }
+
                             if (this.activeMetrics.conversions) {
                                 datasets.push({
                                     label: 'Conversions',
@@ -1269,6 +1367,62 @@
                                 });
                             }
 
+                            if (this.activeMetrics.averageSessionDuration) {
+                                datasets.push({
+                                    label: 'Avg Duration',
+                                    data: chartData.map(r => r.averageSessionDuration),
+                                    borderColor: '#06b6d4',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yAverageSessionDuration',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.bounceRate) {
+                                datasets.push({
+                                    label: 'Bounce Rate',
+                                    data: chartData.map(r => r.bounceRate),
+                                    borderColor: '#ec4899',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yBounceRate',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.totalUsers) {
+                                datasets.push({
+                                    label: 'Total Users',
+                                    data: chartData.map(r => r.totalUsers),
+                                    borderColor: '#6366f1',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yTotalUsers',
+                                    tension: 0.4
+                                });
+                            }
+
+                            if (this.activeMetrics.revenue) {
+                                datasets.push({
+                                    label: 'Revenue',
+                                    data: chartData.map(r => r.revenue),
+                                    borderColor: '#10b981',
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    yAxisID: 'yRevenue',
+                                    tension: 0.4
+                                });
+                            }
+
                             let gridDrawn = false;
                             const cssGridColor = getComputedStyle(document.documentElement).getPropertyValue('--ga4-chart-grid').trim();
                             const cssTicksColor = getComputedStyle(document.documentElement).getPropertyValue('--ga4-chart-ticks').trim();
@@ -1276,16 +1430,18 @@
                             chart.options.scales.x.grid.color = cssGridColor;
                             chart.options.scales.x.ticks.color = cssTicksColor;
 
-                            ['sessions', 'activeUsers', 'newUsers', 'conversions'].forEach(m => {
+                            ['sessions', 'activeUsers', 'newUsers', 'screenPageViews', 'conversions', 'averageSessionDuration', 'bounceRate', 'totalUsers', 'revenue'].forEach(m => {
                                 let scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
-                                chart.options.scales[scaleId].display = this.activeMetrics[m];
-                                if (this.activeMetrics[m]) {
-                                    if (!gridDrawn) {
-                                        chart.options.scales[scaleId].grid.drawOnChartArea = true;
-                                        chart.options.scales[scaleId].grid.color = cssGridColor;
-                                        gridDrawn = true;
-                                    } else {
-                                        chart.options.scales[scaleId].grid.drawOnChartArea = false;
+                                if (chart.options.scales[scaleId]) {
+                                    chart.options.scales[scaleId].display = this.activeMetrics[m];
+                                    if (this.activeMetrics[m]) {
+                                        if (!gridDrawn) {
+                                            chart.options.scales[scaleId].grid.drawOnChartArea = true;
+                                            chart.options.scales[scaleId].grid.color = cssGridColor;
+                                            gridDrawn = true;
+                                        } else {
+                                            chart.options.scales[scaleId].grid.drawOnChartArea = false;
+                                        }
                                     }
                                 }
                             });
