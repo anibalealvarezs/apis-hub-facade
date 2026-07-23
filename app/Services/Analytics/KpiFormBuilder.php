@@ -425,7 +425,15 @@ class KpiFormBuilder
             ) {
                 if (! empty($data['enabled']) && empty($data['lost_access'])) {
                     $id = (string) ($data['platformId'] ?? $data['platform_id'] ?? $data['id'] ?? $data['url'] ?? '');
-                    $name = $data['title'] ?? $data['name'] ?? $data['ig_account_name'] ?? $data['page_name'] ?? $data['pageName'] ?? $data['account_name'] ?? $data['accountName'] ?? $data['username'] ?? $data['url'] ?? $id;
+                    $pageName = $data['title'] ?? $data['name'] ?? $data['page_name'] ?? $data['pageName'] ?? $data['account_name'] ?? $data['accountName'] ?? null;
+                    $igName = $data['ig_account_name'] ?? $data['ig_username'] ?? $data['username'] ?? null;
+
+                    if ($pageName && $igName && strtolower($pageName) !== strtolower($igName)) {
+                        $name = "{$pageName} ({$igName})";
+                    } else {
+                        $name = $pageName ?? $igName ?? $data['url'] ?? $id;
+                    }
+
                     if ($id !== '') {
                         $assets[$id] = [
                             'name' => (string) $name,

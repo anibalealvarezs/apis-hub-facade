@@ -151,40 +151,7 @@ class DashboardBuilder extends Page
 
     public function getAssetsForChannel(string $channel): array
     {
-        $project = \Filament\Facades\Filament::getTenant();
-        if (!$project) return [];
-
-        $config = $project->sync_config[$channel] ?? [];
-        $assets = [];
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
-
-        foreach ($assetKeys as $assetKey) {
-            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
-                foreach ($config[$assetKey] as $item) {
-                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                        $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
-                        $name = $item['name'] ?? $item['url'] ?? $id;
-                        if ($id) $assets[$id] = $name;
-                    }
-                }
-            }
-        }
-
-        if (!empty($config['assets']) && is_array($config['assets'])) {
-            foreach ($assetKeys as $assetKey) {
-                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
-                    foreach ($config['assets'][$assetKey] as $item) {
-                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
-                            $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
-                            $name = $item['name'] ?? $item['url'] ?? $id;
-                            if ($id) $assets[$id] = $name;
-                        }
-                    }
-                }
-            }
-        }
-
-        return $assets;
+        return \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel);
     }
 
     public function getAssetGroupsForChannel(string $channel): array
