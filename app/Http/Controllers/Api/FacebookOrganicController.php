@@ -24,6 +24,8 @@ class FacebookOrganicController extends Controller
             'activeFilters.*' => 'nullable|array',
             'breakdownTab' => 'nullable|string',
             'tableMode' => 'nullable|string|in:posts,breakdown',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'nullable|string',
         ]);
     }
 
@@ -635,9 +637,19 @@ class FacebookOrganicController extends Controller
                 $this->applyPostChartDailyFilters($baseFilters);
             }
 
+            // Filter aggregations by requested metrics array if provided
+            $defaultAggregations = $config['aggregations'];
+            if (! empty($validated['metrics']) && is_array($validated['metrics'])) {
+                $requestedMetrics = array_flip($validated['metrics']);
+                $filteredAggregations = array_intersect_key($defaultAggregations, $requestedMetrics);
+                if (! empty($filteredAggregations)) {
+                    $defaultAggregations = $filteredAggregations;
+                }
+            }
+
             // Trend aliases are required only for post-level charts (snapshot-delta rendering).
             $useTrendAliases = ! empty($validated['postId']);
-            $aggregations = $this->buildChartAggregations($config['aggregations'], $useTrendAliases);
+            $aggregations = $this->buildChartAggregations($defaultAggregations, $useTrendAliases);
 
             $chartGroupBy = ['daily'];
 
@@ -670,7 +682,7 @@ class FacebookOrganicController extends Controller
             $chartData = $results['chart']['data'] ?? [];
 
             if ($validated['activeTab'] === 'facebook' && is_array($chartData)) {
-                $chartData = $this->collapseRowsByDate($chartData, array_keys($config['aggregations']));
+                $chartData = $this->collapseRowsByDate($chartData, array_keys($defaultAggregations));
             }
 
             \Illuminate\Support\Facades\Log::info("FBO Summary - Raw results for tab={$validated['activeTab']}", [
