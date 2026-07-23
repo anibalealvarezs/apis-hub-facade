@@ -278,9 +278,7 @@ class GoogleAnalyticsController extends Controller
                 );
                 
                 $intersect = array_intersect($requestedMetrics, $validForScope);
-                if (!empty($intersect)) {
-                    $requestedMetrics = array_values($intersect);
-                }
+                $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
             
             $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
@@ -398,9 +396,7 @@ class GoogleAnalyticsController extends Controller
                 );
                 
                 $intersect = array_intersect($requestedMetrics, $validForScope);
-                if (!empty($intersect)) {
-                    $requestedMetrics = array_values($intersect);
-                }
+                $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
             $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
             $payloads = [];
@@ -533,9 +529,7 @@ class GoogleAnalyticsController extends Controller
                     );
                     
                     $intersect = array_intersect($unassignedMetrics, $validForScope);
-                    if (!empty($intersect)) {
-                        $unassignedMetrics = array_values($intersect);
-                    }
+                    $unassignedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
                 }
 
                 $allKnownMetrics = array_unique(array_merge(
