@@ -360,7 +360,8 @@ trait LoadsDashboardViewData
                 }
                 
                 if (!empty($primaryChannel)) {
-                    $metrics = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel);
+                    $granularity = $resolved['granularity'] ?? null;
+                    $metrics = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity);
                     $variables['0'] = [
                         'index' => $varIndex++,
                         'channel' => $primaryChannel,

@@ -275,7 +275,7 @@ class KpiFormBuilder
         return $sorted;
     }
 
-    public static function getMetricOptionsForChannel(?string $channel): array
+    public static function getMetricOptionsForChannel(?string $channel, ?string $granularity = null): array
     {
         if (empty($channel)) {
             return [];
@@ -289,6 +289,37 @@ class KpiFormBuilder
         $activeChannels = array_keys(self::getActiveChannels());
         if (! in_array($channel, $activeChannels)) {
             return [];
+        }
+
+        // Granularity-specific metrics override for Facebook Organic
+        if ($channel === 'facebook_organic') {
+            if ($granularity === 'instagram' || $granularity === 'ig_post' || $granularity === 'instagram_account') {
+                return [
+                    'likes' => __('Likes'),
+                    'comments' => __('Comments'),
+                    'reach' => __('Reach'),
+                    'views' => __('Views'),
+                    'profile_views' => __('Profile Views'),
+                    'website_clicks' => __('Website Clicks'),
+                    'profile_links_taps' => __('Profile Links Taps'),
+                    'follows_and_unfollows' => __('Follows & Unfollows'),
+                    'saves' => __('Saves'),
+                    'shares' => __('Shares'),
+                    'total_interactions' => __('Total Interactions'),
+                    'replies' => __('Replies'),
+                    'accounts_engaged' => __('Accounts Engaged'),
+                    'content_views' => __('Content Views'),
+                ];
+            } elseif ($granularity === 'facebook' || $granularity === 'fb_pages' || $granularity === 'fb_posts') {
+                return [
+                    'reach' => __('Reach'),
+                    'page_views_total' => __('Page Views'),
+                    'video_views' => __('Video Views'),
+                    'follows_and_unfollows' => __('Follows & Unfollows'),
+                    'total_interactions' => __('Total Interactions'),
+                    'likes' => __('Likes'),
+                ];
+            }
         }
 
         $options = [];
@@ -305,9 +336,6 @@ class KpiFormBuilder
                 $options["{$channel}_{$tag}_metric_placeholder"] = self::getChannelDisplayName($tag) . ' (Simulated Metric)';
             }
         }
-
-
-
 
         return $options;
     }
