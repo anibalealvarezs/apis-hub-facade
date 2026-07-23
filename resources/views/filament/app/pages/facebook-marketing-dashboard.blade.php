@@ -163,8 +163,8 @@
                                              x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
                     <span>{{ __('Update') }}</span>
                 </button>
-                <div class="relative" x-data="{ open: false, searchAccount: '' }">
-                    <button @click="open = !open" @click.outside="open = false" type="button"
+                <div class="relative" x-data="{ open: false, searchAccount: '' }" @click.outside="open = false">
+                    <button @click="open = !open" type="button"
                             class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px]"
                             style="max-width:250px;">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
