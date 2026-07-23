@@ -290,18 +290,20 @@ class GoogleAnalyticsController extends Controller
                 if ($dependency) {
                     $requestedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
                 } else {
-                    $requestedMetrics = array_merge(
+                    $requestedMetrics = array_values(array_unique(array_merge(
                         $this->metricsForScope('traffic_matrix', true),
-                        $this->metricsForScope('acquisition_matrix')
-                    );
+                        $this->metricsForScope('acquisition_matrix'),
+                        $this->metricsForScope('event_matrix'),
+                        $this->metricsForScope('ad_touchpoint_matrix')
+                    )));
                 }
             } else {
-                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
+                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_unique(array_merge(
                     $this->metricsForScope('traffic_matrix', true),
                     $this->metricsForScope('acquisition_matrix'),
                     $this->metricsForScope('event_matrix'),
                     $this->metricsForScope('ad_touchpoint_matrix')
-                );
+                ));
                 
                 $intersect = array_intersect($requestedMetrics, $validForScope);
                 $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
@@ -324,7 +326,7 @@ class GoogleAnalyticsController extends Controller
                 if ($dependency) {
                     $intersect = $unassignedMetrics;
                 } else {
-                    $scopeMetrics = $this->metricsForScope($scope);
+                    $scopeMetrics = $this->metricsForScope($scope, $scope === 'traffic_matrix');
                     $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
                     
                     if ($scope === 'traffic_matrix') {
