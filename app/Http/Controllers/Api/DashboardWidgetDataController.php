@@ -105,6 +105,17 @@ class DashboardWidgetDataController extends Controller
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
 
+            \Illuminate\Support\Facades\Log::info('[TABLE DEBUG] Raw data returned from handleMetricSource:', [
+                'widget_id' => $widget->id,
+                'effectiveWidgetType' => $widget->widget_type,
+                'data_keys' => is_array($data) ? array_keys($data) : gettype($data),
+                'has_chart' => isset($data['chart']),
+                'chart_count' => isset($data['chart']) && is_array($data['chart']) ? count($data['chart']) : 0,
+                'chart_sample' => isset($data['chart'][0]) ? $data['chart'][0] : null,
+                'has_table' => isset($data['table']),
+                'has_series' => isset($data['series']),
+            ]);
+
             // Ensure controls.metrics reflects the actual resolved metrics
             if ($widget->source_type === 'kpi' && $widget->customKpi) {
                 $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
@@ -642,6 +653,12 @@ class DashboardWidgetDataController extends Controller
                 ];
             } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
+                
+                \Illuminate\Support\Facades\Log::info('[TABLE DEBUG] Entering chart table transformation:', [
+                    'chartData_count' => count($chartData),
+                    'first_row' => $chartData[0] ?? null,
+                    'metricsFilter' => $resolvedControls['metrics'] ?? null,
+                ]);
                 
                 $kpiMetrics = [];
                 if ($effectiveWidgetType === 'table' || $widget->source_type === 'kpi') {
@@ -1809,6 +1826,14 @@ class DashboardWidgetDataController extends Controller
         if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
             if (isset($payload['account']) && !is_array($payload['account'])) {
                 $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
+            }
+            if (empty($payload['account']) && !empty($payload['series_assets'])) {
+                $rawAssets = $payload['series_assets'];
+                if (is_array($rawAssets)) {
+                    $flat = [];
+                    array_walk_recursive($rawAssets, function($v) use (&$flat) { if ($v) $flat[] = (string)$v; });
+                    $payload['account'] = array_values(array_unique($flat));
+                }
             }
         }
 
