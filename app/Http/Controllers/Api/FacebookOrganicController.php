@@ -87,18 +87,7 @@ class FacebookOrganicController extends Controller
         ];
 
         foreach ($selectedAccounts as $accValue) {
-            $str = (string)$accValue;
-            if (!str_contains($str, '|')) {
-                if ($str !== '' && $str !== 'NONE') {
-                    $parsed['fbAccountIds'][] = $str;
-                    $parsed['fbPlatformIds'][] = $str;
-                    $parsed['fbPageIds'][] = $str;
-                    $parsed['igAccountIds'][] = $str;
-                }
-                continue;
-            }
-
-            $parts = explode('|', $str);
+            $parts = explode('|', (string)$accValue);
 
             if (! empty($parts[0]) && $parts[0] !== 'NONE') {
                 $parsed['fbAccountIds'][] = (string)$parts[0];
