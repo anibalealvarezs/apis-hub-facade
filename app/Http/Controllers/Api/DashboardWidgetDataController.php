@@ -1555,9 +1555,17 @@ class DashboardWidgetDataController extends Controller
         }
 
         if ($action === 'table') {
-            $payload['activeTab'] = $granularity;
-            // Map common dimensions to GoogleAnalyticsController's expected tabs if needed,
-            // but ideally the controllers should handle the raw dimensions directly.
+            if ($channel === 'facebook_organic') {
+                if ($granularity === 'ig_post') {
+                    $payload['activeTab'] = 'instagram';
+                    $payload['tableMode'] = 'posts';
+                } else {
+                    $payload['activeTab'] = 'facebook';
+                    $payload['tableMode'] = 'posts';
+                }
+            } else {
+                $payload['activeTab'] = $granularity;
+            }
         }
 
         return $this->forwardToChannelEndpoint($channel, $action, $payload);

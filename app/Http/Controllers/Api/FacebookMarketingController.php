@@ -294,15 +294,16 @@ class FacebookMarketingController extends Controller
             \Illuminate\Support\Facades\Log::info("FBM Table Incoming Request ActiveFilters: ", $validated['activeFilters'] ?? []);
             \Illuminate\Support\Facades\Log::info("FBM Table Outgoing Payload: ", $tabPayload);
 
-            if ($validated['activeTab'] === 'campaigns') {
+            $tab = $validated['activeTab'] ?? 'campaigns';
+            if (in_array($tab, ['campaigns', 'campaign_level'])) {
                 $tabPayload['groupBy'] = ['channeledCampaign', 'campaign_status'];
-            } elseif ($validated['activeTab'] === 'adsets') {
+            } elseif (in_array($tab, ['adsets', 'adset_level'])) {
                 $tabPayload['groupBy'] = ['adGroup', 'adset_status'];
-            } elseif ($validated['activeTab'] === 'ads') {
+            } elseif (in_array($tab, ['ads', 'ad_level'])) {
                 $tabPayload['groupBy'] = ['ad', 'ad_status'];
-            } elseif ($validated['activeTab'] === 'age') {
+            } elseif ($tab === 'age') {
                 $tabPayload['groupBy'] = ['age'];
-            } elseif ($validated['activeTab'] === 'gender') {
+            } elseif ($tab === 'gender') {
                 $tabPayload['groupBy'] = ['gender'];
             }
 
