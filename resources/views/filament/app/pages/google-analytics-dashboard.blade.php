@@ -1197,6 +1197,14 @@
                                                 label: function(context) {
                                                     var label = context.dataset.label || '';
                                                     var value = context.parsed.y;
+                                                    if (label === 'Bounce Rate') {
+                                                        return label + ': ' + (Number(value) * (value <= 1 ? 100 : 1)).toFixed(2) + '%';
+                                                    }
+                                                    if (label === 'Avg Duration') {
+                                                        var mins = Math.floor(value / 60);
+                                                        var secs = Math.floor(value % 60);
+                                                        return label + ': ' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                                                    }
                                                     return label + ': ' + Number(value).toLocaleString('en-US');
                                                 }
                                             }
@@ -1241,7 +1249,10 @@
                                         yBounceRate: {
                                             type: 'linear', position: 'right', display: false,
                                             grid: {drawOnChartArea: false, drawBorder: false},
-                                            ticks: {color: '#ec4899'}
+                                            ticks: {
+                                                color: '#ec4899',
+                                                callback: function(v) { return (v * (v <= 1 ? 100 : 1)).toFixed(0) + '%'; }
+                                            }
                                         },
                                         yTotalUsers: {
                                             type: 'linear', position: 'left', display: false,

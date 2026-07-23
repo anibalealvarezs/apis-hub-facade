@@ -446,7 +446,7 @@ class GoogleAnalyticsController extends Controller
                 if ($dependency) {
                     $intersect = $unassignedMetrics;
                 } else {
-                    $scopeMetrics = $this->metricsForScope($scope);
+                    $scopeMetrics = $this->metricsForScope($scope, $scope === 'traffic_matrix');
                     $intersect = array_values(array_intersect($scopeMetrics, $unassignedMetrics));
                     
                     if ($scope === 'traffic_matrix') {
