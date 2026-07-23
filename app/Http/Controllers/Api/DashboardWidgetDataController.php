@@ -105,7 +105,7 @@ class DashboardWidgetDataController extends Controller
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
 
-            \Illuminate\Support\Facades\Log::info('[TABLE DEBUG] Raw data returned from handleMetricSource:', [
+            \Illuminate\Support\Facades\Log::error('[FACADE TABLE DEBUG] Raw data returned from handleMetricSource:', [
                 'widget_id' => $widget->id,
                 'effectiveWidgetType' => $widget->widget_type,
                 'data_keys' => is_array($data) ? array_keys($data) : gettype($data),
@@ -654,7 +654,7 @@ class DashboardWidgetDataController extends Controller
             } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
                 
-                \Illuminate\Support\Facades\Log::info('[TABLE DEBUG] Entering chart table transformation:', [
+                \Illuminate\Support\Facades\Log::error('[FACADE TABLE DEBUG] Entering chart table transformation:', [
                     'chartData_count' => count($chartData),
                     'first_row' => $chartData[0] ?? null,
                     'metricsFilter' => $resolvedControls['metrics'] ?? null,
