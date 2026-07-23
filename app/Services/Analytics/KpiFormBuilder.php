@@ -294,6 +294,8 @@ class KpiFormBuilder
         // Scope-specific metrics override for Facebook Organic
         if ($channel === 'facebook_organic') {
             $isInstagram = $dependency === 'instagram_account' || in_array($granularity, ['instagram', 'ig_post', 'instagram_account'], true);
+            $isFacebookPage = $dependency === 'facebook_page' || in_array($granularity, ['facebook', 'fb_pages', 'fb_posts'], true);
+
             if ($isInstagram) {
                 return [
                     'likes' => __('Likes'),
@@ -311,7 +313,7 @@ class KpiFormBuilder
                     'accounts_engaged' => __('Accounts Engaged'),
                     'content_views' => __('Content Views'),
                 ];
-            } else {
+            } elseif ($isFacebookPage) {
                 return [
                     'reach' => __('Reach'),
                     'page_views_total' => __('Page Views'),
@@ -319,6 +321,29 @@ class KpiFormBuilder
                     'follows_and_unfollows' => __('Follows & Unfollows'),
                     'total_interactions' => __('Total Interactions'),
                     'likes' => __('Likes'),
+                ];
+            } else {
+                // No specific scope selected yet — return ALL organic social metrics
+                return [
+                    'reach' => __('Reach'),
+                    'page_views_total' => __('Page Views'),
+                    'video_views' => __('Video Views'),
+                    'follows_and_unfollows' => __('Follows & Unfollows'),
+                    'total_interactions' => __('Total Interactions'),
+                    'likes' => __('Likes'),
+                    'comments' => __('Comments'),
+                    'views' => __('Views'),
+                    'profile_views' => __('Profile Views'),
+                    'website_clicks' => __('Website Clicks'),
+                    'profile_links_taps' => __('Profile Links Taps'),
+                    'saves' => __('Saves'),
+                    'shares' => __('Shares'),
+                    'replies' => __('Replies'),
+                    'accounts_engaged' => __('Accounts Engaged'),
+                    'content_views' => __('Content Views'),
+                    'engagements' => __('Engagements'),
+                    'followers' => __('Followers'),
+                    'engaged_users' => __('Engaged Users'),
                 ];
             }
         }
