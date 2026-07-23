@@ -88,8 +88,11 @@ class GoogleAnalyticsDashboard extends Page
                     }
                 }
 
-                if (!empty($this->accounts) && !$this->selectedAccount) {
-                    $this->selectedAccount = array_key_first($this->accounts);
+                if (!empty($this->accounts)) {
+                    uasort($this->accounts, fn($a, $b) => strcasecmp((string)$a, (string)$b));
+                    if (!$this->selectedAccount) {
+                        $this->selectedAccount = array_key_first($this->accounts);
+                    }
                 }
             }
         } catch (\Exception $e) {

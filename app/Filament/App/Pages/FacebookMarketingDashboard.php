@@ -93,8 +93,11 @@ class FacebookMarketingDashboard extends Page
                     }
                 }
                 
-                if (!empty($this->accounts) && empty($this->selectedAccounts)) {
-                    $this->selectedAccounts = [(string) array_key_first($this->accounts)];
+                if (!empty($this->accounts)) {
+                    uasort($this->accounts, fn($a, $b) => strcasecmp((string)$a, (string)$b));
+                    if (empty($this->selectedAccounts)) {
+                        $this->selectedAccounts = [(string) array_key_first($this->accounts)];
+                    }
                 }
             }
         } catch (\Exception $e) {
