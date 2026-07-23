@@ -463,7 +463,7 @@ class KpiFormBuilder
                         }),
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
-                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel')))
+                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'), $get('granularity')))
                         ->required(fn () => $name === 'dependent'),
                     Select::make($name . '_asset_group')
                         ->label(__('Asset Group (keep empty for runtime)'))
