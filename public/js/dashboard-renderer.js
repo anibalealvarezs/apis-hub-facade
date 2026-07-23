@@ -529,9 +529,9 @@ window.dashboardRenderer = {
         }
 
         let html = '<div class="table-wrap" style="overflow:auto;height:100%;border-radius:inherit;">';
-        html += '<table style="width:100%;min-width:max-content;border-collapse:collapse;">';
+        html += '<table style="width:100%;min-width:max-content;border-collapse:separate;border-spacing:0;">';
 
-        html += '<thead style="position:sticky;top:0;z-index:1;">';
+        html += '<thead style="position:sticky;top:0;z-index:2;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
         columns.forEach((col, idx) => {
             const key = col.key || col;
@@ -541,16 +541,20 @@ window.dashboardRenderer = {
             const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
             const thAlign = isNumeric ? 'text-right' : 'text-left';
-            const thStyle = isNumeric ? 'min-width:130px;' : (idx === 0 ? 'min-width:140px;' : 'min-width:120px;');
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            let thStyle = isNumeric ? 'min-width:130px;' : (idx === 0 ? 'min-width:140px;' : 'min-width:120px;');
+            if (idx === 0) {
+                thStyle += 'position:sticky;left:0;z-index:3;';
+            }
+            const stickyClass = idx === 0 ? 'bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700' : '';
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${stickyClass}" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
 
         html += '<tbody class="bg-white dark:bg-gray-900">';
         sortedRows.forEach((row, ri) => {
-            const rowClass = ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-white/[0.02]';
-            html += `<tr class="${rowClass} border-t border-gray-200 dark:border-gray-700">`;
-            columns.forEach(col => {
+            const rowBgClass = ri % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-white/[0.02]';
+            html += `<tr class="${rowBgClass} border-t border-gray-200 dark:border-gray-700">`;
+            columns.forEach((col, idx) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
                 const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
@@ -561,8 +565,12 @@ window.dashboardRenderer = {
                 const tdClass = isNumeric
                     ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
                     : 'px-3 py-2 text-gray-700 dark:text-gray-300';
-                const tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-                html += `<td class="${tdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
+                let tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                if (idx === 0) {
+                    tdStyle += 'position:sticky;left:0;z-index:1;';
+                }
+                const stickyTdClass = idx === 0 ? `${rowBgClass} border-r border-gray-200 dark:border-gray-700` : '';
+                html += `<td class="${tdClass} ${stickyTdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
