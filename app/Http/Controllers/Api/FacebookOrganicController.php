@@ -660,6 +660,13 @@ class FacebookOrganicController extends Controller
             ], $payloads);
 
             $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+
+            \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] chart method results:', [
+                'status' => $results['chart']['status'] ?? null,
+                'error' => $results['chart']['error'] ?? null,
+                'data_count' => isset($results['chart']['data']) && is_array($results['chart']['data']) ? count($results['chart']['data']) : 0,
+                'payloads' => $payloads,
+            ]);
             $chartData = $results['chart']['data'] ?? [];
 
             if ($validated['activeTab'] === 'facebook' && is_array($chartData)) {

@@ -203,6 +203,13 @@ class FacebookMarketingController extends Controller
 
             $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
 
+            \Illuminate\Support\Facades\Log::error('[FACADE FBM DEBUG] chart method results:', [
+                'status' => $results['chart']['status'] ?? null,
+                'error' => $results['chart']['error'] ?? null,
+                'data_count' => isset($results['chart']['data']) && is_array($results['chart']['data']) ? count($results['chart']['data']) : 0,
+                'payloads' => $payloads,
+            ]);
+
             if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("FBM Chart APIs Hub Error: " . json_encode($results['chart']));
             }
