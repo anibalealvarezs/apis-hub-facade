@@ -1934,12 +1934,10 @@ class DashboardWidgetDataController extends Controller
                     if ($activeTab === 'instagram') {
                         $igPlatformId = (string) ($page['ig_account'] ?? $page['igAccountId'] ?? $page['ig_account_id'] ?? '');
                         if ($igPlatformId !== '') {
-                            // Resolve IG platform ID to internal channeled account ID
                             $igId = null;
                             if ($project) {
                                 $service = app(\App\Services\RemoteEngineService::class);
-                                $response = $service->listChanneled($project, 'facebook_organic', 'ig_account', ['limit' => 1000, 'enabled' => 1]);
-                                \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] listChanneled ig_account response: ' . json_encode($response));
+                                $response = $service->listChanneled($project, 'facebook_organic', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
                                 if (isset($response['data']) && is_array($response['data'])) {
                                     foreach ($response['data'] as $acc) {
                                         $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
@@ -1950,12 +1948,7 @@ class DashboardWidgetDataController extends Controller
                                     }
                                 }
                             }
-                            if ($igId) {
-                                $mapped[] = "NONE|{$igId}|{$strAccId}|NONE";
-                            } else {
-                                // Fallback to IG platform ID if internal ID resolution failed
-                                $mapped[] = "NONE|{$igPlatformId}|{$strAccId}|NONE";
-                            }
+                            $mapped[] = "NONE|" . ($igId ?? $igPlatformId) . "|{$strAccId}|NONE";
                         } else {
                             \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] No linked IG platform ID found in sync_config for FB page: ' . $strAccId);
                         }
