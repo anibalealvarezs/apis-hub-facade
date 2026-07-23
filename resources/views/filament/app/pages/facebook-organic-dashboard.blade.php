@@ -690,6 +690,7 @@
                     return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         accounts: @json($selectedAccounts),
+                        accountNames: @json($accounts),
                         dateStart: '{{ $dateStart }}',
                         dateEnd: '{{ $dateEnd }}',
                         activeTab: 'instagram',
@@ -767,8 +768,11 @@
                             const params = new URLSearchParams(window.location.search);
                             const accParam = params.get('accounts');
                             if (accParam) {
-                                const ids = accParam.split(',').filter(id => id);
-                                if (ids.length > 0) this.accounts = ids;
+                                const ids = accParam.split(',').filter(id => this.accountNames[id]);
+                                if (ids.length > 0) this.accounts = [ids[0]];
+                            }
+                            if (this.accounts.length === 0 && Object.keys(this.accountNames).length > 0) {
+                                this.accounts = [Object.keys(this.accountNames)[0]];
                             }
                             const ds = params.get('dateStart');
                             if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;

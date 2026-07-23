@@ -823,6 +823,8 @@
                     return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         account: @entangle('selectedAccount'),
+                        selectedAccount: @entangle('selectedAccount'),
+                        accountNames: @json($accounts),
                         dateStart: @entangle('dateStart'),
                         dateEnd: @entangle('dateEnd'),
                         activeTab: @entangle('activeTab'),
@@ -923,7 +925,17 @@
                         restoreFromUrl() {
                             const params = new URLSearchParams(window.location.search);
                             const accParam = params.get('account');
-                            if (accParam) this.account = accParam;
+                            if (accParam && this.accountNames[accParam]) {
+                                this.account = accParam;
+                                this.selectedAccount = accParam;
+                                this.$wire.set('selectedAccount', accParam);
+                            }
+                            if (!this.selectedAccount && Object.keys(this.accountNames).length > 0) {
+                                const firstAcc = Object.keys(this.accountNames)[0];
+                                this.account = firstAcc;
+                                this.selectedAccount = firstAcc;
+                                this.$wire.set('selectedAccount', firstAcc);
+                            }
                             const ds = params.get('dateStart');
                             if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
                             const de = params.get('dateEnd');
