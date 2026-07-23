@@ -216,7 +216,16 @@ class GoogleAnalyticsController extends Controller
                     }
                     $num = is_numeric($v) ? (float) $v : $v;
                     if (is_float($num)) {
-                        $existing[$k] = ($existing[$k] ?? 0) + $num;
+                        if (in_array($kLower, ['bouncerate', 'bounce_rate', 'averagesessionduration', 'average_session_duration'], true)) {
+                            $cntKey = '_cnt_' . $k;
+                            $currentSum = ($existing[$k] ?? 0) * ($existing[$cntKey] ?? (isset($existing[$k]) ? 1 : 0));
+                            $newCount = ($existing[$cntKey] ?? (isset($existing[$k]) ? 1 : 0)) + 1;
+                            $avg = ($currentSum + $num) / $newCount;
+                            $existing[$k] = in_array($kLower, ['bouncerate', 'bounce_rate'], true) ? min(1.0, $avg) : $avg;
+                            $existing[$cntKey] = $newCount;
+                        } else {
+                            $existing[$k] = ($existing[$k] ?? 0) + $num;
+                        }
                     } elseif (!isset($existing[$k])) {
                         $existing[$k] = $v;
                     }
@@ -229,6 +238,11 @@ class GoogleAnalyticsController extends Controller
             $item['id'] = $item['_dimValue'];
             $item['name'] = $item['_dimValue'];
             unset($item['_dimKey'], $item['_dimValue']);
+            foreach (array_keys($item) as $k) {
+                if (str_starts_with($k, '_cnt_')) {
+                    unset($item[$k]);
+                }
+            }
             return $item;
         }, $map));
     }
