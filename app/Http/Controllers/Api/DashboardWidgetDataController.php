@@ -700,17 +700,27 @@ class DashboardWidgetDataController extends Controller
     
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : (isset($chartData[0]['metric_date']) ? 'metric_date' : 'date');
 
-                $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+                $channel = $resolvedControls['channel'] ?? '';
 
-                // If metricsFilter is set but none of those metrics exist in the returned data,
-                // fall back to showing all returned columns (the channel has a fixed aggregation set).
-                if ($metricsFilter) {
-                    $returnedCleanKeys = array_map(
-                        fn($k) => preg_replace('/^trend_(?:total|average)_/', '', $k),
-                        array_keys($chartData[0])
-                    );
-                    if (empty(array_intersect($metricsFilter, $returnedCleanKeys))) {
-                        $metricsFilter = null;
+                // For channels with fixed aggregation sets (facebook_organic, facebook_marketing),
+                // the widget-configured metric list is a generic tag set that doesn't match the
+                // actual API keys returned, so we skip metric filtering and show all returned columns.
+                $fixedAggregationChannels = ['facebook_organic', 'facebook_marketing'];
+                if (in_array($channel, $fixedAggregationChannels)) {
+                    $metricsFilter = null;
+                } else {
+                    $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+
+                    // If metricsFilter is set but none of those metrics exist in the returned data,
+                    // fall back to showing all returned columns.
+                    if ($metricsFilter) {
+                        $returnedCleanKeys = array_map(
+                            fn($k) => preg_replace('/^trend_(?:total|average)_/', '', $k),
+                            array_keys($chartData[0])
+                        );
+                        if (empty(array_intersect($metricsFilter, $returnedCleanKeys))) {
+                            $metricsFilter = null;
+                        }
                     }
                 }
 
@@ -1891,7 +1901,20 @@ class DashboardWidgetDataController extends Controller
 
             if ($channel === 'facebook_organic' && !empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
-                if ($project) {
+                $activeTab = $payload['activeTab'] ?? 'facebook';
+
+                // IG scope: asset IDs go to compound position [1] (igAccountId).
+                // FB scope: look up the page in sync_config to build a full compound string;
+                //           fall back to position [2] (fbPlatformId) if not found.
+                if ($activeTab === 'instagram') {
+                    $payload['account'] = array_values(array_unique(array_map(
+                        function($accId) {
+                            $str = (string) $accId;
+                            return str_contains($str, '|') ? $str : "NONE|{$str}|NONE|NONE";
+                        },
+                        $payload['account']
+                    )));
+                } elseif ($project) {
                     $pages = $project->sync_config['facebook_organic']['assets']['pages']
                         ?? $project->sync_config['facebook_organic']['pages']
                         ?? [];
