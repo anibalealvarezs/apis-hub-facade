@@ -529,11 +529,11 @@ window.dashboardRenderer = {
         }
 
         let html = '<div class="table-wrap" style="overflow:auto;height:100%;border-radius:inherit;">';
-        html += '<table style="width:100%;table-layout:fixed;border-collapse:collapse;">';
+        html += '<table style="width:100%;min-width:max-content;border-collapse:collapse;">';
 
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
-        columns.forEach(col => {
+        columns.forEach((col, idx) => {
             const key = col.key || col;
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
@@ -541,7 +541,7 @@ window.dashboardRenderer = {
             const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
             const thAlign = isNumeric ? 'text-right' : 'text-left';
-            const thStyle = isNumeric ? 'width:140px;' : '';
+            const thStyle = isNumeric ? 'min-width:130px;' : (idx === 0 ? 'min-width:140px;' : 'min-width:120px;');
             html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
