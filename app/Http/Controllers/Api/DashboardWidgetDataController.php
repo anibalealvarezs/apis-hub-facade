@@ -1669,18 +1669,15 @@ class DashboardWidgetDataController extends Controller
         $seriesAssets = $controls['series_assets'] ?? null;
         if (is_array($seriesAssets)) {
             if (!empty($seriesAssets['dependent'][0])) {
-                $valid = $this->getValidAssetsForChannel($project, $channel);
-                $dependentAssets = array_values(array_intersect((array)$seriesAssets['dependent'], $valid));
-                if (empty($dependentAssets)) return '___EMPTY_GROUP___';
-                return $allowsMultiple ? $dependentAssets : $dependentAssets[0];
+                $dep = (array) $seriesAssets['dependent'];
+                return $allowsMultiple ? $dep : $dep[0];
             }
             if (!empty($seriesAssets[0])) {
-                $asset = is_array($seriesAssets[0]) ? ($seriesAssets[0][0] ?? null) : $seriesAssets[0];
-                if ($asset) {
-                    $valid = $this->getValidAssetsForChannel($project, $channel);
-                    $dependentAssets = array_values(array_intersect((array)$seriesAssets[0], $valid));
-                    if (empty($dependentAssets)) return '___EMPTY_GROUP___';
-                    return $allowsMultiple ? $dependentAssets : $dependentAssets[0];
+                $flat = [];
+                array_walk_recursive($seriesAssets, function($v) use (&$flat) { if ($v) $flat[] = (string)$v; });
+                $flat = array_values(array_unique($flat));
+                if (!empty($flat)) {
+                    return $allowsMultiple ? $flat : $flat[0];
                 }
             }
         }
