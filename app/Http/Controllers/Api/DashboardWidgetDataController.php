@@ -687,6 +687,18 @@ class DashboardWidgetDataController extends Controller
 
                 $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
 
+                // If metricsFilter is set but none of those metrics exist in the returned data,
+                // fall back to showing all returned columns (the channel has a fixed aggregation set).
+                if ($metricsFilter) {
+                    $returnedCleanKeys = array_map(
+                        fn($k) => preg_replace('/^trend_(?:total|average)_/', '', $k),
+                        array_keys($chartData[0])
+                    );
+                    if (empty(array_intersect($metricsFilter, $returnedCleanKeys))) {
+                        $metricsFilter = null;
+                    }
+                }
+
                 $columns = [['key' => 'date', 'label' => 'Date']];
                 foreach ($chartData[0] as $key => $val) {
                     if ($key === $dateKey) continue;
