@@ -349,14 +349,14 @@ class KpiFormBuilder
         $scan = function (array $data) use (&$scan, &$assets) {
             if (
                 array_key_exists('enabled', $data)
-                && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('platformId', $data))
+                && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('platformId', $data) || array_key_exists('platform_id', $data))
             ) {
                 if (! empty($data['enabled']) && empty($data['lost_access'])) {
-                    $id = $data['id'] ?? $data['url'] ?? $data['platformId'] ?? '';
-                    $name = $data['name'] ?? $data['page_name'] ?? $data['pageName'] ?? $data['title'] ?? $data['account_name'] ?? $data['accountName'] ?? $data['username'] ?? $data['url'] ?? $data['platformId'] ?? $id;
-                    if ($id) {
+                    $id = (string) ($data['platformId'] ?? $data['platform_id'] ?? $data['id'] ?? $data['url'] ?? '');
+                    $name = $data['title'] ?? $data['name'] ?? $data['ig_account_name'] ?? $data['page_name'] ?? $data['pageName'] ?? $data['account_name'] ?? $data['accountName'] ?? $data['username'] ?? $data['url'] ?? $id;
+                    if ($id !== '') {
                         $assets[$id] = [
-                            'name' => $name,
+                            'name' => (string) $name,
                             'enabled' => true,
                         ];
                     }
