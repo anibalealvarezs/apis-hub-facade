@@ -666,7 +666,7 @@ class DashboardWidgetDataController extends Controller
                     $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
                     $granularity = $resolvedControls['granularity'] ?? 'daily';
     
-                    $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
+                    $dateKey = isset($chartData[0]['daily']) ? 'daily' : (isset($chartData[0]['metric_date']) ? 'metric_date' : 'date');
 
                 $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
 
