@@ -553,9 +553,9 @@ window.dashboardRenderer = {
         html += '<tbody class="bg-white dark:bg-gray-900">';
         sortedRows.forEach((row, ri) => {
             const isEven = ri % 2 === 0;
-            const rowBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/50';
+            const rowBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/40';
             const stickyCellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
-            html += `<tr class="${rowBgClass} border-t border-gray-200 dark:border-gray-700">`;
+            html += `<tr class="${rowBgClass} border-t border-gray-200 dark:border-gray-800">`;
             columns.forEach((col, idx) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
@@ -571,8 +571,9 @@ window.dashboardRenderer = {
                 if (idx === 0) {
                     tdStyle += 'position:sticky;left:0;z-index:1;';
                 }
-                const stickyTdClass = idx === 0 ? `${stickyCellBgClass} border-r border-gray-200 dark:border-gray-700` : '';
-                html += `<td class="${tdClass} ${stickyTdClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
+                const cellBgClass = idx === 0 ? stickyCellBgClass : rowBgClass;
+                const stickyBorderClass = idx === 0 ? 'border-r border-gray-200 dark:border-gray-700' : '';
+                html += `<td class="${tdClass} ${cellBgClass} ${stickyBorderClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
