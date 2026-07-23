@@ -1902,46 +1902,61 @@ class DashboardWidgetDataController extends Controller
             if ($channel === 'facebook_organic' && !empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
                 $activeTab = $payload['activeTab'] ?? 'facebook';
-
-                // IG scope: asset IDs go to compound position [1] (igAccountId).
-                // FB scope: look up the page in sync_config to build a full compound string;
-                //           fall back to position [2] (fbPlatformId) if not found.
-                if ($activeTab === 'instagram') {
-                    $payload['account'] = array_values(array_unique(array_map(
-                        function($accId) {
-                            $str = (string) $accId;
-                            return str_contains($str, '|') ? $str : "NONE|{$str}|NONE|NONE";
-                        },
-                        $payload['account']
-                    )));
-                } elseif ($project) {
-                    $pages = $project->sync_config['facebook_organic']['assets']['pages']
+                $pages = $project
+                    ? ($project->sync_config['facebook_organic']['assets']['pages']
                         ?? $project->sync_config['facebook_organic']['pages']
-                        ?? [];
-                    $mapped = [];
-                    foreach ($payload['account'] as $accId) {
-                        $strAccId = (string) $accId;
-                        if (str_contains($strAccId, '|')) {
-                            $mapped[] = $strAccId;
-                            continue;
-                        }
-                        $foundCompound = null;
-                        foreach ($pages as $page) {
-                            $pid = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id'] ?? '');
-                            if ($pid === $strAccId) {
-                                $fbAccountId = $page['fbAccountId'] ?? $page['fb_account_id'] ?? 'NONE';
-                                $igAccountId = $page['igAccountId'] ?? $page['ig_account_id'] ?? 'NONE';
-                                $fbPlatformId = $pid;
-                                $fbPageId = $page['pageId'] ?? $page['page_id'] ?? 'NONE';
-                                $foundCompound = "{$fbAccountId}|{$igAccountId}|{$fbPlatformId}|{$fbPageId}";
-                                break;
-                            }
-                        }
-                        $mapped[] = $foundCompound ?? "NONE|NONE|{$strAccId}|NONE";
+                        ?? [])
+                    : [];
+
+                // Build a lookup: fbPlatformId → page entry (for both FB and IG scopes).
+                // Both scopes share the same asset IDs (FB page platform IDs from the builder),
+                // but the compound string field we extract differs:
+                //   FB scope → position [2] fbPlatformId (channeledAccount via page filter)
+                //   IG scope → position [1] igAccountId (channeledAccount via IG filter)
+                $pidToPage = [];
+                foreach ($pages as $page) {
+                    $pid = (string) ($page['platformId'] ?? $page['platform_id'] ?? $page['id'] ?? '');
+                    if ($pid !== '') {
+                        $pidToPage[$pid] = $page;
                     }
-                    $payload['account'] = array_values(array_unique($mapped));
                 }
+
+                $mapped = [];
+                foreach ($payload['account'] as $accId) {
+                    $strAccId = (string) $accId;
+                    if (str_contains($strAccId, '|')) {
+                        $mapped[] = $strAccId;
+                        continue;
+                    }
+
+                    $page = $pidToPage[$strAccId] ?? null;
+
+                    if ($activeTab === 'instagram') {
+                        // Use the IG channeledAccount ID linked to this FB page.
+                        $igId = (string) ($page['igAccountId'] ?? $page['ig_account_id'] ?? '');
+                        // igId should be a small internal integer, not 'NONE' or empty.
+                        $igId = ($igId !== '' && $igId !== 'NONE' && $igId !== '0') ? $igId : null;
+                        if ($igId) {
+                            $mapped[] = "NONE|{$igId}|{$strAccId}|NONE";
+                        } else {
+                            // No IG account linked in sync_config — skip this asset.
+                            \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] No linked IG channeledAccount for FB page platform ID: ' . $strAccId . '. Page config: ' . json_encode($page));
+                        }
+                    } else {
+                        if ($page) {
+                            $fbAccountId  = $page['fbAccountId']  ?? $page['fb_account_id']  ?? 'NONE';
+                            $igAccountId  = $page['igAccountId']  ?? $page['ig_account_id']  ?? 'NONE';
+                            $fbPlatformId = $strAccId;
+                            $fbPageId     = $page['pageId']       ?? $page['page_id']        ?? 'NONE';
+                            $mapped[] = "{$fbAccountId}|{$igAccountId}|{$fbPlatformId}|{$fbPageId}";
+                        } else {
+                            $mapped[] = "NONE|NONE|{$strAccId}|NONE";
+                        }
+                    }
+                }
+                $payload['account'] = array_values(array_unique($mapped));
             }
+
 
             if ($channel === 'facebook_marketing' && !empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
