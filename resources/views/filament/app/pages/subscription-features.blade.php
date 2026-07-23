@@ -68,7 +68,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm text-purple-400">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 5)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 10)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
@@ -139,7 +139,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm text-gray-500">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 20)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 30)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
@@ -215,7 +215,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm text-gray-500">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 30)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 50)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>

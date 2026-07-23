@@ -203,12 +203,12 @@ class BillingLifecycleService
     public function getMaxCustomKpisForTier(UserTier $tier): int
     {
         return match ($tier) {
-            UserTier::FREE => 5,
-            UserTier::PRO => 20,
-            UserTier::ULTRA, UserTier::FOUNDER => 30,
+            UserTier::FREE => 10,
+            UserTier::PRO => 30,
+            UserTier::ULTRA, UserTier::FOUNDER => 50,
             UserTier::ENTERPRISE => 999999,
             UserTier::SUSPENDED => 0,
-            default => 5,
+            default => 10,
         };
     }
 
