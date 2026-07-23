@@ -1546,7 +1546,9 @@ class DashboardWidgetDataController extends Controller
         }
 
         $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
-        if (in_array($widget->widget_type, ['tile', 'gauge'])) {
+        if ($widget->widget_type === 'table') {
+            $action = 'chart';
+        } elseif (in_array($widget->widget_type, ['tile', 'gauge'])) {
             $action = 'chart';
         } elseif (in_array($granularity, $timeGranularities)) {
             $action = 'chart';
@@ -1554,18 +1556,17 @@ class DashboardWidgetDataController extends Controller
             $action = 'table';
         }
 
-        if ($action === 'table') {
-            if ($channel === 'facebook_organic') {
-                if ($granularity === 'ig_post') {
-                    $payload['activeTab'] = 'instagram';
-                    $payload['tableMode'] = 'posts';
-                } else {
-                    $payload['activeTab'] = 'facebook';
-                    $payload['tableMode'] = 'posts';
-                }
+        if ($channel === 'facebook_organic') {
+            if ($granularity === 'ig_post' || ($dependency ?? '') === 'instagram_account') {
+                $payload['activeTab'] = 'instagram';
             } else {
-                $payload['activeTab'] = $granularity;
+                $payload['activeTab'] = 'facebook';
             }
+            if ($action === 'table') {
+                $payload['tableMode'] = 'posts';
+            }
+        } elseif ($action === 'table') {
+            $payload['activeTab'] = $granularity;
         }
 
         return $this->forwardToChannelEndpoint($channel, $action, $payload);
