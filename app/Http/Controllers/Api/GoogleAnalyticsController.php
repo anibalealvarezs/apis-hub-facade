@@ -278,14 +278,9 @@ class GoogleAnalyticsController extends Controller
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
 
             $requestedMetrics = $validated['metrics'] ?? [];
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
-
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Metrics after mapToGa4:", ['metrics' => $requestedMetrics]);
-            
             $dependency = $validated['dependency'] ?? null;
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Resolved dependency:", ['dependency' => $dependency]);
-            
+
             if (empty($requestedMetrics)) {
                 if ($dependency) {
                     $requestedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
@@ -308,7 +303,13 @@ class GoogleAnalyticsController extends Controller
                 $intersect = array_intersect($requestedMetrics, $validForScope);
                 $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
-            
+
+            \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Input]:", [
+                'metrics_raw' => $validated['metrics'] ?? null,
+                'dependency' => $dependency,
+                'requestedMetrics' => $requestedMetrics,
+            ]);
+
             $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
@@ -354,9 +355,9 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final payloads for engine:", $payloads);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Payloads]:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Raw engine results:", $results);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Engine Results]:", $results);
 
             $summary = [];
             $previous = [];
@@ -374,8 +375,10 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final mapped summary result:", $summary);
-            \Illuminate\Support\Facades\Log::error("GA4 Summary: Final mapped previous result:", $previous);
+            \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Final Output]:", [
+                'summary' => $summary,
+                'previous' => $previous
+            ]);
 
             return response()->json([
                 'summary' => $summary,
