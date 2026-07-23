@@ -227,9 +227,9 @@ class DashboardBuilder extends Page
         return $result;
     }
 
-    public function getMetricsForChannel(string $channel, ?string $granularity = null): array
+    public function getMetricsForChannel(string $channel, ?string $granularity = null, ?string $dependency = null): array
     {
-        return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel, $granularity);
+        return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel, $granularity, $dependency);
     }
 
     public function getGranularitiesForChannel(string $channel, ?string $dependency = null): array

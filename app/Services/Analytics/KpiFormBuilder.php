@@ -275,7 +275,7 @@ class KpiFormBuilder
         return $sorted;
     }
 
-    public static function getMetricOptionsForChannel(?string $channel, ?string $granularity = null): array
+    public static function getMetricOptionsForChannel(?string $channel, ?string $granularity = null, ?string $dependency = null): array
     {
         if (empty($channel)) {
             return [];
@@ -291,9 +291,10 @@ class KpiFormBuilder
             return [];
         }
 
-        // Granularity-specific metrics override for Facebook Organic
+        // Scope-specific metrics override for Facebook Organic
         if ($channel === 'facebook_organic') {
-            if ($granularity === 'instagram' || $granularity === 'ig_post' || $granularity === 'instagram_account') {
+            $isInstagram = $dependency === 'instagram_account' || in_array($granularity, ['instagram', 'ig_post', 'instagram_account'], true);
+            if ($isInstagram) {
                 return [
                     'likes' => __('Likes'),
                     'comments' => __('Comments'),
@@ -310,7 +311,7 @@ class KpiFormBuilder
                     'accounts_engaged' => __('Accounts Engaged'),
                     'content_views' => __('Content Views'),
                 ];
-            } elseif ($granularity === 'facebook' || $granularity === 'fb_pages' || $granularity === 'fb_posts') {
+            } else {
                 return [
                     'reach' => __('Reach'),
                     'page_views_total' => __('Page Views'),

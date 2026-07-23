@@ -1545,10 +1545,11 @@
 
                     updateSeriesMetrics() {
                         const gran = this.widgetControlsForm.granularity;
+                        const dep  = this.widgetControlsForm.dependency;
                         (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
                             const ch = series.channel;
                             if (ch) {
-                                @this.getMetricsForChannel(ch, gran).then(metrics => {
+                                @this.getMetricsForChannel(ch, gran, dep).then(metrics => {
                                     const metricsCopy = { ...this.allChannelMetrics };
                                     metricsCopy[ch] = metrics;
                                     this.allChannelMetrics = metricsCopy;
