@@ -36,14 +36,14 @@
         .ga4-header-subtitle { color: var(--ga4-text-dim); font-size: 0.9rem; }
         .ga4-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
 
-        .metrics-grid-ga4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .metrics-grid-ga4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
 
         .card-stat-ga4 {
             background: var(--ga4-bg-card);
             border: 1px solid var(--ga4-border);
             border-bottom: 4px solid var(--color, transparent);
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
             cursor: pointer;
             transition: all 0.2s ease;
             opacity: 0.5;
@@ -53,9 +53,9 @@
         .card-stat-ga4:hover { transform: translateY(-3px); background: var(--ga4-bg-hover); }
         .card-stat-ga4.active { opacity: 1; border-bottom-color: var(--color); background: var(--ga4-bg-active); }
 
-        .ga4-label { font-size: 0.72rem; font-weight: 700; color: var(--ga4-text-dim); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
-        .card-metric-value { font-size: 2.2rem; font-weight: 800; color: var(--ga4-text-main); line-height: 1.2; }
-        .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; width: fit-content; }
+        .ga4-label { font-size: 0.65rem; font-weight: 700; color: var(--ga4-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+        .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--ga4-text-main); line-height: 1.2; }
+        .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
         .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
         .dark .trend-up { color: #4ade80; }
         .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
