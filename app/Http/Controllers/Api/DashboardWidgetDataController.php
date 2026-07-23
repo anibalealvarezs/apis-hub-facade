@@ -1939,6 +1939,7 @@ class DashboardWidgetDataController extends Controller
                             if ($project) {
                                 $service = app(\App\Services\RemoteEngineService::class);
                                 $response = $service->listChanneled($project, 'facebook_organic', 'ig_account', ['limit' => 1000, 'enabled' => 1]);
+                                \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] listChanneled ig_account response: ' . json_encode($response));
                                 if (isset($response['data']) && is_array($response['data'])) {
                                     foreach ($response['data'] as $acc) {
                                         $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
