@@ -164,6 +164,16 @@ class GoogleAnalyticsController extends Controller
     private function mergeMatrixResults(array $results, array $groupByKeys): array
     {
         $map = [];
+        $dimensionKeysToIgnore = [
+            'channeledcampaign', 'channeledcampaign_id',
+            'channeledadgroup', 'channeledadgroup_id',
+            'channeledad', 'channeledad_id',
+            'dimensions.sessiondefaultchannelgroup', 'dimensions.firstuserdefaultchannelgroup',
+            'sessiondefaultchannelgroup', 'firstuserdefaultchannelgroup',
+            'dimensions.sessionsourcemedium', 'dimensions.firstusersourcemedium',
+            'sessionsourcemedium', 'firstusersourcemedium',
+            'dimensions.landing_page', 'landing_page', 'country', 'device', 'event'
+        ];
 
         foreach ($results as $idx => $rows) {
             $dimKey = $groupByKeys[$idx] ?? null;
@@ -174,20 +184,36 @@ class GoogleAnalyticsController extends Controller
 
             foreach ($rows as $row) {
                 $rowLower = array_change_key_case($row, CASE_LOWER);
+
+                // Check for explicit entity ID key (e.g. channeledCampaign_id)
+                $idKey = $lookupStripped . '_id';
+                $entityId = $rowLower[$idKey] ?? null;
+
                 $dimValue = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? null;
                 if (!$dimValue || $dimValue === 'null' || $dimValue === '(not set)') {
                     $dimValue = 'Unknown';
                 }
 
-                $key = strtolower((string) $dimValue);
+                // If entity ID exists, map by entity ID to prevent grouping distinct items into "n/a"
+                $key = ($entityId !== null && $entityId !== '') ? 'id_' . $entityId : strtolower((string) $dimValue);
+
+                $displayName = $dimValue;
+                if ($displayName === 'Unknown' || $displayName === 'N/A') {
+                    if ($entityId) {
+                        $displayName = 'ID #' . $entityId;
+                    }
+                }
+
                 if (!isset($map[$key])) {
-                    $map[$key] = ['_dimKey' => $dimKey, '_dimValue' => $dimValue];
+                    $map[$key] = ['_dimKey' => $dimKey, '_dimValue' => $displayName];
                 }
 
                 $existing = $map[$key];
                 foreach ($row as $k => $v) {
                     $kLower = strtolower($k);
-                    if ($kLower === $lookupFull || $kLower === $lookupStripped) continue;
+                    if (in_array($kLower, $dimensionKeysToIgnore, true) || $kLower === $lookupFull || $kLower === $lookupStripped || $kLower === $idKey) {
+                        continue;
+                    }
                     $num = is_numeric($v) ? (float) $v : $v;
                     if (is_float($num)) {
                         $existing[$k] = ($existing[$k] ?? 0) + $num;
