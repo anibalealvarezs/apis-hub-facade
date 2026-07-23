@@ -212,6 +212,7 @@ window.dashboardRenderer = {
             if (calculation_type) controls.calculation_type = calculation_type;
         }
         this._widgetData.set(containerEl, json);
+        containerEl.innerHTML = '';
         this._renderWidget(widget_type, containerEl, data, controls);
     },
 
