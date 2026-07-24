@@ -639,12 +639,12 @@ window.dashboardRenderer = {
 
         containerEl.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full overflow-hidden">
-                <div class="relative w-full max-w-[240px] h-[130px] flex items-center justify-center">
+                <div class="relative w-full max-w-[280px] aspect-[2/1] flex items-center justify-center">
                     <canvas class="w-full h-full block"></canvas>
-                    <div class="absolute inset-x-0 bottom-2 flex flex-col items-center justify-center text-center pointer-events-none z-10">
+                    <div class="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end text-center pointer-events-none z-10 pb-1">
                         <span class="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
-                        ${label ? `<span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">${this.escapeHtml(label)}</span>` : ''}
-                        <span class="text-[10px] font-medium text-gray-400 dark:text-gray-400 mt-0.5">${formattedValueStr}</span>
+                        ${label ? `<span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">${this.escapeHtml(label)}</span>` : ''}
+                        <span class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">${formattedValueStr}</span>
                     </div>
                 </div>
             </div>`;
