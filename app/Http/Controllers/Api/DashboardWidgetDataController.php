@@ -1298,10 +1298,27 @@ class DashboardWidgetDataController extends Controller
             $controlsToMerge['dependent_channel'] = $runtimeChannel;
         }
 
-        if (!empty($controls['assets'])) {
-            $activeDepChannel = $controlsToMerge['dependent_channel'] ?? $kpiDepChannel;
-            if (empty($kpiDepChannel) || $kpiDepChannel === $runtimeChannel || $activeDepChannel === $runtimeChannel) {
-                $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
+        $activeDepChannel = $controlsToMerge['dependent_channel'] ?? $kpiDepChannel;
+
+        if (!empty($controls['asset_group'])) {
+            $group = \App\Models\AssetGroup::find($controls['asset_group']);
+            $groupAssets = $group ? $group->items()
+                ->where('channel', $activeDepChannel)
+                ->pluck('asset_id')
+                ->toArray() : [];
+
+            if (empty($groupAssets)) {
+                $controlsToMerge['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
+                $controlsToMerge['dependent_asset_group'] = null;
+            } else {
+                $controlsToMerge['dependent_asset_filter'] = array_values($groupAssets);
+                $controlsToMerge['dependent_asset_group'] = null;
+            }
+        } elseif (isset($controls['assets'])) {
+            if (empty($controls['assets']) && !empty($controls['asset_group'])) {
+                $controlsToMerge['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
+            } elseif (empty($kpiDepChannel) || $kpiDepChannel === $runtimeChannel || $activeDepChannel === $runtimeChannel) {
+                $controlsToMerge['dependent_asset_filter'] = !empty($controls['assets']) ? $controls['assets'] : ['___EMPTY_GROUP___'];
             }
         }
         
@@ -1345,9 +1362,25 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_channel'] = $controls['channel'];
                 }
                 $indChannel = $uiState['independent_variables'][$key]['independent_channel'] ?? '';
-                if (empty($var['independent_asset_filter']) && !empty($controls['assets']) && (!empty($controls['channel']) && $controls['channel'] === $indChannel)) {
+
+                if (!empty($controls['asset_group'])) {
+                    $group = \App\Models\AssetGroup::find($controls['asset_group']);
+                    $groupAssets = $group ? $group->items()
+                        ->where('channel', $indChannel)
+                        ->pluck('asset_id')
+                        ->toArray() : [];
+
+                    if (empty($groupAssets)) {
+                        $uiState['independent_variables'][$key]['independent_asset_filter'] = ['___EMPTY_GROUP___'];
+                        $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                    } else {
+                        $uiState['independent_variables'][$key]['independent_asset_filter'] = array_values($groupAssets);
+                        $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                    }
+                } elseif (empty($var['independent_asset_filter']) && !empty($controls['assets']) && (!empty($controls['channel']) && $controls['channel'] === $indChannel)) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
+
                 if (isset($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;

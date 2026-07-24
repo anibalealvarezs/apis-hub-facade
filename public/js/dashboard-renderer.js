@@ -149,6 +149,8 @@ window.dashboardRenderer = {
         } catch (e) {
             if (e.message === 'access_restricted') {
                 containerEl.innerHTML = this.accessRestrictedState();
+            } else if (e.message && (e.message.includes('___EMPTY_GROUP___') || e.message.includes('no assets') || e.message.includes('No assets found') || e.message.includes('no available assets'))) {
+                containerEl.innerHTML = this.emptyAssetState();
             } else {
                 containerEl.innerHTML = this.errorState(e.message);
             }
@@ -228,6 +230,19 @@ window.dashboardRenderer = {
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
                     <p class="text-xs text-gray-400 mt-2">Loading...</p>
+                </div>
+            </div>`;
+    },
+
+    emptyAssetState() {
+        return `
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="text-center">
+                    <svg class="w-6 h-6 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-xs text-amber-500 mt-2 font-medium">No Assets Available</p>
+                    <p class="text-xs text-gray-400 mt-1">The selected asset group has no assets for this widget's channel.</p>
                 </div>
             </div>`;
     },
