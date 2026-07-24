@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dashboard;
 use App\Models\DashboardWidget;
 use App\Models\Project;
-use App\Services\WidgetDataService;
 use App\Services\Analytics\KpiPayloadBuilder;
 use App\Services\RemoteEngineService;
+use App\Services\WidgetDataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +16,8 @@ class DashboardWidgetDataController extends Controller
     public function __construct(
         protected WidgetDataService $widgetDataService,
         protected RemoteEngineService $remoteEngineService,
-    ) {}
+    ) {
+    }
 
     public function show(Request $request, DashboardWidget $widget): JsonResponse
     {
@@ -35,8 +35,8 @@ class DashboardWidgetDataController extends Controller
 
         $user = $request->user();
 
-        if (!$dashboard->is_public) {
-            if (!$user || $user->cannot('view', $dashboard)) {
+        if (! $dashboard->is_public) {
+            if (! $user || $user->cannot('view', $dashboard)) {
                 return response()->json(['error' => 'Unauthorized'], 403, [], JSON_UNESCAPED_UNICODE);
             }
         }
@@ -73,7 +73,7 @@ class DashboardWidgetDataController extends Controller
             'series_assets' => $resolvedControls['series_assets'] ?? '__NOT_SET__',
         ]);
 
-        if (!$dashboard->is_public && $user && !empty($resolvedControls['channel'])) {
+        if (! $dashboard->is_public && $user && ! empty($resolvedControls['channel'])) {
             $isProjectUser = \Illuminate\Support\Facades\DB::table('model_has_roles')
                 ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
                 ->where('model_has_roles.model_id', $user->id)
@@ -84,7 +84,10 @@ class DashboardWidgetDataController extends Controller
             if ($isProjectUser) {
                 $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
                 $allowedAssets = $this->widgetDataService->filterAllowedAssets(
-                    $project, $user->id, $resolvedControls['channel'], $assetList
+                    $project,
+                    $user->id,
+                    $resolvedControls['channel'],
+                    $assetList
                 );
 
                 if (empty($allowedAssets)) {
@@ -125,17 +128,17 @@ class DashboardWidgetDataController extends Controller
                     'widget_id' => $widget->id,
                     'runtimeMetrics_entry' => $runtimeMetrics,
                     'kpi_dependent_metric' => $kpiUiState['dependent_metric'] ?? '__NONE__',
-                    'kpi_independent_vars' => collect($kpiUiState['independent_variables'] ?? [])->map(fn($v) => ['metric' => $v['independent_metric'] ?? '__EMPTY__', 'channel' => $v['independent_channel'] ?? '__EMPTY__'])->values()->toArray(),
-                    'need_dependent_fallback' => empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric']),
+                    'kpi_independent_vars' => collect($kpiUiState['independent_variables'] ?? [])->map(fn ($v) => ['metric' => $v['independent_metric'] ?? '__EMPTY__', 'channel' => $v['independent_channel'] ?? '__EMPTY__'])->values()->toArray(),
+                    'need_dependent_fallback' => empty($runtimeMetrics[0]) && ! empty($kpiUiState['dependent_metric']),
                     'need_independent_fallback' => empty($runtimeMetrics[1]) && isset($kpiUiState['independent_variables']),
                 ]);
 
-                if (empty($runtimeMetrics[0]) && !empty($kpiUiState['dependent_metric'])) {
+                if (empty($runtimeMetrics[0]) && ! empty($kpiUiState['dependent_metric'])) {
                     $resolvedControls['metrics'][0] = $kpiUiState['dependent_metric'];
                 }
                 if (empty($runtimeMetrics[1]) && isset($kpiUiState['independent_variables'])) {
                     $firstIvar = reset($kpiUiState['independent_variables']);
-                    if (!empty($firstIvar['independent_metric'])) {
+                    if (! empty($firstIvar['independent_metric'])) {
                         $resolvedControls['metrics'][1] = $firstIvar['independent_metric'];
                     }
                 }
@@ -156,21 +159,21 @@ class DashboardWidgetDataController extends Controller
 
                 if (in_array($effectiveWidgetType, $chartTypes)) {
                     $effectiveWidgetType = 'anomaly_chart';
-                    if (!empty($series['dates'])) {
+                    if (! empty($series['dates'])) {
                         $pointRadius = array_map(
-                            fn($d) => isset($anomalyDates[$d]) ? 7 : 2,
+                            fn ($d) => isset($anomalyDates[$d]) ? 7 : 2,
                             $series['dates']
                         );
                         $pointBg = array_map(
-                            fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                            fn ($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
                             $series['dates']
                         );
                         $pointBorder = array_map(
-                            fn($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
+                            fn ($d) => isset($anomalyDates[$d]) ? '#ef4444' : 'transparent',
                             $series['dates']
                         );
                         $pointBorderWidth = array_map(
-                            fn($d) => isset($anomalyDates[$d]) ? 3 : 0,
+                            fn ($d) => isset($anomalyDates[$d]) ? 3 : 0,
                             $series['dates']
                         );
 
@@ -250,7 +253,7 @@ class DashboardWidgetDataController extends Controller
                             'borderColor' => '#3b82f6',
                             'borderWidth' => 2,
                             'fill' => false,
-                            'pointRadius' => 0
+                            'pointRadius' => 0,
                         ],
                         [
                             'type' => 'line',
@@ -259,15 +262,15 @@ class DashboardWidgetDataController extends Controller
                             'borderColor' => '#f59e0b',
                             'borderWidth' => 2,
                             'fill' => false,
-                            'pointRadius' => 0
+                            'pointRadius' => 0,
                         ],
                         [
                             'type' => 'bar',
                             'label' => 'Histogram',
                             'data' => $series['histogram'],
-                            'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)', $series['histogram'] ?? [])
-                        ]
-                    ]
+                            'backgroundColor' => array_map(fn ($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)', $series['histogram'] ?? []),
+                        ],
+                    ],
                 ];
             } elseif ($effectiveWidgetType === 'scatter_plot' && isset($data['scatter_data'])) {
                 $scatter = $data['scatter_data'];
@@ -292,27 +295,45 @@ class DashboardWidgetDataController extends Controller
                 // regardless so [[[others]]] stays visible on the chart.
                 // Also filter labels to keep indices aligned with filtered x/y arrays.
                 if ($resolvedControls['metrics'][0] === 'position') {
-                    $filteredX = []; $filteredY = []; $filteredLabels = [];
+                    $filteredX = [];
+                    $filteredY = [];
+                    $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
                         $isCluster = isset($scatter['labels'][$i]) && $scatter['labels'][$i] === 'others';
                         if ($isCluster || $rawY[$i] <= 30) {
-                            $filteredX[] = $x; $filteredY[] = $rawY[$i];
-                            if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
+                            $filteredX[] = $x;
+                            $filteredY[] = $rawY[$i];
+                            if (isset($scatter['labels'][$i])) {
+                                $filteredLabels[] = $scatter['labels'][$i];
+                            }
                         }
                     }
-                    $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
-                    if (!empty($filteredLabels)) $scatter['labels'] = $filteredLabels;
+                    $rawX = $filteredX;
+                    $rawY = $filteredY;
+                    $n = count($rawX);
+                    if (! empty($filteredLabels)) {
+                        $scatter['labels'] = $filteredLabels;
+                    }
                 } elseif ($resolvedControls['metrics'][1] === 'position') {
-                    $filteredX = []; $filteredY = []; $filteredLabels = [];
+                    $filteredX = [];
+                    $filteredY = [];
+                    $filteredLabels = [];
                     foreach ($rawX as $i => $x) {
                         $isCluster = isset($scatter['labels'][$i]) && $scatter['labels'][$i] === 'others';
                         if ($isCluster || $x <= 30) {
-                            $filteredX[] = $x; $filteredY[] = $rawY[$i];
-                            if (isset($scatter['labels'][$i])) $filteredLabels[] = $scatter['labels'][$i];
+                            $filteredX[] = $x;
+                            $filteredY[] = $rawY[$i];
+                            if (isset($scatter['labels'][$i])) {
+                                $filteredLabels[] = $scatter['labels'][$i];
+                            }
                         }
                     }
-                    $rawX = $filteredX; $rawY = $filteredY; $n = count($rawX);
-                    if (!empty($filteredLabels)) $scatter['labels'] = $filteredLabels;
+                    $rawX = $filteredX;
+                    $rawY = $filteredY;
+                    $n = count($rawX);
+                    if (! empty($filteredLabels)) {
+                        $scatter['labels'] = $filteredLabels;
+                    }
                 }
 
                 // Build regression from filtered data
@@ -321,8 +342,8 @@ class DashboardWidgetDataController extends Controller
                 $rSquared = null;
                 if ($n >= 2) {
                     if ($modelType === 'log-log') {
-                        $logX = array_map(fn($v) => $v > 0 ? log($v) : null, $rawX);
-                        $logY = array_map(fn($v) => $v > 0 ? log($v) : null, $rawY);
+                        $logX = array_map(fn ($v) => $v > 0 ? log($v) : null, $rawX);
+                        $logY = array_map(fn ($v) => $v > 0 ? log($v) : null, $rawY);
                         $valid = [];
                         foreach ($logX as $i => $lx) {
                             if ($lx !== null && $logY[$i] !== null) {
@@ -341,25 +362,25 @@ class DashboardWidgetDataController extends Controller
                             }
                             $sumX = array_sum($validLogX);
                             $sumY = array_sum($validLogY);
-                            $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $validLogX, $validLogY));
-                            $sumX2 = array_sum(array_map(fn($v) => $v * $v, $validLogX));
+                            $sumXY = array_sum(array_map(fn ($a, $b) => $a * $b, $validLogX, $validLogY));
+                            $sumX2 = array_sum(array_map(fn ($v) => $v * $v, $validLogX));
                             $m = ($validN * $sumXY - $sumX * $sumY) / ($validN * $sumX2 - $sumX * $sumX);
                             $b = ($sumY - $m * $sumX) / $validN;
-                            $ssRes = array_sum(array_map(fn($lx, $ly) => ($ly - ($m * $lx + $b)) ** 2, $validLogX, $validLogY));
-                            $ssTot = array_sum(array_map(fn($ly) => ($ly - $sumY / $validN) ** 2, $validLogY));
+                            $ssRes = array_sum(array_map(fn ($lx, $ly) => ($ly - ($m * $lx + $b)) ** 2, $validLogX, $validLogY));
+                            $ssTot = array_sum(array_map(fn ($ly) => ($ly - $sumY / $validN) ** 2, $validLogY));
                             $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
                         }
                     } else {
                         $sumX = array_sum($rawX);
                         $sumY = array_sum($rawY);
-                        $sumXY = array_sum(array_map(fn($a, $b) => $a * $b, $rawX, $rawY));
-                        $sumX2 = array_sum(array_map(fn($v) => $v * $v, $rawX));
+                        $sumXY = array_sum(array_map(fn ($a, $b) => $a * $b, $rawX, $rawY));
+                        $sumX2 = array_sum(array_map(fn ($v) => $v * $v, $rawX));
                         $denom = $n * $sumX2 - $sumX * $sumX;
                         if ($denom != 0) {
                             $m = ($n * $sumXY - $sumX * $sumY) / $denom;
                             $b = ($sumY - $m * $sumX) / $n;
-                            $ssRes = array_sum(array_map(fn($xi, $yi) => ($yi - ($m * $xi + $b)) ** 2, $rawX, $rawY));
-                            $ssTot = array_sum(array_map(fn($yi) => ($yi - $sumY / $n) ** 2, $rawY));
+                            $ssRes = array_sum(array_map(fn ($xi, $yi) => ($yi - ($m * $xi + $b)) ** 2, $rawX, $rawY));
+                            $ssTot = array_sum(array_map(fn ($yi) => ($yi - $sumY / $n) ** 2, $rawY));
                             $rSquared = $ssTot > 0 ? 1 - $ssRes / $ssTot : null;
                         }
                     }
@@ -451,6 +472,7 @@ class DashboardWidgetDataController extends Controller
                     foreach ($scatter['labels'] as $i => $label) {
                         if ($label === 'others') {
                             $clusterIndex = $i;
+
                             break;
                         }
                     }
@@ -462,7 +484,7 @@ class DashboardWidgetDataController extends Controller
                     $isCluster = ($clusterIndex !== null && $i === $clusterIndex);
 
                     // Apply volume filter only to non-cluster points
-                    if (!$isCluster) {
+                    if (! $isCluster) {
                         if ($hardFloor !== null && $x < $hardFloor) {
                             continue;
                         }
@@ -493,13 +515,13 @@ class DashboardWidgetDataController extends Controller
 
                     $alwaysKeep = [];
                     $filterable = [];
-                    $removeUnknown = !empty($resolvedControls['remove_unknown']);
+                    $removeUnknown = ! empty($resolvedControls['remove_unknown']);
                     foreach ($points as $p) {
                         $isUnknown = isset($p['label']) && $p['label'] === 'unknown';
                         if ($removeUnknown && $isUnknown) {
                             continue;
                         }
-                        if (!empty($p['_isCluster']) || $isUnknown) {
+                        if (! empty($p['_isCluster']) || $isUnknown) {
                             $alwaysKeep[] = $p;
                         } else {
                             $filterable[] = $p;
@@ -508,15 +530,15 @@ class DashboardWidgetDataController extends Controller
 
                     if (count($filterable) > $nKeep) {
                         if ($isPosition) {
-                            usort($filterable, fn($a, $b) => $a['x'] <=> $b['x']);
+                            usort($filterable, fn ($a, $b) => $a['x'] <=> $b['x']);
                         } else {
-                            usort($filterable, fn($a, $b) => $b['x'] <=> $a['x']);
+                            usort($filterable, fn ($a, $b) => $b['x'] <=> $a['x']);
                         }
                         $filterable = array_slice($filterable, 0, $nKeep);
                     }
 
                     $points = array_merge($alwaysKeep, $filterable);
-                    usort($points, fn($a, $b) => $a['x'] <=> $b['x']);
+                    usort($points, fn ($a, $b) => $a['x'] <=> $b['x']);
 
                     \Illuminate\Support\Facades\Log::info('Scatter percentile cap applied', [
                         'percentile' => $displayPercentile,
@@ -529,22 +551,22 @@ class DashboardWidgetDataController extends Controller
                 \Illuminate\Support\Facades\Log::info('Scatter points after filtering', [
                     'total_points' => count($points),
                     'cluster_index' => $clusterIndex,
-                    'points_sample' => array_map(fn($p) => [
+                    'points_sample' => array_map(fn ($p) => [
                         'label' => $p['label'] ?? 'no-label',
                         'x' => $p['x'],
                         'y' => $p['y'],
-                        'isCluster' => !empty($p['_isCluster']),
+                        'isCluster' => ! empty($p['_isCluster']),
                     ], array_slice($points, 0, 10)),
-                    'all_labels' => array_map(fn($p) => $p['label'] ?? 'no-label', $points),
+                    'all_labels' => array_map(fn ($p) => $p['label'] ?? 'no-label', $points),
                 ]);
 
-                if (!empty($points)) {
+                if (! empty($points)) {
                     $maxXPoint = $points[array_search(max(array_column($points, 'x')), array_column($points, 'x'))];
                     \Illuminate\Support\Facades\Log::info('Max X point after filtering', [
                         'label' => $maxXPoint['label'] ?? 'no-label',
                         'x' => $maxXPoint['x'],
                         'y' => $maxXPoint['y'],
-                        'isCluster' => !empty($maxXPoint['_isCluster']),
+                        'isCluster' => ! empty($maxXPoint['_isCluster']),
                     ]);
                 }
 
@@ -611,7 +633,7 @@ class DashboardWidgetDataController extends Controller
 
                 $rows = [];
                 foreach ($metrics as $metric) {
-                    if (!isset($summary[$metric])) {
+                    if (! isset($summary[$metric])) {
                         continue;
                     }
                     $current = is_numeric($summary[$metric]) ? (float) $summary[$metric] : $summary[$metric];
@@ -653,13 +675,13 @@ class DashboardWidgetDataController extends Controller
                 ];
             } elseif ($effectiveWidgetType === 'table' && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
-                
+
                 \Illuminate\Support\Facades\Log::error('[FACADE TABLE DEBUG] Entering chart table transformation:', [
                     'chartData_count' => count($chartData),
                     'first_row' => $chartData[0] ?? null,
                     'metricsFilter' => $resolvedControls['metrics'] ?? null,
                 ]);
-                
+
                 $kpiMetrics = [];
                 if ($effectiveWidgetType === 'table' || $widget->source_type === 'kpi') {
                     if ($widget->source_type === 'kpi') {
@@ -684,186 +706,206 @@ class DashboardWidgetDataController extends Controller
                     // Add channel-specific labels not in KpiFormBuilder
                     $metricLabels += [
                         // FB Organic fb_pages fixed aggregations
-                        'page_views_total'          => 'Page Views',
-                        'video_views'               => 'Video Views',
-                        'follows_and_unfollows'     => 'Follows & Unfollows',
-                        'engaged_users'             => 'Engaged Users',
+                        'page_views_total' => 'Page Views',
+                        'video_views' => 'Video Views',
+                        'follows_and_unfollows' => 'Follows & Unfollows',
+                        'engaged_users' => 'Engaged Users',
                         // FB Marketing trend-prefixed clean keys
-                        'frequency'                 => 'Frequency',
-                        'link_clicks'               => 'Link Clicks',
-                        'purchase_roas'             => 'ROAS',
+                        'frequency' => 'Frequency',
+                        'link_clicks' => 'Link Clicks',
+                        'purchase_roas' => 'ROAS',
                     ];
 
-                    $ratioMetrics    = ['ctr', 'bounce_rate', 'result_rate'];
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
                     $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas'];
-                    $granularity     = $resolvedControls['granularity'] ?? 'daily';
-    
+                    $granularity = $resolvedControls['granularity'] ?? 'daily';
+
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : (isset($chartData[0]['metric_date']) ? 'metric_date' : 'date');
 
-                $channel = $resolvedControls['channel'] ?? '';
+                    $channel = $resolvedControls['channel'] ?? '';
 
-                // For channels with fixed aggregation sets (facebook_organic, facebook_marketing),
-                // the widget-configured metric list is a generic tag set that doesn't match the
-                // actual API keys returned, so we skip metric filtering and show all returned columns.
-                $fixedAggregationChannels = ['facebook_organic', 'facebook_marketing'];
-                if (in_array($channel, $fixedAggregationChannels)) {
-                    $metricsFilter = null;
-                } else {
-                    $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+                    // For channels with fixed aggregation sets (facebook_organic, facebook_marketing),
+                    // the widget-configured metric list is a generic tag set that doesn't match the
+                    // actual API keys returned, so we skip metric filtering and show all returned columns.
+                    $fixedAggregationChannels = ['facebook_organic', 'facebook_marketing'];
+                    if (in_array($channel, $fixedAggregationChannels)) {
+                        $metricsFilter = null;
+                    } else {
+                        $metricsFilter = ! empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
 
-                    // If metricsFilter is set but none of those metrics exist in the returned data,
-                    // fall back to showing all returned columns.
-                    if ($metricsFilter) {
-                        $returnedCleanKeys = array_map(
-                            fn($k) => preg_replace('/^trend_(?:total|average)_/', '', $k),
-                            array_keys($chartData[0])
-                        );
-                        if (empty(array_intersect($metricsFilter, $returnedCleanKeys))) {
-                            $metricsFilter = null;
-                        }
-                    }
-                }
-
-                $columns = [['key' => 'date', 'label' => 'Date']];
-                foreach ($chartData[0] as $key => $val) {
-                    if ($key === $dateKey) continue;
-                    $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
-                    if ($metricsFilter && !in_array($cleanKey, $metricsFilter)) continue;
-
-                    $isRatio    = in_array($cleanKey, $ratioMetrics);
-                    $isCurrency = in_array($cleanKey, $currencyMetrics);
-                    $isTime     = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
-                    $label      = $metricLabels[$cleanKey] ?? ucwords(str_replace('_', ' ', $cleanKey));
-
-                    $format = 'number';
-                    if ($isRatio)    $format = 'percentage';
-                    elseif ($isCurrency) $format = 'currency';
-                    elseif ($isTime) $format = 'string';
-
-                    $columns[] = [
-                        'key'    => $key,
-                        'label'  => $isRatio ? $label . ' (%)' : $label,
-                        'format' => $format,
-                    ];
-                }
-
-                $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
-
-                $rawRows = [];
-                foreach ($chartData as $row) {
-                    $rawRow = ['date' => $row[$dateKey] ?? ''];
-                    foreach ($row as $k => $v) {
-                        if ($k === $dateKey) continue;
-                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                        
-                        $val = is_numeric($v) ? (float) $v : $v;
-                        $rawRow[$k] = $val;
-                    }
-                    $rawRows[] = $rawRow;
-                }
-
-                if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rawRows) > 1) {
-                    $groups = [];
-                    foreach ($rawRows as $row) {
-                        $date = $row['date'];
-                        if ($granularity === 'weekly') {
-                            $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
-                            $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-                            $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
-                        } elseif ($granularity === 'monthly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
-                        } elseif ($granularity === 'quarterly') {
-                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
-                        } elseif ($granularity === 'semiannual') {
-                            $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
-                        } elseif ($granularity === 'annually') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
-                        } elseif ($granularity === 'lifetime') {
-                            $gKey = 'Lifetime';
-                        } else {
-                            $gKey = $date;
-                        }
-
-                        if (!isset($groups[$gKey])) {
-                            $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
-                        }
-
-                        $rowImpressions = null;
-                        foreach ($row as $k => $v) {
-                            if ($k === 'date' || !is_numeric($v)) continue;
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            if ($ck === 'impressions') { $rowImpressions = (float) $v; break; }
-                        }
-
-                        foreach ($row as $k => $v) {
-                            if ($k === 'date' || !is_numeric($v)) continue;
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            if (!isset($groups[$gKey]['metrics'][$k])) {
-                                $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
-                            }
-                            $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
-                            $groups[$gKey]['metrics'][$k]['count']++;
-                            if ($ck === 'impressions') {
-                                $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
-                            }
-                            if ($ck === 'clicks') {
-                                $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
-                            }
-                            if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
-                                if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
-                                    $groups[$gKey]['companion']['weighted_position_sum'] = [];
-                                }
-                                $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
+                        // If metricsFilter is set but none of those metrics exist in the returned data,
+                        // fall back to showing all returned columns.
+                        if ($metricsFilter) {
+                            $returnedCleanKeys = array_map(
+                                fn ($k) => preg_replace('/^trend_(?:total|average)_/', '', $k),
+                                array_keys($chartData[0])
+                            );
+                            if (empty(array_intersect($metricsFilter, $returnedCleanKeys))) {
+                                $metricsFilter = null;
                             }
                         }
                     }
+
+                    $columns = [['key' => 'date', 'label' => 'Date']];
+                    foreach ($chartData[0] as $key => $val) {
+                        if ($key === $dateKey) {
+                            continue;
+                        }
+                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                        if ($metricsFilter && ! in_array($cleanKey, $metricsFilter)) {
+                            continue;
+                        }
+
+                        $isRatio = in_array($cleanKey, $ratioMetrics);
+                        $isCurrency = in_array($cleanKey, $currencyMetrics);
+                        $isTime = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
+                        $label = $metricLabels[$cleanKey] ?? ucwords(str_replace('_', ' ', $cleanKey));
+
+                        $format = 'number';
+                        if ($isRatio) {
+                            $format = 'percentage';
+                        } elseif ($isCurrency) {
+                            $format = 'currency';
+                        } elseif ($isTime) {
+                            $format = 'string';
+                        }
+
+                        $columns[] = [
+                            'key' => $key,
+                            'label' => $isRatio ? $label . ' (%)' : $label,
+                            'format' => $format,
+                        ];
+                    }
+
+                    $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
 
                     $rawRows = [];
-                    foreach ($groups as $group) {
-                        $agg = ['date' => $group['date']];
-                        $comp = $group['companion'] ?? [];
-                        foreach ($group['metrics'] as $k => $m) {
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
+                    foreach ($chartData as $row) {
+                        $rawRow = ['date' => $row[$dateKey] ?? ''];
+                        foreach ($row as $k => $v) {
+                            if ($k === $dateKey) {
+                                continue;
+                            }
+                            $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
 
-                            if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                            } elseif (str_contains($actualMetric, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
-                                $agg[$k] = $weightedSum / $comp['impressions_sum'];
-                            } elseif ($isRatioOrPosition && $m['count'] > 0) {
-                                $agg[$k] = $m['sum'] / $m['count'];
+                            $val = is_numeric($v) ? (float) $v : $v;
+                            $rawRow[$k] = $val;
+                        }
+                        $rawRows[] = $rawRow;
+                    }
+
+                    if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rawRows) > 1) {
+                        $groups = [];
+                        foreach ($rawRows as $row) {
+                            $date = $row['date'];
+                            if ($granularity === 'weekly') {
+                                $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
+                                $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+                                $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
+                            } elseif ($granularity === 'monthly') {
+                                $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
+                            } elseif ($granularity === 'quarterly') {
+                                $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
+                            } elseif ($granularity === 'semiannual') {
+                                $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
+                            } elseif ($granularity === 'annually') {
+                                $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
+                            } elseif ($granularity === 'lifetime') {
+                                $gKey = 'Lifetime';
                             } else {
-                                $agg[$k] = $m['sum'];
+                                $gKey = $date;
+                            }
+
+                            if (! isset($groups[$gKey])) {
+                                $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
+                            }
+
+                            $rowImpressions = null;
+                            foreach ($row as $k => $v) {
+                                if ($k === 'date' || ! is_numeric($v)) {
+                                    continue;
+                                }
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                if ($ck === 'impressions') {
+                                    $rowImpressions = (float) $v;
+
+                                    break;
+                                }
+                            }
+
+                            foreach ($row as $k => $v) {
+                                if ($k === 'date' || ! is_numeric($v)) {
+                                    continue;
+                                }
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                                if (! isset($groups[$gKey]['metrics'][$k])) {
+                                    $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                                }
+                                $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
+                                $groups[$gKey]['metrics'][$k]['count']++;
+                                if ($ck === 'impressions') {
+                                    $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
+                                }
+                                if ($ck === 'clicks') {
+                                    $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
+                                }
+                                if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
+                                    if (! isset($groups[$gKey]['companion']['weighted_position_sum'])) {
+                                        $groups[$gKey]['companion']['weighted_position_sum'] = [];
+                                    }
+                                    $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
+                                }
                             }
                         }
-                        $rawRows[] = $agg;
-                    }
 
-                    usort($rawRows, fn($a, $b) => $a['date'] <=> $b['date']);
-                }
+                        $rawRows = [];
+                        foreach ($groups as $group) {
+                            $agg = ['date' => $group['date']];
+                            $comp = $group['companion'] ?? [];
+                            foreach ($group['metrics'] as $k => $m) {
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                                $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
 
-                $rows = [];
-                foreach ($rawRows as $row) {
-                    $formattedRow = $row;
-                    foreach ($row as $k => $v) {
-                        if ($k === 'date' || !is_numeric($v)) continue;
-                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                        if (in_array($cleanKey, $ratioMetrics)) {
-                            $formattedRow[$k] = round($v * 100, 4);
-                        } elseif (in_array($cleanKey, $timeMetrics)) {
-                            $formattedRow[$k] = gmdate('H:i:s', (int) $v);
+                                if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                    $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
+                                } elseif (str_contains($actualMetric, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
+                                    $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
+                                    $agg[$k] = $weightedSum / $comp['impressions_sum'];
+                                } elseif ($isRatioOrPosition && $m['count'] > 0) {
+                                    $agg[$k] = $m['sum'] / $m['count'];
+                                } else {
+                                    $agg[$k] = $m['sum'];
+                                }
+                            }
+                            $rawRows[] = $agg;
                         }
-                    }
-                    $rows[] = $formattedRow;
-                }
 
-                $data = [
-                    'columns' => $columns,
-                    'rows' => $rows,
-                ];
+                        usort($rawRows, fn ($a, $b) => $a['date'] <=> $b['date']);
+                    }
+
+                    $rows = [];
+                    foreach ($rawRows as $row) {
+                        $formattedRow = $row;
+                        foreach ($row as $k => $v) {
+                            if ($k === 'date' || ! is_numeric($v)) {
+                                continue;
+                            }
+                            $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                            if (in_array($cleanKey, $ratioMetrics)) {
+                                $formattedRow[$k] = round($v * 100, 4);
+                            } elseif (in_array($cleanKey, $timeMetrics)) {
+                                $formattedRow[$k] = gmdate('H:i:s', (int) $v);
+                            }
+                        }
+                        $rows[] = $formattedRow;
+                    }
+
+                    $data = [
+                        'columns' => $columns,
+                        'rows' => $rows,
+                    ];
                 }
             } elseif ($effectiveWidgetType === 'table' && isset($data['table']) && is_array($data['table'])) {
                 $tableData = $data['table'];
@@ -926,228 +968,237 @@ class DashboardWidgetDataController extends Controller
                     $granularity = $resolvedControls['granularity'] ?? 'daily';
                     $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
-                    $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn($k) => $k !== $dateKey));
-                    $metricsFilter = !empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
+                    $metricKeys = array_values(array_filter(array_keys($chartData[0]), fn ($k) => $k !== $dateKey));
+                    $metricsFilter = ! empty($resolvedControls['metrics']) ? $resolvedControls['metrics'] : null;
                     if ($metricsFilter) {
-                        $metricKeys = array_filter($metricKeys, function($key) use ($metricsFilter) {
+                        $metricKeys = array_filter($metricKeys, function ($key) use ($metricsFilter) {
                             $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+
                             return in_array($cleanKey, $metricsFilter);
                         });
                         $metricKeys = array_values($metricKeys);
                     }
 
-                if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($chartData) > 1) {
-                    $groups = [];
-                    foreach ($chartData as $row) {
-                        $date = $row[$dateKey] ?? '';
-                        if ($granularity === 'weekly') {
-                            $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
-                            $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-                            $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
-                        } elseif ($granularity === 'monthly') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
-                        } elseif ($granularity === 'quarterly') {
-                            $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
-                        } elseif ($granularity === 'semiannual') {
-                            $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
-                        } elseif ($granularity === 'annually') {
-                            $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
-                        } elseif ($granularity === 'lifetime') {
-                            $gKey = 'Lifetime';
-                        } else {
-                            $gKey = $date;
-                        }
-
-                        if (!isset($groups[$gKey])) {
-                            $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
-                        }
-
-                        $rowImpressions = null;
-                        foreach ($row as $k => $v) {
-                            if ($k === $dateKey || !is_numeric($v)) continue;
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            if ($ck === 'impressions') { $rowImpressions = (float) $v; break; }
-                        }
-
-                        foreach ($row as $k => $v) {
-                            if ($k === $dateKey || !is_numeric($v)) continue;
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            
-                            if (!isset($groups[$gKey]['metrics'][$k])) {
-                                $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                    if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($chartData) > 1) {
+                        $groups = [];
+                        foreach ($chartData as $row) {
+                            $date = $row[$dateKey] ?? '';
+                            if ($granularity === 'weekly') {
+                                $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
+                                $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+                                $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
+                            } elseif ($granularity === 'monthly') {
+                                $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
+                            } elseif ($granularity === 'quarterly') {
+                                $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
+                            } elseif ($granularity === 'semiannual') {
+                                $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
+                            } elseif ($granularity === 'annually') {
+                                $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
+                            } elseif ($granularity === 'lifetime') {
+                                $gKey = 'Lifetime';
+                            } else {
+                                $gKey = $date;
                             }
-                            $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
-                            $groups[$gKey]['metrics'][$k]['count']++;
-                            if ($ck === 'impressions') {
-                                $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
+
+                            if (! isset($groups[$gKey])) {
+                                $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
                             }
-                            if ($ck === 'clicks') {
-                                $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
-                            }
-                            if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
-                                if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
-                                    $groups[$gKey]['companion']['weighted_position_sum'] = [];
+
+                            $rowImpressions = null;
+                            foreach ($row as $k => $v) {
+                                if ($k === $dateKey || ! is_numeric($v)) {
+                                    continue;
                                 }
-                                $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                if ($ck === 'impressions') {
+                                    $rowImpressions = (float) $v;
+
+                                    break;
+                                }
+                            }
+
+                            foreach ($row as $k => $v) {
+                                if ($k === $dateKey || ! is_numeric($v)) {
+                                    continue;
+                                }
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
+
+                                if (! isset($groups[$gKey]['metrics'][$k])) {
+                                    $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
+                                }
+                                $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
+                                $groups[$gKey]['metrics'][$k]['count']++;
+                                if ($ck === 'impressions') {
+                                    $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
+                                }
+                                if ($ck === 'clicks') {
+                                    $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
+                                }
+                                if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
+                                    if (! isset($groups[$gKey]['companion']['weighted_position_sum'])) {
+                                        $groups[$gKey]['companion']['weighted_position_sum'] = [];
+                                    }
+                                    $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
+                                }
                             }
                         }
-                    }
 
-                    $aggregated = [];
-                    foreach ($groups as $group) {
-                        $row = [$dateKey => $group['date']];
-                        $comp = $group['companion'] ?? [];
-                        foreach ($group['metrics'] as $k => $m) {
-                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                            $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                            $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
+                        $aggregated = [];
+                        foreach ($groups as $group) {
+                            $row = [$dateKey => $group['date']];
+                            $comp = $group['companion'] ?? [];
+                            foreach ($group['metrics'] as $k => $m) {
+                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
+                                $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
 
-                            if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                            } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
-                                $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
-                                $row[$k] = $weightedSum / $comp['impressions_sum'];
-                            } elseif ($isRatioOrPosition && $m['count'] > 0) {
-                                $row[$k] = $m['sum'] / $m['count'];
-                            } else {
-                                $row[$k] = $m['sum'];
+                                if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
+                                    $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
+                                } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
+                                    $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
+                                    $row[$k] = $weightedSum / $comp['impressions_sum'];
+                                } elseif ($isRatioOrPosition && $m['count'] > 0) {
+                                    $row[$k] = $m['sum'] / $m['count'];
+                                } else {
+                                    $row[$k] = $m['sum'];
+                                }
                             }
+                            $aggregated[] = $row;
                         }
-                        $aggregated[] = $row;
+
+                        usort($aggregated, fn ($a, $b) => $a[$dateKey] <=> $b[$dateKey]);
+                        $chartData = $aggregated;
                     }
 
-                    usort($aggregated, fn($a, $b) => $a[$dateKey] <=> $b[$dateKey]);
-                    $chartData = $aggregated;
-                }
+                    $labels = array_map(fn ($row) => $row[$dateKey] ?? '', $chartData);
 
-                $labels = array_map(fn($row) => $row[$dateKey] ?? '', $chartData);
+                    $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
-                $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-
-                if (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
-                    $firstKey = $metricKeys[0] ?? null;
-                    if ($firstKey && !empty($chartData)) {
-                        // Chart data is sorted ascending by date, so the last element is the most recent period (e.g. last day)
-                        $lastRow = end($chartData);
-                        $value = (float) ($lastRow[$firstKey] ?? 0);
-                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
-                        if (in_array($ck, $ratioMetrics)) {
-                            $value = round($value * 100, 4);
-                        }
-                        
-                        // We also get the previous value if there is more than 1 point
-                        $prevValue = null;
-                        if (count($chartData) > 1) {
-                            $prevRow = $chartData[count($chartData) - 2];
-                            $prevValue = (float) ($prevRow[$firstKey] ?? 0);
+                    if (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
+                        $firstKey = $metricKeys[0] ?? null;
+                        if ($firstKey && ! empty($chartData)) {
+                            // Chart data is sorted ascending by date, so the last element is the most recent period (e.g. last day)
+                            $lastRow = end($chartData);
+                            $value = (float) ($lastRow[$firstKey] ?? 0);
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
                             if (in_array($ck, $ratioMetrics)) {
-                                $prevValue = round($prevValue * 100, 4);
+                                $value = round($value * 100, 4);
+                            }
+
+                            // We also get the previous value if there is more than 1 point
+                            $prevValue = null;
+                            if (count($chartData) > 1) {
+                                $prevRow = $chartData[count($chartData) - 2];
+                                $prevValue = (float) ($prevRow[$firstKey] ?? 0);
+                                if (in_array($ck, $ratioMetrics)) {
+                                    $prevValue = round($prevValue * 100, 4);
+                                }
+                            }
+
+                            $allValues = array_map(fn ($row) => (float) ($row[$firstKey] ?? 0), $chartData);
+                            if (in_array($ck, $ratioMetrics)) {
+                                $allValues = array_map(fn ($v) => round($v * 100, 4), $allValues);
+                            }
+
+                            $data = [
+                                'value' => $value,
+                                'current' => $value,
+                                'previous' => $prevValue,
+                                'label' => $metricLabels[$ck] ?? ucfirst($ck),
+                            ];
+
+                            if (! empty($allValues)) {
+                                $maxValue = max($allValues);
+                                $minValue = min($allValues);
+
+                                if (str_contains($ck, 'position')) {
+                                    $data['min'] = $maxValue;
+                                    $data['max'] = $minValue > 0 ? $minValue : 1;
+                                } else {
+                                    $data['min'] = 0;
+                                    $data['max'] = $maxValue > 0 ? $maxValue : 1; // Prevent division by zero
+                                }
+                            }
+                        } else {
+                            $data = [
+                                'value' => 0,
+                                'current' => 0,
+                                'previous' => null,
+                            ];
+                        }
+                    } elseif ($effectiveWidgetType === 'sparkline') {
+                        $firstKey = $metricKeys[0] ?? null;
+                        $values = $firstKey ? array_map(fn ($row) => (float) ($row[$firstKey] ?? 0), $chartData) : [];
+
+                        if ($firstKey) {
+                            $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
+                            if (in_array($ck, $ratioMetrics)) {
+                                $values = array_map(fn ($v) => round($v * 100, 4), $values);
                             }
                         }
-                        
-                        $allValues = array_map(fn($row) => (float) ($row[$firstKey] ?? 0), $chartData);
-                        if (in_array($ck, $ratioMetrics)) {
-                            $allValues = array_map(fn($v) => round($v * 100, 4), $allValues);
-                        }
 
-                        $data = [
-                            'value' => $value,
-                            'current' => $value,
-                            'previous' => $prevValue,
-                            'label' => $metricLabels[$ck] ?? ucfirst($ck)
-                        ];
-
-                        if (!empty($allValues)) {
-                            $maxValue = max($allValues);
-                            $minValue = min($allValues);
-                            
-                            if (str_contains($ck, 'position')) {
-                                $data['min'] = $maxValue;
-                                $data['max'] = $minValue > 0 ? $minValue : 1;
-                            } else {
-                                $data['min'] = 0;
-                                $data['max'] = $maxValue > 0 ? $maxValue : 1; // Prevent division by zero
-                            }
-                        }
+                        $data = ['values' => $values];
                     } else {
-                        $data = [
-                            'value' => 0,
-                            'current' => 0,
-                            'previous' => null,
-                        ];
-                    }
-                } elseif ($effectiveWidgetType === 'sparkline') {
-                    $firstKey = $metricKeys[0] ?? null;
-                    $values = $firstKey ? array_map(fn($row) => (float) ($row[$firstKey] ?? 0), $chartData) : [];
+                        $datasets = [];
+                        foreach ($metricKeys as $idx => $key) {
+                            $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                            $isRatio = in_array($cleanKey, $ratioMetrics);
+                            $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
+                            $values = array_map(fn ($row) => (float) ($row[$key] ?? 0), $chartData);
 
-                    if ($firstKey) {
-                        $ck = preg_replace('/^trend_(?:total|average)_/', '', $firstKey);
-                        if (in_array($ck, $ratioMetrics)) {
-                            $values = array_map(fn($v) => round($v * 100, 4), $values);
-                        }
-                    }
+                            if ($isRatio) {
+                                $values = array_map(fn ($v) => round($v * 100, 4), $values);
+                            }
 
-                    $data = ['values' => $values];
-                } else {
-                    $datasets = [];
-                    foreach ($metricKeys as $idx => $key) {
-                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
-                        $isRatio = in_array($cleanKey, $ratioMetrics);
-                        $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
-                        $values = array_map(fn($row) => (float) ($row[$key] ?? 0), $chartData);
+                            $color = $palette[$idx % count($palette)];
 
-                        if ($isRatio) {
-                            $values = array_map(fn($v) => round($v * 100, 4), $values);
-                        }
+                            $dataset = [
+                                'label' => $isRatio ? $label . ' (%)' : $label,
+                                'data' => $values,
+                                'borderColor' => $color,
+                                'backgroundColor' => $color . '1a',
+                                'tension' => 0.3,
+                                'pointRadius' => 2,
+                                'yAxisID' => 'y-' . $cleanKey,
+                                'fill' => false,
+                            ];
 
-                        $color = $palette[$idx % count($palette)];
+                            if ($effectiveWidgetType === 'bar_chart') {
+                                $dataset['type'] = 'bar';
+                                $dataset['backgroundColor'] = $color . '80';
+                            }
 
-                        $dataset = [
-                            'label' => $isRatio ? $label . ' (%)' : $label,
-                            'data' => $values,
-                            'borderColor' => $color,
-                            'backgroundColor' => $color . '1a',
-                            'tension' => 0.3,
-                            'pointRadius' => 2,
-                            'yAxisID' => 'y-' . $cleanKey,
-                            'fill' => false,
-                        ];
-
-                        if ($effectiveWidgetType === 'bar_chart') {
-                            $dataset['type'] = 'bar';
-                            $dataset['backgroundColor'] = $color . '80';
+                            $datasets[] = $dataset;
                         }
 
-                        $datasets[] = $dataset;
-                    }
+                        $scales = [];
+                        foreach ($metricKeys as $idx => $key) {
+                            $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
+                            $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
+                            $isRatio = in_array($cleanKey, $ratioMetrics);
 
-                    $scales = [];
-                    foreach ($metricKeys as $idx => $key) {
-                        $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
-                        $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
-                        $isRatio = in_array($cleanKey, $ratioMetrics);
-
-                        $scales['y-' . $cleanKey] = [
-                            'type' => 'linear',
-                            'display' => true,
-                            'position' => $idx % 2 === 0 ? 'left' : 'right',
-                            'title' => [
+                            $scales['y-' . $cleanKey] = [
+                                'type' => 'linear',
                                 'display' => true,
-                                'text' => $isRatio ? $label . ' (%)' : $label,
-                            ],
-                            'grid' => [
-                                'drawOnChartArea' => $idx === 0,
-                            ],
+                                'position' => $idx % 2 === 0 ? 'left' : 'right',
+                                'title' => [
+                                    'display' => true,
+                                    'text' => $isRatio ? $label . ' (%)' : $label,
+                                ],
+                                'grid' => [
+                                    'drawOnChartArea' => $idx === 0,
+                                ],
+                            ];
+                        }
+
+                        $data = [
+                            'labels' => $labels,
+                            'datasets' => $datasets,
+                            'scales' => $scales,
                         ];
                     }
-
-                    $data = [
-                        'labels' => $labels,
-                        'datasets' => $datasets,
-                        'scales' => $scales,
-                    ];
-                }
                 }
             } elseif ($effectiveWidgetType === 'sparkline' && isset($data['trend'])) {
                 $data['values'] = array_column($data['trend'], 'value');
@@ -1183,7 +1234,7 @@ class DashboardWidgetDataController extends Controller
             }
 
             // If tile or gauge and data is still in series format, aggregate to a single value
-            if (in_array($effectiveWidgetType, ['tile', 'gauge']) && !isset($data['value'])) {
+            if (in_array($effectiveWidgetType, ['tile', 'gauge']) && ! isset($data['value'])) {
                 if (isset($data['summary'])) {
                     $metrics = $resolvedControls['metrics'] ?? [];
                     $metric = count($metrics) > 0 ? $metrics[0] : array_key_first($data['summary']);
@@ -1228,6 +1279,7 @@ class DashboardWidgetDataController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
             report($e);
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -1238,7 +1290,7 @@ class DashboardWidgetDataController extends Controller
     protected function handleKpiSource(Project $project, DashboardWidget $widget, array $controls): array
     {
         $kpi = $widget->customKpi;
-        if (!$kpi) {
+        if (! $kpi) {
             throw new \RuntimeException('Widget has no associated KPI');
         }
 
@@ -1265,7 +1317,7 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if ($cached) {
-            $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
+            $cachedDataKeys = ! empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
             \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
                 'widget_id' => $widget->id,
                 'kpi_id' => $kpi->id,
@@ -1274,6 +1326,7 @@ class DashboardWidgetDataController extends Controller
                 'has_scatter' => isset($cached->result['data']['scatter_data']),
                 '_debug' => $cached->result['data']['_debug'] ?? null,
             ]);
+
             return $cached->result;
         }
 
@@ -1282,7 +1335,7 @@ class DashboardWidgetDataController extends Controller
             'widget_id' => $widget->id,
             'kpi_id' => $kpi->id,
             'dependent_metric' => $uiState['dependent_metric'] ?? '__EMPTY__',
-            'independent_variables' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+            'independent_variables' => collect($uiState['independent_variables'] ?? [])->map(fn ($v) => [
                 'independent_metric' => $v['independent_metric'] ?? '__EMPTY__',
                 'independent_channel' => $v['independent_channel'] ?? '__EMPTY__',
                 'independent_asset_filter' => $v['independent_asset_filter'] ?? '__EMPTY__',
@@ -1294,13 +1347,13 @@ class DashboardWidgetDataController extends Controller
         $runtimeChannel = $controls['channel'] ?? '';
 
         // If KPI state already defines a specific channel, preserve it unless runtime channel matches it
-        if (empty($kpiDepChannel) && !empty($runtimeChannel)) {
+        if (empty($kpiDepChannel) && ! empty($runtimeChannel)) {
             $controlsToMerge['dependent_channel'] = $runtimeChannel;
         }
 
         $activeDepChannel = $controlsToMerge['dependent_channel'] ?? $kpiDepChannel;
 
-        if (!empty($controls['asset_group'])) {
+        if (! empty($controls['asset_group'])) {
             $group = \App\Models\AssetGroup::find($controls['asset_group']);
             $groupAssets = $group ? $group->active_items
                 ->where('channel', $activeDepChannel)
@@ -1316,27 +1369,31 @@ class DashboardWidgetDataController extends Controller
                 $controlsToMerge['dependent_asset_group'] = null;
             }
         } elseif (isset($controls['assets'])) {
-            if (empty($controls['assets']) && !empty($controls['asset_group'])) {
+            if (empty($controls['assets']) && ! empty($controls['asset_group'])) {
                 $controlsToMerge['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
             } elseif (empty($kpiDepChannel) || $kpiDepChannel === $runtimeChannel || $activeDepChannel === $runtimeChannel) {
-                $controlsToMerge['dependent_asset_filter'] = !empty($controls['assets']) ? $controls['assets'] : ['___EMPTY_GROUP___'];
+                $controlsToMerge['dependent_asset_filter'] = ! empty($controls['assets']) ? $controls['assets'] : ['___EMPTY_GROUP___'];
             }
         }
-        
-        if (isset($controls['series_assets']['dependent']) && !empty($controls['series_assets']['dependent'])) {
+
+        if (isset($controls['series_assets']['dependent']) && ! empty($controls['series_assets']['dependent'])) {
             $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
             $controlsToMerge['dependent_asset_group'] = null;
         }
-        if (!empty($controls['series_asset_groups']['dependent'])) {
+        if (! empty($controls['series_asset_groups']['dependent'])) {
             $controlsToMerge['dependent_asset_group'] = $controls['series_asset_groups']['dependent'];
             $controlsToMerge['dependent_asset_filter'] = null;
         }
 
-        if (!empty($controls['date_start'])) $controlsToMerge['start_date'] = $controls['date_start'];
-        if (!empty($controls['date_end'])) $controlsToMerge['end_date'] = $controls['date_end'];
-        if (!empty($controls['granularity'])) {
+        if (! empty($controls['date_start'])) {
+            $controlsToMerge['start_date'] = $controls['date_start'];
+        }
+        if (! empty($controls['date_end'])) {
+            $controlsToMerge['end_date'] = $controls['date_end'];
+        }
+        if (! empty($controls['granularity'])) {
             $fixedGranularity = $uiState['granularity'] ?? null;
-            if (!$fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'])) {
+            if (! $fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'])) {
                 $controlsToMerge['granularity'] = $controls['granularity'];
             }
         }
@@ -1362,12 +1419,12 @@ class DashboardWidgetDataController extends Controller
         // If independent variables are present and missing channels/assets, override them with controls
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (empty($var['independent_channel']) && !empty($controls['channel'])) {
+                if (empty($var['independent_channel']) && ! empty($controls['channel'])) {
                     $uiState['independent_variables'][$key]['independent_channel'] = $controls['channel'];
                 }
                 $indChannel = $uiState['independent_variables'][$key]['independent_channel'] ?? '';
 
-                if (!empty($controls['asset_group'])) {
+                if (! empty($controls['asset_group'])) {
                     $group = \App\Models\AssetGroup::find($controls['asset_group']);
                     $groupAssets = $group ? $group->active_items
                         ->where('channel', $indChannel)
@@ -1382,27 +1439,28 @@ class DashboardWidgetDataController extends Controller
                         $uiState['independent_variables'][$key]['independent_asset_filter'] = array_values($groupAssets);
                         $uiState['independent_variables'][$key]['independent_asset_group'] = null;
                     }
-                } elseif (empty($var['independent_asset_filter']) && !empty($controls['assets']) && (!empty($controls['channel']) && $controls['channel'] === $indChannel)) {
+                } elseif (empty($var['independent_asset_filter']) && ! empty($controls['assets']) && (! empty($controls['channel']) && $controls['channel'] === $indChannel)) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 
-                if (isset($controls['series_assets']["independent_{$key}"]) && !empty($controls['series_assets']["independent_{$key}"])) {
+                if (isset($controls['series_assets']["independent_{$key}"]) && ! empty($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } else if (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"]) && !empty($controls['series_assets']["independent_{$var['key']}"])) {
+                } elseif (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"]) && ! empty($controls['series_assets']["independent_{$var['key']}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$var['key']}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } else if (!empty($controls['series_assets']) && is_array($controls['series_assets'])) {
+                } elseif (! empty($controls['series_assets']) && is_array($controls['series_assets'])) {
                     // Match independent_UUID or independent_0 keys
                     foreach ($controls['series_assets'] as $sKey => $sAssets) {
-                        if (str_starts_with($sKey, 'independent_') && !empty($sAssets)) {
+                        if (str_starts_with($sKey, 'independent_') && ! empty($sAssets)) {
                             $uiState['independent_variables'][$key]['independent_asset_filter'] = $sAssets;
                             $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+
                             break;
                         }
                     }
                 }
-                if (!empty($controls['series_asset_groups']["independent_{$key}"])) {
+                if (! empty($controls['series_asset_groups']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = null;
                 }
@@ -1417,20 +1475,20 @@ class DashboardWidgetDataController extends Controller
             'widget_id' => $widget->id,
             'runtimeMetrics_raw' => $runtimeMetrics,
             'dependent_before' => $uiState['dependent_metric'] ?? '__EMPTY__',
-            'independent_vars_before' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+            'independent_vars_before' => collect($uiState['independent_variables'] ?? [])->map(fn ($v) => [
                 'metric' => $v['independent_metric'] ?? '__EMPTY__',
                 'channel' => $v['independent_channel'] ?? '__EMPTY__',
             ])->values()->toArray(),
         ]);
 
-        if (empty($uiState['dependent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
+        if (empty($uiState['dependent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
         }
         $metricIndex++;
 
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (empty($uiState['independent_variables'][$key]['independent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
+                if (empty($uiState['independent_variables'][$key]['independent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                 }
                 $metricIndex++;
@@ -1440,7 +1498,7 @@ class DashboardWidgetDataController extends Controller
         \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] After runtime metric override', [
             'widget_id' => $widget->id,
             'dependent_after' => $uiState['dependent_metric'] ?? '__EMPTY__',
-            'independent_vars_after' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+            'independent_vars_after' => collect($uiState['independent_variables'] ?? [])->map(fn ($v) => [
                 'metric' => $v['independent_metric'] ?? '__EMPTY__',
                 'channel' => $v['independent_channel'] ?? '__EMPTY__',
             ])->values()->toArray(),
@@ -1449,7 +1507,7 @@ class DashboardWidgetDataController extends Controller
         // Auto-resolve missing independent variable metrics
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (empty($var['independent_metric']) && !empty($var['independent_channel'])) {
+                if (empty($var['independent_metric']) && ! empty($var['independent_channel'])) {
                     $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($var['independent_channel']);
                     \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Auto-resolving missing metric', [
                         'widget_id' => $widget->id,
@@ -1457,7 +1515,7 @@ class DashboardWidgetDataController extends Controller
                         'channel' => $var['independent_channel'],
                         'available_metrics' => $channelMetrics ? array_keys($channelMetrics) : [],
                     ]);
-                    if (!empty($channelMetrics)) {
+                    if (! empty($channelMetrics)) {
                         $metricKeys = array_keys($channelMetrics);
                         $uiState['independent_variables'][$key]['independent_metric'] = $metricKeys[0];
                     }
@@ -1465,8 +1523,8 @@ class DashboardWidgetDataController extends Controller
                     \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Skipping auto-resolve', [
                         'widget_id' => $widget->id,
                         'var_key' => $key,
-                        'metric_already_set' => !empty($var['independent_metric']),
-                        'has_channel' => !empty($var['independent_channel']),
+                        'metric_already_set' => ! empty($var['independent_metric']),
+                        'has_channel' => ! empty($var['independent_channel']),
                         'current_metric' => $var['independent_metric'] ?? '__EMPTY__',
                         'current_channel' => $var['independent_channel'] ?? '__EMPTY__',
                     ]);
@@ -1477,7 +1535,7 @@ class DashboardWidgetDataController extends Controller
         \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] After auto-resolve', [
             'widget_id' => $widget->id,
             'dependent_metric' => $uiState['dependent_metric'] ?? '__EMPTY__',
-            'independent_vars' => collect($uiState['independent_variables'] ?? [])->map(fn($v) => [
+            'independent_vars' => collect($uiState['independent_variables'] ?? [])->map(fn ($v) => [
                 'metric' => $v['independent_metric'] ?? '__EMPTY__',
                 'channel' => $v['independent_channel'] ?? '__EMPTY__',
                 'asset_filter' => $v['independent_asset_filter'] ?? '__EMPTY__',
@@ -1485,16 +1543,16 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         $mergedState = array_merge($uiState, $controlsToMerge);
-        if (!empty($controls['activeTab'])) {
+        if (! empty($controls['activeTab'])) {
             $mergedState['dependency'] = ($controls['activeTab'] === 'instagram') ? 'instagram_account' : 'facebook_page';
-        } elseif (!empty($widget->source_config['dependency'])) {
+        } elseif (! empty($widget->source_config['dependency'])) {
             $mergedState['dependency'] = $widget->source_config['dependency'];
         }
 
         \Illuminate\Support\Facades\Log::info('Merged state after auto-resolution (enriched)', [
             'dependent_metric' => $mergedState['dependent_metric'] ?? null,
             'dependent_channel' => $mergedState['dependent_channel'] ?? null,
-            'independent_vars' => collect($mergedState['independent_variables'] ?? [])->map(fn($v) => [
+            'independent_vars' => collect($mergedState['independent_variables'] ?? [])->map(fn ($v) => [
                 'channel' => $v['independent_channel'] ?? null,
                 'metric' => $v['independent_metric'] ?? null,
                 'group' => $v['independent_asset_group'] ?? null,
@@ -1510,11 +1568,11 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if (empty($mergedState['dependent_metric'])) {
-            $channelMetrics = !empty($uiState['dependent_channel'])
+            $channelMetrics = ! empty($uiState['dependent_channel'])
                 ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
                 : [];
 
-            if (!empty($channelMetrics)) {
+            if (! empty($channelMetrics)) {
                 $metricKeys = array_keys($channelMetrics);
                 $mergedState['dependent_metric'] = $metricKeys[0];
             } else {
@@ -1526,19 +1584,20 @@ class DashboardWidgetDataController extends Controller
             $kpi->calculation_type,
             $mergedState,
             [
-                'start_date' => !empty($controls['date_start']) ? $controls['date_start'] : null,
-                'end_date' => !empty($controls['date_end']) ? $controls['date_end'] : null,
-                'granularity' => !empty($controls['granularity']) ? $controls['granularity'] : null,
-                'zero_handling' => !empty($controls['zero_handling']) ? $controls['zero_handling'] : null,
+                'start_date' => ! empty($controls['date_start']) ? $controls['date_start'] : null,
+                'end_date' => ! empty($controls['date_end']) ? $controls['date_end'] : null,
+                'granularity' => ! empty($controls['granularity']) ? $controls['granularity'] : null,
+                'zero_handling' => ! empty($controls['zero_handling']) ? $controls['zero_handling'] : null,
             ]
         );
 
         // If dependent or any independent asset filter is ___EMPTY_GROUP___, short circuit to return graceful empty state
         $hasEmptyGroup = ($mergedState['dependent_asset_filter'] ?? []) === ['___EMPTY_GROUP___'];
-        if (!$hasEmptyGroup && !empty($mergedState['independent_variables'])) {
+        if (! $hasEmptyGroup && ! empty($mergedState['independent_variables'])) {
             foreach ($mergedState['independent_variables'] as $var) {
                 if (($var['independent_asset_filter'] ?? []) === ['___EMPTY_GROUP___']) {
                     $hasEmptyGroup = true;
+
                     break;
                 }
             }
@@ -1549,6 +1608,7 @@ class DashboardWidgetDataController extends Controller
                 'widget_id' => $widget->id,
                 'kpi_id' => $kpi->id,
             ]);
+
             return [
                 'labels' => [],
                 'datasets' => [],
@@ -1565,7 +1625,7 @@ class DashboardWidgetDataController extends Controller
             'dependent_channel' => $mergedState['dependent_channel'] ?? null,
             'dependent_metric' => $mergedState['dependent_metric'] ?? null,
             'dependent_asset_filter' => $mergedState['dependent_asset_filter'] ?? null,
-            'independent_variables' => collect($mergedState['independent_variables'] ?? [])->map(fn($v, $k) => [
+            'independent_variables' => collect($mergedState['independent_variables'] ?? [])->map(fn ($v, $k) => [
                 'key' => $k,
                 'channel' => $v['independent_channel'] ?? null,
                 'metric' => $v['independent_metric'] ?? null,
@@ -1609,7 +1669,7 @@ class DashboardWidgetDataController extends Controller
                     $unknownIndices[] = $idx;
                 }
             }
-            if (!empty($unknownIndices)) {
+            if (! empty($unknownIndices)) {
                 $unknownData = [];
                 foreach ($unknownIndices as $idx) {
                     $unknownData[] = [
@@ -1628,7 +1688,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if (!($result['success'] ?? false)) {
+        if (! ($result['success'] ?? false)) {
             throw new \RuntimeException($result['message'] ?? 'KPI computation failed');
         }
 
@@ -1644,7 +1704,10 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         $this->widgetDataService->cacheResult(
-            $kpi->id, $project->id, $controlsHash, $resultData
+            $kpi->id,
+            $project->id,
+            $controlsHash,
+            $resultData
         );
 
         return $resultData;
@@ -1664,19 +1727,19 @@ class DashboardWidgetDataController extends Controller
                 $needsImpressions = true;
             }
         }
-        if ($needsImpressions && !in_array('impressions', $metrics)) {
+        if ($needsImpressions && ! in_array('impressions', $metrics)) {
             $metrics[] = 'impressions';
         }
-        if (in_array('ctr', $metrics) && !in_array('clicks', $metrics)) {
+        if (in_array('ctr', $metrics) && ! in_array('clicks', $metrics)) {
             $metrics[] = 'clicks';
         }
 
-        if (!$channel) {
+        if (! $channel) {
             throw new \RuntimeException('No channel configured for metric widget');
         }
 
         $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
-        
+
         if ($assetFilter === '___EMPTY_GROUP___') {
             return [
                 'columns' => [],
@@ -1702,7 +1765,7 @@ class DashboardWidgetDataController extends Controller
             'granularity' => $granularity,
             'metrics' => $metrics,
         ];
-        
+
         if ($dependency !== null) {
             $payload['dependency'] = $dependency;
         }
@@ -1741,12 +1804,12 @@ class DashboardWidgetDataController extends Controller
         $entityType = $controls['entity_type'] ?? $config['entity_type'] ?? 'campaigns';
         $limit = $config['limit'] ?? 50;
 
-        if (!$channel) {
+        if (! $channel) {
             throw new \RuntimeException('No channel configured for entity widget');
         }
 
         $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
-        
+
         if ($assetFilter === '___EMPTY_GROUP___') {
             return [
                 'columns' => [],
@@ -1774,54 +1837,61 @@ class DashboardWidgetDataController extends Controller
     protected function extractAssetFilter(array $controls, Project $project, string $channel): array|string|null
     {
         $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel);
-        if (!empty($controls['asset'])) {
+        if (! empty($controls['asset'])) {
             $valid = $this->getValidAssetsForChannel($project, $channel);
-            if (!in_array((string)$controls['asset'], $valid)) {
+            if (! in_array((string)$controls['asset'], $valid)) {
                 return '___EMPTY_GROUP___';
             }
+
             return $controls['asset'];
         }
 
         $requestedAssets = [];
-        if (!empty($controls['assets']) && is_array($controls['assets'])) {
+        if (! empty($controls['assets']) && is_array($controls['assets'])) {
             $requestedAssets = $controls['assets'];
-        } elseif (!empty($controls['asset_group'])) {
+        } elseif (! empty($controls['asset_group'])) {
             $group = \App\Models\AssetGroup::find($controls['asset_group']);
             if ($group) {
                 $requestedAssets = $group->items()
                     ->where('channel', $channel)
                     ->pluck('asset_id')
                     ->toArray();
-                
+
                 if (empty($requestedAssets)) {
                     return '___EMPTY_GROUP___';
                 }
             }
         }
 
-        if (!empty($requestedAssets)) {
+        if (! empty($requestedAssets)) {
             $validForChannel = $this->getValidAssetsForChannel($project, $channel);
             $filtered = array_intersect($requestedAssets, $validForChannel);
-            
+
             if (empty($filtered)) {
                 return '___EMPTY_GROUP___';
             }
-            
+
             $filtered = array_values($filtered);
+
             return $allowsMultiple ? $filtered : $filtered[0];
         }
 
         $seriesAssets = $controls['series_assets'] ?? null;
         if (is_array($seriesAssets)) {
-            if (!empty($seriesAssets['dependent'][0])) {
+            if (! empty($seriesAssets['dependent'][0])) {
                 $dep = (array) $seriesAssets['dependent'];
+
                 return $allowsMultiple ? $dep : $dep[0];
             }
-            if (!empty($seriesAssets[0])) {
+            if (! empty($seriesAssets[0])) {
                 $flat = [];
-                array_walk_recursive($seriesAssets, function($v) use (&$flat) { if ($v) $flat[] = (string)$v; });
+                array_walk_recursive($seriesAssets, function ($v) use (&$flat) {
+                    if ($v) {
+                        $flat[] = (string)$v;
+                    }
+                });
                 $flat = array_values(array_unique($flat));
-                if (!empty($flat)) {
+                if (! empty($flat)) {
                     return $allowsMultiple ? $flat : $flat[0];
                 }
             }
@@ -1837,23 +1907,27 @@ class DashboardWidgetDataController extends Controller
         $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
         foreach ($assetKeys as $assetKey) {
-            if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
+            if (! empty($config[$assetKey]) && is_array($config[$assetKey])) {
                 foreach ($config[$assetKey] as $item) {
-                    if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                    if (is_array($item) && ! empty($item['enabled']) && empty($item['lost_access'])) {
                         $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
-                        if ($id) $assets[] = (string)$id;
+                        if ($id) {
+                            $assets[] = (string)$id;
+                        }
                     }
                 }
             }
         }
 
-        if (!empty($config['assets']) && is_array($config['assets'])) {
+        if (! empty($config['assets']) && is_array($config['assets'])) {
             foreach ($assetKeys as $assetKey) {
-                if (!empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
+                if (! empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                     foreach ($config['assets'][$assetKey] as $item) {
-                        if (is_array($item) && !empty($item['enabled']) && empty($item['lost_access'])) {
+                        if (is_array($item) && ! empty($item['enabled']) && empty($item['lost_access'])) {
                             $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
-                            if ($id) $assets[] = (string)$id;
+                            if ($id) {
+                                $assets[] = (string)$id;
+                            }
                         }
                     }
                 }
@@ -1874,12 +1948,13 @@ class DashboardWidgetDataController extends Controller
             foreach ($asset as $a) {
                 $resolvedArray[] = $this->resolveChanneledAccountId($project, $channel, $a);
             }
+
             return $resolvedArray;
         }
 
         if ($channel === 'google_analytics' && is_numeric($asset)) {
             static $ga4Mappings = [];
-            if (!isset($ga4Mappings[$project->id])) {
+            if (! isset($ga4Mappings[$project->id])) {
                 $service = app(\App\Services\RemoteEngineService::class);
                 $response = $service->listChanneled($project, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
                 $ga4Mappings[$project->id] = [];
@@ -1892,12 +1967,13 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
             }
+
             return $ga4Mappings[$project->id][$asset] ?? $asset;
         }
 
         if ($channel === 'facebook_marketing') {
             static $fbmMappings = [];
-            if (!isset($fbmMappings[$project->id])) {
+            if (! isset($fbmMappings[$project->id])) {
                 $service = app(\App\Services\RemoteEngineService::class);
                 $response = $service->listChanneled($project, 'facebook_marketing', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
                 $fbmMappings[$project->id] = [];
@@ -1914,6 +1990,7 @@ class DashboardWidgetDataController extends Controller
                 }
             }
             $strAsset = (string) $asset;
+
             return $fbmMappings[$project->id][$strAsset] ?? $asset;
         }
 
@@ -1934,11 +2011,12 @@ class DashboardWidgetDataController extends Controller
             $candidate = $site['url'] ?? $site['id'] ?? null;
             if ($candidate === $asset) {
                 $siteUrl = $candidate;
+
                 break;
             }
         }
 
-        if (!$siteUrl) {
+        if (! $siteUrl) {
             return $asset;
         }
 
@@ -1977,30 +2055,34 @@ class DashboardWidgetDataController extends Controller
         ];
 
         $controllerClass = $endpoints[$channel] ?? null;
-        if (!$controllerClass) {
+        if (! $controllerClass) {
             throw new \RuntimeException("Unknown channel: {$channel}");
         }
 
         $controller = app($controllerClass);
 
-        if (!method_exists($controller, $action)) {
+        if (! method_exists($controller, $action)) {
             throw new \RuntimeException("Channel {$channel} does not support action {$action}");
         }
 
         if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
-            if (isset($payload['account']) && !is_array($payload['account'])) {
+            if (isset($payload['account']) && ! is_array($payload['account'])) {
                 $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
             }
-            if (empty($payload['account']) && !empty($payload['series_assets'])) {
+            if (empty($payload['account']) && ! empty($payload['series_assets'])) {
                 $rawAssets = $payload['series_assets'];
                 if (is_array($rawAssets)) {
                     $flat = [];
-                    array_walk_recursive($rawAssets, function($v) use (&$flat) { if ($v) $flat[] = (string)$v; });
+                    array_walk_recursive($rawAssets, function ($v) use (&$flat) {
+                        if ($v) {
+                            $flat[] = (string)$v;
+                        }
+                    });
                     $payload['account'] = array_values(array_unique($flat));
                 }
             }
 
-            if ($channel === 'facebook_organic' && !empty($payload['account'])) {
+            if ($channel === 'facebook_organic' && ! empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
                 $activeTab = $payload['activeTab'] ?? 'facebook';
                 $pages = $project
@@ -2027,6 +2109,7 @@ class DashboardWidgetDataController extends Controller
                     $strAccId = (string) $accId;
                     if (str_contains($strAccId, '|')) {
                         $mapped[] = $strAccId;
+
                         continue;
                     }
 
@@ -2044,6 +2127,7 @@ class DashboardWidgetDataController extends Controller
                                         $pid = (string) ($acc['platformId'] ?? $acc['platform_id'] ?? '');
                                         if ($pid === $igPlatformId) {
                                             $igId = (string) $acc['id'];
+
                                             break;
                                         }
                                     }
@@ -2055,10 +2139,10 @@ class DashboardWidgetDataController extends Controller
                         }
                     } else {
                         if ($page) {
-                            $fbAccountId  = $page['fbAccountId']  ?? $page['fb_account_id']  ?? 'NONE';
-                            $igAccountId  = $page['igAccountId']  ?? $page['ig_account_id']  ?? 'NONE';
+                            $fbAccountId = $page['fbAccountId'] ?? $page['fb_account_id'] ?? 'NONE';
+                            $igAccountId = $page['igAccountId'] ?? $page['ig_account_id'] ?? 'NONE';
                             $fbPlatformId = $strAccId;
-                            $fbPageId     = $page['pageId']       ?? $page['page_id']        ?? 'NONE';
+                            $fbPageId = $page['pageId'] ?? $page['page_id'] ?? 'NONE';
                             $mapped[] = "{$fbAccountId}|{$igAccountId}|{$fbPlatformId}|{$fbPageId}";
                         } else {
                             $mapped[] = "NONE|NONE|{$strAccId}|NONE";
@@ -2069,7 +2153,7 @@ class DashboardWidgetDataController extends Controller
             }
 
 
-            if ($channel === 'facebook_marketing' && !empty($payload['account'])) {
+            if ($channel === 'facebook_marketing' && ! empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
                 if ($project) {
                     $service = app(\App\Services\RemoteEngineService::class);
@@ -2088,7 +2172,7 @@ class DashboardWidgetDataController extends Controller
                         }
                     }
                     $payload['account'] = array_values(array_unique(array_map(
-                        fn($a) => $pidToId[(string)$a] ?? (string)$a,
+                        fn ($a) => $pidToId[(string)$a] ?? (string)$a,
                         $payload['account']
                     )));
                 }
@@ -2102,6 +2186,7 @@ class DashboardWidgetDataController extends Controller
 
         if ($response instanceof \Illuminate\Http\JsonResponse) {
             $data = $response->getData(true);
+
             return $data['data'] ?? $data;
         }
 

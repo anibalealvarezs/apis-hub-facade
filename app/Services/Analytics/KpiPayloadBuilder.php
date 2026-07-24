@@ -86,9 +86,24 @@ class KpiPayloadBuilder
             $dependentNode['filters'] = ['asset_platform_id' => $state['dependent_asset_filter']];
         }
 
-        // If channel is facebook_organic and dependency is instagram_account, specify account_type filter
-        if (($state['dependent_channel'] ?? '') === 'facebook_organic' && ($state['dependency'] ?? '') === 'instagram_account') {
-            $dependentNode['filters']['account_type'] = 'instagram_account';
+        // Allow explicit filters configured in state or template (e.g. account_type => 'instagram_account' or 'facebook_page')
+        if (!empty($state['filters']) && is_array($state['filters'])) {
+            $dependentNode['filters'] = array_merge($dependentNode['filters'] ?? [], $state['filters']);
+        }
+        if (!empty($state['account_type'])) {
+            $dependentNode['filters']['account_type'] = $state['account_type'];
+        }
+
+        // If channel is facebook_organic:
+        // Automatically inject account_type = 'instagram_account' if dependency is instagram_account
+        // OR if the metric requested is an Instagram-specific metric (views, profile_views, website_clicks, profile_links_taps, etc.)
+        if (($state['dependent_channel'] ?? '') === 'facebook_organic' && empty($dependentNode['filters']['account_type'])) {
+            $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
+            $depMetric = $state['dependent_metric'] ?? '';
+            $isIgScope = ($state['dependency'] ?? '') === 'instagram_account' || in_array($depMetric, $igMetrics, true);
+            if ($isIgScope) {
+                $dependentNode['filters']['account_type'] = 'instagram_account';
+            }
         }
 
         // GSC stores data separated by searchAppearance (standard vs AMP/etc).
@@ -226,8 +241,20 @@ class KpiPayloadBuilder
                 ]);
             }
 
-            if (($var['independent_channel'] ?? '') === 'facebook_organic' && ($var['dependency'] ?? '') === 'instagram_account') {
-                $node['filters']['account_type'] = 'instagram_account';
+            if (!empty($var['filters']) && is_array($var['filters'])) {
+                $node['filters'] = array_merge($node['filters'] ?? [], $var['filters']);
+            }
+            if (!empty($var['account_type'])) {
+                $node['filters']['account_type'] = $var['account_type'];
+            }
+
+            if (($var['independent_channel'] ?? '') === 'facebook_organic' && empty($node['filters']['account_type'])) {
+                $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
+                $indMetric = $var['independent_metric'] ?? '';
+                $isIgScope = ($var['dependency'] ?? '') === 'instagram_account' || in_array($indMetric, $igMetrics, true);
+                if ($isIgScope) {
+                    $node['filters']['account_type'] = 'instagram_account';
+                }
             }
 
             if (($var['independent_channel'] ?? '') === 'google_search_console'
