@@ -638,8 +638,8 @@ window.dashboardRenderer = {
         const formattedValueStr = `${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}`;
 
         containerEl.innerHTML = `
-            <div style="width:100%; height:100%; display:flex; align-items:center; justify-center; padding:8px; box-sizing:border-box; position:relative; overflow:hidden;">
-                <div style="position:relative; width:100%; max-width:280px; height:100%; max-height:160px; display:flex; align-items:center; justify-center;">
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; position:relative; overflow:hidden;">
+                <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
                     <canvas style="width:100%; height:100%; display:block;"></canvas>
                 </div>
             </div>`;
@@ -661,29 +661,36 @@ window.dashboardRenderer = {
                     // The inner arc center and radius of the doughnut chart
                     const arc = meta.data[0];
                     const centerX = arc.x;
-                    const centerY = arc.y; // This is the horizontal baseline of the 180° semi-circle
+                    const centerY = arc.y; // The horizontal baseline of the 180° gauge arc
+                    const innerRadius = arc.innerRadius || 60;
 
                     ctx.save();
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
 
-                    // Draw formatted percentage (top line)
+                    // Dynamically calculate font sizes proportional to chart size
+                    const pctFontSize = Math.max(16, Math.min(32, Math.round(innerRadius * 0.35)));
+                    const labelFontSize = Math.max(10, Math.min(16, Math.round(innerRadius * 0.16)));
+                    const valFontSize = Math.max(10, Math.min(16, Math.round(innerRadius * 0.15)));
+
                     const isDark = document.documentElement.classList.contains('dark');
+
+                    // Draw formatted percentage (top line)
                     ctx.fillStyle = isDark ? '#FFFFFF' : '#111827';
-                    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
-                    ctx.fillText(`${Math.round(pct)}%`, centerX, centerY - 38);
+                    ctx.font = `bold ${pctFontSize}px system-ui, -apple-system, sans-serif`;
+                    ctx.fillText(`${Math.round(pct)}%`, centerX, centerY - (innerRadius * 0.45));
 
                     // Draw label (middle line)
                     if (label) {
                         ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280';
-                        ctx.font = '600 12px system-ui, -apple-system, sans-serif';
-                        ctx.fillText(label, centerX, centerY - 20);
+                        ctx.font = `600 ${labelFontSize}px system-ui, -apple-system, sans-serif`;
+                        ctx.fillText(label, centerX, centerY - (innerRadius * 0.22));
                     }
 
                     // Draw value / max (bottom line directly resting on the baseline)
                     ctx.fillStyle = isDark ? '#6B7280' : '#9CA3AF';
-                    ctx.font = '500 12px system-ui, -apple-system, sans-serif';
-                    ctx.fillText(formattedValueStr, centerX, centerY - 2);
+                    ctx.font = `500 ${valFontSize}px system-ui, -apple-system, sans-serif`;
+                    ctx.fillText(formattedValueStr, centerX, centerY - (innerRadius * 0.04));
 
                     ctx.restore();
                 }
