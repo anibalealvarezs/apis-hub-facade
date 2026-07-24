@@ -844,9 +844,10 @@
                                 if (currentAssets.length === 0) continue;
 
                                 const groupId = this.selectedAssetGroup;
-                                if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
+                                const allowedAssets = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
+                                    ? this.channelAssetGroupMap[channel][groupId].map(String)
+                                    : [];
 
-                                const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
                                 const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
 
                                 let newAssets;
@@ -855,7 +856,7 @@
                                 } else if (allowedAssets.length > 0) {
                                     newAssets = [allowedAssets[0]];
                                 } else {
-                                    continue;
+                                    newAssets = ['___EMPTY_GROUP___'];
                                 }
 
                                 if (JSON.stringify(newAssets) !== JSON.stringify(currentAssets)) {
