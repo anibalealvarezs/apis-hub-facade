@@ -1485,6 +1485,11 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         $mergedState = array_merge($uiState, $controlsToMerge);
+        if (!empty($controls['activeTab'])) {
+            $mergedState['dependency'] = ($controls['activeTab'] === 'instagram') ? 'instagram_account' : 'facebook_page';
+        } elseif (!empty($widget->source_config['dependency'])) {
+            $mergedState['dependency'] = $widget->source_config['dependency'];
+        }
 
         \Illuminate\Support\Facades\Log::info('Merged state after auto-resolution (enriched)', [
             'dependent_metric' => $mergedState['dependent_metric'] ?? null,
