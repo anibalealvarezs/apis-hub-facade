@@ -618,10 +618,19 @@ window.dashboardRenderer = {
             {from: 66, to: 100, color: '#22C55E'},
         ];
 
-        const rawValue = value;
-        if (resultFormat?.multiply) value = value * resultFormat.multiply;
+        const metricKey = controls?.metrics?.[0];
+        const isPercentageMetric = metricKey === 'ctr' || metricKey === 'bounce_rate' || metricKey === 'result_rate' || resultFormat?.format === 'percentage';
 
-        const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+        // Normalized raw value (as a fraction or standard number)
+        let rawValue = data?.value ?? 0;
+
+        // If backend returned CTR as whole percentage number (>1 e.g. 2.31 for 2.31%), normalize it to decimal ratio (0.0231)
+        if (isPercentageMetric && rawValue > 1.0) {
+            rawValue = rawValue / 100;
+        }
+
+        // Percentage for gauge fill (0-100%)
+        const pct = Math.min(100, Math.max(0, ((rawValue * 100 - min) / (max - min)) * 100));
 
         let color = thresholds[0]?.color ?? '#22C55E';
         for (const t of thresholds) {
@@ -635,9 +644,8 @@ window.dashboardRenderer = {
         const isDark = document.documentElement.classList.contains('dark');
         const trackColor = isDark ? '#374151' : '#E5E7EB';
 
-        const metricKey = controls?.metrics?.[0];
-        const formattedRawVal = metricKey ? this.formatMetricValue(rawValue, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(rawValue) : resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue));
-        const formattedMaxVal = metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : resultFormat?.format === 'percentage' ? Number(max).toFixed(1) + '%' : this.formatNumber(max));
+        const formattedRawVal = metricKey ? this.formatMetricValue(rawValue, metricKey) : (isPercentageMetric ? (rawValue * 100).toFixed(1) + '%' : resultFormat?.format === 'currency' ? this.formatCurrency(rawValue) : this.formatNumber(rawValue));
+        const formattedMaxVal = isPercentageMetric ? (max / 100).toFixed(1) + '%' : (metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : this.formatNumber(max)));
 
         const formattedValueStr = `${formattedRawVal} / ${formattedMaxVal}`;
 
