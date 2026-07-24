@@ -649,39 +649,51 @@ window.dashboardRenderer = {
                 </div>
             </div>`;
 
-        const canvas = containerEl.querySelector('canvas');
-        const ctx = canvas.getContext('2d');
+        const createChart = () => {
+            const canvas = containerEl.querySelector('canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
 
-        const chart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [pct, remainingPct],
-                    backgroundColor: [color, trackColor],
-                    borderWidth: 0,
-                    borderRadius: 4,
-                }]
-            },
-            options: {
-                rotation: 270,
-                circumference: 180,
-                cutout: '75%',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [pct, remainingPct],
+                        backgroundColor: [color, trackColor],
+                        borderWidth: 0,
+                        borderRadius: 4,
+                    }]
                 },
-                animation: {
-                    animateRotate: true,
-                    animateScale: false,
-                    duration: 800
+                options: {
+                    rotation: 270,
+                    circumference: 180,
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: false,
+                        duration: 800
+                    }
                 }
-            }
-        });
+            });
 
-        if (widgetId) {
-            this._chartInstances.set(widgetId, chart);
+            if (widgetId) {
+                this._chartInstances.set(widgetId, chart);
+            }
+        };
+
+        if (typeof Chart === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+            script.onload = createChart;
+            document.head.appendChild(script);
+        } else {
+            createChart();
         }
     },
 
