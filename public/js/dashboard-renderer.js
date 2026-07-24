@@ -15,6 +15,7 @@ window.dashboardRenderer = {
         'purchase_roas': {label: 'ROAS', format: 'currency', prefix: '$'},
         'aov': {label: 'AOV', format: 'currency', prefix: '$'},
         'cost_per_result': {label: 'Cost/Result', format: 'currency', prefix: '$'},
+        'result_rate': {label: 'Result Rate', format: 'percentage', multiply: 100},
         'ctr': {label: 'CTR', format: 'percentage', multiply: 100},
         'bounce_rate': {label: 'Bounce Rate', format: 'percentage', multiply: 100, lower_is_better: true},
         'clicks': {label: 'Clicks', format: 'number'},
@@ -622,18 +623,20 @@ window.dashboardRenderer = {
         const isPercentageMetric = metricKey === 'ctr' || metricKey === 'bounce_rate' || metricKey === 'result_rate' || resultFormat?.format === 'percentage';
 
         let rawValue = data?.value ?? 0;
-        if (resultFormat?.multiply && !isPercentageMetric) {
-            rawValue = rawValue * resultFormat.multiply;
-        }
 
         // If backend returned a percentage metric as a whole percentage number (>1 e.g. 2.31 for 2.31%), normalize it to decimal ratio (0.0231)
         if (isPercentageMetric && rawValue > 1.0) {
             rawValue = rawValue / 100;
         }
 
-        // Percentage for gauge fill (0-100%)
+        // Target max normalization: if metric is percentage and max is whole percentage (>1 e.g. 100 or 6.7), normalize fill comparison
         let fillValue = isPercentageMetric ? (rawValue * 100) : rawValue;
-        const pct = Math.min(100, Math.max(0, ((fillValue - min) / (max - min)) * 100));
+        let effectiveMax = max;
+        if (isPercentageMetric && max <= 1.0) {
+            effectiveMax = max * 100;
+        }
+
+        const pct = Math.min(100, Math.max(0, ((fillValue - min) / (effectiveMax - min)) * 100));
 
         let color = thresholds[0]?.color ?? '#22C55E';
         for (const t of thresholds) {
@@ -647,8 +650,10 @@ window.dashboardRenderer = {
         const isDark = document.documentElement.classList.contains('dark');
         const trackColor = isDark ? '#374151' : '#E5E7EB';
 
+        const displayLabel = data?.label || (metricKey ? this.getMetricName(metricKey) : '');
+
         const formattedRawVal = metricKey ? this.formatMetricValue(rawValue, metricKey) : (isPercentageMetric ? (rawValue * 100).toFixed(1) + '%' : resultFormat?.format === 'currency' ? this.formatCurrency(rawValue) : this.formatNumber(rawValue));
-        const formattedMaxVal = isPercentageMetric ? (max).toFixed(1) + '%' : (metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : this.formatNumber(max)));
+        const formattedMaxVal = isPercentageMetric ? (effectiveMax).toFixed(1) + '%' : (metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : this.formatNumber(max)));
 
         const formattedValueStr = `${formattedRawVal} / ${formattedMaxVal}`;
 
@@ -696,10 +701,10 @@ window.dashboardRenderer = {
                     ctx.fillText(`${Math.round(pct)}%`, centerX, centerY - (innerRadius * 0.45));
 
                     // Draw label (middle line)
-                    if (label) {
+                    if (displayLabel) {
                         ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280';
                         ctx.font = `600 ${labelFontSize}px system-ui, -apple-system, sans-serif`;
-                        ctx.fillText(label, centerX, centerY - (innerRadius * 0.22));
+                        ctx.fillText(displayLabel, centerX, centerY - (innerRadius * 0.22));
                     }
 
                     // Draw value / max (bottom line directly resting on the baseline)
