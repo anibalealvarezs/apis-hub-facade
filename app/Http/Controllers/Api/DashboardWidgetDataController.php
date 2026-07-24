@@ -1302,9 +1302,10 @@ class DashboardWidgetDataController extends Controller
 
         if (!empty($controls['asset_group'])) {
             $group = \App\Models\AssetGroup::find($controls['asset_group']);
-            $groupAssets = $group ? $group->items()
+            $groupAssets = $group ? $group->active_items
                 ->where('channel', $activeDepChannel)
                 ->pluck('asset_id')
+                ->values()
                 ->toArray() : [];
 
             if (empty($groupAssets)) {
@@ -1365,9 +1366,10 @@ class DashboardWidgetDataController extends Controller
 
                 if (!empty($controls['asset_group'])) {
                     $group = \App\Models\AssetGroup::find($controls['asset_group']);
-                    $groupAssets = $group ? $group->items()
+                    $groupAssets = $group ? $group->active_items
                         ->where('channel', $indChannel)
                         ->pluck('asset_id')
+                        ->values()
                         ->toArray() : [];
 
                     if (empty($groupAssets)) {
@@ -1520,13 +1522,23 @@ class DashboardWidgetDataController extends Controller
             ]
         );
 
-        \Illuminate\Support\Facades\Log::info('KPI payload built', [
+        \Illuminate\Support\Facades\Log::info('[DIAGNOSTIC KPI] Final merged state and payload resolution', [
+            'widget_id' => $widget->id,
+            'kpi_id' => $kpi->id,
+            'kpi_title' => $kpi->title ?? $widget->title,
             'calculation_type' => $kpi->calculation_type,
-            'ast' => $payload['ast'] ?? null,
-            'filters' => $payload['filters'] ?? null,
-            'zero_handling' => $payload['zero_handling'] ?? null,
-            'edge_case_handling' => $payload['edge_case_handling'] ?? null,
-            'max_ratio' => $payload['max_ratio'] ?? null,
+            'asset_group_id' => $controls['asset_group'] ?? null,
+            'dependent_channel' => $mergedState['dependent_channel'] ?? null,
+            'dependent_metric' => $mergedState['dependent_metric'] ?? null,
+            'dependent_asset_filter' => $mergedState['dependent_asset_filter'] ?? null,
+            'independent_variables' => collect($mergedState['independent_variables'] ?? [])->map(fn($v, $k) => [
+                'key' => $k,
+                'channel' => $v['independent_channel'] ?? null,
+                'metric' => $v['independent_metric'] ?? null,
+                'asset_filter' => $v['independent_asset_filter'] ?? null,
+            ])->values()->toArray(),
+            'payload_ast' => $payload['ast'] ?? null,
+            'payload_filters' => $payload['filters'] ?? null,
         ]);
 
         \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] About to call engine', [
