@@ -635,16 +635,18 @@ window.dashboardRenderer = {
         const isDark = document.documentElement.classList.contains('dark');
         const trackColor = isDark ? '#374151' : '#E5E7EB';
 
+        const formattedValueStr = `${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}`;
+
         containerEl.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-4 select-none relative">
-                <div class="relative w-full max-w-[220px] h-[130px] flex items-center justify-center">
+            <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full">
+                <div class="relative w-full max-w-[240px] h-[140px] flex items-center justify-center">
                     <canvas class="w-full h-full"></canvas>
-                    <div class="absolute bottom-2 flex flex-col items-center justify-center text-center">
-                        <span class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">${Math.round(pct)}%</span>
-                        ${label ? `<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">${this.escapeHtml(label)}</span>` : ''}
+                    <div class="absolute bottom-0 flex flex-col items-center justify-center text-center">
+                        <span class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
+                        ${label ? `<span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">${this.escapeHtml(label)}</span>` : ''}
+                        <span class="text-[11px] font-medium text-gray-400 dark:text-gray-400 mt-0.5">${formattedValueStr}</span>
                     </div>
                 </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}</p>
             </div>`;
 
         const canvas = containerEl.querySelector('canvas');
