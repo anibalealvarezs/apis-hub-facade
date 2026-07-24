@@ -635,7 +635,11 @@ window.dashboardRenderer = {
         const isDark = document.documentElement.classList.contains('dark');
         const trackColor = isDark ? '#374151' : '#E5E7EB';
 
-        const formattedValueStr = `${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}`;
+        const metricKey = controls?.metrics?.[0];
+        const formattedRawVal = metricKey ? this.formatMetricValue(rawValue, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(rawValue) : resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue));
+        const formattedMaxVal = metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : resultFormat?.format === 'percentage' ? Number(max).toFixed(1) + '%' : this.formatNumber(max));
+
+        const formattedValueStr = `${formattedRawVal} / ${formattedMaxVal}`;
 
         containerEl.innerHTML = `
             <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; position:relative; overflow:hidden;">
@@ -699,6 +703,7 @@ window.dashboardRenderer = {
             const chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
+                    labels: ['Current Value', 'Target Remaining'],
                     datasets: [{
                         data: [pct, remainingPct],
                         backgroundColor: [color, trackColor],
@@ -713,9 +718,25 @@ window.dashboardRenderer = {
                     cutout: '70%',
                     responsive: true,
                     maintainAspectRatio: false,
+                    onHover(e) {
+                        const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
+                        e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                    },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: false }
+                        tooltip: {
+                            callbacks: {
+                                label: (tooltipItem) => {
+                                    if (tooltipItem.dataIndex === 0) {
+                                        return `Current Value: ${formattedRawVal} (${Math.round(pct)}%)`;
+                                    } else {
+                                        const remainingRaw = Math.max(0, max - rawValue);
+                                        const formattedRem = metricKey ? this.formatMetricValue(remainingRaw, metricKey) : this.formatNumber(remainingRaw);
+                                        return `Target Max: ${formattedMaxVal} (Remaining: ${formattedRem})`;
+                                    }
+                                }
+                            }
+                        }
                     },
                     animation: {
                         animateRotate: true,
