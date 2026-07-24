@@ -1290,12 +1290,17 @@ class DashboardWidgetDataController extends Controller
             'granularity' => $uiState['granularity'] ?? '__EMPTY__',
         ]);
         $controlsToMerge = [];
-        if (!empty($controls['channel'])) {
-            $controlsToMerge['dependent_channel'] = $controls['channel'];
+        $kpiDepChannel = $uiState['dependent_channel'] ?? '';
+        $runtimeChannel = $controls['channel'] ?? '';
+
+        // If KPI state already defines a specific channel, preserve it unless runtime channel matches it
+        if (empty($kpiDepChannel) && !empty($runtimeChannel)) {
+            $controlsToMerge['dependent_channel'] = $runtimeChannel;
         }
+
         if (!empty($controls['assets'])) {
-            $currentDepChannel = $controls['channel'] ?? $uiState['dependent_channel'] ?? '';
-            if (empty($uiState['dependent_channel']) || $uiState['dependent_channel'] === $currentDepChannel) {
+            $activeDepChannel = $controlsToMerge['dependent_channel'] ?? $kpiDepChannel;
+            if (empty($kpiDepChannel) || $kpiDepChannel === $runtimeChannel || $activeDepChannel === $runtimeChannel) {
                 $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
             }
         }
