@@ -881,6 +881,10 @@
                     el.setAttribute('data-raw-controls', JSON.stringify(controls));
                     let effectiveControls = {...controls};
 
+                    if (this.selectedAssetGroup) {
+                        effectiveControls.asset_group = this.selectedAssetGroup;
+                    }
+
                     if (this.hasUserChangedGlobalDate) {
                         if (this.dashboardOverrides.date_start) effectiveControls.date_start = this.dashboardOverrides.date_start;
                         if (this.dashboardOverrides.date_end) effectiveControls.date_end = this.dashboardOverrides.date_end;
