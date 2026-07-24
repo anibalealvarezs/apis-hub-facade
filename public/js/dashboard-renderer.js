@@ -639,9 +639,9 @@ window.dashboardRenderer = {
 
         containerEl.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full overflow-hidden">
-                <div class="relative w-full max-w-[260px] h-[130px] flex items-center justify-center">
-                    <canvas class="w-full h-full"></canvas>
-                    <div class="absolute bottom-2 flex flex-col items-center justify-center text-center left-1/2 -translate-x-1/2 w-full pointer-events-none">
+                <div class="relative w-full max-w-[240px] aspect-[2/1] flex items-center justify-center">
+                    <canvas class="w-full h-full block"></canvas>
+                    <div class="absolute inset-x-0 bottom-1 flex flex-col items-center justify-end text-center pointer-events-none z-10">
                         <span class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
                         ${label ? `<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">${this.escapeHtml(label)}</span>` : ''}
                         <span class="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">${formattedValueStr}</span>
