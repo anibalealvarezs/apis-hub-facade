@@ -307,4 +307,73 @@ class KpiPayloadBuilder
         ];
     }
 
+    /**
+     * For facebook_organic KPI nodes that request instagram_account scope, the
+     * asset_platform_id stored in KPI state is always the FB page platform_id
+     * (both scopes share the same UI asset). apis-hub's translatePlatformIds
+     * resolves the FB page platform_id → a ChanneledAccount of type=facebook_page.
+     * The subsequent SQL then joins channeled_account_id=<FB_PAGE_CA_ID> AND
+     * type='instagram_account', returning zero rows because the IG account is a
+     * separate ChanneledAccount row with its own platform_id.
+     *
+     * This method fixes the AST in-place: before sending the payload to apis-hub,
+     * it swaps the FB page platform_id to the linked IG account platform_id (sourced
+     * from the project sync_config), so translatePlatformIds resolves the correct
+     * instagram_account ChanneledAccount ID.
+     *
+     * @param array  $payload   The payload returned by build() — modified in-place.
+     * @param array  $fboPages  $project->sync_config['facebook_organic']['assets']['pages'] (or ['pages'])
+     */
+    public static function swapFboIgPlatformIds(array &$payload, array $fboPages): void
+    {
+        if (empty($fboPages) || !isset($payload['ast'])) {
+            return;
+        }
+
+        // Build fbPagePlatformId → igAccountPlatformId lookup
+        $fbToIg = [];
+        foreach ($fboPages as $page) {
+            $fbPid = (string)($page['platformId'] ?? $page['platform_id'] ?? $page['id'] ?? '');
+            $igPid = (string)($page['ig_account'] ?? $page['igAccountId'] ?? $page['ig_account_id'] ?? '');
+            if ($fbPid !== '' && $igPid !== '') {
+                $fbToIg[$fbPid] = $igPid;
+            }
+        }
+
+        if (empty($fbToIg)) {
+            return;
+        }
+
+        $walk = function (array &$node) use (&$walk, $fbToIg): void {
+            $type = $node['type'] ?? '';
+            if ($type === 'metric') {
+                $metric      = $node['metric'] ?? '';
+                $accountType = strtolower(trim((string)($node['filters']['account_type'] ?? '')));
+                if (str_starts_with($metric, 'facebook_organic.')
+                    && $accountType === 'instagram_account'
+                    && isset($node['filters']['asset_platform_id'])
+                ) {
+                    $raw     = $node['filters']['asset_platform_id'];
+                    $isArray = is_array($raw);
+                    $ids     = $isArray ? $raw : [$raw];
+                    $swapped = array_map(fn ($id) => $fbToIg[(string)$id] ?? $id, $ids);
+                    $node['filters']['asset_platform_id'] = $isArray ? $swapped : $swapped[0];
+                    \Illuminate\Support\Facades\Log::info('[KpiPayloadBuilder] Swapped FBO asset_platform_id: FB page → IG account', [
+                        'original' => $ids,
+                        'swapped'  => $swapped,
+                    ]);
+                }
+            } elseif ($type === 'operator') {
+                if (isset($node['left']) && is_array($node['left'])) {
+                    $walk($node['left']);
+                }
+                if (isset($node['right']) && is_array($node['right'])) {
+                    $walk($node['right']);
+                }
+            }
+        };
+
+        $walk($payload['ast']);
+    }
+
 }

@@ -1591,8 +1591,19 @@ class DashboardWidgetDataController extends Controller
             ]
         );
 
-        // If dependent or any independent asset filter is ___EMPTY_GROUP___, short circuit to return graceful empty state
+        // When a facebook_organic KPI node requests instagram_account scope, the asset_platform_id
+        // is the FB page platform_id (both scopes share the same UI asset). Swap it to the linked
+        // IG account platform_id before sending to apis-hub, so translatePlatformIds resolves the
+        // correct instagram_account ChanneledAccount ID. See KpiPayloadBuilder::swapFboIgPlatformIds().
+        KpiPayloadBuilder::swapFboIgPlatformIds(
+            $payload,
+            $project->sync_config['facebook_organic']['assets']['pages']
+                ?? $project->sync_config['facebook_organic']['pages']
+                ?? []
+        );
+
         $hasEmptyGroup = ($mergedState['dependent_asset_filter'] ?? []) === ['___EMPTY_GROUP___'];
+
         if (! $hasEmptyGroup && ! empty($mergedState['independent_variables'])) {
             foreach ($mergedState['independent_variables'] as $var) {
                 if (($var['independent_asset_filter'] ?? []) === ['___EMPTY_GROUP___']) {

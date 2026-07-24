@@ -306,7 +306,14 @@ class KpiExecuteActionBuilder
                 );
 
                 $project = \Filament\Facades\Filament::getTenant();
+                KpiPayloadBuilder::swapFboIgPlatformIds(
+                    $payload,
+                    $project->sync_config['facebook_organic']['assets']['pages']
+                        ?? $project->sync_config['facebook_organic']['pages']
+                        ?? []
+                );
                 $result = $service->computeKpi($project, $payload);
+
 
                 if (isset($result['success']) && $result['success']) {
                     \Filament\Notifications\Notification::make()
