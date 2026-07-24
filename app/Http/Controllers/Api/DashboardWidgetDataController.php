@@ -1392,7 +1392,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        // Hydrate/override metrics from runtime controls (on-the-go / widget-level override)
+        // Hydrate metrics from runtime controls ONLY if not already defined in KPI _ui_state
         $runtimeMetrics = $controls['metrics'] ?? [];
         $metricIndex = 0;
 
@@ -1406,14 +1406,14 @@ class DashboardWidgetDataController extends Controller
             ])->values()->toArray(),
         ]);
 
-        if (!empty($runtimeMetrics[$metricIndex])) {
+        if (empty($uiState['dependent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
         }
         $metricIndex++;
 
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (!empty($runtimeMetrics[$metricIndex])) {
+                if (empty($uiState['independent_variables'][$key]['independent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                 }
                 $metricIndex++;
