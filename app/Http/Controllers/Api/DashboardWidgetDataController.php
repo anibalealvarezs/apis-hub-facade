@@ -1290,8 +1290,15 @@ class DashboardWidgetDataController extends Controller
             'granularity' => $uiState['granularity'] ?? '__EMPTY__',
         ]);
         $controlsToMerge = [];
-        if (!empty($controls['channel'])) $controlsToMerge['dependent_channel'] = $controls['channel'];
-        if (!empty($controls['assets'])) $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
+        if (!empty($controls['channel'])) {
+            $controlsToMerge['dependent_channel'] = $controls['channel'];
+        }
+        if (!empty($controls['assets'])) {
+            $currentDepChannel = $controls['channel'] ?? $uiState['dependent_channel'] ?? '';
+            if (empty($uiState['dependent_channel']) || $uiState['dependent_channel'] === $currentDepChannel) {
+                $controlsToMerge['dependent_asset_filter'] = $controls['assets'];
+            }
+        }
         
         if (isset($controls['series_assets']['dependent'])) {
             $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
@@ -1332,7 +1339,8 @@ class DashboardWidgetDataController extends Controller
                 if (empty($var['independent_channel']) && !empty($controls['channel'])) {
                     $uiState['independent_variables'][$key]['independent_channel'] = $controls['channel'];
                 }
-                if (empty($var['independent_asset_filter']) && !empty($controls['assets'])) {
+                $indChannel = $uiState['independent_variables'][$key]['independent_channel'] ?? '';
+                if (empty($var['independent_asset_filter']) && !empty($controls['assets']) && (!empty($controls['channel']) && $controls['channel'] === $indChannel)) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
                 if (isset($controls['series_assets']["independent_{$key}"])) {
