@@ -638,14 +638,9 @@ window.dashboardRenderer = {
         const formattedValueStr = `${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}`;
 
         containerEl.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full overflow-hidden">
-                <div class="relative w-full max-w-[280px] aspect-[2/1] flex items-center justify-center">
-                    <canvas class="w-full h-full block"></canvas>
-                    <div class="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end text-center pointer-events-none z-10 pb-1">
-                        <span class="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
-                        ${label ? `<span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">${this.escapeHtml(label)}</span>` : ''}
-                        <span class="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">${formattedValueStr}</span>
-                    </div>
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-center; padding:8px; box-sizing:border-box; position:relative; overflow:hidden;">
+                <div style="position:relative; width:100%; max-width:280px; height:100%; max-height:160px; display:flex; align-items:center; justify-center;">
+                    <canvas style="width:100%; height:100%; display:block;"></canvas>
                 </div>
             </div>`;
 
@@ -653,6 +648,46 @@ window.dashboardRenderer = {
             const canvas = containerEl.querySelector('canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+
+            const gaugeTextPlugin = {
+                id: 'gaugeCenterText',
+                afterDraw: (chart) => {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+
+                    const meta = chart.getDatasetMeta(0);
+                    if (!meta || !meta.data || !meta.data[0]) return;
+
+                    // The inner arc center and radius of the doughnut chart
+                    const arc = meta.data[0];
+                    const centerX = arc.x;
+                    const centerY = arc.y; // This is the horizontal baseline of the 180° semi-circle
+
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    // Draw formatted percentage (top line)
+                    const isDark = document.documentElement.classList.contains('dark');
+                    ctx.fillStyle = isDark ? '#FFFFFF' : '#111827';
+                    ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+                    ctx.fillText(`${Math.round(pct)}%`, centerX, centerY - 38);
+
+                    // Draw label (middle line)
+                    if (label) {
+                        ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280';
+                        ctx.font = '600 12px system-ui, -apple-system, sans-serif';
+                        ctx.fillText(label, centerX, centerY - 20);
+                    }
+
+                    // Draw value / max (bottom line directly resting on the baseline)
+                    ctx.fillStyle = isDark ? '#6B7280' : '#9CA3AF';
+                    ctx.font = '500 12px system-ui, -apple-system, sans-serif';
+                    ctx.fillText(formattedValueStr, centerX, centerY - 2);
+
+                    ctx.restore();
+                }
+            };
 
             const chart = new Chart(ctx, {
                 type: 'doughnut',
@@ -664,10 +699,11 @@ window.dashboardRenderer = {
                         borderRadius: 4,
                     }]
                 },
+                plugins: [gaugeTextPlugin],
                 options: {
                     rotation: 270,
                     circumference: 180,
-                    cutout: '68%',
+                    cutout: '70%',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
