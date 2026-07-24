@@ -1347,6 +1347,9 @@ class DashboardWidgetDataController extends Controller
         if (isset($controls['edge_case_grouping'])) {
             $controlsToMerge['edge_case_grouping'] = $controls['edge_case_grouping'];
         }
+        if (isset($controls['zero_handling'])) {
+            $controlsToMerge['zero_handling'] = $controls['zero_handling'];
+        }
 
         if (isset($controls['max_ratio'])) {
             $controlsToMerge['max_ratio'] = $controls['max_ratio'] !== null ? (float) $controls['max_ratio'] : null;
