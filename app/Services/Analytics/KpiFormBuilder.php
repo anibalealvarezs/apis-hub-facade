@@ -999,12 +999,13 @@ class KpiFormBuilder
                         ->schema([
                             Select::make('account_type')
                                 ->label(__('Social / Asset Scope (Account Type)'))
-                                ->options([
-                                    'instagram_account' => __('Instagram Account'),
-                                    'facebook_page' => __('Facebook Page'),
-                                ])
+                                ->options(function (Get $get) {
+                                    $ch = $get('dependent_channel');
+                                    return $ch ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($ch) : [];
+                                })
+                                ->visible(fn (Get $get) => ($get('dependent_channel') ?? '') === 'facebook_organic')
                                 ->placeholder(__('Auto-detect from metric or dashboard tab'))
-                                ->helperText(__('Explicitly target Instagram Account or Facebook Page. Leave blank for auto-detection.')),
+                                ->helperText(__('Explicitly target Instagram Account or Facebook Page.')),
                             DatePicker::make('start_date')->label(__('Start Date')),
                             DatePicker::make('end_date')->label(__('End Date')),
                             Select::make('granularity')
@@ -1200,10 +1201,12 @@ class KpiFormBuilder
         if ($templateKey) {
             $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Template</dt><dd class=\"text-gray-950 dark:text-white\">{$templateName}</dd>";
         }
-        $accountTypeVal = $get('account_type');
-        $accountTypeLabels = ['instagram_account' => __('Instagram Account'), 'facebook_page' => __('Facebook Page')];
-        $accountTypeText = e($accountTypeLabels[$accountTypeVal] ?? ($accountTypeVal ? ucfirst($accountTypeVal) : __('Auto-detect')));
-        $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Account Scope</dt><dd class=\"text-gray-950 dark:text-white\">{$accountTypeText}</dd>";
+        if (($get('dependent_channel') ?? '') === 'facebook_organic') {
+            $accountTypeVal = $get('account_type');
+            $accountTypeLabels = ['instagram_account' => __('Instagram Account'), 'facebook_page' => __('Facebook Page')];
+            $accountTypeText = e($accountTypeLabels[$accountTypeVal] ?? ($accountTypeVal ? ucfirst($accountTypeVal) : __('Auto-detect')));
+            $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Account Scope</dt><dd class=\"text-gray-950 dark:text-white\">{$accountTypeText}</dd>";
+        }
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";
         $groupLabels = ['none' => 'No grouping', 'histogram' => 'Histogram-elbow', 'percentile' => 'Bottom percentile'];
