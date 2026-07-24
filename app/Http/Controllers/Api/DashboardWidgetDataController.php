@@ -1323,7 +1323,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
         
-        if (isset($controls['series_assets']['dependent']) && (empty($controls['asset_group']) || $controls['series_assets']['dependent'] === ['___EMPTY_GROUP___'])) {
+        if (isset($controls['series_assets']['dependent']) && !empty($controls['series_assets']['dependent'])) {
             $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
             $controlsToMerge['dependent_asset_group'] = null;
         }
@@ -1383,13 +1383,13 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 
-                if (isset($controls['series_assets']["independent_{$key}"]) && (empty($controls['asset_group']) || $controls['series_assets']["independent_{$key}"] === ['___EMPTY_GROUP___'])) {
+                if (isset($controls['series_assets']["independent_{$key}"]) && !empty($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } else if (!empty($controls['series_assets']) && is_array($controls['series_assets']) && empty($controls['asset_group'])) {
+                } else if (!empty($controls['series_assets']) && is_array($controls['series_assets'])) {
                     // Match independent_UUID or independent_0 keys
                     foreach ($controls['series_assets'] as $sKey => $sAssets) {
-                        if (str_starts_with($sKey, 'independent_')) {
+                        if (str_starts_with($sKey, 'independent_') && !empty($sAssets)) {
                             $uiState['independent_variables'][$key]['independent_asset_filter'] = $sAssets;
                             $uiState['independent_variables'][$key]['independent_asset_group'] = null;
                             break;
