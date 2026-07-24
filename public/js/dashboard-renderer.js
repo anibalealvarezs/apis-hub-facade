@@ -638,13 +638,13 @@ window.dashboardRenderer = {
         const formattedValueStr = `${resultFormat?.format === 'percentage' ? Number(rawValue).toFixed(1) + '%' : this.formatNumber(rawValue)} / ${this.formatNumber(max)}`;
 
         containerEl.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full">
-                <div class="relative w-full max-w-[240px] h-[140px] flex items-center justify-center">
+            <div class="flex flex-col items-center justify-center h-full p-2 select-none relative w-full overflow-hidden">
+                <div class="relative w-full max-w-[260px] h-[160px] flex items-center justify-center pb-2">
                     <canvas class="w-full h-full"></canvas>
-                    <div class="absolute bottom-0 flex flex-col items-center justify-center text-center">
-                        <span class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
-                        ${label ? `<span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">${this.escapeHtml(label)}</span>` : ''}
-                        <span class="text-[11px] font-medium text-gray-400 dark:text-gray-400 mt-0.5">${formattedValueStr}</span>
+                    <div class="absolute bottom-4 flex flex-col items-center justify-center text-center">
+                        <span class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-none">${Math.round(pct)}%</span>
+                        ${label ? `<span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">${this.escapeHtml(label)}</span>` : ''}
+                        <span class="text-[10px] font-medium text-gray-400 dark:text-gray-400 mt-0.5">${formattedValueStr}</span>
                     </div>
                 </div>
             </div>`;
@@ -667,7 +667,7 @@ window.dashboardRenderer = {
                 options: {
                     rotation: 270,
                     circumference: 180,
-                    cutout: '75%',
+                    cutout: '68%',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
