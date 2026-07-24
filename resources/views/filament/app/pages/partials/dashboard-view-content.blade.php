@@ -683,6 +683,9 @@
                                                                               x-text="assetName"></span>
                                                                     </div>
                                                                 </template>
+                                                                <template x-if="selectedAssetGroup && vConfig.channel && (!channelAssetGroupMap[vConfig.channel] || !channelAssetGroupMap[vConfig.channel][selectedAssetGroup] || channelAssetGroupMap[vConfig.channel][selectedAssetGroup].length === 0)">
+                                                                    <p class="text-xs text-amber-500 font-medium mt-2 mx-2">No assets available in this group for this channel.</p>
+                                                                </template>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1123,22 +1126,26 @@
                 },
 
                 // ─── Compatibility aliases for asset group filtering ───
-                isAssetAllowedByGroups(seriesKey, channel, assetId) {
-                    if (!this.selectedAssetGroup || !channel || !this.channelAssetGroupMap[channel]) return true;
-                    const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup];
-                    if (!groupAssets) return true;
+                isViewAssetInGroup(channel, assetId) {
+                    if (!this.selectedAssetGroup || !channel) return true;
+                    const groupAssets = this.channelAssetGroupMap[channel]?.[this.selectedAssetGroup];
+                    if (!groupAssets) return false;
                     return groupAssets.map(String).includes(String(assetId));
                 },
 
+                isAssetAllowedByGroups(seriesKey, channel, assetId) {
+                    return this.isViewAssetInGroup(channel, assetId);
+                },
+
                 ensureValidAssets(seriesKey, channel, selectedAssets) {
-                    if (!this.selectedAssetGroup || !channel || !this.channelAssetGroupMap[channel]) return selectedAssets;
-                    const groupAssets = this.channelAssetGroupMap[channel][this.selectedAssetGroup];
-                    if (!groupAssets) return selectedAssets;
+                    if (!this.selectedAssetGroup || !channel) return selectedAssets;
+                    const groupAssets = this.channelAssetGroupMap[channel]?.[this.selectedAssetGroup];
+                    if (!groupAssets) return ['___EMPTY_GROUP___'];
                     const allowedAssets = groupAssets.map(String);
                     const validAssets = (selectedAssets || []).filter(a => allowedAssets.includes(String(a)));
                     if (validAssets.length > 0) return validAssets;
                     if (allowedAssets.length > 0) return [allowedAssets[0]];
-                    return [];
+                    return ['___EMPTY_GROUP___'];
                 },
 
                 // ─── Fullscreen Pop-Out ───
