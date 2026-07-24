@@ -1323,7 +1323,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
         
-        if (isset($controls['series_assets']['dependent']) && !empty($controls['series_assets']['dependent'])) {
+        if (isset($controls['series_assets']['dependent']) && (empty($controls['asset_group']) || $controls['series_assets']['dependent'] === ['___EMPTY_GROUP___'])) {
             $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
             $controlsToMerge['dependent_asset_group'] = null;
         }
@@ -1386,8 +1386,11 @@ class DashboardWidgetDataController extends Controller
                 if (isset($controls['series_assets']["independent_{$key}"]) && !empty($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } else if (!empty($controls['series_assets']) && is_array($controls['series_assets'])) {
-                    // Match independent_UUID or independent_0 keys
+                } else if (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"]) && !empty($controls['series_assets']["independent_{$var['key']}"])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$var['key']}"];
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                } else if (!empty($controls['series_assets']) && is_array($controls['series_assets']) && empty($controls['asset_group'])) {
+                    // Match independent_UUID or independent_0 keys ONLY if asset_group is empty
                     foreach ($controls['series_assets'] as $sKey => $sAssets) {
                         if (str_starts_with($sKey, 'independent_') && !empty($sAssets)) {
                             $uiState['independent_variables'][$key]['independent_asset_filter'] = $sAssets;
