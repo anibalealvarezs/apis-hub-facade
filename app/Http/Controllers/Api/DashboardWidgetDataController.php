@@ -1522,6 +1522,29 @@ class DashboardWidgetDataController extends Controller
             ]
         );
 
+        // If dependent or any independent asset filter is ___EMPTY_GROUP___, short circuit to return graceful empty state
+        $hasEmptyGroup = ($mergedState['dependent_asset_filter'] ?? []) === ['___EMPTY_GROUP___'];
+        if (!$hasEmptyGroup && !empty($mergedState['independent_variables'])) {
+            foreach ($mergedState['independent_variables'] as $var) {
+                if (($var['independent_asset_filter'] ?? []) === ['___EMPTY_GROUP___']) {
+                    $hasEmptyGroup = true;
+                    break;
+                }
+            }
+        }
+
+        if ($hasEmptyGroup) {
+            \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Short-circuiting ___EMPTY_GROUP___', [
+                'widget_id' => $widget->id,
+                'kpi_id' => $kpi->id,
+            ]);
+            return [
+                'labels' => [],
+                'datasets' => [],
+                '_debug' => 'No available assets in the selected group for this channel.',
+            ];
+        }
+
         \Illuminate\Support\Facades\Log::info('[DIAGNOSTIC KPI] Final merged state and payload resolution', [
             'widget_id' => $widget->id,
             'kpi_id' => $kpi->id,
