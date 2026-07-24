@@ -86,6 +86,11 @@ class KpiPayloadBuilder
             $dependentNode['filters'] = ['asset_platform_id' => $state['dependent_asset_filter']];
         }
 
+        // If channel is facebook_organic and dependency is instagram_account, specify account_type filter
+        if (($state['dependent_channel'] ?? '') === 'facebook_organic' && ($state['dependency'] ?? '') === 'instagram_account') {
+            $dependentNode['filters']['account_type'] = 'instagram_account';
+        }
+
         // GSC stores data separated by searchAppearance (standard vs AMP/etc).
         // Without filtering to 'standard', metrics double-count because both
         // dimension sets are summed independently.
@@ -219,6 +224,10 @@ class KpiPayloadBuilder
                 \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Independent asset filter applied', [
                     'asset_filter' => $var['independent_asset_filter'],
                 ]);
+            }
+
+            if (($var['independent_channel'] ?? '') === 'facebook_organic' && ($var['dependency'] ?? '') === 'instagram_account') {
+                $node['filters']['account_type'] = 'instagram_account';
             }
 
             if (($var['independent_channel'] ?? '') === 'google_search_console'
