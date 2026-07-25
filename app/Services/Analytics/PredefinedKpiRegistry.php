@@ -135,6 +135,7 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
+
             'cpc_momentum' => [
                 'name' => 'CPC Momentum (MACD)',
                 'description' => 'Detect when performance momentum flips. Example: Is our CPC getting cheaper or more expensive on a rolling basis?',
@@ -922,18 +923,13 @@ class PredefinedKpiRegistry
             ],
             'brand_search_halo_effect' => [
                 'name' => 'Brand Search Halo Effect',
-                'description' => 'Analyzes if social media efforts generate a delayed increase in brand searches on Google.',
+                'description' => 'Tests whether paid advertising spend causes a statistically significant delayed increase in organic brand search clicks. Does paying for ads lift your brand\'s organic search visibility?',
                 'scope' => 'global',
-                'categories' => ['cross-channel', 'seo', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
-                'required_tags' => ['seo', 'spendable', 'organic_social'],
-                'calculation_type' => 'calculate_regression',
-                'compatible_widgets' => ['table', 'scatter_plot'],
-                'optimal_widgets' => ['scatter_plot'],
-                'default_zero_handling' => 'remove',
-                'default_edge_case_handling' => [
-                    'weighted' => true,
-                    'grouping' => 'none',
-                ],
+                'categories' => ['performance', 'cross-channel', 'seo', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'seo', 'clickable'],
+                'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -941,21 +937,12 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'impressions',
+                            'metric' => 'clicks',
                         ],
                         'right' => [
-                            'type' => 'operator',
-                            'operator' => '+',
-                            'left' => [
-                                'type' => 'metric',
-                                'channel' => '__SPENDABLE_CHANNEL_1__',
-                                'metric' => 'spend',
-                            ],
-                            'right' => [
-                                'type' => 'metric',
-                                'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                                'metric' => 'reach',
-                            ],
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
                         ],
                     ],
                 ],
