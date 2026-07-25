@@ -1233,6 +1233,64 @@ class DashboardWidgetDataController extends Controller
                 }
             }
 
+            // ── Granger Causality result reshaping ──────────────────────────────────
+            // apis-hub returns Granger results as a flat object:
+            //   {predictive, p_value, lag_days, data_points}
+            // renderTable expects {columns, rows}; renderTile expects {value, label}.
+            // Reshape here so the frontend renderers work without modification.
+            if (isset($data['p_value']) && $widget->source_type === 'kpi') {
+                $pValue     = (float)$data['p_value'];
+                $lagDays    = (int)($data['lag_days']    ?? 0);
+                $dataPoints = (int)($data['data_points'] ?? 0);
+                $predictive = (bool)($data['predictive'] ?? false);
+
+                // Human-readable significance label
+                $significance = $pValue < 0.01  ? 'Strong (p < 0.01)'
+                              : ($pValue < 0.05  ? 'Significant (p < 0.05)'
+                              : ($pValue < 0.10  ? 'Weak (p < 0.10)'
+                              : 'Not significant'));
+
+                // Best-effort metric labels from the KPI ui_state or runtime controls
+                $_uiState   = $widget->customKpi?->filters['_ui_state'] ?? [];
+                $depMetric  = $_uiState['dependent_metric']  ?? ($resolvedControls['metrics'][0] ?? 'Dependent');
+                $_firstIvar = !empty($_uiState['independent_variables']) ? reset($_uiState['independent_variables']) : [];
+                $indMetric  = $_firstIvar['independent_metric'] ?? ($resolvedControls['metrics'][1] ?? 'Independent');
+                $depChannel = $_uiState['dependent_channel'] ?? '';
+                $indChannel = $_firstIvar['independent_channel'] ?? '';
+
+                $depLabel = ($depChannel ? ucwords(str_replace('_', ' ', $depChannel)) . ' ' : '') . ucwords(str_replace('_', ' ', $depMetric));
+                $indLabel = ($indChannel ? ucwords(str_replace('_', ' ', $indChannel)) . ' ' : '') . ucwords(str_replace('_', ' ', $indMetric));
+
+                if ($effectiveWidgetType === 'table') {
+                    $data = [
+                        'columns' => [
+                            ['key' => 'metric',       'label' => 'Metric Pair'],
+                            ['key' => 'result',       'label' => 'Result'],
+                            ['key' => 'p_value',      'label' => 'P-Value',     'format' => 'number'],
+                            ['key' => 'lag_days',     'label' => 'Lag (days)',  'format' => 'number'],
+                            ['key' => 'data_points',  'label' => 'Data Points', 'format' => 'number'],
+                        ],
+                        'rows' => [
+                            [
+                                'metric'      => $depLabel . ' ← ' . $indLabel,
+                                'result'      => $significance . ($predictive ? ' ✓' : ' ✗'),
+                                'p_value'     => round($pValue, 4),
+                                'lag_days'    => $lagDays,
+                                'data_points' => $dataPoints,
+                            ],
+                        ],
+                    ];
+                } elseif (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
+                    $data = [
+                        'value'  => $pValue,
+                        'label'  => $significance . ' — lag ' . $lagDays . 'd',
+                        'format' => 'number',
+                        'prefix' => 'p=',
+                        'suffix' => '',
+                    ];
+                }
+            }
+
             // If tile or gauge and data is still in series format, aggregate to a single value
             if (in_array($effectiveWidgetType, ['tile', 'gauge']) && ! isset($data['value'])) {
                 if (isset($data['summary'])) {
@@ -1255,6 +1313,7 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
             }
+
 
             \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
                 'widget_id' => $widget->id,
