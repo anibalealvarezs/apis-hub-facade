@@ -1266,7 +1266,7 @@ class DashboardWidgetDataController extends Controller
                         'columns' => [
                             ['key' => 'metric',       'label' => 'Metric Pair'],
                             ['key' => 'result',       'label' => 'Result'],
-                            ['key' => 'p_value',      'label' => 'P-Value',     'format' => 'number'],
+                            ['key' => 'p_value',      'label' => 'P-Value'],
                             ['key' => 'lag_days',     'label' => 'Lag (days)',  'format' => 'number'],
                             ['key' => 'data_points',  'label' => 'Data Points', 'format' => 'number'],
                         ],
@@ -1274,18 +1274,23 @@ class DashboardWidgetDataController extends Controller
                             [
                                 'metric'      => $depLabel . ' ← ' . $indLabel,
                                 'result'      => $significance . ($predictive ? ' ✓' : ' ✗'),
-                                'p_value'     => round($pValue, 4),
+                                'p_value'     => number_format($pValue, 4),  // string: won't be zeroed by formatNumber
                                 'lag_days'    => $lagDays,
                                 'data_points' => $dataPoints,
                             ],
                         ],
                     ];
                 } elseif (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
+                    // Confidence % = (1 - p_value) * 100 — renderTile formats this cleanly as "99.3%"
+                    // p=0.007301 → 99.3%; p=0.95 → 5.0%  (low = not causal)
+                    $confidence = round((1 - $pValue) * 100, 1);
+                    $lagLabel   = $lagDays . ' day' . ($lagDays !== 1 ? 's' : '') . ' lag';
+                    $icon       = $predictive ? '✓' : '✗';
                     $data = [
-                        'value'  => $pValue,
-                        'label'  => $significance . ' — lag ' . $lagDays . 'd',
-                        'format' => 'number',
-                        'prefix' => 'p=',
+                        'value'  => $confidence,
+                        'label'  => $icon . ' ' . $significance . ' · ' . $lagLabel,
+                        'format' => 'percentage',
+                        'prefix' => '',
                         'suffix' => '',
                     ];
                 }
