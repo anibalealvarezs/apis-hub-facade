@@ -107,7 +107,7 @@ class DerivedMetricResource extends Resource
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get) {
-                                        if (blank($get('label'))->isEmpty() && filled($get('channel')) && filled($get('metric'))) {
+                                        if (empty($get('label')) && filled($get('channel')) && filled($get('metric'))) {
                                             $channelLabel = str($get('channel'))->replace('_', ' ')->title()->toString();
                                             $metricLabel = str($get('metric'))->replace('_', ' ')->title()->toString();
                                             $set('label', $channelLabel . ' - ' . $metricLabel);
