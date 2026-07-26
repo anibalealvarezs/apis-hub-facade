@@ -2523,8 +2523,8 @@ class DashboardWidgetDataController extends Controller
         if (isset($response['chart']) && is_array($response['chart'])) {
             $result = [];
             foreach ($response['chart'] as $point) {
-                $date = $point['date'] ?? $point['label'] ?? null;
-                $value = $point[$metric] ?? $point['value'] ?? $point['y'] ?? 0;
+                $date = $point['daily'] ?? $point['date'] ?? $point['label'] ?? null;
+                $value = $this->findMetricValueInPoint($point, $metric);
                 if ($date !== null) {
                     $result[$date] = (float) $value;
                 }
@@ -2536,8 +2536,8 @@ class DashboardWidgetDataController extends Controller
         if (isset($response['data']) && is_array($response['data'])) {
             $result = [];
             foreach ($response['data'] as $row) {
-                $date = $row['date'] ?? $row['daily'] ?? $row['label'] ?? null;
-                $value = $row[$metric] ?? $row['value'] ?? $row['y'] ?? 0;
+                $date = $row['daily'] ?? $row['date'] ?? $row['label'] ?? null;
+                $value = $this->findMetricValueInPoint($row, $metric);
                 if ($date !== null) {
                     $result[$date] = (float) $value;
                 }
@@ -2547,5 +2547,20 @@ class DashboardWidgetDataController extends Controller
         }
 
         return [];
+    }
+
+    private function findMetricValueInPoint(array $point, string $metric): float
+    {
+        if (isset($point[$metric])) {
+            return (float) $point[$metric];
+        }
+
+        foreach ($point as $key => $value) {
+            if (is_string($key) && str_ends_with($key, '_' . $metric)) {
+                return (float) $value;
+            }
+        }
+
+        return (float) ($point['value'] ?? $point['y'] ?? 0);
     }
 }
