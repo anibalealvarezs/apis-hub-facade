@@ -174,6 +174,14 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Derived Metrics defined for this project.
+     */
+    public function derivedMetrics(): HasMany
+    {
+        return $this->hasMany(DerivedMetric::class);
+    }
+
+    /**
      * Relationship: Dashboards belonging to this project.
      */
     public function dashboards(): HasMany
