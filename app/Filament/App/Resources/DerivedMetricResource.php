@@ -268,6 +268,18 @@ class DerivedMetricResource extends Resource
                         $project = \Filament\Facades\Filament::getTenant();
                         $sourceSeries = $record->source_series ?? [];
 
+                        \Illuminate\Support\Facades\Log::debug('[DM_TEST] Action fired', [
+                            'dm_id' => $record->id,
+                            'project_id' => $project->id,
+                            'granularity' => $granularity,
+                            'dateStart' => $dateStart,
+                            'dateEnd' => $dateEnd,
+                            'source_series_count' => count($sourceSeries),
+                            'ast' => $record->ast,
+                            'data_keys' => array_keys($data),
+                            'data' => $data,
+                        ]);
+
                         $widgetDataController = new \App\Http\Controllers\Api\DashboardWidgetDataController(
                             app(\App\Services\WidgetDataService::class),
                             app(\App\Services\RemoteEngineService::class)
@@ -279,7 +291,15 @@ class DerivedMetricResource extends Resource
                             $channel = $series['channel'] ?? null;
                             $metric = $series['metric'] ?? null;
 
+                            \Illuminate\Support\Facades\Log::debug('[DM_TEST] Processing series', [
+                                'key' => $key,
+                                'channel' => $channel,
+                                'metric' => $metric,
+                                'series_config' => $series,
+                            ]);
+
                             if (empty($channel) || empty($metric)) {
+                                \Illuminate\Support\Facades\Log::warning('[DM_TEST] Skipping series - missing channel or metric', ['key' => $key]);
                                 $fetchedSeries[$key] = [];
                                 continue;
                             }
@@ -290,11 +310,23 @@ class DerivedMetricResource extends Resource
                                 $validAssets = $widgetDataController->getValidAssetsForChannel($project, $channel);
                                 $filtered = array_intersect($assetFilter, $validAssets);
                                 $extractedAssets = ! empty($filtered) ? array_values($filtered) : null;
+                                \Illuminate\Support\Facades\Log::debug('[DM_TEST] Asset filter applied', [
+                                    'key' => $key,
+                                    'asset_filter' => $assetFilter,
+                                    'valid_assets' => $validAssets,
+                                    'filtered' => $filtered,
+                                    'extractedAssets' => $extractedAssets,
+                                ]);
                             } else {
                                 $runtimeAsset = $data["runtime_asset_{$key}"] ?? null;
                                 if (! empty($runtimeAsset)) {
                                     $extractedAssets = is_array($runtimeAsset) ? $runtimeAsset : [$runtimeAsset];
                                 }
+                                \Illuminate\Support\Facades\Log::debug('[DM_TEST] No asset_filter, runtime check', [
+                                    'key' => $key,
+                                    'runtimeAsset' => $runtimeAsset,
+                                    'extractedAssets' => $extractedAssets,
+                                ]);
                             }
 
                             $payload = [
@@ -306,14 +338,45 @@ class DerivedMetricResource extends Resource
                                 'metrics' => [$metric],
                             ];
 
+                            \Illuminate\Support\Facades\Log::debug('[DM_TEST] Calling forwardToChannelEndpoint', [
+                                'key' => $key,
+                                'channel' => $channel,
+                                'payload' => $payload,
+                            ]);
+
                             try {
                                 $channelResponse = $widgetDataController->forwardToChannelEndpoint($channel, 'chart', $payload);
+                                \Illuminate\Support\Facades\Log::debug('[DM_TEST] Channel response received', [
+                                    'key' => $key,
+                                    'response_keys' => array_keys($channelResponse),
+                                    'response_type' => gettype($channelResponse),
+                                    'response_preview' => array_slice($channelResponse, 0, 5),
+                                ]);
                                 $seriesData = $widgetDataController->extractTimeSeriesFromResponse($channelResponse, $metric);
+                                \Illuminate\Support\Facades\Log::debug('[DM_TEST] Extracted time series', [
+                                    'key' => $key,
+                                    'metric' => $metric,
+                                    'seriesData_count' => count($seriesData),
+                                    'seriesData_preview' => array_slice($seriesData, 0, 5),
+                                ]);
                                 $fetchedSeries[$key] = $seriesData;
                             } catch (\Throwable $e) {
+                                \Illuminate\Support\Facades\Log::error('[DM_TEST] Exception fetching series', [
+                                    'key' => $key,
+                                    'channel' => $channel,
+                                    'metric' => $metric,
+                                    'exception' => get_class($e),
+                                    'message' => $e->getMessage(),
+                                    'file' => $e->getFile(),
+                                    'line' => $e->getLine(),
+                                ]);
                                 $fetchedSeries[$key] = [];
                             }
                         }
+
+                        \Illuminate\Support\Facades\Log::debug('[DM_TEST] All series fetched', [
+                            'fetchedSeries' => array_map(fn ($v) => ['count' => count($v), 'preview' => array_slice($v, 0, 3)], $fetchedSeries),
+                        ]);
 
                         $computePayload = [
                             'ast' => $record->ast,
@@ -327,8 +390,22 @@ class DerivedMetricResource extends Resource
                             'derived_metrics' => [],
                         ];
 
+                        \Illuminate\Support\Facades\Log::debug('[DM_TEST] Calling computeKpi', [
+                            'payload_keys' => array_keys($computePayload),
+                            'series_data_keys' => array_keys($fetchedSeries),
+                            'series_data_counts' => array_map(fn ($v) => count($v), $fetchedSeries),
+                        ]);
+
                         $remoteEngineService = app(\App\Services\RemoteEngineService::class);
                         $result = $remoteEngineService->computeKpi($project, $computePayload);
+
+                        \Illuminate\Support\Facades\Log::debug('[DM_TEST] computeKpi result', [
+                            'success' => $result['success'] ?? false,
+                            'message' => $result['message'] ?? null,
+                            'data_type' => gettype($result['data'] ?? null),
+                            'data_keys' => is_array($result['data'] ?? null) ? array_keys($result['data']) : null,
+                            'data_preview' => is_array($result['data'] ?? null) ? array_slice($result['data'], 0, 5) : $result['data'] ?? null,
+                        ]);
 
                         if (isset($result['success']) && $result['success']) {
                             \Filament\Notifications\Notification::make()
