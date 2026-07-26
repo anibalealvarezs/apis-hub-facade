@@ -25,6 +25,7 @@
         statePath: '{{ addslashes($statePath) }}',
         seriesFieldPath: '{{ addslashes($seriesFieldPath) }}',
         initialSeriesKeys: @js($seriesKeys ?? []),
+        seriesData: @js($seriesData ?? []),
         wire: @this,
         operators: @js($operators),
     })"
@@ -182,6 +183,7 @@ document.addEventListener('alpine:init', () => {
         statePath: config.statePath,
         seriesFieldPath: config.seriesFieldPath,
         initialSeriesKeys: config.initialSeriesKeys || [],
+        seriesData: config.seriesData || [],
         wire: config.wire,
         operators: config.operators,
         flatNodes: {},
@@ -190,13 +192,19 @@ document.addEventListener('alpine:init', () => {
         seriesKeys: [],
 
         getSeriesKeys() {
+            if (this.seriesData && this.seriesData.length > 0) {
+                return this.seriesData.map((s, i) => s.key || String.fromCharCode(97 + i));
+            }
+            if (this.initialSeriesKeys && this.initialSeriesKeys.length > 0) {
+                return this.initialSeriesKeys;
+            }
             try {
                 const raw = this.wire.get(this.seriesFieldPath);
                 if (Array.isArray(raw) && raw.length > 0) {
                     return raw.map((s, i) => s.key || String.fromCharCode(97 + i));
                 }
             } catch {}
-            return this.initialSeriesKeys;
+            return this.initialSeriesKeys || [];
         },
 
         hydrateFromLivewire() {

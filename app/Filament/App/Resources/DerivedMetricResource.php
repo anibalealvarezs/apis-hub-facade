@@ -147,6 +147,7 @@ class DerivedMetricResource extends Resource
                                     ->map(fn ($s, $i) => $s['key'] ?? chr(97 + $i))
                                     ->values()
                                     ->all(),
+                                'seriesData' => $get('source_series') ?? [],
                             ])
                             ->helperText(__('Use source series keys (a, b, c…) and operators to define the formula. Click "Refresh keys" after adding/removing series.')),
                     ]),
