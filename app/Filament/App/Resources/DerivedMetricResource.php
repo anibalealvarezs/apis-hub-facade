@@ -143,6 +143,7 @@ class DerivedMetricResource extends Resource
                             ->view('filament.app.components.formula-editor')
                             ->viewData(fn (Forms\Get $get): array => [
                                 'seriesKeys' => collect($get('source_series') ?? [])
+                                    ->values()
                                     ->map(fn ($s, $i) => $s['key'] ?? chr(97 + $i))
                                     ->values()
                                     ->all(),
