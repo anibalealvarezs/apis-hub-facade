@@ -1,5 +1,14 @@
 @php
     $astStatePath = $astStatePath ?? 'data.ast';
+
+    \Log::info('[DM_FORM] blade', [
+        'seriesData_count' => is_array($seriesData ?? null) ? count($seriesData ?? []) : 'null',
+        'seriesData' => $seriesData ?? 'UNDEFINED',
+        'initialAst_type' => gettype($initialAst ?? null),
+        'initialAst' => $initialAst ?? 'UNDEFINED',
+        'astStatePath' => $astStatePath,
+    ]);
+
     $operators = [
         '+' => '+ (Add)',
         '-' => '- (Subtract)',
@@ -189,36 +198,63 @@ document.addEventListener('alpine:init', () => {
         nodeCounter: 0,
         seriesKeys: [],
 
+        init() {
+            console.log('[DM_JS] Alpine config:', {
+                astStatePath: config.astStatePath,
+                seriesData: config.seriesData,
+                initialSeriesKeys: config.initialSeriesKeys,
+                initialAst: config.initialAst,
+                wireType: typeof config.wire,
+                wireKeys: config.wire ? Object.keys(config.wire) : null,
+            });
+        },
+
         getSeriesKeys() {
+            console.log('[DM_JS] getSeriesKeys:', {
+                seriesData: this.seriesData,
+                initialSeriesKeys: this.initialSeriesKeys,
+            });
             if (this.seriesData && this.seriesData.length > 0) {
-                return this.seriesData.map((s, i) => s.key || String.fromCharCode(97 + i));
+                const keys = this.seriesData.map((s, i) => s.key || String.fromCharCode(97 + i));
+                console.log('[DM_JS] getSeriesKeys from seriesData:', keys);
+                return keys;
             }
             if (this.initialSeriesKeys && this.initialSeriesKeys.length > 0) {
+                console.log('[DM_JS] getSeriesKeys from initialSeriesKeys:', this.initialSeriesKeys);
                 return this.initialSeriesKeys;
             }
             try {
                 const raw = this.wire.get(this.astStatePath.replace('.ast', '.source_series'));
+                console.log('[DM_JS] getSeriesKeys wire.get:', raw);
                 if (Array.isArray(raw) && raw.length > 0) {
                     return raw.map((s, i) => s.key || String.fromCharCode(97 + i));
                 }
-            } catch {}
+            } catch (e) { console.log('[DM_JS] getSeriesKeys wire.get error:', e); }
+            console.log('[DM_JS] getSeriesKeys fallback empty');
             return this.initialSeriesKeys || [];
         },
 
         hydrateFromServer() {
             this.seriesKeys = this.getSeriesKeys();
+            console.log('[DM_JS] hydrateFromServer seriesKeys:', this.seriesKeys);
 
             let raw = this.initialAst;
+            console.log('[DM_JS] hydrateFromServer initialAst:', raw);
 
             if (!raw || typeof raw !== 'object' || !raw.type) {
+                console.log('[DM_JS] hydrateFromServer initialAst invalid, trying wire.get');
                 try {
                     raw = this.wire.get(this.astStatePath);
-                } catch {}
+                    console.log('[DM_JS] hydrateFromServer wire.get result:', raw);
+                } catch (e) { console.log('[DM_JS] hydrateFromServer wire.get error:', e); }
             }
             if (typeof raw === 'string') {
+                console.log('[DM_JS] hydrateFromServer parsing string AST');
                 try { raw = JSON.parse(raw); } catch { raw = null; }
             }
+            console.log('[DM_JS] hydrateFromServer final raw:', raw);
             if (!raw || typeof raw !== 'object' || !raw.type) {
+                console.log('[DM_JS] hydrateFromServer no valid AST, clearing');
                 this.flatNodes = {};
                 this.jsonAst = '{}';
                 return;
@@ -227,6 +263,7 @@ document.addEventListener('alpine:init', () => {
             this.nodeCounter = 0;
             this.buildFlatNodes(raw, 'root', 0, 'root');
             this.jsonAst = JSON.stringify(raw);
+            console.log('[DM_JS] hydrateFromServer built flatNodes:', JSON.parse(JSON.stringify(this.flatNodes)));
         },
 
         buildFlatNodes(node, path, depth, side) {

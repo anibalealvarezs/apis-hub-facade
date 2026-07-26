@@ -141,11 +141,22 @@ class DerivedMetricResource extends Resource
                         Forms\Components\ViewField::make('_formula_editor')
                             ->label(__('Build Formula'))
                             ->view('filament.app.components.formula-editor')
-                            ->viewData(fn (Forms\Get $get): array => [
-                                'seriesData' => $get('source_series') ?? [],
-                                'initialAst' => $get('ast'),
-                                'astStatePath' => 'data.ast',
-                            ])
+                            ->viewData(fn (Forms\Get $get): array => {
+                                $sd = $get('source_series') ?? [];
+                                $ast = $get('ast');
+                                \Log::info('[DM_FORM] viewData', [
+                                    'source_series_type' => gettype($sd),
+                                    'source_series_count' => is_array($sd) ? count($sd) : 'N/A',
+                                    'source_series' => $sd,
+                                    'ast_type' => gettype($ast),
+                                    'ast' => $ast,
+                                ]);
+                                return [
+                                    'seriesData' => $sd,
+                                    'initialAst' => $ast,
+                                    'astStatePath' => 'data.ast',
+                                ];
+                            })
                             ->helperText(__('Use source series keys (a, b, c…) and operators to define the formula. Click "Refresh keys" after adding/removing series.')),
                     ]),
             ]);
