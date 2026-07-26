@@ -105,6 +105,7 @@ class DashboardWidgetDataController extends Controller
                 'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
                 'metric' => $this->handleMetricSource($project, $widget, $resolvedControls),
                 'entity' => $this->handleEntitySource($project, $widget, $resolvedControls),
+                'derived_metric' => $this->handleDerivedMetricSource($project, $widget, $resolvedControls),
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
 
@@ -1909,7 +1910,7 @@ class DashboardWidgetDataController extends Controller
         return $this->forwardToChannelEndpoint($channel, 'table', $payload);
     }
 
-    protected function extractAssetFilter(array $controls, Project $project, string $channel): array|string|null
+    protected function extractAssetFilter(array $controls, Project $project, string $channel, ?array $seriesAssetFilter = null): array|string|null
     {
         $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel);
         if (! empty($controls['asset'])) {
@@ -1918,7 +1919,19 @@ class DashboardWidgetDataController extends Controller
                 return '___EMPTY_GROUP___';
             }
 
-            return $controls['asset'];
+            $asset = $controls['asset'];
+            if ($seriesAssetFilter !== null) {
+                $validArray = is_array($asset) ? $asset : [$asset];
+                $filtered = array_intersect($validArray, $seriesAssetFilter);
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
+                $filtered = array_values($filtered);
+
+                return $allowsMultiple ? $filtered : $filtered[0];
+            }
+
+            return $asset;
         }
 
         $requestedAssets = [];
@@ -1941,6 +1954,27 @@ class DashboardWidgetDataController extends Controller
         if (! empty($requestedAssets)) {
             $validForChannel = $this->getValidAssetsForChannel($project, $channel);
             $filtered = array_intersect($requestedAssets, $validForChannel);
+
+            if (empty($filtered)) {
+                return '___EMPTY_GROUP___';
+            }
+
+            $filtered = array_values($filtered);
+
+            if ($seriesAssetFilter !== null) {
+                $filtered = array_intersect($filtered, $seriesAssetFilter);
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
+                $filtered = array_values($filtered);
+            }
+
+            return $allowsMultiple ? $filtered : $filtered[0];
+        }
+
+        if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
+            $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+            $filtered = array_intersect($seriesAssetFilter, $validForChannel);
 
             if (empty($filtered)) {
                 return '___EMPTY_GROUP___';
@@ -2270,5 +2304,167 @@ class DashboardWidgetDataController extends Controller
         }
 
         return json_decode(json_encode($response, JSON_UNESCAPED_UNICODE), true);
+    }
+
+    protected function handleDerivedMetricSource(Project $project, DashboardWidget $widget, array $controls): array
+    {
+        $derivedMetric = $widget->derivedMetric;
+
+        if (! $derivedMetric) {
+            throw new \RuntimeException('Derived Metric not found for widget ' . $widget->id);
+        }
+
+        $sourceSeries = $derivedMetric->source_series ?? [];
+        $ast = $derivedMetric->ast ?? [];
+
+        if (empty($sourceSeries) || empty($ast)) {
+            return ['labels' => [], 'datasets' => [], 'series' => ['dates' => [], 'values' => []]];
+        }
+
+        $cacheService = app(\App\Services\DerivedMetricCacheService::class);
+        $controlsForHash = [
+            'date_start' => $controls['date_start'] ?? null,
+            'date_end' => $controls['date_end'] ?? null,
+            'granularity' => $controls['granularity'] ?? null,
+            'asset_group' => $controls['asset_group'] ?? null,
+            'assets' => $controls['assets'] ?? null,
+        ];
+        $controlsHash = $cacheService->computeControlsHash($controlsForHash);
+        $cached = $cacheService->getCachedResult($derivedMetric->id, $controlsHash);
+
+        if ($cached) {
+            return $cached->result;
+        }
+
+        $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
+        $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
+
+        $fetchedSeries = [];
+
+        foreach ($sourceSeries as $series) {
+            $key = $series['key'];
+            $channel = $series['channel'] ?? '';
+            $metric = $series['metric'] ?? '';
+            $seriesGranularity = $derivedMetric->output_granularity ?? $series['granularity'] ?? $controls['granularity'] ?? 'daily';
+
+            if (! $channel || ! $metric) {
+                $fetchedSeries[$key] = [];
+                continue;
+            }
+
+            $seriesAssetFilter = $series['asset_filter'] ?? null;
+            $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
+
+            if ($assetFilter === '___EMPTY_GROUP___') {
+                $fetchedSeries[$key] = [];
+                continue;
+            }
+
+            $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+            $payload = [
+                'tenant' => $project->id,
+                'account' => $assetFilter,
+                'dateStart' => $dateStart,
+                'dateEnd' => $dateEnd,
+                'granularity' => $seriesGranularity,
+                'metrics' => [$metric],
+            ];
+
+            $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
+
+            $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
+            $fetchedSeries[$key] = $seriesData;
+        }
+
+        $context = new \Services\Analytics\VirtualMetricEngine\EvaluationContext($fetchedSeries);
+
+        $derivedMetricResolver = function (int $referencedDmId) use ($project, $controls) {
+            $referencedDm = \App\Models\DerivedMetric::find($referencedDmId);
+            if (! $referencedDm) {
+                return [];
+            }
+
+            $tempWidget = new DashboardWidget([
+                'derived_metric_id' => $referencedDmId,
+                'source_type' => 'derived_metric',
+                'widget_type' => 'line_chart',
+            ]);
+            $tempWidget->setRelation('derivedMetric', $referencedDm);
+
+            return $this->handleDerivedMetricSource($project, $tempWidget, $controls);
+        };
+
+        $context->setDerivedMetricResolver($derivedMetricResolver);
+
+        $parser = new \Services\Analytics\VirtualMetricEngine\AstParser();
+        $node = $parser->parse($ast);
+        $result = $node->evaluate($context);
+
+        if (is_array($result) && isset($result['dates']) && isset($result['values'])) {
+            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $result);
+
+            return $result;
+        }
+
+        if (is_array($result)) {
+            $dates = array_keys($result);
+            $values = array_values($result);
+            sort($dates);
+            $sortedValues = array_map(fn ($d) => $result[$d], $dates);
+
+            $formatted = [
+                'dates' => $dates,
+                'values' => $sortedValues,
+            ];
+            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $formatted);
+
+            return $formatted;
+        }
+
+        return ['dates' => [], 'values' => []];
+    }
+
+    protected function extractTimeSeriesFromResponse(array $response, string $metric): array
+    {
+        if (isset($response['series']) && is_array($response['series'])) {
+            $series = $response['series'];
+            if (isset($series['dates']) && isset($series['values'])) {
+                $result = [];
+                foreach ($series['dates'] as $i => $date) {
+                    $result[$date] = $series['values'][$i] ?? 0;
+                }
+
+                return $result;
+            }
+        }
+
+        if (isset($response['chart']) && is_array($response['chart'])) {
+            $result = [];
+            foreach ($response['chart'] as $point) {
+                $date = $point['date'] ?? $point['label'] ?? null;
+                $value = $point[$metric] ?? $point['value'] ?? $point['y'] ?? 0;
+                if ($date !== null) {
+                    $result[$date] = (float) $value;
+                }
+            }
+
+            return $result;
+        }
+
+        if (isset($response['data']) && is_array($response['data'])) {
+            $result = [];
+            foreach ($response['data'] as $row) {
+                $date = $row['date'] ?? $row['daily'] ?? $row['label'] ?? null;
+                $value = $row[$metric] ?? $row['value'] ?? $row['y'] ?? 0;
+                if ($date !== null) {
+                    $result[$date] = (float) $value;
+                }
+            }
+
+            return $result;
+        }
+
+        return [];
     }
 }

@@ -7,11 +7,13 @@ class WidgetTypeRegistry
     protected static array $compatibility = [
         'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'],
         'metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'],
+        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'],
     ];
 
     protected static array $sourceLabels = [
         'kpi' => 'Custom KPI (Analytics Engine)',
         'metric' => 'Metric (Raw Aggregation)',
+        'derived_metric' => 'Derived Metric (Computed Series)',
     ];
 
     protected static array $widgetLabels = [

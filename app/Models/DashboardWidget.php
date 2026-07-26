@@ -15,6 +15,7 @@ class DashboardWidget extends Model
     protected $fillable = [
         'dashboard_id',
         'custom_kpi_id',
+        'derived_metric_id',
         'name',
         'title',
         'description',
@@ -41,5 +42,10 @@ class DashboardWidget extends Model
     public function customKpi(): BelongsTo
     {
         return $this->belongsTo(CustomKpi::class);
+    }
+
+    public function derivedMetric(): BelongsTo
+    {
+        return $this->belongsTo(DerivedMetric::class);
     }
 }

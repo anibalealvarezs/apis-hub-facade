@@ -95,6 +95,8 @@ Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyti
 
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
 
+Route::post('/api/derived-metrics/preview', [\App\Http\Controllers\Api\DerivedMetricPreviewController::class, 'preview'])->middleware(['web', 'auth']);
+
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
 // English Legal Documents
