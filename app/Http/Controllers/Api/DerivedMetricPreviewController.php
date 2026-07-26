@@ -43,11 +43,13 @@ class DerivedMetricPreviewController extends Controller
                 app(\App\Services\RemoteEngineService::class)
             );
 
+            $validForChannel = $controller->getValidAssetsForChannel($project, $channel);
             $extractedAssets = null;
             if ($assetFilter !== null && ! empty($assetFilter)) {
-                $validForChannel = $controller->getValidAssetsForChannel($project, $channel);
                 $filtered = array_intersect($assetFilter, $validForChannel);
                 $extractedAssets = ! empty($filtered) ? array_values($filtered) : null;
+            } elseif (! empty($validForChannel)) {
+                $extractedAssets = $validForChannel[0];
             }
 
             $payload = [

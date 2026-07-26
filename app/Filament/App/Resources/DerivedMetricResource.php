@@ -234,6 +234,28 @@ class DerivedMetricResource extends Resource
                             ->label(__('End Date'))
                             ->default(now());
 
+                        $sourceSeries = $record->source_series ?? [];
+                        $runtimeAssetFields = [];
+                        foreach ($sourceSeries as $series) {
+                            $key = $series['key'] ?? null;
+                            $channel = $series['channel'] ?? null;
+                            if (empty($key) || empty($channel)) {
+                                continue;
+                            }
+                            $hasAssetFilter = ! empty($series['asset_filter']) && is_array($series['asset_filter']);
+                            if ($hasAssetFilter) {
+                                continue;
+                            }
+                            $runtimeAssetFields[] = Forms\Components\Select::make("runtime_asset_{$key}")
+                                ->label(__('Asset for "{$key}"') . " ({$channel})")
+                                ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel));
+                        }
+                        if (! empty($runtimeAssetFields)) {
+                            $fields[] = Forms\Components\Section::make(__('Runtime Asset Overrides'))
+                                ->schema($runtimeAssetFields)
+                                ->helperText(__('Select assets for source series that do not have a fixed asset filter. Leave empty to use all assets.'));
+                        }
+
                         return $fields;
                     })
                     ->action(function (DerivedMetric $record, array $data) {
@@ -266,6 +288,11 @@ class DerivedMetricResource extends Resource
                                 $validAssets = $widgetDataController->getValidAssetsForChannel($project, $channel);
                                 $filtered = array_intersect($assetFilter, $validAssets);
                                 $extractedAssets = ! empty($filtered) ? array_values($filtered) : null;
+                            } else {
+                                $runtimeAsset = $data["runtime_asset_{$key}"] ?? null;
+                                if (! empty($runtimeAsset)) {
+                                    $extractedAssets = is_array($runtimeAsset) ? $runtimeAsset : [$runtimeAsset];
+                                }
                             }
 
                             $payload = [
