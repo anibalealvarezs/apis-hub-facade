@@ -12,7 +12,9 @@ class EditDerivedMetric extends EditRecord
 
     protected function getFormActions(): array
     {
-        return [];
+        return [
+            Actions\SaveAction::make(),
+        ];
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
