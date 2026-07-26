@@ -107,8 +107,7 @@ class DerivedMetricResource extends Resource
                                     ->options(fn (Forms\Get $get) => ! empty($get('channel'))
                                         ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($get('channel'))
                                         : [])
-                                    ->required()
-                                    ->dependsOn('channel'),
+                                    ->required(),
                                 Forms\Components\Select::make('granularity')
                                     ->label(__('Granularity'))
                                     ->options([
