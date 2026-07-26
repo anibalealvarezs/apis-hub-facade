@@ -2023,7 +2023,7 @@ class DashboardWidgetDataController extends Controller
         return null;
     }
 
-    protected function getValidAssetsForChannel(Project $project, string $channel): array
+    public function getValidAssetsForChannel(Project $project, string $channel): array
     {
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getValidAssetsForChannel ENTER", ['channel' => $channel, 'project_id' => $project->id]);
@@ -2183,7 +2183,7 @@ class DashboardWidgetDataController extends Controller
         return $asset;
     }
 
-    protected function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
+    public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
     {
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
@@ -2506,7 +2506,7 @@ class DashboardWidgetDataController extends Controller
         }
     }
 
-    protected function extractTimeSeriesFromResponse(array $response, string $metric): array
+    public function extractTimeSeriesFromResponse(array $response, string $metric): array
     {
         if (isset($response['series']) && is_array($response['series'])) {
             $series = $response['series'];
