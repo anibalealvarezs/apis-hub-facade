@@ -143,14 +143,10 @@ class DerivedMetricResource extends Resource
                             ->view('filament.app.components.formula-editor')
                             ->viewData(function (Forms\Get $get): array {
                                 $sd = $get('source_series') ?? [];
+                                if (is_assoc_array($sd)) {
+                                    $sd = array_values($sd);
+                                }
                                 $ast = $get('ast');
-                                \Log::info('[DM_FORM] viewData', [
-                                    'source_series_type' => gettype($sd),
-                                    'source_series_count' => is_array($sd) ? count($sd) : 'N/A',
-                                    'source_series' => $sd,
-                                    'ast_type' => gettype($ast),
-                                    'ast' => $ast,
-                                ]);
                                 return [
                                     'seriesData' => $sd,
                                     'initialAst' => $ast,
