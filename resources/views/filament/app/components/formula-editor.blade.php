@@ -186,7 +186,7 @@ document.addEventListener('alpine:init', () => {
         wire: config.wire,
         operators: config.operators,
         flatNodes: {},
-        jsonAst: '{}',
+        jsonAst: (config.initialAst && config.initialAst.type) ? JSON.stringify(config.initialAst) : '{}',
         nodeCounter: 0,
         seriesKeys: [],
 

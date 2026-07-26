@@ -88,6 +88,7 @@ class DerivedMetricResource extends Resource
                                 Forms\Components\TextInput::make('label')
                                     ->label(__('Label'))
                                     ->maxLength(255)
+                                    ->live()
                                     ->helperText(__('Display name for this series (e.g. "Facebook Spend")')),
                                 Forms\Components\Select::make('channel')
                                     ->label(__('Channel'))
