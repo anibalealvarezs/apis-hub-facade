@@ -89,8 +89,8 @@ class DerivedMetricResource extends Resource
                                     ->label(__('Label'))
                                     ->maxLength(255)
                                     ->live()
-                                    ->afterStateUpdated(function ($state) {
-                                        $this->dispatch('dm-label-changed');
+                                    ->afterStateUpdated(function () {
+                                        \Livewire\Livewire::dispatch('dm-label-changed');
                                     })
                                     ->helperText(__('Display name for this series (e.g. "Facebook Spend")')),
                                 Forms\Components\Select::make('channel')
