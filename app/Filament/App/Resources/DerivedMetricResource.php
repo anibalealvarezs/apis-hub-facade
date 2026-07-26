@@ -147,7 +147,8 @@ class DerivedMetricResource extends Resource
                                     $set('_builder_step', '2_formula');
                                 }),
                         ]),
-                    ]),
+                    ])
+                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '1_series'),
 
                 // ── Step 2: Formula ───────────────────────────────────────
                 Forms\Components\Section::make(__('Formula'))
