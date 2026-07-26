@@ -12,6 +12,10 @@
         'abs_diff' => '|A - B|',
         'pct_change' => '% change ((A-B)/B)',
     ];
+
+    $wrapperClasses = 'fi-input-wrp flex items-center rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500';
+    $selectClasses = 'fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 text-base text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3 [&_optgroup]:bg-white [&_optgroup]:dark:bg-gray-900 [&_option]:bg-white [&_option]:dark:bg-gray-900';
+    $inputClasses = 'fi-input block w-full border-none bg-transparent/0 py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500 dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3';
 @endphp
 
 <div
@@ -29,92 +33,28 @@
     <div class="flex items-center justify-between">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Formula') }}</span>
         <div class="flex gap-2">
-            <button type="button" @click="refreshKeys()" class="text-xs text-primary-600 hover:text-primary-500">{{ __('Refresh keys') }}</button>
-            <button type="button" @click="reset()" class="text-xs text-danger-600 hover:text-danger-500">{{ __('Reset') }}</button>
+            <button type="button" @click="refreshKeys()" class="text-xs text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">{{ __('Refresh keys') }}</button>
+            <button type="button" @click="reset()" class="text-xs text-danger-600 hover:text-danger-500 dark:text-danger-400 dark:hover:text-danger-300">{{ __('Reset') }}</button>
         </div>
     </div>
 
     {{-- Root node editor --}}
     <div class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         <template x-for="(entry, path) in flatNodes" :key="entry.path">
-            <div class="flex items-center gap-2 p-3" :style="'padding-left: ' + (entry.depth * 24 + 12) + 'px'">
+            <div class="flex items-center gap-2 p-3 flex-wrap" :style="'padding-left: ' + (entry.depth * 24 + 12) + 'px'">
                 {{-- Depth indicator --}}
                 <template x-if="entry.depth > 0">
-                    <span class="text-gray-400 text-xs mr-1" x-text="'└'"></span>
+                    <span class="text-gray-400 dark:text-gray-500 text-xs mr-1" x-text="'└'"></span>
                 </template>
 
                 {{-- Label --}}
                 <span class="text-xs text-gray-500 dark:text-gray-400 w-16 shrink-0" x-text="entry.depth === 0 ? 'Formula:' : entry.side + ':'"></span>
 
                 {{-- Left/Operand select --}}
-                <select
-                    class="filament-input max-w-[160px]"
-                    x-model="entry.leftType"
-                    @change="onNodeChange(entry)"
-                >
-                    <option value="">{{ __('Select...') }}</option>
-                    <optgroup label="{{ __('Source Series') }}">
-                        <template x-for="sk in seriesKeys" :key="sk">
-                            <option :value="'metric:' + sk" x-text="sk"></option>
-                        </template>
-                    </optgroup>
-                    <optgroup label="{{ __('Number') }}">
-                        <option value="value">{{ __('Literal number') }}</option>
-                    </optgroup>
-                    <optgroup label="{{ __('Sub-formula') }}">
-                        <option value="operator">{{ __('( A op B )') }}</option>
-                    </optgroup>
-                </select>
-
-                {{-- Literal value input --}}
-                <template x-if="entry.leftType === 'value'">
-                    <input
-                        type="number"
-                        class="filament-input w-24"
-                        x-model.number="entry.leftValue"
-                        @input="onNodeChange(entry)"
-                        placeholder="0"
-                        step="any"
-                    >
-                </template>
-
-                {{-- Operator select (only for operator nodes) --}}
-                <template x-if="entry.leftType === 'operator'">
-                    <div class="flex items-center gap-2">
-                        <span class="text-gray-400 text-sm">(</span>
-                        <select
-                            class="filament-input max-w-[180px]"
-                            x-model="entry.operator"
-                            @change="onNodeChange(entry)"
-                        >
-                            <option value="">{{ __('Operator') }}</option>
-                            <template x-for="(label, op) in operators" :key="op">
-                                <option :value="op" x-text="label"></option>
-                            </template>
-                        </select>
-                        <span class="text-gray-400 text-sm">)</span>
-                    </div>
-                </template>
-
-                {{-- Operator for top-level (when leftType is not operator, show it inline) --}}
-                <template x-if="entry.leftType !== 'operator' && entry.leftType !== ''">
+                <div class="{{ $wrapperClasses }} max-w-[180px]">
                     <select
-                        class="filament-input max-w-[180px]"
-                        x-model="entry.operator"
-                        @change="onNodeChange(entry)"
-                    >
-                        <option value="">{{ __('Operator') }}</option>
-                        <template x-for="(label, op) in operators" :key="op">
-                            <option :value="op" x-text="label"></option>
-                        </template>
-                    </select>
-                </template>
-
-                {{-- Right operand type --}}
-                <template x-if="entry.leftType !== '' && entry.operator !== ''">
-                    <select
-                        class="filament-input max-w-[160px]"
-                        x-model="entry.rightType"
+                        class="{{ $selectClasses }}"
+                        x-model="entry.leftType"
                         @change="onNodeChange(entry)"
                     >
                         <option value="">{{ __('Select...') }}</option>
@@ -126,19 +66,95 @@
                         <optgroup label="{{ __('Number') }}">
                             <option value="value">{{ __('Literal number') }}</option>
                         </optgroup>
+                        <optgroup label="{{ __('Sub-formula') }}">
+                            <option value="operator">{{ __('( A op B )') }}</option>
+                        </optgroup>
                     </select>
+                </div>
+
+                {{-- Literal value input --}}
+                <template x-if="entry.leftType === 'value'">
+                    <div class="{{ $wrapperClasses }} w-28">
+                        <input
+                            type="number"
+                            class="{{ $inputClasses }}"
+                            x-model.number="entry.leftValue"
+                            @input="onNodeChange(entry)"
+                            placeholder="0"
+                            step="any"
+                        >
+                    </div>
+                </template>
+
+                {{-- Operator select (only for operator nodes — nested sub-formula) --}}
+                <template x-if="entry.leftType === 'operator'">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-400 dark:text-gray-500 text-sm">(</span>
+                        <div class="{{ $wrapperClasses }} max-w-[200px]">
+                            <select
+                                class="{{ $selectClasses }}"
+                                x-model="entry.operator"
+                                @change="onNodeChange(entry)"
+                            >
+                                <option value="">{{ __('Operator') }}</option>
+                                <template x-for="(label, op) in operators" :key="op">
+                                    <option :value="op" x-text="label"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <span class="text-gray-400 dark:text-gray-500 text-sm">)</span>
+                    </div>
+                </template>
+
+                {{-- Operator for top-level (when leftType is a metric or value) --}}
+                <template x-if="entry.leftType !== 'operator' && entry.leftType !== ''">
+                    <div class="{{ $wrapperClasses }} max-w-[200px]">
+                        <select
+                            class="{{ $selectClasses }}"
+                            x-model="entry.operator"
+                            @change="onNodeChange(entry)"
+                        >
+                            <option value="">{{ __('Operator') }}</option>
+                            <template x-for="(label, op) in operators" :key="op">
+                                <option :value="op" x-text="label"></option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+
+                {{-- Right operand select --}}
+                <template x-if="entry.leftType !== '' && entry.operator !== ''">
+                    <div class="{{ $wrapperClasses }} max-w-[180px]">
+                        <select
+                            class="{{ $selectClasses }}"
+                            x-model="entry.rightType"
+                            @change="onNodeChange(entry)"
+                        >
+                            <option value="">{{ __('Select...') }}</option>
+                            <optgroup label="{{ __('Source Series') }}">
+                                <template x-for="sk in seriesKeys" :key="sk">
+                                    <option :value="'metric:' + sk" x-text="sk"></option>
+                                </template>
+                            </optgroup>
+                            <optgroup label="{{ __('Number') }}">
+                                <option value="value">{{ __('Literal number') }}</option>
+                            </optgroup>
+                        </select>
+                    </div>
                 </template>
 
                 {{-- Right literal value --}}
                 <template x-if="entry.rightType === 'value'">
-                    <input
-                        type="number"
-                        class="filament-input w-24"
-                        x-model.number="entry.rightValue"
-                        @input="onNodeChange(entry)"
-                        placeholder="0"
-                        step="any"
-                    >
+                    <div class="{{ $wrapperClasses }} w-28">
+                        <input
+                            type="number"
+                            class="{{ $inputClasses }}"
+                            x-model.number="entry.rightValue"
+                            @input="onNodeChange(entry)"
+                            placeholder="0"
+                            step="any"
+                        >
+                    </div>
                 </template>
             </div>
         </template>
@@ -147,7 +163,7 @@
     {{-- Empty state --}}
     <template x-if="Object.keys(flatNodes).length === 0">
         <div class="text-center py-4">
-            <button type="button" @click="addRootNode()" class="text-primary-600 hover:text-primary-500 font-medium text-sm">
+            <button type="button" @click="addRootNode()" class="text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 font-medium text-sm">
                 {{ __('+ Build Formula') }}
             </button>
         </div>
