@@ -21,6 +21,9 @@ class DashboardWidgetDataController extends Controller
 
     public function show(Request $request, DashboardWidget $widget): JsonResponse
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() ENTER widget={$widget->id} source_type={$widget->source_type}");
+
         $validated = $request->validate([
             'tenant' => 'required|string',
             'controls' => 'nullable|array',
@@ -101,6 +104,8 @@ class DashboardWidgetDataController extends Controller
         }
 
         try {
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} BEFORE match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
+            $tMatch = microtime(true);
             $data = match ($widget->source_type) {
                 'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
                 'metric' => $this->handleMetricSource($project, $widget, $resolvedControls),
@@ -108,6 +113,8 @@ class DashboardWidgetDataController extends Controller
                 'derived_metric' => $this->handleDerivedMetricSource($project, $widget, $resolvedControls),
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
+
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} AFTER match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $tMatch) * 1000, 1)]);
 
             \Illuminate\Support\Facades\Log::error('[FACADE TABLE DEBUG] Raw data returned from handleMetricSource:', [
                 'widget_id' => $widget->id,
@@ -1354,6 +1361,7 @@ class DashboardWidgetDataController extends Controller
 
     protected function handleKpiSource(Project $project, DashboardWidget $widget, array $controls): array
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleKpiSource ENTER", ['widget_id' => $widget->id]);
         $kpi = $widget->customKpi;
         if (! $kpi) {
             throw new \RuntimeException('Widget has no associated KPI');
@@ -1720,7 +1728,11 @@ class DashboardWidgetDataController extends Controller
             'payload_calc' => $payload['calculate_regression'] ?? $payload['calculate_elasticity'] ?? null,
         ]);
 
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleKpiSource BEFORE computeKpi", ['widget_id' => $widget->id]);
+
         $result = $this->remoteEngineService->computeKpi($project, $payload);
+
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleKpiSource AFTER computeKpi", ['widget_id' => $widget->id]);
 
         \Illuminate\Support\Facades\Log::info('Raw result from remote node', [
             'has_data' => isset($result['data']),
@@ -1791,6 +1803,7 @@ class DashboardWidgetDataController extends Controller
 
     protected function handleMetricSource(Project $project, DashboardWidget $widget, array $controls): array
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
         $config = $widget->source_config ?? [];
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
         $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
@@ -1875,6 +1888,7 @@ class DashboardWidgetDataController extends Controller
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleEntitySource ENTER", ['widget_id' => $widget->id]);
         $config = $widget->source_config ?? [];
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
         $entityType = $controls['entity_type'] ?? $config['entity_type'] ?? 'campaigns';
@@ -2011,6 +2025,8 @@ class DashboardWidgetDataController extends Controller
 
     protected function getValidAssetsForChannel(Project $project, string $channel): array
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getValidAssetsForChannel ENTER", ['channel' => $channel, 'project_id' => $project->id]);
         $config = $project->sync_config[$channel] ?? [];
         $assets = [];
         $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
@@ -2043,6 +2059,8 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getValidAssetsForChannel EXIT", ['channel' => $channel, 'count' => count($assets), 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
+
         return $assets;
     }
 
@@ -2051,6 +2069,8 @@ class DashboardWidgetDataController extends Controller
         if ($asset === null) {
             return $asset;
         }
+
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId", ['channel' => $channel, 'asset_type' => gettype($asset)]);
 
         if (is_array($asset)) {
             $resolvedArray = [];
@@ -2064,8 +2084,11 @@ class DashboardWidgetDataController extends Controller
         if ($channel === 'google_analytics' && is_numeric($asset)) {
             static $ga4Mappings = [];
             if (! isset($ga4Mappings[$project->id])) {
+                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GA4", ['project_id' => $project->id]);
+                $ga4ListT0 = microtime(true);
                 $service = app(\App\Services\RemoteEngineService::class);
                 $response = $service->listChanneled($project, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GA4", ['project_id' => $project->id, 'ms' => round((microtime(true) - $ga4ListT0) * 1000, 1)]);
                 $ga4Mappings[$project->id] = [];
                 if (isset($response['data']) && is_array($response['data'])) {
                     foreach ($response['data'] as $prop) {
@@ -2083,8 +2106,11 @@ class DashboardWidgetDataController extends Controller
         if ($channel === 'facebook_marketing') {
             static $fbmMappings = [];
             if (! isset($fbmMappings[$project->id])) {
+                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled FB", ['project_id' => $project->id]);
+                $fbListT0 = microtime(true);
                 $service = app(\App\Services\RemoteEngineService::class);
                 $response = $service->listChanneled($project, 'facebook_marketing', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled FB", ['project_id' => $project->id, 'ms' => round((microtime(true) - $fbListT0) * 1000, 1)]);
                 $fbmMappings[$project->id] = [];
                 if (isset($response['data']) && is_array($response['data'])) {
                     foreach ($response['data'] as $acc) {
@@ -2132,8 +2158,11 @@ class DashboardWidgetDataController extends Controller
         $hash = md5($siteUrl);
 
         try {
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GSC", ['project_id' => $project->id]);
+            $gscListT0 = microtime(true);
             $service = app(\App\Services\RemoteEngineService::class);
             $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GSC", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gscListT0) * 1000, 1)]);
 
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $page) {
@@ -2156,6 +2185,8 @@ class DashboardWidgetDataController extends Controller
 
     protected function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
         $endpoints = [
             'facebook_marketing' => \App\Http\Controllers\Api\FacebookMarketingController::class,
             'facebook_organic' => \App\Http\Controllers\Api\FacebookOrganicController::class,
@@ -2291,7 +2322,9 @@ class DashboardWidgetDataController extends Controller
         $request = new Request($payload);
         $request->setUserResolver(fn () => auth()->user());
 
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint BEFORE controller call", ['channel' => $channel, 'action' => $action, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
         $response = $controller->$action($request);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint AFTER controller call", ['channel' => $channel, 'action' => $action, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         if ($response instanceof \Illuminate\Http\JsonResponse) {
             $data = $response->getData(true);
@@ -2308,6 +2341,7 @@ class DashboardWidgetDataController extends Controller
 
     protected function handleDerivedMetricSource(Project $project, DashboardWidget $widget, array $controls): array
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleDerivedMetricSource ENTER", ['widget_id' => $widget->id]);
         $derivedMetric = $widget->derivedMetric;
 
         if (! $derivedMetric) {

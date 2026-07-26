@@ -13,6 +13,8 @@ class WidgetDataService
 {
     public function resolveControls(Dashboard $dashboard, DashboardWidget $widget): array
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveControls ENTER", ['widget_id' => $widget->id]);
         $dashboardControls = $dashboard->controls ?? [];
         if (empty($dashboardControls['date_end'])) {
             $dashboardControls['date_end'] = \Carbon\Carbon::now()->subDays(1)->format('Y-m-d');
@@ -60,6 +62,8 @@ class WidgetDataService
                 $resolved['max_ratio'] = $kpiUiState['max_ratio'];
             }
         }
+
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveControls EXIT", ['widget_id' => $widget->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         return $resolved;
     }

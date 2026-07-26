@@ -26,17 +26,21 @@ class DashboardBuilder extends Page
 
     public function mount(Dashboard $record): void
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount ENTER", ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
         $this->loadWidgets();
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount DONE", ['widget_count' => count($this->widgets)]);
     }
 
     public function loadWidgets(): void
     {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets ENTER");
         $this->widgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
             ->get()
             ->toArray();
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets DONE", ['count' => count($this->widgets)]);
 
         $this->gridState = array_map(fn ($w) => [
             'id' => $w['id'],

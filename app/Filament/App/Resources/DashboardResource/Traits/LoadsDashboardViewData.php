@@ -58,17 +58,26 @@ trait LoadsDashboardViewData
 
     public function loadDashboardViewData(Dashboard $record): void
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData ENTER', ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
         $this->allChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData getActiveChannels done', ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
+        $t1 = microtime(true);
         $this->widgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
             ->get()
             ->toArray();
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData widgets loaded', ['count' => count($this->widgets), 'ms' => round((microtime(true) - $t1) * 1000, 1)]);
 
         $service = app(WidgetDataService::class);
+        $wi = 0;
         foreach ($this->widgets as &$widgetArray) {
+            $wi++;
+            $tw = microtime(true);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] loadDashboardViewData processing widget {$wi}", ['id' => $widgetArray['id'] ?? '?', 'source_type' => $widgetArray['source_type'] ?? '?']);
             $widgetModel = (new DashboardWidget())->forceFill($widgetArray);
             $resolved = $service->resolveControls($this->dashboard, $widgetModel);
             $widgetArray['resolved_controls'] = $resolved;
@@ -445,6 +454,9 @@ trait LoadsDashboardViewData
                     }
                 }
             }
+
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] loadDashboardViewData widget {$wi} DONE", ['id' => $widgetArray['id'] ?? '?', 'ms' => round((microtime(true) - $tw) * 1000, 1)]);
         }
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData EXIT', ['total_widgets' => $wi, 'total_ms' => round((microtime(true) - $t0) * 1000, 1)]);
     }
 }

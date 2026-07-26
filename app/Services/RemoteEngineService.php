@@ -14,6 +14,8 @@ class RemoteEngineService
      */
     protected function getClient(Project $project, int $timeout = 120): ApisHubApi
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getClient ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
         $baseDomain = config('app.network_domain');
         $domain = "{$project->subdomain}.{$baseDomain}";
 
@@ -63,6 +65,7 @@ class RemoteEngineService
         ]);
 
         // Initialize SDK with base protocol and API Key
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getClient BEFORE SDK init", ['project_id' => $project->id, 'domain' => $domain, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
         return new ApisHubApi(
             baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
@@ -76,10 +79,16 @@ class RemoteEngineService
      */
     public function execute(Project $project, callable $callback, int $timeout = 120)
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
         try {
             $client = $this->getClient($project, $timeout);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute getClient done", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
-            return $callback($client);
+            $result = $callback($client);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute callback done", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
+
+            return $result;
         } catch (Exception $e) {
             Log::error("Remote Engine Action Failed: {$project->name}", [
                 'error' => $e->getMessage(),
@@ -283,6 +292,8 @@ class RemoteEngineService
      */
     public function computeKpi(Project $project, array $payload)
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi ENTER", ['project_id' => $project->id]);
         $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
         $payload['analytics_engine_host'] = env('ANALYTICS_ENGINE_HOST', 'https://analytics.apis-hub.cloud/');
 
@@ -291,6 +302,7 @@ class RemoteEngineService
         \Illuminate\Support\Facades\Log::info('RemoteEngine KPI payload', $logPayload);
 
         $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi AFTER execute", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => isset($result['data']) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
 
