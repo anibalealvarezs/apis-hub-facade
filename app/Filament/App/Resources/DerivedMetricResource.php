@@ -148,7 +148,7 @@ class DerivedMetricResource extends Resource
                                 }),
                         ]),
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '1_series'),
+                    ->extraAttributes(['x-show' => '$wire.data._builder_step === "1_series"', 'x-cloak' => '']),
 
                 // ── Step 2: Formula ───────────────────────────────────────
                 Forms\Components\Section::make(__('Formula'))
@@ -205,7 +205,7 @@ class DerivedMetricResource extends Resource
                                 }),
                         ]),
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '2_formula'),
+                    ->extraAttributes(['x-show' => '$wire.data._builder_step === "2_formula"', 'x-cloak' => '']),
 
                 // ── Step 3: Details ───────────────────────────────────────
                 Forms\Components\Section::make(__('Details'))
@@ -253,7 +253,7 @@ class DerivedMetricResource extends Resource
                         ]),
                     ])
                     ->columns(2)
-                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '3_details'),
+                    ->extraAttributes(['x-show' => '$wire.data._builder_step === "3_details"', 'x-cloak' => '']),
             ]);
     }
 
