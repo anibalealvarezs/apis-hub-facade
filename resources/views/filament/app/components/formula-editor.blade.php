@@ -63,7 +63,7 @@
                         <option value="">{{ __('Select...') }}</option>
                         <optgroup label="{{ __('Source Series') }}">
                             @foreach($seriesKeys as $sk)
-                                <option value="{{ 'metric:' . $sk }}">{{ $sk }}</option>
+                                <option value="{{ 'metric:' . $sk }}">{{ $sk }}@if(!empty($seriesData[$loop->index]['label'])) — {{ $seriesData[$loop->index]['label'] }}@endif</option>
                             @endforeach
                         </optgroup>
                         <optgroup label="{{ __('Number') }}">
@@ -136,7 +136,7 @@
                             <option value="">{{ __('Select...') }}</option>
                             <optgroup label="{{ __('Source Series') }}">
                                 @foreach($seriesKeys as $sk)
-                                    <option value="{{ 'metric:' . $sk }}">{{ $sk }}</option>
+                                    <option value="{{ 'metric:' . $sk }}">{{ $sk }}@if(!empty($seriesData[$loop->index]['label'])) — {{ $seriesData[$loop->index]['label'] }}@endif</option>
                                 @endforeach
                             </optgroup>
                             <optgroup label="{{ __('Number') }}">

@@ -104,7 +104,15 @@ class DerivedMetricResource extends Resource
                                     ->options(fn (Forms\Get $get) => ! empty($get('channel'))
                                         ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($get('channel'))
                                         : [])
-                                    ->required(),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get) {
+                                        if (blank($get('label'))->isEmpty() && filled($get('channel')) && filled($get('metric'))) {
+                                            $channelLabel = str($get('channel'))->replace('_', ' ')->title()->toString();
+                                            $metricLabel = str($get('metric'))->replace('_', ' ')->title()->toString();
+                                            $set('label', $channelLabel . ' - ' . $metricLabel);
+                                        }
+                                    }),
                                 Forms\Components\Select::make('granularity')
                                     ->label(__('Granularity'))
                                     ->options([
@@ -132,7 +140,7 @@ class DerivedMetricResource extends Resource
                             ->columns(3)
                             ->defaultItems(2)
                             ->addActionLabel(__('Add Source Series'))
-                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? $state['channel'] ?? null),
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? (isset($state['channel'], $state['metric']) ? str($state['channel'])->replace('_', ' ')->title() . ' - ' . str($state['metric'])->replace('_', ' ')->title() : $state['channel'] ?? null)),
                     ]),
 
                 Forms\Components\Section::make(__('Formula'))
