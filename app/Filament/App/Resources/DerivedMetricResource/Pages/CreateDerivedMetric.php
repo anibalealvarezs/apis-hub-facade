@@ -13,7 +13,9 @@ class CreateDerivedMetric extends CreateRecord
 
     protected function getFormActions(): array
     {
-        return [];
+        return [
+            Actions\CreateAction::make(),
+        ];
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
