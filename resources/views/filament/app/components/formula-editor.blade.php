@@ -13,6 +13,16 @@
         'pct_change' => '% change ((A-B)/B)',
     ];
 
+    $seriesFieldPath = str_replace('.ast', '.source_series', $statePath);
+    $seriesData = $get($seriesFieldPath) ?? [];
+    if (! is_array($seriesData)) {
+        $seriesData = [];
+    }
+    $seriesKeys = array_column($seriesData, 'key');
+    if (empty($seriesKeys) && ! empty($seriesData)) {
+        $seriesKeys = array_map(fn ($i) => chr(97 + $i), range(0, count($seriesData) - 1));
+    }
+
     $wrapperClasses = 'fi-input-wrp flex items-center rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500';
     $selectClasses = 'fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 text-base text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3 [&_optgroup]:bg-white [&_optgroup]:dark:bg-gray-900 [&_option]:bg-white [&_option]:dark:bg-gray-900';
     $inputClasses = 'fi-input block w-full border-none bg-transparent/0 py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500 dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3';
@@ -21,7 +31,8 @@
 <div
     x-data="formulaEditor({
         statePath: '{{ addslashes($statePath) }}',
-        seriesFieldPath: '{{ addslashes(str_replace('.ast', '.source_series', $statePath)) }}',
+        seriesFieldPath: '{{ addslashes($seriesFieldPath) }}',
+        initialSeriesKeys: @js($seriesKeys),
         wire: @this,
         operators: @js($operators),
     })"
@@ -178,6 +189,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('formulaEditor', (config) => ({
         statePath: config.statePath,
         seriesFieldPath: config.seriesFieldPath,
+        initialSeriesKeys: config.initialSeriesKeys || [],
         wire: config.wire,
         operators: config.operators,
         flatNodes: {},
@@ -188,11 +200,11 @@ document.addEventListener('alpine:init', () => {
         getSeriesKeys() {
             try {
                 const raw = this.wire.get(this.seriesFieldPath);
-                if (!raw || !Array.isArray(raw)) return [];
-                return raw.map((s, i) => s.key || String.fromCharCode(97 + i));
-            } catch {
-                return [];
-            }
+                if (Array.isArray(raw) && raw.length > 0) {
+                    return raw.map((s, i) => s.key || String.fromCharCode(97 + i));
+                }
+            } catch {}
+            return this.initialSeriesKeys;
         },
 
         hydrateFromLivewire() {
