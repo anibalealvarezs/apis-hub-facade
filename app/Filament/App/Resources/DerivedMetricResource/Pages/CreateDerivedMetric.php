@@ -4,19 +4,11 @@ namespace App\Filament\App\Resources\DerivedMetricResource\Pages;
 
 use App\Filament\App\Resources\DerivedMetricResource;
 use App\Models\DerivedMetric;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateDerivedMetric extends CreateRecord
 {
     protected static string $resource = DerivedMetricResource::class;
-
-    protected function getFormActions(): array
-    {
-        return [
-            Actions\CreateAction::make(),
-        ];
-    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

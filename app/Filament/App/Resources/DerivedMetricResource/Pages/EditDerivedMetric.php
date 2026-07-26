@@ -10,13 +10,6 @@ class EditDerivedMetric extends EditRecord
 {
     protected static string $resource = DerivedMetricResource::class;
 
-    protected function getFormActions(): array
-    {
-        return [
-            Actions\SaveAction::make(),
-        ];
-    }
-
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if (empty($data['output_granularity'])) {
