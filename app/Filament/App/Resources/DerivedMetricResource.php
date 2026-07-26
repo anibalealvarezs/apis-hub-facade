@@ -246,8 +246,10 @@ class DerivedMetricResource extends Resource
                             if ($hasAssetFilter) {
                                 continue;
                             }
+                            $seriesLabel = $series['label'] ?? $series['metric'] ?? $key;
+                            $channelLabel = \App\Services\Analytics\KpiFormBuilder::getActiveChannels()[$channel] ?? $channel;
                             $runtimeAssetFields[] = Forms\Components\Select::make("runtime_asset_{$key}")
-                                ->label(__('Asset for "{$key}"') . " ({$channel})")
+                                ->label(__('Asset for :series (:channel)', ['series' => $seriesLabel, 'channel' => $channelLabel]))
                                 ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($channel));
                         }
                         if (! empty($runtimeAssetFields)) {
