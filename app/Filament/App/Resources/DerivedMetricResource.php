@@ -141,7 +141,7 @@ class DerivedMetricResource extends Resource
                         Forms\Components\ViewField::make('_formula_editor')
                             ->label(__('Build Formula'))
                             ->view('filament.app.components.formula-editor')
-                            ->viewData(fn (Forms\Get $get): array => {
+                            ->viewData(function (Forms\Get $get): array {
                                 $sd = $get('source_series') ?? [];
                                 $ast = $get('ast');
                                 \Log::info('[DM_FORM] viewData', [
