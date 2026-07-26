@@ -1,5 +1,5 @@
 @php
-    $statePath = $getStatePath();
+    $astStatePath = $astStatePath ?? 'data.ast';
     $operators = [
         '+' => '+ (Add)',
         '-' => '- (Subtract)',
@@ -13,8 +13,6 @@
         'pct_change' => '% change ((A-B)/B)',
     ];
 
-    $seriesFieldPath = str_replace('.ast', '.source_series', $statePath);
-
     $wrapperClasses = 'fi-input-wrp flex items-center rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500';
     $selectClasses = 'fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 text-base text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3 [&_optgroup]:bg-white [&_optgroup]:dark:bg-gray-900 [&_option]:bg-white [&_option]:dark:bg-gray-900';
     $inputClasses = 'fi-input block w-full border-none bg-transparent/0 py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500 dark:disabled:text-gray-400 sm:text-sm sm:leading-6 ps-3';
@@ -22,17 +20,17 @@
 
 <div
     x-data="formulaEditor({
-        statePath: '{{ addslashes($statePath) }}',
-        seriesFieldPath: '{{ addslashes($seriesFieldPath) }}',
+        astStatePath: '{{ addslashes($astStatePath) }}',
         initialSeriesKeys: @js($seriesKeys ?? []),
         seriesData: @js($seriesData ?? []),
+        initialAst: @js($initialAst ?? null),
         wire: @this,
         operators: @js($operators),
     })"
-    x-init="$nextTick(() => hydrateFromLivewire())"
+    x-init="$nextTick(() => hydrateFromServer())"
     class="space-y-3"
 >
-    <input type="hidden" :name="statePath" x-model="jsonAst">
+    <input type="hidden" name="{{ $astStatePath }}" x-model="jsonAst">
 
     <div class="flex items-center justify-between">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Formula') }}</span>
@@ -180,10 +178,10 @@ document.addEventListener('alpine:init', () => {
     window.__formulaEditorRegistered = true;
 
     Alpine.data('formulaEditor', (config) => ({
-        statePath: config.statePath,
-        seriesFieldPath: config.seriesFieldPath,
+        astStatePath: config.astStatePath,
         initialSeriesKeys: config.initialSeriesKeys || [],
         seriesData: config.seriesData || [],
+        initialAst: config.initialAst || null,
         wire: config.wire,
         operators: config.operators,
         flatNodes: {},
@@ -199,7 +197,7 @@ document.addEventListener('alpine:init', () => {
                 return this.initialSeriesKeys;
             }
             try {
-                const raw = this.wire.get(this.seriesFieldPath);
+                const raw = this.wire.get(this.astStatePath.replace('.ast', '.source_series'));
                 if (Array.isArray(raw) && raw.length > 0) {
                     return raw.map((s, i) => s.key || String.fromCharCode(97 + i));
                 }
@@ -207,9 +205,16 @@ document.addEventListener('alpine:init', () => {
             return this.initialSeriesKeys || [];
         },
 
-        hydrateFromLivewire() {
+        hydrateFromServer() {
             this.seriesKeys = this.getSeriesKeys();
-            let raw = this.wire.get(this.statePath);
+
+            let raw = this.initialAst;
+
+            if (!raw || typeof raw !== 'object' || !raw.type) {
+                try {
+                    raw = this.wire.get(this.astStatePath);
+                } catch {}
+            }
             if (typeof raw === 'string') {
                 try { raw = JSON.parse(raw); } catch { raw = null; }
             }
@@ -330,7 +335,9 @@ document.addEventListener('alpine:init', () => {
             const ast = this.entryToAst(root);
             this.jsonAst = JSON.stringify(ast);
 
-            this.wire.set(this.statePath, ast);
+            try {
+                this.wire.set(this.astStatePath, ast);
+            } catch {}
         },
 
         addRootNode() {
@@ -348,7 +355,9 @@ document.addEventListener('alpine:init', () => {
         reset() {
             this.flatNodes = {};
             this.jsonAst = '{}';
-            this.wire.set(this.statePath, null);
+            try {
+                this.wire.set(this.astStatePath, null);
+            } catch {}
         },
     }));
 });
