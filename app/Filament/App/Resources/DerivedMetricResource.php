@@ -128,23 +128,25 @@ class DerivedMetricResource extends Resource
                             ->defaultItems(2)
                             ->addActionLabel(__('Add Source Series'))
                             ->itemLabel(fn (array $state): ?string => $state['label'] ?? (isset($state['channel'], $state['metric']) ? str($state['channel'])->replace('_', ' ')->title() . ' - ' . str($state['metric'])->replace('_', ' ')->title() : $state['channel'] ?? null)),
-                        Forms\Components\Actions\Action::make('nextToFormula')
-                            ->label(__('Next: Define Formula'))
-                            ->icon('heroicon-o-arrow-right')
-                            ->iconPosition('after')
-                            ->color('primary')
-                            ->extraAttributes(['class' => $primaryClasses])
-                            ->requiresConfirmation()
-                            ->modalHeading(__('Define Formula'))
-                            ->modalDescription(__('Proceed to the formula editor where you can define how your source series are combined.'))
-                            ->modalSubmitActionLabel(__('Continue'))
-                            ->modalCancelActionLabel(__('Go Back'))
-                            ->action(function (Forms\Set $set, Forms\Get $get) {
-                                $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                $history[] = $get('_builder_step');
-                                $set('_step_history', json_encode($history));
-                                $set('_builder_step', '2_formula');
-                            }),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('nextToFormula')
+                                ->label(__('Next: Define Formula'))
+                                ->icon('heroicon-o-arrow-right')
+                                ->iconPosition('after')
+                                ->color('primary')
+                                ->extraAttributes(['class' => $primaryClasses])
+                                ->requiresConfirmation()
+                                ->modalHeading(__('Define Formula'))
+                                ->modalDescription(__('Proceed to the formula editor where you can define how your source series are combined.'))
+                                ->modalSubmitActionLabel(__('Continue'))
+                                ->modalCancelActionLabel(__('Go Back'))
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $history[] = $get('_builder_step');
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', '2_formula');
+                                }),
+                        ]),
                     ]),
 
                 // ── Step 2: Formula ───────────────────────────────────────
@@ -171,34 +173,36 @@ class DerivedMetricResource extends Resource
                                 ];
                             })
                             ->helperText(__('Use source series keys (a, b, c…) and operators to define the formula. Click "Refresh keys" after adding/removing series.')),
-                        Forms\Components\Actions\Action::make('backToSeries')
-                            ->label(__('Back: Source Series'))
-                            ->icon('heroicon-o-arrow-left')
-                            ->color('gray')
-                            ->extraAttributes(['class' => $grayClasses])
-                            ->action(function (Forms\Set $set, Forms\Get $get) {
-                                $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                $prevStep = array_pop($history) ?? '1_series';
-                                $set('_step_history', json_encode($history));
-                                $set('_builder_step', $prevStep);
-                            }),
-                        Forms\Components\Actions\Action::make('nextToDetails')
-                            ->label(__('Next: Details'))
-                            ->icon('heroicon-o-arrow-right')
-                            ->iconPosition('after')
-                            ->color('primary')
-                            ->extraAttributes(['class' => $primaryClasses])
-                            ->requiresConfirmation()
-                            ->modalHeading(__('Add Details'))
-                            ->modalDescription(__('Proceed to add a name, description, and output granularity.'))
-                            ->modalSubmitActionLabel(__('Continue'))
-                            ->modalCancelActionLabel(__('Go Back'))
-                            ->action(function (Forms\Set $set, Forms\Get $get) {
-                                $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                $history[] = $get('_builder_step');
-                                $set('_step_history', json_encode($history));
-                                $set('_builder_step', '3_details');
-                            }),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('backToSeries')
+                                ->label(__('Back: Source Series'))
+                                ->icon('heroicon-o-arrow-left')
+                                ->color('gray')
+                                ->extraAttributes(['class' => $grayClasses])
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $prevStep = array_pop($history) ?? '1_series';
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', $prevStep);
+                                }),
+                            Forms\Components\Actions\Action::make('nextToDetails')
+                                ->label(__('Next: Details'))
+                                ->icon('heroicon-o-arrow-right')
+                                ->iconPosition('after')
+                                ->color('primary')
+                                ->extraAttributes(['class' => $primaryClasses])
+                                ->requiresConfirmation()
+                                ->modalHeading(__('Add Details'))
+                                ->modalDescription(__('Proceed to add a name, description, and output granularity.'))
+                                ->modalSubmitActionLabel(__('Continue'))
+                                ->modalCancelActionLabel(__('Go Back'))
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $history[] = $get('_builder_step');
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', '3_details');
+                                }),
+                        ]),
                     ])
                     ->visible(fn (Forms\Get $get) => $get('_builder_step') === '2_formula'),
 
@@ -226,24 +230,26 @@ class DerivedMetricResource extends Resource
                             ->helperText(__('Fixed granularity locks the Derived Metric to a specific time resolution. Dynamic allows the widget viewer to choose.')),
                         Forms\Components\Toggle::make('is_active')
                             ->default(true),
-                        Forms\Components\Actions\Action::make('backToFormula')
-                            ->label(__('Back: Formula'))
-                            ->icon('heroicon-o-arrow-left')
-                            ->color('gray')
-                            ->extraAttributes(['class' => $grayClasses])
-                            ->action(function (Forms\Set $set, Forms\Get $get) {
-                                $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                $prevStep = array_pop($history) ?? '2_formula';
-                                $set('_step_history', json_encode($history));
-                                $set('_builder_step', $prevStep);
-                            }),
-                        Forms\Components\Actions\Action::make('createDerivedMetric')
-                            ->label(fn () => $isEdit ? __('Save Changes') : __('Create Derived Metric'))
-                            ->icon('heroicon-o-check-circle')
-                            ->color('primary')
-                            ->extraAttributes(['class' => $primaryClasses . ' fi-btn-create'])
-                            ->submit($isEdit ? 'save' : 'create')
-                            ->visible(fn () => $isEdit ? auth()->user()->can('edit_preferences') : true),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('backToFormula')
+                                ->label(__('Back: Formula'))
+                                ->icon('heroicon-o-arrow-left')
+                                ->color('gray')
+                                ->extraAttributes(['class' => $grayClasses])
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $prevStep = array_pop($history) ?? '2_formula';
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', $prevStep);
+                                }),
+                            Forms\Components\Actions\Action::make('createDerivedMetric')
+                                ->label(fn () => $isEdit ? __('Save Changes') : __('Create Derived Metric'))
+                                ->icon('heroicon-o-check-circle')
+                                ->color('primary')
+                                ->extraAttributes(['class' => $primaryClasses . ' fi-btn-create'])
+                                ->submit($isEdit ? 'save' : 'create')
+                                ->visible(fn () => $isEdit ? auth()->user()->can('edit_preferences') : true),
+                        ]),
                     ])
                     ->columns(2)
                     ->visible(fn (Forms\Get $get) => $get('_builder_step') === '3_details'),
