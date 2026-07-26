@@ -201,7 +201,10 @@ document.addEventListener('alpine:init', () => {
 
         hydrateFromLivewire() {
             this.seriesKeys = this.getSeriesKeys();
-            const raw = this.wire.get(this.statePath);
+            let raw = this.wire.get(this.statePath);
+            if (typeof raw === 'string') {
+                try { raw = JSON.parse(raw); } catch { raw = null; }
+            }
             if (!raw || typeof raw !== 'object' || !raw.type) {
                 this.flatNodes = {};
                 this.jsonAst = '{}';
@@ -209,8 +212,20 @@ document.addEventListener('alpine:init', () => {
             }
             this.flatNodes = {};
             this.nodeCounter = 0;
-            this.flatNodes['root'] = this.astToEntry(raw, 'root');
+            this.buildFlatNodes(raw, 'root', 0, 'root');
             this.jsonAst = JSON.stringify(raw);
+        },
+
+        buildFlatNodes(node, path, depth, side) {
+            if (!node || !node.type) return;
+            const entry = this.astToEntry(node, path);
+            entry.depth = depth;
+            entry.side = side;
+            this.flatNodes[path] = entry;
+            if (node.type === 'operator' && node.left && node.left.type === 'operator') {
+                const childPath = path + '.left';
+                this.buildFlatNodes(node.left, childPath, depth + 1, 'Left');
+            }
         },
 
         astToEntry(node, path) {
