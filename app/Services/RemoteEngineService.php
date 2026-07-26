@@ -304,10 +304,10 @@ class RemoteEngineService
         $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi AFTER execute", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
-        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => isset($result['data']) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
+        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => is_array($result['data'] ?? null) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
 
         // Log full response data structure — check for intermediate/raw fields
-        if (is_array($result) && isset($result['data'])) {
+        if (is_array($result) && is_array($result['data'] ?? null)) {
             $allDataKeys = array_keys($result['data']);
             $extraKeys = array_diff($allDataKeys, ['baseline_intercept','coefficients','r_squared','data_points','scatter_data']);
             if (!empty($extraKeys)) {
