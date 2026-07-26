@@ -253,7 +253,7 @@ class DerivedMetricResource extends Resource
                         if (! empty($runtimeAssetFields)) {
                             $fields[] = Forms\Components\Section::make(__('Runtime Asset Overrides'))
                                 ->schema($runtimeAssetFields)
-                                ->helperText(__('Select assets for source series that do not have a fixed asset filter. Leave empty to use all assets.'));
+                                ->description(__('Select assets for source series that do not have a fixed asset filter. Leave empty to use all assets.'));
                         }
 
                         return $fields;
