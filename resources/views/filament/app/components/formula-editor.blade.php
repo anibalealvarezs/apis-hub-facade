@@ -20,6 +20,7 @@
 @endphp
 
 <div
+    wire:ignore
     x-data="formulaEditor({
         astStatePath: '{{ addslashes($astStatePath) }}',
         initialSeriesKeys: @js($seriesKeys ?? []),
@@ -29,10 +30,9 @@
         operators: @js($operators),
     })"
     x-init="$nextTick(() => hydrateFromServer())"
+    @dm-label-changed.window="updateLabels()"
     class="space-y-3"
 >
-    <input type="hidden" name="{{ $astStatePath }}" x-model="jsonAst">
-
     <div class="flex items-center justify-between">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Formula') }}</span>
         <div class="flex gap-2">
@@ -192,7 +192,6 @@ document.addEventListener('alpine:init', () => {
 
         getSeriesKeys() {
             let items = [];
-            console.log('[DM_KEYS] seriesData type:', typeof this.seriesData, 'isArray:', Array.isArray(this.seriesData), 'value:', JSON.parse(JSON.stringify(this.seriesData)));
 
             if (this.seriesData && typeof this.seriesData === 'object') {
                 if (Array.isArray(this.seriesData)) {
@@ -201,12 +200,9 @@ document.addEventListener('alpine:init', () => {
                     items = Object.values(this.seriesData);
                 }
             }
-            console.log('[DM_KEYS] items after normalize:', items);
 
             if (items.length > 0) {
-                const keys = items.map((s, i) => s.key || String.fromCharCode(97 + i));
-                console.log('[DM_KEYS] keys from items:', keys);
-                return keys;
+                return items.map((s, i) => s.key || String.fromCharCode(97 + i));
             }
 
             if (this.initialSeriesKeys && this.initialSeriesKeys.length > 0) {
@@ -223,16 +219,13 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) {}
 
-            console.log('[DM_KEYS] ALL SOURCES EXHAUSTED, returning empty');
             return this.initialSeriesKeys || [];
         },
 
         hydrateFromServer() {
             this.seriesKeys = this.getSeriesKeys();
-            console.log('[DM_HYDRATE] final seriesKeys:', this.seriesKeys);
 
             let raw = this.initialAst;
-            console.log('[DM_HYDRATE] initialAst type:', typeof raw, 'value:', raw ? JSON.parse(JSON.stringify(raw)) : null);
 
             if (!raw || typeof raw !== 'object' || !raw.type) {
                 try {
@@ -242,7 +235,6 @@ document.addEventListener('alpine:init', () => {
             if (typeof raw === 'string') {
                 try { raw = JSON.parse(raw); } catch { raw = null; }
             }
-            console.log('[DM_HYDRATE] final raw:', raw ? JSON.parse(JSON.stringify(raw)) : null);
             if (!raw || typeof raw !== 'object' || !raw.type) {
                 this.flatNodes = {};
                 this.jsonAst = '{}';
@@ -252,7 +244,6 @@ document.addEventListener('alpine:init', () => {
             this.nodeCounter = 0;
             this.buildFlatNodes(raw, 'root', 0, 'root');
             this.jsonAst = JSON.stringify(raw);
-            console.log('[DM_HYDRATE] flatNodes:', JSON.parse(JSON.stringify(this.flatNodes)));
 
             this.$nextTick(() => {
                 this._syncSelects();
@@ -399,6 +390,28 @@ document.addEventListener('alpine:init', () => {
 
         refreshKeys() {
             this.seriesKeys = this.getSeriesKeys();
+        },
+
+        updateLabels() {
+            try {
+                const raw = this.wire.get(this.astStatePath.replace('.ast', '.source_series'));
+                if (raw && typeof raw === 'object') {
+                    const arr = Array.isArray(raw) ? raw : Object.values(raw);
+                    if (arr.length > 0) {
+                        this.seriesData = arr;
+                        this.seriesKeys = arr.map((s, i) => s.key || String.fromCharCode(97 + i));
+                    }
+                }
+            } catch (e) {}
+
+            this.$el.querySelectorAll('select option[value^="metric:"]').forEach(opt => {
+                const key = opt.value.replace('metric:', '');
+                const idx = this.seriesKeys.indexOf(key);
+                if (idx !== -1 && this.seriesData[idx]) {
+                    const label = this.seriesData[idx].label;
+                    opt.textContent = label ? key + ' \u2014 ' + label : key;
+                }
+            });
         },
 
         reset() {
