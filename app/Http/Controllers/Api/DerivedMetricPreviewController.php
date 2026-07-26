@@ -68,21 +68,49 @@ class DerivedMetricPreviewController extends Controller
             }
         }
 
-        $context = new \Services\Analytics\VirtualMetricEngine\EvaluationContext($fetchedSeries);
+        $remoteEngineService = app(\App\Services\RemoteEngineService::class);
+        $granularity = $validated['granularity'] ?? 'daily';
 
-        $parser = new \Services\Analytics\VirtualMetricEngine\AstParser();
-        $node = $parser->parse($validated['ast']);
-        $result = $node->evaluate($context);
+        $computePayload = [
+            'ast' => $validated['ast'],
+            'filters' => [
+                'startDate' => $dateStart,
+                'endDate' => $dateEnd,
+                'period' => $granularity,
+                'groupBy' => [$granularity],
+            ],
+            'series_data' => $fetchedSeries,
+            'derived_metrics' => [],
+        ];
 
-        if (is_array($result) && ! isset($result['dates'])) {
-            $dates = array_keys($result);
-            $values = array_values($result);
-            sort($dates);
-            $sortedValues = array_map(fn ($d) => $result[$d], $dates);
-            $result = ['dates' => $dates, 'values' => $sortedValues];
+        $result = $remoteEngineService->computeKpi($project, $computePayload);
+
+        $data = $result['data'] ?? $result;
+
+        if (is_array($data) && ! isset($data['dates'])) {
+            if (isset($data['chart'])) {
+                $chartData = $data['chart'];
+                $dates = [];
+                $values = [];
+                foreach ($chartData as $point) {
+                    $date = $point['date'] ?? $point['label'] ?? null;
+                    $value = $point['value'] ?? $point['y'] ?? null;
+                    if ($date !== null && is_numeric($value)) {
+                        $dates[] = $date;
+                        $values[] = (float) $value;
+                    }
+                }
+                $data = ['dates' => $dates, 'values' => $values];
+            } else {
+                $dates = array_keys($data);
+                $values = array_values($data);
+                sort($dates);
+                $sortedValues = array_map(fn ($d) => $data[$d], $dates);
+                $data = ['dates' => $dates, 'values' => $sortedValues];
+            }
         }
 
-        $preview = $result;
+        $preview = $data;
         if (isset($preview['dates']) && count($preview['dates']) > 30) {
             $preview['dates'] = array_slice($preview['dates'], 0, 30);
             $preview['values'] = array_slice($preview['values'], 0, 30);

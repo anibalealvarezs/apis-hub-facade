@@ -2411,41 +2411,36 @@ class DashboardWidgetDataController extends Controller
             $fetchedSeries[$key] = $seriesData;
         }
 
-        $context = new \Services\Analytics\VirtualMetricEngine\EvaluationContext($fetchedSeries);
+        $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
 
-        $derivedMetricResolver = function (int $referencedDmId) use ($project, $controls) {
-            $referencedDm = \App\Models\DerivedMetric::find($referencedDmId);
-            if (! $referencedDm) {
-                return [];
-            }
+        $granularity = $controls['granularity'] ?? 'daily';
+        $computePayload = [
+            'ast' => $ast,
+            'filters' => [
+                'startDate' => $dateStart,
+                'endDate' => $dateEnd,
+                'period' => $granularity,
+                'groupBy' => [$granularity],
+            ],
+            'series_data' => $fetchedSeries,
+            'derived_metrics' => $derivedResults,
+        ];
 
-            $tempWidget = new DashboardWidget([
-                'derived_metric_id' => $referencedDmId,
-                'source_type' => 'derived_metric',
-                'widget_type' => 'line_chart',
-            ]);
-            $tempWidget->setRelation('derivedMetric', $referencedDm);
+        $result = $this->remoteEngineService->computeKpi($project, $computePayload);
 
-            return $this->handleDerivedMetricSource($project, $tempWidget, $controls);
-        };
+        $data = $result['data'] ?? $result;
 
-        $context->setDerivedMetricResolver($derivedMetricResolver);
+        if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
+            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $data);
 
-        $parser = new \Services\Analytics\VirtualMetricEngine\AstParser();
-        $node = $parser->parse($ast);
-        $result = $node->evaluate($context);
-
-        if (is_array($result) && isset($result['dates']) && isset($result['values'])) {
-            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $result);
-
-            return $result;
+            return $data;
         }
 
-        if (is_array($result)) {
-            $dates = array_keys($result);
-            $values = array_values($result);
+        if (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+            $dates = array_keys($data);
+            $values = array_values($data);
             sort($dates);
-            $sortedValues = array_map(fn ($d) => $result[$d], $dates);
+            $sortedValues = array_map(fn ($d) => $data[$d], $dates);
 
             $formatted = [
                 'dates' => $dates,
@@ -2456,7 +2451,59 @@ class DashboardWidgetDataController extends Controller
             return $formatted;
         }
 
+        if (is_array($data) && isset($data['chart'])) {
+            $chartData = $data['chart'];
+            $seriesResult = ['dates' => [], 'values' => []];
+            foreach ($chartData as $point) {
+                $date = $point['date'] ?? $point['label'] ?? null;
+                $value = $point['value'] ?? $point['y'] ?? reset($point);
+                if ($date !== null && is_numeric($value)) {
+                    $seriesResult['dates'][] = $date;
+                    $seriesResult['values'][] = (float) $value;
+                }
+            }
+            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $seriesResult);
+
+            return $seriesResult;
+        }
+
         return ['dates' => [], 'values' => []];
+    }
+
+    protected function resolveDerivedMetricReferences(array $ast, Project $project, array $controls): array
+    {
+        $results = [];
+        $this->walkAstForDerivedMetrics($ast, $project, $controls, $results);
+
+        return $results;
+    }
+
+    protected function walkAstForDerivedMetrics(array $node, Project $project, array $controls, array &$results): void
+    {
+        if (($node['type'] ?? null) === 'derived_metric') {
+            $dmId = (int) ($node['derived_metric_id'] ?? 0);
+            if ($dmId > 0 && ! isset($results[$dmId])) {
+                $referencedDm = \App\Models\DerivedMetric::find($dmId);
+                if ($referencedDm) {
+                    $tempWidget = new DashboardWidget([
+                        'derived_metric_id' => $dmId,
+                        'source_type' => 'derived_metric',
+                        'widget_type' => 'line_chart',
+                    ]);
+                    $tempWidget->setRelation('derivedMetric', $referencedDm);
+
+                    $innerResult = $this->handleDerivedMetricSource($project, $tempWidget, $controls);
+                    $results[$dmId] = $innerResult;
+                }
+            }
+        }
+
+        if (isset($node['left']) && is_array($node['left'])) {
+            $this->walkAstForDerivedMetrics($node['left'], $project, $controls, $results);
+        }
+        if (isset($node['right']) && is_array($node['right'])) {
+            $this->walkAstForDerivedMetrics($node['right'], $project, $controls, $results);
+        }
     }
 
     protected function extractTimeSeriesFromResponse(array $response, string $metric): array
