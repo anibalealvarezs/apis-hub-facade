@@ -44,7 +44,7 @@
     {{-- Root node editor --}}
     <div class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
         <template x-for="(entry, path) in flatNodes" :key="entry.path">
-            <div class="flex items-center gap-2 p-3 flex-wrap" :style="'padding-left: ' + (entry.depth * 24 + 12) + 'px'">
+            <div class="flex items-center gap-2 p-3 flex-wrap" :data-flat-key="entry.path" :style="'padding-left: ' + (entry.depth * 24 + 12) + 'px'">
                 {{-- Depth indicator --}}
                 <template x-if="entry.depth > 0">
                     <span class="text-gray-400 dark:text-gray-500 text-xs mr-1" x-text="'└'"></span>
@@ -62,9 +62,9 @@
                     >
                         <option value="">{{ __('Select...') }}</option>
                         <optgroup label="{{ __('Source Series') }}">
-                            <template x-for="sk in seriesKeys" :key="sk">
-                                <option :value="'metric:' + sk" x-text="sk"></option>
-                            </template>
+                            @foreach($seriesKeys as $sk)
+                                <option value="{{ 'metric:' . $sk }}">{{ $sk }}</option>
+                            @endforeach
                         </optgroup>
                         <optgroup label="{{ __('Number') }}">
                             <option value="value">{{ __('Literal number') }}</option>
@@ -100,9 +100,9 @@
                                 @change="onNodeChange(entry)"
                             >
                                 <option value="">{{ __('Operator') }}</option>
-                                <template x-for="(label, op) in operators" :key="op">
-                                    <option :value="op" x-text="label"></option>
-                                </template>
+                                @foreach($operators as $op => $label)
+                                    <option value="{{ $op }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <span class="text-gray-400 dark:text-gray-500 text-sm">)</span>
@@ -118,9 +118,9 @@
                             @change="onNodeChange(entry)"
                         >
                             <option value="">{{ __('Operator') }}</option>
-                            <template x-for="(label, op) in operators" :key="op">
-                                <option :value="op" x-text="label"></option>
-                            </template>
+                            @foreach($operators as $op => $label)
+                                <option value="{{ $op }}">{{ $label }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </template>
@@ -135,9 +135,9 @@
                         >
                             <option value="">{{ __('Select...') }}</option>
                             <optgroup label="{{ __('Source Series') }}">
-                                <template x-for="sk in seriesKeys" :key="sk">
-                                    <option :value="'metric:' + sk" x-text="sk"></option>
-                                </template>
+                                @foreach($seriesKeys as $sk)
+                                    <option value="{{ 'metric:' . $sk }}">{{ $sk }}</option>
+                                @endforeach
                             </optgroup>
                             <optgroup label="{{ __('Number') }}">
                                 <option value="value">{{ __('Literal number') }}</option>
@@ -253,6 +253,29 @@ document.addEventListener('alpine:init', () => {
             this.buildFlatNodes(raw, 'root', 0, 'root');
             this.jsonAst = JSON.stringify(raw);
             console.log('[DM_HYDRATE] flatNodes:', JSON.parse(JSON.stringify(this.flatNodes)));
+
+            this.$nextTick(() => {
+                this._syncSelects();
+            });
+        },
+
+        _syncSelects() {
+            this.$el.querySelectorAll('select').forEach(sel => {
+                const model = sel.getAttribute('x-model');
+                if (!model) return;
+                const parts = model.split('.');
+                if (parts[0] !== 'entry') return;
+                const prop = parts[1];
+                const row = sel.closest('[data-flat-key]');
+                if (!row) return;
+                const key = row.getAttribute('data-flat-key');
+                const entry = this.flatNodes[key];
+                if (!entry) return;
+                const val = entry[prop];
+                if (val !== undefined && val !== null && sel.value !== String(val)) {
+                    sel.value = String(val);
+                }
+            });
         },
 
         buildFlatNodes(node, path, depth, side) {
