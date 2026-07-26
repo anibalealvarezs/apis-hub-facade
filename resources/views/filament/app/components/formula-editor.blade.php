@@ -20,7 +20,6 @@
 @endphp
 
 <div
-    wire:ignore
     x-data="formulaEditor({
         astStatePath: '{{ addslashes($astStatePath) }}',
         initialSeriesKeys: @js($seriesKeys ?? []),
@@ -30,7 +29,6 @@
         operators: @js($operators),
     })"
     x-init="$nextTick(() => hydrateFromServer())"
-    @dm-label-changed.window="updateLabels()"
     class="space-y-3"
 >
     <div class="flex items-center justify-between">
@@ -390,28 +388,6 @@ document.addEventListener('alpine:init', () => {
 
         refreshKeys() {
             this.seriesKeys = this.getSeriesKeys();
-        },
-
-        updateLabels() {
-            try {
-                const raw = this.wire.get(this.astStatePath.replace('.ast', '.source_series'));
-                if (raw && typeof raw === 'object') {
-                    const arr = Array.isArray(raw) ? raw : Object.values(raw);
-                    if (arr.length > 0) {
-                        this.seriesData = arr;
-                        this.seriesKeys = arr.map((s, i) => s.key || String.fromCharCode(97 + i));
-                    }
-                }
-            } catch (e) {}
-
-            this.$el.querySelectorAll('select option[value^="metric:"]').forEach(opt => {
-                const key = opt.value.replace('metric:', '');
-                const idx = this.seriesKeys.indexOf(key);
-                if (idx !== -1 && this.seriesData[idx]) {
-                    const label = this.seriesData[idx].label;
-                    opt.textContent = label ? key + ' \u2014 ' + label : key;
-                }
-            });
         },
 
         reset() {

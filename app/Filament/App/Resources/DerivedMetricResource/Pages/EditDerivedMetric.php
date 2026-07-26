@@ -10,6 +10,19 @@ class EditDerivedMetric extends EditRecord
 {
     protected static string $resource = DerivedMetricResource::class;
 
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['_builder_step'] = '2_formula';
+        $data['_step_history'] = json_encode(['1_series']);
+
+        return $data;
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if (empty($data['output_granularity'])) {
@@ -29,6 +42,8 @@ class EditDerivedMetric extends EditRecord
         if (is_string($data['ast'] ?? null)) {
             $data['ast'] = json_decode($data['ast'], true);
         }
+
+        unset($data['_builder_step'], $data['_step_history'], $data['_formula_editor']);
 
         return $data;
     }

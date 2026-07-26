@@ -3,12 +3,16 @@
 namespace App\Filament\App\Resources\DerivedMetricResource\Pages;
 
 use App\Filament\App\Resources\DerivedMetricResource;
-use App\Models\DerivedMetric;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateDerivedMetric extends CreateRecord
 {
     protected static string $resource = DerivedMetricResource::class;
+
+    protected function getFormActions(): array
+    {
+        return [];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -34,6 +38,8 @@ class CreateDerivedMetric extends CreateRecord
         if (is_string($data['ast'] ?? null)) {
             $data['ast'] = json_decode($data['ast'], true);
         }
+
+        unset($data['_builder_step'], $data['_step_history'], $data['_formula_editor']);
 
         return $data;
     }
