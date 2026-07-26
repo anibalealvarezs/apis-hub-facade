@@ -85,22 +85,19 @@ class DerivedMetricResource extends Resource
                         Forms\Components\Repeater::make('source_series')
                             ->label(__('Define the time series inputs for your formula'))
                             ->schema([
-                                Forms\Components\TextInput::make('key')
-                                    ->label(__('Key'))
-                                    ->required()
-                                    ->maxLength(50)
-                                    ->helperText(__('Short identifier used in the formula (e.g. "a", "b")')),
                                 Forms\Components\TextInput::make('label')
                                     ->label(__('Label'))
                                     ->maxLength(255)
-                                    ->helperText(__('Display name for this series')),
+                                    ->helperText(__('Display name for this series (e.g. "Facebook Spend")')),
                                 Forms\Components\Select::make('channel')
                                     ->label(__('Channel'))
                                     ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getActiveChannels())
                                     ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set) {
                                         $set('metric', null);
+                                        $set('asset_group', null);
+                                        $set('asset_filter', null);
                                     }),
                                 Forms\Components\Select::make('metric')
                                     ->label(__('Metric'))
@@ -118,23 +115,33 @@ class DerivedMetricResource extends Resource
                                         'annually' => __('Annually'),
                                     ])
                                     ->default('daily'),
-                                Forms\Components\TagsInput::make('asset_filter')
-                                    ->label(__('Asset Filter (optional)'))
-                                    ->helperText(__('Restrict to specific assets. Leave empty to use all project assets for this channel.')),
+                                Forms\Components\Select::make('asset_group')
+                                    ->label(__('Asset Group'))
+                                    ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getAssetGroupOptions())
+                                    ->disabled(fn (Forms\Get $get) => filled($get('asset_filter')))
+                                    ->live(),
+                                Forms\Components\Select::make('asset_filter')
+                                    ->label(__('Asset Filter'))
+                                    ->multiple()
+                                    ->options(fn (Forms\Get $get) => ! empty($get('channel'))
+                                        ? \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($get('channel'))
+                                        : [])
+                                    ->disabled(fn (Forms\Get $get) => filled($get('asset_group')))
+                                    ->live(),
                             ])
                             ->columns(3)
                             ->defaultItems(2)
                             ->addActionLabel(__('Add Source Series'))
-                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? $state['key'] ?? null),
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? $state['channel'] ?? null),
                     ]),
 
                 Forms\Components\Section::make(__('Formula'))
                     ->schema([
-                        Forms\Components\KeyValue::make('ast')
-                            ->label(__('AST Formula'))
-                            ->helperText(__('JSON representation of the formula tree. Use source keys as metric references (e.g. {"type":"operator","operator":"+","left":{"type":"metric","metric":"a"},"right":{"type":"metric","metric":"b"}})'))
-                            ->keyLabel(__('Type'))
-                            ->valueLabel(__('Value')),
+                        Forms\Components\Hidden::make('ast'),
+                        Forms\Components\ViewField::make('ast')
+                            ->label(__('Build Formula'))
+                            ->view('filament.app.components.formula-editor')
+                            ->helperText(__('Use source series keys (a, b, c…) and operators to define the formula. Click "Refresh keys" after adding/removing series.')),
                     ]),
             ]);
     }

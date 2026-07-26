@@ -29,10 +29,8 @@ class CreateDerivedMetric extends CreateRecord
             $data['source_series'] = [];
         }
 
-        foreach ($data['source_series'] as &$series) {
-            if (empty($series['key'])) {
-                $series['key'] = strtolower(substr(bin2hex(random_bytes(4)), 0, 8));
-            }
+        foreach ($data['source_series'] as $index => &$series) {
+            $series['key'] = chr(97 + $index);
             if (isset($series['asset_filter']) && is_array($series['asset_filter'])) {
                 $series['asset_filter'] = array_values(array_filter($series['asset_filter']));
             }

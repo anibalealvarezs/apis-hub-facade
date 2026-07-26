@@ -21,12 +21,15 @@ class EditDerivedMetric extends EditRecord
             $data['output_granularity'] = null;
         }
 
-        foreach ($data['source_series'] as &$series) {
-            if (isset($series['asset_filter']) && is_array($series['asset_filter'])) {
-                $series['asset_filter'] = array_values(array_filter($series['asset_filter']));
+        if (is_array($data['source_series'] ?? null)) {
+            foreach ($data['source_series'] as $index => &$series) {
+                $series['key'] = chr(97 + $index);
+                if (isset($series['asset_filter']) && is_array($series['asset_filter'])) {
+                    $series['asset_filter'] = array_values(array_filter($series['asset_filter']));
+                }
             }
+            unset($series);
         }
-        unset($series);
 
         if (is_string($data['ast'] ?? null)) {
             $data['ast'] = json_decode($data['ast'], true);
