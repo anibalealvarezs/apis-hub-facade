@@ -192,6 +192,7 @@ document.addEventListener('alpine:init', () => {
 
         getSeriesKeys() {
             let items = [];
+            console.log('[DM_KEYS] seriesData type:', typeof this.seriesData, 'isArray:', Array.isArray(this.seriesData), 'value:', JSON.parse(JSON.stringify(this.seriesData)));
 
             if (this.seriesData && typeof this.seriesData === 'object') {
                 if (Array.isArray(this.seriesData)) {
@@ -200,9 +201,12 @@ document.addEventListener('alpine:init', () => {
                     items = Object.values(this.seriesData);
                 }
             }
+            console.log('[DM_KEYS] items after normalize:', items);
 
             if (items.length > 0) {
-                return items.map((s, i) => s.key || String.fromCharCode(97 + i));
+                const keys = items.map((s, i) => s.key || String.fromCharCode(97 + i));
+                console.log('[DM_KEYS] keys from items:', keys);
+                return keys;
             }
 
             if (this.initialSeriesKeys && this.initialSeriesKeys.length > 0) {
@@ -219,13 +223,16 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) {}
 
+            console.log('[DM_KEYS] ALL SOURCES EXHAUSTED, returning empty');
             return this.initialSeriesKeys || [];
         },
 
         hydrateFromServer() {
             this.seriesKeys = this.getSeriesKeys();
+            console.log('[DM_HYDRATE] final seriesKeys:', this.seriesKeys);
 
             let raw = this.initialAst;
+            console.log('[DM_HYDRATE] initialAst type:', typeof raw, 'value:', raw ? JSON.parse(JSON.stringify(raw)) : null);
 
             if (!raw || typeof raw !== 'object' || !raw.type) {
                 try {
@@ -235,6 +242,7 @@ document.addEventListener('alpine:init', () => {
             if (typeof raw === 'string') {
                 try { raw = JSON.parse(raw); } catch { raw = null; }
             }
+            console.log('[DM_HYDRATE] final raw:', raw ? JSON.parse(JSON.stringify(raw)) : null);
             if (!raw || typeof raw !== 'object' || !raw.type) {
                 this.flatNodes = {};
                 this.jsonAst = '{}';
@@ -244,6 +252,7 @@ document.addEventListener('alpine:init', () => {
             this.nodeCounter = 0;
             this.buildFlatNodes(raw, 'root', 0, 'root');
             this.jsonAst = JSON.stringify(raw);
+            console.log('[DM_HYDRATE] flatNodes:', JSON.parse(JSON.stringify(this.flatNodes)));
         },
 
         buildFlatNodes(node, path, depth, side) {

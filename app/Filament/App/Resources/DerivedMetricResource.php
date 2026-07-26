@@ -145,6 +145,8 @@ class DerivedMetricResource extends Resource
                                 $sd = $get('source_series') ?? [];
                                 $sd = is_array($sd) ? array_values($sd) : [];
                                 $ast = $get('ast');
+                                \Log::info('[DM_EDIT] viewData sd', ['sd' => $sd]);
+                                \Log::info('[DM_EDIT] viewData ast', ['ast' => $ast]);
                                 return [
                                     'seriesData' => $sd,
                                     'initialAst' => $ast,
