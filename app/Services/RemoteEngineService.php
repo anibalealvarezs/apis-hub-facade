@@ -12,7 +12,7 @@ class RemoteEngineService
     /**
      * Get an instance of the ApisHubApi client for a project.
      */
-    protected function getClient(Project $project, int $timeout = 120): ApisHubApi
+    protected function getClient(Project $project, int $timeout = 15): ApisHubApi
     {
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getClient ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
@@ -77,7 +77,7 @@ class RemoteEngineService
     /**
      * Execute a task via the SDK with centralized error handling.
      */
-    public function execute(Project $project, callable $callback, int $timeout = 120)
+    public function execute(Project $project, callable $callback, int $timeout = 15)
     {
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
