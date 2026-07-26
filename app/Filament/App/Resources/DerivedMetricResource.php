@@ -207,6 +207,116 @@ class DerivedMetricResource extends Resource
                     })
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel(__('Close')),
+                Tables\Actions\Action::make('test')
+                    ->label(__('Test'))
+                    ->icon('heroicon-o-play')
+                    ->color('success')
+                    ->form(function (DerivedMetric $record) {
+                        $fields = [];
+                        $dmGranularity = $record->output_granularity;
+
+                        if (empty($dmGranularity)) {
+                            $fields[] = Forms\Components\Select::make('granularity')
+                                ->label(__('Granularity'))
+                                ->options([
+                                    'daily' => __('Daily'),
+                                    'weekly' => __('Weekly'),
+                                    'monthly' => __('Monthly'),
+                                ])
+                                ->default('daily');
+                        }
+
+                        $fields[] = Forms\Components\DatePicker::make('date_start')
+                            ->label(__('Start Date'))
+                            ->default(now()->subDays(30));
+
+                        $fields[] = Forms\Components\DatePicker::make('date_end')
+                            ->label(__('End Date'))
+                            ->default(now());
+
+                        return $fields;
+                    })
+                    ->action(function (DerivedMetric $record, array $data) {
+                        $granularity = $record->output_granularity ?? $data['granularity'] ?? 'daily';
+                        $dateStart = $data['date_start'] ?? now()->subDays(30)->format('Y-m-d');
+                        $dateEnd = $data['date_end'] ?? now()->format('Y-m-d');
+
+                        $project = \Filament\Facades\Filament::getTenant();
+                        $sourceSeries = $record->source_series ?? [];
+
+                        $widgetDataController = new \App\Http\Controllers\Api\DashboardWidgetDataController(
+                            app(\App\Services\WidgetDataService::class),
+                            app(\App\Services\RemoteEngineService::class)
+                        );
+
+                        $fetchedSeries = [];
+                        foreach ($sourceSeries as $series) {
+                            $key = $series['key'];
+                            $channel = $series['channel'] ?? null;
+                            $metric = $series['metric'] ?? null;
+
+                            if (empty($channel) || empty($metric)) {
+                                $fetchedSeries[$key] = [];
+                                continue;
+                            }
+
+                            $assetFilter = $series['asset_filter'] ?? null;
+                            $extractedAssets = null;
+                            if (! empty($assetFilter) && is_array($assetFilter)) {
+                                $validAssets = $widgetDataController->getValidAssetsForChannel($project, $channel);
+                                $filtered = array_intersect($assetFilter, $validAssets);
+                                $extractedAssets = ! empty($filtered) ? array_values($filtered) : null;
+                            }
+
+                            $payload = [
+                                'tenant' => $project->id,
+                                'account' => $extractedAssets,
+                                'dateStart' => $dateStart,
+                                'dateEnd' => $dateEnd,
+                                'granularity' => $series['granularity'] ?? $granularity,
+                                'metrics' => [$metric],
+                            ];
+
+                            try {
+                                $channelResponse = $widgetDataController->forwardToChannelEndpoint($channel, 'chart', $payload);
+                                $seriesData = $widgetDataController->extractTimeSeriesFromResponse($channelResponse, $metric);
+                                $fetchedSeries[$key] = $seriesData;
+                            } catch (\Throwable $e) {
+                                $fetchedSeries[$key] = [];
+                            }
+                        }
+
+                        $computePayload = [
+                            'ast' => $record->ast,
+                            'filters' => [
+                                'startDate' => $dateStart,
+                                'endDate' => $dateEnd,
+                                'period' => $granularity,
+                                'groupBy' => [$granularity],
+                            ],
+                            'series_data' => $fetchedSeries,
+                            'derived_metrics' => [],
+                        ];
+
+                        $remoteEngineService = app(\App\Services\RemoteEngineService::class);
+                        $result = $remoteEngineService->computeKpi($project, $computePayload);
+
+                        if (isset($result['success']) && $result['success']) {
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Test Execution Successful'))
+                                ->success()
+                                ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">' . json_encode($result['data'] ?? [], JSON_PRETTY_PRINT) . '</pre>')
+                                ->persistent()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Test Execution Failed'))
+                                ->danger()
+                                ->body($result['message'] ?? __('An unknown error occurred.'))
+                                ->persistent()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\ReplicateAction::make()
                     ->label(__('Duplicate'))
                     ->excludeAttributes(['id', 'widgets_count'])
