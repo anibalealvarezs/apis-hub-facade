@@ -225,6 +225,26 @@ trait LoadsDashboardViewData
                 }
             }
 
+            // DM source series asset options
+            if ($widgetArray['source_type'] === 'derived_metric') {
+                $dmId = $widgetArray['source_config']['derived_metric_id'] ?? null;
+                if ($dmId) {
+                    $dm = \App\Models\DerivedMetric::find($dmId);
+                    if ($dm) {
+                        $sourceSeries = array_values($dm->source_series ?? []);
+                        $widgetArray['dm_source_series'] = $sourceSeries;
+                        foreach ($sourceSeries as $sIdx => $series) {
+                            $channel = $series['channel'] ?? '';
+                            if (!empty($channel)) {
+                                $dmAssetKey = 'dm_' . $sIdx;
+                                $allowedIds = $resolved['dm_assets'][$sIdx] ?? $series['asset_filter'] ?? null;
+                                $provideAssetFilters($channel, $dmAssetKey, $series['label'] ?? ('Series ' . chr(97 + $sIdx)), is_array($allowedIds) ? $allowedIds : null);
+                            }
+                        }
+                    }
+                }
+            }
+
             // Fallback for non-KPI widgets with a channel
             if (empty($widgetArray['series_assets_options'])) {
                 $primaryChannel = $resolved['channel'] ?? null;

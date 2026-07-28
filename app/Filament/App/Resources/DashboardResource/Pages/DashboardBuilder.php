@@ -261,6 +261,26 @@ class DashboardBuilder extends Page
         return $result;
     }
 
+    public function getDerivedMetricsForWidgetPicker(): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        $dms = \App\Models\DerivedMetric::where('project_id', $project->id)
+            ->where('is_active', true)
+            ->get();
+
+        $result = [];
+        foreach ($dms as $dm) {
+            $sourceSeries = array_values($dm->source_series ?? []);
+            $result[$dm->id] = [
+                'name' => $dm->name,
+                'source_series' => $sourceSeries,
+                'output_granularity' => $dm->output_granularity,
+            ];
+        }
+
+        return $result;
+    }
+
     public function getKpiConfiguration(int $kpiId): array
     {
         $project = \Filament\Facades\Filament::getTenant();

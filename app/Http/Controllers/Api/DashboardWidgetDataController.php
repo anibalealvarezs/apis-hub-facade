@@ -2362,6 +2362,7 @@ class DashboardWidgetDataController extends Controller
             'granularity' => $controls['granularity'] ?? null,
             'asset_group' => $controls['asset_group'] ?? null,
             'assets' => $controls['assets'] ?? null,
+            'dm_assets' => $controls['dm_assets'] ?? null,
         ];
         $controlsHash = $cacheService->computeControlsHash($controlsForHash);
         $cached = $cacheService->getCachedResult($derivedMetric->id, $controlsHash);
@@ -2373,20 +2374,31 @@ class DashboardWidgetDataController extends Controller
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
 
+        $dmAssets = $controls['dm_assets'] ?? [];
         $fetchedSeries = [];
+        $datasets = [];
 
-        foreach ($sourceSeries as $series) {
+        foreach ($sourceSeries as $index => $series) {
             $key = $series['key'];
             $channel = $series['channel'] ?? '';
             $metric = $series['metric'] ?? '';
             $seriesGranularity = $derivedMetric->output_granularity ?? $series['granularity'] ?? $controls['granularity'] ?? 'daily';
+            $label = $series['label'] ?? ($channel . ' - ' . $metric);
 
             if (! $channel || ! $metric) {
                 $fetchedSeries[$key] = [];
                 continue;
             }
 
+            // Per-series asset override from widget controls (dm_assets[index]) merged with DM-level asset_filter
             $seriesAssetFilter = $series['asset_filter'] ?? null;
+            $widgetAssetOverride = $dmAssets[$index] ?? null;
+            if (! empty($widgetAssetOverride)) {
+                $mergedFilter = is_array($seriesAssetFilter)
+                    ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))
+                    : $widgetAssetOverride;
+                $seriesAssetFilter = $mergedFilter;
+            }
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
 
             if ($assetFilter === '___EMPTY_GROUP___') {
@@ -2409,8 +2421,19 @@ class DashboardWidgetDataController extends Controller
 
             $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
             $fetchedSeries[$key] = $seriesData;
+
+            // Build a dataset for this source series
+            if (! empty($seriesData['dates']) && ! empty($seriesData['values'])) {
+                $datasets[] = [
+                    'label' => $label,
+                    'data' => $seriesData['values'],
+                    'key' => $key,
+                    'type' => 'source',
+                ];
+            }
         }
 
+        // Compute the formula result
         $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
 
         $granularity = $controls['granularity'] ?? 'daily';
@@ -2427,47 +2450,70 @@ class DashboardWidgetDataController extends Controller
         ];
 
         $result = $this->remoteEngineService->computeKpi($project, $computePayload);
-
         $data = $result['data'] ?? $result;
 
+        // Extract dates from first source series or computed result
+        $allDates = [];
+
         if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
-            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $data);
-
-            return $data;
-        }
-
-        if (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+            $allDates = $data['dates'];
+            $datasets[] = [
+                'label' => $derivedMetric->name . ' (Result)',
+                'data' => $data['values'],
+                'key' => 'result',
+                'type' => 'result',
+            ];
+        } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
             $dates = array_keys($data);
             $values = array_values($data);
             sort($dates);
             $sortedValues = array_map(fn ($d) => $data[$d], $dates);
-
-            $formatted = [
-                'dates' => $dates,
-                'values' => $sortedValues,
+            $allDates = $dates;
+            $datasets[] = [
+                'label' => $derivedMetric->name . ' (Result)',
+                'data' => $sortedValues,
+                'key' => 'result',
+                'type' => 'result',
             ];
-            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $formatted);
-
-            return $formatted;
-        }
-
-        if (is_array($data) && isset($data['chart'])) {
+        } elseif (is_array($data) && isset($data['chart'])) {
             $chartData = $data['chart'];
-            $seriesResult = ['dates' => [], 'values' => []];
+            $resultDates = [];
+            $resultValues = [];
             foreach ($chartData as $point) {
                 $date = $point['date'] ?? $point['label'] ?? null;
                 $value = $point['value'] ?? $point['y'] ?? reset($point);
                 if ($date !== null && is_numeric($value)) {
-                    $seriesResult['dates'][] = $date;
-                    $seriesResult['values'][] = (float) $value;
+                    $resultDates[] = $date;
+                    $resultValues[] = (float) $value;
                 }
             }
-            $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $seriesResult);
-
-            return $seriesResult;
+            $allDates = $resultDates;
+            $datasets[] = [
+                'label' => $derivedMetric->name . ' (Result)',
+                'data' => $resultValues,
+                'key' => 'result',
+                'type' => 'result',
+            ];
         }
 
-        return ['dates' => [], 'values' => []];
+        // Fallback: extract labels from first fetched series
+        if (empty($allDates)) {
+            foreach ($fetchedSeries as $seriesData) {
+                if (! empty($seriesData['dates'])) {
+                    $allDates = $seriesData['dates'];
+                    break;
+                }
+            }
+        }
+
+        $multiSeriesResult = [
+            'labels' => $allDates,
+            'datasets' => $datasets,
+        ];
+
+        $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $multiSeriesResult);
+
+        return $multiSeriesResult;
     }
 
     protected function resolveDerivedMetricReferences(array $ast, Project $project, array $controls): array

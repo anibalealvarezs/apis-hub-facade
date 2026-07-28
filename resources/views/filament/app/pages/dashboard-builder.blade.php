@@ -181,6 +181,14 @@
                                             <template x-if="widget.source_type === 'entity'">
                                                 <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">Entity</span>
                                             </template>
+                                            <template x-if="widget.source_type === 'derived_metric'">
+                                                <div class="flex flex-wrap items-center justify-center gap-2">
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">DM</span>
+                                                    <template x-if="widget.source_config?.derived_metric_id && derivedMetrics[widget.source_config.derived_metric_id]">
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700" x-text="derivedMetrics[widget.source_config.derived_metric_id].name"></span>
+                                                    </template>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -318,11 +326,15 @@
                             
                             {{-- Data Source Badges --}}
                             <span class="inline-flex items-center rounded-md bg-primary-50 dark:bg-primary-950/40 px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-400 ring-1 ring-inset ring-primary-700/10 dark:ring-primary-400/20"
-                                  x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI' : 'Metric'"></span>
+                                  x-text="widgetControlsTarget.source_type === 'kpi' ? 'Custom KPI' : widgetControlsTarget.source_type === 'derived_metric' ? 'Derived Metric' : 'Metric'"></span>
                             
                             <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
                                 <span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
                                       x-text="kpis[widgetControlsTarget.source_config.custom_kpi_id] ? kpis[widgetControlsTarget.source_config.custom_kpi_id].name : ('KPI ID: ' + widgetControlsTarget.source_config.custom_kpi_id)"></span>
+                            </template>
+                            <template x-if="widgetControlsTarget.source_type === 'derived_metric' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.derived_metric_id">
+                                <span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
+                                      x-text="derivedMetrics[widgetControlsTarget.source_config.derived_metric_id] ? derivedMetrics[widgetControlsTarget.source_config.derived_metric_id].name : ('DM ID: ' + widgetControlsTarget.source_config.derived_metric_id)"></span>
                             </template>
                         </div>
                         
@@ -939,6 +951,61 @@
                             </template>
                         </template>
 
+                        {{-- Series: Derived Metric source series --}}
+                        <template x-if="widgetControlsTarget.source_type === 'derived_metric'">
+                            <template x-for="(series, index) in widgetControlsTarget.dmSourceSeries" :key="index">
+                                <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                        <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                                                </svg>
+                                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="series.label || ('Source ' + String.fromCharCode(97 + index))"></span>
+                                            </div>
+                                        </div>
+                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                            <div>
+                                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Channel</span>
+                                                <p class="text-sm text-gray-900 dark:text-white mt-1" x-text="(channels[series.channel] || series.channel)"></p>
+                                            </div>
+                                            <div>
+                                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Metric</span>
+                                                <p class="text-sm text-gray-900 dark:text-white mt-1" x-text="series.metric"></p>
+                                            </div>
+                                            <div>
+                                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Granularity</span>
+                                                <p class="text-sm text-gray-900 dark:text-white mt-1 capitalize" x-text="series.granularity || 'daily'"></p>
+                                            </div>
+                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-4">
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Asset Override (leave empty for DM default)</label>
+                                                <div class="flex-1 relative min-h-0" style="min-height: 120px;">
+                                                    <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                        <template x-for="(name, id) in allChannelAssets[series.channel] || {}" :key="id">
+                                                            <div @click="toggleDmAsset(index, id)"
+                                                                 class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                 :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                     :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                    <svg x-show="(widgetControlsForm.dm_assets[index] || []).includes(String(id))" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <span class="truncate font-medium" :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="name"></span>
+                                                            </div>
+                                                        </template>
+                                                        <template x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                            <p class="text-xs text-gray-400 dark:text-gray-500">No assets loaded for this channel.</p>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+
                         </div>
                     </div>
                 </div>
@@ -999,6 +1066,20 @@
                                     <option value="">{{ __('Choose a KPI...') }}</option>
                                     <template x-for="(kpi, id) in kpis" :key="id">
                                         <option :value="id" x-text="kpi.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </template>
+
+                        {{-- Derived Metric (if derived_metric source) --}}
+                        <template x-if="addWidgetForm.source_type === 'derived_metric'">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Derived Metric</label>
+                                <select x-model="addWidgetForm.derived_metric_id"
+                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                                    <option value="">{{ __('Choose a Derived Metric...') }}</option>
+                                    <template x-for="(dm, id) in derivedMetrics" :key="id">
+                                        <option :value="id" x-text="dm.name"></option>
                                     </template>
                                 </select>
                             </div>
@@ -1264,6 +1345,7 @@
                         metrics: [],
                         series_assets: {},
                         series_asset_groups: {},
+                        dm_assets: {},
                     },
                     widgetKpiConfig: {},
                     widgetAssets: {},
@@ -1281,9 +1363,11 @@
                     showAddWidgetModal: false,
                     sourceTypes: @json($this->getAvailableSourceTypes()),
                     kpis: @json($this->getKpisForWidgetPicker()),
+                    derivedMetrics: @json($this->getDerivedMetricsForWidgetPicker()),
                     addWidgetForm: {
                         source_type: '',
                         custom_kpi_id: '',
+                        derived_metric_id: '',
                         widget_type: '',
                         name: '',
                     },
@@ -1326,6 +1410,14 @@
                             return filtered;
                         }
                         
+                        if (this.addWidgetForm.source_type === 'derived_metric') {
+                            const allowed = @json(\App\Services\WidgetTypeRegistry::getWidgetTypesForSource('derived_metric'));
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
+                            return filtered;
+                        }
+                        
                         return allTypes;
                     },
 
@@ -1357,6 +1449,17 @@
                                 if (allTypes[t]) filtered[t] = allTypes[t];
                             }
                             // Always include the current type even if no longer in compat list
+                            if (target.widget_type && !filtered[target.widget_type]) {
+                                filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
+                            }
+                            return filtered;
+                        }
+
+                        if (target.source_type === 'derived_metric') {
+                            const allowed = @json(\App\Services\WidgetTypeRegistry::getWidgetTypesForSource('derived_metric'));
+                            for (const t of allowed) {
+                                if (allTypes[t]) filtered[t] = allTypes[t];
+                            }
                             if (target.widget_type && !filtered[target.widget_type]) {
                                 filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
                             }
@@ -1779,6 +1882,7 @@
                             max_ratio_inherit: wc.max_ratio === undefined,
                             max_ratio: wc.max_ratio !== undefined ? wc.max_ratio : null,
                             raw_series: [],
+                            dm_assets: wc.dm_assets || {},
                         };
 
                         if (widget.source_type !== 'kpi') {
@@ -1911,6 +2015,27 @@
                             });
                         } else {
                             this.loadWidgetMetrics(savedMetrics);
+                        }
+
+                        // Load DM source series for the controls modal
+                        if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
+                            const dm = this.derivedMetrics[widget.source_config.derived_metric_id];
+                            if (dm) {
+                                widget.dmSourceSeries = dm.source_series || [];
+                                widget.dmSourceSeries.forEach((series, idx) => {
+                                    const ch = series.channel;
+                                    if (ch && !this.allChannelAssets[ch]) {
+                                        @this.getAssetsForChannel(ch).then(assets => {
+                                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                                        });
+                                    }
+                                    if (ch && !this.allChannelAssetGroups[ch]) {
+                                        @this.getAssetGroupsForChannel(ch).then(groups => {
+                                            this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
+                                        });
+                                    }
+                                });
+                            }
                         }
 
                         console.log('Before updateDependenciesAndGranularities:');
@@ -2058,6 +2183,16 @@
                             this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
                         } else {
                             this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
+                        }
+                    },
+
+                    toggleDmAsset(index, id) {
+                        const current = this.widgetControlsForm.dm_assets[index] || [];
+                        const strId = String(id);
+                        if (current.includes(strId)) {
+                            this.widgetControlsForm.dm_assets[index] = current.filter(a => a !== strId);
+                        } else {
+                            this.widgetControlsForm.dm_assets[index] = [...current, strId];
                         }
                     },
 
@@ -2240,6 +2375,10 @@
                             payload.series_asset_groups = c.series_asset_groups;
                         }
 
+                        if (this.widgetControlsTarget.source_type === 'derived_metric') {
+                            payload.dm_assets = c.dm_assets || {};
+                        }
+
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
 
                         // Handle widget type change
@@ -2264,7 +2403,7 @@
 
                     // ─── Add Widget ──
                     openAddWidgetModal() {
-                        this.addWidgetForm = {source_type: '', custom_kpi_id: '', widget_type: '', name: ''};
+                        this.addWidgetForm = {source_type: '', custom_kpi_id: '', derived_metric_id: '', widget_type: '', name: ''};
                         this.showAddWidgetModal = true;
                     },
 
@@ -2272,6 +2411,7 @@
                         if (!this.addWidgetForm.source_type) return false;
                         if (!this.addWidgetForm.widget_type) return false;
                         if (this.addWidgetForm.source_type === 'kpi' && !this.addWidgetForm.custom_kpi_id) return false;
+                        if (this.addWidgetForm.source_type === 'derived_metric' && !this.addWidgetForm.derived_metric_id) return false;
                         return true;
                     },
 
@@ -2284,7 +2424,12 @@
                             title: form.name || form.widget_type,
                             source_type: form.source_type,
                             custom_kpi_id: form.source_type === 'kpi' ? form.custom_kpi_id : null,
-                            source_config: form.source_type === 'kpi' ? {custom_kpi_id: form.custom_kpi_id} : {},
+                            derived_metric_id: form.source_type === 'derived_metric' ? form.derived_metric_id : null,
+                            source_config: form.source_type === 'kpi'
+                                ? {custom_kpi_id: form.custom_kpi_id}
+                                : form.source_type === 'derived_metric'
+                                    ? {derived_metric_id: form.derived_metric_id}
+                                    : {},
                             widget_type: form.widget_type,
                             controls: {},
                             grid_x: null,
