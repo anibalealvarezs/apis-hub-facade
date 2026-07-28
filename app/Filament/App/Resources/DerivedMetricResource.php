@@ -233,6 +233,68 @@ class DerivedMetricResource extends Resource
                                     $set('_step_history', json_encode($history));
                                     $set('_builder_step', $prevStep);
                                 }),
+                            Forms\Components\Actions\Action::make('nextToSummary')
+                                ->label(__('Next: Summary'))
+                                ->icon('heroicon-o-arrow-right')
+                                ->iconPosition('after')
+                                ->color('primary')
+                                ->extraAttributes(['class' => $primaryClasses])
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $history[] = $get('_builder_step');
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', '4_summary');
+                                }),
+                        ]),
+                    ])
+                    ->columns(2)
+                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '3_details'),
+
+                // ── Step 4: Summary ──────────────────────────────────────
+                Forms\Components\Section::make(__('Summary'))
+                    ->description(__('Review your Derived Metric before saving.'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('_summary')
+                            ->label(false)
+                            ->content(function (Forms\Get $get) {
+                                $html = '<div class="space-y-6">';
+                                $html .= '<div class="grid grid-cols-2 gap-4">';
+                                $html .= '<div><strong>' . __('Name') . ':</strong> ' . e($get('name') ?? '—') . '</div>';
+                                $html .= '<div><strong>' . __('Status') . ':</strong> ' . ($get('is_active') ? __('Active') : __('Inactive')) . '</div>';
+                                $html .= '</div>';
+                                $html .= '<div><strong>' . __('Description') . ':</strong> ' . e($get('description') ?? '—') . '</div>';
+                                $html .= '<div><strong>' . __('Output Granularity') . ':</strong> ' . __($get('output_granularity') ?: 'Dynamic (user selects at widget level)') . '</div>';
+                                $series = $get('source_series') ?? [];
+                                if (is_array($series) && count($series)) {
+                                    $html .= '<div><strong>' . __('Source Series') . ':</strong><table class="table-auto w-full mt-1"><thead><tr class="text-left"><th class="pr-4">' . __('Key') . '</th><th class="pr-4">' . __('Label') . '</th><th class="pr-4">' . __('Channel') . '</th><th class="pr-4">' . __('Metric') . '</th><th>' . __('Granularity') . '</th></tr></thead><tbody>';
+                                    $i = 0;
+                                    foreach (array_values($series) as $s) {
+                                        $key = $s['key'] ?? chr(97 + $i);
+                                        $html .= '<tr><td class="pr-4">' . e($key) . '</td><td class="pr-4">' . e($s['label'] ?? '') . '</td><td class="pr-4">' . e($s['channel'] ?? '') . '</td><td class="pr-4">' . e($s['metric'] ?? '') . '</td><td>' . e($s['granularity'] ?? 'daily') . '</td></tr>';
+                                        $i++;
+                                    }
+                                    $html .= '</tbody></table></div>';
+                                }
+                                $ast = $get('ast');
+                                if (! empty($ast)) {
+                                    $decoded = json_decode($ast, true);
+                                    $html .= '<div><strong>' . __('Formula (AST)') . ':</strong><pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">' . e(json_encode($decoded ?? $ast, JSON_PRETTY_PRINT)) . '</pre></div>';
+                                }
+                                $html .= '</div>';
+                                return new \Illuminate\Support\HtmlString($html);
+                            }),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('backToDetails')
+                                ->label(__('Back: Details'))
+                                ->icon('heroicon-o-arrow-left')
+                                ->color('gray')
+                                ->extraAttributes(['class' => $grayClasses])
+                                ->action(function (Forms\Set $set, Forms\Get $get) {
+                                    $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                    $prevStep = array_pop($history) ?? '3_details';
+                                    $set('_step_history', json_encode($history));
+                                    $set('_builder_step', $prevStep);
+                                }),
                             Forms\Components\Actions\Action::make('createDerivedMetric')
                                 ->label(fn () => $isEdit ? __('Save Changes') : __('Create Derived Metric'))
                                 ->icon('heroicon-o-check-circle')
@@ -247,8 +309,7 @@ class DerivedMetricResource extends Resource
                                 ->visible(fn () => $isEdit ? auth()->user()->can('edit_preferences') : true),
                         ]),
                     ])
-                    ->columns(2)
-                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '3_details'),
+                    ->visible(fn (Forms\Get $get) => $get('_builder_step') === '4_summary'),
             ]);
     }
 
