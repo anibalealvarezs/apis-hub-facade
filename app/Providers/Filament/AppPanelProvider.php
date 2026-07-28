@@ -71,7 +71,14 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::scripts.after',
-                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\', \'resources/js/formula-editor.js\'])')
+                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
+            )
+            ->renderHook(
+                'panels::head.end',
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>
+                    ' . view("filament.hooks.seo-auth")->render() . '
+                ')
             )
             ->renderHook(
                 'panels::head.start',
@@ -83,10 +90,6 @@ class AppPanelProvider extends PanelProvider
                     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
                     @vite([\'resources/js/gtm.js\'])
                 ')
-            )
-            ->renderHook(
-                'panels::head.end',
-                fn () => view('filament.hooks.seo-auth')
             )
             ->renderHook(
                 'panels::auth.login.form.after',

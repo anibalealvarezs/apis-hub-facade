@@ -1,7 +1,8 @@
 if (!window.__formulaEditorRegistered) {
     window.__formulaEditorRegistered = true;
 
-    Alpine.data('formulaEditor', (config) => ({
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('formulaEditor', (config) => ({
         astStatePath: config.astStatePath,
         initialSeriesKeys: config.initialSeriesKeys || [],
         seriesData: config.seriesData || [],
@@ -223,4 +224,5 @@ if (!window.__formulaEditorRegistered) {
             } catch {}
         },
     }));
+    });
 }
