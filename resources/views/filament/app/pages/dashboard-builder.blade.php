@@ -2351,7 +2351,9 @@
                         }
 
                         this.widgetControlsError = '';
-                        if (this.widgetControlsTarget.source_type !== 'kpi') {
+                        if (this.widgetControlsTarget.source_type === 'derived_metric') {
+                            payload.dm_assets = c.dm_assets || {};
+                        } else if (this.widgetControlsTarget.source_type !== 'kpi') {
                             if (!c.raw_series || c.raw_series.length === 0) {
                                 this.widgetControlsError = "Please add at least one series before saving.";
                                 return;
@@ -2395,10 +2397,6 @@
                             payload.metrics = c.metrics;
                             payload.series_assets = c.series_assets;
                             payload.series_asset_groups = c.series_asset_groups;
-                        }
-
-                        if (this.widgetControlsTarget.source_type === 'derived_metric') {
-                            payload.dm_assets = c.dm_assets || {};
                         }
 
                         @this.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
