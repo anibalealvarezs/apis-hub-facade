@@ -16,6 +16,7 @@ class DerivedMetric extends Model
         'name',
         'description',
         'calculation_type',
+        'format',
         'ast',
         'source_series',
         'output_granularity',

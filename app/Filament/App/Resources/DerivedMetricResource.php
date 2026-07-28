@@ -207,6 +207,14 @@ class DerivedMetricResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->nullable()
                             ->rows(3),
+                        Forms\Components\Select::make('format')
+                            ->label(__('Value Format'))
+                            ->options([
+                                'decimal' => __('Decimal'),
+                                'percentage' => __('Percentage (%)'),
+                            ])
+                            ->default('decimal')
+                            ->helperText(__('Percentage multiplies values by 100 and displays them with % formatting.')),
                         Forms\Components\Select::make('output_granularity')
                             ->label(__('Output Granularity'))
                             ->options([
@@ -263,7 +271,9 @@ class DerivedMetricResource extends Resource
                                 $html .= '<div><strong>' . __('Status') . ':</strong> ' . ($get('is_active') ? __('Active') : __('Inactive')) . '</div>';
                                 $html .= '</div>';
                                 $html .= '<div><strong>' . __('Description') . ':</strong> ' . e($get('description') ?? '—') . '</div>';
+                                $formatLabel = $get('format') === 'percentage' ? 'Percentage (%)' : ($get('format') === 'decimal' ? 'Decimal' : '—');
                                 $html .= '<div><strong>' . __('Output Granularity') . ':</strong> ' . __($get('output_granularity') ?: 'Dynamic (user selects at widget level)') . '</div>';
+                                $html .= '<div><strong>' . __('Value Format') . ':</strong> ' . e($formatLabel) . '</div>';
                                 $series = $get('source_series') ?? [];
                                 if (is_array($series) && count($series)) {
                                     $html .= '<div><strong>' . __('Source Series') . ':</strong><table class="table-auto w-full mt-1"><thead><tr class="text-left"><th class="pr-4">' . __('Key') . '</th><th class="pr-4">' . __('Label') . '</th><th class="pr-4">' . __('Channel') . '</th><th class="pr-4">' . __('Metric') . '</th><th>' . __('Granularity') . '</th></tr></thead><tbody>';

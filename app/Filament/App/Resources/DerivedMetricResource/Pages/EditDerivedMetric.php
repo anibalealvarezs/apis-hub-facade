@@ -20,6 +20,10 @@ class EditDerivedMetric extends EditRecord
         $data['_builder_step'] = '2_formula';
         $data['_step_history'] = json_encode(['1_series']);
 
+        if (empty($data['format'])) {
+            $data['format'] = 'decimal';
+        }
+
         return $data;
     }
 

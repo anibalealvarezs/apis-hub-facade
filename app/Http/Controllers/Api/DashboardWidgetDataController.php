@@ -2519,6 +2519,11 @@ class DashboardWidgetDataController extends Controller
             ];
         }
 
+        if ($derivedMetric->format === 'percentage' && ! empty($datasets)) {
+            $datasets[0]['data'] = array_map(fn ($v) => is_numeric($v) ? (float) $v * 100 : $v, $datasets[0]['data'] ?? []);
+            $datasets[0]['percentage'] = true;
+        }
+
         // Fallback: extract labels from first fetched series
         if (empty($allDates)) {
             \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] allDates empty after processing — trying fallback from fetchedSeries');
@@ -2532,6 +2537,11 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        $axisLabel = $derivedMetric->name . ' (Result)';
+        if ($derivedMetric->format === 'percentage') {
+            $axisLabel .= ' (%)';
+        }
+
         $scales = [
             'y' => [
                 'type' => 'linear',
@@ -2539,7 +2549,7 @@ class DashboardWidgetDataController extends Controller
                 'position' => 'left',
                 'title' => [
                     'display' => true,
-                    'text' => $derivedMetric->name . ' (Result)',
+                    'text' => $axisLabel,
                 ],
             ],
         ];

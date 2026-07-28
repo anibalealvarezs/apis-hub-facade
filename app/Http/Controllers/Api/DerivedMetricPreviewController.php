@@ -20,6 +20,7 @@ class DerivedMetricPreviewController extends Controller
             'source_series.*.metric' => 'required|string',
             'source_series.*.asset_filter' => 'nullable|array',
             'granularity' => 'nullable|string',
+            'format' => 'nullable|string|in:decimal,percentage',
             'date_start' => 'nullable|date',
             'date_end' => 'nullable|date',
         ]);
@@ -113,6 +114,11 @@ class DerivedMetricPreviewController extends Controller
         }
 
         $preview = $data;
+
+        if (($validated['format'] ?? null) === 'percentage' && isset($preview['values'])) {
+            $preview['values'] = array_map(fn ($v) => is_numeric($v) ? (float) $v * 100 : $v, $preview['values']);
+        }
+
         if (isset($preview['dates']) && count($preview['dates']) > 30) {
             $preview['dates'] = array_slice($preview['dates'], 0, 30);
             $preview['values'] = array_slice($preview['values'], 0, 30);
