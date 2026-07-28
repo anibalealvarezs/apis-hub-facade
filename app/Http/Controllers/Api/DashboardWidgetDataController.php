@@ -2474,11 +2474,16 @@ class DashboardWidgetDataController extends Controller
 
         if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
             $allDates = $data['dates'];
+            $resultColor = '#8b5cf6';
             $datasets[] = [
                 'label' => $derivedMetric->name . ' (Result)',
                 'data' => $data['values'],
+                'borderColor' => $resultColor,
+                'backgroundColor' => $resultColor . '1a',
+                'tension' => 0.3,
+                'pointRadius' => 2,
+                'fill' => false,
                 'key' => 'result',
-                'type' => 'result',
             ];
         } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
             $dates = array_keys($data);
@@ -2486,11 +2491,16 @@ class DashboardWidgetDataController extends Controller
             sort($dates);
             $sortedValues = array_map(fn ($d) => $data[$d], $dates);
             $allDates = $dates;
+            $resultColor = '#8b5cf6';
             $datasets[] = [
                 'label' => $derivedMetric->name . ' (Result)',
                 'data' => $sortedValues,
+                'borderColor' => $resultColor,
+                'backgroundColor' => $resultColor . '1a',
+                'tension' => 0.3,
+                'pointRadius' => 2,
+                'fill' => false,
                 'key' => 'result',
-                'type' => 'result',
             ];
         } elseif (is_array($data) && isset($data['chart'])) {
             $chartData = $data['chart'];
@@ -2505,11 +2515,16 @@ class DashboardWidgetDataController extends Controller
                 }
             }
             $allDates = $resultDates;
+            $resultColor = '#8b5cf6';
             $datasets[] = [
                 'label' => $derivedMetric->name . ' (Result)',
                 'data' => $resultValues,
+                'borderColor' => $resultColor,
+                'backgroundColor' => $resultColor . '1a',
+                'tension' => 0.3,
+                'pointRadius' => 2,
+                'fill' => false,
                 'key' => 'result',
-                'type' => 'result',
             ];
         }
 
