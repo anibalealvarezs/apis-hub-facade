@@ -1934,7 +1934,7 @@ class DashboardWidgetDataController extends Controller
             }
 
             $asset = $controls['asset'];
-            if ($seriesAssetFilter !== null) {
+            if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
                 $validArray = is_array($asset) ? $asset : [$asset];
                 $filtered = array_intersect($validArray, $seriesAssetFilter);
                 if (empty($filtered)) {
@@ -1975,7 +1975,7 @@ class DashboardWidgetDataController extends Controller
 
             $filtered = array_values($filtered);
 
-            if ($seriesAssetFilter !== null) {
+            if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
                 $filtered = array_intersect($filtered, $seriesAssetFilter);
                 if (empty($filtered)) {
                     return '___EMPTY_GROUP___';
@@ -2404,21 +2404,9 @@ class DashboardWidgetDataController extends Controller
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
 
             if ($assetFilter === '___EMPTY_GROUP___') {
-                \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for {$key} channel={$channel} seriesAssetFilter=" . json_encode($seriesAssetFilter) . " — falling back to first valid asset");
-                // Fallback: try the first valid asset for this channel (same strategy as DerivedMetricPreviewController)
-                try {
-                    $fallbackAssets = $this->getValidAssetsForChannel($project, $channel);
-                    $assetFilter = ! empty($fallbackAssets) ? [$fallbackAssets[0]] : [];
-                    \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] fallback asset for {$key}: " . json_encode($assetFilter));
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("[DM_DEBUG] fallback failed for {$key}: " . $e->getMessage());
-                    $fetchedSeries[$key] = [];
-                    continue;
-                }
-                if (empty($assetFilter)) {
-                    $fetchedSeries[$key] = [];
-                    continue;
-                }
+                \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for {$key} channel={$channel} seriesAssetFilter=" . json_encode($seriesAssetFilter));
+                $fetchedSeries[$key] = [];
+                continue;
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
