@@ -276,9 +276,11 @@ class DerivedMetricResource extends Resource
                                     $html .= '</tbody></table></div>';
                                 }
                                 $ast = $get('ast');
+                                if (is_string($ast)) {
+                                    $ast = json_decode($ast, true);
+                                }
                                 if (! empty($ast)) {
-                                    $decoded = json_decode($ast, true);
-                                    $html .= '<div><strong>' . __('Formula (AST)') . ':</strong><pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">' . e(json_encode($decoded ?? $ast, JSON_PRETTY_PRINT)) . '</pre></div>';
+                                    $html .= '<div><strong>' . __('Formula (AST)') . ':</strong><pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">' . e(json_encode($ast, JSON_PRETTY_PRINT)) . '</pre></div>';
                                 }
                                 $html .= '</div>';
                                 return new \Illuminate\Support\HtmlString($html);
