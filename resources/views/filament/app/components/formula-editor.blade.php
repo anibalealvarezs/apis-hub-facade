@@ -172,8 +172,7 @@
 </div>
 
 <script>
-document.addEventListener('alpine:init', () => {
-    if (window.__formulaEditorRegistered) return;
+if (!window.__formulaEditorRegistered) {
     window.__formulaEditorRegistered = true;
 
     Alpine.data('formulaEditor', (config) => ({
@@ -398,5 +397,5 @@ document.addEventListener('alpine:init', () => {
             } catch {}
         },
     }));
-});
+}
 </script>
