@@ -25,6 +25,9 @@ class EditDerivedMetric extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $rawState = $this->form->getRawState();
+        $data = array_merge($rawState, $data);
+
         if (empty($data['output_granularity'])) {
             $data['output_granularity'] = null;
         }

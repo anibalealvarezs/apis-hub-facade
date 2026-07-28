@@ -16,6 +16,9 @@ class CreateDerivedMetric extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $rawState = $this->form->getRawState();
+        $data = array_merge($rawState, $data);
+
         $project = \Filament\Facades\Filament::getTenant();
         $data['project_id'] = $project->id;
 
