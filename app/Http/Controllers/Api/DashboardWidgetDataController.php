@@ -2404,11 +2404,26 @@ class DashboardWidgetDataController extends Controller
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
 
             if ($assetFilter === '___EMPTY_GROUP___') {
-                $fetchedSeries[$key] = [];
-                continue;
+                \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for {$key} channel={$channel} seriesAssetFilter=" . json_encode($seriesAssetFilter) . " — falling back to first valid asset");
+                // Fallback: try the first valid asset for this channel (same strategy as DerivedMetricPreviewController)
+                try {
+                    $fallbackAssets = $this->getValidAssetsForChannel($project, $channel);
+                    $assetFilter = ! empty($fallbackAssets) ? [$fallbackAssets[0]] : [];
+                    \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] fallback asset for {$key}: " . json_encode($assetFilter));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("[DM_DEBUG] fallback failed for {$key}: " . $e->getMessage());
+                    $fetchedSeries[$key] = [];
+                    continue;
+                }
+                if (empty($assetFilter)) {
+                    $fetchedSeries[$key] = [];
+                    continue;
+                }
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] source series {$key} channel={$channel} metric={$metric} assetFilter=" . json_encode($assetFilter));
 
             $payload = [
                 'tenant' => $project->id,
@@ -2421,14 +2436,20 @@ class DashboardWidgetDataController extends Controller
 
             $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint response for {$key}", ['response_keys' => is_array($channelResponse) ? array_keys($channelResponse) : gettype($channelResponse), 'chart_count' => isset($channelResponse['chart']) && is_array($channelResponse['chart']) ? count($channelResponse['chart']) : 'N/A']);
+
             $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
             $fetchedSeries[$key] = $seriesData;
 
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] extracted seriesData for {$key}", ['count' => count($seriesData), 'sample' => array_slice($seriesData, 0, 3, true)]);
+
             // Build a dataset for this source series
-            if (! empty($seriesData['dates']) && ! empty($seriesData['values'])) {
+            if (! empty($seriesData)) {
+                $srcDates = array_keys($seriesData);
+                $srcValues = array_values($seriesData);
                 $datasets[] = [
                     'label' => $label,
-                    'data' => $seriesData['values'],
+                    'data' => $srcValues,
                     'key' => $key,
                     'type' => 'source',
                 ];
@@ -2451,8 +2472,12 @@ class DashboardWidgetDataController extends Controller
             'derived_metrics' => $derivedResults,
         ];
 
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] computePayload series_data count: ' . count($computePayload['series_data'] ?? []), ['keys' => array_keys($computePayload['series_data'] ?? []), 'sample_sizes' => array_map(fn($v) => is_array($v) ? count($v) : gettype($v), $computePayload['series_data'] ?? [])]);
+
         $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] computeKpi raw result', ['type' => gettype($result), 'keys' => is_array($result) ? array_keys($result) : null, 'sample' => is_array($result) ? json_encode(array_slice($result, 0, 2)) : null]);
         $data = $result['data'] ?? $result;
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] computeKpi extracted data', ['type' => gettype($data), 'keys' => is_array($data) ? array_keys($data) : null, 'has_dates' => isset($data['dates']), 'has_values' => isset($data['values']), 'has_chart' => isset($data['chart']), 'sample' => is_array($data) ? json_encode(array_slice($data, 0, 5, true)) : null]);
 
         // Extract dates from first source series or computed result
         $allDates = [];
@@ -2500,9 +2525,12 @@ class DashboardWidgetDataController extends Controller
 
         // Fallback: extract labels from first fetched series
         if (empty($allDates)) {
-            foreach ($fetchedSeries as $seriesData) {
-                if (! empty($seriesData['dates'])) {
-                    $allDates = $seriesData['dates'];
+            \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] allDates empty after processing — trying fallback from fetchedSeries');
+            foreach ($fetchedSeries as $fsKey => $seriesData) {
+                if (! empty($seriesData) && is_array($seriesData)) {
+                    $fsDates = array_keys($seriesData);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] fallback check {$fsKey}: dates_count=" . count($fsDates) . ' sample=' . json_encode(array_slice($fsDates, 0, 3)));
+                    $allDates = $fsDates;
                     break;
                 }
             }
