@@ -711,6 +711,7 @@
                                                     <template x-if="series.channel">
                                                         <div class="flex gap-3">
                                                             <button @click="selectAllRawAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                            <button @click="clearAllRawAssets(index)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -911,6 +912,7 @@
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets <span x-show="varCfg.independent_asset_group">(Limited to KPI Group)</span><span x-show="!varCfg.independent_asset_group">(Leave empty for All Assets)</span></label>
                                                         <div class="flex gap-3">
                                                             <button @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Select All</button>
+                                                            <button @click="clearAllKpiAssets('independent_' + idx)" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Clear</button>
                                                         </div>
                                                     </div>
                                                     <div class="relative">
@@ -978,6 +980,7 @@
                                                 <div class="flex items-center justify-between">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Asset Override (leave empty for DM default)</label>
                                                     <button @click="selectAllDmAssets(index)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                                    <button @click="clearAllDmAssets(index)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                                 </div>
                                                 <div class="relative">
                                                     <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
@@ -2216,6 +2219,14 @@
                             validIds = validIds.filter(id => groupAssets.includes(id));
                         }
                         this.widgetControlsForm.dm_assets[index] = validIds;
+                    },
+
+                    clearAllRawAssets(index) {
+                        this.widgetControlsForm.raw_series[index].assets = [];
+                    },
+
+                    clearAllDmAssets(index) {
+                        this.widgetControlsForm.dm_assets[index] = [];
                     },
 
                     clearAllKpiAssets(seriesKey) {
