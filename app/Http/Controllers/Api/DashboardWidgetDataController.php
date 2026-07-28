@@ -2363,6 +2363,7 @@ class DashboardWidgetDataController extends Controller
             'asset_group' => $controls['asset_group'] ?? null,
             'assets' => $controls['assets'] ?? null,
             'dm_assets' => $controls['dm_assets'] ?? null,
+            'series_assets' => $controls['series_assets'] ?? null,
         ];
         $controlsHash = $cacheService->computeControlsHash($controlsForHash);
         $cached = $cacheService->getCachedResult($derivedMetric->id, $controlsHash);
@@ -2390,9 +2391,10 @@ class DashboardWidgetDataController extends Controller
                 continue;
             }
 
-            // Per-series asset override from widget controls (dm_assets[index]) merged with DM-level asset_filter
+            // Per-series asset override from widget controls (series_assets['dm_N'] from view, dm_assets[N] from builder) merged with DM-level asset_filter
             $seriesAssetFilter = $series['asset_filter'] ?? null;
-            $widgetAssetOverride = $dmAssets[$index] ?? null;
+            $seriesAssetKey = 'dm_' . $index;
+            $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey] ?? $dmAssets[$index] ?? null;
             if (! empty($widgetAssetOverride)) {
                 $mergedFilter = is_array($seriesAssetFilter)
                     ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))

@@ -237,8 +237,40 @@ trait LoadsDashboardViewData
                             $channel = $series['channel'] ?? '';
                             if (!empty($channel)) {
                                 $dmAssetKey = 'dm_' . $sIdx;
-                                $allowedIds = $resolved['dm_assets'][$sIdx] ?? $series['asset_filter'] ?? null;
-                                $provideAssetFilters($channel, $dmAssetKey, $series['label'] ?? ('Series ' . chr(97 + $sIdx)), is_array($allowedIds) ? $allowedIds : null);
+                                $alreadySaved = isset($resolved['series_assets'][$dmAssetKey]);
+                                // Set up series_assets_options needed by the settings modal
+                                $allAssets = $getAssetsForChannel($channel);
+                                $computedMode = $kpiAssetMode;
+                                if (!\App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
+                                    $computedMode = 'single';
+                                }
+                                $widgetArray['series_assets_options'][$dmAssetKey] = [
+                                    'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
+                                    'options' => (object) ($allAssets ?: []),
+                                    'mode' => $computedMode,
+                                ];
+                                // Preserve view-saved selection; fallback to builder dm_assets or definition asset_filter
+                                if (!$alreadySaved) {
+                                    $allowedIds = $resolved['dm_assets'][$sIdx] ?? $series['asset_filter'] ?? null;
+                                    $defaultAssets = $allAssets;
+                                    if (is_array($allowedIds) && !empty($allowedIds)) {
+                                        $filtered = [];
+                                        foreach ($allowedIds as $id) {
+                                            if (isset($allAssets[$id])) {
+                                                $filtered[$id] = $allAssets[$id];
+                                            }
+                                        }
+                                        if (!empty($filtered)) {
+                                            $defaultAssets = $filtered;
+                                        }
+                                    }
+                                    if (!empty($defaultAssets)) {
+                                        reset($defaultAssets);
+                                        $resolved['series_assets'][$dmAssetKey] = [strval(key($defaultAssets))];
+                                    } else {
+                                        $resolved['series_assets'][$dmAssetKey] = [];
+                                    }
+                                }
                             }
                         }
                     }
@@ -283,6 +315,12 @@ trait LoadsDashboardViewData
                             } elseif (str_starts_with($assetKey, 'independent_')) {
                                 $idx = substr($assetKey, strlen('independent_'));
                                 $channel = $uiState['independent_variables'][$idx]['independent_channel'] ?? null;
+                            }
+                        } elseif ($widgetArray['source_type'] === 'derived_metric') {
+                            if (str_starts_with($assetKey, 'dm_')) {
+                                $sIdx = (int) substr($assetKey, 3);
+                                $dmSeries = $widgetArray['dm_source_series'] ?? [];
+                                $channel = $dmSeries[$sIdx]['channel'] ?? null;
                             }
                         } else {
                             if (is_numeric($assetKey)) {
@@ -378,6 +416,20 @@ trait LoadsDashboardViewData
                             'channel_name' => !empty($indChannel) ? KpiFormBuilder::getChannelDisplayName($indChannel) : '',
                             'metrics' => $indMetrics,
                             'selected_metric' => $var['independent_metric'] ?? '',
+                        ];
+                    }
+                }
+            } elseif ($widgetArray['source_type'] === 'derived_metric') {
+                $dmSeries = $widgetArray['dm_source_series'] ?? [];
+                foreach ($dmSeries as $sIdx => $series) {
+                    $channel = $series['channel'] ?? '';
+                    if (!empty($channel)) {
+                        $variables['dm_' . $sIdx] = [
+                            'index' => $varIndex++,
+                            'channel' => $channel,
+                            'channel_name' => KpiFormBuilder::getChannelDisplayName($channel),
+                            'metrics' => [$series['metric'] => $series['metric']],
+                            'selected_metric' => $series['metric'],
                         ];
                     }
                 }

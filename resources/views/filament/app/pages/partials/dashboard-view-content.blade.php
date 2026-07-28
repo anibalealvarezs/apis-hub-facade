@@ -560,7 +560,7 @@
                                                             x-text="vConfig.channel_name || vConfig.channel"></span>
                                                     </template>
                                                     <template
-                                                        x-if="settingsSourceType === 'kpi' && vConfig.selected_metric">
+                                                         x-if="(settingsSourceType === 'kpi' || settingsSourceType === 'derived_metric') && vConfig.selected_metric">
                                                         <span
                                                             class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
                                                             x-text="(vConfig.metrics || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
@@ -583,7 +583,7 @@
                                                 </template>
 
                                                 {{-- Metric selector (Metric Widgets) --}}
-                                                <template x-if="settingsSourceType !== 'kpi'">
+                                                <template x-if="settingsSourceType !== 'kpi' && settingsSourceType !== 'derived_metric'">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
                                                         <div class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
