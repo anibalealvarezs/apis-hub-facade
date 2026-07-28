@@ -816,11 +816,10 @@
         </div>
     </div>
 
+    @script
     <script>
-        (function () {
-            const registerGa4Dashboard = () => {
-                Alpine.data('ga4Dashboard', () => {
-                    return {
+        Alpine.data('ga4Dashboard', () => {
+            return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         account: @entangle('selectedAccount'),
                         selectedAccount: @entangle('selectedAccount'),
@@ -1625,14 +1624,7 @@
                             return Number(num).toFixed(2);
                         }
                     }
-                });
-            };
-
-            if (window.Alpine) {
-                registerGa4Dashboard();
-            } else {
-                document.addEventListener('alpine:init', registerGa4Dashboard);
-            }
-        })();
+        });
     </script>
+    @endscript
 </x-filament-panels::page>

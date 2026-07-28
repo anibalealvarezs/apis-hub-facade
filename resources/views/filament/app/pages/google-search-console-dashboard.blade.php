@@ -431,11 +431,10 @@
         </div>
     </div>
 
+    @script
     <script>
-        (function () {
-            const registerGscDashboard = () => {
-                Alpine.data('gscDashboard', () => {
-                    return {
+        Alpine.data('gscDashboard', () => {
+            return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         account: @entangle('selectedAccount'),
                         selectedAccount: @entangle('selectedAccount'),
@@ -1220,14 +1219,7 @@
                             return Number(num).toFixed(2);
                         }
                     }
-                });
-            };
-
-            if (window.Alpine) {
-                registerGscDashboard();
-            } else {
-                document.addEventListener('alpine:init', registerGscDashboard);
-            }
-        })();
+        });
     </script>
+    @endscript
 </x-filament-panels::page>

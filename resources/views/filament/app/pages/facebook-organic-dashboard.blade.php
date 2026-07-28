@@ -683,11 +683,10 @@
         </div>
     </div>
 
+    @script
     <script>
-        (function () {
-            const registerFboDashboard = () => {
-                Alpine.data('fboDashboard', () => {
-                    return {
+        Alpine.data('fboDashboard', () => {
+            return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         accounts: @json($selectedAccounts),
                         accountNames: @json($accounts),
@@ -1891,14 +1890,7 @@
                             return `${paddedMinutes}:${paddedSeconds}`;
                         }
                     }
-                });
-            };
-
-            if (window.Alpine) {
-                registerFboDashboard();
-            } else {
-                document.addEventListener('alpine:init', registerFboDashboard);
-            }
-        })();
+        });
     </script>
+    @endscript
 </x-filament-panels::page>

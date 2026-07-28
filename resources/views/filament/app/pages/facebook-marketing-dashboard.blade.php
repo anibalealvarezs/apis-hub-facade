@@ -534,11 +534,10 @@
         </div>
     </div>
 
+    @script
     <script>
-        (function () {
-            const registerFbDashboard = () => {
-                Alpine.data('fbDashboard', () => {
-                    return {
+        Alpine.data('fbDashboard', () => {
+            return {
                         tenantId: '{{ Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug }}',
                         accounts: @json($selectedAccounts),
                         accountNames: @json($accounts),
@@ -1605,14 +1604,7 @@
                             return (num * 100).toFixed(2) + '%';
                         }
                     }
-                });
-            };
-
-            if (window.Alpine) {
-                registerFbDashboard();
-            } else {
-                document.addEventListener('alpine:init', registerFbDashboard);
-            }
-        })();
+        });
     </script>
+    @endscript
 </x-filament-panels::page>

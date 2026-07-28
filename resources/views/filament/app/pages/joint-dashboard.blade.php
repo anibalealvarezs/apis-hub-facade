@@ -398,10 +398,9 @@
         </div>
     </div>
 
+    @script
     <script>
-        (() => {
-            const registerJointDashboard = () => {
-                Alpine.data('jointDashboard', () => ({
+        Alpine.data('jointDashboard', () => ({
                     isLoading: false,
                     chartRendered: false,
                     chartInstance: null,
@@ -953,16 +952,7 @@
                                 }
                             }
                         });
-
-                    }
-                }));
-            };
-
-            if (window.Alpine) {
-                registerJointDashboard();
-            } else {
-                document.addEventListener('alpine:init', registerJointDashboard);
-            }
-        })();
+        });
     </script>
+    @endscript
 </x-filament-panels::page>
