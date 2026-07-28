@@ -2472,6 +2472,7 @@ class DashboardWidgetDataController extends Controller
                 'pointRadius' => 2,
                 'fill' => false,
                 'key' => 'result',
+                'yAxisID' => 'y',
             ];
         } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
             $dates = array_keys($data);
@@ -2489,6 +2490,7 @@ class DashboardWidgetDataController extends Controller
                 'pointRadius' => 2,
                 'fill' => false,
                 'key' => 'result',
+                'yAxisID' => 'y',
             ];
         } elseif (is_array($data) && isset($data['chart'])) {
             $chartData = $data['chart'];
@@ -2513,6 +2515,7 @@ class DashboardWidgetDataController extends Controller
                 'pointRadius' => 2,
                 'fill' => false,
                 'key' => 'result',
+                'yAxisID' => 'y',
             ];
         }
 
@@ -2529,9 +2532,22 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
+        $scales = [
+            'y' => [
+                'type' => 'linear',
+                'display' => true,
+                'position' => 'left',
+                'title' => [
+                    'display' => true,
+                    'text' => $derivedMetric->name . ' (Result)',
+                ],
+            ],
+        ];
+
         $multiSeriesResult = [
             'labels' => $allDates,
             'datasets' => $datasets,
+            'scales' => $scales,
         ];
 
         $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $multiSeriesResult);

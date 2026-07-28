@@ -360,11 +360,12 @@ window.dashboardRenderer = {
         };
 
         if (datasets.length === 1) {
+            const backendY = data?.scales?.y || {};
             chartScales.y = {
                 beginAtZero: !reverseY,
                 reverse: reverseY,
-                title: {display: true, text: yAxisLabel},
-                ticks: {font: {size: 10}},
+                title: {display: true, text: backendY.title?.text || yAxisLabel},
+                ticks: {font: {size: 10}, ...backendY.ticks},
             };
             mappedDatasets[0].yAxisID = 'y';
         } else {
@@ -447,10 +448,12 @@ window.dashboardRenderer = {
         };
 
         if (datasets.length === 1) {
+            const backendY = data?.scales?.y || {};
             chartScales.y = {
                 beginAtZero: !reverseY,
                 reverse: reverseY,
-                ticks: {font: {size: 10}}
+                title: {display: true, text: backendY.title?.text || ''},
+                ticks: {font: {size: 10}, ...backendY.ticks},
             };
             mappedDatasets[0].yAxisID = 'y';
         } else {
