@@ -2443,17 +2443,7 @@ class DashboardWidgetDataController extends Controller
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] extracted seriesData for {$key}", ['count' => count($seriesData), 'sample' => array_slice($seriesData, 0, 3, true)]);
 
-            // Build a dataset for this source series
-            if (! empty($seriesData)) {
-                $srcDates = array_keys($seriesData);
-                $srcValues = array_values($seriesData);
-                $datasets[] = [
-                    'label' => $label,
-                    'data' => $srcValues,
-                    'key' => $key,
-                    'type' => 'source',
-                ];
-            }
+            // Source series data is only for internal computation — not added to chart datasets
         }
 
         // Compute the formula result
