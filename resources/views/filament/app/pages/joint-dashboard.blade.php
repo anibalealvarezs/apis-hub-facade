@@ -952,7 +952,7 @@
                                 }
                             }
                         });
-        });
+        }));
     </script>
     @endscript
 </x-filament-panels::page>
