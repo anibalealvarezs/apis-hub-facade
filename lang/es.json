@@ -1227,5 +1227,16 @@
     "Evaluates by landing page: How many clicks do you get per unit of search position? Higher means more compelling snippets.": "Evalúa por página de destino: ¿Cuántos clics obtienes por unidad de posición de búsqueda? Valores más altos significan fragmentos más atractivos.",
     "Search Position Efficiency (By Keyword)": "Eficiencia de Posición de Búsqueda (Por Palabra Clave)",
     "Evaluates by search term: How many clicks do you get per unit of search position? Higher means more compelling snippets.": "Evalúa por término de búsqueda: ¿Cuántos clics obtienes por unidad de posición de búsqueda? Valores más altos significan fragmentos más atractivos.",
-    "Not Available": "No Disponible"
+    "Not Available": "No Disponible",
+    "The selected channel does not support this metric.": "El canal seleccionado no soporta esta métrica.",
+    "Derived Metrics": "Métricas Derivadas",
+    "These metrics are calculated from other metrics and are not directly provided by the source platform.": "Estas métricas se calculan a partir de otras métricas y no son proporcionadas directamente por la plataforma fuente.",
+    "The selected channel does not support derived metrics.": "El canal seleccionado no soporta métricas derivadas.",
+    "The selected channel does not support this analysis level.": "El canal seleccionado no soporta este nivel de análisis.",
+    "The selected channel does not support this lag configuration.": "El canal seleccionado no soporta esta configuración de lag.",
+    "The selected channel does not support this analysis level and lag configuration.": "El canal seleccionado no soporta este nivel de análisis ni esta configuración de lag.",
+    "The selected channel does not support this analysis level or lag configuration.": "El canal seleccionado no soporta este nivel de análisis ni esta configuración de lag.",
+    "The selected channel does not support this analysis level, lag configuration, or derived metrics.": "El canal seleccionado no soporta este nivel de análisis, configuración de lag ni métricas derivadas.",
+    "The selected channel does not support this lag configuration or derived metrics.": "El canal seleccionado no soporta esta configuración de lag ni métricas derivadas.",
+    "The selected channel does not support this analysis level or derived metrics.": "El canal seleccionado no soporta este nivel de análisis ni métricas derivadas."
 }
