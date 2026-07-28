@@ -135,11 +135,6 @@ class DerivedMetricResource extends Resource
                                 ->iconPosition('after')
                                 ->color('primary')
                                 ->extraAttributes(['class' => $primaryClasses])
-                                ->requiresConfirmation()
-                                ->modalHeading(__('Define Formula'))
-                                ->modalDescription(__('Proceed to the formula editor where you can define how your source series are combined.'))
-                                ->modalSubmitActionLabel(__('Continue'))
-                                ->modalCancelActionLabel(__('Go Back'))
                                 ->action(function (Forms\Set $set, Forms\Get $get) {
                                     $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
                                     $history[] = $get('_builder_step');
@@ -192,11 +187,6 @@ class DerivedMetricResource extends Resource
                                 ->iconPosition('after')
                                 ->color('primary')
                                 ->extraAttributes(['class' => $primaryClasses])
-                                ->requiresConfirmation()
-                                ->modalHeading(__('Add Details'))
-                                ->modalDescription(__('Proceed to add a name, description, and output granularity.'))
-                                ->modalSubmitActionLabel(__('Continue'))
-                                ->modalCancelActionLabel(__('Go Back'))
                                 ->action(function (Forms\Set $set, Forms\Get $get) {
                                     $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
                                     $history[] = $get('_builder_step');
@@ -248,6 +238,11 @@ class DerivedMetricResource extends Resource
                                 ->icon('heroicon-o-check-circle')
                                 ->color('primary')
                                 ->extraAttributes(['class' => $primaryClasses . ' fi-btn-create'])
+                                ->requiresConfirmation()
+                                ->modalHeading(fn () => $isEdit ? __('Save Changes') : __('Create Derived Metric'))
+                                ->modalDescription(fn () => $isEdit ? __('Are you sure you want to save changes to this Derived Metric?') : __('Are you sure you want to create this Derived Metric?'))
+                                ->modalSubmitActionLabel(fn () => $isEdit ? __('Save Changes') : __('Create'))
+                                ->modalCancelActionLabel(__('Cancel'))
                                 ->submit($isEdit ? 'save' : 'create')
                                 ->visible(fn () => $isEdit ? auth()->user()->can('edit_preferences') : true),
                         ]),
