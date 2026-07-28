@@ -952,6 +952,7 @@
                                 }
                             }
                         });
+                    }
         }));
     </script>
     @endscript
