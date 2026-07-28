@@ -2364,6 +2364,7 @@ class DashboardWidgetDataController extends Controller
             'assets' => $controls['assets'] ?? null,
             'dm_assets' => $controls['dm_assets'] ?? null,
             'series_assets' => $controls['series_assets'] ?? null,
+            'format' => $derivedMetric->format,
         ];
         $controlsHash = $cacheService->computeControlsHash($controlsForHash);
         $cached = $cacheService->getCachedResult($derivedMetric->id, $controlsHash);
@@ -2519,9 +2520,13 @@ class DashboardWidgetDataController extends Controller
             ];
         }
 
-        if ($derivedMetric->format === 'percentage' && ! empty($datasets)) {
-            $datasets[0]['data'] = array_map(fn ($v) => is_numeric($v) ? (float) $v * 100 : $v, $datasets[0]['data'] ?? []);
-            $datasets[0]['percentage'] = true;
+        if (! empty($datasets)) {
+            if ($derivedMetric->format === 'percentage') {
+                $datasets[0]['data'] = array_map(fn ($v) => is_numeric($v) ? (float) $v * 100 : $v, $datasets[0]['data'] ?? []);
+                $datasets[0]['percentage'] = true;
+            } elseif ($derivedMetric->format === 'currency') {
+                $datasets[0]['currency'] = true;
+            }
         }
 
         // Fallback: extract labels from first fetched series
@@ -2540,6 +2545,8 @@ class DashboardWidgetDataController extends Controller
         $axisLabel = $derivedMetric->name . ' (Result)';
         if ($derivedMetric->format === 'percentage') {
             $axisLabel .= ' (%)';
+        } elseif ($derivedMetric->format === 'currency') {
+            $axisLabel = '$ ' . $axisLabel;
         }
 
         $scales = [

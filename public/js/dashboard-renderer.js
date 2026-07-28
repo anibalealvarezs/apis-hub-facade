@@ -409,7 +409,10 @@ window.dashboardRenderer = {
                             title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label: (ctx) => {
                                 const dsLabel = ctx.dataset.label || yMetricName;
-                                const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
+                                let val = ctx.parsed.y;
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '% ' + dsLabel;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val) + ' ' + dsLabel;
+                                const valY = this.formatMetricValue(val, yMetric);
                                 return valY + ' ' + dsLabel;
                             },
                         },
@@ -973,7 +976,10 @@ window.dashboardRenderer = {
                             title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
                             label: (ctx) => {
                                 const dsLabel = ctx.dataset.label || yMetricName;
-                                const valY = this.formatMetricValue(ctx.parsed.y, yMetric);
+                                let val = ctx.parsed.y;
+                                if (ctx.dataset?.percentage) return val.toFixed(1) + '% ' + dsLabel;
+                                if (ctx.dataset?.currency) return this.formatCurrency(val) + ' ' + dsLabel;
+                                const valY = this.formatMetricValue(val, yMetric);
                                 return valY + ' ' + dsLabel;
                             },
                         },

@@ -212,9 +212,10 @@ class DerivedMetricResource extends Resource
                             ->options([
                                 'decimal' => __('Decimal'),
                                 'percentage' => __('Percentage (%)'),
+                                'currency' => __('Currency ($)'),
                             ])
                             ->default('decimal')
-                            ->helperText(__('Percentage multiplies values by 100 and displays them with % formatting.')),
+                            ->helperText(__('Percentage multiplies values by 100 and displays them with % formatting. Currency prefixes values with $.')),
                         Forms\Components\Select::make('output_granularity')
                             ->label(__('Output Granularity'))
                             ->options([
@@ -271,7 +272,8 @@ class DerivedMetricResource extends Resource
                                 $html .= '<div><strong>' . __('Status') . ':</strong> ' . ($get('is_active') ? __('Active') : __('Inactive')) . '</div>';
                                 $html .= '</div>';
                                 $html .= '<div><strong>' . __('Description') . ':</strong> ' . e($get('description') ?? '—') . '</div>';
-                                $formatLabel = $get('format') === 'percentage' ? 'Percentage (%)' : ($get('format') === 'decimal' ? 'Decimal' : '—');
+                                $fmt = $get('format');
+                                $formatLabel = $fmt === 'percentage' ? 'Percentage (%)' : ($fmt === 'currency' ? 'Currency ($)' : ($fmt === 'decimal' ? 'Decimal' : '—'));
                                 $html .= '<div><strong>' . __('Output Granularity') . ':</strong> ' . __($get('output_granularity') ?: 'Dynamic (user selects at widget level)') . '</div>';
                                 $html .= '<div><strong>' . __('Value Format') . ':</strong> ' . e($formatLabel) . '</div>';
                                 $series = $get('source_series') ?? [];
