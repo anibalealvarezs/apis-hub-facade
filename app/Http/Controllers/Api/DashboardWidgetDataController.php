@@ -1359,7 +1359,7 @@ class DashboardWidgetDataController extends Controller
                 $indChannel = $uiState['independent_variables'][$key]['independent_channel'] ?? '';
                 $indSourceType = $var['independent_source_type'] ?? 'channel';
 
-                if (! empty($controls['asset_group']) && $indSourceType !== 'derived_metric') {
+                if (! empty($controls['asset_group']) && $indSourceType !== 'derived_metric' && ! empty($indChannel)) {
                     $group = \App\Models\AssetGroup::find($controls['asset_group']);
                     $groupAssets = $group ? $group->active_items
                         ->where('channel', $indChannel)
@@ -1374,7 +1374,7 @@ class DashboardWidgetDataController extends Controller
                         $uiState['independent_variables'][$key]['independent_asset_filter'] = array_values($groupAssets);
                         $uiState['independent_variables'][$key]['independent_asset_group'] = null;
                     }
-                } elseif ($indSourceType !== 'derived_metric' && empty($var['independent_asset_filter']) && ! empty($controls['assets']) && (! empty($controls['channel']) && $controls['channel'] === $indChannel)) {
+                } elseif ($indSourceType !== 'derived_metric' && ! empty($indChannel) && empty($var['independent_asset_filter']) && ! empty($controls['assets']) && (! empty($controls['channel']) && $controls['channel'] === $indChannel)) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 

@@ -69,6 +69,10 @@
 - **Changes in KpiFormBuilder.php:** Added `getDerivedMetricOptions()`, source type selector in `getNodeSchema()`, DM select field, `afterStateUpdated` to clear opposing field values when switching source types, summary HTML for DM display. Removed `disabled()` on next_series, removed `searchable()` on DM select, removed `required()` on dependent_metric.
 - **Changes in KpiPayloadBuilder.php:** Handles `dm_<id>` metric keys in `buildAstFromState()` and `buildIndependentNodes()` for both dependent and independent variables
 - **Changes in DashboardWidgetDataController.php (handleKpiSource):** Pre-fetches DM series data for KPI variables using DMs; accepts DM source type for dependent variable; added `depSourceType`/`indSourceType` guards to skip asset_group resolution for DM variables (avoids `___EMPTY_GROUP___` sentinel from empty channel)
+- **Bug fix (2026-07-29):** DM KPI widget shows no data (`___EMPTY_GROUP___` short-circuit)
+  - **Root cause:** The independent variable's `independent_source_type` is not persisted in `_ui_state` (missing key), so `$indSourceType` defaults to `'channel'`. With `$indChannel` empty (DM has no channel), the asset group resolution at line 1362 sets `independent_asset_filter = ["___EMPTY_GROUP___"]`, which triggers the `$hasEmptyGroup` short-circuit and returns empty data.
+  - **Fix:** Added `&& ! empty($indChannel)` guard to both the independent variable asset_group route (line 1362) and assets route (line 1377), so empty-channel independent variables (DM or unconfigured) skip asset group/asset resolution entirely.
+  - **Logs confirmed:** The DM guard check correctly logs `depSourceType: "derived_metric"`, and the auto-resolve correctly skips DM source type. The independent variable downstream is now properly guarded.
 - **Known issues:**
   - Next button in step 22_series may not advance when DM source type selected (user reports "can't select next because there's no channel selected") — root cause unknown; possibly client-side Livewire reactivity or validation
   - Anomaly/KPI payload shows `metrics: ["", ""]` — cosmetic; actual AST is built correctly by KpiPayloadBuilder from `_ui_state` DM IDs
