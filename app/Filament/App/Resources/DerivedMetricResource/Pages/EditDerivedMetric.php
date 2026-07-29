@@ -17,8 +17,8 @@ class EditDerivedMetric extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['_builder_step'] = '2_formula';
-        $data['_step_history'] = json_encode(['1_series']);
+        $data['_builder_step'] = '3_formula';
+        $data['_step_history'] = json_encode(['2_series']);
 
         if (empty($data['format'])) {
             $data['format'] = 'decimal';
