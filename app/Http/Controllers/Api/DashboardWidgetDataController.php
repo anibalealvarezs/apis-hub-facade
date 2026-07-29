@@ -2393,7 +2393,7 @@ class DashboardWidgetDataController extends Controller
             return ['labels' => [], 'datasets' => [], 'series' => ['dates' => [], 'values' => []]];
         }
 
-        $effectiveGranularity = $derivedMetric->output_granularity ?? $controls['granularity'] ?? 'daily';
+        $effectiveGranularity = $controls['granularity'] ?? $derivedMetric->output_granularity ?? 'daily';
 
         $cacheService = app(\App\Services\DerivedMetricCacheService::class);
         $controlsForHash = [
