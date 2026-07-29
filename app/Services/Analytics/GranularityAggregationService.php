@@ -46,6 +46,15 @@ class GranularityAggregationService
                 if ($ck === 'clicks') {
                     $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
                 }
+                if ($ck === 'spend') {
+                    $groups[$gKey]['companion']['spend_sum'] = ($groups[$gKey]['companion']['spend_sum'] ?? 0) + (float) $v;
+                }
+                if ($ck === 'reach') {
+                    $groups[$gKey]['companion']['reach_sum'] = ($groups[$gKey]['companion']['reach_sum'] ?? 0) + (float) $v;
+                }
+                if ($ck === 'results') {
+                    $groups[$gKey]['companion']['results_sum'] = ($groups[$gKey]['companion']['results_sum'] ?? 0) + (float) $v;
+                }
                 if (str_contains($ck, 'position') && $rowImpressions !== null) {
                     if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
                         $groups[$gKey]['companion']['weighted_position_sum'] = [];
@@ -64,6 +73,14 @@ class GranularityAggregationService
 
                 if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
                     $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
+                } elseif ($ck === 'frequency' && ($comp['reach_sum'] ?? 0) > 0) {
+                    $row[$k] = ($comp['impressions_sum'] ?? 0) / $comp['reach_sum'];
+                } elseif ($ck === 'cpm' && isset($comp['spend_sum']) && ($comp['impressions_sum'] ?? 0) > 0) {
+                    $row[$k] = $comp['spend_sum'] / $comp['impressions_sum'] * 1000;
+                } elseif ($ck === 'cpc' && isset($comp['spend_sum']) && ($comp['clicks_sum'] ?? 0) > 0) {
+                    $row[$k] = $comp['spend_sum'] / $comp['clicks_sum'];
+                } elseif ($ck === 'cost_per_result' && isset($comp['spend_sum']) && ($comp['results_sum'] ?? 0) > 0) {
+                    $row[$k] = $comp['spend_sum'] / $comp['results_sum'];
                 } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
                     $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
                     $row[$k] = $weightedSum / $comp['impressions_sum'];
