@@ -59,6 +59,19 @@ class EditCustomKpi extends EditRecord
             if (!isset($data['keep_template_guidance'])) {
                 $data['keep_template_guidance'] = !empty($data['template']);
             }
+
+            // Fallback: infer source_type from channel data for KPIs saved before the field existed
+            if (empty($data['dependent_source_type']) && !empty($data['dependent_channel'])) {
+                $data['dependent_source_type'] = 'channel';
+            }
+            if (!empty($data['independent_variables'])) {
+                foreach ($data['independent_variables'] as $k => &$var) {
+                    if (empty($var['independent_source_type']) && !empty($var['independent_channel'])) {
+                        $var['independent_source_type'] = 'channel';
+                    }
+                }
+                unset($var);
+            }
         }
         $data['_builder_step'] = '22_series';
         $data['_step_history'] = json_encode(['1_intent']);
