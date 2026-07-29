@@ -2440,7 +2440,7 @@ class DashboardWidgetDataController extends Controller
             $key = $series['key'];
             $channel = $series['channel'] ?? '';
             $metric = $series['metric'] ?? '';
-            $seriesGranularity = $series['granularity'] ?? $effectiveGranularity;
+            $seriesGranularity = $effectiveGranularity;
             $label = $series['label'] ?? ($channel . ' - ' . $metric);
 
             if (! $channel || ! $metric) {
