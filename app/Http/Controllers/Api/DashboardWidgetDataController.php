@@ -690,19 +690,6 @@ class DashboardWidgetDataController extends Controller
                     'metricsFilter' => $resolvedControls['metrics'] ?? null,
                 ]);
 
-                $kpiMetrics = [];
-                if ($effectiveWidgetType === 'table' || $widget->source_type === 'kpi') {
-                    if ($widget->source_type === 'kpi') {
-                        $uiState = $widget->customKpi->filters['_ui_state'] ?? [];
-                        $kpiMetrics['dependent'] = $uiState['dependent_metric'] ?? '';
-                        if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
-                            foreach ($uiState['independent_variables'] as $i => $var) {
-                                $kpiMetrics['independent_' . $i] = $var['independent_metric'] ?? '';
-                            }
-                        }
-                    }
-                }
-
                 if (empty($chartData)) {
                     $data = [
                         'columns' => [],
@@ -803,94 +790,8 @@ class DashboardWidgetDataController extends Controller
                     }
 
                     if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rawRows) > 1) {
-                        $groups = [];
-                        foreach ($rawRows as $row) {
-                            $date = $row['date'];
-                            if ($granularity === 'weekly') {
-                                $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
-                                $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-                                $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
-                            } elseif ($granularity === 'monthly') {
-                                $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
-                            } elseif ($granularity === 'quarterly') {
-                                $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
-                            } elseif ($granularity === 'semiannual') {
-                                $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
-                            } elseif ($granularity === 'annually') {
-                                $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
-                            } elseif ($granularity === 'lifetime') {
-                                $gKey = 'Lifetime';
-                            } else {
-                                $gKey = $date;
-                            }
-
-                            if (! isset($groups[$gKey])) {
-                                $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
-                            }
-
-                            $rowImpressions = null;
-                            foreach ($row as $k => $v) {
-                                if ($k === 'date' || ! is_numeric($v)) {
-                                    continue;
-                                }
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                if ($ck === 'impressions') {
-                                    $rowImpressions = (float) $v;
-
-                                    break;
-                                }
-                            }
-
-                            foreach ($row as $k => $v) {
-                                if ($k === 'date' || ! is_numeric($v)) {
-                                    continue;
-                                }
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                                if (! isset($groups[$gKey]['metrics'][$k])) {
-                                    $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
-                                }
-                                $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
-                                $groups[$gKey]['metrics'][$k]['count']++;
-                                if ($ck === 'impressions') {
-                                    $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
-                                }
-                                if ($ck === 'clicks') {
-                                    $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
-                                }
-                                if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
-                                    if (! isset($groups[$gKey]['companion']['weighted_position_sum'])) {
-                                        $groups[$gKey]['companion']['weighted_position_sum'] = [];
-                                    }
-                                    $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
-                                }
-                            }
-                        }
-
-                        $rawRows = [];
-                        foreach ($groups as $group) {
-                            $agg = ['date' => $group['date']];
-                            $comp = $group['companion'] ?? [];
-                            foreach ($group['metrics'] as $k => $m) {
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                                $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
-
-                                if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                    $agg[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                                } elseif (str_contains($actualMetric, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
-                                    $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
-                                    $agg[$k] = $weightedSum / $comp['impressions_sum'];
-                                } elseif ($isRatioOrPosition && $m['count'] > 0) {
-                                    $agg[$k] = $m['sum'] / $m['count'];
-                                } else {
-                                    $agg[$k] = $m['sum'];
-                                }
-                            }
-                            $rawRows[] = $agg;
-                        }
-
-                        usort($rawRows, fn ($a, $b) => $a['date'] <=> $b['date']);
+                        $aggregator = new \App\Services\Analytics\GranularityAggregationService($ratioMetrics);
+                        $rawRows = $aggregator->aggregateRows($rawRows, $granularity, 'date');
                     }
 
                     $rows = [];
@@ -1026,96 +927,8 @@ class DashboardWidgetDataController extends Controller
                     }
 
                     if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($chartData) > 1) {
-                        $groups = [];
-                        foreach ($chartData as $row) {
-                            $date = $row[$dateKey] ?? '';
-                            if ($granularity === 'weekly') {
-                                $start = \Carbon\Carbon::parse($date)->startOfWeek(\Carbon\Carbon::MONDAY);
-                                $end = $start->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-                                $gKey = $start->format('Y-m-d') . ' to ' . $end->format('d');
-                            } elseif ($granularity === 'monthly') {
-                                $gKey = \Carbon\Carbon::parse($date)->startOfMonth()->format('Y-m');
-                            } elseif ($granularity === 'quarterly') {
-                                $gKey = \Carbon\Carbon::parse($date)->firstOfQuarter()->format('Y') . '-Q' . \Carbon\Carbon::parse($date)->quarter;
-                            } elseif ($granularity === 'semiannual') {
-                                $gKey = \Carbon\Carbon::parse($date)->format('Y') . '-S' . (\Carbon\Carbon::parse($date)->month <= 6 ? '1' : '2');
-                            } elseif ($granularity === 'annually') {
-                                $gKey = \Carbon\Carbon::parse($date)->startOfYear()->format('Y');
-                            } elseif ($granularity === 'lifetime') {
-                                $gKey = 'Lifetime';
-                            } else {
-                                $gKey = $date;
-                            }
-
-                            if (! isset($groups[$gKey])) {
-                                $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
-                            }
-
-                            $rowImpressions = null;
-                            foreach ($row as $k => $v) {
-                                if ($k === $dateKey || ! is_numeric($v)) {
-                                    continue;
-                                }
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                if ($ck === 'impressions') {
-                                    $rowImpressions = (float) $v;
-
-                                    break;
-                                }
-                            }
-
-                            foreach ($row as $k => $v) {
-                                if ($k === $dateKey || ! is_numeric($v)) {
-                                    continue;
-                                }
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
-
-                                if (! isset($groups[$gKey]['metrics'][$k])) {
-                                    $groups[$gKey]['metrics'][$k] = ['sum' => 0.0, 'count' => 0];
-                                }
-                                $groups[$gKey]['metrics'][$k]['sum'] += (float) $v;
-                                $groups[$gKey]['metrics'][$k]['count']++;
-                                if ($ck === 'impressions') {
-                                    $groups[$gKey]['companion']['impressions_sum'] = ($groups[$gKey]['companion']['impressions_sum'] ?? 0) + (float) $v;
-                                }
-                                if ($ck === 'clicks') {
-                                    $groups[$gKey]['companion']['clicks_sum'] = ($groups[$gKey]['companion']['clicks_sum'] ?? 0) + (float) $v;
-                                }
-                                if (str_contains($actualMetric, 'position') && $rowImpressions !== null) {
-                                    if (! isset($groups[$gKey]['companion']['weighted_position_sum'])) {
-                                        $groups[$gKey]['companion']['weighted_position_sum'] = [];
-                                    }
-                                    $groups[$gKey]['companion']['weighted_position_sum'][$k] = ($groups[$gKey]['companion']['weighted_position_sum'][$k] ?? 0) + (float) $v * $rowImpressions;
-                                }
-                            }
-                        }
-
-                        $aggregated = [];
-                        foreach ($groups as $group) {
-                            $row = [$dateKey => $group['date']];
-                            $comp = $group['companion'] ?? [];
-                            foreach ($group['metrics'] as $k => $m) {
-                                $ck = preg_replace('/^trend_(?:total|average)_/', '', $k);
-                                $actualMetric = $kpiMetrics[$ck] ?? $ck;
-                                $isRatioOrPosition = in_array($actualMetric, $ratioMetrics) || str_contains($actualMetric, 'position') || str_contains($actualMetric, 'average') || str_contains($actualMetric, 'avg');
-
-                                if ($ck === 'ctr' && ($comp['impressions_sum'] ?? 0) > 0) {
-                                    $row[$k] = $comp['clicks_sum'] / $comp['impressions_sum'];
-                                } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
-                                    $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
-                                    $row[$k] = $weightedSum / $comp['impressions_sum'];
-                                } elseif ($isRatioOrPosition && $m['count'] > 0) {
-                                    $row[$k] = $m['sum'] / $m['count'];
-                                } else {
-                                    $row[$k] = $m['sum'];
-                                }
-                            }
-                            $aggregated[] = $row;
-                        }
-
-                        usort($aggregated, fn ($a, $b) => $a[$dateKey] <=> $b[$dateKey]);
-                        $chartData = $aggregated;
+                        $aggregator = new \App\Services\Analytics\GranularityAggregationService($ratioMetrics);
+                        $chartData = $aggregator->aggregateRows($chartData, $granularity, $dateKey);
                     }
 
                     $labels = array_map(fn ($row) => $row[$dateKey] ?? '', $chartData);
@@ -2440,7 +2253,6 @@ class DashboardWidgetDataController extends Controller
             $key = $series['key'];
             $channel = $series['channel'] ?? '';
             $metric = $series['metric'] ?? '';
-            $seriesGranularity = $effectiveGranularity;
             $label = $series['label'] ?? ($channel . ' - ' . $metric);
 
             if (! $channel || ! $metric) {
@@ -2473,7 +2285,7 @@ class DashboardWidgetDataController extends Controller
             \Illuminate\Support\Facades\Log::info('[DM_GRAN] Fetching series', [
                 'key' => $key,
                 'channel' => $channel,
-                'seriesGranularity' => $seriesGranularity,
+                'granularity' => 'daily',
             ]);
 
             $payload = [
@@ -2481,7 +2293,7 @@ class DashboardWidgetDataController extends Controller
                 'account' => $assetFilter,
                 'dateStart' => $dateStart,
                 'dateEnd' => $dateEnd,
-                'granularity' => $seriesGranularity,
+                'granularity' => 'daily',
                 'metrics' => [$metric],
             ];
 
@@ -2493,6 +2305,20 @@ class DashboardWidgetDataController extends Controller
             $fetchedSeries[$key] = $seriesData;
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] extracted seriesData for {$key}", ['count' => count($seriesData), 'sample' => array_slice($seriesData, 0, 3, true)]);
+
+            // Aggregate daily series data to target granularity before passing to compute engine
+            if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
+                $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                $aggregated = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
+                \Illuminate\Support\Facades\Log::info('[DM_GRAN] Aggregated series data', [
+                    'key' => $key,
+                    'from_granularity' => 'daily',
+                    'to_granularity' => $effectiveGranularity,
+                    'from_count' => count($seriesData),
+                    'to_count' => count($aggregated),
+                ]);
+                $fetchedSeries[$key] = $aggregated;
+            }
 
             // Source series data is only for internal computation — not added to chart datasets
         }
