@@ -61,4 +61,5 @@
 - **Template pre-fill:** Channel placeholders resolved against user's active channels via `ChannelCapabilityRegistry`; keys (a, b, c…) auto-assigned; AST, format, output_granularity, name, description pre-filled
 - **Template details panel:** Shows name, description, format badge, source series keys/metrics, and AST preview
 - **Helper methods:** `getDerivedMetricCategoryOptions()` (13 categories) and `getDerivedMetricTemplateOptions(array $categoryFilter)` (filters by category + active channels) added to `DerivedMetricResource`
+- **Bug fix (2026-07-28):** DM table widget rendering — `handleDerivedMetricSource()` returned only chart-shaped data (`labels`/`datasets`). Added `elseif` branch in `show()` at line 961 that detects `$effectiveWidgetType === 'table' && isset($data['labels']) && isset($data['datasets'])` and transforms to `columns`/`rows` with Date column and dataset columns, respecting `percentage`/`currency` format flags.
 - **Next steps:** Add a reference page similar to `KpiReference`, add Spanish translations to `es.json`

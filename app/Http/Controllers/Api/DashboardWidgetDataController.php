@@ -958,6 +958,44 @@ class DashboardWidgetDataController extends Controller
                         'rows' => $rows,
                     ];
                 }
+            } elseif ($effectiveWidgetType === 'table' && isset($data['labels']) && isset($data['datasets'])) {
+                $labels = $data['labels'];
+                $datasets = $data['datasets'];
+
+                $columns = [
+                    ['key' => 'date', 'label' => 'Date'],
+                ];
+
+                foreach ($datasets as $ds) {
+                    $cleanKey = $ds['key'] ?? 'result';
+                    $format = 'number';
+                    if (!empty($ds['percentage'])) {
+                        $format = 'percentage';
+                    } elseif (!empty($ds['currency'])) {
+                        $format = 'currency';
+                    }
+
+                    $columns[] = [
+                        'key' => $cleanKey,
+                        'label' => $ds['label'] ?? 'Result',
+                        'format' => $format,
+                    ];
+                }
+
+                $rows = [];
+                foreach ($labels as $i => $label) {
+                    $row = ['date' => $label];
+                    foreach ($datasets as $ds) {
+                        $cleanKey = $ds['key'] ?? 'result';
+                        $row[$cleanKey] = $ds['data'][$i] ?? null;
+                    }
+                    $rows[] = $row;
+                }
+
+                $data = [
+                    'columns' => $columns,
+                    'rows' => $rows,
+                ];
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'tile', 'gauge']) && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
 
