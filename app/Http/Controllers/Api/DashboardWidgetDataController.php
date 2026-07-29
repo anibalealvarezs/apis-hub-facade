@@ -2395,6 +2395,12 @@ class DashboardWidgetDataController extends Controller
 
         $effectiveGranularity = $controls['granularity'] ?? $derivedMetric->output_granularity ?? 'daily';
 
+        \Illuminate\Support\Facades\Log::info('[DM_GRAN] handleDerivedMetricSource granularity trace', [
+            'controls_granularity' => $controls['granularity'] ?? '__MISSING__',
+            'dm_output_granularity' => $derivedMetric->output_granularity ?? '__NULL__',
+            'effectiveGranularity' => $effectiveGranularity,
+        ]);
+
         $cacheService = app(\App\Services\DerivedMetricCacheService::class);
         $controlsForHash = [
             'date_start' => $controls['date_start'] ?? null,
@@ -2411,8 +2417,17 @@ class DashboardWidgetDataController extends Controller
         $cached = $cacheService->getCachedResult($derivedMetric->id, $controlsHash);
 
         if ($cached) {
+            \Illuminate\Support\Facades\Log::info('[DM_GRAN] CACHE HIT — returning cached result', [
+                'cached_at' => $cached->cached_at,
+                'labels_count' => isset($cached->result['labels']) ? count($cached->result['labels']) : 'N/A',
+            ]);
             return $cached->result;
         }
+
+        \Illuminate\Support\Facades\Log::info('[DM_GRAN] CACHE MISS — computing fresh result', [
+            'hash' => $controlsHash,
+            'controls_snapshot' => $controlsForHash,
+        ]);
 
         $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
@@ -2455,6 +2470,12 @@ class DashboardWidgetDataController extends Controller
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] source series {$key} channel={$channel} metric={$metric} assetFilter=" . json_encode($assetFilter));
 
+            \Illuminate\Support\Facades\Log::info('[DM_GRAN] Fetching series', [
+                'key' => $key,
+                'channel' => $channel,
+                'seriesGranularity' => $seriesGranularity,
+            ]);
+
             $payload = [
                 'tenant' => $project->id,
                 'account' => $assetFilter,
@@ -2478,6 +2499,12 @@ class DashboardWidgetDataController extends Controller
 
         // Compute the formula result
         $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
+
+        \Illuminate\Support\Facades\Log::info('[DM_GRAN] Compute payload filters', [
+            'period' => $effectiveGranularity,
+            'groupBy' => [$effectiveGranularity],
+            'series_keys' => array_keys($fetchedSeries),
+        ]);
 
         $computePayload = [
             'ast' => $ast,
@@ -2606,6 +2633,12 @@ class DashboardWidgetDataController extends Controller
             'datasets' => $datasets,
             'scales' => $scales,
         ];
+
+        \Illuminate\Support\Facades\Log::info('[DM_GRAN] Returning result', [
+            'labels_count' => count($allDates),
+            'labels_sample' => array_slice($allDates, 0, 3),
+            'datasets_count' => count($datasets),
+        ]);
 
         $cacheService->cacheResult($derivedMetric->id, $project->id, $controlsHash, $multiSeriesResult);
 
