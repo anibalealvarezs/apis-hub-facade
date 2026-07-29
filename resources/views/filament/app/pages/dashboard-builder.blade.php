@@ -858,7 +858,7 @@
                             </template>
 
                             {{-- Dependent Derived Metric series box (KPI) --}}
-                            <template x-if="widgetKpiConfig.dependent_source_type === 'derived_metric' && widgetKpiConfig.dependent_dm_id">
+                            <template x-if="widgetKpiConfig.dependent_dm_id">
                                 <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                         <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -929,7 +929,7 @@
                         <template x-if="widgetControlsTarget.source_type === 'kpi'">
                             <template x-if="widgetKpiConfig.independent_variables">
                                 <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
-                                    <template x-if="varCfg.independent_source_type === 'derived_metric' && varCfg.independent_dm_id">
+                                    <template x-if="varCfg.independent_dm_id">
                                         <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -2127,13 +2127,13 @@
                                         });
                                     }
                                 };
-                                if (this.widgetKpiConfig.dependent_source_type === 'derived_metric' && this.widgetKpiConfig.dependent_dm_id) {
+                                if (this.widgetKpiConfig.dependent_dm_id) {
                                     initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
                                 }
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
-                                        if (v.independent_source_type === 'derived_metric' && v.independent_dm_id) {
+                                        if (v.independent_dm_id) {
                                             initDmKpiAssets('ind_' + key, v.independent_dm_id);
                                         }
                                     }
@@ -2150,7 +2150,7 @@
                                     }
                                 }
                                 // Also load channels from DM KPI source series
-                                if (this.widgetKpiConfig.dependent_source_type === 'derived_metric' && this.widgetKpiConfig.dependent_dm_id) {
+                                if (this.widgetKpiConfig.dependent_dm_id) {
                                     const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
                                     if (depDm && depDm.source_series) {
                                         depDm.source_series.forEach(s => { if (s.channel) channelsToLoad.add(s.channel); });
@@ -2159,7 +2159,7 @@
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
-                                        if (v.independent_source_type === 'derived_metric' && v.independent_dm_id) {
+                                        if (v.independent_dm_id) {
                                             const indDm = this.derivedMetrics?.[v.independent_dm_id];
                                             if (indDm && indDm.source_series) {
                                                 indDm.source_series.forEach(s => { if (s.channel) channelsToLoad.add(s.channel); });

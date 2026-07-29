@@ -73,7 +73,10 @@
   - **Root cause:** The independent variable's `independent_source_type` is not persisted in `_ui_state` (missing key), so `$indSourceType` defaults to `'channel'`. With `$indChannel` empty (DM has no channel), the asset group resolution at line 1362 sets `independent_asset_filter = ["___EMPTY_GROUP___"]`, which triggers the `$hasEmptyGroup` short-circuit and returns empty data.
   - **Fix:** Added `&& ! empty($indChannel)` guard to both the independent variable asset_group route (line 1362) and assets route (line 1377), so empty-channel independent variables (DM or unconfigured) skip asset group/asset resolution entirely.
   - **Logs confirmed:** The DM guard check correctly logs `depSourceType: "derived_metric"`, and the auto-resolve correctly skips DM source type. The independent variable downstream is now properly guarded.
+- **Bug fix (2026-07-29, builder):** DM KPI asset selectors not showing in builder
+  - **Root cause:** Blade template (`x-if`) and JS `openWidgetControls` both check `_source_type === 'derived_metric' && _dm_id` but the stored `_ui_state` only has `_dm_id` (no `_source_type`). The controller fix-ups `dependent_source_type` only during data fetch (line 1522), not for `getKpiConfiguration()` or independent vars.
+  - **Fix:** Simplified all 6 gating conditions (2 blade `x-if`, 2 JS `initDmKpiAssets`, 2 JS `channelsToLoad`) to check just `dependent_dm_id` / `independent_dm_id` — presence implies it's a derived metric.
 - **Known issues:**
   - Next button in step 22_series may not advance when DM source type selected (user reports "can't select next because there's no channel selected") — root cause unknown; possibly client-side Livewire reactivity or validation
   - Anomaly/KPI payload shows `metrics: ["", ""]` — cosmetic; actual AST is built correctly by KpiPayloadBuilder from `_ui_state` DM IDs
-  - Dashboard view may not display DM metric selection — `LoadsDashboardViewData.php` auto-resolve logic doesn't recognize DM source type variables
+  - Dashboard view may not display DM metric selection — `LoadsDashboardViewData.php` auto-resolve logic doesn't recognize DM source type variables (same `_source_type` gating issue)
