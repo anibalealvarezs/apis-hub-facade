@@ -80,3 +80,22 @@
   - Next button in step 22_series may not advance when DM source type selected (user reports "can't select next because there's no channel selected") — root cause unknown; possibly client-side Livewire reactivity or validation
   - Anomaly/KPI payload shows `metrics: ["", ""]` — cosmetic; actual AST is built correctly by KpiPayloadBuilder from `_ui_state` DM IDs
   - Dashboard view may not display DM metric selection — `LoadsDashboardViewData.php` auto-resolve logic doesn't recognize DM source type variables (same `_source_type` gating issue)
+
+### Formula Editor Render Hook Fix (2026-07-29)
+- **Problem:** Formula editor Alpine component (`formulaEditor`) not loading in DM editor page
+- **Root cause chain:**
+  - Original `panels::head.end` hook rendered SEO auth view directly (returned `View` object)
+  - Formula editor JS was moved into `panels::head.end` alongside SEO auth via inline `<script>` (commit `152e49ac`), both wrapped in `Blade::render()`
+  - SEO auth view uses `@@context` which renders to `@context` (Alpine event listener). When passed through `Blade::render()`, `@context` collides with Filament's `@context` Blade directive — breaks login page
+  - Commit `647a2693` moved SEO auth OUT of `Blade::render()` to fix login page, but formula editor JS stopped loading
+  - Commit `f36e45fd` put only formula editor back in `Blade::render()` (SEO auth outside) — still broken
+- **Key insight from investigation:** `FilamentView::renderHook()` casts return to `(string)` before wrapping in `HtmlString` — so `Blade::render()` vs plain string shouldn't change HTML output. Root cause of formula editor not loading outside `Blade::render()` remains unclear, but `Blade::render()` context is required for it to function.
+- **Fix applied:** Both formula editor JS and SEO auth wrapped in single `Blade::render()` call, with SEO auth wrapped in `@verbatim`/`@endverbatim` to prevent `@context` from being processed as a Blade directive
+- **Current code** (`AppPanelProvider.php:78`):
+  ```php
+  fn () => \Illuminate\Support\Facades\Blade::render('
+      <script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>
+      @verbatim' . view("filament.hooks.seo-auth")->render() . '@endverbatim
+  ')
+  ```
+- **Commit:** `a2e5bf4` (HEAD)

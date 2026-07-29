@@ -75,7 +75,10 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::head.end',
-                fn () => \Illuminate\Support\Facades\Blade::render('<script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>') . PHP_EOL . view('filament.hooks.seo-auth')->render()
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>
+                    @verbatim' . view("filament.hooks.seo-auth")->render() . '@endverbatim
+                ')
             )
             ->renderHook(
                 'panels::head.start',
