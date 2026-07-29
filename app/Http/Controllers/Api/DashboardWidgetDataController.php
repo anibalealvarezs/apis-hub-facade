@@ -1278,6 +1278,15 @@ class DashboardWidgetDataController extends Controller
         $activeDepChannel = $controlsToMerge['dependent_channel'] ?? $kpiDepChannel;
         $depSourceType = $uiState['dependent_source_type'] ?? 'channel';
 
+        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] DM guard check', [
+            'depSourceType' => $depSourceType,
+            'has_asset_group' => ! empty($controls['asset_group']),
+            'has_assets' => isset($controls['assets']),
+            'kpiDepChannel' => $kpiDepChannel,
+            'activeDepChannel' => $activeDepChannel,
+            'controls_keys' => array_keys($controls),
+        ]);
+
         if (! empty($controls['asset_group']) && $depSourceType !== 'derived_metric') {
             $group = \App\Models\AssetGroup::find($controls['asset_group']);
             $groupAssets = $group ? $group->active_items
@@ -1293,7 +1302,7 @@ class DashboardWidgetDataController extends Controller
                 $controlsToMerge['dependent_asset_filter'] = array_values($groupAssets);
                 $controlsToMerge['dependent_asset_group'] = null;
             }
-        } elseif (isset($controls['assets'])) {
+        } elseif ($depSourceType !== 'derived_metric' && isset($controls['assets'])) {
             if (empty($controls['assets']) && ! empty($controls['asset_group'])) {
                 $controlsToMerge['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
             } elseif (empty($kpiDepChannel) || $kpiDepChannel === $runtimeChannel || $activeDepChannel === $runtimeChannel) {
