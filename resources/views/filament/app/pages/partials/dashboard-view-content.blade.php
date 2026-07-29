@@ -571,7 +571,10 @@
                                                     </svg>
                                                     <span
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                        x-text="vKey === 'dependent' ? 'Dependent Series' : (settingsSourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1))"></span>
+                                                        x-text="vConfig.dm_name ? (settingsSourceType === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? 'Dependent Series' : (settingsSourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1)))"></span>
+                                                    <template x-if="vConfig.dm_name">
+                                                        <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
+                                                    </template>
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1">
                                                     <template x-if="vConfig.channel">

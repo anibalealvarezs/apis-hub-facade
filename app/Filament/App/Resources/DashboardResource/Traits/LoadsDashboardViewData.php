@@ -225,6 +225,115 @@ trait LoadsDashboardViewData
                 }
             }
 
+            // KPI DM series info + per-source-series asset options
+            $widgetArray['dm_kpi_series'] = [];
+            if ($widgetArray['source_type'] === 'kpi') {
+                // Dependent DM
+                if (! empty($uiState['dependent_source_type']) && $uiState['dependent_source_type'] === 'derived_metric' && ! empty($uiState['dependent_dm_id'])) {
+                    $depDm = \App\Models\DerivedMetric::find($uiState['dependent_dm_id']);
+                    if ($depDm) {
+                        $depSourceSeries = array_values($depDm->source_series ?? []);
+                        $widgetArray['dm_kpi_series']['dependent'] = [
+                            'dm_id' => $depDm->id,
+                            'dm_name' => $depDm->name,
+                            'source_series' => $depSourceSeries,
+                        ];
+                        foreach ($depSourceSeries as $sIdx => $series) {
+                            $channel = $series['channel'] ?? '';
+                            if (! empty($channel)) {
+                                $key = 'dep_dm_' . $sIdx;
+                                $alreadySaved = isset($resolved['series_assets'][$key]);
+                                $allAssets = $getAssetsForChannel($channel);
+                                $computedMode = $kpiAssetMode;
+                                if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
+                                    $computedMode = 'single';
+                                }
+                                $widgetArray['series_assets_options'][$key] = [
+                                    'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
+                                    'options' => (object) ($allAssets ?: []),
+                                    'mode' => $computedMode,
+                                ];
+                                if (! $alreadySaved) {
+                                    $allowedIds = $series['asset_filter'] ?? null;
+                                    $defaultAssets = $allAssets;
+                                    if (is_array($allowedIds) && ! empty($allowedIds)) {
+                                        $filtered = [];
+                                        foreach ($allowedIds as $id) {
+                                            if (isset($allAssets[$id])) {
+                                                $filtered[$id] = $allAssets[$id];
+                                            }
+                                        }
+                                        if (! empty($filtered)) {
+                                            $defaultAssets = $filtered;
+                                        }
+                                    }
+                                    if (! empty($defaultAssets)) {
+                                        reset($defaultAssets);
+                                        $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
+                                    } else {
+                                        $resolved['series_assets'][$key] = [];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Independent DMs
+                if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
+                    foreach ($uiState['independent_variables'] as $key => $var) {
+                        if (! empty($var['independent_source_type']) && $var['independent_source_type'] === 'derived_metric' && ! empty($var['independent_dm_id'])) {
+                            $indDm = \App\Models\DerivedMetric::find($var['independent_dm_id']);
+                            if ($indDm) {
+                                $indSourceSeries = array_values($indDm->source_series ?? []);
+                                $widgetArray['dm_kpi_series']['independent_' . $key] = [
+                                    'dm_id' => $indDm->id,
+                                    'dm_name' => $indDm->name,
+                                    'source_series' => $indSourceSeries,
+                                ];
+                                foreach ($indSourceSeries as $sIdx => $series) {
+                                    $channel = $series['channel'] ?? '';
+                                    if (! empty($channel)) {
+                                        $assetKey = 'ind_' . $key . '_dm_' . $sIdx;
+                                        $alreadySaved = isset($resolved['series_assets'][$assetKey]);
+                                        $allAssets = $getAssetsForChannel($channel);
+                                        $computedMode = $kpiAssetMode;
+                                        if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
+                                            $computedMode = 'single';
+                                        }
+                                        $widgetArray['series_assets_options'][$assetKey] = [
+                                            'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
+                                            'options' => (object) ($allAssets ?: []),
+                                            'mode' => $computedMode,
+                                        ];
+                                        if (! $alreadySaved) {
+                                            $allowedIds = $series['asset_filter'] ?? null;
+                                            $defaultAssets = $allAssets;
+                                            if (is_array($allowedIds) && ! empty($allowedIds)) {
+                                                $filtered = [];
+                                                foreach ($allowedIds as $id) {
+                                                    if (isset($allAssets[$id])) {
+                                                        $filtered[$id] = $allAssets[$id];
+                                                    }
+                                                }
+                                                if (! empty($filtered)) {
+                                                    $defaultAssets = $filtered;
+                                                }
+                                            }
+                                            if (! empty($defaultAssets)) {
+                                                reset($defaultAssets);
+                                                $resolved['series_assets'][$assetKey] = [strval(key($defaultAssets))];
+                                            } else {
+                                                $resolved['series_assets'][$assetKey] = [];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // DM source series asset options
             if ($widgetArray['source_type'] === 'derived_metric') {
                 $dmId = $widgetArray['source_config']['derived_metric_id'] ?? null;
@@ -315,6 +424,13 @@ trait LoadsDashboardViewData
                             } elseif (str_starts_with($assetKey, 'independent_')) {
                                 $idx = substr($assetKey, strlen('independent_'));
                                 $channel = $uiState['independent_variables'][$idx]['independent_channel'] ?? null;
+                            } elseif (str_starts_with($assetKey, 'dep_dm_')) {
+                                $sIdx = (int) substr($assetKey, 7);
+                                $channel = ($widgetArray['dm_kpi_series']['dependent']['source_series'][$sIdx] ?? [])['channel'] ?? null;
+                            } elseif (preg_match('/^ind_(\d+)_dm_(\d+)$/', $assetKey, $m)) {
+                                $vKey = 'independent_' . $m[1];
+                                $sIdx = (int) $m[2];
+                                $channel = ($widgetArray['dm_kpi_series'][$vKey]['source_series'][$sIdx] ?? [])['channel'] ?? null;
                             }
                         } elseif ($widgetArray['source_type'] === 'derived_metric') {
                             if (str_starts_with($assetKey, 'dm_')) {
@@ -417,6 +533,27 @@ trait LoadsDashboardViewData
                             'metrics' => $indMetrics,
                             'selected_metric' => $var['independent_metric'] ?? '',
                         ];
+                    }
+                }
+                // Add DM source series variables for KPI DM variables (view settings modal)
+                foreach ($widgetArray['dm_kpi_series'] ?? [] as $varKey => $dmInfo) {
+                    foreach ($dmInfo['source_series'] ?? [] as $sIdx => $series) {
+                        $channel = $series['channel'] ?? '';
+                        if (! empty($channel)) {
+                            // Match the asset key scheme used in series_assets_options and builder
+                            $prefix = $varKey === 'dependent' ? 'dep' : 'ind';
+                            $entryKey = ($varKey === 'dependent' ? '' : str_replace('independent_', '', $varKey) . '_');
+                            $entryKey = ($varKey === 'dependent' ? 'dep' : 'ind_' . str_replace('independent_', '', $varKey)) . '_dm_' . $sIdx;
+                            $variables[$entryKey] = [
+                                'index' => $varIndex++,
+                                'channel' => $channel,
+                                'channel_name' => KpiFormBuilder::getChannelDisplayName($channel),
+                                'metrics' => [$series['metric'] => $series['metric']],
+                                'selected_metric' => $series['metric'],
+                                'dm_source_label' => $series['label'] ?? ('Source ' . chr(97 + $sIdx)),
+                                'dm_name' => $dmInfo['dm_name'] ?? '',
+                            ];
+                        }
                     }
                 }
             } elseif ($widgetArray['source_type'] === 'derived_metric') {

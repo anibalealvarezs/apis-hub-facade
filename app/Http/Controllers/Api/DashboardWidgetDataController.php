@@ -1615,11 +1615,38 @@ class DashboardWidgetDataController extends Controller
         if (! empty($dmIds)) {
             $seriesData = $payload['series_data'] ?? [];
 
+            $dmControlKeys = [];
+            if (($mergedState['dependent_source_type'] ?? 'channel') === 'derived_metric' && ! empty($mergedState['dependent_dm_id'])) {
+                $dmControlKeys[$mergedState['dependent_dm_id']] = 'dep';
+            }
+            foreach (($mergedState['independent_variables'] ?? []) as $key => $var) {
+                if (($var['independent_source_type'] ?? 'channel') === 'derived_metric' && ! empty($var['independent_dm_id'])) {
+                    $dmControlKeys[$var['independent_dm_id']] = 'ind_' . $key;
+                }
+            }
+
             foreach ($dmIds as $dmId) {
                 try {
                     $referencedDm = \App\Models\DerivedMetric::find($dmId);
                     if (! $referencedDm) {
                         continue;
+                    }
+
+                    // Map KPI DM series_assets (dep_dm_N / ind_X_dm_N) to DM source series keys (dm_N)
+                    $dmControls = $controls;
+                    $prefix = $dmControlKeys[$dmId] ?? null;
+                    if ($prefix && ! empty($controls['series_assets']) && is_array($controls['series_assets'])) {
+                        $sourceSeries = array_values($referencedDm->source_series ?? []);
+                        $dmSeriesAssets = [];
+                        foreach ($sourceSeries as $sIdx => $series) {
+                            $kpiKey = $prefix . '_dm_' . $sIdx;
+                            if (isset($controls['series_assets'][$kpiKey]) && ! empty($controls['series_assets'][$kpiKey])) {
+                                $dmSeriesAssets['dm_' . $sIdx] = $controls['series_assets'][$kpiKey];
+                            }
+                        }
+                        if (! empty($dmSeriesAssets)) {
+                            $dmControls['series_assets'] = array_merge($controls['series_assets'] ?? [], $dmSeriesAssets);
+                        }
                     }
 
                     $tempWidget = new DashboardWidget([
@@ -1629,7 +1656,7 @@ class DashboardWidgetDataController extends Controller
                     ]);
                     $tempWidget->setRelation('derivedMetric', $referencedDm);
 
-                    $dmResult = $this->handleDerivedMetricSource($project, $tempWidget, $controls);
+                    $dmResult = $this->handleDerivedMetricSource($project, $tempWidget, $dmControls);
 
                     if (! empty($dmResult['labels']) && ! empty($dmResult['datasets'][0]['data'])) {
                         $dmSeries = [];
