@@ -70,11 +70,210 @@
 
             return $form
                 ->schema([
-                    Forms\Components\Hidden::make('_builder_step')->default('1_series'),
+                    Forms\Components\Hidden::make('_builder_step')->default('0_intent'),
                     Forms\Components\Hidden::make('_step_history')->default('[]'),
 
-                    // ── Step 1: Source Series ──────────────────────────────────
-                    Forms\Components\Section::make(__('Source Series'))
+                    // ── Step 0: Intent ─────────────────────────────────────────
+                    Forms\Components\Section::make(__('Choose Build Method'))
+                        ->description(__('Start from scratch or use a predefined formula template.'))
+                        ->schema([
+                            Forms\Components\Radio::make('_intent')
+                                ->label(__('How would you like to create this Derived Metric?'))
+                                ->options([
+                                    'template' => __('Use a predefined template'),
+                                    'scratch'  => __('Build from scratch'),
+                                ])
+                                ->descriptions([
+                                    'template' => __('Pick from common marketing formulas like CPC, CTR, ROAS, etc.'),
+                                    'scratch'  => __('Define your own source series and custom formula.'),
+                                ])
+                                ->live(),
+                            Forms\Components\Actions::make([
+                                Forms\Components\Actions\Action::make('next_intent')
+                                    ->label(__('Next'))
+                                    ->icon('heroicon-o-arrow-right')
+                                    ->iconPosition('after')
+                                    ->color('primary')
+                                    ->extraAttributes(['class' => $primaryClasses])
+                                    ->action(function (Forms\Set $set, Forms\Get $get) {
+                                        $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                        $history[] = $get('_builder_step');
+                                        $set('_step_history', json_encode($history));
+                                        $set('_builder_step', $get('_intent') === 'template' ? '1_template' : '2_series');
+                                    })
+                                    ->disabled(fn (Forms\Get $get) => empty($get('_intent'))),
+                            ]),
+                        ])
+                        ->visible(fn (Forms\Get $get) => $get('_builder_step') === '0_intent'),
+
+                    // ── Step 1: Template Selection ─────────────────────────────
+                    Forms\Components\Section::make(__('1. Select Template'))
+                        ->description(__('Choose a predefined formula to auto-fill the form.'))
+                        ->schema([
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Select::make('category_filter')
+                                            ->label(__('Filter by category'))
+                                            ->multiple()
+                                            ->options(self::getDerivedMetricCategoryOptions())
+                                            ->live(),
+                                        Forms\Components\Select::make('template')
+                                            ->label(__('Predefined Formula'))
+                                            ->allowHtml()
+                                            ->searchable()
+                                            ->options(fn (Forms\Get $get) => self::getDerivedMetricTemplateOptions($get('category_filter') ?? []))
+                                            ->live()
+                                            ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                                if (! $state) {
+                                                    return;
+                                                }
+                                                $dm = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined()[$state] ?? null;
+                                                if (! $dm) {
+                                                    return;
+                                                }
+
+                                                if (empty($get('name'))) {
+                                                    $set('name', $dm['name'] ?? '');
+                                                }
+                                                if (empty($get('description'))) {
+                                                    $set('description', $dm['description'] ?? '');
+                                                }
+                                                $set('format', $dm['format'] ?? 'decimal');
+                                                $set('output_granularity', $dm['output_granularity'] ?? '');
+
+                                                $activeChannels = array_keys(\App\Services\Analytics\KpiFormBuilder::getActiveChannels());
+                                                $registryTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+
+                                                $resolveChannel = function (string $placeholder) use ($activeChannels, $registryTags): ?string {
+                                                    preg_match('/__([A-Z_]+)_CHANNEL_(\d+)__/', $placeholder, $matches);
+                                                    if (empty($matches[1])) {
+                                                        return null;
+                                                    }
+                                                    $requiredTag = strtolower($matches[1]);
+                                                    $index = (int) ($matches[2] ?? 1) - 1;
+                                                    $matchingChannels = [];
+                                                    foreach ($activeChannels as $channel) {
+                                                        $tags = $registryTags[$channel] ?? [];
+                                                        if (in_array($requiredTag, $tags)) {
+                                                            $matchingChannels[] = $channel;
+                                                        }
+                                                    }
+                                                    return $matchingChannels[$index] ?? $matchingChannels[0] ?? null;
+                                                };
+
+                                                $tplSeries = $dm['source_series'] ?? [];
+                                                $resolvedSeries = [];
+                                                $keyIndex = 0;
+                                                foreach ($tplSeries as $tpl) {
+                                                    $channel = $tpl['channel'] ?? '';
+                                                    if (str_starts_with($channel, '__')) {
+                                                        $channel = $resolveChannel($channel);
+                                                    }
+                                                    $key = chr(97 + $keyIndex);
+                                                    $resolvedSeries[] = [
+                                                        'key'          => $key,
+                                                        'label'        => $tpl['label'] ?? ($channel ? str($channel)->replace('_', ' ')->title().' - '.str($tpl['metric'] ?? '')->replace('_', ' ')->title() : 'Series '.$key),
+                                                        'channel'      => $channel ?? '',
+                                                        'metric'       => $tpl['metric'] ?? '',
+                                                        'granularity'  => $tpl['granularity'] ?? 'daily',
+                                                        'asset_group'  => '',
+                                                        'asset_filter' => [],
+                                                    ];
+                                                    $keyIndex++;
+                                                }
+                                                $set('source_series', $resolvedSeries);
+                                                $set('ast', $dm['ast'] ?? []);
+                                            }),
+                                    ]),
+                                    Forms\Components\Group::make([
+                                        Forms\Components\Placeholder::make('template_details')
+                                            ->hiddenLabel()
+                                            ->content(function (Forms\Get $get) {
+                                                $templateId = $get('template');
+                                                if (! $templateId) {
+                                                    return new \Illuminate\Support\HtmlString(
+                                                        '<div class="h-full flex items-center justify-center p-6 text-gray-500 italic bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">'
+                                                        .__('Select a template to view its details.').'</div>'
+                                                    );
+                                                }
+                                                $dms = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                                                $dm = $dms[$templateId] ?? null;
+                                                if (! $dm) {
+                                                    return new \Illuminate\Support\HtmlString(
+                                                        '<div class="text-danger-600 dark:text-danger-400 p-4 bg-danger-50 dark:bg-danger-400/10 rounded-xl">'
+                                                        .__('Template details not found.').'</div>'
+                                                    );
+                                                }
+
+                                                $formatLabel = match ($dm['format'] ?? 'decimal') {
+                                                    'percentage' => 'Percentage (%)',
+                                                    'currency'   => 'Currency ($)',
+                                                    default      => 'Decimal',
+                                                };
+                                                $categoriesText = implode(', ', array_map(fn ($c) => __(str($c)->replace('_', ' ')->title()->toString()), $dm['categories'] ?? []));
+
+                                                $sourcePreview = '';
+                                                foreach ($dm['source_series'] ?? [] as $s) {
+                                                    $channelLabel = $s['channel'] ?? '?';
+                                                    $metricLabel = str($s['metric'] ?? '?')->replace('_', ' ')->title();
+                                                    $sourcePreview .= '<div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">'
+                                                        .'<span class="font-mono text-xs text-primary-600 dark:text-primary-400">'.$s['key'].'</span>'
+                                                        .'<span>—</span>'
+                                                        .'<span>'.e($metricLabel).'</span>'
+                                                        .'<span class="text-xs text-gray-400">('.e($channelLabel).')</span>'
+                                                        .'</div>';
+                                                }
+
+                                                $astPreview = e(json_encode($dm['ast'] ?? [], JSON_PRETTY_PRINT));
+
+                                                return new \Illuminate\Support\HtmlString(
+                                                    '<div class="space-y-4 p-6 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">'
+                                                    .'<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">'.e($dm['name']).'</h3></div>'
+                                                    .'<div><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">'.e($dm['description'] ?? '').'</p></div>'
+                                                    .'<div class="flex flex-wrap gap-2">'
+                                                    .'<span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">'.$formatLabel.'</span>'
+                                                    .'</div>'
+                                                    .'<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">'.__('Source Series').'</h4>'
+                                                    .$sourcePreview.'</div>'
+                                                    .'<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">'.__('Formula (AST)').'</h4>'
+                                                    .'<pre class="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">'.$astPreview.'</pre></div>'
+                                                    .'</div>'
+                                                );
+                                            }),
+                                    ]),
+                                ]),
+                            Forms\Components\Actions::make([
+                                Forms\Components\Actions\Action::make('backFromTemplate')
+                                    ->label(__('Back'))
+                                    ->icon('heroicon-o-arrow-left')
+                                    ->color('gray')
+                                    ->extraAttributes(['class' => $grayClasses])
+                                    ->action(function (Forms\Set $set, Forms\Get $get) {
+                                        $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                        $prevStep = array_pop($history) ?? '0_intent';
+                                        $set('_step_history', json_encode($history));
+                                        $set('_builder_step', $prevStep);
+                                    }),
+                                Forms\Components\Actions\Action::make('nextToSeries')
+                                    ->label(__('Next: Source Series'))
+                                    ->icon('heroicon-o-arrow-right')
+                                    ->iconPosition('after')
+                                    ->color('primary')
+                                    ->extraAttributes(['class' => $primaryClasses])
+                                    ->action(function (Forms\Set $set, Forms\Get $get) {
+                                        $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
+                                        $history[] = $get('_builder_step');
+                                        $set('_step_history', json_encode($history));
+                                        $set('_builder_step', '2_series');
+                                    })
+                                    ->disabled(fn (Forms\Get $get) => empty($get('template'))),
+                            ]),
+                        ])
+                        ->visible(fn (Forms\Get $get) => $get('_builder_step') === '1_template'),
+
+                    // ── Step 2: Source Series ──────────────────────────────────
+                    Forms\Components\Section::make(__('2. Source Series'))
                         ->description(__('Define the time series inputs for your formula.'))
                         ->schema([
                             Forms\Components\Repeater::make('source_series')
@@ -147,14 +346,14 @@
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
                                         $history[] = $get('_builder_step');
                                         $set('_step_history', json_encode($history));
-                                        $set('_builder_step', '2_formula');
+                                        $set('_builder_step', '3_formula');
                                     }),
                             ]),
                         ])
-                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '1_series'),
+                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '2_series'),
 
-                    // ── Step 2: Formula ───────────────────────────────────────
-                    Forms\Components\Section::make(__('Formula'))
+                    // ── Step 3: Formula ───────────────────────────────────────
+                    Forms\Components\Section::make(__('3. Formula'))
                         ->description(__('Define how your source series are combined.'))
                         ->schema([
                             Forms\Components\Hidden::make('ast'),
@@ -186,7 +385,7 @@
                                     ->extraAttributes(['class' => $grayClasses])
                                     ->action(function (Forms\Set $set, Forms\Get $get) {
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                        $prevStep = array_pop($history) ?? '1_series';
+                                        $prevStep = array_pop($history) ?? '2_series';
                                         $set('_step_history', json_encode($history));
                                         $set('_builder_step', $prevStep);
                                     }),
@@ -200,14 +399,14 @@
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
                                         $history[] = $get('_builder_step');
                                         $set('_step_history', json_encode($history));
-                                        $set('_builder_step', '3_details');
+                                        $set('_builder_step', '4_details');
                                     }),
                             ]),
                         ])
-                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '2_formula'),
+                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '3_formula'),
 
-                    // ── Step 3: Details ───────────────────────────────────────
-                    Forms\Components\Section::make(__('Details'))
+                    // ── Step 4: Details ───────────────────────────────────────
+                    Forms\Components\Section::make(__('4. Details'))
                         ->description(__('Name your derived metric and configure output settings.'))
                         ->schema([
                             Forms\Components\TextInput::make('name')
@@ -247,7 +446,7 @@
                                     ->extraAttributes(['class' => $grayClasses])
                                     ->action(function (Forms\Set $set, Forms\Get $get) {
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                        $prevStep = array_pop($history) ?? '2_formula';
+                                        $prevStep = array_pop($history) ?? '3_formula';
                                         $set('_step_history', json_encode($history));
                                         $set('_builder_step', $prevStep);
                                     }),
@@ -261,15 +460,15 @@
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
                                         $history[] = $get('_builder_step');
                                         $set('_step_history', json_encode($history));
-                                        $set('_builder_step', '4_summary');
+                                        $set('_builder_step', '5_summary');
                                     }),
                             ]),
                         ])
                         ->columns(2)
-                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '3_details'),
+                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '4_details'),
 
-                    // ── Step 4: Summary ──────────────────────────────────────
-                    Forms\Components\Section::make(__('Summary'))
+                    // ── Step 5: Summary ──────────────────────────────────────
+                    Forms\Components\Section::make(__('5. Summary'))
                         ->description(__('Review your Derived Metric before saving.'))
                         ->schema([
                             Forms\Components\Placeholder::make('_summary')
@@ -315,7 +514,7 @@
                                     ->extraAttributes(['class' => $grayClasses])
                                     ->action(function (Forms\Set $set, Forms\Get $get) {
                                         $history = json_decode($get('_step_history') ?? '[]', true) ?: [];
-                                        $prevStep = array_pop($history) ?? '3_details';
+                                        $prevStep = array_pop($history) ?? '4_details';
                                         $set('_step_history', json_encode($history));
                                         $set('_builder_step', $prevStep);
                                     }),
@@ -333,7 +532,7 @@
                                     ->visible(fn() => $isEdit ? auth()->user()->can('edit_preferences') : true),
                             ]),
                         ])
-                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '4_summary'),
+                        ->visible(fn(Forms\Get $get) => $get('_builder_step') === '5_summary'),
                 ]);
         }
 
@@ -561,6 +760,72 @@
                             ->visible(fn() => auth()->user()->can('edit_preferences')),
                     ]),
                 ]);
+        }
+
+        public static function getDerivedMetricCategoryOptions(): array
+        {
+            return [
+                'paid_media'   => __('Paid Media'),
+                'organic'      => __('Organic Social'),
+                'seo'          => __('SEO / Search'),
+                'cross-channel' => __('Cross-Channel'),
+                'cost'         => __('Cost'),
+                'performance'  => __('Performance'),
+                'results'      => __('Results'),
+                'engagement'   => __('Engagement'),
+                'revenue'      => __('Revenue'),
+                'reach'        => __('Reach'),
+                'clicks'       => __('Clicks'),
+                'impressions'  => __('Impressions'),
+                'budget'       => __('Budget'),
+            ];
+        }
+
+        public static function getDerivedMetricTemplateOptions(array $categoryFilter = []): array
+        {
+            $activeChannels = array_keys(\App\Services\Analytics\KpiFormBuilder::getActiveChannels());
+            $available = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getAvailable($activeChannels);
+            $options = [];
+
+            foreach ($available as $key => $dm) {
+                $cats = $dm['categories'] ?? [];
+                if (! empty($categoryFilter)) {
+                    $intersection = array_intersect($categoryFilter, $cats);
+                    if (count($intersection) !== count($categoryFilter)) {
+                        continue;
+                    }
+                }
+
+                $metrics = array_map(
+                    fn ($s) => str($s['metric'] ?? '?')->replace('_', ' ')->title()->toString(),
+                    $dm['source_series'] ?? []
+                );
+
+                $formulaPreview = implode(' / ', array_slice($metrics, 0, 3));
+                if (count($metrics) > 3) {
+                    $formulaPreview .= ' …';
+                }
+
+                $options[$key] = '<div class="flex flex-col">
+                    <span class="font-medium text-gray-900 dark:text-gray-100">'.e($dm['name']).'</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">'.e($formulaPreview).'</span>
+                </div>';
+            }
+
+            $names = [];
+            foreach ($available as $key => $dm) {
+                if (isset($options[$key])) {
+                    $names[$key] = $dm['name'];
+                }
+            }
+            asort($names);
+
+            $sorted = [];
+            foreach ($names as $key => $name) {
+                $sorted[$key] = $options[$key];
+            }
+
+            return $sorted;
         }
 
         public static function getPages(): array

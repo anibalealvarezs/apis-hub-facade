@@ -42,4 +42,23 @@
   - Progressive asset restriction: DM definition ∩ KPI ∩ Widget builder ∩ Dashboard runtime
   - AST evaluated locally in PHP (not via analytics engine) since DM source series are fetched independently
   - Cache key: SHA-256 of controls (date_start, date_end, granularity, asset_group, assets)
-  - Recursive DM resolution via `EvaluationContext::setDerivedMetricResolver()`
+   - Recursive DM resolution via `EvaluationContext::setDerivedMetricResolver()`
+
+### Predefined Derived Metrics Registry (2026-07-28)
+- **Status:** Registry created with 21 entries
+- **New file:** `app/Services/Analytics/PredefinedDerivedMetricRegistry.php`
+- **Pattern:** Mirrors `PredefinedKpiRegistry` — same `required_tags` filtering via `ChannelCapabilityRegistry`, `getAvailable(array $activeChannels)` method, and placeholder channel references (`__SPENDABLE_CHANNEL_1__`, etc.)
+- **Categories:**
+  - **Single-Channel Paid Media (9):** `cpc`, `ctr`, `cpa`, `cvr`, `roas`, `cost_per_conversion`, `result_rate`, `cost_per_engagement`, `engagement_click_rate`
+  - **Single-Channel Organic Social (3):** `organic_engagement_rate`, `organic_reach_efficiency`, `organic_impression_engagement`
+  - **Single-Channel SEO (3):** `seo_ctr`, `click_position_efficiency`, `impression_position_efficiency`
+  - **Cross-Channel Paid (5):** `blended_cpc`, `blended_cpa`, `blended_ctr`, `blended_roas`, `budget_share_ratio`
+  - **Cross-Channel Paid + Organic (4):** `paid_organic_reach_ratio`, `paid_organic_reach_abs_diff`, `seo_paid_click_ratio`, `paid_organic_impression_ratio`
+  - **Cross-Channel Hybrid (1):** `organic_reach_vs_seo_ctr`
+  - **Cross-Channel Revenue (1):** `revenue_per_click`
+- **Status:** Integrated into `DerivedMetricResource` form with template picker step
+- **Form changes:** Added 2-step wizard prefix: `0_intent` (template vs scratch) → `1_template` (select + pre-fill) → `2_series` → `3_formula` → `4_details` → `5_summary`; existing steps renumbered
+- **Template pre-fill:** Channel placeholders resolved against user's active channels via `ChannelCapabilityRegistry`; keys (a, b, c…) auto-assigned; AST, format, output_granularity, name, description pre-filled
+- **Template details panel:** Shows name, description, format badge, source series keys/metrics, and AST preview
+- **Helper methods:** `getDerivedMetricCategoryOptions()` (13 categories) and `getDerivedMetricTemplateOptions(array $categoryFilter)` (filters by category + active channels) added to `DerivedMetricResource`
+- **Next steps:** Add a reference page similar to `KpiReference`, add Spanish translations to `es.json`
