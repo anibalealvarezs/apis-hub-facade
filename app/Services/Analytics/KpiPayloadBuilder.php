@@ -55,6 +55,44 @@ class KpiPayloadBuilder
 
     public static function buildAstFromState(string $calculationType, array $state): array
     {
+        $depSourceType = $state['dependent_source_type'] ?? 'channel';
+
+        if ($depSourceType === 'derived_metric') {
+            $depDmId = $state['dependent_dm_id'] ?? null;
+            $depFullMetric = $depDmId ? 'dm_' . $depDmId : '';
+            $dependentNode = [
+                'type' => 'metric',
+                'metric' => $depFullMetric,
+            ];
+            \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building AST dependent node (derived metric)', [
+                'dm_id' => $depDmId,
+                'full_metric' => $depFullMetric,
+            ]);
+
+            if (in_array($calculationType, [
+                'calculate_autocorrelation', 'calculate_anomaly',
+                'calculate_trend_linear', 'calculate_trend_sma',
+                'calculate_trend_ema', 'calculate_trend_holt_winters',
+                'calculate_trend_logarithmic'
+            ])) {
+                return $dependentNode;
+            }
+
+            $independents = array_values($state['independent_variables'] ?? []);
+            if (empty($independents)) {
+                return $dependentNode;
+            }
+
+            $rightNode = self::buildIndependentNodes($independents, $state['granularity'] ?? 'daily');
+
+            return [
+                'type' => 'operator',
+                'operator' => '/',
+                'left' => $dependentNode,
+                'right' => $rightNode,
+            ];
+        }
+
         $depChannel = $state['dependent_channel'] ?? '';
         $depMetric = $state['dependent_metric'] ?? '';
         $depFullMetric = $depChannel . '.' . $depMetric;
@@ -204,6 +242,22 @@ class KpiPayloadBuilder
     {
         if (count($variables) === 1) {
             $var = $variables[0];
+            $indSourceType = $var['independent_source_type'] ?? 'channel';
+
+            if ($indSourceType === 'derived_metric') {
+                $indDmId = $var['independent_dm_id'] ?? null;
+                $indFullMetric = $indDmId ? 'dm_' . $indDmId : '';
+                $node = [
+                    'type' => 'metric',
+                    'metric' => $indFullMetric,
+                ];
+                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building independent node (single derived metric)', [
+                    'dm_id' => $indDmId,
+                    'full_metric' => $indFullMetric,
+                ]);
+                return $node;
+            }
+
             $indChannel = $var['independent_channel'] ?? '';
             $indMetric = $var['independent_metric'] ?? '';
             $indFullMetric = $indChannel . '.' . $indMetric;
@@ -273,12 +327,22 @@ class KpiPayloadBuilder
 
         // If multiple, chain them with '+'
         $first = array_shift($variables);
-        $left = [
-            'type' => 'metric',
-            'metric' => ($first['independent_channel'] ?? '') . '.' . ($first['independent_metric'] ?? ''),
-        ];
-        
-        if (!empty($first['independent_asset_group'])) {
+        $firstSourceType = $first['independent_source_type'] ?? 'channel';
+
+        if ($firstSourceType === 'derived_metric') {
+            $firstDmId = $first['independent_dm_id'] ?? null;
+            $left = [
+                'type' => 'metric',
+                'metric' => $firstDmId ? 'dm_' . $firstDmId : '',
+            ];
+        } else {
+            $left = [
+                'type' => 'metric',
+                'metric' => ($first['independent_channel'] ?? '') . '.' . ($first['independent_metric'] ?? ''),
+            ];
+        }
+
+        if ($firstSourceType !== 'derived_metric' && !empty($first['independent_asset_group'])) {
             $group = \App\Models\AssetGroup::find($first['independent_asset_group']);
             $assets = $group ? $group->active_items->where('channel', $first['independent_channel'])->pluck('asset_id')->toArray() : [];
             
@@ -287,11 +351,12 @@ class KpiPayloadBuilder
             } else {
                 $left['filters'] = ['asset_platform_id' => ['__empty_group__']];
             }
-        } elseif (!empty($first['independent_asset_filter'])) {
+        } elseif ($firstSourceType !== 'derived_metric' && !empty($first['independent_asset_filter'])) {
             $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
         }
 
-        if (($first['independent_channel'] ?? '') === 'google_search_console'
+        if ($firstSourceType !== 'derived_metric'
+            && ($first['independent_channel'] ?? '') === 'google_search_console'
             && $granularity !== 'search_appearance'
             && $granularity !== 'dimensions.searchAppearance'
             && !isset($left['filters']['dimensions.searchAppearance'])

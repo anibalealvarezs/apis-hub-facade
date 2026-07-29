@@ -1412,7 +1412,8 @@ class DashboardWidgetDataController extends Controller
 
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
-                if (empty($uiState['independent_variables'][$key]['independent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
+                $indSourceType = $var['independent_source_type'] ?? 'channel';
+                if ($indSourceType === 'channel' && empty($uiState['independent_variables'][$key]['independent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                 }
                 $metricIndex++;
@@ -1431,6 +1432,10 @@ class DashboardWidgetDataController extends Controller
         // Auto-resolve missing independent variable metrics
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
+                $indSourceType = $var['independent_source_type'] ?? 'channel';
+                if ($indSourceType === 'derived_metric') {
+                    continue;
+                }
                 if (empty($var['independent_metric']) && ! empty($var['independent_channel'])) {
                     $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($var['independent_channel']);
                     \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Auto-resolving missing metric', [
@@ -1491,7 +1496,7 @@ class DashboardWidgetDataController extends Controller
             'widget_id' => $widget->id,
         ]);
 
-        if (empty($mergedState['dependent_metric'])) {
+        if (empty($mergedState['dependent_metric']) && empty($mergedState['dependent_dm_id'])) {
             $channelMetrics = ! empty($uiState['dependent_channel'])
                 ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
                 : [];
@@ -1502,6 +1507,8 @@ class DashboardWidgetDataController extends Controller
             } else {
                 throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured, no runtime metric was provided, and no default metrics are available for the channel.");
             }
+        } elseif (! empty($mergedState['dependent_dm_id'])) {
+            $mergedState['dependent_source_type'] = 'derived_metric';
         }
 
         $payload = KpiPayloadBuilder::build(
@@ -1578,6 +1585,71 @@ class DashboardWidgetDataController extends Controller
             'payload_filters' => $payload['filters'] ?? null,
             'payload_calc' => $payload['calculate_regression'] ?? $payload['calculate_elasticity'] ?? null,
         ]);
+
+        // Pre-fetch derived metric data for KPI variables that use DMs as series
+        $dmIds = [];
+
+        if (($mergedState['dependent_source_type'] ?? 'channel') === 'derived_metric' && ! empty($mergedState['dependent_dm_id'])) {
+            $dmIds[] = $mergedState['dependent_dm_id'];
+        }
+
+        foreach (($mergedState['independent_variables'] ?? []) as $var) {
+            if (($var['independent_source_type'] ?? 'channel') === 'derived_metric' && ! empty($var['independent_dm_id'])) {
+                $dmIds[] = $var['independent_dm_id'];
+            }
+        }
+
+        $dmIds = array_values(array_unique($dmIds));
+
+        if (! empty($dmIds)) {
+            $seriesData = $payload['series_data'] ?? [];
+
+            foreach ($dmIds as $dmId) {
+                try {
+                    $referencedDm = \App\Models\DerivedMetric::find($dmId);
+                    if (! $referencedDm) {
+                        continue;
+                    }
+
+                    $tempWidget = new DashboardWidget([
+                        'derived_metric_id' => $dmId,
+                        'source_type' => 'derived_metric',
+                        'widget_type' => 'line_chart',
+                    ]);
+                    $tempWidget->setRelation('derivedMetric', $referencedDm);
+
+                    $dmResult = $this->handleDerivedMetricSource($project, $tempWidget, $controls);
+
+                    if (! empty($dmResult['labels']) && ! empty($dmResult['datasets'][0]['data'])) {
+                        $dmSeries = [];
+                        foreach ($dmResult['labels'] as $i => $label) {
+                            $dmSeries[$label] = $dmResult['datasets'][0]['data'][$i] ?? 0;
+                        }
+                        $seriesData['dm_' . $dmId] = $dmSeries;
+
+                        \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Pre-fetched DM series data', [
+                            'dm_id' => $dmId,
+                            'dm_name' => $referencedDm->name,
+                            'data_points' => count($dmSeries),
+                        ]);
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning('[STEP handleKpiSource] DM returned no usable data', [
+                            'dm_id' => $dmId,
+                            'dm_name' => $referencedDm->name,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('[STEP handleKpiSource] Failed to pre-fetch DM data', [
+                        'dm_id' => $dmId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if (! empty($seriesData)) {
+                $payload['series_data'] = $seriesData;
+            }
+        }
 
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleKpiSource BEFORE computeKpi", ['widget_id' => $widget->id]);
 

@@ -480,12 +480,33 @@ class KpiFormBuilder
         return \App\Models\AssetGroup::where('project_id', $tenant->id)->pluck('name', 'id')->toArray();
     }
 
+    public static function getDerivedMetricOptions(): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (! $project) {
+            return [];
+        }
+
+        return \App\Models\DerivedMetric::where('project_id', $project->id)
+            ->where('is_active', true)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
     public static function getNodeSchema(string $name, string $label): array
     {
         return [
             Section::make($label)
                 ->schema([
                     Hidden::make('_required_tag'),
+                    Select::make($name . '_source_type')
+                        ->label(__('Source Type'))
+                        ->options([
+                            'channel' => __('Channel Metric'),
+                            'derived_metric' => __('Derived Metric'),
+                        ])
+                        ->default('channel')
+                        ->live(),
                     Select::make($name . '_channel')
                         ->label(__('Channel (keep empty for runtime)'))
                         ->options(function (Get $get) {
@@ -507,6 +528,7 @@ class KpiFormBuilder
                             return $filtered;
                         })
                         ->live()
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
                         ->extraAttributes(function (Get $get) use ($name) {
                             return empty($get($name . '_channel'))
                                 ? ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-amber-500 [&_.fi-input-wrapper]:!bg-amber-50 dark:[&_.fi-input-wrapper]:!bg-amber-900/20 [&_.fi-input-wrapper_*]:!text-amber-900 dark:[&_.fi-input-wrapper_*]:!text-amber-100']
@@ -515,17 +537,26 @@ class KpiFormBuilder
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'), $get('granularity')))
-                        ->required(fn () => $name === 'dependent'),
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
+                        ->required(fn (Get $get) => $name === 'dependent' && $get($name . '_source_type') === 'channel'),
+                    Select::make($name . '_dm_id')
+                        ->label(__('Derived Metric'))
+                        ->options(fn () => static::getDerivedMetricOptions())
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'derived_metric')
+                        ->searchable()
+                        ->live(),
                     Select::make($name . '_asset_group')
                         ->label(__('Asset Group (keep empty for runtime)'))
                         ->options(fn () => static::getAssetGroupOptions())
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_filter')))
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
                         ->live(),
                     Select::make($name . '_asset_filter')
                         ->label(__('Asset Filter (keep empty for runtime)'))
                         ->multiple()
                         ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
                         ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
                         ->live(),
                 ])->columns(1),
         ];
@@ -936,14 +967,22 @@ class KpiFormBuilder
                                                 ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                                                 ->disabled(function (Get $get) {
-                                                    if (empty($get('dependent_channel'))) {
+                                                    $depSourceType = $get('dependent_source_type') ?? 'channel';
+                                                    if ($depSourceType === 'channel' && empty($get('dependent_channel'))) {
+                                                        return true;
+                                                    }
+                                                    if ($depSourceType === 'derived_metric' && empty($get('dependent_dm_id'))) {
                                                         return true;
                                                     }
 
                                                     $independents = $get('independent_variables') ?? [];
                                                     if (!empty($independents)) {
                                                         foreach ($independents as $item) {
-                                                            if (empty($item['independent_channel'])) {
+                                                            $indSourceType = $item['independent_source_type'] ?? 'channel';
+                                                            if ($indSourceType === 'channel' && empty($item['independent_channel'])) {
+                                                                return true;
+                                                            }
+                                                            if ($indSourceType === 'derived_metric' && empty($item['independent_dm_id'])) {
                                                                 return true;
                                                             }
                                                         }
@@ -957,6 +996,11 @@ class KpiFormBuilder
                                                         return true; // hide modal
                                                     }
 
+                                                    $depSourceType = $get('dependent_source_type') ?? 'channel';
+                                                    if ($depSourceType === 'derived_metric') {
+                                                        return true; // hide modal — DMs have no asset groups
+                                                    }
+
                                                     $depGroup = $get('dependent_asset_group');
                                                     $independents = $get('independent_variables') ?? [];
 
@@ -964,6 +1008,10 @@ class KpiFormBuilder
                                                     $hasAnyGroup = $depStr !== '';
 
                                                     foreach ($independents as $item) {
+                                                        $indSourceType = $item['independent_source_type'] ?? 'channel';
+                                                        if ($indSourceType === 'derived_metric') {
+                                                            continue; // skip DM variables
+                                                        }
                                                         $indVal = $item['independent_asset_group'] ?? '';
                                                         $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
                                                         if ($indStr !== '') {
@@ -976,6 +1024,10 @@ class KpiFormBuilder
                                                     }
 
                                                     foreach ($independents as $item) {
+                                                        $indSourceType = $item['independent_source_type'] ?? 'channel';
+                                                        if ($indSourceType === 'derived_metric') {
+                                                            continue; // skip DM variables
+                                                        }
                                                         $indVal = $item['independent_asset_group'] ?? '';
                                                         $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
 
@@ -1151,8 +1203,16 @@ class KpiFormBuilder
         }
 
         // Dependent variable
-        $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
-        $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
+        $depSourceType = $get('dependent_source_type') ?? 'channel';
+        if ($depSourceType === 'derived_metric') {
+            $depDmId = $get('dependent_dm_id');
+            $depDm = $depDmId ? \App\Models\DerivedMetric::find($depDmId) : null;
+            $depChannel = 'Derived Metric';
+            $depMetric = e($depDm?->name ?? '—');
+        } else {
+            $depChannel = e(Str::headline($get('dependent_channel') ?: '—'));
+            $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
+        }
 
         $getAssetsText = function ($groupVal, $filterVal) {
             if ($groupVal) {
@@ -1175,9 +1235,18 @@ class KpiFormBuilder
         $indHtml = '';
         $idx = 1;
         foreach ($independents as $var) {
-            $ch = e(Str::headline($var['independent_channel'] ?? '—'));
-            $me = e(Str::headline($var['independent_metric'] ?? '—'));
-            $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
+            $indSourceType = $var['independent_source_type'] ?? 'channel';
+            if ($indSourceType === 'derived_metric') {
+                $indDmId = $var['independent_dm_id'] ?? null;
+                $indDm = $indDmId ? \App\Models\DerivedMetric::find($indDmId) : null;
+                $ch = 'Derived Metric';
+                $me = e($indDm?->name ?? '—');
+                $ast = '—';
+            } else {
+                $ch = e(Str::headline($var['independent_channel'] ?? '—'));
+                $me = e(Str::headline($var['independent_metric'] ?? '—'));
+                $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
+            }
             $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ast}</td></tr>";
             $idx++;
         }
