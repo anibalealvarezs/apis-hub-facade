@@ -506,7 +506,17 @@ class KpiFormBuilder
                             'derived_metric' => __('Derived Metric'),
                         ])
                         ->default('channel')
-                        ->live(),
+                        ->live()
+                        ->afterStateUpdated(function (Set $set, Get $get, $state) use ($name) {
+                            if ($state === 'derived_metric') {
+                                $set($name . '_channel', null);
+                                $set($name . '_metric', null);
+                                $set($name . '_asset_group', null);
+                                $set($name . '_asset_filter', null);
+                            } else {
+                                $set($name . '_dm_id', null);
+                            }
+                        }),
                     Select::make($name . '_channel')
                         ->label(__('Channel (keep empty for runtime)'))
                         ->options(function (Get $get) {
@@ -967,22 +977,18 @@ class KpiFormBuilder
                                                 ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
                                                 ->disabled(function (Get $get) {
-                                                    $depSourceType = $get('dependent_source_type') ?? 'channel';
-                                                    if ($depSourceType === 'channel' && empty($get('dependent_channel'))) {
-                                                        return true;
-                                                    }
-                                                    if ($depSourceType === 'derived_metric' && empty($get('dependent_dm_id'))) {
+                                                    $depHasChannel = ! empty($get('dependent_channel'));
+                                                    $depHasDm = ! empty($get('dependent_dm_id'));
+                                                    if (! $depHasChannel && ! $depHasDm) {
                                                         return true;
                                                     }
 
                                                     $independents = $get('independent_variables') ?? [];
-                                                    if (!empty($independents)) {
+                                                    if (! empty($independents)) {
                                                         foreach ($independents as $item) {
-                                                            $indSourceType = $item['independent_source_type'] ?? 'channel';
-                                                            if ($indSourceType === 'channel' && empty($item['independent_channel'])) {
-                                                                return true;
-                                                            }
-                                                            if ($indSourceType === 'derived_metric' && empty($item['independent_dm_id'])) {
+                                                            $indHasChannel = ! empty($item['independent_channel']);
+                                                            $indHasDm = ! empty($item['independent_dm_id']);
+                                                            if (! $indHasChannel && ! $indHasDm) {
                                                                 return true;
                                                             }
                                                         }
