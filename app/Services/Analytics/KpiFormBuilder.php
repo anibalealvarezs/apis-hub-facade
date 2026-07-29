@@ -547,13 +547,11 @@ class KpiFormBuilder
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'), $get('granularity')))
-                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
-                        ->required(fn (Get $get) => $name === 'dependent' && $get($name . '_source_type') === 'channel'),
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel'),
                     Select::make($name . '_dm_id')
                         ->label(__('Derived Metric'))
                         ->options(fn () => static::getDerivedMetricOptions())
                         ->visible(fn (Get $get) => $get($name . '_source_type') === 'derived_metric')
-                        ->searchable()
                         ->live(),
                     Select::make($name . '_asset_group')
                         ->label(__('Asset Group (keep empty for runtime)'))
@@ -976,26 +974,6 @@ class KpiFormBuilder
                                 Actions\Action::make('next_series')
                                                 ->label(__('Next'))
                                                 ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
-                                                ->disabled(function (Get $get) {
-                                                    $depHasChannel = ! empty($get('dependent_channel'));
-                                                    $depHasDm = ! empty($get('dependent_dm_id'));
-                                                    if (! $depHasChannel && ! $depHasDm) {
-                                                        return true;
-                                                    }
-
-                                                    $independents = $get('independent_variables') ?? [];
-                                                    if (! empty($independents)) {
-                                                        foreach ($independents as $item) {
-                                                            $indHasChannel = ! empty($item['independent_channel']);
-                                                            $indHasDm = ! empty($item['independent_dm_id']);
-                                                            if (! $indHasChannel && ! $indHasDm) {
-                                                                return true;
-                                                            }
-                                                        }
-                                                    }
-
-                                                    return false;
-                                                })
                                                 ->modalHidden(function (Get $get) {
                                                     $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
                                                     if (! $isBivariate) {
