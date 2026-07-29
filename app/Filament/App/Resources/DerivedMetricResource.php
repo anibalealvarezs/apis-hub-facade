@@ -3,6 +3,7 @@
     namespace App\Filament\App\Resources;
 
     use App\Filament\App\Resources\DerivedMetricResource\Pages;
+    use App\Filament\App\Resources\DerivedMetricResource\RelationManagers;
     use App\Models\DerivedMetric;
     use Filament\Forms;
     use Filament\Forms\Form;
@@ -756,11 +757,35 @@
                 ])
                 ->bulkActions([
                     Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make()
-                            ->visible(fn() => auth()->user()->can('edit_preferences')),
-                    ]),
-                ]);
-        }
+                Tables\Actions\DeleteBulkAction::make()
+                    ->visible(fn() => auth()->user()->can('edit_preferences')),
+                Tables\Actions\BulkAction::make('pruneVersions')
+                    ->label(__('Prune Versions'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('months')
+                            ->label(__('Delete versions older than'))
+                            ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
+                            ->required(),
+                    ])
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                        $cutoff = now()->subMonths((int) $data['months']);
+                        foreach ($records as $record) {
+                            $record->versions()
+                                ->where('created_at', '<', $cutoff)
+                                ->where('version_number', '>', 1)
+                                ->delete();
+                        }
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Old versions pruned successfully'))
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn() => auth()->user()->can('edit_preferences')),
+            ]),
+        ]);
+    }
 
         public static function getDerivedMetricCategoryOptions(): array
         {
@@ -826,6 +851,13 @@
             }
 
             return $sorted;
+        }
+
+        public static function getRelations(): array
+        {
+            return [
+                RelationManagers\VersionsRelationManager::class,
+            ];
         }
 
         public static function getPages(): array

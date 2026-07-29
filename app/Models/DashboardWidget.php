@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\TracksVersions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ class DashboardWidget extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use TracksVersions;
 
     protected $fillable = [
         'dashboard_id',
@@ -47,5 +49,25 @@ class DashboardWidget extends Model
     public function derivedMetric(): BelongsTo
     {
         return $this->belongsTo(DerivedMetric::class);
+    }
+
+    protected function getVersionModelClass(): string
+    {
+        return \App\Models\WidgetVersion::class;
+    }
+
+    protected function getTrackableFields(): array
+    {
+        return [
+            'custom_kpi_id', 'derived_metric_id',
+            'name', 'title', 'description',
+            'source_type', 'source_config', 'widget_type',
+            'controls', 'grid_x', 'grid_y', 'grid_w', 'grid_h',
+        ];
+    }
+
+    protected function getVersionForeignKey(): string
+    {
+        return 'dashboard_widget_id';
     }
 }

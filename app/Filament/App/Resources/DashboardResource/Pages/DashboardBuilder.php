@@ -417,6 +417,24 @@ class DashboardBuilder extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('versionHistory')
+                ->label(__('Version History'))
+                ->icon('heroicon-o-clock')
+                ->color('gray')
+                ->modalHeading(__('Dashboard Version History'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel(__('Close'))
+                ->modalContent(function () {
+                    $versions = $this->dashboard->versions()
+                        ->with('user')
+                        ->orderBy('version_number', 'desc')
+                        ->get();
+
+                    return view('filament.modals.version-history', [
+                        'versions' => $versions,
+                        'dashboard' => $this->dashboard,
+                    ]);
+                }),
             Actions\Action::make('settings')
                 ->label(__('Dashboard Settings'))
                 ->icon('heroicon-o-cog-6-tooth')
@@ -433,5 +451,20 @@ class DashboardBuilder extends Page
                 ->url(DashboardResource::getUrl('index'))
                 ->extraAttributes(['wire:navigate.none' => true]),
         ];
+    }
+
+    public function restoreVersion(int $versionId): void
+    {
+        $version = $this->dashboard->versions()->findOrFail($versionId);
+
+        $this->dashboard->createVersion('Before restore to v' . $version->version_number);
+        $this->dashboard->restoreVersion($version->id);
+
+        $this->loadWidgets();
+
+        \Filament\Notifications\Notification::make()
+            ->title(__('Dashboard restored to version #:version', ['version' => $version->version_number]))
+            ->success()
+            ->send();
     }
 }

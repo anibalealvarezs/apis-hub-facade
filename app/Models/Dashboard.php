@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\TracksVersions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ class Dashboard extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use TracksVersions;
 
     protected $fillable = [
         'project_id',
@@ -51,5 +53,20 @@ class Dashboard extends Model
     {
         return $this->belongsToMany(User::class, 'dashboard_user')
             ->withTimestamps();
+    }
+
+    protected function getVersionModelClass(): string
+    {
+        return \App\Models\DashboardVersion::class;
+    }
+
+    protected function getTrackableFields(): array
+    {
+        return ['name', 'description', 'grid_layout', 'controls', 'is_public', 'is_default'];
+    }
+
+    protected function getVersionForeignKey(): string
+    {
+        return 'dashboard_id';
     }
 }
