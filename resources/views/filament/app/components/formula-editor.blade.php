@@ -28,7 +28,7 @@
         wire: @this,
         operators: @js($operators),
     })"
-    x-init="$nextTick(() => hydrateFromServer())"
+    x-init="console.log('[FE] x-init running, has hydrateFromServer:', typeof hydrateFromServer); $nextTick(() => hydrateFromServer())"
     class="space-y-3"
 >
     <div class="flex items-center justify-between">

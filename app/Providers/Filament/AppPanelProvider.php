@@ -75,10 +75,20 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::head.end',
-                fn () => \Illuminate\Support\Facades\Blade::render('
-                    <script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>
-                    @verbatim' . view("filament.hooks.seo-auth")->render() . '@endverbatim
-                ')
+                function () {
+                    $path = resource_path('js/formula-editor.js');
+                    $jsContent = file_exists($path) ? file_get_contents($path) : '/* FILE NOT FOUND: ' . $path . ' */';
+                    $jsLen = strlen($jsContent);
+                    $seoHtml = view('filament.hooks.seo-auth')->render();
+                    $seoLen = strlen($seoHtml);
+                    $route = request()->route()?->getName() ?? 'NO_ROUTE';
+                    \Illuminate\Support\Facades\Log::debug('[FE] head.end hook: route=' . $route . ' jsLen=' . $jsLen . ' seoLen=' . $seoLen);
+                    return \Illuminate\Support\Facades\Blade::render('
+                        <script>console.log("[FE] formula-editor loaded, len=' . $jsLen . '")</script>
+                        <script>' . $jsContent . '</script>
+                        @verbatim' . $seoHtml . '@endverbatim
+                    ');
+                }
             )
             ->renderHook(
                 'panels::head.start',
