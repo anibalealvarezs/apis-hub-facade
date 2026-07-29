@@ -2393,11 +2393,14 @@ class DashboardWidgetDataController extends Controller
             return ['labels' => [], 'datasets' => [], 'series' => ['dates' => [], 'values' => []]];
         }
 
+        $effectiveGranularity = $derivedMetric->output_granularity ?? $controls['granularity'] ?? 'daily';
+
         $cacheService = app(\App\Services\DerivedMetricCacheService::class);
         $controlsForHash = [
             'date_start' => $controls['date_start'] ?? null,
             'date_end' => $controls['date_end'] ?? null,
             'granularity' => $controls['granularity'] ?? null,
+            'output_granularity' => $derivedMetric->output_granularity,
             'asset_group' => $controls['asset_group'] ?? null,
             'assets' => $controls['assets'] ?? null,
             'dm_assets' => $controls['dm_assets'] ?? null,
@@ -2422,7 +2425,7 @@ class DashboardWidgetDataController extends Controller
             $key = $series['key'];
             $channel = $series['channel'] ?? '';
             $metric = $series['metric'] ?? '';
-            $seriesGranularity = $derivedMetric->output_granularity ?? $series['granularity'] ?? $controls['granularity'] ?? 'daily';
+            $seriesGranularity = $series['granularity'] ?? $effectiveGranularity;
             $label = $series['label'] ?? ($channel . ' - ' . $metric);
 
             if (! $channel || ! $metric) {
@@ -2476,14 +2479,13 @@ class DashboardWidgetDataController extends Controller
         // Compute the formula result
         $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
 
-        $granularity = $controls['granularity'] ?? 'daily';
         $computePayload = [
             'ast' => $ast,
             'filters' => [
                 'startDate' => $dateStart,
                 'endDate' => $dateEnd,
-                'period' => $granularity,
-                'groupBy' => [$granularity],
+                'period' => $effectiveGranularity,
+                'groupBy' => [$effectiveGranularity],
             ],
             'series_data' => $fetchedSeries,
             'derived_metrics' => $derivedResults,
