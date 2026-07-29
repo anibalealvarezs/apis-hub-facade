@@ -65,25 +65,14 @@
 - **Next steps:** Add a reference page similar to `KpiReference`, add Spanish translations to `es.json`
 
 ### KPI Derived Metric Integration (2026-07-29)
-- **Status:** DM source series rendering refactored — each DM source series renders as a separate full-width card instead of nested panels
+- **Status:** DM variables can be selected in KPI form builder; next button issue unresolved
 - **Changes in KpiFormBuilder.php:** Added `getDerivedMetricOptions()`, source type selector in `getNodeSchema()`, DM select field, `afterStateUpdated` to clear opposing field values when switching source types, summary HTML for DM display. Removed `disabled()` on next_series, removed `searchable()` on DM select, removed `required()` on dependent_metric.
 - **Changes in KpiPayloadBuilder.php:** Handles `dm_<id>` metric keys in `buildAstFromState()` and `buildIndependentNodes()` for both dependent and independent variables
-- **Changes in DashboardWidgetDataController.php (handleKpiSource):**
-  - Pre-fetches DM series data for KPI variables using DMs; accepts DM source type for dependent variable
-  - Added `depSourceType`/`indSourceType` guards to skip asset_group resolution for DM variables (avoids `___EMPTY_GROUP___` sentinel from empty channel)
-  - Pre-fetches DM data for KPI variables (lines 1618–1650): builds `$dmControlKeys` mapping DM IDs → KPI variable prefix, maps KPI DM `series_assets` keys (`dep_dm_N`/`ind_N_dm_M`) → DM source series keys (`dm_N`) before calling `handleDerivedMetricSource()`
+- **Changes in DashboardWidgetDataController.php (handleKpiSource):** Pre-fetches DM series data for KPI variables using DMs; accepts DM source type for dependent variable; added `depSourceType`/`indSourceType` guards to skip asset_group resolution for DM variables (avoids `___EMPTY_GROUP___` sentinel from empty channel)
 - **Bug fix (2026-07-29):** DM KPI widget shows no data (`___EMPTY_GROUP___` short-circuit)
   - **Root cause:** The independent variable's `independent_source_type` is not persisted in `_ui_state` (missing key), so `$indSourceType` defaults to `'channel'`. With `$indChannel` empty (DM has no channel), the asset group resolution at line 1362 sets `independent_asset_filter = ["___EMPTY_GROUP___"]`, which triggers the `$hasEmptyGroup` short-circuit and returns empty data.
   - **Fix:** Added `&& ! empty($indChannel)` guard to both the independent variable asset_group route (line 1362) and assets route (line 1377), so empty-channel independent variables (DM or unconfigured) skip asset group/asset resolution entirely.
-- **Builder Blade changes (`dashboard-builder.blade.php`):**
-  - **Channel loading:** Extended `channelsToLoad` in `openWidgetControls()` to include channels from KPI DM source series
-  - **series_assets init:** Added initialization of `widgetControlsForm.series_assets['dep_dm_N']` and `widgetControlsForm.series_assets['ind_N_dm_M']` for DM source series
-  - **DM dependent series cards (~line 860):** Each source series renders as a **separate full flex-none card** (matching DM widget pattern at line 1092) with header showing "DM Name · Source label" + DM badge, channel badge, read-only metric, and asset override with search/select-all/clear/checkbox list
-  - **DM independent series cards (~line 924):** Each source series renders as its own standalone card (same pattern as dependent DM cards), replacing the previous nested source-series panels inside a single outer card per variable
-  - **Template tag fix:** Fixed unclosed `<template>` tag wrapping the regular independent variable card (added missing `</template>` at correct indent level) to resolve Livewire `getUpdateUri` error
-  - **Regular independent card:** Changed from `<div x-show>` to `<template x-if>` to prevent JS errors when `independent_channel` is empty (DM variables)
-- **View Blade (`dashboard-view-content.blade.php`):** Settings modal header shows DM name + "DM" badge for DM source series entries (line 574)
-- **`LoadsDashboardViewData.php`:** Added `widgetArray['dm_kpi_series']` with per-DM `{ dm_id, dm_name, source_series[] }`, `series_assets_options` entries (`dep_dm_N`, `ind_N_dm_M`), DM variables with `dm_name`/`dm_source_label`, and asset group channel mapping for `dep_dm_N`/`ind_N_dm_M` keys
+  - **Logs confirmed:** The DM guard check correctly logs `depSourceType: "derived_metric"`, and the auto-resolve correctly skips DM source type. The independent variable downstream is now properly guarded.
 - **Known issues:**
   - Next button in step 22_series may not advance when DM source type selected (user reports "can't select next because there's no channel selected") — root cause unknown; possibly client-side Livewire reactivity or validation
   - Anomaly/KPI payload shows `metrics: ["", ""]` — cosmetic; actual AST is built correctly by KpiPayloadBuilder from `_ui_state` DM IDs
