@@ -1,4 +1,5 @@
 @php
+    \Illuminate\Support\Facades\Log::debug('[FE] formula-editor.blade.php RENDERED');
     $astStatePath = $astStatePath ?? 'data.ast';
 
     $operators = [
