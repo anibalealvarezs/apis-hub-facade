@@ -40,7 +40,16 @@ class VersionsRelationManager extends RelationManager
                 Tables\Actions\Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
-                    ->modalContent(fn ($record) => view('filament.modals.version-diff', ['version' => $record])),
+                    ->modalContent(function ($record) {
+                        $previousVersion = $record->where('version_number', $record->version_number - 1)
+                            ->where('custom_kpi_id', $record->custom_kpi_id)
+                            ->first();
+
+                        return view('filament.modals.version-diff', [
+                            'version' => $record,
+                            'previousVersion' => $previousVersion,
+                        ]);
+                    }),
             ]);
     }
 }

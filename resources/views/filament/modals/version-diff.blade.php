@@ -1,246 +1,138 @@
 @php
-    $changedFields = [];
-    if ($version->change_summary && str_starts_with($version->change_summary, 'Updated: ')) {
-        $summaryPart = substr($version->change_summary, 9);
-        $changedDisplayNames = array_map('trim', explode(',', $summaryPart));
-        foreach ($changedDisplayNames as $displayName) {
-            $changedFields[] = str_replace(' ', '_', $displayName);
+    $prev = $previousVersion ?? null;
+
+    $changeType = null;
+    if ($version->change_summary) {
+        if (str_starts_with($version->change_summary, 'Created')) {
+            $changeType = 'created';
+        } elseif (str_starts_with($version->change_summary, 'Updated: ')) {
+            $changeType = 'updated';
+        } else {
+            $changeType = 'other';
         }
     }
-    $isChanged = fn(string $attr) => in_array($attr, $changedFields, true);
-    $changedClass = 'bg-warning-50 dark:bg-warning-400/10 ring-1 ring-warning-300 dark:ring-warning-600';
-    $unchangedClass = 'bg-gray-50 dark:bg-white/5';
+
+    $fmt = function ($v) {
+        if (is_bool($v)) return $v ? 'Yes' : 'No';
+        if ($v === null) return '—';
+        if (is_array($v)) return json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        return (string) $v;
+    };
+
+    $isJson = fn ($v) => is_array($v);
+
+    $fieldDefs = [
+        ['key' => 'name', 'label' => 'Name'],
+        ['key' => 'description', 'label' => 'Description'],
+        ['key' => 'title', 'label' => 'Title'],
+        ['key' => 'calculation_type', 'label' => 'Calculation Type'],
+        ['key' => 'source_type', 'label' => 'Source Type'],
+        ['key' => 'widget_type', 'label' => 'Widget Type'],
+        ['key' => 'output_granularity', 'label' => 'Output Granularity'],
+        ['key' => 'is_active', 'label' => 'Active', 'type' => 'bool'],
+        ['key' => 'is_public', 'label' => 'Public', 'type' => 'bool'],
+        ['key' => 'is_default', 'label' => 'Default Dashboard', 'type' => 'bool'],
+        ['key' => 'grid_x', 'label' => 'Grid X'],
+        ['key' => 'grid_y', 'label' => 'Grid Y'],
+        ['key' => 'grid_w', 'label' => 'Grid W'],
+        ['key' => 'grid_h', 'label' => 'Grid H'],
+        ['key' => 'ast', 'label' => 'Formula (AST)', 'type' => 'json'],
+        ['key' => 'filters', 'label' => 'Filters', 'type' => 'json'],
+        ['key' => 'source_series', 'label' => 'Source Series', 'type' => 'json'],
+        ['key' => 'grid_layout', 'label' => 'Grid Layout', 'type' => 'json'],
+        ['key' => 'controls', 'label' => 'Controls', 'type' => 'json'],
+        ['key' => 'source_config', 'label' => 'Source Config', 'type' => 'json'],
+    ];
 @endphp
 
-<div class="space-y-5 p-4">
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4 text-sm">
-            <span class="text-gray-500 dark:text-gray-400">Version <strong class="text-gray-900 dark:text-white">#{{ $version->version_number }}</strong></span>
+<div class="space-y-5">
+    {{-- Header bar --}}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+            <span>Version <strong class="text-gray-950 dark:text-white">#{{ $version->version_number }}</strong></span>
             <span class="text-gray-300 dark:text-gray-600">|</span>
-            <span class="text-gray-500 dark:text-gray-400">{{ $version->user?->name ?? 'System' }}</span>
+            <span>{{ $version->user?->name ?? 'System' }}</span>
             <span class="text-gray-300 dark:text-gray-600">|</span>
-            <span class="text-gray-500 dark:text-gray-400">{{ $version->created_at->format('M j, Y H:i') }}</span>
+            <span>{{ $version->created_at->format('M j, Y H:i') }}</span>
         </div>
-        @if($version->change_summary)
-            @if(str_starts_with($version->change_summary, 'Created'))
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    Created
-                </span>
-            @elseif(str_starts_with($version->change_summary, 'Updated: '))
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
-                    Modified
-                </span>
-            @else
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{{ $version->change_summary }}</span>
-            @endif
+        @if($changeType === 'created')
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300 ring-1 ring-inset ring-success-200 dark:ring-success-700">
+                <x-filament::icon icon="heroicon-m-plus" class="w-3.5 h-3.5" />
+                Created
+            </span>
+        @elseif($changeType === 'updated')
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
+                <x-filament::icon icon="heroicon-m-arrow-path" class="w-3.5 h-3.5" />
+                Modified
+            </span>
+        @elseif($changeType === 'other')
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-inset ring-gray-200 dark:ring-gray-700">
+                {{ $version->change_summary }}
+            </span>
         @endif
     </div>
 
-    <div class="space-y-2">
-        @if($version->name !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('name') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</h4>
-                    @if($isChanged('name'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->name }}</p>
-            </div>
-        @endif
+    @if($prev && $changeType === 'updated')
+        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-2.5 ring-1 ring-gray-950/5 dark:ring-white/10">
+            <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <span>Compared to version <strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
+        </div>
+    @endif
 
-        @if($version->description !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('description') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</h4>
-                    @if($isChanged('description'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->description ?: '—' }}</p>
-            </div>
-        @endif
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        @foreach($fieldDefs as $def)
+            @php
+                $key = $def['key'];
+                $isBool = ($def['type'] ?? null) === 'bool';
+                $isJson = ($def['type'] ?? null) === 'json';
 
-        @if($version->getAttribute('calculation_type') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('calculation_type') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Calculation Type</h4>
-                    @if($isChanged('calculation_type'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->calculation_type ?: '—' }}</p>
-            </div>
-        @endif
+                $val = $version->getAttribute($key);
+                if ($val === null && !$isBool) continue;
 
-        @if($version->getAttribute('is_active') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('is_active') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Active</h4>
-                    @if($isChanged('is_active'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->is_active ? 'Yes' : 'No' }}</p>
-            </div>
-        @endif
+                $prevVal = $prev?->getAttribute($key);
+                $changed = $prev && $val !== $prevVal;
 
-        @if($version->getAttribute('output_granularity') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('output_granularity') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Output Granularity</h4>
-                    @if($isChanged('output_granularity'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->output_granularity ?: '—' }}</p>
-            </div>
-        @endif
+                $hasOld = $changed && $prev;
+            @endphp
 
-        @if($version->getAttribute('is_public') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('is_public') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Public</h4>
-                    @if($isChanged('is_public'))
+            <div class="rounded-xl p-4 ring-1 {{ $changed ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
+                {{-- Label row --}}
+                <div class="flex items-center justify-between mb-1.5">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider {{ $changed ? 'text-warning-700 dark:text-warning-300' : 'text-gray-500 dark:text-gray-400' }}">
+                        {{ $def['label'] }}
+                    </h4>
+                    @if($changed)
                         <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
                     @endif
                 </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->is_public ? 'Yes' : 'No' }}</p>
-            </div>
-        @endif
 
-        @if($version->getAttribute('is_default') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('is_default') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Default Dashboard</h4>
-                    @if($isChanged('is_default'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
+                {{-- Old value (strikethrough) --}}
+                @if($hasOld)
+                    @if($isJson)
+                        <pre class="text-xs text-gray-400 dark:text-gray-500 line-through mb-1.5 overflow-x-auto max-h-24">{{ $fmt($prevVal) }}</pre>
+                    @else
+                        <div class="text-sm text-gray-400 dark:text-gray-500 line-through mb-1">{{ $fmt($prevVal) }}</div>
                     @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->is_default ? 'Yes' : 'No' }}</p>
-            </div>
-        @endif
+                @endif
 
-        @if($version->getAttribute('title') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('title') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</h4>
-                    @if($isChanged('title'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->title ?: '—' }}</p>
+                {{-- Current value --}}
+                @if($isJson)
+                    <pre class="text-xs overflow-x-auto max-h-48 rounded {{ $changed ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ $fmt($val) }}</pre>
+                @elseif($isBool)
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full {{ $val ? 'bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300 ring-1 ring-inset ring-success-200 dark:ring-success-700' : 'bg-danger-50 text-danger-700 dark:bg-danger-400/10 dark:text-danger-300 ring-1 ring-inset ring-danger-200 dark:ring-danger-700' }}">
+                        <x-filament::icon icon="{{ $val ? 'heroicon-m-check-circle' : 'heroicon-m-x-circle' }}" class="w-3.5 h-3.5" />
+                        {{ $fmt($val) }}
+                    </div>
+                @else
+                    <div class="text-sm {{ $changed ? 'text-warning-700 dark:text-warning-200 font-medium' : 'text-gray-950 dark:text-white' }}">{{ $fmt($val) }}</div>
+                @endif
             </div>
-        @endif
-
-        @if($version->getAttribute('source_type') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('source_type') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source Type</h4>
-                    @if($isChanged('source_type'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->source_type }}</p>
-            </div>
-        @endif
-
-        @if($version->getAttribute('widget_type') !== null)
-            <div class="rounded-lg p-3 {{ $isChanged('widget_type') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Widget Type</h4>
-                    @if($isChanged('widget_type'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">{{ $version->widget_type }}</p>
-            </div>
-        @endif
-
-        @if($version->getAttribute('grid_x') !== null)
-            <div class="rounded-lg p-3 {{ ($isChanged('grid_x') || $isChanged('grid_y') || $isChanged('grid_w') || $isChanged('grid_h')) ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Grid Position</h4>
-                    @if($isChanged('grid_x') || $isChanged('grid_y') || $isChanged('grid_w') || $isChanged('grid_h'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <p class="text-sm text-gray-900 dark:text-white mt-0.5">x: {{ $version->grid_x }}, y: {{ $version->grid_y }}, w: {{ $version->grid_w }}, h: {{ $version->grid_h }}</p>
-            </div>
-        @endif
-
-        @if($version->getAttribute('ast'))
-            <div class="rounded-lg p-3 {{ $isChanged('ast') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Formula (AST)</h4>
-                    @if($isChanged('ast'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->ast, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
-
-        @if($version->getAttribute('source_series'))
-            <div class="rounded-lg p-3 {{ $isChanged('source_series') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source Series</h4>
-                    @if($isChanged('source_series'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->source_series, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
-
-        @if($version->getAttribute('filters'))
-            <div class="rounded-lg p-3 {{ $isChanged('filters') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Filters</h4>
-                    @if($isChanged('filters'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->filters, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
-
-        @if($version->getAttribute('grid_layout'))
-            <div class="rounded-lg p-3 {{ $isChanged('grid_layout') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Grid Layout</h4>
-                    @if($isChanged('grid_layout'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->grid_layout, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
-
-        @if($version->getAttribute('controls'))
-            <div class="rounded-lg p-3 {{ $isChanged('controls') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Controls</h4>
-                    @if($isChanged('controls'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->controls, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
-
-        @if($version->getAttribute('source_config'))
-            <div class="rounded-lg p-3 {{ $isChanged('source_config') ? $changedClass : $unchangedClass }}">
-                <div class="flex items-center justify-between">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source Config</h4>
-                    @if($isChanged('source_config'))
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">changed</span>
-                    @endif
-                </div>
-                <pre class="text-xs bg-white dark:bg-gray-900/50 text-gray-900 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48 mt-1.5">{{ json_encode($version->source_config, JSON_PRETTY_PRINT) }}</pre>
-            </div>
-        @endif
+        @endforeach
     </div>
+
+    @if($prev && $changeType === 'updated')
+        <div class="text-xs text-gray-400 dark:text-gray-500 text-right pt-1">
+            {{ $version->change_summary }}
+        </div>
+    @endif
 </div>
