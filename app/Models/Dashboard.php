@@ -80,6 +80,10 @@ class Dashboard extends Model
         foreach ($this->widgets as $widget) {
             $widgetIds[] = $widget->id;
             $latestVersion = $widget->versions()->latest('version_number')->first();
+            if (!$latestVersion) {
+                $widget->createVersion('Initial snapshot');
+                $latestVersion = $widget->versions()->latest('version_number')->first();
+            }
             if ($latestVersion) {
                 $widgetVersionIds[$widget->id] = $latestVersion->id;
             }
