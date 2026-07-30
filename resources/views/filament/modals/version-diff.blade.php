@@ -308,37 +308,8 @@
         @endif
     </div>
 
-    {{-- RIGHT COLUMN: Version Data & Payload --}}
+    {{-- RIGHT COLUMN: Payload --}}
     <div class="md:col-span-1 space-y-4">
-        {{-- Version metadata card --}}
-        <div class="rounded-xl p-4 ring-1 bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10">
-            <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
-                <div class="flex justify-between">
-                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Version</span>
-                    <span class="text-gray-950 dark:text-white font-medium">#{{ $version->version_number }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Changed by</span>
-                    <span class="text-gray-950 dark:text-white">{{ $version->user?->name ?? 'System' }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Date</span>
-                    <span class="text-gray-950 dark:text-white">{{ $version->created_at->format('M j, Y H:i') }}</span>
-                </div>
-                <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    @if($changeType === 'created')
-                        <span class="text-xs font-medium text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-400/10 px-2 py-0.5 rounded-full ring-1 ring-inset ring-success-200 dark:ring-success-700">Created</span>
-                    @elseif($changeType === 'updated')
-                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-400/10 px-2 py-0.5 rounded-full ring-1 ring-inset ring-warning-200 dark:ring-warning-700">Modified</span>
-                    @endif
-                    @if($prev)
-                        <span class="text-xs text-gray-400 dark:text-gray-500">v{{ $prev->version_number }} → v{{ $version->version_number }}</span>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Raw payload with highlighted changes --}}
         <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
             <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
                 <x-filament::icon icon="heroicon-m-code-bracket" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -352,18 +323,21 @@
                         $isChanged = $isFieldChanged($fk);
                         $isLast = $loop->last;
                     @endphp
-                    <div class="px-4 py-1.5 {{ $isChanged ? 'bg-warning-50 dark:bg-warning-400/10 border-l-2 border-warning-400 dark:border-warning-500' : 'border-l-2 border-transparent' }}">
+                    <div class="px-4 py-1 {{ $isChanged ? 'bg-warning-50 dark:bg-warning-400/10 border-l-2 border-warning-400 dark:border-warning-500' : 'border-l-2 border-transparent' }}">
                         <span class="text-gray-500 dark:text-gray-400">"{{ $fk }}"</span>:
                         @if(is_array($val))
-                            <span class="whitespace-pre {{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</span>
+                            <pre class="whitespace-pre-wrap break-all mt-1 ml-2 {{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                            @if(!$isLast)<div class="text-gray-400 dark:text-gray-500 ml-2">,</div>@endif
                         @elseif(is_bool($val))
                             <span class="{{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ $val ? 'true' : 'false' }}</span>
+                            @if(!$isLast)<span class="text-gray-400 dark:text-gray-500">,</span>@endif
                         @elseif($val === null)
                             <span class="text-gray-400 dark:text-gray-500">null</span>
+                            @if(!$isLast)<span class="text-gray-400 dark:text-gray-500">,</span>@endif
                         @else
                             <span class="{{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ json_encode($val, JSON_UNESCAPED_UNICODE) }}</span>
+                            @if(!$isLast)<span class="text-gray-400 dark:text-gray-500">,</span>@endif
                         @endif
-                        @if(!$isLast)<span class="text-gray-400 dark:text-gray-500">,</span>@endif
                     </div>
                 @endforeach
                 <div class="px-4 py-2 text-gray-500 dark:text-gray-400">}</div>
