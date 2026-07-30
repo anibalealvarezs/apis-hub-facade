@@ -39,6 +39,8 @@ class VersionsRelationManager extends RelationManager
                 Tables\Actions\Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
                     ->modalContent(function ($record) {
                         $previousVersion = $record->where('version_number', $record->version_number - 1)
                             ->where('derived_metric_id', $record->derived_metric_id)

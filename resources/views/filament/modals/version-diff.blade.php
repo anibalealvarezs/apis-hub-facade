@@ -344,7 +344,7 @@
                 <x-filament::icon icon="heroicon-m-code-bracket" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Payload</span>
             </div>
-            <div class="overflow-x-auto bg-white dark:bg-gray-900/50 font-mono text-xs leading-relaxed">
+            <div class="overflow-x-auto bg-white dark:bg-white/5 font-mono text-xs leading-relaxed">
                 <div class="px-4 py-2 text-gray-500 dark:text-gray-400">{</div>
                 @foreach($snapshotKeys as $fk)
                     @php
