@@ -25,7 +25,7 @@
                             <td class="px-3 py-2.5 text-right">
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-500"
+                                    class="inline-flex items-center gap-1 text-xs font-medium version-restore-btn"
                                     wire:click="restoreVersion({{ $version->id }})"
                                     wire:confirm="{{ __('Restore to version #:version? This will create a snapshot of the current state first.', ['version' => $version->version_number]) }}"
                                 >
@@ -39,3 +39,10 @@
         </div>
     @endif
 </div>
+
+<style>
+.version-restore-btn { color: #2563eb; }
+.version-restore-btn:hover { color: #3b82f6; }
+.dark .version-restore-btn { color: #60a5fa; }
+.dark .version-restore-btn:hover { color: #93c5fd; }
+</style>
