@@ -38,9 +38,14 @@ trait TracksVersions
         ));
     }
 
-    public function getVersions(): HasMany
+    public function versions(): HasMany
     {
         return $this->hasMany($this->getVersionModelClass(), $this->getVersionForeignKey());
+    }
+
+    public function getVersions(): HasMany
+    {
+        return $this->versions();
     }
 
     public function restoreVersion(int $versionId): bool
