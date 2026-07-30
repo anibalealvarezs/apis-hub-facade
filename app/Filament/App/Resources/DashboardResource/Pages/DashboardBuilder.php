@@ -465,6 +465,6 @@ class DashboardBuilder extends Page
             ->success()
             ->send();
 
-        $this->redirect(request()->url());
+        $this->js('window.location.reload()');
     }
 }
