@@ -28,7 +28,7 @@
     @if($version->ast)
         <div>
             <h4 class="text-sm font-medium text-gray-500 mb-1">Formula (AST)</h4>
-            <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->ast, JSON_PRETTY_PRINT) }}</pre>
+            <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->ast, JSON_PRETTY_PRINT) }}</pre>
         </div>
     @endif
 
@@ -36,7 +36,7 @@
         @if($version->source_series)
             <div>
                 <h4 class="text-sm font-medium text-gray-500 mb-1">Source Series</h4>
-                <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->source_series, JSON_PRETTY_PRINT) }}</pre>
+                <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->source_series, JSON_PRETTY_PRINT) }}</pre>
             </div>
         @endif
     @endif
@@ -44,28 +44,28 @@
     @if($version->filters)
         <div>
             <h4 class="text-sm font-medium text-gray-500 mb-1">Filters</h4>
-            <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->filters, JSON_PRETTY_PRINT) }}</pre>
+            <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->filters, JSON_PRETTY_PRINT) }}</pre>
         </div>
     @endif
 
     @if($version->grid_layout)
         <div>
             <h4 class="text-sm font-medium text-gray-500 mb-1">Grid Layout</h4>
-            <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->grid_layout, JSON_PRETTY_PRINT) }}</pre>
+            <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->grid_layout, JSON_PRETTY_PRINT) }}</pre>
         </div>
     @endif
 
     @if($version->controls)
         <div>
             <h4 class="text-sm font-medium text-gray-500 mb-1">Controls</h4>
-            <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->controls, JSON_PRETTY_PRINT) }}</pre>
+            <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->controls, JSON_PRETTY_PRINT) }}</pre>
         </div>
     @endif
 
     @if($version->source_config)
         <div>
             <h4 class="text-sm font-medium text-gray-500 mb-1">Source Config</h4>
-            <pre class="text-xs bg-gray-100 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->source_config, JSON_PRETTY_PRINT) }}</pre>
+            <pre class="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 rounded p-3 overflow-x-auto max-h-48">{{ json_encode($version->source_config, JSON_PRETTY_PRINT) }}</pre>
         </div>
     @endif
 
