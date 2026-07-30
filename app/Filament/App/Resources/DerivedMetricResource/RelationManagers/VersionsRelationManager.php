@@ -39,7 +39,7 @@ class VersionsRelationManager extends RelationManager
                 Tables\Actions\Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
-                    ->modalWidth('screen')
+                    ->modalWidth('2xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalContent(function ($record) {
