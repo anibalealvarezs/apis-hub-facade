@@ -200,7 +200,7 @@ class DashboardResource extends Resource
                     ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
                         $cutoff = now()->subMonths((int) $data['months']);
                         foreach ($records as $record) {
-                            $record->versions()
+                            $record->getVersions()
                                 ->where('created_at', '<', $cutoff)
                                 ->where('version_number', '>', 1)
                                 ->delete();
