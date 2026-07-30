@@ -51,6 +51,20 @@
         return (string) $v;
     };
 
+    $snapshotKeys = ['name', 'description', 'calculation_type', 'output_granularity', 'is_active', 'ast', 'source_series'];
+
+    $changedFieldNames = [];
+    if ($prev) {
+        foreach ($snapshotKeys as $f) {
+            if ($version->getAttribute($f) !== $prev->getAttribute($f)) {
+                $changedFieldNames[] = $f;
+            }
+        }
+    }
+    $isFieldChanged = function ($key) use ($changedFieldNames) {
+        return in_array($key, $changedFieldNames, true);
+    };
+
     $currentSeries = $version->source_series ?? [];
     $previousSeries = $prev?->source_series ?? [];
     $currentMap = $seriesMap($currentSeries);
@@ -74,21 +88,6 @@
 
     $seriesFieldList = ['label', 'channel', 'metric', 'granularity'];
 
-    $changedFieldNames = [];
-    if ($prev) {
-        foreach (['name', 'description', 'calculation_type', 'output_granularity'] as $f) {
-            if ($version->getAttribute($f) !== $prev->getAttribute($f)) {
-                $changedFieldNames[] = $f;
-            }
-        }
-        if ($version->source_series !== $prev->source_series) {
-            $changedFieldNames[] = 'source_series';
-        }
-        if ($version->ast !== $prev->ast) {
-            $changedFieldNames[] = 'ast';
-        }
-    }
-
     $currentAst = $version->ast;
     $previousAst = $prev?->ast;
     $astChanged = $prev && $currentAst !== $previousAst;
@@ -104,226 +103,271 @@
     } else {
         $previousFormula = $fmt($previousAst);
     }
+
 @endphp
 
-<div class="space-y-5">
-    {{-- Header --}}
-    <div class="flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-            <span>Version <strong class="text-gray-950 dark:text-white">#{{ $version->version_number }}</strong></span>
-            <span class="text-gray-300 dark:text-gray-600">|</span>
-            <span>{{ $version->user?->name ?? 'System' }}</span>
-            <span class="text-gray-300 dark:text-gray-600">|</span>
-            <span>{{ $version->created_at->format('M j, Y H:i') }}</span>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {{-- LEFT COLUMN: Full Summary --}}
+    <div class="md:col-span-2 space-y-5">
+        {{-- Header --}}
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <span>Version <strong class="text-gray-950 dark:text-white">#{{ $version->version_number }}</strong></span>
+                <span class="text-gray-300 dark:text-gray-600">|</span>
+                <span>{{ $version->user?->name ?? 'System' }}</span>
+                <span class="text-gray-300 dark:text-gray-600">|</span>
+                <span>{{ $version->created_at->format('M j, Y H:i') }}</span>
+            </div>
+            @if($changeType === 'created')
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300 ring-1 ring-inset ring-success-200 dark:ring-success-700">
+                    <x-filament::icon icon="heroicon-m-plus" class="w-3.5 h-3.5" />
+                    Created
+                </span>
+            @elseif($changeType === 'updated')
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
+                    <x-filament::icon icon="heroicon-m-arrow-path" class="w-3.5 h-3.5" />
+                    Modified
+                </span>
+            @elseif($changeType === 'other')
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-inset ring-gray-200 dark:ring-gray-700">
+                    {{ $version->change_summary }}
+                </span>
+            @endif
         </div>
-        @if($changeType === 'created')
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300 ring-1 ring-inset ring-success-200 dark:ring-success-700">
-                <x-filament::icon icon="heroicon-m-plus" class="w-3.5 h-3.5" />
-                Created
-            </span>
-        @elseif($changeType === 'updated')
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
-                <x-filament::icon icon="heroicon-m-arrow-path" class="w-3.5 h-3.5" />
-                Modified
-            </span>
-        @elseif($changeType === 'other')
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-inset ring-gray-200 dark:ring-gray-700">
-                {{ $version->change_summary }}
-            </span>
+
+        @if($prev)
+            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-2.5 ring-1 ring-gray-950/5 dark:ring-white/10">
+                <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <span>Compared to version <strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
+            </div>
         @endif
-    </div>
 
-    @if($prev)
-        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-2.5 ring-1 ring-gray-950/5 dark:ring-white/10">
-            <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <span>Compared to version <strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
+        {{-- Config summary --}}
+        <div class="rounded-xl p-4 ring-1 bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                @foreach([['key' => 'name', 'label' => 'Name'], ['key' => 'description', 'label' => 'Description'], ['key' => 'calculation_type', 'label' => 'Calculation'], ['key' => 'output_granularity', 'label' => 'Granularity']] as $def)
+                    @php
+                        $val = $version->getAttribute($def['key']);
+                        $prevVal = $prev?->getAttribute($def['key']);
+                        $changed = $prev && $val !== $prevVal;
+                        if ($def['key'] === 'description' && $val === null && $prevVal === null) continue;
+                    @endphp
+                    <div class="flex items-baseline gap-2 text-sm py-0.5">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 shrink-0 w-24">{{ $def['label'] }}</span>
+                        @if($changed)
+                            <span class="text-gray-400 dark:text-gray-500 line-through text-xs truncate">{{ $fmt($prevVal) }}</span>
+                            <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 shrink-0" />
+                            <span class="text-warning-700 dark:text-warning-200 font-medium truncate">{{ $fmt($val) }}</span>
+                        @else
+                            <span class="text-gray-950 dark:text-white truncate">{{ $fmt($val) }}</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            @if($changeType === 'updated' && !empty($changedFieldNames))
+                <div class="mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 text-xs">
+                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 shrink-0">Updated</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach($changedFieldNames as $cf)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
+                                {{ str_replace('_', ' ', $cf) }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
-    @endif
 
-    {{-- Config summary --}}
-    @php
-        $configFields = [
-            ['key' => 'name', 'label' => 'Name'],
-            ['key' => 'description', 'label' => 'Description'],
-            ['key' => 'calculation_type', 'label' => 'Calculation'],
-            ['key' => 'output_granularity', 'label' => 'Granularity'],
-        ];
-    @endphp
-
-    <div class="rounded-xl p-4 ring-1 bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-            @foreach($configFields as $def)
-                @php
-                    $val = $version->getAttribute($def['key']);
-                    $prevVal = $prev?->getAttribute($def['key']);
-                    $changed = $prev && $val !== $prevVal;
-                    if ($def['key'] === 'description' && $val === null && $prevVal === null) continue;
-                @endphp
-                <div class="flex items-baseline gap-2 text-sm py-0.5">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 shrink-0 w-24">{{ $def['label'] }}</span>
-                    @if($changed)
-                        <span class="text-gray-400 dark:text-gray-500 line-through text-xs truncate">{{ $fmt($prevVal) }}</span>
-                        <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 shrink-0" />
-                        <span class="text-warning-700 dark:text-warning-200 font-medium truncate">{{ $fmt($val) }}</span>
-                    @else
-                        <span class="text-gray-950 dark:text-white truncate">{{ $fmt($val) }}</span>
+        {{-- Source Series table --}}
+        @if(!empty($allSeriesKeys))
+            <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
+                <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
+                    <x-filament::icon icon="heroicon-m-table-cells" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Source Series</span>
+                    @if($prev && $currentSeries !== $previousSeries)
+                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
                     @endif
                 </div>
-            @endforeach
-        </div>
-
-        {{-- Updated fields info --}}
-        @if($changeType === 'updated' && !empty($changedFieldNames))
-            <div class="mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 text-xs">
-                <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 shrink-0">Updated</span>
-                <div class="flex flex-wrap gap-1.5">
-                    @foreach($changedFieldNames as $cf)
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
-                            {{ str_replace('_', ' ', $cf) }}
-                        </span>
-                    @endforeach
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-700">
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap w-24">Field</th>
+                                @foreach($allSeriesKeys as $sk)
+                                    @php
+                                        $curr = $currentByKey[$sk] ?? null;
+                                        $prevEnt = $previousByKey[$sk] ?? null;
+                                        $isNew = !$prevEnt && $curr;
+                                        $isRemoved = $prevEnt && !$curr;
+                                        $hasChange = $prev && $curr && $prevEnt && $curr !== $prevEnt;
+                                    @endphp
+                                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap {{ $isNew ? 'text-success-600 dark:text-success-400' : ($isRemoved ? 'text-danger-600 dark:text-danger-400' : ($hasChange ? 'text-warning-600 dark:text-warning-400' : 'text-gray-400 dark:text-gray-500')) }}">
+                                        Key {{ strtoupper($sk) }}
+                                        @if($isNew)
+                                            <span class="ml-1 text-success-600 dark:text-success-400">(added)</span>
+                                        @elseif($isRemoved)
+                                            <span class="ml-1 text-danger-600 dark:text-danger-400">(removed)</span>
+                                        @elseif($hasChange)
+                                            <span class="ml-1 text-warning-600 dark:text-warning-400">(changed)</span>
+                                        @endif
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($seriesFieldList as $sfi => $sf)
+                                <tr class="{{ $sfi < count($seriesFieldList) - 1 ? 'border-b border-gray-100 dark:border-gray-700/50' : '' }}">
+                                    <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ $sf }}</td>
+                                    @foreach($allSeriesKeys as $sk)
+                                        @php
+                                            $curr = $currentByKey[$sk] ?? null;
+                                            $prevEnt = $previousByKey[$sk] ?? null;
+                                            $currVal = $curr[$sf] ?? '—';
+                                            $prevVal = $prevEnt[$sf] ?? '—';
+                                            $cellChanged = $prev && $curr && $prevEnt && $currVal !== $prevVal;
+                                            $isNew = !$prevEnt && $curr;
+                                            $isRemoved = $prevEnt && !$curr;
+                                        @endphp
+                                        <td class="px-4 py-2.5 text-sm whitespace-nowrap {{ $cellChanged ? 'bg-warning-50 dark:bg-warning-400/10' : ($isNew ? 'bg-success-50/50 dark:bg-success-400/5' : ($isRemoved ? 'bg-danger-50/50 dark:bg-danger-400/5' : '')) }}">
+                                            @if($isRemoved)
+                                                <span class="text-gray-400 dark:text-gray-500 line-through">{{ $prevVal }}</span>
+                                            @elseif($cellChanged)
+                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $prevVal }}</span>
+                                                <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
+                                                <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $currVal }}</span>
+                                            @elseif($isNew)
+                                                <span class="text-success-700 dark:text-success-300 font-medium">{{ $currVal }}</span>
+                                            @else
+                                                <span class="text-gray-950 dark:text-white">{{ $currVal }}</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                            @php
+                                $anyAssetFilters = false;
+                                foreach ($allSeriesKeys as $sk) {
+                                    $curr = $currentByKey[$sk] ?? null;
+                                    $prevEnt = $previousByKey[$sk] ?? null;
+                                    if (!empty($curr['asset_filter'] ?? []) || !empty($prevEnt['asset_filter'] ?? [])) {
+                                        $anyAssetFilters = true;
+                                        break;
+                                    }
+                                }
+                            @endphp
+                            @if($anyAssetFilters)
+                                <tr>
+                                    <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Filters</td>
+                                    @foreach($allSeriesKeys as $sk)
+                                        @php
+                                            $curr = $currentByKey[$sk] ?? null;
+                                            $prevEnt = $previousByKey[$sk] ?? null;
+                                            $currFilter = $curr['asset_filter'] ?? [];
+                                            $prevFilter = $prevEnt['asset_filter'] ?? [];
+                                            $filterChanged = $prev && $curr && $prevEnt && $currFilter !== $prevFilter;
+                                        @endphp
+                                        <td class="px-4 py-2.5 text-xs whitespace-nowrap {{ $filterChanged ? 'bg-warning-50 dark:bg-warning-400/10' : '' }}">
+                                            @if($filterChanged)
+                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $fmt($prevFilter) }}</span>
+                                                <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
+                                                <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $fmt($currFilter) }}</span>
+                                            @elseif(!empty($currFilter))
+                                                <span class="text-gray-950 dark:text-white">{{ $fmt($currFilter) }}</span>
+                                            @elseif(!empty($prevFilter))
+                                                <span class="text-gray-400 dark:text-gray-500 line-through">{{ $fmt($prevFilter) }}</span>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+        @endif
+
+        {{-- Formula --}}
+        @if($currentAst || $previousAst)
+            <div class="rounded-xl p-4 ring-1 {{ $astChanged ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
+                <div class="flex items-center gap-2 mb-2.5">
+                    <x-filament::icon icon="heroicon-m-variable" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Formula</span>
+                    @if($astChanged)
+                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
+                    @endif
+                </div>
+                @if($astChanged)
+                    <div class="text-sm text-gray-400 dark:text-gray-500 line-through mb-1.5 font-mono">{{ $previousFormula }}</div>
+                    <x-filament::icon icon="heroicon-m-arrow-down" class="w-4 h-4 text-warning-500 mb-1" />
+                @endif
+                <div class="text-sm {{ $astChanged ? 'text-warning-700 dark:text-warning-200 font-medium' : 'text-gray-950 dark:text-white' }} font-mono leading-relaxed">{{ $currentFormula }}</div>
             </div>
         @endif
     </div>
 
-    {{-- Source Series table --}}
-    @if(!empty($allSeriesKeys))
-        @php
-            $seriesHasChanges = $prev && $currentSeries !== $previousSeries;
-        @endphp
+    {{-- RIGHT COLUMN: Version Data & Payload --}}
+    <div class="md:col-span-1 space-y-4">
+        {{-- Version metadata card --}}
+        <div class="rounded-xl p-4 ring-1 bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10">
+            <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
+                <div class="flex justify-between">
+                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Version</span>
+                    <span class="text-gray-950 dark:text-white font-medium">#{{ $version->version_number }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Changed by</span>
+                    <span class="text-gray-950 dark:text-white">{{ $version->user?->name ?? 'System' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Date</span>
+                    <span class="text-gray-950 dark:text-white">{{ $version->created_at->format('M j, Y H:i') }}</span>
+                </div>
+                <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    @if($changeType === 'created')
+                        <span class="text-xs font-medium text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-400/10 px-2 py-0.5 rounded-full ring-1 ring-inset ring-success-200 dark:ring-success-700">Created</span>
+                    @elseif($changeType === 'updated')
+                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-400/10 px-2 py-0.5 rounded-full ring-1 ring-inset ring-warning-200 dark:ring-warning-700">Modified</span>
+                    @endif
+                    @if($prev)
+                        <span class="text-xs text-gray-400 dark:text-gray-500">v{{ $prev->version_number }} → v{{ $version->version_number }}</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- Raw payload with highlighted changes --}}
         <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
             <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
-                <x-filament::icon icon="heroicon-m-table-cells" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Source Series</span>
-                @if($seriesHasChanges)
-                    <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
-                @endif
+                <x-filament::icon icon="heroicon-m-code-bracket" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Payload</span>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-gray-700">
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap w-24">Field</th>
-                            @foreach($allSeriesKeys as $sk)
-                                @php
-                                    $curr = $currentByKey[$sk] ?? null;
-                                    $prevEnt = $previousByKey[$sk] ?? null;
-                                    $isNew = !$prevEnt && $curr;
-                                    $isRemoved = $prevEnt && !$curr;
-                                    $hasChange = $prev && $curr && $prevEnt && $curr !== $prevEnt;
-                                @endphp
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap {{ $isNew ? 'text-success-600 dark:text-success-400' : ($isRemoved ? 'text-danger-600 dark:text-danger-400' : ($hasChange ? 'text-warning-600 dark:text-warning-400' : 'text-gray-400 dark:text-gray-500')) }}">
-                                    Key {{ strtoupper($sk) }}
-                                    @if($isNew)
-                                        <span class="ml-1 text-success-600 dark:text-success-400">(added)</span>
-                                    @elseif($isRemoved)
-                                        <span class="ml-1 text-danger-600 dark:text-danger-400">(removed)</span>
-                                    @elseif($hasChange)
-                                        <span class="ml-1 text-warning-600 dark:text-warning-400">(changed)</span>
-                                    @endif
-                                </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $rowIndex = 0; @endphp
-                        @foreach($seriesFieldList as $sf)
-                            @php $rowIndex++; @endphp
-                            <tr class="{{ $rowIndex < count($seriesFieldList) ? 'border-b border-gray-100 dark:border-gray-700/50' : '' }}">
-                                <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ $sf }}</td>
-                                @foreach($allSeriesKeys as $sk)
-                                    @php
-                                        $curr = $currentByKey[$sk] ?? null;
-                                        $prevEnt = $previousByKey[$sk] ?? null;
-                                        $currVal = $curr[$sf] ?? '—';
-                                        $prevVal = $prevEnt[$sf] ?? '—';
-                                        $cellChanged = $prev && $curr && $prevEnt && $currVal !== $prevVal;
-                                        $isNew = !$prevEnt && $curr;
-                                        $isRemoved = $prevEnt && !$curr;
-                                    @endphp
-                                    <td class="px-4 py-2.5 text-sm whitespace-nowrap {{ $cellChanged ? 'bg-warning-50 dark:bg-warning-400/10' : ($isNew ? 'bg-success-50/50 dark:bg-success-400/5' : ($isRemoved ? 'bg-danger-50/50 dark:bg-danger-400/5' : '')) }}">
-                                        @if($isRemoved)
-                                            <span class="text-gray-400 dark:text-gray-500 line-through">{{ $prevVal }}</span>
-                                        @elseif($cellChanged)
-                                            <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $prevVal }}</span>
-                                            <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
-                                            <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $currVal }}</span>
-                                        @elseif($isNew)
-                                            <span class="text-success-700 dark:text-success-300 font-medium">{{ $currVal }}</span>
-                                        @else
-                                            <span class="text-gray-950 dark:text-white">{{ $currVal }}</span>
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-                        {{-- Asset filter row --}}
-                        @php
-                            $anyAssetFilters = false;
-                            foreach ($allSeriesKeys as $sk) {
-                                $curr = $currentByKey[$sk] ?? null;
-                                $prevEnt = $previousByKey[$sk] ?? null;
-                                if (!empty($curr['asset_filter'] ?? []) || !empty($prevEnt['asset_filter'] ?? [])) {
-                                    $anyAssetFilters = true;
-                                    break;
-                                }
-                            }
-                        @endphp
-                        @if($anyAssetFilters)
-                            <tr>
-                                <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Asset Filter</td>
-                                @foreach($allSeriesKeys as $sk)
-                                    @php
-                                        $curr = $currentByKey[$sk] ?? null;
-                                        $prevEnt = $previousByKey[$sk] ?? null;
-                                        $currFilter = $curr['asset_filter'] ?? [];
-                                        $prevFilter = $prevEnt['asset_filter'] ?? [];
-                                        $filterChanged = $prev && $curr && $prevEnt && $currFilter !== $prevFilter;
-                                    @endphp
-                                    <td class="px-4 py-2.5 text-xs whitespace-nowrap {{ $filterChanged ? 'bg-warning-50 dark:bg-warning-400/10' : '' }}">
-                                        @if($filterChanged)
-                                            <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $fmt($prevFilter) }}</span>
-                                            <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
-                                            <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $fmt($currFilter) }}</span>
-                                        @elseif(!empty($currFilter))
-                                            <span class="text-gray-950 dark:text-white">{{ $fmt($currFilter) }}</span>
-                                        @elseif(!empty($prevFilter))
-                                            <span class="text-gray-400 dark:text-gray-500 line-through">{{ $fmt($prevFilter) }}</span>
-                                        @else
-                                            <span class="text-gray-400 dark:text-gray-500">—</span>
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
+            <div class="overflow-x-auto bg-white dark:bg-gray-900/50 font-mono text-xs leading-relaxed">
+                <div class="px-4 py-2 text-gray-500 dark:text-gray-400">{</div>
+                @foreach($snapshotKeys as $fk)
+                    @php
+                        $val = $version->getAttribute($fk);
+                        $isChanged = $isFieldChanged($fk);
+                        $isLast = $loop->last;
+                    @endphp
+                    <div class="px-4 py-1.5 {{ $isChanged ? 'bg-warning-50 dark:bg-warning-400/10 border-l-2 border-warning-400 dark:border-warning-500' : 'border-l-2 border-transparent' }}">
+                        <span class="text-gray-500 dark:text-gray-400">"{{ $fk }}"</span>:
+                        @if(is_array($val))
+                            <span class="whitespace-pre {{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</span>
+                        @elseif(is_bool($val))
+                            <span class="{{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ $val ? 'true' : 'false' }}</span>
+                        @elseif($val === null)
+                            <span class="text-gray-400 dark:text-gray-500">null</span>
+                        @else
+                            <span class="{{ $isChanged ? 'text-warning-700 dark:text-warning-200' : 'text-gray-950 dark:text-white' }}">{{ json_encode($val, JSON_UNESCAPED_UNICODE) }}</span>
                         @endif
-                    </tbody>
-                </table>
+                        @if(!$isLast)<span class="text-gray-400 dark:text-gray-500">,</span>@endif
+                    </div>
+                @endforeach
+                <div class="px-4 py-2 text-gray-500 dark:text-gray-400">}</div>
             </div>
         </div>
-    @endif
-
-    {{-- Formula --}}
-    @if($currentAst || $previousAst)
-        <div class="rounded-xl p-4 ring-1 {{ $astChanged ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
-            <div class="flex items-center gap-2 mb-2.5">
-                <x-filament::icon icon="heroicon-m-variable" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Formula</span>
-                @if($astChanged)
-                    <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
-                @endif
-            </div>
-            @if($astChanged)
-                <div class="text-sm text-gray-400 dark:text-gray-500 line-through mb-1.5 font-mono">{{ $previousFormula }}</div>
-                <x-filament::icon icon="heroicon-m-arrow-down" class="w-4 h-4 text-warning-500 mb-1" />
-            @endif
-            <div class="text-sm {{ $astChanged ? 'text-warning-700 dark:text-warning-200 font-medium' : 'text-gray-950 dark:text-white' }} font-mono leading-relaxed">{{ $currentFormula }}</div>
-        </div>
-    @endif
-
-    @if($prev && $changeType === 'updated')
-        <div class="text-xs text-gray-400 dark:text-gray-500 text-right pt-1 border-t border-gray-200 dark:border-gray-700">
-            {{ $version->change_summary }}
-        </div>
-    @endif
+    </div>
 </div>
