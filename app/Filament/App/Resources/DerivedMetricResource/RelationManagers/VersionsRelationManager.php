@@ -36,8 +36,8 @@ class VersionsRelationManager extends RelationManager
                         $owner = $this->getOwnerRecord();
                         $owner->createVersion('Before restore to v' . $record->version_number);
                         $owner->restoreVersion($record->id);
-                    })
-                    ->successRedirectUrl(url()->current()),
+                        $this->js('window.location.reload()');
+                    }),
                 Tables\Actions\Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
