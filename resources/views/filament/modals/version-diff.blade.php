@@ -55,9 +55,8 @@
     $highlightedJson = implode("\n", $jsonLines);
 @endphp
 
-<div class="flex flex-col max-h-[75vh]">
-    <div class="shrink-0 space-y-4">
-        <div class="flex items-center justify-between flex-wrap gap-3">
+<div class="space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
             <span>Version <strong class="text-gray-950 dark:text-white">#{{ $version->version_number }}</strong></span>
             <span class="text-gray-300 dark:text-gray-600">|</span>
@@ -78,22 +77,18 @@
                 {{ $version->change_summary }}
             </span>
         @endif
-    </div>
+    @if($prev)
+        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-2.5 ring-1 ring-gray-950/5 dark:ring-white/10">
+            <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <span>Compared to v<strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
+            @if(!empty($changedKeys))
+                <span class="text-gray-400 dark:text-gray-500">·</span>
+                <span class="text-warning-600 dark:text-warning-400 font-medium">{{ count($changedKeys) }} change(s)</span>
+            @endif
+        </div>
+    @endif
 
-        @if($prev)
-            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-2.5 ring-1 ring-gray-950/5 dark:ring-white/10">
-                <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                <span>Compared to v<strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
-                @if(!empty($changedKeys))
-                    <span class="text-gray-400 dark:text-gray-500">·</span>
-                    <span class="text-warning-600 dark:text-warning-400 font-medium">{{ count($changedKeys) }} change(s)</span>
-                @endif
-            </div>
-        @endif
-    </div>
-
-    <div class="flex-1 min-h-0 overflow-y-auto">
-        <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
+    <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
         <div class="flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
             <x-filament::icon icon="heroicon-m-code-bracket" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Snapshot</span>
@@ -101,7 +96,6 @@
                 <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(highlighted = changed)</span>
             @endif
         </div>
-            <pre class="px-5 py-4 bg-white dark:bg-white/5 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre">{!! $highlightedJson !!}</pre>
-        </div>
+        <pre class="px-5 py-4 bg-white dark:bg-white/5 font-mono text-xs leading-relaxed overflow-x-auto overflow-y-auto max-h-[60vh] whitespace-pre">{!! $highlightedJson !!}</pre>
     </div>
 </div>
