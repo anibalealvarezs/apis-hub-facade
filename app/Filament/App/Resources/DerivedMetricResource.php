@@ -738,52 +738,67 @@
                         })
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('flushCache')
-                        ->label(__('Flush Cache'))
-                        ->icon('heroicon-o-x-circle')
+                    Tables\Actions\Action::make('clearCache')
+                        ->label(__('Clear Cache'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->requiresConfirmation()
                         ->action(function (DerivedMetric $record) {
-                            \App\Models\DerivedMetricResult::where('derived_metric_id', $record->id)->delete();
+                            app(\App\Services\DerivedMetricCacheService::class)->invalidateCache($record->id);
                             \Filament\Notifications\Notification::make()
-                                ->title(__('Cache flushed successfully'))
+                                ->title(__('Cache cleared successfully'))
                                 ->success()
                                 ->send();
                         })
-                        ->requiresConfirmation()
-                        ->modalHeading(__('Flush Cache'))
-                        ->modalDescription(__('This will clear all cached results for this Derived Metric.'))
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                 ])
                 ->bulkActions([
                     Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->visible(fn() => auth()->user()->can('edit_preferences')),
-                Tables\Actions\BulkAction::make('pruneVersions')
-                    ->label(__('Prune Versions'))
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->form([
-                        \Filament\Forms\Components\Select::make('months')
-                            ->label(__('Delete versions older than'))
-                            ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
-                            ->required(),
-                    ])
-                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
-                        $cutoff = now()->subMonths((int) $data['months']);
-                        foreach ($records as $record) {
-                            $record->versions()
-                                ->where('created_at', '<', $cutoff)
-                                ->where('version_number', '>', 1)
-                                ->delete();
-                        }
-                        \Filament\Notifications\Notification::make()
-                            ->title(__('Old versions pruned successfully'))
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn() => auth()->user()->can('edit_preferences')),
-            ]),
+                        Tables\Actions\BulkAction::make('clearCache')
+                            ->label(__('Clear Cache'))
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                                $service = app(\App\Services\DerivedMetricCacheService::class);
+                                foreach ($records as $record) {
+                                    $service->invalidateCache($record->id);
+                                }
+                                \Filament\Notifications\Notification::make()
+                                    ->title(__('Cache cleared for selected Derived Metrics'))
+                                    ->success()
+                                    ->send();
+                            })
+                            ->visible(fn() => auth()->user()->can('edit_preferences')),
+                        Tables\Actions\DeleteBulkAction::make()
+                            ->visible(fn() => auth()->user()->can('edit_preferences')),
+                        Tables\Actions\BulkAction::make('pruneVersions')
+                            ->label(__('Prune Versions'))
+                            ->icon('heroicon-o-trash')
+                            ->color('danger')
+                            ->form([
+                                \Filament\Forms\Components\Select::make('months')
+                                    ->label(__('Delete versions older than'))
+                                    ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
+                                    ->required(),
+                            ])
+                            ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                                $cutoff = now()->subMonths((int) $data['months']);
+                                foreach ($records as $record) {
+                                    $record->versions()
+                                        ->where('created_at', '<', $cutoff)
+                                        ->where('version_number', '>', 1)
+                                        ->delete();
+                                }
+                                \Filament\Notifications\Notification::make()
+                                    ->title(__('Old versions pruned successfully'))
+                                    ->success()
+                                    ->send();
+                            })
+                            ->visible(fn() => auth()->user()->can('edit_preferences')),
+                    ]),
         ]);
     }
 
