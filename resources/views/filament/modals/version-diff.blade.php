@@ -108,7 +108,7 @@
             return $result;
         }
 
-        return '<span class="text-warning-700 dark:text-warning-200 font-medium">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
+        return '<span class="text-warning-700 dark:text-warning-300 font-medium">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
     }
 
     $jsonLines = [];
@@ -134,10 +134,10 @@
             $encoded = json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             $valLines = explode("\n", $encoded);
             $line = '    ' . json_encode($key) . ': ';
-            $line .= '<span class="text-warning-700 dark:text-warning-200 font-medium">' . $valLines[0] . '</span>';
+            $line .= '<span class="text-warning-700 dark:text-warning-300 font-medium">' . $valLines[0] . '</span>';
             $jsonLines[] = $line;
             for ($j = 1; $j < count($valLines); $j++) {
-                $jsonLines[] = '    ' . '<span class="text-warning-700 dark:text-warning-200 font-medium">' . $valLines[$j] . '</span>';
+                $jsonLines[] = '    ' . '<span class="text-warning-700 dark:text-warning-300 font-medium">' . $valLines[$j] . '</span>';
             }
             $lastIdx = count($jsonLines) - 1;
             if (!$last) $jsonLines[$lastIdx] .= ',';
