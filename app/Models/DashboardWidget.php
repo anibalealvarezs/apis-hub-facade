@@ -70,4 +70,13 @@ class DashboardWidget extends Model
     {
         return 'dashboard_widget_id';
     }
+
+    protected function getVersionExtraAttributes(): array
+    {
+        $this->loadMissing('dashboard');
+        return [
+            'dashboard_id' => $this->dashboard_id,
+            'project_id' => $this->dashboard?->project_id,
+        ];
+    }
 }

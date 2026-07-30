@@ -34,7 +34,8 @@ trait TracksVersions
                 'user_id' => auth()->id(),
                 'version_number' => $lastVersion + 1,
                 'change_summary' => $changeSummary,
-            ]
+            ],
+            $this->getVersionExtraAttributes(),
         ));
     }
 
@@ -78,6 +79,11 @@ trait TracksVersions
         }
 
         return 'Updated: ' . implode(', ', $parts);
+    }
+
+    protected function getVersionExtraAttributes(): array
+    {
+        return [];
     }
 
     abstract protected function getVersionModelClass(): string;
