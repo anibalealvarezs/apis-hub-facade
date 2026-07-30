@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\DashboardResource\RelationManagers;
 
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,6 +18,9 @@ class VersionsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('version_number')
                     ->label('#')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('label')
+                    ->label('Label')
+                    ->placeholder('-'),
                 Tables\Columns\TextColumn::make('name'),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Changed by'),
@@ -33,18 +37,9 @@ class VersionsRelationManager extends RelationManager
                     ->modalHeading('Restore Version')
                     ->modalDescription('This will overwrite the current state with this version. A new version will be created for the current state before restoring.')
                     ->action(function ($record) {
-                        \Log::debug('[VersionsRelationManager] restore action start', [
-                            'record_class' => get_class($record),
-                            'record_id' => $record->id,
-                            'record_version_number' => $record->version_number,
-                            'owner_class' => get_class($this->getOwnerRecord()),
-                            'owner_id' => $this->getOwnerRecord()?->id,
-                        ]);
                         $owner = $this->getOwnerRecord();
                         $owner->createVersion('Before restore to v' . $record->version_number);
-                        \Log::debug('[VersionsRelationManager] after createVersion, about to call restoreFullVersion');
                         $owner->restoreFullVersion($record);
-                        \Log::debug('[VersionsRelationManager] after restoreFullVersion');
                         $this->js('window.location.reload()');
                     }),
                 Tables\Actions\Action::make('view')
@@ -63,6 +58,27 @@ class VersionsRelationManager extends RelationManager
                             'previousVersion' => $previousVersion,
                         ]);
                     }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Delete selected'),
+                    Tables\Actions\BulkAction::make('pruneAll')
+                        ->label('Prune all versions')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Prune all versions?')
+                        ->modalDescription('This will permanently delete ALL versions for this dashboard. Consider keeping the latest version. This action cannot be undone.')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function () {
+                            $this->getOwnerRecord()->versions()->delete();
+                            Notification::make()
+                                ->title('All versions pruned')
+                                ->success()
+                                ->send();
+                        }),
+                ]),
             ]);
     }
 }

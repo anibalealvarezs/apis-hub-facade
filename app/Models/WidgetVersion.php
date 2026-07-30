@@ -30,6 +30,7 @@ class WidgetVersion extends Model
         'grid_w',
         'grid_h',
         'change_summary',
+        'label',
     ];
 
     protected $casts = [

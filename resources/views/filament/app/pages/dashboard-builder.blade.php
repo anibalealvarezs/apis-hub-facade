@@ -24,6 +24,12 @@
                     </button>
                 @endcan
 
+                {{-- Version Unsaved Changes Indicator --}}
+                <div x-show="$wire.unsavedChanges" x-cloak class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 text-xs font-semibold text-danger-700 dark:text-danger-400">
+                    <span class="w-2 h-2 rounded-full bg-danger-500 animate-pulse"></span>
+                    <span>{{ __('Unsaved version') }}</span>
+                </div>
+
                 {{-- Layout Dirty Status Badge --}}
                 <div x-show="isDirty" x-cloak class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20 text-xs font-semibold text-warning-700 dark:text-warning-400">
                     <span class="w-2 h-2 rounded-full bg-warning-500 animate-pulse"></span>

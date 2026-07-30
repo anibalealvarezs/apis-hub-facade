@@ -22,6 +22,7 @@ class CustomKpiVersion extends Model
         'filters',
         'is_active',
         'change_summary',
+        'label',
     ];
 
     protected $casts = [

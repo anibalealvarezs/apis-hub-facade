@@ -24,6 +24,7 @@ class DashboardVersion extends Model
         'is_public',
         'is_default',
         'change_summary',
+        'label',
     ];
 
     protected $casts = [

@@ -79,4 +79,9 @@ class DashboardWidget extends Model
             'project_id' => $this->dashboard?->project_id,
         ];
     }
+
+    protected function shouldAutoVersionOnUpdate(): bool
+    {
+        return true;
+    }
 }

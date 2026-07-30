@@ -4,6 +4,8 @@ namespace App\Filament\App\Resources\DerivedMetricResource\Pages;
 
 use App\Filament\App\Resources\DerivedMetricResource;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDerivedMetric extends EditRecord
@@ -59,6 +61,25 @@ class EditDerivedMetric extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('saveVersion')
+                ->label(fn (): string => __('Save Version'))
+                ->icon('heroicon-o-document-plus')
+                ->color('primary')
+                ->form([
+                    Forms\Components\TextInput::make('label')
+                        ->label(__('Version Label'))
+                        ->placeholder(__('e.g. Updated formula')),
+                ])
+                ->action(function (array $data) {
+                    $this->record->createVersion(
+                        changeSummary: 'Manually saved',
+                        versionName: $data['label'] ?? null,
+                    );
+                    Notification::make()
+                        ->title(__('Version saved'))
+                        ->success()
+                        ->send();
+                }),
             Actions\DeleteAction::make()
                 ->visible(fn () => auth()->user()->can('edit_preferences')),
         ];

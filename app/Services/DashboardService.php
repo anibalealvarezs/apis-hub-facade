@@ -36,6 +36,41 @@ class DashboardService
         return $clone->fresh(['widgets']);
     }
 
+    public function cloneDashboardFromVersion(Dashboard $dashboard, $version): Dashboard
+    {
+        $versionData = collect($version->toArray())
+            ->only($dashboard->getTrackableFields())
+            ->toArray();
+
+        $clone = $dashboard->replicate();
+        $clone->name = ($versionData['name'] ?? $dashboard->name) . ' (From v' . $version->version_number . ')';
+        $clone->is_default = false;
+        unset($clone->widgets_count);
+        $clone->fill($versionData);
+        $clone->push();
+
+        $widgetVersionIds = $version->widget_version_ids ?? [];
+        $widgetVersions = \App\Models\WidgetVersion::whereIn('id', array_values($widgetVersionIds))->get()->keyBy('id');
+
+        foreach ($widgetVersionIds as $origWidgetId => $widgetVersionId) {
+            $wv = $widgetVersions->get($widgetVersionId);
+            if (!$wv) {
+                continue;
+            }
+
+            $widgetData = collect($wv->toArray())
+                ->only((new \App\Models\DashboardWidget)->getTrackableFields())
+                ->toArray();
+            $widgetData['dashboard_id'] = $clone->id;
+
+            $widgetClone = new \App\Models\DashboardWidget();
+            $widgetClone->fill($widgetData);
+            $widgetClone->push();
+        }
+
+        return $clone->fresh(['widgets']);
+    }
+
     public function saveLayout(Dashboard $dashboard, array $gridItems): void
     {
         foreach ($gridItems as $item) {

@@ -118,3 +118,23 @@
   - **Bug fix (2026-07-30):** 18/21 widgets had no WidgetVersion records (created before TracksVersions was applied to DashboardWidget). `getVersionExtraAttributes` only stored `widget_version_ids` for widgets that had versions, causing restore to silently skip the other 18.
   - **Fix:** In `getVersionExtraAttributes`, if a widget has no WidgetVersion, one is created on-the-fly via `$widget->createVersion('Initial snapshot')` before snapshotting.
   - **Note:** Existing `dashboard_versions` created before this fix still have incomplete `widget_version_ids`. To fully restore them, a data migration would need to backfill WidgetVersion records and update old dashboard versions. For now, new dashboard versions will correctly capture all widgets.
+
+### Versioning Overhaul (2026-07-30)
+- **No auto-versioning on model update:** `TracksVersions::shouldAutoVersionOnUpdate()` returns `false` by default. Versioning is manual via "Save Version" button.
+- **DashboardWidget overrides** `shouldAutoVersionOnUpdate()` to `true` — WidgetVersions auto-create on widget saves (needed for dashboard restore accuracy).
+- **Unsaved changes indicator:** `$unsavedChanges` flag on DashboardBuilder (Livewire component), reset when version is saved, shown in toolbar header and Save Version action label.
+- **Custom version labels:** `label` column added to all 4 version tables via migration `2026_07_30_000006_add_label_to_version_tables.php`. `createVersion()` accepts optional `$versionName` param.
+- **Prune all versions:** Bulk action added to all 3 VersionsRelationManagers (Dashboard, CustomKPI, DerivedMetric).
+- **Duplicate dashboard from version:** `DashboardService::cloneDashboardFromVersion()` creates a new dashboard from a historic version's snapshot. Triggered from version-history modal.
+- **Duplicate current dashboard:** Header action on DashboardBuilder clones current state and redirects.
+- **Files modified:**
+  - `app/Traits/TracksVersions.php` — removed auto-versioning, added `hasUnsavedChanges()`, `$versionName` param, `shouldAutoVersionOnUpdate()`
+  - `app/Models/DashboardWidget.php` — `shouldAutoVersionOnUpdate() = true`
+  - `app/Models/DashboardVersion.php`, `WidgetVersion.php`, `CustomKpiVersion.php`, `DerivedMetricVersion.php` — `label` in fillable
+  - `app/Filament/App/Resources/DashboardResource/Pages/DashboardBuilder.php` — saveVersion action, duplicateCurrent, duplicateFromVersion, unsavedChanges flag
+  - `app/Services/DashboardService.php` — `cloneDashboardFromVersion()`
+  - `app/Filament/App/Resources/CustomKpiResource/Pages/EditCustomKpi.php` — saveVersion action
+  - `app/Filament/App/Resources/DerivedMetricResource/Pages/EditDerivedMetric.php` — saveVersion action
+  - All 3 VersionsRelationManagers — label column, pruneAll bulk action
+  - `resources/views/filament/modals/version-history.blade.php` — label column, duplicate button
+  - `resources/views/filament/app/pages/dashboard-builder.blade.php` — unsaved changes indicator in toolbar

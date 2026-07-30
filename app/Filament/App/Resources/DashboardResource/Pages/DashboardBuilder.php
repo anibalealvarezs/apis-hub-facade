@@ -9,6 +9,7 @@ use App\Models\CustomKpi;
 use App\Services\WidgetTypeRegistry;
 use App\Services\Analytics\KpiFormBuilder;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Pages\Page;
 use Filament\Notifications\Notification;
 
@@ -23,6 +24,8 @@ class DashboardBuilder extends Page
     public ?array $widgets = [];
 
     public ?array $gridState = [];
+
+    public bool $unsavedChanges = false;
 
     public function mount(Dashboard $record): void
     {
@@ -56,10 +59,17 @@ class DashboardBuilder extends Page
         $service = app(\App\Services\DashboardService::class);
         $service->saveLayout($this->dashboard, $gridItems);
 
+        $this->unsavedChanges = true;
+
         Notification::make()
             ->title(__('Layout saved'))
             ->success()
             ->send();
+    }
+
+    public function getHasUnsavedChanges(): bool
+    {
+        return $this->unsavedChanges;
     }
 
     // ─── Dashboard Controls ───
@@ -67,6 +77,8 @@ class DashboardBuilder extends Page
     public function saveDashboardControls(array $controls): void
     {
         $this->dashboard->update(['controls' => $controls]);
+
+        $this->unsavedChanges = true;
 
         Notification::make()
             ->title(__('Dashboard controls saved'))
@@ -91,6 +103,8 @@ class DashboardBuilder extends Page
 
         $widget->update(['widget_type' => $widgetType]);
 
+        $this->unsavedChanges = true;
+
         Notification::make()
             ->title(__('Widget type changed to :type', ['type' => WidgetTypeRegistry::getWidgetLabel($widgetType)]))
             ->success()
@@ -109,6 +123,8 @@ class DashboardBuilder extends Page
             'title' => $title,
             'description' => $description,
         ]);
+
+        $this->unsavedChanges = true;
 
         Notification::make()
             ->title(__('Widget controls saved'))
@@ -316,6 +332,7 @@ class DashboardBuilder extends Page
         $widget = $service->addWidget($this->dashboard, $data);
 
         $this->loadWidgets();
+        $this->unsavedChanges = true;
 
         Notification::make()
             ->title(__('Widget added'))
@@ -336,6 +353,7 @@ class DashboardBuilder extends Page
 
         $service->removeWidget($widget);
         $this->loadWidgets();
+        $this->unsavedChanges = true;
 
         Notification::make()
             ->title(__('Widget removed'))
@@ -354,6 +372,7 @@ class DashboardBuilder extends Page
 
         $newWidget = $service->duplicateWidget($widget);
         $this->loadWidgets();
+        $this->unsavedChanges = true;
 
         Notification::make()
             ->title(__('Widget duplicated'))
@@ -417,6 +436,26 @@ class DashboardBuilder extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('saveVersion')
+                ->label(fn (): string => $this->getHasUnsavedChanges() ? __('Save Version') . ' ⚠' : __('Save Version'))
+                ->icon('heroicon-o-document-plus')
+                ->color('primary')
+                ->form([
+                    Forms\Components\TextInput::make('label')
+                        ->label(__('Version Label'))
+                        ->placeholder(__('e.g. Campaign launch layout')),
+                ])
+                ->action(function (array $data) {
+                    $this->dashboard->createVersion(
+                        changeSummary: 'Manually saved',
+                        versionName: $data['label'] ?? null,
+                    );
+                    $this->unsavedChanges = false;
+                    Notification::make()
+                        ->title(__('Version saved'))
+                        ->success()
+                        ->send();
+                }),
             Actions\Action::make('versionHistory')
                 ->label(__('Version History'))
                 ->icon('heroicon-o-clock')
@@ -434,6 +473,23 @@ class DashboardBuilder extends Page
                         'versions' => $versions,
                         'dashboard' => $this->dashboard,
                     ]);
+                }),
+            Actions\Action::make('duplicateCurrent')
+                ->label(__('Duplicate'))
+                ->icon('heroicon-o-document-duplicate')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalHeading(__('Duplicate Dashboard'))
+                ->modalDescription(__('Create a copy of this dashboard from its current state?'))
+                ->modalSubmitActionLabel(__('Duplicate'))
+                ->action(function () {
+                    $service = app(\App\Services\DashboardService::class);
+                    $clone = $service->cloneDashboard($this->dashboard);
+                    Notification::make()
+                        ->title(__('Dashboard duplicated'))
+                        ->success()
+                        ->send();
+                    $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
                 }),
             Actions\Action::make('settings')
                 ->label(__('Dashboard Settings'))
@@ -460,11 +516,28 @@ class DashboardBuilder extends Page
         $this->dashboard->createVersion('Before restore to v' . $version->version_number);
         $this->dashboard->restoreFullVersion($version);
 
+        $this->unsavedChanges = true;
+
         $this->js('window.location.reload()');
 
         \Filament\Notifications\Notification::make()
             ->title(__('Dashboard restored to version #:version', ['version' => $version->version_number]))
             ->success()
             ->send();
+    }
+
+    public function duplicateFromVersion(int $versionId): void
+    {
+        $version = $this->dashboard->versions()->findOrFail($versionId);
+
+        $service = app(\App\Services\DashboardService::class);
+        $clone = $service->cloneDashboardFromVersion($this->dashboard, $version);
+
+        Notification::make()
+            ->title(__('Dashboard duplicated from version #:version', ['version' => $version->version_number]))
+            ->success()
+            ->send();
+
+        $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
     }
 }

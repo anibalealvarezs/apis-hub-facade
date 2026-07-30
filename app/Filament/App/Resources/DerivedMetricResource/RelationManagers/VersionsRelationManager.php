@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\DerivedMetricResource\RelationManagers;
 
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,6 +18,9 @@ class VersionsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('version_number')
                     ->label('#')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('label')
+                    ->label('Label')
+                    ->placeholder('-'),
                 Tables\Columns\TextColumn::make('name'),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Changed by'),
@@ -54,6 +58,27 @@ class VersionsRelationManager extends RelationManager
                             'previousVersion' => $previousVersion,
                         ]);
                     }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Delete selected'),
+                    Tables\Actions\BulkAction::make('pruneAll')
+                        ->label('Prune all versions')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Prune all versions?')
+                        ->modalDescription('This will permanently delete ALL versions for this derived metric. This action cannot be undone.')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function () {
+                            $this->getOwnerRecord()->versions()->delete();
+                            Notification::make()
+                                ->title('All versions pruned')
+                                ->success()
+                                ->send();
+                        }),
+                ]),
             ]);
     }
 }

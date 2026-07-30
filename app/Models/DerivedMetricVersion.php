@@ -23,6 +23,7 @@ class DerivedMetricVersion extends Model
         'output_granularity',
         'is_active',
         'change_summary',
+        'label',
     ];
 
     protected $casts = [
