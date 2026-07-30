@@ -575,17 +575,55 @@
                         ->label(__('Preview'))
                         ->icon('heroicon-o-magnifying-glass')
                         ->color('gray')
-                        ->modalHeading(__('Derived Metric Preview'))
+                        ->modalHeading(__('Derived Metric Configuration Summary'))
                         ->modalContent(function (DerivedMetric $record) {
-                            $sourceKeys = array_column($record->source_series ?? [], 'key');
-                            $astJson = json_encode($record->ast, JSON_PRETTY_PRINT);
-                            $seriesJson = json_encode($record->source_series, JSON_PRETTY_PRINT);
+                            $formatLabel = match ($record->format ?? 'decimal') {
+                                'percentage' => __('Percentage (%)'),
+                                'currency'   => __('Currency ($)'),
+                                default      => __('Decimal'),
+                            };
+
+                            $series = $record->source_series ?? [];
+                            $seriesRows = '';
+                            $i = 0;
+                            foreach (array_values($series) as $s) {
+                                $key = $s['key'] ?? chr(97 + $i);
+                                $seriesRows .= '<tr>'
+                                    .'<td class="pr-4 font-mono text-xs text-primary-600 dark:text-primary-400">'.e($key).'</td>'
+                                    .'<td class="pr-4">'.e($s['label'] ?? '').'</td>'
+                                    .'<td class="pr-4">'.e($s['channel'] ?? '').'</td>'
+                                    .'<td class="pr-4">'.e($s['metric'] ?? '').'</td>'
+                                    .'<td>'.e($s['granularity'] ?? 'daily').'</td>'
+                                    .'</tr>';
+                                $i++;
+                            }
+
+                            $astPreview = e(json_encode($record->ast, JSON_PRETTY_PRINT));
 
                             return new \Illuminate\Support\HtmlString(
-                                '<div class="space-y-4">'
-                                .'<div><strong>'.__('Formula (AST)').':</strong><pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'.$astJson.'</pre></div>'
-                                .'<div><strong>'.__('Source Series').':</strong><pre style="background: #1f2937; color: #60a5fa; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'.$seriesJson.'</pre></div>'
-                                .'<div><strong>'.__('Source Keys').':</strong> '.implode(', ', $sourceKeys).'</div>'
+                                '<div class="space-y-6">'
+                                .'<div class="grid grid-cols-2 gap-4">'
+                                .'<div><strong>'.__('Name').':</strong> '.e($record->name).'</div>'
+                                .'<div><strong>'.__('Status').':</strong> '.($record->is_active ? __('Active') : __('Inactive')).'</div>'
+                                .'</div>'
+                                .'<div><strong>'.__('Description').':</strong> '.e($record->description ?? '—').'</div>'
+                                .'<div class="grid grid-cols-2 gap-4">'
+                                .'<div><strong>'.__('Output Granularity').':</strong> '.($record->output_granularity ? __(ucfirst($record->output_granularity)) : __('Dynamic (user selects at widget level)')).'</div>'
+                                .'<div><strong>'.__('Value Format').':</strong> '.$formatLabel.'</div>'
+                                .'</div>'
+                                .'<div><strong>'.__('Source Series').':</strong>'
+                                .'<table class="table-auto w-full mt-1">'
+                                .'<thead><tr class="text-left text-sm">'
+                                .'<th class="pr-4">'.__('Key').'</th>'
+                                .'<th class="pr-4">'.__('Label').'</th>'
+                                .'<th class="pr-4">'.__('Channel').'</th>'
+                                .'<th class="pr-4">'.__('Metric').'</th>'
+                                .'<th>'.__('Granularity').'</th>'
+                                .'</tr></thead><tbody>'
+                                .$seriesRows
+                                .'</tbody></table></div>'
+                                .'<div><strong>'.__('Formula (AST)').':</strong>'
+                                .'<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem; margin-top: 0.25rem;">'.$astPreview.'</pre></div>'
                                 .'</div>'
                             );
                         })
