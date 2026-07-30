@@ -35,7 +35,7 @@ class VersionsRelationManager extends RelationManager
                     ->action(function ($record) {
                         $owner = $this->getOwnerRecord();
                         $owner->createVersion('Before restore to v' . $record->version_number);
-                        $owner->restoreVersion($record->id);
+                        $owner->restoreFullVersion($record);
                         $this->js('window.location.reload()');
                     }),
                 Tables\Actions\Action::make('view')

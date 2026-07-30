@@ -69,4 +69,91 @@ class Dashboard extends Model
     {
         return 'dashboard_id';
     }
+
+    protected function getVersionExtraAttributes(): array
+    {
+        $this->loadMissing('widgets');
+
+        $widgetIds = [];
+        $widgetVersionIds = [];
+
+        foreach ($this->widgets as $widget) {
+            $widgetIds[] = $widget->id;
+            $latestVersion = $widget->versions()->latest('version_number')->first();
+            if ($latestVersion) {
+                $widgetVersionIds[$widget->id] = $latestVersion->id;
+            }
+        }
+
+        return [
+            'widget_ids' => $widgetIds,
+            'widget_version_ids' => $widgetVersionIds,
+        ];
+    }
+
+    public function restoreFullVersion(DashboardVersion $version): void
+    {
+        $this->withoutVersioning = true;
+
+        $trackable = collect($version->toArray())
+            ->only($this->getTrackableFields())
+            ->toArray();
+
+        $this->update($trackable);
+
+        $this->withoutVersioning = false;
+
+        $this->reconcileWidgetsFromVersion($version);
+    }
+
+    protected function reconcileWidgetsFromVersion(DashboardVersion $version): void
+    {
+        $snapshotWidgetIds = collect($version->widget_ids ?? []);
+        $snapshotWidgetVersionIds = $version->widget_version_ids ?? [];
+
+        $this->loadMissing('widgets');
+        $currentWidgets = $this->widgets->keyBy('id');
+
+        $currentWidgetIds = $currentWidgets->keys();
+
+        $toDelete = $currentWidgetIds->diff($snapshotWidgetIds);
+        $toRestoreFromTrash = $snapshotWidgetIds->diff($currentWidgetIds);
+
+        DashboardWidget::whereIn('id', $toDelete)->get()->each(function ($widget) {
+            $widget->delete();
+        });
+
+        if ($toRestoreFromTrash->isNotEmpty()) {
+            DashboardWidget::onlyTrashed()
+                ->whereIn('dashboard_id', [$this->id])
+                ->whereIn('id', $toRestoreFromTrash)
+                ->get()
+                ->each(function ($widget) {
+                    $widget->restore();
+                });
+        }
+
+        $this->loadMissing('widgets');
+
+        foreach ($snapshotWidgetIds as $widgetId) {
+            $widget = DashboardWidget::withTrashed()->find($widgetId);
+            if (!$widget) {
+                continue;
+            }
+
+            $widgetVersionId = $snapshotWidgetVersionIds[$widgetId] ?? null;
+
+            if ($widgetVersionId) {
+                $widgetVersion = WidgetVersion::find($widgetVersionId);
+                if ($widgetVersion) {
+                    $widget->withoutVersioning = true;
+                    $trackable = collect($widgetVersion->toArray())
+                        ->only($widget->getTrackableFields())
+                        ->toArray();
+                    $widget->update($trackable);
+                    $widget->withoutVersioning = false;
+                }
+            }
+        }
+    }
 }

@@ -19,6 +19,8 @@ class DashboardVersion extends Model
         'description',
         'grid_layout',
         'controls',
+        'widget_ids',
+        'widget_version_ids',
         'is_public',
         'is_default',
         'change_summary',
@@ -27,6 +29,8 @@ class DashboardVersion extends Model
     protected $casts = [
         'grid_layout' => 'array',
         'controls' => 'array',
+        'widget_ids' => 'array',
+        'widget_version_ids' => 'array',
         'is_public' => 'boolean',
         'is_default' => 'boolean',
     ];

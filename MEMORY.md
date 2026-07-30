@@ -99,3 +99,14 @@
   ')
   ```
 - **Commit:** `a2e5bf4` (HEAD)
+
+### Dashboard Full-State Restore (2026-07-29)
+- **Status:** Implemented
+- **Problem:** Restoring a dashboard version only restored dashboard fields (name, description, grid_layout, controls), not the widget state — widgets remained as-is
+- **Solution:** Added `widget_ids` (JSON) and `widget_version_ids` (JSON) columns to `dashboard_versions` table. When creating a dashboard version, the current widget IDs and their latest version IDs are snapshotted via `getVersionExtraAttributes()`. 
+- **Restore flow:** `restoreFullVersion()` on Dashboard reconciles three cases:
+  1. **Extra widgets** (exist now but not in snapshot) → soft-deleted
+  2. **Missing widgets** (in snapshot but soft-deleted) → restored from trash
+  3. **Changed widgets** (exist in both) → restored to their snapshot version via stored `widget_version_ids`
+- **New files:** `database/migrations/2026_07_29_000005_add_widget_snapshot_to_dashboard_versions.php`
+- **Modified files:** `app\Models\Dashboard.php`, `app\Models\DashboardVersion.php`, `app\Filament\App\Resources\DashboardResource\RelationManagers\VersionsRelationManager.php`
