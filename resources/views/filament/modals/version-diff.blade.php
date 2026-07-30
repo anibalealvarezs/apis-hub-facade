@@ -220,8 +220,6 @@
     background: #fffbeb; color: #b45309;
     box-shadow: inset 0 0 0 1px #fde68a;
 }
-.dark .diff-danger { color: #fca5a5; }
-.dark .diff-success { color: #86efac; }
 .dark .diff-change-count { color: #fbbf24; }
 .dark .diff-badge-success {
     background: rgba(34,197,94,0.1); color: #86efac;
