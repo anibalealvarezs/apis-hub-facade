@@ -113,7 +113,6 @@
         };
         $currentByKey = $byKey($currentSeries);
         $previousByKey = $byKey($previousSeries);
-        $seriesFieldList = ['label', 'channel', 'metric', 'granularity'];
     } else {
         $currentSeries = $previousSeries = [];
         $currentMap = $previousMap = [];
@@ -231,49 +230,55 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap w-24">Field</th>
-                                @foreach($allSeriesKeys as $sk)
-                                    @php
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Key</th>
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Label</th>
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Channel</th>
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Metric</th>
+                                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Granularity</th>
+                                @php
+                                    $anyAssetFilters = false;
+                                    foreach ($allSeriesKeys as $sk) {
                                         $curr = $currentByKey[$sk] ?? null;
                                         $prevEnt = $previousByKey[$sk] ?? null;
-                                        $isNew = !$prevEnt && $curr;
-                                        $isRemoved = $prevEnt && !$curr;
-                                        $hasChange = $prev && $curr && $prevEnt && $curr !== $prevEnt;
-                                    @endphp
-                                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap {{ $isNew ? 'text-success-600 dark:text-success-400' : ($isRemoved ? 'text-danger-600 dark:text-danger-400' : ($hasChange ? 'text-warning-600 dark:text-warning-400' : 'text-gray-400 dark:text-gray-500')) }}">
-                                        Key {{ strtoupper($sk) }}
-                                        @if($isNew)
-                                            <span class="ml-1 text-success-600 dark:text-success-400">(added)</span>
-                                        @elseif($isRemoved)
-                                            <span class="ml-1 text-danger-600 dark:text-danger-400">(removed)</span>
-                                        @elseif($hasChange)
-                                            <span class="ml-1 text-warning-600 dark:text-warning-400">(changed)</span>
-                                        @endif
-                                    </th>
-                                @endforeach
+                                        if (!empty($curr['asset_filter'] ?? []) || !empty($prevEnt['asset_filter'] ?? [])) {
+                                            $anyAssetFilters = true;
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                @if($anyAssetFilters)
+                                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Filters</th>
+                                @endif
+                                @if($prev)
+                                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Status</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($seriesFieldList as $sfi => $sf)
-                                <tr class="{{ $sfi < count($seriesFieldList) - 1 ? 'border-b border-gray-100 dark:border-gray-700/50' : '' }}">
-                                    <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">{{ $sf }}</td>
-                                    @foreach($allSeriesKeys as $sk)
+                            @foreach($allSeriesKeys as $sk)
+                                @php
+                                    $curr = $currentByKey[$sk] ?? null;
+                                    $prevEnt = $previousByKey[$sk] ?? null;
+                                    $isNew = !$prevEnt && $curr;
+                                    $isRemoved = $prevEnt && !$curr;
+                                    $hasChange = $prev && $curr && $prevEnt && $curr !== $prevEnt;
+                                    $rowBg = $isNew ? 'bg-success-50/30 dark:bg-success-400/5' : ($isRemoved ? 'bg-danger-50/30 dark:bg-danger-400/5' : ($hasChange ? 'bg-warning-50/30 dark:bg-warning-400/5' : ''));
+                                @endphp
+                                <tr class="border-b border-gray-100 dark:border-gray-700/50 {{ $rowBg }}">
+                                    <td class="px-4 py-2.5 text-sm font-medium text-gray-950 dark:text-white whitespace-nowrap">{{ $sk }}</td>
+                                    @foreach(['label', 'channel', 'metric', 'granularity'] as $sf)
                                         @php
-                                            $curr = $currentByKey[$sk] ?? null;
-                                            $prevEnt = $previousByKey[$sk] ?? null;
                                             $currVal = $curr[$sf] ?? '—';
                                             $prevVal = $prevEnt[$sf] ?? '—';
                                             $cellChanged = $prev && $curr && $prevEnt && $currVal !== $prevVal;
-                                            $isNew = !$prevEnt && $curr;
-                                            $isRemoved = $prevEnt && !$curr;
                                         @endphp
-                                        <td class="px-4 py-2.5 text-sm whitespace-nowrap {{ $cellChanged ? 'bg-warning-50 dark:bg-warning-400/10' : ($isNew ? 'bg-success-50/50 dark:bg-success-400/5' : ($isRemoved ? 'bg-danger-50/50 dark:bg-danger-400/5' : '')) }}">
-                                            @if($isRemoved)
-                                                <span class="text-gray-400 dark:text-gray-500 line-through">{{ $prevVal }}</span>
-                                            @elseif($cellChanged)
-                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $prevVal }}</span>
+                                        <td class="px-4 py-2.5 text-sm whitespace-nowrap">
+                                            @if($cellChanged)
+                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1">{{ $prevVal }}</span>
                                                 <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
                                                 <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $currVal }}</span>
+                                            @elseif($isRemoved)
+                                                <span class="text-gray-400 dark:text-gray-500 line-through">{{ $prevVal }}</span>
                                             @elseif($isNew)
                                                 <span class="text-success-700 dark:text-success-300 font-medium">{{ $currVal }}</span>
                                             @else
@@ -281,33 +286,15 @@
                                             @endif
                                         </td>
                                     @endforeach
-                                </tr>
-                            @endforeach
-                            @php
-                                $anyAssetFilters = false;
-                                foreach ($allSeriesKeys as $sk) {
-                                    $curr = $currentByKey[$sk] ?? null;
-                                    $prevEnt = $previousByKey[$sk] ?? null;
-                                    if (!empty($curr['asset_filter'] ?? []) || !empty($prevEnt['asset_filter'] ?? [])) {
-                                        $anyAssetFilters = true;
-                                        break;
-                                    }
-                                }
-                            @endphp
-                            @if($anyAssetFilters)
-                                <tr>
-                                    <td class="px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">Filters</td>
-                                    @foreach($allSeriesKeys as $sk)
+                                    @if($anyAssetFilters)
                                         @php
-                                            $curr = $currentByKey[$sk] ?? null;
-                                            $prevEnt = $previousByKey[$sk] ?? null;
                                             $currFilter = $curr['asset_filter'] ?? [];
                                             $prevFilter = $prevEnt['asset_filter'] ?? [];
                                             $filterChanged = $prev && $curr && $prevEnt && $currFilter !== $prevFilter;
                                         @endphp
-                                        <td class="px-4 py-2.5 text-xs whitespace-nowrap {{ $filterChanged ? 'bg-warning-50 dark:bg-warning-400/10' : '' }}">
+                                        <td class="px-4 py-2.5 text-xs whitespace-nowrap">
                                             @if($filterChanged)
-                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1.5">{{ $fmt($prevFilter) }}</span>
+                                                <span class="text-gray-400 dark:text-gray-500 line-through mr-1">{{ $fmt($prevFilter) }}</span>
                                                 <x-filament::icon icon="heroicon-m-arrow-right" class="w-3 h-3 text-warning-500 inline shrink-0 -mt-0.5" />
                                                 <span class="text-warning-700 dark:text-warning-200 font-medium ml-1">{{ $fmt($currFilter) }}</span>
                                             @elseif(!empty($currFilter))
@@ -318,9 +305,22 @@
                                                 <span class="text-gray-400 dark:text-gray-500">—</span>
                                             @endif
                                         </td>
-                                    @endforeach
+                                    @endif
+                                    @if($prev)
+                                        <td class="px-4 py-2.5 text-xs whitespace-nowrap">
+                                            @if($isNew)
+                                                <span class="text-success-600 dark:text-success-400 font-medium">Added</span>
+                                            @elseif($isRemoved)
+                                                <span class="text-danger-600 dark:text-danger-400 font-medium">Removed</span>
+                                            @elseif($hasChange)
+                                                <span class="text-warning-600 dark:text-warning-400 font-medium">Modified</span>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">Unchanged</span>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
-                            @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
