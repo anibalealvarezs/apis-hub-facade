@@ -7,14 +7,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait TracksVersions
 {
+    protected bool $withoutVersioning = false;
+
     protected static function bootTracksVersions(): void
     {
         static::created(function (Model $model) {
-            $model->createVersion('Created');
+            if (!$model->withoutVersioning) {
+                $model->createVersion('Created');
+            }
         });
 
         static::updated(function (Model $model) {
-            if ($model->wasChanged($model->getTrackableFields())) {
+            if (!$model->withoutVersioning && $model->wasChanged($model->getTrackableFields())) {
                 $model->createVersion($model->detectChangeSummary());
             }
         });
@@ -56,7 +60,11 @@ trait TracksVersions
             ->only($this->getTrackableFields())
             ->toArray();
 
-        return $this->update($trackable);
+        $this->withoutVersioning = true;
+        $result = $this->update($trackable);
+        $this->withoutVersioning = false;
+
+        return $result;
     }
 
     protected function getTrackableSnapshot(): array
