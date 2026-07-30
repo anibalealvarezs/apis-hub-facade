@@ -29,7 +29,7 @@
                                     type="button"
                                     class="inline-flex items-center gap-1 text-xs font-medium version-restore-btn"
                                     wire:click="restoreVersion({{ $version->id }})"
-                                    wire:confirm="{{ __('Restore to version #:version? This will create a snapshot of the current state first.', ['version' => $version->version_number]) }}"
+                                    wire:confirm="{{ __('Restore to version #:version? Save the current state as a version first or it will be lost forever.', ['version' => $version->version_number]) }}"
                                 >
                                     {{ __('Restore') }}
                                 </button>

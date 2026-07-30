@@ -35,10 +35,9 @@ class VersionsRelationManager extends RelationManager
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->requiresConfirmation()
                     ->modalHeading('Restore Version')
-                    ->modalDescription('This will overwrite the current state with this version. A new version will be created for the current state before restoring.')
+                    ->modalDescription('This will overwrite the current state with this version. Save the current state as a version first or it will be lost forever.')
                     ->action(function ($record) {
                         $owner = $this->getOwnerRecord();
-                        $owner->createVersion('Before restore to v' . $record->version_number);
                         $owner->restoreVersion($record->id);
                         $this->js('window.location.reload()');
                     }),

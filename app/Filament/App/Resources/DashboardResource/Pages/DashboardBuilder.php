@@ -513,7 +513,6 @@ class DashboardBuilder extends Page
     {
         $version = $this->dashboard->versions()->findOrFail($versionId);
 
-        $this->dashboard->createVersion('Before restore to v' . $version->version_number);
         $this->dashboard->restoreFullVersion($version);
 
         $this->unsavedChanges = true;
