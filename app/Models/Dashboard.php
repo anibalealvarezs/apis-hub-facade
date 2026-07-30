@@ -85,6 +85,12 @@ class Dashboard extends Model
             }
         }
 
+        \Log::debug('[Dashboard:getVersionExtraAttributes]', [
+            'dashboard_id' => $this->id,
+            'widget_ids' => $widgetIds,
+            'widget_version_ids' => $widgetVersionIds,
+        ]);
+
         return [
             'widget_ids' => $widgetIds,
             'widget_version_ids' => $widgetVersionIds,
@@ -93,6 +99,14 @@ class Dashboard extends Model
 
     public function restoreFullVersion(DashboardVersion $version): void
     {
+        \Log::debug('[Dashboard:restoreFullVersion] start', [
+            'dashboard_id' => $this->id,
+            'version_id' => $version->id,
+            'version_number' => $version->version_number,
+            'version_widget_ids' => $version->widget_ids,
+            'version_widget_version_ids' => $version->widget_version_ids,
+        ]);
+
         $this->withoutVersioning = true;
 
         $trackable = collect($version->toArray())
@@ -109,6 +123,7 @@ class Dashboard extends Model
     protected function reconcileWidgetsFromVersion(DashboardVersion $version): void
     {
         if ($version->widget_ids === null) {
+            \Log::debug('[Dashboard:reconcileWidgetsFromVersion] skipped: widget_ids is null');
             return;
         }
 
@@ -116,12 +131,25 @@ class Dashboard extends Model
         $snapshotWidgetVersionIds = $version->widget_version_ids ?? [];
 
         $this->loadMissing('widgets');
+
+        \Log::debug('[Dashboard:reconcileWidgetsFromVersion] loadMissing widgets', [
+            'widget_count' => $this->widgets->count(),
+            'widget_ids_in_relation' => $this->widgets->pluck('id')->toArray(),
+        ]);
+
         $currentWidgets = $this->widgets->keyBy('id');
 
         $currentWidgetIds = $currentWidgets->keys();
 
         $toDelete = $currentWidgetIds->diff($snapshotWidgetIds);
         $toRestoreFromTrash = $snapshotWidgetIds->diff($currentWidgetIds);
+
+        \Log::debug('[Dashboard:reconcileWidgetsFromVersion] widget diff', [
+            'toDelete' => $toDelete->toArray(),
+            'toRestoreFromTrash' => $toRestoreFromTrash->toArray(),
+            'snapshotWidgetIds' => $snapshotWidgetIds->toArray(),
+            'currentWidgetIds' => $currentWidgetIds->toArray(),
+        ]);
 
         DashboardWidget::whereIn('id', $toDelete)->get()->each(function ($widget) {
             $widget->delete();
@@ -142,10 +170,22 @@ class Dashboard extends Model
         foreach ($snapshotWidgetIds as $widgetId) {
             $widget = DashboardWidget::withTrashed()->find($widgetId);
             if (!$widget) {
+                \Log::debug('[Dashboard:reconcileWidgetsFromVersion] widget not found', ['widgetId' => $widgetId]);
                 continue;
             }
 
             $widgetVersionId = $snapshotWidgetVersionIds[$widgetId] ?? null;
+
+            \Log::debug('[Dashboard:reconcileWidgetsFromVersion] restoring widget', [
+                'widgetId' => $widgetId,
+                'widgetVersionId' => $widgetVersionId,
+                'current_grid_values' => [
+                    'grid_x' => $widget->grid_x,
+                    'grid_y' => $widget->grid_y,
+                    'grid_w' => $widget->grid_w,
+                    'grid_h' => $widget->grid_h,
+                ],
+            ]);
 
             if ($widgetVersionId) {
                 $widgetVersion = WidgetVersion::find($widgetVersionId);
@@ -154,9 +194,31 @@ class Dashboard extends Model
                     $trackable = collect($widgetVersion->toArray())
                         ->only($widget->getTrackableFields())
                         ->toArray();
+
+                    \Log::debug('[Dashboard:reconcileWidgetsFromVersion] applying version', [
+                        'widgetId' => $widgetId,
+                        'versionNumber' => $widgetVersion->version_number,
+                        'trackable' => $trackable,
+                    ]);
+
                     $widget->update($trackable);
+
                     $widget->withoutVersioning = false;
+
+                    \Log::debug('[Dashboard:reconcileWidgetsFromVersion] after update', [
+                        'widgetId' => $widgetId,
+                        'new_grid_values' => [
+                            'grid_x' => $widget->grid_x,
+                            'grid_y' => $widget->grid_y,
+                            'grid_w' => $widget->grid_w,
+                            'grid_h' => $widget->grid_h,
+                        ],
+                    ]);
+                } else {
+                    \Log::debug('[Dashboard:reconcileWidgetsFromVersion] WidgetVersion not found', ['widgetVersionId' => $widgetVersionId]);
                 }
+            } else {
+                \Log::debug('[Dashboard:reconcileWidgetsFromVersion] no widgetVersionId in snapshot for widget', ['widgetId' => $widgetId]);
             }
         }
     }

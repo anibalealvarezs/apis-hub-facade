@@ -30,8 +30,10 @@ trait TracksVersions
         $lastVersion = $versionClass::where($this->getVersionForeignKey(), $this->id)
             ->max('version_number') ?? 0;
 
+        $snapshot = $this->getTrackableSnapshot();
+
         $versionClass::create(array_merge(
-            $this->getTrackableSnapshot(),
+            $snapshot,
             [
                 $this->getVersionForeignKey() => $this->id,
                 'project_id' => $this->project_id,
@@ -41,6 +43,16 @@ trait TracksVersions
             ],
             $this->getVersionExtraAttributes(),
         ));
+
+        if (in_array('grid_w', $this->getTrackableFields())) {
+            \Log::debug('[TracksVersions] WidgetVersion created', [
+                'widget_id' => $this->id,
+                'class' => get_class($this),
+                'version_number' => $lastVersion + 1,
+                'snapshot_grid_w' => $snapshot['grid_w'] ?? 'N/A',
+                'snapshot_grid_h' => $snapshot['grid_h'] ?? 'N/A',
+            ]);
+        }
     }
 
     public function versions(): HasMany

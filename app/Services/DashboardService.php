@@ -41,11 +41,30 @@ class DashboardService
         foreach ($gridItems as $item) {
             $widget = DashboardWidget::find($item['id']);
             if ($widget && $widget->dashboard_id === $dashboard->id) {
+                $oldVals = [
+                    'grid_x' => $widget->grid_x,
+                    'grid_y' => $widget->grid_y,
+                    'grid_w' => $widget->grid_w,
+                    'grid_h' => $widget->grid_h,
+                ];
+
                 $widget->update([
                     'grid_x' => $item['x'] ?? 0,
                     'grid_y' => $item['y'] ?? 0,
                     'grid_w' => $item['w'] ?? 4,
                     'grid_h' => $item['h'] ?? 2,
+                ]);
+
+                $widget->refresh();
+                $latestVersion = $widget->versions()->latest('version_number')->first();
+
+                \Log::debug('[DashboardService:saveLayout] widget updated', [
+                    'widget_id' => $widget->id,
+                    'old' => $oldVals,
+                    'new' => ['grid_x' => $widget->grid_x, 'grid_y' => $widget->grid_y, 'grid_w' => $widget->grid_w, 'grid_h' => $widget->grid_h],
+                    'latest_version_id' => $latestVersion?->id,
+                    'latest_version_number' => $latestVersion?->version_number,
+                    'latest_version_grid_w' => $latestVersion?->grid_w,
                 ]);
             }
         }
