@@ -73,9 +73,9 @@
                     $result .= "\n" . $innerIndent . json_encode($key) . ': ';
 
                     if (!array_key_exists($key, $new)) {
-                        $result .= '<span class="text-danger-700 dark:text-danger-300">' . json_encode($old[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                        $result .= '<span class="diff-danger">' . json_encode($old[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
                     } elseif (!array_key_exists($key, $old)) {
-                        $result .= '<span class="text-success-700 dark:text-success-300 font-medium">' . json_encode($new[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                        $result .= '<span class="diff-success">' . json_encode($new[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
                     } elseif ($old[$key] !== $new[$key]) {
                         $result .= renderDiffValue($old[$key], $new[$key], $innerIndent, $childIsLast);
                     } else {
@@ -95,9 +95,9 @@
                 $result .= "\n" . $innerIndent;
 
                 if (!array_key_exists($i, $new)) {
-                    $result .= '<span class="text-danger-700 dark:text-danger-300">' . json_encode($old[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                    $result .= '<span class="diff-danger">' . json_encode($old[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
                 } elseif (!array_key_exists($i, $old)) {
-                    $result .= '<span class="text-success-700 dark:text-success-300 font-medium">' . json_encode($new[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                    $result .= '<span class="diff-success">' . json_encode($new[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
                 } elseif ($old[$i] !== $new[$i]) {
                     $result .= renderDiffValue($old[$i], $new[$i], $innerIndent, $childIsLast);
                 } else {
@@ -108,7 +108,7 @@
             return $result;
         }
 
-        return '<span class="text-warning-700 dark:text-warning-300 font-medium">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
+        return '<span class="diff-warning">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
     }
 
     $jsonLines = [];
@@ -134,10 +134,10 @@
             $encoded = json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             $valLines = explode("\n", $encoded);
             $line = '    ' . json_encode($key) . ': ';
-            $line .= '<span class="text-warning-700 dark:text-warning-300 font-medium">' . $valLines[0] . '</span>';
+            $line .= '<span class="diff-warning">' . $valLines[0] . '</span>';
             $jsonLines[] = $line;
             for ($j = 1; $j < count($valLines); $j++) {
-                $jsonLines[] = '    ' . '<span class="text-warning-700 dark:text-warning-300 font-medium">' . $valLines[$j] . '</span>';
+                $jsonLines[] = '    ' . '<span class="diff-warning">' . $valLines[$j] . '</span>';
             }
             $lastIdx = count($jsonLines) - 1;
             if (!$last) $jsonLines[$lastIdx] .= ',';
@@ -163,15 +163,15 @@
             <span>{{ $version->created_at->format('M j, Y H:i') }}</span>
         </div>
         @if($changeType === 'created')
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-300 ring-1 ring-inset ring-success-200 dark:ring-success-700">
+            <span class="diff-badge diff-badge-success">
                 <x-filament::icon icon="heroicon-m-plus" class="w-3.5 h-3.5" /> Created
             </span>
         @elseif($changeType === 'updated')
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-warning-50 text-warning-700 dark:bg-warning-400/10 dark:text-warning-300 ring-1 ring-inset ring-warning-200 dark:ring-warning-700">
+            <span class="diff-badge diff-badge-warning">
                 <x-filament::icon icon="heroicon-m-arrow-path" class="w-3.5 h-3.5" /> Modified
             </span>
         @else
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 ring-1 ring-inset ring-gray-200 dark:ring-gray-700">
+            <span class="diff-badge diff-badge-other">
                 {{ $version->change_summary }}
             </span>
         @endif
@@ -183,7 +183,7 @@
         <span>Compared to v<strong class="text-gray-950 dark:text-white">#{{ $prev->version_number }}</strong></span>
         @if(!empty($changedKeys))
             <span class="text-gray-400 dark:text-gray-500">·</span>
-            <span class="text-warning-600 dark:text-warning-400 font-medium">{{ count($changedKeys) }} change(s)</span>
+            <span class="diff-change-count">{{ count($changedKeys) }} change(s)</span>
         @endif
     </div>
     @endif
@@ -193,9 +193,48 @@
             <x-filament::icon icon="heroicon-m-code-bracket" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Snapshot</span>
             @if(!empty($changedKeys))
-                <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(highlighted = changed)</span>
+                <span class="text-xs font-medium diff-change-count">(highlighted = changed)</span>
             @endif
         </div>
         <pre style="max-height: 55vh; overflow-y: auto;" class="px-5 py-4 bg-white dark:bg-white/5 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre">{!! $highlightedJson !!}</pre>
     </div>
 </div>
+
+<style>
+.diff-warning { color: #d97706; font-weight: 500; }
+.diff-danger { color: #dc2626; }
+.diff-success { color: #16a34a; font-weight: 500; }
+.diff-change-count { color: #d97706; font-weight: 500; }
+.diff-badge {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem; font-weight: 500;
+    border-radius: 9999px;
+    ring: 1px solid;
+}
+.diff-badge-success {
+    background: #f0fdf4; color: #15803d;
+    box-shadow: inset 0 0 0 1px #bbf7d0;
+}
+.diff-badge-warning {
+    background: #fffbeb; color: #b45309;
+    box-shadow: inset 0 0 0 1px #fde68a;
+}
+.dark .diff-warning { color: #fde68a; }
+.dark .diff-danger { color: #fca5a5; }
+.dark .diff-success { color: #86efac; }
+.dark .diff-change-count { color: #fbbf24; }
+.dark .diff-badge-success {
+    background: rgba(34,197,94,0.1); color: #86efac;
+    box-shadow: inset 0 0 0 1px #166534;
+}
+.dark .diff-badge-warning {
+    background: rgba(251,191,36,0.1); color: #fde68a;
+    box-shadow: inset 0 0 0 1px #78350f;
+}
+.dark .diff-badge-other {
+    background: rgb(31 41 55 / var(--tw-bg-opacity, 1));
+    color: #9ca3af;
+    box-shadow: inset 0 0 0 1px rgb(55 65 81 / var(--tw-ring-opacity, 1));
+}
+</style>
