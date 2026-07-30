@@ -738,6 +738,24 @@
                         })
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('debugPayload')
+                        ->label(__('Debug Payload'))
+                        ->icon('heroicon-o-code-bracket')
+                        ->color('gray')
+                        ->visible(fn() => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
+                        ->modalHeading(__('Payload Debugger'))
+                        ->modalContent(function (DerivedMetric $record) {
+                            $payload = [
+                                'ast' => $record->ast,
+                                'source_series' => $record->source_series,
+                                'output_granularity' => $record->output_granularity,
+                                'calculation_type' => $record->calculation_type,
+                            ];
+
+                            return new \Illuminate\Support\HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'.json_encode($payload, JSON_PRETTY_PRINT).'</pre>');
+                        })
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\Action::make('clearCache')
                         ->label(__('Clear Cache'))
                         ->icon('heroicon-o-arrow-path')
