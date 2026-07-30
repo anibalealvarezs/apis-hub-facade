@@ -28,28 +28,104 @@
     }
 
     // Build highlighted JSON
+    function renderDiffValue($old, $new, $indent, $isLast) {
+        $comma = $isLast ? '' : ',';
+
+        if ($old === $new) {
+            return json_encode($new, JSON_UNESCAPED_UNICODE) . $comma;
+        }
+
+        if (is_array($old) && is_array($new)) {
+            $keysOld = array_keys($old);
+            $keysNew = array_keys($new);
+            $isObj = count(array_filter(array_merge($keysOld, $keysNew), 'is_string')) > 0;
+
+            if ($isObj) {
+                $result = '{';
+                $allKeys = array_values(array_unique(array_merge($keysOld, $keysNew)));
+                $total = count($allKeys);
+                foreach ($allKeys as $i => $key) {
+                    $innerIndent = $indent . '    ';
+                    $childIsLast = ($i === $total - 1);
+                    $childComma = $childIsLast ? '' : ',';
+                    $result .= "\n" . $innerIndent . json_encode($key) . ': ';
+
+                    if (!array_key_exists($key, $new)) {
+                        $result .= '<span class="text-danger-700 dark:text-danger-300">' . json_encode($old[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                    } elseif (!array_key_exists($key, $old)) {
+                        $result .= '<span class="text-success-700 dark:text-success-300 font-medium">' . json_encode($new[$key], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                    } elseif ($old[$key] !== $new[$key]) {
+                        $result .= renderDiffValue($old[$key], $new[$key], $innerIndent, $childIsLast);
+                    } else {
+                        $result .= json_encode($new[$key], JSON_UNESCAPED_UNICODE) . $childComma;
+                    }
+                }
+                $result .= "\n" . $indent . '}' . $comma;
+                return $result;
+            }
+
+            $result = '[';
+            $count = max(count($old), count($new));
+            for ($i = 0; $i < $count; $i++) {
+                $innerIndent = $indent . '    ';
+                $childIsLast = ($i === $count - 1);
+                $childComma = $childIsLast ? '' : ',';
+                $result .= "\n" . $innerIndent;
+
+                if (!array_key_exists($i, $new)) {
+                    $result .= '<span class="text-danger-700 dark:text-danger-300">' . json_encode($old[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                } elseif (!array_key_exists($i, $old)) {
+                    $result .= '<span class="text-success-700 dark:text-success-300 font-medium">' . json_encode($new[$i], JSON_UNESCAPED_UNICODE) . '</span>' . $childComma;
+                } elseif ($old[$i] !== $new[$i]) {
+                    $result .= renderDiffValue($old[$i], $new[$i], $innerIndent, $childIsLast);
+                } else {
+                    $result .= json_encode($new[$i], JSON_UNESCAPED_UNICODE) . $childComma;
+                }
+            }
+            $result .= "\n" . $indent . ']' . $comma;
+            return $result;
+        }
+
+        return '<span class="text-warning-700 dark:text-warning-200 font-medium">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
+    }
+
     $jsonLines = [];
     $jsonLines[] = '{';
     $total = count($snapshotKeys);
     foreach ($snapshotKeys as $i => $key) {
         $val = $version->getAttribute($key);
         $isChanged = in_array($key, $changedKeys);
-        $encoded = json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        $valLines = explode("\n", $encoded);
         $last = $i === $total - 1;
 
-        $line = '    ' . json_encode($key) . ': ';
-        if ($isChanged) $line .= '<span class="text-warning-700 dark:text-warning-200 font-medium">';
-        $line .= $valLines[0];
-        $jsonLines[] = $line;
-
-        for ($j = 1; $j < count($valLines); $j++) {
-            $jsonLines[] = '    ' . $valLines[$j];
+        if (!$isChanged) {
+            $encoded = json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $valLines = explode("\n", $encoded);
+            $line = '    ' . json_encode($key) . ': ';
+            $line .= $valLines[0];
+            $jsonLines[] = $line;
+            for ($j = 1; $j < count($valLines); $j++) {
+                $jsonLines[] = '    ' . $valLines[$j];
+            }
+            $lastIdx = count($jsonLines) - 1;
+            if (!$last) $jsonLines[$lastIdx] .= ',';
+        } elseif (!is_array($val)) {
+            $encoded = json_encode($val, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $valLines = explode("\n", $encoded);
+            $line = '    ' . json_encode($key) . ': ';
+            $line .= '<span class="text-warning-700 dark:text-warning-200 font-medium">' . $valLines[0] . '</span>';
+            $jsonLines[] = $line;
+            for ($j = 1; $j < count($valLines); $j++) {
+                $jsonLines[] = '    ' . '<span class="text-warning-700 dark:text-warning-200 font-medium">' . $valLines[$j] . '</span>';
+            }
+            $lastIdx = count($jsonLines) - 1;
+            if (!$last) $jsonLines[$lastIdx] .= ',';
+        } else {
+            $oldVal = $prev->getAttribute($key);
+            $rendered = '    ' . json_encode($key) . ': ' . renderDiffValue($oldVal, $val, '    ', $last);
+            foreach (explode("\n", $rendered) as $dl) {
+                $jsonLines[] = $dl;
+            }
         }
-
-        $lastIdx = count($jsonLines) - 1;
-        if ($isChanged) $jsonLines[$lastIdx] .= '</span>';
-        if (!$last) $jsonLines[$lastIdx] .= ',';
     }
     $jsonLines[] = '}';
     $highlightedJson = implode("\n", $jsonLines);
