@@ -36,6 +36,7 @@ class VersionsRelationManager extends RelationManager
                         $owner = $this->getOwnerRecord();
                         $owner->createVersion('Before restore to v' . $record->version_number);
                         $owner->restoreVersion($record->id);
+                        $this->redirect(request()->url());
                     }),
                 Tables\Actions\Action::make('view')
                     ->label('View')

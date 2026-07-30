@@ -460,11 +460,11 @@ class DashboardBuilder extends Page
         $this->dashboard->createVersion('Before restore to v' . $version->version_number);
         $this->dashboard->restoreVersion($version->id);
 
-        $this->loadWidgets();
-
         \Filament\Notifications\Notification::make()
             ->title(__('Dashboard restored to version #:version', ['version' => $version->version_number]))
             ->success()
             ->send();
+
+        $this->redirect(request()->url());
     }
 }
