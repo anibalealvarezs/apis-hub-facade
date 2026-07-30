@@ -110,3 +110,8 @@
   3. **Changed widgets** (exist in both) → restored to their snapshot version via stored `widget_version_ids`
 - **New files:** `database/migrations/2026_07_29_000005_add_widget_snapshot_to_dashboard_versions.php`
 - **Modified files:** `app\Models\Dashboard.php`, `app\Models\DashboardVersion.php`, `app\Filament\App\Resources\DashboardResource\RelationManagers\VersionsRelationManager.php`
+- **Bug fix (2026-07-29):** Widget size not restored on dashboard version restore
+  - **Root cause 1:** `DashboardService::saveLayout()` used bulk update (`DashboardWidget::where(...)->update(...)`) which bypasses Eloquent events — no `WidgetVersion` created when resizing widgets. Every dashboard version pointed to the initial `WidgetVersion` (snapshotted on creation), making widget-size restore a no-op.
+  - **Fix 1:** Changed to model-aware `update()` on each loaded `DashboardWidget` instance, firing `TracksVersions` and creating proper `WidgetVersion` records. Reordered: widgets updated first, then dashboard (so dashboard version captures post-update widget version IDs).
+  - **Root cause 2:**`reconcileWidgetsFromVersion` used `$version->widget_ids ?? []` — versions created before the feature (or during `created` event before widgets exist) had null `widget_ids`, which was silently converted to `[]`, causing all current widgets to be soft-deleted on restore.
+  - **Fix 2:** Explicit null check at top of `reconcileWidgetsFromVersion` skips widget reconciliation entirely when `widget_ids` is null.

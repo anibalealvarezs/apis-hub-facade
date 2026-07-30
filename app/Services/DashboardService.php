@@ -38,18 +38,19 @@ class DashboardService
 
     public function saveLayout(Dashboard $dashboard, array $gridItems): void
     {
-        $dashboard->update(['grid_layout' => $gridItems]);
-
         foreach ($gridItems as $item) {
-            DashboardWidget::where('id', $item['id'])
-                ->where('dashboard_id', $dashboard->id)
-                ->update([
+            $widget = DashboardWidget::find($item['id']);
+            if ($widget && $widget->dashboard_id === $dashboard->id) {
+                $widget->update([
                     'grid_x' => $item['x'] ?? 0,
                     'grid_y' => $item['y'] ?? 0,
                     'grid_w' => $item['w'] ?? 4,
                     'grid_h' => $item['h'] ?? 2,
                 ]);
+            }
         }
+
+        $dashboard->update(['grid_layout' => $gridItems]);
     }
 
     public function addWidget(Dashboard $dashboard, array $data): DashboardWidget

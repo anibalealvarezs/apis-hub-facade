@@ -108,7 +108,11 @@ class Dashboard extends Model
 
     protected function reconcileWidgetsFromVersion(DashboardVersion $version): void
     {
-        $snapshotWidgetIds = collect($version->widget_ids ?? []);
+        if ($version->widget_ids === null) {
+            return;
+        }
+
+        $snapshotWidgetIds = collect($version->widget_ids);
         $snapshotWidgetVersionIds = $version->widget_version_ids ?? [];
 
         $this->loadMissing('widgets');
