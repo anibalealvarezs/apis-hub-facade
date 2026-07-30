@@ -1,6 +1,22 @@
 @php
     $prev = $previousVersion ?? null;
 
+    if (!$prev && $version->version_number > 1) {
+        $fkMap = [
+            \App\Models\DerivedMetricVersion::class => 'derived_metric_id',
+            \App\Models\CustomKpiVersion::class => 'custom_kpi_id',
+            \App\Models\DashboardVersion::class => 'dashboard_id',
+        ];
+        $modelClass = get_class($version);
+        $fk = $fkMap[$modelClass] ?? null;
+        if ($fk && $version->{$fk}) {
+            $prev = $version->newQuery()
+                ->where($fk, $version->{$fk})
+                ->where('version_number', $version->version_number - 1)
+                ->first();
+        }
+    }
+
     $isDerivedMetric = $version instanceof \App\Models\DerivedMetricVersion;
     $isCustomKpi = $version instanceof \App\Models\CustomKpiVersion;
 
@@ -21,7 +37,13 @@
     $changedKeys = [];
     if ($prev) {
         foreach ($snapshotKeys as $k) {
-            if ($version->getAttribute($k) !== $prev->getAttribute($k)) {
+            $v1 = $version->getAttribute($k);
+            $v2 = $prev->getAttribute($k);
+            if (is_array($v1) && is_array($v2)) {
+                if (json_encode($v1) !== json_encode($v2)) {
+                    $changedKeys[] = $k;
+                }
+            } elseif ($v1 !== $v2) {
                 $changedKeys[] = $k;
             }
         }
