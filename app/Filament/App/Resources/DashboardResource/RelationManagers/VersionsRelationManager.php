@@ -33,9 +33,18 @@ class VersionsRelationManager extends RelationManager
                     ->modalHeading('Restore Version')
                     ->modalDescription('This will overwrite the current state with this version. A new version will be created for the current state before restoring.')
                     ->action(function ($record) {
+                        \Log::debug('[VersionsRelationManager] restore action start', [
+                            'record_class' => get_class($record),
+                            'record_id' => $record->id,
+                            'record_version_number' => $record->version_number,
+                            'owner_class' => get_class($this->getOwnerRecord()),
+                            'owner_id' => $this->getOwnerRecord()?->id,
+                        ]);
                         $owner = $this->getOwnerRecord();
                         $owner->createVersion('Before restore to v' . $record->version_number);
+                        \Log::debug('[VersionsRelationManager] after createVersion, about to call restoreFullVersion');
                         $owner->restoreFullVersion($record);
+                        \Log::debug('[VersionsRelationManager] after restoreFullVersion');
                         $this->js('window.location.reload()');
                     }),
                 Tables\Actions\Action::make('view')
