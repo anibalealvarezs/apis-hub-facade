@@ -50,7 +50,7 @@
     }
 
     // Build highlighted JSON
-    function renderDiffValue($old, $new, $indent, $isLast) {
+    if (!function_exists('renderDiffValue')) { function renderDiffValue($old, $new, $indent, $isLast) {
         $comma = $isLast ? '' : ',';
 
         if ($old === $new) {
@@ -109,7 +109,7 @@
         }
 
         return '<span class="diff-warning">' . json_encode($new, JSON_UNESCAPED_UNICODE) . '</span>' . $comma;
-    }
+    } }
 
     $jsonLines = [];
     $jsonLines[] = '{';
