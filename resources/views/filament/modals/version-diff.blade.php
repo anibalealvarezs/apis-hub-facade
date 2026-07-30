@@ -1,6 +1,10 @@
 @php
     $prev = $previousVersion ?? null;
 
+    $isDerivedMetric = $version instanceof \App\Models\DerivedMetricVersion;
+    $isCustomKpi = $version instanceof \App\Models\CustomKpiVersion;
+    $isDashboard = $version instanceof \App\Models\DashboardVersion;
+
     $changeType = null;
     if ($version->change_summary) {
         if (str_starts_with($version->change_summary, 'Created')) {
@@ -11,6 +15,43 @@
             $changeType = 'other';
         }
     }
+
+    if ($isDerivedMetric) {
+        $snapshotKeys = ['name', 'description', 'calculation_type', 'output_granularity', 'is_active', 'ast', 'source_series'];
+        $summaryFields = [
+            ['key' => 'name', 'label' => 'Name'],
+            ['key' => 'description', 'label' => 'Description'],
+            ['key' => 'calculation_type', 'label' => 'Calculation'],
+            ['key' => 'output_granularity', 'label' => 'Granularity'],
+        ];
+    } elseif ($isCustomKpi) {
+        $snapshotKeys = ['name', 'description', 'calculation_type', 'is_active', 'ast', 'filters'];
+        $summaryFields = [
+            ['key' => 'name', 'label' => 'Name'],
+            ['key' => 'description', 'label' => 'Description'],
+            ['key' => 'calculation_type', 'label' => 'Calculation'],
+        ];
+    } elseif ($isDashboard) {
+        $snapshotKeys = ['name', 'description', 'is_public', 'is_default', 'grid_layout', 'controls'];
+        $summaryFields = [
+            ['key' => 'name', 'label' => 'Name'],
+            ['key' => 'description', 'label' => 'Description'],
+            ['key' => 'is_public', 'label' => 'Public'],
+            ['key' => 'is_default', 'label' => 'Default'],
+        ];
+    }
+
+    $changedFieldNames = [];
+    if ($prev) {
+        foreach ($snapshotKeys as $f) {
+            if ($version->getAttribute($f) !== $prev->getAttribute($f)) {
+                $changedFieldNames[] = $f;
+            }
+        }
+    }
+    $isFieldChanged = function ($key) use ($changedFieldNames) {
+        return in_array($key, $changedFieldNames, true);
+    };
 
     $seriesMap = function ($series) {
         $map = [];
@@ -51,59 +92,56 @@
         return (string) $v;
     };
 
-    $snapshotKeys = ['name', 'description', 'calculation_type', 'output_granularity', 'is_active', 'ast', 'source_series'];
+    if ($isDerivedMetric) {
+        $currentSeries = $version->source_series ?? [];
+        $previousSeries = $prev?->source_series ?? [];
+        $currentMap = $seriesMap($currentSeries);
+        $previousMap = $seriesMap($previousSeries);
 
-    $changedFieldNames = [];
-    if ($prev) {
-        foreach ($snapshotKeys as $f) {
-            if ($version->getAttribute($f) !== $prev->getAttribute($f)) {
-                $changedFieldNames[] = $f;
+        $allSeriesKeys = array_unique(array_merge(
+            array_column($currentSeries, 'key'),
+            array_column($previousSeries, 'key')
+        ));
+        sort($allSeriesKeys);
+
+        $byKey = function ($series) {
+            $mapped = [];
+            foreach ($series as $s) {
+                $mapped[$s['key']] = $s;
             }
-        }
+            return $mapped;
+        };
+        $currentByKey = $byKey($currentSeries);
+        $previousByKey = $byKey($previousSeries);
+        $seriesFieldList = ['label', 'channel', 'metric', 'granularity'];
+    } else {
+        $currentSeries = $previousSeries = [];
+        $currentMap = $previousMap = [];
+        $allSeriesKeys = [];
+        $currentByKey = $previousByKey = [];
     }
-    $isFieldChanged = function ($key) use ($changedFieldNames) {
-        return in_array($key, $changedFieldNames, true);
-    };
-
-    $currentSeries = $version->source_series ?? [];
-    $previousSeries = $prev?->source_series ?? [];
-    $currentMap = $seriesMap($currentSeries);
-    $previousMap = $seriesMap($previousSeries);
-
-    $allSeriesKeys = array_unique(array_merge(
-        array_column($currentSeries, 'key'),
-        array_column($previousSeries, 'key')
-    ));
-    sort($allSeriesKeys);
-
-    $byKey = function ($series) {
-        $mapped = [];
-        foreach ($series as $s) {
-            $mapped[$s['key']] = $s;
-        }
-        return $mapped;
-    };
-    $currentByKey = $byKey($currentSeries);
-    $previousByKey = $byKey($previousSeries);
-
-    $seriesFieldList = ['label', 'channel', 'metric', 'granularity'];
 
     $currentAst = $version->ast;
     $previousAst = $prev?->ast;
     $astChanged = $prev && $currentAst !== $previousAst;
 
-    if ($currentAst && is_array($currentAst)) {
+    $hasFormula = $isDerivedMetric || $isCustomKpi;
+
+    if ($hasFormula && $currentAst && is_array($currentAst)) {
         $currentFormula = $astToString($currentAst, $currentMap);
     } else {
-        $currentFormula = $fmt($currentAst);
+        $currentFormula = $hasFormula ? $fmt($currentAst) : null;
     }
 
-    if ($previousAst && is_array($previousAst)) {
+    if ($hasFormula && $previousAst && is_array($previousAst)) {
         $previousFormula = $astToString($previousAst, $previousMap);
     } else {
-        $previousFormula = $fmt($previousAst);
+        $previousFormula = $hasFormula ? $fmt($previousAst) : null;
     }
 
+    $currentFilters = $isCustomKpi ? ($version->filters ?? []) : [];
+    $previousFilters = ($isCustomKpi && $prev) ? ($prev->filters ?? []) : [];
+    $filtersChanged = $prev && $currentFilters !== $previousFilters;
 @endphp
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -145,7 +183,7 @@
         {{-- Config summary --}}
         <div class="rounded-xl p-4 ring-1 bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-                @foreach([['key' => 'name', 'label' => 'Name'], ['key' => 'description', 'label' => 'Description'], ['key' => 'calculation_type', 'label' => 'Calculation'], ['key' => 'output_granularity', 'label' => 'Granularity']] as $def)
+                @foreach($summaryFields as $def)
                     @php
                         $val = $version->getAttribute($def['key']);
                         $prevVal = $prev?->getAttribute($def['key']);
@@ -180,7 +218,7 @@
         </div>
 
         {{-- Source Series table --}}
-        @if(!empty($allSeriesKeys))
+        @if($isDerivedMetric && !empty($allSeriesKeys))
             <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
                 <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
                     <x-filament::icon icon="heroicon-m-table-cells" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -289,8 +327,53 @@
             </div>
         @endif
 
+        {{-- KPI Filters --}}
+        @if($isCustomKpi && (!empty($currentFilters) || !empty($previousFilters)))
+            <div class="rounded-xl p-4 ring-1 {{ $filtersChanged ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
+                <div class="flex items-center gap-2 mb-2.5">
+                    <x-filament::icon icon="heroicon-m-funnel" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Filters</span>
+                    @if($filtersChanged)
+                        <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
+                    @endif
+                </div>
+                @if($filtersChanged)
+                    <div class="text-xs text-gray-400 dark:text-gray-500 line-through mb-1.5 font-mono whitespace-pre-wrap">{{ $fmt($previousFilters) }}</div>
+                    <x-filament::icon icon="heroicon-m-arrow-down" class="w-4 h-4 text-warning-500 mb-1" />
+                @endif
+                <div class="text-xs {{ $filtersChanged ? 'text-warning-700 dark:text-warning-200 font-medium' : 'text-gray-950 dark:text-white' }} font-mono whitespace-pre-wrap">{{ $fmt($currentFilters) }}</div>
+            </div>
+        @endif
+
+        {{-- Dashboard Layout --}}
+        @if($isDashboard)
+            @foreach([['key' => 'grid_layout', 'label' => 'Grid Layout', 'icon' => 'heroicon-m-view-columns'], ['key' => 'controls', 'label' => 'Controls', 'icon' => 'heroicon-m-adjustments-horizontal']] as $section)
+                @php
+                    $secVal = $version->getAttribute($section['key']);
+                    $secPrev = $prev?->getAttribute($section['key']);
+                    $secChanged = $prev && $secVal !== $secPrev;
+                @endphp
+                @if($secVal || $secPrev)
+                    <div class="rounded-xl p-4 ring-1 {{ $secChanged ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
+                        <div class="flex items-center gap-2 mb-2.5">
+                            <x-filament::icon icon="{{ $section['icon'] }}" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ $section['label'] }}</span>
+                            @if($secChanged)
+                                <span class="text-xs font-medium text-warning-600 dark:text-warning-400">(changed)</span>
+                            @endif
+                        </div>
+                        @if($secChanged)
+                            <div class="text-xs text-gray-400 dark:text-gray-500 line-through mb-1.5 font-mono whitespace-pre-wrap">{{ $fmt($secPrev) }}</div>
+                            <x-filament::icon icon="heroicon-m-arrow-down" class="w-4 h-4 text-warning-500 mb-1" />
+                        @endif
+                        <div class="text-xs {{ $secChanged ? 'text-warning-700 dark:text-warning-200 font-medium' : 'text-gray-950 dark:text-white' }} font-mono whitespace-pre-wrap">{{ $fmt($secVal) }}</div>
+                    </div>
+                @endif
+            @endforeach
+        @endif
+
         {{-- Formula --}}
-        @if($currentAst || $previousAst)
+        @if($hasFormula && ($currentAst || $previousAst))
             <div class="rounded-xl p-4 ring-1 {{ $astChanged ? 'bg-warning-50 dark:bg-warning-400/5 ring-warning-300 dark:ring-warning-600' : 'bg-gray-50 dark:bg-white/5 ring-gray-950/5 dark:ring-white/10' }}">
                 <div class="flex items-center gap-2 mb-2.5">
                     <x-filament::icon icon="heroicon-m-variable" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
