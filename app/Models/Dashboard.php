@@ -194,7 +194,6 @@ class Dashboard extends Model
             if ($widgetVersionId) {
                 $widgetVersion = WidgetVersion::find($widgetVersionId);
                 if ($widgetVersion) {
-                    $widget->withoutVersioning = true;
                     $trackable = collect($widgetVersion->toArray())
                         ->only($widget->getTrackableFields())
                         ->toArray();
@@ -205,9 +204,7 @@ class Dashboard extends Model
                         'trackable' => $trackable,
                     ]);
 
-                    $widget->update($trackable);
-
-                    $widget->withoutVersioning = false;
+                    $widget->updateQuietly($trackable);
 
                     \Log::debug('[Dashboard:reconcileWidgetsFromVersion] after update', [
                         'widgetId' => $widgetId,

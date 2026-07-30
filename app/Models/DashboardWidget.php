@@ -56,7 +56,7 @@ class DashboardWidget extends Model
         return \App\Models\WidgetVersion::class;
     }
 
-    protected function getTrackableFields(): array
+    public function getTrackableFields(): array
     {
         return [
             'custom_kpi_id', 'derived_metric_id',
