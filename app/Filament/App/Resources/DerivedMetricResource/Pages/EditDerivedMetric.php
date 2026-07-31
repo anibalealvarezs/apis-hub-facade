@@ -71,6 +71,8 @@ class EditDerivedMetric extends EditRecord
                         ->placeholder(__('e.g. Updated formula')),
                 ])
                 ->action(function (array $data) {
+                    $formData = $this->mutateFormDataBeforeSave($this->form->getState());
+                    $this->record->fill($formData);
                     $this->record->createVersion(
                         changeSummary: 'Manually saved',
                         versionName: $data['label'] ?? null,

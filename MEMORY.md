@@ -119,6 +119,11 @@
   - **Fix:** In `getVersionExtraAttributes`, if a widget has no WidgetVersion, one is created on-the-fly via `$widget->createVersion('Initial snapshot')` before snapshotting.
   - **Note:** Existing `dashboard_versions` created before this fix still have incomplete `widget_version_ids`. To fully restore them, a data migration would need to backfill WidgetVersion records and update old dashboard versions. For now, new dashboard versions will correctly capture all widgets.
 
+### Save Version Snapshots Form Data, Not Stale Record (2026-07-30)
+- **Bug:** `EditDerivedMetric` and `EditCustomKpi` "Save Version" actions called `$this->record->createVersion(...)` which snapshots `$this->record`'s current attributes — the **stale DB values**. The form's unsaved changes were never filled into the model, so the version record captured the old state, not the new edits.
+- **Fix:** Before `createVersion()`, the form state is processed through `mutateFormDataBeforeSave()` and then filled into the record via `$this->record->fill($formData)`. This updates the in-memory model with the current form values without persisting to DB. `createVersion()` then snapshots the fresh values.
+- **Files:** `app/.../DerivedMetricResource/Pages/EditDerivedMetric.php:74-75`, `app/.../CustomKpiResource/Pages/EditCustomKpi.php:151-152`
+
 ### Unsaved Changes Warning Persists on Reload (2026-07-30)
 - **Bug:** `$unsavedChanges` flag on DashboardBuilder Livewire component was initialized to `false` in the property declaration and never checked against `hasUnsavedChanges()` on mount. After page reload, the warning always disappeared—even when the dashboard state genuinely differed from the latest version (e.g., after restore without creating a version).
 - **Fix:** Added `$this->unsavedChanges = $this->dashboard->hasUnsavedChanges()` in `mount()`. On page load, if the current model state doesn't match the latest version snapshot, the warning now persists.
