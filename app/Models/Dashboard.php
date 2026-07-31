@@ -156,8 +156,7 @@ class Dashboard extends Model
         ]);
 
         DashboardWidget::whereIn('id', $toDelete)->get()->each(function ($widget) {
-            $widget->withoutVersioning = true;
-            $widget->delete();
+            $widget->updateQuietly(['deleted_at' => now()]);
         });
 
         if ($toRestoreFromTrash->isNotEmpty()) {
@@ -166,8 +165,7 @@ class Dashboard extends Model
                 ->whereIn('id', $toRestoreFromTrash)
                 ->get()
                 ->each(function ($widget) {
-                    $widget->withoutVersioning = true;
-                    $widget->restore();
+                    $widget->updateQuietly(['deleted_at' => null]);
                 });
         }
 
@@ -206,7 +204,6 @@ class Dashboard extends Model
                         'trackable' => $trackable,
                     ]);
 
-                    $widget->withoutVersioning = true;
                     $widget->updateQuietly($trackable);
 
                     \Log::debug('[Dashboard:reconcileWidgetsFromVersion] after update', [
