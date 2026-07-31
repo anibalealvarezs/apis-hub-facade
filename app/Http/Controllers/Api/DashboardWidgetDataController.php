@@ -1913,16 +1913,21 @@ class DashboardWidgetDataController extends Controller
         if (! empty($controls['assets']) && is_array($controls['assets'])) {
             $requestedAssets = $controls['assets'];
         } elseif (! empty($controls['asset_group'])) {
-            $group = \App\Models\AssetGroup::find($controls['asset_group']);
-            if ($group) {
-                $requestedAssets = $group->items()
-                    ->where('channel', $channel)
-                    ->pluck('asset_id')
-                    ->toArray();
+            $group = \App\Models\AssetGroup::where('id', $controls['asset_group'])
+                ->where('project_id', $project->id)
+                ->first();
 
-                if (empty($requestedAssets)) {
-                    return '___EMPTY_GROUP___';
-                }
+            if (! $group) {
+                return '___EMPTY_GROUP___';
+            }
+
+            $requestedAssets = $group->items()
+                ->where('channel', $channel)
+                ->pluck('asset_id')
+                ->toArray();
+
+            if (empty($requestedAssets)) {
+                return '___EMPTY_GROUP___';
             }
         }
 

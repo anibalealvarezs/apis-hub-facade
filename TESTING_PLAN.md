@@ -454,10 +454,12 @@ When implementing this plan:
 | A — Derived Metrics | 19 | 9 | 0 | - | DM-007..010 via `DerivedMetricCacheServiceTest` |
 | B — Custom KPIs | 18 | 0 | 0 | - | |
 | C — Dashboard + Widget | 30 | 13 | 0 | - | DASHV-001..008, WID-008, WIDV-001..004, DUP-004/005 via `DashboardVersionRestoreTest` |
-| D — Data Requests & Rendering | 22 | 0 | 0 | - | |
+| D — Data Requests & Rendering | 22 | 2 | 0 | - | REQ-009/010 via `AssetFilteringTest` + `WidgetConfigHeritageTest` |
 | E — Duplication | 5 | 3 | 0 | - | DUP-003/004/005 via `DashboardVersionRestoreTest` |
-| F — Hierarchy Heritage | 9 | 0 | 0 | - | |
+| F — Hierarchy Heritage | 9 | 1 | 0 | - | HIER-009 via `WidgetConfigHeritageTest` |
 | G — Permissions/Tenancy/Quotas | 9 | 0 | 0 | - | |
-| **TOTAL** | **112** | **25** | **0** | | |
+| **TOTAL** | **112** | **28** | **0** | | |
 
 **Implemented 2026-07-30:** `tests/Unit/TracksVersionsTest.php` (27 passing, stale assertions updated to post-overhaul manual-versioning model), `tests/Feature/Analytics/DashboardVersionRestoreTest.php` (11 passing), `tests/Unit/Analytics/DerivedMetricCacheServiceTest.php` (9 passing), `tests/Feature/VersionHistoryTest.php` pruning tests (2 fixed). **Bugs found & fixed during implementation:** stale `widgets` relation cached on dashboard instance (`loadMissing`→`load` in `getVersionExtraAttributes` + `reconcileWidgetsFromVersion` + `cloneDashboard`), protected `getTrackableFields()` call from `DashboardService` (made public on 3 models), and `cloneDashboardFromVersion()` fill-order overwriting name suffix/`is_default`. Baseline: 89 passing / 25 pre-existing unrelated failures.
+
+**Implemented 2026-07-31:** `tests/Unit/Analytics/WidgetConfigHeritageTest.php` (60 passing) — REQ-010 / HIER-009: `WidgetTypeRegistry` per-source compatibility for ALL 9 widget types, `resolveControls` precedence (widget > dashboard > defaults, `__inherit__` honored, KPI `_ui_state` edge-case/max_ratio only for kpi source). `tests/Feature/Analytics/AssetFilteringTest.php` (18 passing) — REQ-009 asset-group filtering: `extractAssetFilter` group → enabled channel assets (multi vs single-asset channels), `___EMPTY_GROUP___` sentinel, group no-bypass (foreign/missing group), invalid `assets`, series-filter intersection; DM source-series inheritance (group / DM-level `asset_filter` / view `series_assets.dm_N` override) and KPI dependent/independent asset groups asserted via mocked engine payloads; empty-group short-circuit never calls the engine. **Bug found & fixed:** `extractAssetFilter()` returned `null` for a missing or foreign `asset_group`, letting the engine run WITHOUT an account filter (all-assets leak). Fix: project-scoped group lookup; missing group → `___EMPTY_GROUP___`. Baseline: 167 passing / 25 pre-existing unrelated failures.
