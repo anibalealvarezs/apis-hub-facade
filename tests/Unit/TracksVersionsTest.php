@@ -33,7 +33,25 @@ it('creates version v1 when CustomKpi is created', function () {
     expect($kpi->versions()->first()->change_summary)->toBe('Created');
 });
 
-it('creates a new version when trackable fields change on CustomKpi', function () {
+it('creates a version via createVersion capturing current model state on CustomKpi', function () {
+    $kpi = CustomKpi::create([
+        'project_id' => $this->project->id,
+        'name' => 'Test KPI',
+        'calculation_type' => 'ratio',
+        'ast' => ['type' => 'divide', 'left' => 'a', 'right' => 'b'],
+        'filters' => ['channel' => 'google_ads'],
+        'is_active' => true,
+    ]);
+
+    $kpi->fill(['name' => 'Updated KPI']);
+    $kpi->createVersion();
+
+    expect($kpi->versions()->count())->toBe(2);
+    expect($kpi->versions()->latest('version_number')->first()->version_number)->toBe(2);
+    expect($kpi->versions()->latest('version_number')->first()->name)->toBe('Updated KPI');
+});
+
+it('does not auto-create a version on plain CustomKpi update', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -45,9 +63,7 @@ it('creates a new version when trackable fields change on CustomKpi', function (
 
     $kpi->update(['name' => 'Updated KPI']);
 
-    expect($kpi->versions()->count())->toBe(2);
-    expect($kpi->versions()->latest('version_number')->first()->version_number)->toBe(2);
-    expect($kpi->versions()->latest('version_number')->first()->name)->toBe('Updated KPI');
+    expect($kpi->versions()->count())->toBe(1);
 });
 
 it('does not create a version when only updated_at changes on CustomKpi', function () {
@@ -82,10 +98,10 @@ it('restores a previous version on CustomKpi', function () {
 
     $kpi->refresh();
     expect($kpi->name)->toBe('Original Name');
-    expect($kpi->versions()->count())->toBe(3);
+    expect($kpi->versions()->count())->toBe(1);
 });
 
-it('tracks changes to description on CustomKpi', function () {
+it('tracks changes to description on CustomKpi via createVersion', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -96,12 +112,13 @@ it('tracks changes to description on CustomKpi', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['description' => 'Updated description']);
+    $kpi->fill(['description' => 'Updated description']);
+    $kpi->createVersion();
 
     expect($kpi->versions()->latest('version_number')->first()->description)->toBe('Updated description');
 });
 
-it('tracks changes to is_active on CustomKpi', function () {
+it('tracks changes to is_active on CustomKpi via createVersion', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -111,7 +128,8 @@ it('tracks changes to is_active on CustomKpi', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['is_active' => false]);
+    $kpi->fill(['is_active' => false]);
+    $kpi->createVersion();
 
     expect($kpi->versions()->latest('version_number')->first()->is_active)->toBeFalse();
 });
@@ -131,7 +149,23 @@ it('creates version v1 when DerivedMetric is created', function () {
     expect($dm->versions()->first()->version_number)->toBe(1);
 });
 
-it('creates a new version when trackable fields change on DerivedMetric', function () {
+it('creates a version via createVersion on DerivedMetric', function () {
+    $dm = DerivedMetric::create([
+        'project_id' => $this->project->id,
+        'name' => 'Test DM',
+        'ast' => ['type' => 'addition', 'values' => ['a', 'b']],
+        'source_series' => [['key' => 'a', 'channel' => 'google_ads', 'metric' => 'impressions']],
+        'is_active' => true,
+    ]);
+
+    $dm->fill(['name' => 'Updated DM']);
+    $dm->createVersion();
+
+    expect($dm->versions()->count())->toBe(2);
+    expect($dm->versions()->latest('version_number')->first()->name)->toBe('Updated DM');
+});
+
+it('does not auto-create a version on plain DerivedMetric update', function () {
     $dm = DerivedMetric::create([
         'project_id' => $this->project->id,
         'name' => 'Test DM',
@@ -142,8 +176,7 @@ it('creates a new version when trackable fields change on DerivedMetric', functi
 
     $dm->update(['name' => 'Updated DM']);
 
-    expect($dm->versions()->count())->toBe(2);
-    expect($dm->versions()->latest('version_number')->first()->name)->toBe('Updated DM');
+    expect($dm->versions()->count())->toBe(1);
 });
 
 it('restores a previous version on DerivedMetric', function () {
@@ -164,7 +197,7 @@ it('restores a previous version on DerivedMetric', function () {
     expect($dm->name)->toBe('Original');
 });
 
-it('tracks source_series changes on DerivedMetric', function () {
+it('tracks source_series changes on DerivedMetric via createVersion', function () {
     $dm = DerivedMetric::create([
         'project_id' => $this->project->id,
         'name' => 'Test DM',
@@ -174,12 +207,13 @@ it('tracks source_series changes on DerivedMetric', function () {
     ]);
 
     $newSeries = [['key' => 'a', 'channel' => 'google_ads', 'metric' => 'clicks']];
-    $dm->update(['source_series' => $newSeries]);
+    $dm->fill(['source_series' => $newSeries]);
+    $dm->createVersion();
 
     expect($dm->versions()->latest('version_number')->first()->source_series)->toBe($newSeries);
 });
 
-it('tracks output_granularity changes on DerivedMetric', function () {
+it('tracks output_granularity changes on DerivedMetric via createVersion', function () {
     $dm = DerivedMetric::create([
         'project_id' => $this->project->id,
         'name' => 'Test DM',
@@ -189,7 +223,8 @@ it('tracks output_granularity changes on DerivedMetric', function () {
         'is_active' => true,
     ]);
 
-    $dm->update(['output_granularity' => 'weekly']);
+    $dm->fill(['output_granularity' => 'weekly']);
+    $dm->createVersion();
 
     expect($dm->versions()->latest('version_number')->first()->output_granularity)->toBe('weekly');
 });
@@ -209,7 +244,22 @@ it('creates version v1 when Dashboard is created', function () {
     expect($dashboard->versions()->first()->version_number)->toBe(1);
 });
 
-it('creates a new version when trackable fields change on Dashboard', function () {
+it('creates a version via createVersion on Dashboard', function () {
+    $dashboard = Dashboard::create([
+        'project_id' => $this->project->id,
+        'user_id' => $this->user->id,
+        'name' => 'Test Dashboard',
+        'is_public' => false,
+        'is_default' => false,
+    ]);
+
+    $dashboard->fill(['name' => 'Updated Dashboard']);
+    $dashboard->createVersion();
+
+    expect($dashboard->versions()->count())->toBe(2);
+});
+
+it('does not auto-create a version on plain Dashboard update', function () {
     $dashboard = Dashboard::create([
         'project_id' => $this->project->id,
         'user_id' => $this->user->id,
@@ -220,10 +270,10 @@ it('creates a new version when trackable fields change on Dashboard', function (
 
     $dashboard->update(['name' => 'Updated Dashboard']);
 
-    expect($dashboard->versions()->count())->toBe(2);
+    expect($dashboard->versions()->count())->toBe(1);
 });
 
-it('tracks is_public changes on Dashboard', function () {
+it('tracks is_public changes on Dashboard via createVersion', function () {
     $dashboard = Dashboard::create([
         'project_id' => $this->project->id,
         'user_id' => $this->user->id,
@@ -232,12 +282,13 @@ it('tracks is_public changes on Dashboard', function () {
         'is_default' => false,
     ]);
 
-    $dashboard->update(['is_public' => true]);
+    $dashboard->fill(['is_public' => true]);
+    $dashboard->createVersion();
 
     expect($dashboard->versions()->latest('version_number')->first()->is_public)->toBeTrue();
 });
 
-it('tracks grid_layout changes on Dashboard', function () {
+it('tracks grid_layout changes on Dashboard via createVersion', function () {
     $dashboard = Dashboard::create([
         'project_id' => $this->project->id,
         'user_id' => $this->user->id,
@@ -247,7 +298,8 @@ it('tracks grid_layout changes on Dashboard', function () {
     ]);
 
     $layout = [['x' => 0, 'y' => 0, 'w' => 6, 'h' => 4]];
-    $dashboard->update(['grid_layout' => $layout]);
+    $dashboard->fill(['grid_layout' => $layout]);
+    $dashboard->createVersion();
 
     expect($dashboard->versions()->latest('version_number')->first()->grid_layout)->toBe($layout);
 });
@@ -354,7 +406,7 @@ it('restores a previous version on DashboardWidget', function () {
 
 // ─── Version Number Sequence ───
 
-it('increments version numbers sequentially for CustomKpi', function () {
+it('increments version numbers sequentially for CustomKpi via createVersion', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -364,9 +416,12 @@ it('increments version numbers sequentially for CustomKpi', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'v2']);
-    $kpi->update(['name' => 'v3']);
-    $kpi->update(['name' => 'v4']);
+    $kpi->fill(['name' => 'v2']);
+    $kpi->createVersion();
+    $kpi->fill(['name' => 'v3']);
+    $kpi->createVersion();
+    $kpi->fill(['name' => 'v4']);
+    $kpi->createVersion();
 
     $numbers = $kpi->versions()->pluck('version_number')->sort()->values()->toArray();
     expect($numbers)->toBe([1, 2, 3, 4]);
@@ -374,7 +429,34 @@ it('increments version numbers sequentially for CustomKpi', function () {
 
 // ─── Change Summary Detection ───
 
-it('generates a change summary when trackable fields change', function () {
+it('generates a change summary when trackable fields change on DashboardWidget auto-version', function () {
+    $dashboard = Dashboard::create([
+        'project_id' => $this->project->id,
+        'user_id' => $this->user->id,
+        'name' => 'Test Dashboard',
+        'is_public' => false,
+        'is_default' => false,
+    ]);
+
+    $widget = DashboardWidget::create([
+        'dashboard_id' => $dashboard->id,
+        'name' => 'Test Widget',
+        'source_type' => 'kpi',
+        'widget_type' => 'counter',
+        'grid_x' => 0,
+        'grid_y' => 0,
+        'grid_w' => 3,
+        'grid_h' => 2,
+    ]);
+
+    $widget->update(['name' => 'Updated', 'description' => 'New description']);
+
+    $latestVersion = $widget->versions()->latest('version_number')->first();
+    expect($latestVersion->change_summary)->toContain('name');
+    expect($latestVersion->change_summary)->toContain('description');
+});
+
+it('stores a custom label on createVersion', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -384,16 +466,32 @@ it('generates a change summary when trackable fields change', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'Updated', 'description' => 'New description']);
+    $kpi->fill(['name' => 'Updated KPI']);
+    $kpi->createVersion(null, null, 'My custom label');
 
-    $latestVersion = $kpi->versions()->latest('version_number')->first();
-    expect($latestVersion->change_summary)->toContain('name');
-    expect($latestVersion->change_summary)->toContain('description');
+    expect($kpi->versions()->latest('version_number')->first()->label)->toBe('My custom label');
 });
 
-// ─── Restore Creates Snapshot Before Reverting ───
+it('reports unsaved changes when current state diverges from latest version', function () {
+    $kpi = CustomKpi::create([
+        'project_id' => $this->project->id,
+        'name' => 'Test KPI',
+        'calculation_type' => 'ratio',
+        'ast' => ['type' => 'divide', 'left' => 'a', 'right' => 'b'],
+        'filters' => ['channel' => 'google_ads'],
+        'is_active' => true,
+    ]);
 
-it('creates a before-restore version snapshot', function () {
+    expect($kpi->hasUnsavedChanges())->toBeFalse();
+
+    $kpi->update(['name' => 'Changed on screen']);
+
+    expect($kpi->hasUnsavedChanges())->toBeTrue();
+});
+
+// ─── Restore Does Not Create A Snapshot ───
+
+it('does not create a version snapshot during restore', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Original',
@@ -403,14 +501,13 @@ it('creates a before-restore version snapshot', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'Intermediate']);
-    $kpi->update(['name' => 'Current']);
+    $kpi->fill(['name' => 'Intermediate']);
+    $kpi->createVersion();
 
-    expect($kpi->versions()->count())->toBe(3);
+    expect($kpi->versions()->count())->toBe(2);
 
     $firstVersion = $kpi->versions()->oldest('version_number')->first();
     $kpi->restoreVersion($firstVersion->id);
 
-    expect($kpi->versions()->count())->toBe(4);
-    expect($kpi->versions()->latest('version_number')->first()->change_summary)->toContain('Before restore');
+    expect($kpi->versions()->count())->toBe(2);
 });

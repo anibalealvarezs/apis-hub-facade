@@ -43,7 +43,7 @@ class CustomKpi extends Model
         return \App\Models\CustomKpiVersion::class;
     }
 
-    protected function getTrackableFields(): array
+    public function getTrackableFields(): array
     {
         return ['name', 'description', 'calculation_type', 'ast', 'filters', 'is_active'];
     }

@@ -21,6 +21,8 @@ class DashboardService
 
     public function cloneDashboard(Dashboard $dashboard, ?string $newName = null): Dashboard
     {
+        $dashboard->load('widgets');
+
         $clone = $dashboard->replicate();
         $clone->name = $newName ?? $dashboard->name . ' (Copy)';
         $clone->is_default = false;
@@ -43,10 +45,10 @@ class DashboardService
             ->toArray();
 
         $clone = $dashboard->replicate();
+        $clone->fill($versionData);
         $clone->name = ($versionData['name'] ?? $dashboard->name) . ' (From v' . $version->version_number . ')';
         $clone->is_default = false;
         unset($clone->widgets_count);
-        $clone->fill($versionData);
         $clone->push();
 
         $widgetVersionIds = $version->widget_version_ids ?? [];

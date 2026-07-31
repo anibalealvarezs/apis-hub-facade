@@ -60,7 +60,7 @@ class Dashboard extends Model
         return \App\Models\DashboardVersion::class;
     }
 
-    protected function getTrackableFields(): array
+    public function getTrackableFields(): array
     {
         return ['name', 'description', 'grid_layout', 'controls', 'is_public', 'is_default'];
     }
@@ -72,7 +72,7 @@ class Dashboard extends Model
 
     protected function getVersionExtraAttributes(): array
     {
-        $this->loadMissing('widgets');
+        $this->load('widgets');
 
         $widgetIds = [];
         $widgetVersionIds = [];
@@ -134,9 +134,9 @@ class Dashboard extends Model
         $snapshotWidgetIds = collect($version->widget_ids);
         $snapshotWidgetVersionIds = $version->widget_version_ids ?? [];
 
-        $this->loadMissing('widgets');
+        $this->load('widgets');
 
-        \Log::debug('[Dashboard:reconcileWidgetsFromVersion] loadMissing widgets', [
+        \Log::debug('[Dashboard:reconcileWidgetsFromVersion] load widgets', [
             'widget_count' => $this->widgets->count(),
             'widget_ids_in_relation' => $this->widgets->pluck('id')->toArray(),
         ]);
@@ -166,7 +166,7 @@ class Dashboard extends Model
                 ->update(['deleted_at' => null, 'updated_at' => now()]);
         }
 
-        $this->loadMissing('widgets');
+        $this->load('widgets');
 
         foreach ($snapshotWidgetIds as $widgetId) {
             $widget = DashboardWidget::withTrashed()->find($widgetId);

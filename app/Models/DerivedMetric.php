@@ -46,7 +46,7 @@ class DerivedMetric extends Model
         return \App\Models\DerivedMetricVersion::class;
     }
 
-    protected function getTrackableFields(): array
+    public function getTrackableFields(): array
     {
         return ['name', 'description', 'calculation_type', 'ast', 'source_series', 'output_granularity', 'is_active'];
     }

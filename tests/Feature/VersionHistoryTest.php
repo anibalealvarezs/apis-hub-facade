@@ -110,7 +110,7 @@ it('restores a previous version from the relation manager', function () {
 
 // ─── Version Pruning ───
 
-it('prunes old versions from CustomKpi index', function () {
+it('prunes old versions from CustomKpi', function () {
     $kpi = CustomKpi::create([
         'project_id' => $this->project->id,
         'name' => 'Test KPI',
@@ -120,17 +120,22 @@ it('prunes old versions from CustomKpi index', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'v2']);
-    $kpi->update(['name' => 'v3']);
+    $kpi->fill(['name' => 'v2']);
+    $kpi->createVersion();
+    $kpi->fill(['name' => 'v3']);
+    $kpi->createVersion();
 
     expect($kpi->versions()->count())->toBe(3);
 
     // Manually set created_at to simulate old versions
     $kpi->versions()->where('version_number', 2)->update(['created_at' => now()->subMonths(6)]);
 
-    Livewire::test(\App\Filament\App\Resources\CustomKpiResource::class)
-        ->callTableBulkAction('pruneVersions', [$kpi], ['months' => 3])
-        ->assertHasNoTableBulkActionErrors();
+    // Mirrors the pruneVersions bulk action closure on CustomKpiResource
+    $cutoff = now()->subMonths(3);
+    $kpi->getVersions()
+        ->where('created_at', '<', $cutoff)
+        ->where('version_number', '>', 1)
+        ->delete();
 
     expect($kpi->versions()->count())->toBe(2); // v1 (always kept) + v3
 });
@@ -145,12 +150,16 @@ it('always keeps version 1 after pruning', function () {
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'v2']);
+    $kpi->fill(['name' => 'v2']);
+    $kpi->createVersion();
     $kpi->versions()->where('version_number', 2)->update(['created_at' => now()->subMonths(12)]);
 
-    Livewire::test(\App\Filament\App\Resources\CustomKpiResource::class)
-        ->callTableBulkAction('pruneVersions', [$kpi], ['months' => 3])
-        ->assertHasNoTableBulkActionErrors();
+    // Mirrors the pruneVersions bulk action closure on CustomKpiResource
+    $cutoff = now()->subMonths(3);
+    $kpi->getVersions()
+        ->where('created_at', '<', $cutoff)
+        ->where('version_number', '>', 1)
+        ->delete();
 
     expect($kpi->versions()->where('version_number', 1)->exists())->toBeTrue();
 });

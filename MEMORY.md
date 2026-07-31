@@ -130,8 +130,7 @@
 - **Restore flow improved:** After `restoreFullVersion()` (which sets `unsavedChanges = true` then calls `window.location.reload()`), the reload causes `mount()` to re-evaluate `hasUnsavedChanges()`. Since restore creates no new version, the dashboard state differs from the latest version → `unsavedChanges = true` → warning persists.
 - **File:** `app/Filament/App/Resources/DashboardResource/Pages/DashboardBuilder.php:34`
 
-### Versioning Overhaul (2026-07-30)
-- **No auto-versioning on model update:** `TracksVersions::shouldAutoVersionOnUpdate()` returns `false` by default. Versioning is manual via "Save Version" button.
+### Versioning Overhaul (2026-07-30)- **No auto-versioning on model update:** `TracksVersions::shouldAutoVersionOnUpdate()` returns `false` by default. Versioning is manual via "Save Version" button.
 - **DashboardWidget overrides** `shouldAutoVersionOnUpdate()` to `true` — WidgetVersions auto-create on widget saves (needed for dashboard restore accuracy).
 - **Unsaved changes indicator:** `$unsavedChanges` flag on DashboardBuilder (Livewire component), reset when version is saved, shown in toolbar header and Save Version action label.
 - **Custom version labels:** `label` column added to all 4 version tables via migration `2026_07_30_000006_add_label_to_version_tables.php`. `createVersion()` accepts optional `$versionName` param.
@@ -149,3 +148,17 @@
   - All 3 VersionsRelationManagers — label column, pruneAll bulk action
   - `resources/views/filament/modals/version-history.blade.php` — label column, duplicate button
   - `resources/views/filament/app/pages/dashboard-builder.blade.php` — unsaved changes indicator in toolbar
+
+### Test Suite + Bugs Found (2026-07-30)
+- **New:** `TESTING_PLAN.md` — 112-case end-to-end plan covering DM/KPI/Dashboard/Widget lifecycle, versioning, duplication, data requests/rendering, and the DM→KPI→Builder→View heritage chain. Tracks IDs per domain for hand-off to future agents.
+- **New tests written (all passing):**
+  - `tests/Feature/Analytics/DashboardVersionRestoreTest.php` (11 tests) — DASHV/WIDV/DUP scenarios: widget snapshot capture, initial-snapshot fallback, saveLayout versioning, full restore reconciliation (delete extra/restore trashed/revert changed), no version on restore, unsaved-changes after restore, null widget_ids skip, clone current/from-version, duplicate widget.
+  - `tests/Unit/Analytics/DerivedMetricCacheServiceTest.php` (9 tests) — DM-007/008/009/010: controls hash stability/ordering/asset sensitivity, cache miss→store→hit with 60-min TTL, upsert, expiry miss, invalidate/flush.
+- **Fixed stale `tests/Unit/TracksVersionsTest.php` (11 tests):** rewrote pre-overhaul assertions (plain updates auto-versioning, before-restore snapshot) to new manual-versioning model (explicit `createVersion()`, `fill()` before snapshot, restore keeps count, `hasUnsavedChanges()`). Added coverage for `label`, widget auto-version change summary, no-snapshot-on-restore.
+- **Fixed stale `tests/Feature/VersionHistoryTest.php` pruning tests (2):** moved from `Livewire::test(CustomKpiResource::class)` (never a Livewire component → ComponentNotFoundException) to direct assertions mirroring the `pruneVersions` bulk action closure.
+- **Bugs found & fixed while testing:**
+  1. **Stale `widgets` relation in `Dashboard::getVersionExtraAttributes()`** — `loadMissing('widgets')` never reloads a relation already cached on the instance. The `created` event auto-versions the dashboard BEFORE widgets exist, caching an empty `widgets` relation; later `createVersion()` snapshotted empty `widget_ids`/`widget_version_ids`, making restore delete all widgets. **Fix:** `load('widgets')` (forces reload). Also applied to the two `loadMissing` calls in `reconcileWidgetsFromVersion()`.
+  2. **Same stale-relation bug in `DashboardService::cloneDashboard()`** — `$dashboard->widgets` returned empty cached collection → clones had no widgets. **Fix:** `$dashboard->load('widgets')` before iterating.
+  3. **`DashboardService::cloneDashboardFromVersion()` called protected `getTrackableFields()`** → `BadMethodCallException`. **Fix:** made `getTrackableFields()` public on `Dashboard`, `CustomKpi`, `DerivedMetric` (matches existing `DashboardWidget`).
+  4. **`cloneDashboardFromVersion()` fill-order bug** — `fill($versionData)` ran AFTER setting the `(From vN)` name suffix and `is_default=false`, overwriting both with the historical values. **Fix:** fill first, then apply suffix + is_default.
+- **Baseline:** full suite = 89 passing (was 87) / 25 failing — all 25 remaining failures are pre-existing on clean HEAD (VersionHistoryTest UI-mount tests, ProjectDeployment/ProjectTransfer/ProjectSoftDelete/RemoteEngineService/UserTierManagement) and unrelated to this work. Local SQLite test DB works fine; the Postgres unreachable issue only affects real migrations.
