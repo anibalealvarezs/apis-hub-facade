@@ -49,7 +49,7 @@ class CreateCustomKpi extends CreateRecord
                 fn () => $this->data['calculation_type'] ?? null
             ),
             Actions\Action::make('debug')
-                ->label(__('Debug Payload'))
+                ->label(__('Payload'))
                 ->icon('heroicon-o-code-bracket')
                 ->color('gray')
                 ->visible(fn () => config('app.env') !== 'production')

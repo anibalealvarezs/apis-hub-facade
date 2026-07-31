@@ -180,7 +180,7 @@
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\Action::make('debugPayload')
-                        ->label(__('Debug Payload'))
+                        ->label(__('Payload'))
                         ->icon('heroicon-o-code-bracket')
                         ->color('gray')
                         ->visible(fn() => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')

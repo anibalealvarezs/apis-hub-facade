@@ -20,7 +20,7 @@ class KpiExecuteActionBuilder
     public static function configure($action, callable $getUiState, callable $getCalculationType)
     {
         return $action
-            ->label(__('Test KPI Payload'))
+            ->label(__('Test'))
             ->icon('heroicon-o-play')
             ->color('success')
             ->form(function (?\Illuminate\Database\Eloquent\Model $record = null) use ($getUiState, $getCalculationType) {
