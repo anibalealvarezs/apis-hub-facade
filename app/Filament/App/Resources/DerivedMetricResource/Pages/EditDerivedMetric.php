@@ -77,6 +77,7 @@ class EditDerivedMetric extends EditRecord
                         changeSummary: 'Manually saved',
                         versionName: $data['label'] ?? null,
                     );
+                    $this->dispatch('refreshRelationManagers');
                     Notification::make()
                         ->title(__('Version saved'))
                         ->success()
