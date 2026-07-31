@@ -119,6 +119,12 @@
   - **Fix:** In `getVersionExtraAttributes`, if a widget has no WidgetVersion, one is created on-the-fly via `$widget->createVersion('Initial snapshot')` before snapshotting.
   - **Note:** Existing `dashboard_versions` created before this fix still have incomplete `widget_version_ids`. To fully restore them, a data migration would need to backfill WidgetVersion records and update old dashboard versions. For now, new dashboard versions will correctly capture all widgets.
 
+### Unsaved Changes Warning Persists on Reload (2026-07-30)
+- **Bug:** `$unsavedChanges` flag on DashboardBuilder Livewire component was initialized to `false` in the property declaration and never checked against `hasUnsavedChanges()` on mount. After page reload, the warning always disappeared—even when the dashboard state genuinely differed from the latest version (e.g., after restore without creating a version).
+- **Fix:** Added `$this->unsavedChanges = $this->dashboard->hasUnsavedChanges()` in `mount()`. On page load, if the current model state doesn't match the latest version snapshot, the warning now persists.
+- **Restore flow improved:** After `restoreFullVersion()` (which sets `unsavedChanges = true` then calls `window.location.reload()`), the reload causes `mount()` to re-evaluate `hasUnsavedChanges()`. Since restore creates no new version, the dashboard state differs from the latest version → `unsavedChanges = true` → warning persists.
+- **File:** `app/Filament/App/Resources/DashboardResource/Pages/DashboardBuilder.php:34`
+
 ### Versioning Overhaul (2026-07-30)
 - **No auto-versioning on model update:** `TracksVersions::shouldAutoVersionOnUpdate()` returns `false` by default. Versioning is manual via "Save Version" button.
 - **DashboardWidget overrides** `shouldAutoVersionOnUpdate()` to `true` — WidgetVersions auto-create on widget saves (needed for dashboard restore accuracy).

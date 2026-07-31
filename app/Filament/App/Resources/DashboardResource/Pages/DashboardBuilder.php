@@ -31,6 +31,7 @@ class DashboardBuilder extends Page
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount ENTER", ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
+        $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
         $this->loadWidgets();
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount DONE", ['widget_count' => count($this->widgets)]);
     }
