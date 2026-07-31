@@ -154,11 +154,12 @@ class EditCustomKpi extends EditRecord
                         changeSummary: 'Manually saved',
                         versionName: $data['label'] ?? null,
                     );
-                    $this->dispatch('refreshRelationManagers');
                     Notification::make()
                         ->title(__('Version saved'))
                         ->success()
                         ->send();
+
+                    $this->js('window.location.reload()');
                 }),
             Actions\DeleteAction::make()
                 ->visible(fn () => auth()->user()->can('edit_preferences')),
