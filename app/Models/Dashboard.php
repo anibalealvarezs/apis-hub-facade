@@ -155,18 +155,15 @@ class Dashboard extends Model
             'currentWidgetIds' => $currentWidgetIds->toArray(),
         ]);
 
-        DashboardWidget::whereIn('id', $toDelete)->get()->each(function ($widget) {
-            $widget->updateQuietly(['deleted_at' => now()]);
-        });
+        DashboardWidget::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+            ->whereIn('id', $toDelete)
+            ->update(['deleted_at' => now(), 'updated_at' => now()]);
 
         if ($toRestoreFromTrash->isNotEmpty()) {
-            DashboardWidget::onlyTrashed()
-                ->whereIn('dashboard_id', [$this->id])
+            DashboardWidget::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+                ->where('dashboard_id', $this->id)
                 ->whereIn('id', $toRestoreFromTrash)
-                ->get()
-                ->each(function ($widget) {
-                    $widget->updateQuietly(['deleted_at' => null]);
-                });
+                ->update(['deleted_at' => null, 'updated_at' => now()]);
         }
 
         $this->loadMissing('widgets');
@@ -204,7 +201,10 @@ class Dashboard extends Model
                         'trackable' => $trackable,
                     ]);
 
-                    $widget->updateQuietly($trackable);
+                    DashboardWidget::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+                        ->where('id', $widget->id)
+                        ->update(array_merge($trackable, ['updated_at' => now()]));
+                    $widget->fill($trackable);
 
                     \Log::debug('[Dashboard:reconcileWidgetsFromVersion] after update', [
                         'widgetId' => $widgetId,
