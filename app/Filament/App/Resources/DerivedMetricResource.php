@@ -775,7 +775,6 @@
                             $replica->name = $replica->name.' (copy)';
                         })
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
-                    Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('debugPayload')
                         ->label(__('Payload'))
                         ->icon('heroicon-o-code-bracket')

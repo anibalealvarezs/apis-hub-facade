@@ -203,7 +203,6 @@
                             $replica->name = $replica->name . ' (copy)';
                         })
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
-                    Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('clearCache')
                         ->label(__('Clear Cache'))
                         ->icon('heroicon-o-arrow-path')

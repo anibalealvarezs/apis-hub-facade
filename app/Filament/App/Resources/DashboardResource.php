@@ -178,8 +178,6 @@ class DashboardResource extends Resource
                     ->icon('heroicon-o-document-duplicate')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
             ])
