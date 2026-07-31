@@ -119,9 +119,9 @@ class Dashboard extends Model
 
         $this->update($trackable);
 
-        $this->withoutVersioning = false;
-
         $this->reconcileWidgetsFromVersion($version);
+
+        $this->withoutVersioning = false;
     }
 
     protected function reconcileWidgetsFromVersion(DashboardVersion $version): void
@@ -156,6 +156,7 @@ class Dashboard extends Model
         ]);
 
         DashboardWidget::whereIn('id', $toDelete)->get()->each(function ($widget) {
+            $widget->withoutVersioning = true;
             $widget->delete();
         });
 
@@ -165,6 +166,7 @@ class Dashboard extends Model
                 ->whereIn('id', $toRestoreFromTrash)
                 ->get()
                 ->each(function ($widget) {
+                    $widget->withoutVersioning = true;
                     $widget->restore();
                 });
         }
@@ -204,6 +206,7 @@ class Dashboard extends Model
                         'trackable' => $trackable,
                     ]);
 
+                    $widget->withoutVersioning = true;
                     $widget->updateQuietly($trackable);
 
                     \Log::debug('[Dashboard:reconcileWidgetsFromVersion] after update', [
