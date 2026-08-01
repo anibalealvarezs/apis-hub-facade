@@ -1250,7 +1250,6 @@
     "When on, this user can see every enabled asset in the project. When off, only the selected asset groups are shared.": "Cuando está activado, este usuario puede ver todos los activos habilitados del proyecto. Cuando está desactivado, solo se comparten los grupos de activos seleccionados.",
     "Shared asset groups": "Grupos de activos compartidos",
     "Asset access updated for :name": "Acceso a activos actualizado para :name",
-    "Asset list for :name": "Lista de activos para :name",
     "Close": "Cerrar",
     "Custom list": "Lista personalizada",
     "No enabled assets are currently available in the shared groups.": "Actualmente no hay activos habilitados disponibles en los grupos compartidos.",

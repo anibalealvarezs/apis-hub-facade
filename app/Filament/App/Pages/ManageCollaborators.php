@@ -113,37 +113,42 @@ class ManageCollaborators extends Page implements HasTable
 
                         return $service->getSharedAssetGroupIds($project, $record->id) ? 'warning' : 'danger';
                     })
-                    ->action(function (TextColumn $column) use ($project) {
-                        $record = $column->getRecord();
-
-                        if (! $record instanceof User) {
-                            return null;
-                        }
-
-                        $service = app(\App\Services\CollaboratorAssetAccessService::class);
-
-                        if ($service->isUnrestricted($project, $record->id)) {
-                            return null;
-                        }
-
-                        $sharedGroups = $service->getSharedAssetGroups($project, $record->id);
-
-                        if ($sharedGroups->isEmpty()) {
-                            return null;
-                        }
-
-                        return Action::make('view_asset_list')
-                            ->record($record)
-                            ->modalHeading(__('Asset list for :name', ['name' => $record->name]))
+                    ->action(
+                        Action::make('view_asset_list')
+                            ->modalHeading(fn (Action $action) => __('Asset access:') . ' ' . ($action->getRecord()?->name ?? ''))
                             ->modalWidth('2xl')
                             ->modalSubmitAction(false)
                             ->modalCancelActionLabel(__('Close'))
-                            ->modalContent(fn () => view('filament.modals.collaborator-asset-list', [
-                                'user' => $record,
-                                'project' => $project,
-                                'sharedGroups' => $sharedGroups->load('items'),
-                            ]));
-                    }),
+                            ->disabled(function (Action $action) use ($project) {
+                                $record = $action->getRecord();
+
+                                if (! $record instanceof User) {
+                                    return true;
+                                }
+
+                                $service = app(\App\Services\CollaboratorAssetAccessService::class);
+
+                                return $service->isUnrestricted($project, $record->id)
+                                    || $service->getSharedAssetGroups($project, $record->id)->isEmpty();
+                            })
+                            ->modalContent(function (Action $action) use ($project) {
+                                $record = $action->getRecord();
+
+                                if (! $record instanceof User) {
+                                    return null;
+                                }
+
+                                $sharedGroups = app(\App\Services\CollaboratorAssetAccessService::class)
+                                    ->getSharedAssetGroups($project, $record->id)
+                                    ->load('items');
+
+                                return view('filament.modals.collaborator-asset-list', [
+                                    'user' => $record,
+                                    'project' => $project,
+                                    'sharedGroups' => $sharedGroups,
+                                ]);
+                            })
+                    ),
             ])
             ->actions([
                 Action::make('abandon')
