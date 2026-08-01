@@ -269,6 +269,24 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            $user = $request->user();
+            if ($user) {
+                $access = app(\App\Services\CollaboratorAssetAccessService::class);
+                $userId = (int) $user->getAuthIdentifier();
+                if ($access->isProjectMember($tenant, $userId) && ! $access->isUnrestricted($tenant, $userId)) {
+                    $allowed = $access->getAllowedAssetIdsForChannel($tenant, $userId, 'google_analytics');
+                    $allowedSet = [];
+                    foreach ($allowed as $id) {
+                        $allowedSet[(string) $id] = true;
+                    }
+                    $properties = array_values(array_filter($properties, function (array $prop) use ($allowedSet) {
+                        $pid = (string) ($prop['platformId'] ?? '');
+
+                        return $pid !== '' && isset($allowedSet[$pid]);
+                    }));
+                }
+            }
+
             return response()->json(['properties' => $properties]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GA4 List Properties Error: " . $e->getMessage());

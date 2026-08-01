@@ -901,8 +901,47 @@ class FacebookOrganicController extends Controller
                 'postId' => $validated['postId'], // Doctrine ORM expects camelCase property name
             ]);
 
+            $post = $results['data'][0] ?? null;
+
+            $user = $request->user();
+            if ($post && $user) {
+                $access = app(\App\Services\CollaboratorAssetAccessService::class);
+                $userId = (int) $user->getAuthIdentifier();
+                if ($access->isProjectMember($tenant, $userId) && ! $access->isUnrestricted($tenant, $userId)) {
+                    $set = $access->buildAllowedIdentifierSet($tenant, $userId, 'facebook_organic');
+                    $candidates = [
+                        $post['channeled_account_id'] ?? null,
+                        $post['account_id'] ?? null,
+                        $post['channeledAccount'] ?? null,
+                        $post['account'] ?? null,
+                        $post['page_id'] ?? null,
+                        $post['page'] ?? null,
+                        $post['page_platform_id'] ?? null,
+                        $post['fb_page_id'] ?? null,
+                        $post['linked_fb_page_id'] ?? null,
+                        $post['platform_id'] ?? null,
+                    ];
+
+                    $allowed = false;
+                    foreach ($candidates as $candidate) {
+                        if ($candidate !== null && $access->identifierAllowed((string) $candidate, $set)) {
+                            $allowed = true;
+                            break;
+                        }
+                    }
+
+                    if (! $allowed) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'access_restricted',
+                            'message' => 'You do not have access to this post.',
+                        ], 403);
+                    }
+                }
+            }
+
             return response()->json([
-                'post' => $results['data'][0] ?? null,
+                'post' => $post,
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

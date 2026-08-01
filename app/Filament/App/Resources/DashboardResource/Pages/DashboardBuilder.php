@@ -207,7 +207,10 @@ class DashboardBuilder extends Page
         $project = \Filament\Facades\Filament::getTenant();
         if (!$project) return [];
 
-        $groups = \App\Models\AssetGroup::where('project_id', $project->id)->get();
+        $groups = app(\App\Services\CollaboratorAssetAccessService::class)
+            ->getAllowedAssetGroupQuery($project, auth()->user()?->getAuthIdentifier())
+            ->get();
+
         $result = [];
         foreach ($groups as $group) {
             $result[$group->id] = $group->name;

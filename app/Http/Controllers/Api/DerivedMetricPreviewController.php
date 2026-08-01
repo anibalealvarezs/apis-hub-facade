@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Services\CollaboratorAssetAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,22 @@ class DerivedMetricPreviewController extends Controller
 
         $project = Project::findOrFail($validated['project_id']);
 
+        $access = app(CollaboratorAssetAccessService::class);
+        $restricted = false;
+        $userId = null;
+        $user = $request->user();
+        if ($user) {
+            $userId = (int) $user->getAuthIdentifier();
+            if (! $access->isProjectMember($project, $userId)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'access_denied',
+                    'message' => 'You do not have access to this project.',
+                ], 403);
+            }
+            $restricted = ! $access->isUnrestricted($project, $userId);
+        }
+
         $dateStart = $validated['date_start'] ?? now()->subDays(30)->format('Y-m-d');
         $dateEnd = $validated['date_end'] ?? now()->format('Y-m-d');
         $granularity = $validated['granularity'] ?? 'daily';
@@ -45,12 +62,23 @@ class DerivedMetricPreviewController extends Controller
             );
 
             $validForChannel = $controller->getValidAssetsForChannel($project, $channel);
+
+            if ($restricted) {
+                $allowed = $access->getAllowedAssetIdsForChannel($project, $userId, $channel);
+                $validForChannel = array_values(array_intersect($validForChannel, $allowed));
+            }
+
             $extractedAssets = null;
             if ($assetFilter !== null && ! empty($assetFilter)) {
                 $filtered = array_intersect($assetFilter, $validForChannel);
                 $extractedAssets = ! empty($filtered) ? array_values($filtered) : null;
             } elseif (! empty($validForChannel)) {
                 $extractedAssets = $validForChannel[0];
+            }
+
+            if ($restricted && $extractedAssets === null) {
+                $fetchedSeries[$key] = [];
+                continue;
             }
 
             $payload = [
@@ -69,6 +97,13 @@ class DerivedMetricPreviewController extends Controller
             } catch (\Throwable $e) {
                 $fetchedSeries[$key] = [];
             }
+        }
+
+        if ($restricted && empty(array_filter($fetchedSeries, fn ($s) => ! empty($s)))) {
+            return response()->json([
+                'success' => true,
+                'data' => ['dates' => [], 'values' => []],
+            ]);
         }
 
         $remoteEngineService = app(\App\Services\RemoteEngineService::class);

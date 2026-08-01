@@ -90,7 +90,9 @@ class KpiExecuteActionBuilder
                             $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
 
                             if (!empty($uiState['dependent_asset_group'])) {
-                                $group = \App\Models\AssetGroup::find($uiState['dependent_asset_group']);
+                                $group = app(\App\Services\CollaboratorAssetAccessService::class)
+                                    ->getAllowedAssetGroupQuery(\Filament\Facades\Filament::getTenant(), auth()->user()?->getAuthIdentifier())
+                                    ->find($uiState['dependent_asset_group']);
                                 if ($group) {
                                     $allowedAssets = $group->active_items->where('channel', $channel)->pluck('asset_id')->toArray();
                                     $options = array_intersect_key($options, array_flip($allowedAssets));
@@ -136,7 +138,9 @@ class KpiExecuteActionBuilder
                                 $options = KpiFormBuilder::getAssetOptionsForChannel($channel);
 
                                 if (!empty($var['independent_asset_group'])) {
-                                    $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
+                                    $group = app(\App\Services\CollaboratorAssetAccessService::class)
+                                        ->getAllowedAssetGroupQuery(\Filament\Facades\Filament::getTenant(), auth()->user()?->getAuthIdentifier())
+                                        ->find($var['independent_asset_group']);
                                     if ($group) {
                                         $allowedAssets = $group->active_items->where('channel', $channel)->pluck('asset_id')->toArray();
                                         $options = array_intersect_key($options, array_flip($allowedAssets));

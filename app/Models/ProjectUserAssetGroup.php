@@ -6,19 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ProjectUserAllowedAsset extends Model
+class ProjectUserAssetGroup extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'project_id',
         'user_id',
-        'channel',
-        'allowed_assets',
-    ];
-
-    protected $casts = [
-        'allowed_assets' => 'array',
+        'asset_group_id',
     ];
 
     public function project(): BelongsTo
@@ -29,5 +24,10 @@ class ProjectUserAllowedAsset extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assetGroup(): BelongsTo
+    {
+        return $this->belongsTo(AssetGroup::class);
     }
 }

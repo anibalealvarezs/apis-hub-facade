@@ -26,7 +26,10 @@ trait LoadsDashboardViewData
         $project = Filament::getTenant();
         if (!$project) return [];
 
-        $groups = \App\Models\AssetGroup::where('project_id', $project->id)->get();
+        $groups = app(\App\Services\CollaboratorAssetAccessService::class)
+            ->getAllowedAssetGroupQuery($project, auth()->user()?->getAuthIdentifier())
+            ->get();
+
         $result = [];
         foreach ($groups as $group) {
             $result[$group->id] = $group->name;
@@ -39,7 +42,8 @@ trait LoadsDashboardViewData
         $project = Filament::getTenant();
         if (!$project) return [];
 
-        $groups = \App\Models\AssetGroup::where('project_id', $project->id)
+        $groups = app(\App\Services\CollaboratorAssetAccessService::class)
+            ->getAllowedAssetGroupQuery($project, auth()->user()?->getAuthIdentifier())
             ->with('items')
             ->get();
 
@@ -103,17 +107,18 @@ trait LoadsDashboardViewData
             }
 
             $user = auth()->user();
-            $isAdmin = $user && ($user->role === 'admin' || $user->role === 'owner');
+            $access = app(\App\Services\CollaboratorAssetAccessService::class);
+            $project = Filament::getTenant();
 
-            $getAssetsForChannel = function ($channel) use ($isAdmin, $user, $service) {
+            $getAssetsForChannel = function ($channel) use ($user, $access, $project) {
                 if (empty($channel)) {
                     return [];
                 }
                 $allAssets = KpiFormBuilder::getAssetOptionsForChannel($channel);
-                if ($isAdmin) {
+                if (! $user || $access->isUnrestricted($project, $user->id)) {
                     return $allAssets;
                 }
-                $allowed = $service->filterAllowedAssets(Filament::getTenant(), $user->id, $channel, array_keys($allAssets));
+                $allowed = $access->getAllowedAssetIdsForChannel($project, $user->id, $channel);
                 $filtered = [];
                 foreach ($allowed as $id) {
                     if (isset($allAssets[$id])) {
@@ -172,7 +177,7 @@ trait LoadsDashboardViewData
                 $depAssetIds = null;
                 $configuredGroup = $uiState['global_asset_group'] ?? $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
                 if (!empty($configuredGroup)) {
-                    $group = AssetGroup::find($configuredGroup);
+                    $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                     if ($group) {
                         $activeAssetIds = $group->active_items->pluck('asset_id')->toArray();
                         if (!empty($activeAssetIds)) {
@@ -201,7 +206,7 @@ trait LoadsDashboardViewData
                         $indAssetIds = null;
                         $configuredGroup = $uiState['global_asset_group'] ?? $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
                         if (!empty($configuredGroup)) {
-                            $group = AssetGroup::find($configuredGroup);
+                            $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                             if ($group) {
                                 $activeAssetIds = $group->active_items->pluck('asset_id')->toArray();
                                 if (!empty($activeAssetIds)) {

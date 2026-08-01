@@ -79,8 +79,11 @@
         public function getAssetGroupsData(): array
         {
             $tenant = Filament::getTenant();
-            $groups = \App\Models\AssetGroup::where('project_id', $tenant->id)->with('items')->get();
-            
+            $groups = app(\App\Services\CollaboratorAssetAccessService::class)
+                ->getAllowedAssetGroupQuery($tenant, auth()->user()?->getAuthIdentifier())
+                ->with('items')
+                ->get();
+
             $assetMap = [];
             foreach ($groups as $group) {
                 foreach ($group->items as $item) {
@@ -90,7 +93,7 @@
                     $assetMap[$item->asset_id][] = $group->name;
                 }
             }
-            
+
             return [
                 'groups' => $groups->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->toArray(),
                 'assetMap' => $assetMap,

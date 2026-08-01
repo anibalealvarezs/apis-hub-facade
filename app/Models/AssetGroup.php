@@ -25,6 +25,11 @@ class AssetGroup extends Model
         return $this->hasMany(AssetGroupItem::class);
     }
 
+    public function sharedWithUsers()
+    {
+        return $this->belongsToMany(User::class, 'project_user_asset_groups', 'asset_group_id', 'user_id');
+    }
+
     public function getActiveItemsAttribute()
     {
         $project = $this->project;

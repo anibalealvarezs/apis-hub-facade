@@ -142,6 +142,12 @@ window.dashboardRenderer = {
                 throw new Error(json.message || json.error || 'Unknown error');
             }
 
+            if (json.missing_assets || json.data?._missing_assets) {
+                containerEl.innerHTML = this.emptyAssetState();
+                this._widgetData.set(containerEl, json);
+                return;
+            }
+
             this._widgetData.set(containerEl, json);
 
             // Render immediately if already in viewport, otherwise defer

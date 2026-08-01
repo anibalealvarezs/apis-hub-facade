@@ -76,29 +76,40 @@ class DashboardWidgetDataController extends Controller
             'series_assets' => $resolvedControls['series_assets'] ?? '__NOT_SET__',
         ]);
 
-        if (! $dashboard->is_public && $user && ! empty($resolvedControls['channel'])) {
-            $isProjectUser = \Illuminate\Support\Facades\DB::table('model_has_roles')
-                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                ->where('model_has_roles.model_id', $user->id)
-                ->where('model_has_roles.project_id', $project->id)
-                ->where('roles.name', 'project_user')
-                ->exists();
+        if (! $dashboard->is_public && $user && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
+            $assetAccess = app(\App\Services\CollaboratorAssetAccessService::class);
 
-            if ($isProjectUser) {
-                $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
-                $allowedAssets = $this->widgetDataService->filterAllowedAssets(
-                    $project,
-                    $user->id,
-                    $resolvedControls['channel'],
-                    $assetList
-                );
+            if (! $assetAccess->isUnrestricted($project, $user->id)) {
+                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
 
-                if (empty($allowedAssets)) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'access_restricted',
-                        'message' => 'You do not have access to the selected asset for this dashboard.',
-                    ], 403, [], JSON_UNESCAPED_UNICODE);
+                if (! empty($channel)) {
+                    $allowedAssets = $assetAccess->getAllowedAssetIdsForChannel($project, $user->id, $channel);
+
+                    if (empty($allowedAssets)) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'access_restricted',
+                            'message' => 'You do not have access to any asset for this dashboard.',
+                        ], 403, [], JSON_UNESCAPED_UNICODE);
+                    }
+
+                    $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
+
+                    if (! empty($assetList)) {
+                        $filtered = array_values(array_intersect($assetList, $allowedAssets));
+
+                        if (empty($filtered)) {
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'access_restricted',
+                                'message' => 'You do not have access to the selected asset for this dashboard.',
+                            ], 403, [], JSON_UNESCAPED_UNICODE);
+                        }
+
+                        $resolvedControls['assets'] = $filtered;
+                    } else {
+                        $resolvedControls['assets'] = array_values($allowedAssets);
+                    }
                 }
             }
         }
@@ -113,6 +124,9 @@ class DashboardWidgetDataController extends Controller
                 'derived_metric' => $this->handleDerivedMetricSource($project, $widget, $resolvedControls),
                 default => throw new \InvalidArgumentException('Unknown source type: ' . $widget->source_type),
             };
+
+            $missingAssets = $this->detectMissingAssets($project, $widget, $resolvedControls)
+                || ! empty($data['_missing_assets'] ?? false);
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} AFTER match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $tMatch) * 1000, 1)]);
 
@@ -1194,6 +1208,7 @@ class DashboardWidgetDataController extends Controller
                 'source_type' => $widget->source_type,
                 'data' => $data,
                 'controls' => $resolvedControls,
+                'missing_assets' => $missingAssets,
             ], 200, [], JSON_UNESCAPED_UNICODE);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[STEP show] Exception', [
@@ -1207,6 +1222,63 @@ class DashboardWidgetDataController extends Controller
                 'success' => false,
                 'error' => $e->getMessage(),
             ], 500, [], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * Report whether a widget has no renderable assets for the acting user, so the
+     * frontend can show a missing-assets state instead of an empty chart. This is
+     * evaluated independently of the handlers so handler output contracts (empty
+     * arrays / compute requests with empty series data) stay unchanged.
+     */
+    protected function detectMissingAssets(Project $project, DashboardWidget $widget, array $controls): bool
+    {
+        $config = $widget->source_config ?? [];
+
+        switch ($widget->source_type) {
+            case 'metric':
+            case 'entity':
+                $channel = $controls['channel'] ?? $config['channel'] ?? null;
+                if (! $channel) {
+                    return false;
+                }
+
+                return $this->extractAssetFilter($controls, $project, $channel) === '___EMPTY_GROUP___';
+
+            case 'derived_metric':
+                $derivedMetric = $widget->derivedMetric;
+                $sourceSeries = $derivedMetric?->source_series ?? [];
+                if (empty($sourceSeries)) {
+                    return false;
+                }
+
+                $hasRenderableSeries = false;
+                foreach ($sourceSeries as $index => $series) {
+                    $channel = $series['channel'] ?? null;
+                    if (! $channel) {
+                        continue;
+                    }
+
+                    $seriesAssetFilter = $series['asset_filter'] ?? null;
+                    $seriesAssetKey = 'dm_'.$index;
+                    $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey] ?? $controls['dm_assets'][$index] ?? null;
+                    if (! empty($widgetAssetOverride)) {
+                        $seriesAssetFilter = is_array($seriesAssetFilter)
+                            ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))
+                            : $widgetAssetOverride;
+                    }
+
+                    $filter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
+                    if ($filter !== '___EMPTY_GROUP___' && $filter !== null && $filter !== []) {
+                        $hasRenderableSeries = true;
+                        break;
+                    }
+                }
+
+                return ! $hasRenderableSeries;
+
+            default:
+                return false;
         }
     }
 
@@ -1288,7 +1360,7 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if (! empty($controls['asset_group']) && $depSourceType !== 'derived_metric') {
-            $group = \App\Models\AssetGroup::find($controls['asset_group']);
+            $group = $this->resolveGroupForUser($project, $controls['asset_group']);
             $groupAssets = $group ? $group->active_items
                 ->where('channel', $activeDepChannel)
                 ->pluck('asset_id')
@@ -1360,7 +1432,7 @@ class DashboardWidgetDataController extends Controller
                 $indSourceType = $var['independent_source_type'] ?? 'channel';
 
                 if (! empty($controls['asset_group']) && $indSourceType !== 'derived_metric' && ! empty($indChannel)) {
-                    $group = \App\Models\AssetGroup::find($controls['asset_group']);
+                    $group = $this->resolveGroupForUser($project, $controls['asset_group']);
                     $groupAssets = $group ? $group->active_items
                         ->where('channel', $indChannel)
                         ->pluck('asset_id')
@@ -1483,6 +1555,63 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         $mergedState = array_merge($uiState, $controlsToMerge);
+        $mergedState = $this->sanitizeMergedGroupRefs($project, $mergedState);
+
+        $userId = auth()->user()?->getAuthIdentifier();
+        $assetAccess = app(\App\Services\CollaboratorAssetAccessService::class);
+
+        if ($userId !== null && ! $assetAccess->isUnrestricted($project, $userId)) {
+            $depChannel = $mergedState['dependent_channel'] ?? '';
+
+            if (! empty($depChannel)) {
+                $depAllowed = $assetAccess->getAllowedAssetIdsForChannel($project, $userId, $depChannel);
+
+                if (empty($depAllowed)) {
+                    $mergedState['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
+                    $mergedState['dependent_asset_group'] = null;
+                } elseif (empty($mergedState['dependent_asset_filter'])) {
+                    if (empty($mergedState['dependent_asset_group'])) {
+                        $mergedState['dependent_asset_filter'] = array_values($depAllowed);
+                    }
+                } else {
+                    $depIntersected = array_values(array_intersect(
+                        (array) $mergedState['dependent_asset_filter'],
+                        $depAllowed
+                    ));
+                    $mergedState['dependent_asset_filter'] = empty($depIntersected)
+                        ? ['___EMPTY_GROUP___']
+                        : $depIntersected;
+                }
+            }
+
+            foreach ($mergedState['independent_variables'] ?? [] as $key => $var) {
+                $indChannel = $var['independent_channel'] ?? '';
+
+                if (empty($indChannel) || ($var['independent_source_type'] ?? 'channel') === 'derived_metric') {
+                    continue;
+                }
+
+                $indAllowed = $assetAccess->getAllowedAssetIdsForChannel($project, $userId, $indChannel);
+
+                if (empty($indAllowed)) {
+                    $mergedState['independent_variables'][$key]['independent_asset_filter'] = ['___EMPTY_GROUP___'];
+                    $mergedState['independent_variables'][$key]['independent_asset_group'] = null;
+                } elseif (empty($var['independent_asset_filter'])) {
+                    if (empty($var['independent_asset_group'])) {
+                        $mergedState['independent_variables'][$key]['independent_asset_filter'] = array_values($indAllowed);
+                    }
+                } else {
+                    $indIntersected = array_values(array_intersect(
+                        (array) $var['independent_asset_filter'],
+                        $indAllowed
+                    ));
+                    $mergedState['independent_variables'][$key]['independent_asset_filter'] = empty($indIntersected)
+                        ? ['___EMPTY_GROUP___']
+                        : $indIntersected;
+                }
+            }
+        }
+
         if (! empty($controls['activeTab'])) {
             $mergedState['dependency'] = ($controls['activeTab'] === 'instagram') ? 'instagram_account' : 'facebook_page';
         } elseif (! empty($widget->source_config['dependency'])) {
@@ -1566,6 +1695,7 @@ class DashboardWidgetDataController extends Controller
                 'labels' => [],
                 'datasets' => [],
                 '_debug' => 'No available assets in the selected group for this channel.',
+                '_missing_assets' => true,
             ];
         }
 
@@ -1888,6 +2018,36 @@ class DashboardWidgetDataController extends Controller
     protected function extractAssetFilter(array $controls, Project $project, string $channel, ?array $seriesAssetFilter = null): array|string|null
     {
         $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel);
+
+        $allowedIds = null;
+        $user = auth()->user();
+        if ($user) {
+            $service = app(\App\Services\CollaboratorAssetAccessService::class);
+            $userId = $user->getAuthIdentifier();
+            if (! $service->isUnrestricted($project, $userId)) {
+                $allowedIds = $service->getAllowedAssetIdsForChannel($project, $userId, $channel);
+
+                if (empty($allowedIds)) {
+                    return '___EMPTY_GROUP___';
+                }
+            }
+        }
+
+        $constrain = function (array|string $value) use ($allowedIds, $allowsMultiple): array|string {
+            if ($allowedIds === null) {
+                return $value;
+            }
+
+            $valid = is_array($value) ? $value : [$value];
+            $filtered = array_values(array_intersect($valid, $allowedIds));
+
+            if (empty($filtered)) {
+                return '___EMPTY_GROUP___';
+            }
+
+            return $allowsMultiple ? $filtered : $filtered[0];
+        };
+
         if (! empty($controls['asset'])) {
             $valid = $this->getValidAssetsForChannel($project, $channel);
             if (! in_array((string)$controls['asset'], $valid)) {
@@ -1903,19 +2063,17 @@ class DashboardWidgetDataController extends Controller
                 }
                 $filtered = array_values($filtered);
 
-                return $allowsMultiple ? $filtered : $filtered[0];
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
             }
 
-            return $asset;
+            return $constrain($asset);
         }
 
         $requestedAssets = [];
         if (! empty($controls['assets']) && is_array($controls['assets'])) {
             $requestedAssets = $controls['assets'];
         } elseif (! empty($controls['asset_group'])) {
-            $group = \App\Models\AssetGroup::where('id', $controls['asset_group'])
-                ->where('project_id', $project->id)
-                ->first();
+            $group = $this->resolveGroupForUser($project, $controls['asset_group']);
 
             if (! $group) {
                 return '___EMPTY_GROUP___';
@@ -1949,7 +2107,7 @@ class DashboardWidgetDataController extends Controller
                 $filtered = array_values($filtered);
             }
 
-            return $allowsMultiple ? $filtered : $filtered[0];
+            return $constrain($allowsMultiple ? $filtered : $filtered[0]);
         }
 
         if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
@@ -1962,7 +2120,7 @@ class DashboardWidgetDataController extends Controller
 
             $filtered = array_values($filtered);
 
-            return $allowsMultiple ? $filtered : $filtered[0];
+            return $constrain($allowsMultiple ? $filtered : $filtered[0]);
         }
 
         $seriesAssets = $controls['series_assets'] ?? null;
@@ -1970,7 +2128,7 @@ class DashboardWidgetDataController extends Controller
             if (! empty($seriesAssets['dependent'][0])) {
                 $dep = (array) $seriesAssets['dependent'];
 
-                return $allowsMultiple ? $dep : $dep[0];
+                return $constrain($allowsMultiple ? $dep : $dep[0]);
             }
             if (! empty($seriesAssets[0])) {
                 $flat = [];
@@ -1981,9 +2139,13 @@ class DashboardWidgetDataController extends Controller
                 });
                 $flat = array_values(array_unique($flat));
                 if (! empty($flat)) {
-                    return $allowsMultiple ? $flat : $flat[0];
+                    return $constrain($allowsMultiple ? $flat : $flat[0]);
                 }
             }
+        }
+
+        if ($allowedIds !== null) {
+            return $allowsMultiple ? array_values($allowedIds) : $allowedIds[0];
         }
 
         return null;
@@ -2028,6 +2190,61 @@ class DashboardWidgetDataController extends Controller
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getValidAssetsForChannel EXIT", ['channel' => $channel, 'count' => count($assets), 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         return $assets;
+    }
+
+    protected function resolveGroupForUser(Project $project, int|string $groupId): ?\App\Models\AssetGroup
+    {
+        $group = \App\Models\AssetGroup::where('id', $groupId)
+            ->where('project_id', $project->id)
+            ->first();
+
+        if (! $group) {
+            return null;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            return $group;
+        }
+
+        $service = app(\App\Services\CollaboratorAssetAccessService::class);
+        $userId = $user->getAuthIdentifier();
+
+        if ($service->isUnrestricted($project, $userId)) {
+            return $group;
+        }
+
+        return in_array($group->id, $service->getSharedAssetGroupIds($project, $userId), true)
+            ? $group
+            : null;
+    }
+
+    protected function sanitizeMergedGroupRefs(Project $project, array $mergedState): array
+    {
+        $userId = auth()->user()?->getAuthIdentifier();
+        $service = app(\App\Services\CollaboratorAssetAccessService::class);
+
+        if (! empty($mergedState['dependent_asset_group'])) {
+            if ($userId === null || $service->canAccessGroup($project, $userId, (int) $mergedState['dependent_asset_group'])) {
+                // Group reference is allowed.
+            } else {
+                $mergedState['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
+                $mergedState['dependent_asset_group'] = null;
+            }
+        }
+
+        foreach ($mergedState['independent_variables'] ?? [] as $key => $var) {
+            if (! empty($var['independent_asset_group'])) {
+                if ($userId === null || $service->canAccessGroup($project, $userId, (int) $var['independent_asset_group'])) {
+                    // Group reference is allowed.
+                } else {
+                    $mergedState['independent_variables'][$key]['independent_asset_filter'] = ['___EMPTY_GROUP___'];
+                    $mergedState['independent_variables'][$key]['independent_asset_group'] = null;
+                }
+            }
+        }
+
+        return $mergedState;
     }
 
     protected function resolveChanneledAccountId(Project $project, string $channel, array|string|null $asset): array|string|null
@@ -2437,6 +2654,11 @@ class DashboardWidgetDataController extends Controller
 
             // Source series data is only for internal computation — not added to chart datasets
         }
+
+        // If no source series produced any data (e.g. every series resolved to
+        // ___EMPTY_GROUP___), the compute request still runs with the empty series
+        // data so the engine can return a deterministic empty result. Whether the
+        // widget has renderable assets is reported by detectMissingAssets() in show().
 
         // Compute the formula result
         $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);

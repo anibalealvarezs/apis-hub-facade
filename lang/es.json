@@ -1238,5 +1238,16 @@
     "The selected channel does not support this analysis level or lag configuration.": "El canal seleccionado no soporta este nivel de análisis ni esta configuración de lag.",
     "The selected channel does not support this analysis level, lag configuration, or derived metrics.": "El canal seleccionado no soporta este nivel de análisis, configuración de lag ni métricas derivadas.",
     "The selected channel does not support this lag configuration or derived metrics.": "El canal seleccionado no soporta esta configuración de lag ni métricas derivadas.",
-    "The selected channel does not support this analysis level or derived metrics.": "El canal seleccionado no soporta este nivel de análisis ni métricas derivadas."
+    "The selected channel does not support this analysis level or derived metrics.": "El canal seleccionado no soporta este nivel de análisis ni métricas derivadas.",
+    "Asset access": "Acceso a activos",
+    "All assets": "Todos los activos",
+    "No access": "Sin acceso",
+    "Groups: :groups": "Grupos: :groups",
+    "Manage Asset Groups": "Gestionar Grupos de Activos",
+    "Asset access:": "Acceso a activos:",
+    "When \"Allow all assets\" is off, this user only sees assets inside the selected asset groups.": "Cuando \"Permitir todos los activos\" está desactivado, este usuario solo verá los activos de los grupos de activos seleccionados.",
+    "Allow all assets": "Permitir todos los activos",
+    "When on, this user can see every enabled asset in the project. When off, only the selected asset groups are shared.": "Cuando está activado, este usuario puede ver todos los activos habilitados del proyecto. Cuando está desactivado, solo se comparten los grupos de activos seleccionados.",
+    "Shared asset groups": "Grupos de activos compartidos",
+    "Asset access updated for :name": "Acceso a activos actualizado para :name"
 }

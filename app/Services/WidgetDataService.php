@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Dashboard;
 use App\Models\DashboardWidget;
 use App\Models\Project;
-use App\Models\ProjectUserAllowedAsset;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 
@@ -79,18 +78,8 @@ class WidgetDataService
 
     public function filterAllowedAssets(Project $project, int $userId, string $channel, array $assetIds): array
     {
-        $allowed = ProjectUserAllowedAsset::where('project_id', $project->id)
-            ->where('user_id', $userId)
-            ->where('channel', $channel)
-            ->first();
-
-        if (!$allowed || $allowed->allowed_assets === null) {
-            return $assetIds;
-        }
-
-        $allowedAssetIds = $allowed->allowed_assets;
-
-        return array_intersect($assetIds, $allowedAssetIds);
+        return app(CollaboratorAssetAccessService::class)
+            ->filterAllowedAssets($project, $userId, $channel, $assetIds);
     }
 
     public function computeControlsHash(array $controls): string

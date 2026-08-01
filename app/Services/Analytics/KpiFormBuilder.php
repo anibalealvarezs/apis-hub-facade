@@ -477,7 +477,10 @@ class KpiFormBuilder
             return [];
         }
 
-        return \App\Models\AssetGroup::where('project_id', $tenant->id)->pluck('name', 'id')->toArray();
+        return app(\App\Services\CollaboratorAssetAccessService::class)
+            ->getAllowedAssetGroupQuery($tenant, auth()->user()?->getAuthIdentifier())
+            ->pluck('name', 'id')
+            ->toArray();
     }
 
     public static function getDerivedMetricOptions(): array

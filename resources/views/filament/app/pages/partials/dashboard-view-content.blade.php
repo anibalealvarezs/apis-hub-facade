@@ -20,7 +20,13 @@
     </div>
 
     {{-- Dashboard Controls (on-the-go) --}}
-    @php $dc = $this->dashboard->controls ?? []; @endphp
+    @php
+        $dc = $this->dashboard->controls ?? [];
+        $dcAssetGroup = (string) ($dc['asset_group'] ?? '');
+        $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $this->getAllAssetGroups())
+            ? $dcAssetGroup
+            : '';
+    @endphp
     <div class="flex flex-wrap items-center gap-3 text-xs">
         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Date range:</span>
         <input type="date" x-model="dashboardOverrides.date_start"
@@ -763,8 +769,8 @@
                 hasUserChangedGlobalDate: false,
                 assetGroups: @json($this->getAllAssetGroups()),
                 channelAssetGroupMap: @json($this->getChannelAssetGroupMap()),
-                selectedAssetGroup: '{{ $dc['asset_group'] ?? '' }}',
-                _dashboardConfiguredGroup: '{{ $dc['asset_group'] ?? '' }}',
+                selectedAssetGroup: '{{ $dashboardGroup }}',
+                _dashboardConfiguredGroup: '{{ $dashboardGroup }}',
                 init() {
                     const groupKeys = Object.keys(this.assetGroups || {});
                     if (!this.selectedAssetGroup && groupKeys.length > 0) {
