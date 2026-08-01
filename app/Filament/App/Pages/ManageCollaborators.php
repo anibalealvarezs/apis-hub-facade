@@ -100,9 +100,9 @@ class ManageCollaborators extends Page implements HasTable
                             return __('All assets');
                         }
 
-                        $groups = $service->getSharedAssetGroups($project, $record->id)->pluck('name');
+                        $hasGroups = $service->getSharedAssetGroups($project, $record->id)->isNotEmpty();
 
-                        return $groups->isEmpty() ? __('No access') : __('Groups: :groups', ['groups' => $groups->join(', ')]);
+                        return $hasGroups ? __('Custom list') : __('No access');
                     })
                     ->color(function (User $record) use ($project) {
                         $service = app(\App\Services\CollaboratorAssetAccessService::class);
@@ -112,6 +112,37 @@ class ManageCollaborators extends Page implements HasTable
                         }
 
                         return $service->getSharedAssetGroupIds($project, $record->id) ? 'warning' : 'danger';
+                    })
+                    ->action(function (TextColumn $column) use ($project) {
+                        $record = $column->getRecord();
+
+                        if (! $record instanceof User) {
+                            return null;
+                        }
+
+                        $service = app(\App\Services\CollaboratorAssetAccessService::class);
+
+                        if ($service->isUnrestricted($project, $record->id)) {
+                            return null;
+                        }
+
+                        $sharedGroups = $service->getSharedAssetGroups($project, $record->id);
+
+                        if ($sharedGroups->isEmpty()) {
+                            return null;
+                        }
+
+                        return Action::make('view_asset_list')
+                            ->record($record)
+                            ->modalHeading(__('Asset list for :name', ['name' => $record->name]))
+                            ->modalWidth('2xl')
+                            ->modalSubmitAction(false)
+                            ->modalCancelActionLabel(__('Close'))
+                            ->modalContent(fn () => view('filament.modals.collaborator-asset-list', [
+                                'user' => $record,
+                                'project' => $project,
+                                'sharedGroups' => $sharedGroups->load('items'),
+                            ]));
                     }),
             ])
             ->actions([
