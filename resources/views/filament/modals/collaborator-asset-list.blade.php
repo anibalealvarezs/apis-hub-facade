@@ -25,20 +25,22 @@
         </div>
     </div>
 
-    @foreach ($entries as $entry)
-        <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
-            <div class="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
-                <span class="text-sm font-semibold text-gray-950 dark:text-white">{{ $entry['group']->name }}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $entry['total'] }}</span>
+    <div style="max-height: 55vh; overflow-y: auto;" class="space-y-4 pr-1">
+        @foreach ($entries as $entry)
+            <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
+                <div class="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-semibold text-gray-950 dark:text-white">{{ $entry['group']->name }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ $entry['total'] }}</span>
+                </div>
+                <div class="divide-y divide-gray-100 dark:divide-white/5">
+                    @foreach ($entry['itemsByChannel'] as $channel => $items)
+                        <div class="flex items-baseline justify-between gap-4 px-4 py-2.5">
+                            <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 shrink-0">{{ $channel }}</span>
+                            <span class="text-sm font-mono text-gray-700 dark:text-gray-300 text-right break-all">{{ $items->pluck('asset_id')->join(', ') }}</span>
+                        </div>
+                    @endforeach
+                </div>
             </div>
-            <div class="divide-y divide-gray-100 dark:divide-white/5">
-                @foreach ($entry['itemsByChannel'] as $channel => $items)
-                    <div class="flex items-baseline justify-between gap-4 px-4 py-2.5">
-                        <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 shrink-0">{{ $channel }}</span>
-                        <span class="text-sm font-mono text-gray-700 dark:text-gray-300 text-right break-all">{{ $items->pluck('asset_id')->join(', ') }}</span>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endforeach
+        @endforeach
+    </div>
 </div>

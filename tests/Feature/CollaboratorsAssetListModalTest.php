@@ -6,21 +6,22 @@ use App\Models\AssetGroupItem;
 use App\Models\Project;
 use App\Models\ProjectUserAssetGroup;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use function Pest\Laravel\actingAs;
 
-function scratchRole(string $name): Role
+function makeRole(string $name): Role
 {
     return Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
 }
 
-function scratchProject(): Project
+function makeProject(): Project
 {
     return Project::factory()->create([
-        'subdomain' => 'scratch-' . uniqid(),
+        'subdomain' => 'asset-modal-' . uniqid(),
         'sync_config' => [
             'facebook_marketing' => [
                 'ad_accounts' => [
@@ -31,7 +32,7 @@ function scratchProject(): Project
     ]);
 }
 
-function scratchAddMember(User $user, Project $project, string $role = 'project_user', bool $unrestricted = false, array $groupIds = []): void
+function addMember(User $user, Project $project, string $role = 'project_user', bool $unrestricted = false, array $groupIds = []): void
 {
     DB::table('project_user')->insertOrIgnore([
         'project_id' => $project->id,
@@ -42,7 +43,7 @@ function scratchAddMember(User $user, Project $project, string $role = 'project_
     ]);
 
     DB::table('model_has_roles')->insertOrIgnore([
-        'role_id' => scratchRole($role)->id,
+        'role_id' => makeRole($role)->id,
         'model_type' => User::class,
         'model_id' => $user->id,
         'project_id' => $project->id,
@@ -57,22 +58,24 @@ function scratchAddMember(User $user, Project $project, string $role = 'project_
     }
 }
 
-it('shows the custom list label and opens the asset list modal on click', function () {
+it('shows the custom list badge and opens the asset list modal on click', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
 
     $permission = Permission::findOrCreate('view_settings', 'web');
     $owner->givePermissionTo($permission);
 
-    $project = scratchProject();
+    $project = makeProject();
     $project->users()->attach($owner->id);
 
     $group = AssetGroup::create(['project_id' => $project->id, 'name' => 'Scratch Group']);
     AssetGroupItem::create(['asset_group_id' => $group->id, 'channel' => 'facebook_marketing', 'asset_id' => 'act_111']);
 
-    scratchAddMember($member, $project, 'project_user', false, [$group->id]);
+    addMember($member, $project, 'project_user', false, [$group->id]);
 
     actingAs($owner);
+
+    Filament::setTenant($project);
 
     $component = Livewire::test(ManageCollaborators::class, ['tenant' => $project->subdomain]);
 
@@ -85,19 +88,21 @@ it('shows the custom list label and opens the asset list modal on click', functi
     $component->assertSee('Scratch Group');
 });
 
-it('does not open the modal for unrestricted users', function () {
+it('does not open the asset list modal for unrestricted users', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
 
     $permission = Permission::findOrCreate('view_settings', 'web');
     $owner->givePermissionTo($permission);
 
-    $project = scratchProject();
+    $project = makeProject();
     $project->users()->attach($owner->id);
 
-    scratchAddMember($member, $project, 'project_user', true, []);
+    addMember($member, $project, 'project_user', true, []);
 
     actingAs($owner);
+
+    Filament::setTenant($project);
 
     $component = Livewire::test(ManageCollaborators::class, ['tenant' => $project->subdomain]);
 
