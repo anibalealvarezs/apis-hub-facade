@@ -110,3 +110,15 @@ Route::get('/es/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->na
 Route::get('/es/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion.es');
 
 Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');
+
+// Public Dashboard Views (Issue #114 & #115)
+Route::get('/pv/{token}', [\App\Http\Controllers\PublicViewController::class, 'show'])
+    ->name('public-view.show')
+    ->middleware(['throttle:60,1', \App\Http\Middleware\VerifyBrowserUserAgent::class, \App\Http\Middleware\PublicViewNoIndex::class])
+    ->where('token', '[A-Za-z0-9._-]+');
+
+Route::get('/pv/{token}/embed.js', [\App\Http\Controllers\PublicViewEmbedController::class, 'script'])
+    ->name('public-view.embed')
+    ->middleware(['throttle:60,1', \App\Http\Middleware\VerifyBrowserUserAgent::class])
+    ->where('token', '[A-Za-z0-9._-]+');
+

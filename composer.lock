@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "89aa7a99c87315a1ac9bc25d9ed4a40d",
+    "content-hash": "f72f6c80887aa6eb7e4de6fd69da19c8",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",

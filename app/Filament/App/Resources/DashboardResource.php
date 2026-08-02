@@ -145,6 +145,10 @@ class DashboardResource extends Resource
                     ->label(__('Widgets'))
                     ->counts('widgets')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('public_views_count')
+                    ->label(__('Public Views'))
+                    ->counts('publicViews')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Created by'))
                     ->sortable(),
@@ -231,6 +235,7 @@ class DashboardResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\PublicViewsRelationManager::class,
             RelationManagers\VersionsRelationManager::class,
         ];
     }

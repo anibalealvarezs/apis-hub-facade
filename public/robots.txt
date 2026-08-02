@@ -2,6 +2,7 @@ User-agent: *
 
 # Block everything by default
 Disallow: /
+Disallow: /pv/
 
 # Allow essential assets for page rendering
 Allow: /build/

@@ -39,13 +39,16 @@ class Dashboard extends Model
         static::deleting(function (Dashboard $dashboard) {
             if ($dashboard->isForceDeleting()) {
                 $dashboard->widgets()->withTrashed()->forceDelete();
+                $dashboard->publicViews()->withTrashed()->forceDelete();
             } else {
                 $dashboard->widgets()->delete();
+                $dashboard->publicViews()->delete();
             }
         });
 
         static::restoring(function (Dashboard $dashboard) {
             $dashboard->widgets()->onlyTrashed()->restore();
+            $dashboard->publicViews()->onlyTrashed()->restore();
         });
     }
 
@@ -62,6 +65,11 @@ class Dashboard extends Model
     public function widgets(): HasMany
     {
         return $this->hasMany(DashboardWidget::class);
+    }
+
+    public function publicViews(): HasMany
+    {
+        return $this->hasMany(DashboardPublicView::class);
     }
 
     public function sharedUsers(): BelongsToMany

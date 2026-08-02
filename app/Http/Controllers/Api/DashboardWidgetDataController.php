@@ -37,9 +37,18 @@ class DashboardWidgetDataController extends Controller
         }
 
         $user = $request->user();
+        $pvToken = $request->input('pv_token');
+        $pv = null;
 
-        if (! $dashboard->is_public) {
-            if (! $user || $user->cannot('view', $dashboard)) {
+        if ($pvToken) {
+            $pv = app(\App\Services\PublicViewService::class)->verifyToken($pvToken);
+            if (!$pv || !$pv->is_active || $pv->trashed() || $pv->dashboard_id !== $dashboard->id) {
+                return response()->json(['error' => 'Unauthorized'], 403, [], JSON_UNESCAPED_UNICODE);
+            }
+        }
+
+        if (!$dashboard->is_public && !$pv) {
+            if (!$user || $user->cannot('view', $dashboard)) {
                 return response()->json(['error' => 'Unauthorized'], 403, [], JSON_UNESCAPED_UNICODE);
             }
         }
@@ -103,6 +112,43 @@ class DashboardWidgetDataController extends Controller
                                 'success' => false,
                                 'error' => 'access_restricted',
                                 'message' => 'You do not have access to the selected asset for this dashboard.',
+                            ], 403, [], JSON_UNESCAPED_UNICODE);
+                        }
+
+                        $resolvedControls['assets'] = $filtered;
+                    } else {
+                        $resolvedControls['assets'] = array_values($allowedAssets);
+                    }
+                }
+            }
+        if ($pv && $pv->asset_group_id && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
+            $assetGroup = $pv->assetGroup;
+            if ($assetGroup) {
+                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
+                if (! empty($channel)) {
+                    $allowedAssets = $assetGroup->items()
+                        ->where('channel', $channel)
+                        ->pluck('asset_id')
+                        ->toArray();
+
+                    if (empty($allowedAssets)) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'access_restricted',
+                            'message' => 'You do not have access to any asset for this public view.',
+                        ], 403, [], JSON_UNESCAPED_UNICODE);
+                    }
+
+                    $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
+
+                    if (! empty($assetList)) {
+                        $filtered = array_values(array_intersect($assetList, $allowedAssets));
+
+                        if (empty($filtered)) {
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'access_restricted',
+                                'message' => 'You do not have access to the selected asset for this public view.',
                             ], 403, [], JSON_UNESCAPED_UNICODE);
                         }
 
