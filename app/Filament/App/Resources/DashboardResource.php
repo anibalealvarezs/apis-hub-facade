@@ -22,7 +22,10 @@ class DashboardResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                \Illuminate\Database\Eloquent\SoftDeletingScope::class,
+            ]);
         
         if (!auth()->user()->can('view_data')) {
             $query->where(function ($q) {
@@ -157,6 +160,7 @@ class DashboardResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_public'),
                 Tables\Filters\TernaryFilter::make('is_default'),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\Action::make('open_builder')
@@ -180,35 +184,43 @@ class DashboardResource extends Resource
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Tables\Actions\RestoreAction::make()
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Tables\Actions\ForceDeleteAction::make()
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => auth()->user()->can('edit_preferences')),
-                Tables\Actions\BulkAction::make('pruneVersions')
-                    ->label(__('Prune Versions'))
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->form([
-                        \Filament\Forms\Components\Select::make('months')
-                            ->label(__('Delete versions older than'))
-                            ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
-                            ->required(),
-                    ])
-                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
-                        $cutoff = now()->subMonths((int) $data['months']);
-                        foreach ($records as $record) {
-                            $record->getVersions()
-                                ->where('created_at', '<', $cutoff)
-                                ->where('version_number', '>', 1)
-                                ->delete();
-                        }
-                        \Filament\Notifications\Notification::make()
-                            ->title(__('Old versions pruned successfully'))
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\RestoreBulkAction::make()
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\ForceDeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\BulkAction::make('pruneVersions')
+                        ->label(__('Prune Versions'))
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->form([
+                            \Filament\Forms\Components\Select::make('months')
+                                ->label(__('Delete versions older than'))
+                                ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                            $cutoff = now()->subMonths((int) $data['months']);
+                            foreach ($records as $record) {
+                                $record->getVersions()
+                                    ->where('created_at', '<', $cutoff)
+                                    ->where('version_number', '>', 1)
+                                    ->delete();
+                            }
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Old versions pruned successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
                 ]),
             ])
             ->defaultSort('is_default', 'desc')
