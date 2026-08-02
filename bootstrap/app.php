@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/token-authority/refresh',
             'api/v1/tokens/refresh',
             'webhooks/paypal',
+            'api/dashboard/widget/*/data',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
