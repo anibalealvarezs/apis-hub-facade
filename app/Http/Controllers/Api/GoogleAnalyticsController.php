@@ -59,8 +59,8 @@ class GoogleAnalyticsController extends Controller
             'new_users' => 'newUsers',
             'average_session_duration' => 'averageSessionDuration',
             'revenue' => 'totalRevenue',
-            'events' => 'eventCount',
-            'active_users' => 'activeUsers',
+            'events', 'event_count' => 'eventCount',
+            'active_users', 'reach' => 'activeUsers',
             'total_users' => 'totalUsers',
             default => $metric,
         };

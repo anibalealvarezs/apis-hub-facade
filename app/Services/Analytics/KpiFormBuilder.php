@@ -366,6 +366,47 @@ class KpiFormBuilder
             ];
         }
 
+        // Scope-specific metrics override for Google Analytics
+        if ($channel === 'google_analytics') {
+            return match ($dependency) {
+                'traffic_matrix' => [
+                    'sessions' => __('Sessions'),
+                    'pageviews' => __('Page Views'),
+                    'bounce_rate' => __('Bounce Rate'),
+                    'revenue' => __('Revenue'),
+                    'conversions' => __('Conversions'),
+                    'average_session_duration' => __('Average Session Duration'),
+                ],
+                'acquisition_matrix' => [
+                    'new_users' => __('New Users'),
+                    'total_users' => __('Total Users'),
+                    'reach' => __('Active Users'),
+                    'revenue' => __('Revenue'),
+                ],
+                'event_matrix' => [
+                    'event_count' => __('Event Count'),
+                    'conversions' => __('Conversions'),
+                ],
+                'ad_touchpoint_matrix' => [
+                    'sessions' => __('Sessions'),
+                    'conversions' => __('Conversions'),
+                    'revenue' => __('Revenue'),
+                ],
+                default => [
+                    'sessions' => __('Sessions'),
+                    'pageviews' => __('Page Views'),
+                    'bounce_rate' => __('Bounce Rate'),
+                    'revenue' => __('Revenue'),
+                    'conversions' => __('Conversions'),
+                    'average_session_duration' => __('Average Session Duration'),
+                    'new_users' => __('New Users'),
+                    'total_users' => __('Total Users'),
+                    'reach' => __('Active Users'),
+                    'event_count' => __('Event Count'),
+                ],
+            };
+        }
+
         $options = [];
         $channelTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags()[$channel] ?? [];
 
