@@ -34,6 +34,21 @@ class Dashboard extends Model
         'is_default' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Dashboard $dashboard) {
+            if ($dashboard->isForceDeleting()) {
+                $dashboard->widgets()->withTrashed()->forceDelete();
+            } else {
+                $dashboard->widgets()->delete();
+            }
+        });
+
+        static::restoring(function (Dashboard $dashboard) {
+            $dashboard->widgets()->onlyTrashed()->restore();
+        });
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
