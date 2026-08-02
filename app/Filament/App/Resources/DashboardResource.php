@@ -167,27 +167,28 @@ class DashboardResource extends Resource
                     ->label(__('Open Builder'))
                     ->icon('heroicon-o-pencil-square')
                     ->url(fn (Dashboard $record): string => DashboardResource::getUrl('builder', ['record' => $record]))
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('open_view')
                     ->label(__('View'))
                     ->icon('heroicon-o-eye')
-                    ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record])),
+                    ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record]))
+                    ->visible(fn (Dashboard $record) => !$record->trashed()),
                 Tables\Actions\Action::make('set_default')
                     ->label(__('Set as default'))
                     ->icon('heroicon-o-star')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->setDefaultDashboard($record))
-                    ->visible(fn (Dashboard $record) => !$record->is_default && auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && !$record->is_default && auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('duplicate')
                     ->label(__('Duplicate'))
                     ->icon('heroicon-o-document-duplicate')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\RestoreAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\ForceDeleteAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
