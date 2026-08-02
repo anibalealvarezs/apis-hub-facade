@@ -1803,9 +1803,21 @@
                     updateSeriesMetrics() {
                         const gran = this.widgetControlsForm.granularity;
                         const dep  = this.widgetControlsForm.dependency;
+                        const mainCh = (this.widgetControlsTarget?.source_type === 'kpi')
+                            ? (this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel)
+                            : (this.widgetControlsForm.raw_series?.[0]?.channel || this.widgetControlsForm.channel);
+
+                        if (mainCh) {
+                            @this.getMetricsForChannel(mainCh, gran, dep).then(metrics => {
+                                const metricsCopy = { ...this.allChannelMetrics };
+                                metricsCopy[mainCh] = metrics;
+                                this.allChannelMetrics = metricsCopy;
+                            });
+                        }
+
                         (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
                             const ch = series.channel;
-                            if (ch) {
+                            if (ch && ch !== mainCh) {
                                 @this.getMetricsForChannel(ch, gran, dep).then(metrics => {
                                     const metricsCopy = { ...this.allChannelMetrics };
                                     metricsCopy[ch] = metrics;

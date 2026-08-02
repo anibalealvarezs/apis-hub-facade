@@ -590,7 +590,11 @@ class KpiFormBuilder
                         }),
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
-                        ->options(fn (Get $get) => static::getMetricOptionsForChannel($get($name . '_channel'), $get('granularity')))
+                        ->options(fn (Get $get) => static::getMetricOptionsForChannel(
+                            $get($name . '_channel'),
+                            $get('granularity'),
+                            $get($name . '_dependency') ?? $get('channel_dependency') ?? $get('account_type')
+                        ))
                         ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel'),
                     Select::make($name . '_dm_id')
                         ->label(__('Derived Metric'))
