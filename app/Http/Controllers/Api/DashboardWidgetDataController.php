@@ -121,6 +121,8 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
             }
+        }
+
         if ($pv && $pv->asset_group_id && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
             $assetGroup = $pv->assetGroup;
             if ($assetGroup) {
