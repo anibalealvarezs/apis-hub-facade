@@ -1309,19 +1309,6 @@
     "When enabled, saving a single language automatically populates all other supported languages with the same text.": "Cuando está habilitado, guardar un único idioma completa automáticamente los demás idiomas admitidos con el mismo texto.",
     "Use Case": "Caso de uso",
     "Interpretation": "Interpretación",
-    "Cost Efficiency Analyzer": "Analizador de eficiencia de costos",
-    "Diminishing Returns Finder": "Buscador de retornos decrecientes",
-    "Organic Pattern Detector": "Detector de patrones orgánicos",
-    "Cross-Channel Influence Detector": "Detector de influencia entre canales",
-    "Trend Direction Tracker": "Rastreador de dirección de tendencia",
-    "Outlier / Spike Detector": "Detector de picos / anomalías",
-    "SEO Traffic Trend": "Tendencia de tráfico SEO",
-    "Audience Saturation Finder": "Buscador de saturación de audiencia",
-    "Engagement Decay Meter": "Medidor de decaimiento de interacción",
-    "Channel Conflict Detector": "Detector de conflicto de canales",
     "Search Presence Quality (Page)": "Calidad de presencia en búsqueda (Página)",
-    "Search Presence Quality (Keyword)": "Calidad de presencia en búsqueda (Palabra clave)",
-    "Revenue Growth Predictor": "Predictor de crecimiento de ingresos",
-    "Acquisition Cost Monitor": "Monitor de costo de adquisición",
-    "Organic Revenue Detector": "Detector de ingresos orgánicos"
+    "Search Presence Quality (Keyword)": "Calidad de presencia en búsqueda (Palabra clave)"
 }
