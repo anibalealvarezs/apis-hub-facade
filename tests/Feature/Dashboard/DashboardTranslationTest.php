@@ -137,3 +137,46 @@ it('updates widget controls with per-language title and description maps cleanly
     expect($widget->description)->toBe('Rastrea el gasto publicitario total');
 });
 
+it('translates KPI theory guidance attributes dynamically when locale changes to es', function () {
+    app()->setLocale('es');
+
+    $dashboard = Dashboard::create([
+        'project_id' => $this->project->id,
+        'user_id' => $this->user->id,
+        'name' => 'KPI Theory Translation Dashboard',
+        'is_public' => true,
+        'is_default' => false,
+    ]);
+
+    $widget = DashboardWidget::create([
+        'dashboard_id' => $dashboard->id,
+        'name' => 'True Blended Marginal Cost',
+        'title' => 'True Blended Marginal Cost',
+        'description' => 'Blended cost analysis',
+        'widget_type' => 'chart',
+        'source_type' => 'kpi',
+        'controls' => [
+            'template_key' => 'true_blended_marginal_cost',
+            'keep_template_guidance' => true,
+        ],
+        'grid_x' => 0,
+        'grid_y' => 0,
+        'grid_w' => 6,
+        'grid_h' => 4,
+    ]);
+
+    $view = new class {
+        use \App\Filament\App\Resources\DashboardResource\Traits\LoadsDashboardViewData;
+    };
+
+    $view->dashboard = $dashboard;
+    $view->widgets = [$widget->toArray()];
+    $view->loadDashboardViewData($dashboard);
+
+    $loadedWidget = $view->widgets[0];
+    expect($loadedWidget['kpi_theory'])->not->toBeNull();
+    expect($loadedWidget['kpi_theory']['type_label'])->toBe('Analizador de Eficiencia de Costes');
+    expect($loadedWidget['kpi_theory']['explanation'])->toContain('Calcula el coste medio real');
+});
+
+

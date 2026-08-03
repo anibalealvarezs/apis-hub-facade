@@ -643,14 +643,17 @@ trait LoadsDashboardViewData
 
             $widgetArray['kpi_theory'] = null;
             if ($widgetArray['source_type'] === 'kpi') {
-                $keepGuidance = $uiState['keep_template_guidance'] ?? null;
+                $widgetControls = is_array($widgetArray['controls'] ?? null)
+                    ? $widgetArray['controls']
+                    : (json_decode($widgetArray['controls'] ?? '[]', true) ?: []);
+                $keepGuidance = $widgetControls['keep_template_guidance'] ?? null;
 
                 // If user explicitly opted out, skip entirely
                 if ($keepGuidance === false) {
                     continue;
                 }
 
-                $templateKey = $uiState['template_key'] ?? null;
+                $templateKey = $widgetControls['template_key'] ?? null;
 
                 // Fallback for existing KPIs: try to match by name in the predefined registry
                 if (!$templateKey && isset($kpi) && !empty($kpi->name)) {
