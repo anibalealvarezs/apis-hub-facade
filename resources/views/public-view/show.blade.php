@@ -28,7 +28,7 @@
     <div x-data="publicView()" x-init="init()" class="{{ $isEmbedded ? 'w-full' : 'max-w-7xl mx-auto px-4 py-6' }} space-y-6">
         @if (!$isEmbedded)
             {{-- Header --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">{{ $dashboard->name }}</h1>
@@ -36,39 +36,14 @@
                             <p class="text-sm text-gray-500 mt-1">{{ $dashboard->description }}</p>
                         @endif
                     </div>
-                </div>
-
-                {{-- Dashboard Controls Bar (Excludes Asset Group Selector) --}}
-                <div class="pt-3 border-t border-gray-100 flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Dates:') }}</span>
-                        <input type="date" x-model="dashboardControls.date_start" @change="applyDashboardControls()"
-                               class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg p-1.5 focus:ring-primary-500 focus:border-primary-500" />
-                        <span class="text-xs text-gray-400">&ndash;</span>
-                        <input type="date" x-model="dashboardControls.date_end" @change="applyDashboardControls()"
-                               class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg p-1.5 focus:ring-primary-500 focus:border-primary-500" />
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Granularity:') }}</span>
-                        <select x-model="dashboardControls.granularity" @change="applyDashboardControls()"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg p-1.5 focus:ring-primary-500 focus:border-primary-500">
-                            <option value="daily">{{ __('Daily') }}</option>
-                            <option value="weekly">{{ __('Weekly') }}</option>
-                            <option value="monthly">{{ __('Monthly') }}</option>
-                            <option value="quarterly">{{ __('Quarterly') }}</option>
-                            <option value="annually">{{ __('Annually') }}</option>
-                        </select>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Zeroes:') }}</span>
-                        <select x-model="dashboardControls.zero_handling" @change="applyDashboardControls()"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg p-1.5 focus:ring-primary-500 focus:border-primary-500">
-                            <option value="remove">{{ __('Remove Zeros') }}</option>
-                            <option value="keep">{{ __('Keep Zeros') }}</option>
-                            <option value="trim">{{ __('Trim Zeros') }}</option>
-                        </select>
+                    <div class="flex items-center gap-3">
+                        <button @click="openDashboardControls()"
+                                class="px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                            </svg>
+                            <span>{{ __('Controls') }}</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -147,6 +122,14 @@
                                             </div>
                                         </div>
                                     @endif
+
+                                    {{-- Widget Controls Gear Icon --}}
+                                    <button @click="openWidgetControlsModal()" class="p-1 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors" title="Configure Widget">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         @endif
@@ -163,6 +146,80 @@
                 <p class="text-gray-400 text-lg">No widgets on this dashboard yet</p>
             </div>
         @endif
+
+        {{-- ============================================================ --}}
+        {{-- DASHBOARD-LEVEL CONTROLS MODAL (Excludes Asset Group)        --}}
+        {{-- ============================================================ --}}
+        <div x-show="showDashboardControls" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showDashboardControls = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-xl w-full p-6 space-y-6 z-10 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-lg font-bold text-gray-900">{{ __('Dashboard Controls') }}</h2>
+                <p class="text-sm text-gray-500">These default controls apply to all widgets on this public view.</p>
+
+                {{-- Date Range --}}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">{{ __('Date Range') }}</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-xs text-gray-500">{{ __('Start') }}</span>
+                            <input type="date" x-model="dashboardControls.date_start"
+                                   class="w-full rounded-lg border-gray-300 bg-white text-gray-900 text-sm p-2 border focus:ring-primary-500 focus:border-primary-500"/>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500">{{ __('End') }}</span>
+                            <input type="date" x-model="dashboardControls.date_end"
+                                   class="w-full rounded-lg border-gray-300 bg-white text-gray-900 text-sm p-2 border focus:ring-primary-500 focus:border-primary-500"/>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Granularity --}}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">{{ __('Granularity') }}</label>
+                    <select x-model="dashboardControls.granularity"
+                            class="w-full rounded-lg border-gray-300 bg-white text-gray-900 text-sm p-2 border focus:ring-primary-500 focus:border-primary-500">
+                        <option value="daily">{{ __('Daily') }}</option>
+                        <option value="weekly">{{ __('Weekly') }}</option>
+                        <option value="monthly">{{ __('Monthly') }}</option>
+                        <option value="quarterly">{{ __('Quarterly') }}</option>
+                        <option value="annually">{{ __('Annually') }}</option>
+                    </select>
+                </div>
+
+                {{-- Zero Handling --}}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">{{ __('Zero / Missing Data') }}</label>
+                    <select x-model="dashboardControls.zero_handling"
+                            class="w-full rounded-lg border-gray-300 bg-white text-gray-900 text-sm p-2 border focus:ring-primary-500 focus:border-primary-500">
+                        <option value="remove">{{ __('Remove zeros from results') }}</option>
+                        <option value="keep">{{ __('Keep zeros in results') }}</option>
+                        <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
+                    </select>
+                </div>
+
+                {{-- Edge Cases --}}
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">{{ __('Edge Cases') }}</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm text-gray-600">
+                            <input type="checkbox" x-model="dashboardControls.edge_case_weighted" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"/>
+                            {{ __('Weighted regression (WLS)') }}
+                        </label>
+                        <select x-model="dashboardControls.edge_case_grouping"
+                                class="w-full rounded-lg border-gray-300 bg-white text-gray-900 text-sm p-2 border focus:ring-primary-500 focus:border-primary-500">
+                            <option value="none">{{ __('No grouping') }}</option>
+                            <option value="histogram">{{ __('Auto histogram-elbow') }}</option>
+                            <option value="percentile">{{ __('Bottom percentile') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button class="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-sm" @click="showDashboardControls = false">Cancel</button>
+                    <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 text-sm font-semibold" @click="confirmDashboardControls()">Save Controls</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
@@ -177,11 +234,14 @@
                 tenant: '{{ $project->subdomain }}',
                 pvToken: '{{ $pv->token }}',
                 isEmbedded: {{ $isEmbedded ? 'true' : 'false' }},
+                showDashboardControls: false,
                 dashboardControls: {
                     date_start: '{{ $dashboard->controls['date_start'] ?? '' }}',
                     date_end: '{{ $dashboard->controls['date_end'] ?? '' }}',
                     granularity: '{{ $dashboard->controls['granularity'] ?? 'daily' }}',
-                    zero_handling: '{{ $dashboard->controls['zero_handling'] ?? 'remove' }}'
+                    zero_handling: '{{ $dashboard->controls['zero_handling'] ?? 'remove' }}',
+                    edge_case_weighted: {{ ($dashboard->controls['edge_case_weighted'] ?? true) ? 'true' : 'false' }},
+                    edge_case_grouping: '{{ $dashboard->controls['edge_case_grouping'] ?? 'none' }}'
                 },
 
                 init() {
@@ -208,7 +268,12 @@
                     });
                 },
 
-                applyDashboardControls() {
+                openDashboardControls() {
+                    this.showDashboardControls = true;
+                },
+
+                confirmDashboardControls() {
+                    this.showDashboardControls = false;
                     const gridItems = document.querySelectorAll('.grid-stack-item');
                     gridItems.forEach(item => {
                         const widgetId = item.getAttribute('gs-id');
@@ -281,6 +346,10 @@
                     for (const key in this.seriesOptions) {
                         this.searchQueries[key] = '';
                     }
+                },
+
+                openWidgetControlsModal() {
+                    this.openFilters = !this.openFilters;
                 },
 
                 isSelected(seriesKey, assetId) {
