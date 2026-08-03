@@ -72,9 +72,8 @@
                 <div
                     class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col"
                     style="overflow: visible !important;">
-                    @if ($widget['title'] || $widget['name'])
-                        <div
-                            class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
+                    <div
+                        class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
                             x-data="widgetHeader"
                             data-widget-id="{{ $widget['id'] }}"
                             data-controls="{{ json_encode($widget['resolved_controls']) }}"
@@ -272,8 +271,7 @@
                                     </svg>
                                 </button>
                             </div>
-                        </div>
-                    @endif
+                    </div>
                     <div class="widget-content flex-grow p-4 relative overflow-y-auto"
                          data-widget-id="{{ $widget['id'] }}"
                          x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
