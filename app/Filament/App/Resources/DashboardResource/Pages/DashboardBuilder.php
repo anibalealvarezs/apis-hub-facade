@@ -39,11 +39,22 @@ class DashboardBuilder extends Page
     public function loadWidgets(): void
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets ENTER");
-        $this->widgets = $this->dashboard->widgets()
+        $rawWidgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
-            ->get()
-            ->toArray();
+            ->get();
+
+        $locale = app()->getLocale();
+        $this->widgets = $rawWidgets->map(function ($widget) use ($locale) {
+            $arr = $widget->toArray();
+            $arr['title'] = $widget->getTranslation('title', $locale) ?: (is_string($arr['title']) ? $arr['title'] : (reset($arr['title']) ?: ''));
+            $arr['name'] = $widget->getTranslation('name', $locale) ?: (is_string($arr['name']) ? $arr['name'] : (reset($arr['name']) ?: ''));
+            $arr['description'] = $widget->getTranslation('description', $locale) ?: (is_string($arr['description']) ? $arr['description'] : (reset($arr['description']) ?: ''));
+            $arr['titles'] = $widget->getTranslations('title');
+            $arr['descriptions'] = $widget->getTranslations('description');
+            return $arr;
+        })->toArray();
+
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets DONE", ['count' => count($this->widgets)]);
 
         $this->gridState = array_map(fn ($w) => [
@@ -58,14 +69,9 @@ class DashboardBuilder extends Page
     public function saveLayout(array $gridItems): void
     {
         $service = app(\App\Services\DashboardService::class);
-        $service->saveLayout($this->dashboard, $gridItems);
-
+        $service->updateLayout($this->dashboard, $gridItems);
+        $this->gridState = $gridItems;
         $this->unsavedChanges = true;
-
-        Notification::make()
-            ->title(__('Layout saved'))
-            ->success()
-            ->send();
     }
 
     public function getHasUnsavedChanges(): bool
@@ -121,17 +127,18 @@ class DashboardBuilder extends Page
 
         $widget->controls = $controls;
         if (! empty($titles)) {
-            $widget->setTranslations('title', array_filter($titles));
+            $widget->setTranslations('title', array_filter($titles, fn ($v) => $v !== null && $v !== ''));
         } elseif ($title !== null) {
             $widget->title = $title;
         }
         if (! empty($descriptions)) {
-            $widget->setTranslations('description', array_filter($descriptions));
+            $widget->setTranslations('description', array_filter($descriptions, fn ($v) => $v !== null && $v !== ''));
         } elseif ($description !== null) {
             $widget->description = $description;
         }
         $widget->save();
 
+        $this->loadWidgets();
         $this->unsavedChanges = true;
 
         Notification::make()

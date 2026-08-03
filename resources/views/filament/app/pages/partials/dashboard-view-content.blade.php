@@ -1049,12 +1049,14 @@
                     this.settingsOriginalControls = JSON.parse(JSON.stringify(controls || {}));
                     this.settingsControls = controls || {};
                     const widgetObj = (this.widgets || []).find(w => w.id === widgetId);
-                    if (!this.settingsControls.titles) {
-                        this.settingsControls.titles = widgetObj?.titles || { en: widgetObj?.title || '', es: widgetObj?.title || '' };
-                    }
-                    if (!this.settingsControls.descriptions) {
-                        this.settingsControls.descriptions = widgetObj?.descriptions || { en: widgetObj?.description || '', es: widgetObj?.description || '' };
-                    }
+                    this.settingsControls.titles = {
+                        en: widgetObj?.titles?.en || (typeof widgetObj?.title === 'string' ? widgetObj?.title : ''),
+                        es: widgetObj?.titles?.es || (typeof widgetObj?.title === 'string' ? widgetObj?.title : '')
+                    };
+                    this.settingsControls.descriptions = {
+                        en: widgetObj?.descriptions?.en || (typeof widgetObj?.description === 'string' ? widgetObj?.description : ''),
+                        es: widgetObj?.descriptions?.es || (typeof widgetObj?.description === 'string' ? widgetObj?.description : '')
+                    };
                     if (!this.settingsControls.metrics) this.settingsControls.metrics = [];
                     if (!Array.isArray(this.settingsControls.metrics)) {
                         this.settingsControls.metrics = Object.values(this.settingsControls.metrics);

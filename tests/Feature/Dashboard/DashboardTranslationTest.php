@@ -89,3 +89,51 @@ it('auto duplicates widget name, title, and description across locales on creati
     app()->setLocale('en');
     expect($widget->title)->toBe('Total Traffic');
 });
+
+it('updates widget controls with per-language title and description maps cleanly', function () {
+    app()->setLocale('en');
+
+    $dashboard = Dashboard::create([
+        'project_id' => $this->project->id,
+        'user_id' => $this->user->id,
+        'name' => 'Widget Controls Test Dashboard',
+        'is_public' => true,
+        'is_default' => false,
+    ]);
+
+    $widget = DashboardWidget::create([
+        'dashboard_id' => $dashboard->id,
+        'name' => 'Ad Spend',
+        'title' => 'Total Ad Spend',
+        'description' => 'Ad spend across channels',
+        'widget_type' => 'chart',
+        'source_type' => 'metric',
+        'grid_x' => 0,
+        'grid_y' => 0,
+        'grid_w' => 6,
+        'grid_h' => 4,
+    ]);
+
+    $builder = new \App\Filament\App\Resources\DashboardResource\Pages\DashboardBuilder();
+    $builder->dashboard = $dashboard;
+
+    $builder->saveWidgetControls(
+        $widget->id,
+        ['date_start' => '2026-01-01'],
+        null,
+        null,
+        ['en' => 'Total Paid Spend', 'es' => 'Gasto Publicitario Total'],
+        ['en' => 'Track total ad spend', 'es' => 'Rastrea el gasto publicitario total']
+    );
+
+    $widget->refresh();
+
+    app()->setLocale('en');
+    expect($widget->title)->toBe('Total Paid Spend');
+    expect($widget->description)->toBe('Track total ad spend');
+
+    app()->setLocale('es');
+    expect($widget->title)->toBe('Gasto Publicitario Total');
+    expect($widget->description)->toBe('Rastrea el gasto publicitario total');
+});
+
