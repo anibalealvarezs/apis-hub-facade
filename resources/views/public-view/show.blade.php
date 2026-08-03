@@ -6,7 +6,26 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
     <title>{{ $dashboard->name }}</title>
-    <link rel="stylesheet" href="{{ asset('css/filament/filament/app.css') }}" />
+    <script>
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+            origWarn.apply(console, args);
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd', '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8', '800': '#1e40af', '900': '#1e3a8a', '950': '#172554' },
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
     <style>
         body { font-family: 'Outfit', system-ui, sans-serif; }

@@ -563,7 +563,7 @@
                             class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory"
                             style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
-                                <template x-if="(vConfig.metrics && Object.keys(vConfig.metrics).length > 0) || (settingsSeriesOptions[vKey] && Object.keys(settingsSeriesOptions[vKey].options || {}).length > 0)">
+                                <template x-if="vConfig">
                                     <div
                                         class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
                                         x-init="console.log('DEBUG loop:', { vKey: vKey, options: settingsSeriesOptions[vKey]?.options, keysLength: settingsSeriesOptions[vKey]?.options ? Object.keys(settingsSeriesOptions[vKey].options).length : 0 })">
@@ -1044,6 +1044,7 @@
                     }
                     this.settingsGranularityOnTheGo = granularityOnTheGo;
                     this.settingsSourceType = sourceType || '';
+                    this.openSettings = true;
                     this.settingsSearchQueries = {};
                     for (const key in seriesOptions) {
                         this.settingsSearchQueries[key] = '';
