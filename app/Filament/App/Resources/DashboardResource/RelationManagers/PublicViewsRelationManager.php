@@ -33,12 +33,12 @@ class PublicViewsRelationManager extends RelationManager
                     ->label(__('View Name'))
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('asset_group_id')
-                    ->label(__('Locked Asset Group'))
+                Forms\Components\Select::make('asset_group_ids')
+                    ->label(__('Locked Asset Groups'))
                     ->options(fn () => AssetGroup::where('project_id', $projectId)->pluck('name', 'id'))
+                    ->multiple()
                     ->searchable()
-                    ->nullable()
-                    ->helperText(__('Select an asset group to restrict the public view data. Leave empty for all project assets.')),
+                    ->helperText(__('Select one or more asset groups to restrict the public view data. Leave empty for all project assets.')),
                 Forms\Components\Toggle::make('is_active')
                     ->label(__('Active'))
                     ->default(true),
@@ -55,8 +55,13 @@ class PublicViewsRelationManager extends RelationManager
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assetGroup.name')
-                    ->label(__('Asset Group'))
+                Tables\Columns\TextColumn::make('asset_group_ids')
+                    ->label(__('Asset Groups'))
+                    ->formatStateUsing(function ($state) {
+                        $ids = is_array($state) ? $state : [];
+                        if (empty($ids)) return null;
+                        return AssetGroup::whereIn('id', $ids)->pluck('name')->join(', ');
+                    })
                     ->placeholder(__('All Assets')),
                 Tables\Columns\TextColumn::make('token')
                     ->label(__('Token'))

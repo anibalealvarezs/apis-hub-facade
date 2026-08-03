@@ -60,7 +60,7 @@ class PublicViewService
         /** @var DashboardPublicView $pv */
         $pv = $dashboard->publicViews()->create([
             'name' => $data['name'],
-            'asset_group_id' => $data['asset_group_id'] ?? null,
+            'asset_group_ids' => $data['asset_group_ids'] ?? null,
             'is_active' => $data['is_active'] ?? true,
         ]);
 

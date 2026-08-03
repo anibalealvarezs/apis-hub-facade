@@ -92,7 +92,7 @@ it('renders public view page with KPI widgets without indirect series_assets_opt
     $response->assertSee('Public View Integration Dashboard');
 });
 
-it('restricts allowed assets when public view specifies an asset group', function () {
+it('restricts allowed assets when public view specifies asset groups', function () {
     $group = AssetGroup::create([
         'project_id' => $this->project->id,
         'name' => 'Restricted Group',
@@ -106,7 +106,7 @@ it('restricts allowed assets when public view specifies an asset group', functio
     $pv = DashboardPublicView::create([
         'dashboard_id' => $this->dashboard->id,
         'name' => 'Asset Group Restricted View',
-        'asset_group_id' => $group->id,
+        'asset_group_ids' => [$group->id],
     ]);
 
     $widget = DashboardWidget::create([
@@ -129,6 +129,57 @@ it('restricts allowed assets when public view specifies an asset group', functio
     ]);
 
     expect($response->status())->not->toBe(419);
+});
+
+it('allows assets from the union of multiple asset groups', function () {
+    $groupA = AssetGroup::create([
+        'project_id' => $this->project->id,
+        'name' => 'Group A',
+        'type' => 'static',
+    ]);
+    $groupA->items()->create([
+        'channel' => 'google_analytics',
+        'asset_id' => 'asset_a1',
+    ]);
+
+    $groupB = AssetGroup::create([
+        'project_id' => $this->project->id,
+        'name' => 'Group B',
+        'type' => 'static',
+    ]);
+    $groupB->items()->create([
+        'channel' => 'google_analytics',
+        'asset_id' => 'asset_b1',
+    ]);
+
+    $pv = DashboardPublicView::create([
+        'dashboard_id' => $this->dashboard->id,
+        'name' => 'Multi Group View',
+        'asset_group_ids' => [$groupA->id, $groupB->id],
+    ]);
+
+    $widget = DashboardWidget::create([
+        'dashboard_id' => $this->dashboard->id,
+        'name' => 'GA Widget',
+        'widget_type' => 'chart',
+        'source_type' => 'metric',
+        'source_config' => [
+            'channel' => 'google_analytics',
+            'metrics' => ['sessions'],
+        ],
+        'grid_x' => 0,
+        'grid_y' => 0,
+        'grid_w' => 6,
+        'grid_h' => 4,
+    ]);
+
+    // Both asset_a1 and asset_b1 should be allowed via the union
+    $response = $this->postJson("/api/dashboard/widget/{$widget->id}/data", [
+        'pv_token' => $pv->token,
+    ]);
+
+    expect($response->status())->not->toBe(419);
+    expect($response->status())->not->toBe(403);
 });
 
 it('renders dashboard controls bar without asset group selector and renders widget filters button', function () {
@@ -162,5 +213,3 @@ it('renders dashboard controls bar without asset group selector and renders widg
     // Assert Asset Group selector is disabled via dashboardDefaults
     $response->assertSee('show_asset_group_selector: false', false);
 });
-
-

@@ -123,15 +123,15 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if ($pv && $pv->asset_group_id && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
-            $assetGroup = $pv->assetGroup;
-            if ($assetGroup) {
+        if ($pv && ! empty($pv->asset_group_ids) && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
+            $assetGroups = $pv->assetGroups();
+            if ($assetGroups->isNotEmpty()) {
                 $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
                 if (! empty($channel)) {
-                    $allowedAssets = $assetGroup->items()
-                        ->where('channel', $channel)
-                        ->pluck('asset_id')
-                        ->toArray();
+                    // Union of allowed assets across all groups
+                    $allowedAssets = $assetGroups->flatMap(function ($group) use ($channel) {
+                        return $group->items()->where('channel', $channel)->pluck('asset_id');
+                    })->unique()->values()->toArray();
 
                     if (empty($allowedAssets)) {
                         return response()->json([

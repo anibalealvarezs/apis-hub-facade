@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class DashboardPublicView extends Model
 {
@@ -15,7 +16,7 @@ class DashboardPublicView extends Model
 
     protected $fillable = [
         'dashboard_id',
-        'asset_group_id',
+        'asset_group_ids',
         'name',
         'token',
         'token_secret',
@@ -24,6 +25,7 @@ class DashboardPublicView extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'asset_group_ids' => 'array',
     ];
 
     protected static function booted(): void
@@ -51,9 +53,16 @@ class DashboardPublicView extends Model
         return $this->belongsTo(Dashboard::class);
     }
 
-    public function assetGroup(): BelongsTo
+    /**
+     * Get the AssetGroup models referenced by asset_group_ids.
+     */
+    public function assetGroups(): Collection
     {
-        return $this->belongsTo(AssetGroup::class);
+        $ids = $this->asset_group_ids ?? [];
+        if (empty($ids)) {
+            return collect();
+        }
+        return AssetGroup::whereIn('id', $ids)->get();
     }
 
     public function scopeActive($query)
