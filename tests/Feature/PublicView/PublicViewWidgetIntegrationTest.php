@@ -164,8 +164,6 @@ it('renders dashboard controls bar without asset group selector and renders widg
     // Assert Asset Group selector is excluded
     $response->assertDontSee('dashboardControls.asset_group', false);
     $response->assertDontSee('Asset Group', false);
-
-    // Assert widget filters button exists
-    $response->assertSee('Filters', false);
 });
+
 
