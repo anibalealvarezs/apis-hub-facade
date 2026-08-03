@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Services\PublicViewService;
-use App\Services\WidgetDataService;
 use Illuminate\Http\Request;
 
 class PublicViewController extends Controller
@@ -24,61 +23,15 @@ class PublicViewController extends Controller
             abort(404);
         }
 
-        $project = $dashboard->project;
-        $widgets = $dashboard->widgets()
-            ->orderBy('grid_y')
-            ->orderBy('grid_x')
-            ->get();
-
-        $service = app(WidgetDataService::class);
-        foreach ($widgets as $widget) {
-            $resolved = $service->resolveControls($dashboard, $widget);
-            $widget->resolved_controls = $resolved;
-            $seriesAssetsOptions = [];
-
-            $uiState = [];
-            if ($widget->source_type === 'kpi' && !empty($widget->source_config['custom_kpi_id'])) {
-                $kpi = \App\Models\CustomKpi::find($widget->source_config['custom_kpi_id']);
-                if ($kpi) {
-                    $uiState = $kpi->filters['_ui_state'] ?? [];
-                }
-            }
-
-            if (!empty($uiState['dependent_channel']) && empty($uiState['dependent_asset_filter'])) {
-                $seriesAssetsOptions['dependent'] = [
-                    'label' => 'Dep (' . \Illuminate\Support\Str::headline($uiState['dependent_channel']) . ')',
-                    'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($uiState['dependent_channel'])
-                ];
-            }
-
-            if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
-                foreach ($uiState['independent_variables'] as $key => $var) {
-                    if (!empty($var['independent_channel']) && empty($var['independent_asset_filter'])) {
-                        $seriesAssetsOptions['independent_' . $key] = [
-                            'label' => 'Ind ' . $key . ' (' . \Illuminate\Support\Str::headline($var['independent_channel']) . ')',
-                            'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($var['independent_channel'])
-                        ];
-                    }
-                }
-            }
-
-            if (empty($seriesAssetsOptions) && !empty($resolved['channel']) && empty($resolved['assets'])) {
-                $seriesAssetsOptions['dependent'] = [
-                    'label' => \Illuminate\Support\Str::headline($resolved['channel']),
-                    'options' => \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($resolved['channel'])
-                ];
-            }
-
-            $widget->series_assets_options = $seriesAssetsOptions;
-        }
-
         $isEmbedded = $request->boolean('embedded');
+        $viewModel = new PublicDashboardViewModel($pv, $isEmbedded);
 
         return view('public-view.show', [
+            'viewModel' => $viewModel,
             'pv' => $pv,
             'dashboard' => $dashboard,
-            'project' => $project,
-            'widgets' => $widgets,
+            'project' => $dashboard->project,
+            'widgets' => $viewModel->widgets,
             'isEmbedded' => $isEmbedded,
         ]);
     }

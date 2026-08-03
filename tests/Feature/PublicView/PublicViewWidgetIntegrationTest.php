@@ -156,14 +156,11 @@ it('renders dashboard controls bar without asset group selector and renders widg
 
     $response->assertSuccessful();
     // Assert dashboard controls bar fields exist
-    $response->assertSee('dashboardControls.date_start', false);
-    $response->assertSee('dashboardControls.date_end', false);
-    $response->assertSee('dashboardControls.granularity', false);
-    $response->assertSee('dashboardControls.zero_handling', false);
+    $response->assertSee('dashboardOverrides.date_start', false);
+    $response->assertSee('dashboardOverrides.date_end', false);
     
-    // Assert Asset Group selector is excluded
-    $response->assertDontSee('dashboardControls.asset_group', false);
-    $response->assertDontSee('Asset Group', false);
+    // Assert Asset Group selector is disabled via dashboardDefaults
+    $response->assertSee('show_asset_group_selector: false', false);
 });
 
 

@@ -1,4 +1,7 @@
 <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
+@php
+    $viewObj = $viewObj ?? $viewModel ?? null;
+@endphp
 
 <div x-data="dashboardView()" x-init="init()" id="dashboard-view-container" class="space-y-4"
      @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)"
@@ -6,9 +9,9 @@
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
         <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $this->dashboard->name }}</h1>
-            @if ($this->dashboard->description)
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $this->dashboard->description }}</p>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $viewObj->dashboard->name }}</h1>
+            @if ($viewObj->dashboard->description)
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
         <div class="flex items-center gap-2">
@@ -21,9 +24,9 @@
 
     {{-- Dashboard Controls (on-the-go) --}}
     @php
-        $dc = $this->dashboard->controls ?? [];
+        $dc = $viewObj->dashboard->controls ?? [];
         $dcAssetGroup = (string) ($dc['asset_group'] ?? '');
-        $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $this->getAllAssetGroups())
+        $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $viewObj->getAllAssetGroups())
             ? $dcAssetGroup
             : '';
     @endphp
@@ -57,7 +60,7 @@
 
     {{-- Grid --}}
     <div id="view-grid-stack" class="grid-stack">
-        @foreach ($this->widgets as $widget)
+        @foreach ($viewObj->widgets as $widget)
             <div class="grid-stack-item"
                  gs-id="{{ $widget['id'] }}"
                  gs-x="{{ $widget['grid_x'] }}"
@@ -278,7 +281,7 @@
         @endforeach
     </div>
 
-    @if (empty($this->widgets))
+    @if (empty($viewObj->widgets))
         <div class="flex flex-col items-center justify-center py-24 text-center">
             <x-filament::icon name="heroicon-o-squares-2x2" class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"/>
             <p class="text-gray-500 dark:text-gray-400 text-lg">No widgets on this dashboard yet</p>
@@ -753,8 +756,8 @@
         window.dashboardView = function () {
             return {
                 loadedCount: 0,
-                totalCount: {{ count($this->widgets) }},
-                tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? '' }}',
+                totalCount: {{ count($viewObj->widgets) }},
+                tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? ($viewObj->project->subdomain ?? '') }}',
                 dashboardDefaults: {
                     date_start: '{{ $dc['date_start'] ?? '' }}',
                     date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
@@ -767,8 +770,8 @@
                     zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
                 },
                 hasUserChangedGlobalDate: false,
-                assetGroups: @json($this->getAllAssetGroups()),
-                channelAssetGroupMap: @json($this->getChannelAssetGroupMap()),
+                assetGroups: @json($viewObj->getAllAssetGroups()),
+                channelAssetGroupMap: @json($viewObj->getChannelAssetGroupMap()),
                 selectedAssetGroup: '{{ $dashboardGroup }}',
                 _dashboardConfiguredGroup: '{{ $dashboardGroup }}',
                 init() {
@@ -909,6 +912,10 @@
                 renderWidget(widgetId, el, controls) {
                     el.setAttribute('data-raw-controls', JSON.stringify(controls));
                     let effectiveControls = {...controls};
+
+                    if (window.pvToken) {
+                        effectiveControls.pv_token = window.pvToken;
+                    }
 
                     if (this.selectedAssetGroup) {
                         effectiveControls.asset_group = this.selectedAssetGroup;
