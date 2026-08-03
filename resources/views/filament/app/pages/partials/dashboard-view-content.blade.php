@@ -16,8 +16,8 @@
         </div>
         <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-400 dark:text-gray-500">
-                    <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
-                    <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
+                    <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
+                    <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">{{ __('Refresh all') }}</button>
                 </span>
         </div>
     </div>
@@ -31,7 +31,7 @@
             : '';
     @endphp
     <div class="flex flex-wrap items-center gap-3 text-xs">
-        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Date range:</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ __('Date range:') }}</span>
         <input type="date" x-model="dashboardOverrides.date_start"
                x-on:change.debounce.500ms="applyDateRange()"
                class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
@@ -53,8 +53,8 @@
             </select>
         </template>
         <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> loaded
-                <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">Refresh all</button>
+                <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
+                <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">{{ __('Refresh all') }}</button>
             </span>
     </div>
 

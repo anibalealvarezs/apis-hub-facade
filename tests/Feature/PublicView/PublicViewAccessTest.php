@@ -30,6 +30,24 @@ it('returns 200 for active public view with valid token', function () {
         ->assertSee('Feature Access Dashboard');
 });
 
+it('supports dark/light mode toggle controls and language switching', function () {
+    $pv = DashboardPublicView::create([
+        'dashboard_id' => $this->dashboard->id,
+        'name' => 'Theme & Language View',
+    ]);
+
+    // Test default English page
+    $responseEn = $this->get(route('public-view.show', ['token' => $pv->token]));
+    $responseEn->assertSuccessful();
+    $responseEn->assertSee('toggleTheme');
+    $responseEn->assertSee('changeLang');
+
+    // Test Spanish language query parameter
+    $responseEs = $this->get(route('public-view.show', ['token' => $pv->token, 'lang' => 'es']));
+    $responseEs->assertSuccessful();
+    $responseEs->assertCookie('pv_lang', 'es');
+});
+
 it('returns 404 for unknown token', function () {
     $this->get(route('public-view.show', ['token' => 'invalid-token-value']))
         ->assertNotFound();

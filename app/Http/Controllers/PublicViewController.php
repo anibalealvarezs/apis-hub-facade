@@ -23,6 +23,12 @@ class PublicViewController extends Controller
             abort(404);
         }
 
+        $locale = $request->query('lang') ?? $request->cookie('pv_lang') ?? session('locale') ?? app()->getLocale();
+        if (in_array($locale, ['en', 'es'])) {
+            app()->setLocale($locale);
+            cookie()->queue('pv_lang', $locale, 60 * 24 * 365);
+        }
+
         app()->instance('current_public_project', $dashboard->project);
 
         $isEmbedded = $request->boolean('embedded');
