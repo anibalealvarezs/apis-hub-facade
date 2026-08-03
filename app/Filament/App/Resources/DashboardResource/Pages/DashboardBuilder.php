@@ -45,11 +45,27 @@ class DashboardBuilder extends Page
             ->get();
 
         $locale = app()->getLocale();
-        $this->widgets = $rawWidgets->map(function ($widget) use ($locale) {
+        $resolveField = function (DashboardWidget $widget, string $field) use ($locale) {
+            $trans = $widget->getTranslation($field, $locale);
+            if (! empty($trans)) {
+                return $trans;
+            }
+            $val = $widget->getAttributes()[$field] ?? null;
+            if (is_string($val)) {
+                return $val;
+            }
+            if (is_array($val) && ! empty($val)) {
+                $first = reset($val);
+                return is_string($first) ? $first : '';
+            }
+            return '';
+        };
+
+        $this->widgets = $rawWidgets->map(function ($widget) use ($resolveField) {
             $arr = $widget->toArray();
-            $arr['title'] = $widget->getTranslation('title', $locale) ?: (is_string($arr['title']) ? $arr['title'] : (reset($arr['title']) ?: ''));
-            $arr['name'] = $widget->getTranslation('name', $locale) ?: (is_string($arr['name']) ? $arr['name'] : (reset($arr['name']) ?: ''));
-            $arr['description'] = $widget->getTranslation('description', $locale) ?: (is_string($arr['description']) ? $arr['description'] : (reset($arr['description']) ?: ''));
+            $arr['title'] = $resolveField($widget, 'title');
+            $arr['name'] = $resolveField($widget, 'name');
+            $arr['description'] = $resolveField($widget, 'description');
             $arr['titles'] = $widget->getTranslations('title');
             $arr['descriptions'] = $widget->getTranslations('description');
             return $arr;
