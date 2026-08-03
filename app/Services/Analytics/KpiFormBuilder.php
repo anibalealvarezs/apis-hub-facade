@@ -286,7 +286,7 @@ class KpiFormBuilder
             return [];
         }
 
-        $project = Filament::getTenant();
+        $project = static::getTenant();
         if (! $project) {
             return [];
         }
