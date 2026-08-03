@@ -601,7 +601,7 @@
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
                                                 {{-- Metric selector (KPI Widgets) --}}
-                                                <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric">
+                                                <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                                         <select x-model="settingsControls.metrics[vConfig.index]"
@@ -615,7 +615,7 @@
                                                 </template>
 
                                                 {{-- Metric selector (Metric Widgets) --}}
-                                                <template x-if="settingsSourceType !== 'kpi' && settingsSourceType !== 'derived_metric'">
+                                                <template x-if="settingsSourceType !== 'kpi' && settingsSourceType !== 'derived_metric' && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
                                                         <div class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
