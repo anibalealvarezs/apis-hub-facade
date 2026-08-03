@@ -241,6 +241,10 @@ class AppPanelProvider extends PanelProvider
                         action: \Jeffgreco13\FilamentBreezy\Pages\TwoFactorPage::class
                     )
             )
-            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make())
+            ->plugin(
+                \Filament\SpatieLaravelTranslatablePlugin::make()
+                    ->defaultLocales(['en', 'es'])
+            );
     }
 }
