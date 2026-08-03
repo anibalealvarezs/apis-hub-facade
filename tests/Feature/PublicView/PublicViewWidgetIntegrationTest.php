@@ -130,3 +130,42 @@ it('restricts allowed assets when public view specifies an asset group', functio
 
     expect($response->status())->not->toBe(419);
 });
+
+it('renders dashboard controls bar without asset group selector and renders widget filters button', function () {
+    $pv = DashboardPublicView::create([
+        'dashboard_id' => $this->dashboard->id,
+        'name' => 'Interactive Controls View',
+    ]);
+
+    $widget = DashboardWidget::create([
+        'dashboard_id' => $this->dashboard->id,
+        'name' => 'GA Metric Widget',
+        'widget_type' => 'chart',
+        'source_type' => 'metric',
+        'source_config' => [
+            'channel' => 'google_analytics',
+            'metrics' => ['sessions'],
+        ],
+        'grid_x' => 0,
+        'grid_y' => 0,
+        'grid_w' => 6,
+        'grid_h' => 4,
+    ]);
+
+    $response = $this->get(route('public-view.show', ['token' => $pv->token]));
+
+    $response->assertSuccessful();
+    // Assert dashboard controls bar fields exist
+    $response->assertSee('dashboardControls.date_start', false);
+    $response->assertSee('dashboardControls.date_end', false);
+    $response->assertSee('dashboardControls.granularity', false);
+    $response->assertSee('dashboardControls.zero_handling', false);
+    
+    // Assert Asset Group selector is excluded
+    $response->assertDontSee('dashboardControls.asset_group', false);
+    $response->assertDontSee('Asset Group', false);
+
+    // Assert widget filters button exists
+    $response->assertSee('Filters', false);
+});
+
