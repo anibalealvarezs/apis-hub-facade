@@ -23,6 +23,8 @@ class PublicViewController extends Controller
             abort(404);
         }
 
+        app()->instance('current_public_project', $dashboard->project);
+
         $isEmbedded = $request->boolean('embedded');
         $viewModel = new PublicDashboardViewModel($pv, $isEmbedded);
 

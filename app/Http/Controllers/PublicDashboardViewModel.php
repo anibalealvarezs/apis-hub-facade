@@ -20,6 +20,9 @@ class PublicDashboardViewModel
         $this->pv = $pv;
         $this->isEmbedded = $isEmbedded;
         $this->project = $pv->dashboard->project;
+
+        app()->instance('current_public_project', $this->project);
+
         $this->loadDashboardViewData($pv->dashboard);
     }
 

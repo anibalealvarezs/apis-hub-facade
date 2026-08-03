@@ -23,9 +23,14 @@ use Illuminate\Support\Str;
 
 class KpiFormBuilder
 {
+    public static function getTenant()
+    {
+        return Filament::getTenant() ?? (app()->bound('current_public_project') ? app('current_public_project') : null);
+    }
+
     public static function getActiveChannels(): array
     {
-        $tenant = Filament::getTenant();
+        $tenant = static::getTenant();
         if (! $tenant) {
             return [];
         }
@@ -62,7 +67,7 @@ class KpiFormBuilder
      */
     private static function channelHasEnabledAssets(string $channel): bool
     {
-        $tenant = Filament::getTenant();
+        $tenant = static::getTenant();
         if (! $tenant) {
             return false;
         }
@@ -431,7 +436,7 @@ class KpiFormBuilder
             return [];
         }
 
-        $project = Filament::getTenant();
+        $project = static::getTenant();
         if (! $project) {
             return [];
         }
@@ -513,7 +518,7 @@ class KpiFormBuilder
 
     public static function getAssetGroupOptions(): array
     {
-        $tenant = Filament::getTenant();
+        $tenant = static::getTenant();
         if (! $tenant) {
             return [];
         }
@@ -526,7 +531,7 @@ class KpiFormBuilder
 
     public static function getDerivedMetricOptions(): array
     {
-        $project = \Filament\Facades\Filament::getTenant();
+        $project = static::getTenant();
         if (! $project) {
             return [];
         }
