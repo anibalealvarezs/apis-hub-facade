@@ -1295,5 +1295,14 @@
     "No cap": "Sin límite",
     "Filter out ratio values above this threshold.": "Filtrar valores de ratio por encima de este umbral.",
     "Exclude unknown keyword": "Excluir palabra clave unknown",
-    "Remove the unknown query from the chart and recalculate the regression line without it.": "Eliminar la consulta unknown del gráfico y recalcular la línea de regresión sin ella."
+    "Remove the unknown query from the chart and recalculate the regression line without it.": "Eliminar la consulta unknown del gráfico y recalcular la línea de regresión sin ella.",
+    "Title & Description": "Título y Descripción",
+    "Title (English)": "Título (Inglés)",
+    "Description (English)": "Descripción (Inglés)",
+    "Widget Title in English": "Título del Widget en Inglés",
+    "Widget Description in English": "Descripción del Widget en Inglés",
+    "Title (Spanish)": "Título (Español)",
+    "Description (Spanish)": "Descripción (Español)",
+    "Título del Widget en Español": "Título del Widget en Español",
+    "Descripción del Widget en Español": "Descripción del Widget en Español"
 }

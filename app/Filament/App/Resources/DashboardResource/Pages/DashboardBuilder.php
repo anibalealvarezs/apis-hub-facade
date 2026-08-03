@@ -114,16 +114,23 @@ class DashboardBuilder extends Page
 
     // ─── Widget Controls ───
 
-    public function saveWidgetControls(int $widgetId, array $controls, string $title, ?string $description = null): void
+    public function saveWidgetControls(int $widgetId, array $controls, ?string $title = null, ?string $description = null, array $titles = [], array $descriptions = []): void
     {
         $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
             ->findOrFail($widgetId);
 
-        $widget->update([
-            'controls' => $controls,
-            'title' => $title,
-            'description' => $description,
-        ]);
+        $widget->controls = $controls;
+        if (! empty($titles)) {
+            $widget->setTranslations('title', array_filter($titles));
+        } elseif ($title !== null) {
+            $widget->title = $title;
+        }
+        if (! empty($descriptions)) {
+            $widget->setTranslations('description', array_filter($descriptions));
+        } elseif ($description !== null) {
+            $widget->description = $description;
+        }
+        $widget->save();
 
         $this->unsavedChanges = true;
 
