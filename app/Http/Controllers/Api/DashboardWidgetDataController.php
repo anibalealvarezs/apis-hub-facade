@@ -2117,6 +2117,35 @@ class DashboardWidgetDataController extends Controller
             return $constrain($asset);
         }
 
+        $seriesAssets = $controls['series_assets'] ?? null;
+        if (is_array($seriesAssets) && ! empty($seriesAssets)) {
+            $flat = [];
+            array_walk_recursive($seriesAssets, function ($v) use (&$flat) {
+                if ($v !== null && $v !== '') {
+                    $flat[] = (string) $v;
+                }
+            });
+            $flat = array_values(array_unique($flat));
+            if (! empty($flat)) {
+                $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                $filtered = array_intersect($flat, $validForChannel);
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
+                $filtered = array_values($filtered);
+
+                if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
+                    $filtered = array_intersect($filtered, $seriesAssetFilter);
+                    if (empty($filtered)) {
+                        return '___EMPTY_GROUP___';
+                    }
+                    $filtered = array_values($filtered);
+                }
+
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+            }
+        }
+
         $requestedAssets = [];
         if (! empty($controls['assets']) && is_array($controls['assets'])) {
             $requestedAssets = $controls['assets'];
@@ -2169,27 +2198,6 @@ class DashboardWidgetDataController extends Controller
             $filtered = array_values($filtered);
 
             return $constrain($allowsMultiple ? $filtered : $filtered[0]);
-        }
-
-        $seriesAssets = $controls['series_assets'] ?? null;
-        if (is_array($seriesAssets)) {
-            if (! empty($seriesAssets['dependent'][0])) {
-                $dep = (array) $seriesAssets['dependent'];
-
-                return $constrain($allowsMultiple ? $dep : $dep[0]);
-            }
-            if (! empty($seriesAssets[0])) {
-                $flat = [];
-                array_walk_recursive($seriesAssets, function ($v) use (&$flat) {
-                    if ($v) {
-                        $flat[] = (string)$v;
-                    }
-                });
-                $flat = array_values(array_unique($flat));
-                if (! empty($flat)) {
-                    return $constrain($allowsMultiple ? $flat : $flat[0]);
-                }
-            }
         }
 
         if ($allowedIds !== null) {

@@ -69,6 +69,19 @@ class WidgetDataService
 
     public function getResolvedAssetList(DashboardWidget $widget, array $resolvedControls): array
     {
+        if (!empty($resolvedControls['series_assets']) && is_array($resolvedControls['series_assets'])) {
+            $flat = [];
+            array_walk_recursive($resolvedControls['series_assets'], function ($v) use (&$flat) {
+                if ($v !== null && $v !== '') {
+                    $flat[] = (string) $v;
+                }
+            });
+            $flat = array_values(array_unique($flat));
+            if (!empty($flat)) {
+                return $flat;
+            }
+        }
+
         if (!empty($resolvedControls['assets']) && is_array($resolvedControls['assets'])) {
             return $resolvedControls['assets'];
         }
