@@ -21,6 +21,11 @@ class DashboardWidgetDataController extends Controller
 
     public function show(Request $request, DashboardWidget $widget): JsonResponse
     {
+        $locale = $request->query('lang') ?? $request->cookie('pv_lang') ?? session('locale') ?? app()->getLocale();
+        if (in_array($locale, ['en', 'es'])) {
+            app()->setLocale($locale);
+        }
+
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() ENTER widget={$widget->id} source_type={$widget->source_type}");
 
