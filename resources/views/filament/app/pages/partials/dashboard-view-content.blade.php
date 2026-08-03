@@ -149,14 +149,14 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <div
-                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ $widget['kpi_theory']['name'] }}</div>
+                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ __($widget['kpi_theory']['name']) }}</div>
                                                         <div
-                                                            class="text-[10px] text-gray-500 mt-0.5">{{ $widget['kpi_theory']['type_label'] }}</div>
+                                                            class="text-[10px] text-gray-500 mt-0.5">{{ __($widget['kpi_theory']['type_label']) }}</div>
                                                     </div>
                                                 </div>
 
                                                 {{-- Explanation --}}
-                                                <p class="text-sm text-gray-200 leading-relaxed mb-4">{{ $widget['kpi_theory']['explanation'] }}</p>
+                                                <p class="text-sm text-gray-200 leading-relaxed mb-4">{{ __($widget['kpi_theory']['explanation']) }}</p>
 
                                                 {{-- Use Case --}}
                                                 @if (!empty($widget['kpi_theory']['use_case']))
@@ -165,9 +165,9 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-emerald-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">Use Case</span>
+                                                                class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">{{ __('Use Case') }}</span>
                                                         </div>
-                                                        <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ $widget['kpi_theory']['use_case'] }}</p>
+                                                        <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['use_case']) }}</p>
                                                     </div>
                                                 @endif
 
@@ -178,9 +178,9 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-amber-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">Interpretation</span>
+                                                                class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">{{ __('Interpretation') }}</span>
                                                         </div>
-                                                        <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ $widget['kpi_theory']['interpretation'] }}</p>
+                                                        <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['interpretation']) }}</p>
                                                     </div>
                                                 @endif
 

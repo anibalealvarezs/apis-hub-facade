@@ -42,15 +42,20 @@ class Dashboard extends Model
     protected static function booted(): void
     {
         static::creating(function (Dashboard $dashboard) {
-            $locales = ['en', 'es'];
-            foreach ($dashboard->translatable as $field) {
-                $val = $dashboard->getAttributes()[$field] ?? null;
-                if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
-                    $translations = [];
-                    foreach ($locales as $loc) {
-                        $translations[$loc] = $val;
+            $autoDuplicate = $dashboard->auto_duplicate_translations ?? true;
+            unset($dashboard->attributes['auto_duplicate_translations']);
+
+            if ($autoDuplicate) {
+                $locales = ['en', 'es'];
+                foreach ($dashboard->translatable as $field) {
+                    $val = $dashboard->getAttributes()[$field] ?? null;
+                    if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
+                        $translations = [];
+                        foreach ($locales as $loc) {
+                            $translations[$loc] = $val;
+                        }
+                        $dashboard->setTranslations($field, $translations);
                     }
-                    $dashboard->setTranslations($field, $translations);
                 }
             }
         });

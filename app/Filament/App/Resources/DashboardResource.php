@@ -82,6 +82,13 @@ class DashboardResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
                             ->columnSpanFull(),
+                        Forms\Components\Toggle::make('auto_duplicate_translations')
+                            ->label(__('Automatically duplicate title and description to all languages on creation'))
+                            ->helperText(__('When enabled, saving a single language automatically populates all other supported languages with the same text.'))
+                            ->default(true)
+                            ->dehydrated(true)
+                            ->columnSpanFull()
+                            ->visible(fn (string $operation) => $operation === 'create'),
                         Forms\Components\Toggle::make('is_public')
                             ->label(__('Public (accessible by any project collaborator and via shared link)'))
                             ->default(false)

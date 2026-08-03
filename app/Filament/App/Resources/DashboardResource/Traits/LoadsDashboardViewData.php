@@ -672,11 +672,11 @@ trait LoadsDashboardViewData
                             ?? $widgetArray['name']
                             ?? '';
                         $widgetArray['kpi_theory'] = [
-                            'name' => $kpiName,
-                            'type_label' => $guidance['type_label'] ?? '',
-                            'explanation' => $guidance['explanation'] ?? '',
-                            'use_case' => $guidance['use_case'] ?? '',
-                            'interpretation' => $guidance['interpretation'] ?? '',
+                            'name' => __($kpiName),
+                            'type_label' => __($guidance['type_label'] ?? ''),
+                            'explanation' => __($guidance['explanation'] ?? ''),
+                            'use_case' => __($guidance['use_case'] ?? ''),
+                            'interpretation' => __($guidance['interpretation'] ?? ''),
                         ];
                     }
                 }

@@ -44,15 +44,20 @@ class DashboardWidget extends Model
     protected static function booted(): void
     {
         static::creating(function (DashboardWidget $widget) {
-            $locales = ['en', 'es'];
-            foreach ($widget->translatable as $field) {
-                $val = $widget->getAttributes()[$field] ?? null;
-                if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
-                    $translations = [];
-                    foreach ($locales as $loc) {
-                        $translations[$loc] = $val;
+            $autoDuplicate = $widget->auto_duplicate_translations ?? true;
+            unset($widget->attributes['auto_duplicate_translations']);
+
+            if ($autoDuplicate) {
+                $locales = ['en', 'es'];
+                foreach ($widget->translatable as $field) {
+                    $val = $widget->getAttributes()[$field] ?? null;
+                    if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
+                        $translations = [];
+                        foreach ($locales as $loc) {
+                            $translations[$loc] = $val;
+                        }
+                        $widget->setTranslations($field, $translations);
                     }
-                    $widget->setTranslations($field, $translations);
                 }
             }
         });
