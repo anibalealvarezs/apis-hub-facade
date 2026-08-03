@@ -10,11 +10,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Spatie\Translatable\HasTranslations;
+
 class Dashboard extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use TracksVersions;
+    use HasTranslations;
+
+    public array $translatable = ['name', 'description'];
 
     protected $fillable = [
         'project_id',
@@ -36,6 +41,19 @@ class Dashboard extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (Dashboard $dashboard) {
+            $locales = ['en', 'es'];
+            foreach ($dashboard->translatable as $field) {
+                $val = $dashboard->getAttributes()[$field] ?? null;
+                if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
+                    $translations = [];
+                    foreach ($locales as $loc) {
+                        $translations[$loc] = $val;
+                    }
+                    $dashboard->setTranslations($field, $translations);
+                }
+            }
+        });
         static::deleting(function (Dashboard $dashboard) {
             if ($dashboard->isForceDeleting()) {
                 $dashboard->widgets()->withTrashed()->forceDelete();

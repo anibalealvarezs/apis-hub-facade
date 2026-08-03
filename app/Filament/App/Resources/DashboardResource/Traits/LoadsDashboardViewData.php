@@ -78,8 +78,19 @@ trait LoadsDashboardViewData
 
         $service = app(WidgetDataService::class);
         $wi = 0;
+        $locale = app()->getLocale();
         foreach ($this->widgets as &$widgetArray) {
             $wi++;
+            if (is_array($widgetArray['name'] ?? null)) {
+                $widgetArray['name'] = $widgetArray['name'][$locale] ?? reset($widgetArray['name']) ?? '';
+            }
+            if (is_array($widgetArray['title'] ?? null)) {
+                $widgetArray['title'] = $widgetArray['title'][$locale] ?? reset($widgetArray['title']) ?? '';
+            }
+            if (is_array($widgetArray['description'] ?? null)) {
+                $widgetArray['description'] = $widgetArray['description'][$locale] ?? reset($widgetArray['description']) ?? '';
+            }
+
             $tw = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] loadDashboardViewData processing widget {$wi}", ['id' => $widgetArray['id'] ?? '?', 'source_type' => $widgetArray['source_type'] ?? '?']);
             $widgetModel = (new DashboardWidget())->forceFill($widgetArray);

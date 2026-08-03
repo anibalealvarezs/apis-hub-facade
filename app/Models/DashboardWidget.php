@@ -8,11 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Spatie\Translatable\HasTranslations;
+
 class DashboardWidget extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use TracksVersions;
+    use HasTranslations;
+
+    public array $translatable = ['name', 'title', 'description'];
 
     protected $fillable = [
         'dashboard_id',
@@ -35,6 +40,23 @@ class DashboardWidget extends Model
         'source_config' => 'array',
         'controls' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (DashboardWidget $widget) {
+            $locales = ['en', 'es'];
+            foreach ($widget->translatable as $field) {
+                $val = $widget->getAttributes()[$field] ?? null;
+                if (! empty($val) && is_string($val) && ! str_starts_with(trim($val), '{')) {
+                    $translations = [];
+                    foreach ($locales as $loc) {
+                        $translations[$loc] = $val;
+                    }
+                    $widget->setTranslations($field, $translations);
+                }
+            }
+        });
+    }
 
     public function dashboard(): BelongsTo
     {

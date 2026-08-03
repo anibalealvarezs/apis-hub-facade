@@ -14,11 +14,17 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
-        <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-400 dark:text-gray-500">
-                    <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
-                    <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">{{ __('Refresh all') }}</button>
-                </span>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
+            </span>
+            <button x-on:click="refreshAll()"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                <span>{{ __('Refresh all') }}</span>
+            </button>
         </div>
     </div>
 
@@ -52,10 +58,6 @@
                 </template>
             </select>
         </template>
-        <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
-                <button x-on:click="refreshAll()" class="ml-2 text-primary-500 hover:underline">{{ __('Refresh all') }}</button>
-            </span>
     </div>
 
     {{-- Grid --}}
@@ -366,7 +368,7 @@
                 @click.away="closeSettings()">
                 <div
                     class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
-                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Widget Settings</h3>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Widget Settings') }}</h3>
                     <button @click="closeSettings()"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -420,7 +422,7 @@
                                               d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
                                     </svg>
                                     <span
-                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Date Range</span>
+                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Date Range') }}</span>
                                 </div>
                                 <div class="p-6 flex flex-row items-center gap-3">
                                     <input type="date" x-model="settingsControls.date_start"
@@ -448,7 +450,7 @@
                                                   d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                         <span
-                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Granularity</span>
+                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Granularity') }}</span>
                                     </div>
                                     <div class="p-6">
                                         <template x-if="settingsSourceType === 'kpi'">
@@ -473,19 +475,19 @@
                                             <select x-model="settingsControls.granularity"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
                                                 <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="Time Granularities">
-                                                        <option value="">Dashboard Default</option>
-                                                        <option value="daily">Daily</option>
-                                                        <option value="weekly">Weekly</option>
-                                                        <option value="monthly">Monthly</option>
-                                                        <option value="quarterly">Quarterly</option>
-                                                        <option value="semiannual">Semiannual</option>
-                                                        <option value="annually">Annually</option>
-                                                        <option value="lifetime">Lifetime</option>
+                                                    <optgroup label="{{ __('Time Granularities') }}">
+                                                        <option value="">{{ __('Dashboard Default') }}</option>
+                                                        <option value="daily">{{ __('Daily') }}</option>
+                                                        <option value="weekly">{{ __('Weekly') }}</option>
+                                                        <option value="monthly">{{ __('Monthly') }}</option>
+                                                        <option value="quarterly">{{ __('Quarterly') }}</option>
+                                                        <option value="semiannual">{{ __('Semiannual') }}</option>
+                                                        <option value="annually">{{ __('Annually') }}</option>
+                                                        <option value="lifetime">{{ __('Lifetime') }}</option>
                                                     </optgroup>
                                                 </template>
                                                 <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="Dimension">
+                                                    <optgroup label="{{ __('Dimension') }}">
                                                         <option :value="settingsBuilderControls.granularity" x-text="{
                                                             'query': 'Query (SEO)',
                                                             'dimensions.page': 'Page (SEO)',
@@ -513,46 +515,40 @@
                                                   d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/>
                                         </svg>
                                         <span
-                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Edge Cases</span>
+                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Edge Cases') }}</span>
                                     </div>
                                     <div class="p-6 space-y-4">
                                         <label class="flex items-center gap-3 cursor-pointer">
                                             <input type="checkbox" x-model="settingsControls.edge_case_weighted"
                                                    class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Weighted regression (WLS)</span>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ __('Weighted regression (WLS)') }}</span>
                                         </label>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Weight each dimension
-                                            value by its volume so high-volume items influence the regression line
-                                            proportionally more.</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">{{ __('Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.') }}</p>
                                         <div>
                                             <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group
-                                                low-frequency values</label>
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Group low-frequency values') }}</label>
                                             <select x-model="settingsControls.edge_case_grouping"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                <option value="none">No grouping</option>
-                                                <option value="histogram">Auto histogram-elbow</option>
-                                                <option value="percentile">Bottom percentile</option>
+                                                <option value="none">{{ __('No grouping') }}</option>
+                                                <option value="histogram">{{ __('Auto histogram-elbow') }}</option>
+                                                <option value="percentile">{{ __('Bottom percentile') }}</option>
                                             </select>
                                         </div>
                                         <div>
                                             <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Max
-                                                ratio cap</label>
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max ratio cap') }}</label>
                                             <input type="number" step="0.01" min="0"
                                                    x-model="settingsControls.max_ratio"
                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                   placeholder="No cap"/>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Filter out ratio
-                                                values above this threshold.</p>
+                                                   placeholder="{{ __('No cap') }}"/>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Filter out ratio values above this threshold.') }}</p>
                                         </div>
                                         <label class="flex items-center gap-3 cursor-pointer">
                                             <input type="checkbox" x-model="settingsControls.remove_unknown"
                                                    class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white">Exclude unknown keyword</span>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ __('Exclude unknown keyword') }}</span>
                                         </label>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Remove the <code>unknown</code>
-                                            query from the chart and recalculate the regression line without it.</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">{{ __('Remove the unknown query from the chart and recalculate the regression line without it.') }}</p>
                                     </div>
                                 </div>
                             </template>
