@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DashboardResource extends Resource
 {
+    use \Filament\Resources\Concerns\Translatable;
+
     protected static ?string $model = Dashboard::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
