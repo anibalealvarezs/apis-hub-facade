@@ -23,7 +23,7 @@ trait LoadsDashboardViewData
 
     public function getAllAssetGroups(): array
     {
-        $project = Filament::getTenant();
+        $project = Filament::getTenant() ?? ($this->project ?? null) ?? ($this->dashboard->project ?? null);
         if (!$project) return [];
 
         $groups = app(\App\Services\CollaboratorAssetAccessService::class)
@@ -39,7 +39,7 @@ trait LoadsDashboardViewData
 
     public function getChannelAssetGroupMap(): array
     {
-        $project = Filament::getTenant();
+        $project = Filament::getTenant() ?? ($this->project ?? null) ?? ($this->dashboard->project ?? null);
         if (!$project) return [];
 
         $groups = app(\App\Services\CollaboratorAssetAccessService::class)
@@ -108,7 +108,7 @@ trait LoadsDashboardViewData
 
             $user = auth()->user();
             $access = app(\App\Services\CollaboratorAssetAccessService::class);
-            $project = Filament::getTenant();
+            $project = Filament::getTenant() ?? ($this->project ?? null) ?? ($this->dashboard->project ?? null);
 
             $getAssetsForChannel = function ($channel) use ($user, $access, $project) {
                 if (empty($channel)) {
