@@ -929,19 +929,19 @@ class KpiFormBuilder
                                                     $guidance = $reference->getGuidance($templateId);
 
                                                     $html = '<div class="space-y-4 p-6 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">';
-                                                    $html .= '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e($kpi['name']) . '</h3>';
-                                                    $html .= '<span class="inline-block mt-1 px-2 py-1 text-xs font-medium text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-400/10 rounded-full">' . e($guidance['type_label']) . '</span></div>';
+                                                    $html .= '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e(__($kpi['name'])) . '</h3>';
+                                                    $html .= '<span class="inline-block mt-1 px-2 py-1 text-xs font-medium text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-400/10 rounded-full">' . e(__($guidance['type_label'])) . '</span></div>';
 
                                                     if (! empty($guidance['explanation'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">What it does</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['explanation'])) . '</p></div>';
+                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('What it does')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['explanation']))) . '</p></div>';
                                                     }
 
                                                     if (! empty($guidance['use_case'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">Golden use case</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['use_case'])) . '</p></div>';
+                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('Golden use case')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['use_case']))) . '</p></div>';
                                                     }
 
                                                     if (! empty($guidance['interpretation'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">Reading the result</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e($guidance['interpretation'])) . '</p></div>';
+                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('Reading the result')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['interpretation']))) . '</p></div>';
                                                     }
 
                                                     $html .= '</div>';

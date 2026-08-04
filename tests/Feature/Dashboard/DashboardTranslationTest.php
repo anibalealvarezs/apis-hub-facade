@@ -175,8 +175,8 @@ it('translates KPI theory guidance attributes dynamically when locale changes to
 
     $loadedWidget = $view->widgets[0];
     expect($loadedWidget['kpi_theory'])->not->toBeNull();
-    expect($loadedWidget['kpi_theory']['type_label'])->toBe('Analizador de Eficiencia de Costes');
-    expect($loadedWidget['kpi_theory']['explanation'])->toContain('Calcula el coste medio real');
+    expect(__($loadedWidget['kpi_theory']['type_label']))->toBe('Analizador de Eficiencia de Costes');
+    expect(__($loadedWidget['kpi_theory']['explanation']))->toContain('Calcula el coste medio real');
 });
 
 
