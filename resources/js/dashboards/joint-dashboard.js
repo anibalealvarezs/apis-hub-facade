@@ -24,7 +24,7 @@ export function jointDashboard(config = {}) {
         getAvailablePlays() {
             let availableKeys = Object.keys(this.channels);
             return this.allPlays.filter(play => {
-                return play.requires.every(req => availableKeys.includes(req) && Object.keys(this.availableAccounts[req] || {}).length > 0);
+                return play.requires.length === 0 || play.requires.every(req => availableKeys.includes(req));
             });
         },
 

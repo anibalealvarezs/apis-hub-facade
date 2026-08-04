@@ -200,7 +200,19 @@
                 'requires' => ['facebook_marketing'],
                 'config' => [
                     'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'ctr', 'level' => 'zscore', 'lag' => '0'],
-                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'cpc', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'cost_per_result', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'google_evaluation_cycle',
+                'name' => __('SEO Evaluation Cycle'),
+                'short_desc' => __('GSC Impressions vs Position'),
+                'theory' => __('When Google gives you an impression spike, it takes the algorithm a few days to process the user-behavior signals from that traffic before adjusting your ranking.'),
+                'expected' => __('Positive correlation with Lag +4. A spike in impressions 4 days ago often correlates with a temporary drop in ranking today.'),
+                'requires' => ['google_search_console'],
+                'config' => [
+                    'curveA' => ['channel' => 'google_search_console', 'metric' => 'impressions', 'level' => 'zscore', 'lag' => '4'],
+                    'curveB' => ['channel' => 'google_search_console', 'metric' => 'position', 'level' => 'zscore', 'lag' => '0'],
                 ],
             ],
             [
@@ -213,6 +225,42 @@
                 'config' => [
                     'curveA' => ['channel' => 'google_search_console', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '0'],
                     'curveB' => ['channel' => 'facebook_organic', 'metric' => 'page_engaged_users', 'level' => 'zscore', 'lag' => '2'],
+                ],
+            ],
+            [
+                'id' => 'empty_traffic',
+                'name' => __('Empty Traffic Check'),
+                'short_desc' => __('FB Clicks vs Conversions'),
+                'theory' => __('More clicks should theoretically mean more conversions. If they don\'t, you might have a "clickbait" ad or a broken landing page.'),
+                'expected' => __('Should be a strong positive correlation. If the correlation drops to zero or goes negative, your ads are driving low-intent traffic.'),
+                'requires' => ['facebook_marketing'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'results', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'cpm_vs_roas',
+                'name' => __('Auction Competition vs ROAS'),
+                'short_desc' => __('FB CPM vs ROAS'),
+                'theory' => __('When market competition drives up the cost of impressions (CPM), does your return on ad spend (ROAS) immediately drop?'),
+                'expected' => __('Typically a negative correlation. As CPMs rise, ROAS drops unless the more expensive audience converts at a higher rate.'),
+                'requires' => ['facebook_marketing'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'cpm', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'purchase_roas', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'organic_algorithm_reward',
+                'name' => __('Algorithm Reward'),
+                'short_desc' => __('FB Engagements vs Reach'),
+                'theory' => __('Social algorithms reward high engagement (likes/comments) today with broader reach tomorrow.'),
+                'expected' => __('Positive correlation with a 1 to 2 day lag. A spike in interactions today should cause a delayed spike in reach.'),
+                'requires' => ['facebook_organic'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_organic', 'metric' => 'total_interactions', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_organic', 'metric' => 'reach', 'level' => 'zscore', 'lag' => '2'],
                 ],
             ],
         ],
@@ -267,23 +315,14 @@
                     {{ __('Select a predefined marketing theory scenario to auto-configure the dashboard. You will only need to select your specific assets.') }}
                 </p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <template x-for="play in getAvailablePlays()" :key="play.id">
-                        <div @click="applyPlay(play)" 
-                             class="p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between"
-                             :class="(selectedPlay && selectedPlay.id === play.id) ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/20 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></span>
-                                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium" x-text="play.short_desc"></span>
-                                </div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2" x-text="play.theory"></p>
-                            </div>
-                            <div class="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs">
-                                <span class="text-primary-600 dark:text-primary-400 font-medium" x-text="(selectedPlay && selectedPlay.id === play.id) ? '{{ __('Active') }}' : '{{ __('Apply Scenario') }}'"></span>
-                                <x-heroicon-m-arrow-right class="w-3.5 h-3.5 text-primary-500" />
-                            </div>
-                        </div>
+                        <button type="button" @click="applyPlay(play)" 
+                                class="text-left px-4 py-3 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                :class="(selectedPlay && selectedPlay.id === play.id) ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-primary-300 dark:hover:border-primary-500/50'">
+                            <div class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate" x-text="play.short_desc"></div>
+                        </button>
                     </template>
                 </div>
 
