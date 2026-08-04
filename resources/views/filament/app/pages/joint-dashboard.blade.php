@@ -204,7 +204,7 @@
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Asset / Property') }}</label>
                             <x-ui.select-input x-model="curveA.asset" @change="if (curveA.channel === curveB.channel) curveB.asset = curveA.asset" 
                                     class="w-full mt-1 transition-colors duration-300"
-                                    :class="{
+                                    x-bind:class="{
                                         'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
                                         'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
                                     }">
@@ -247,7 +247,6 @@
                                     <x-ui.select-option value="-1">{{ __('-1 Day') }}</x-ui.select-option>
                                     <x-ui.select-option value="-2">{{ __('-2 Days') }}</x-ui.select-option>
                                     <x-ui.select-option value="-3">{{ __('-3 Days') }}</x-ui.select-option>
-                                </x-ui.select-input>
                                     <x-ui.select-option value="-4">{{ __('-4 Days') }}</x-ui.select-option>
                                     <x-ui.select-option value="-5">{{ __('-5 Days') }}</x-ui.select-option>
                                     <x-ui.select-option value="-6">{{ __('-6 Days') }}</x-ui.select-option>
@@ -280,7 +279,7 @@
                             <x-ui.select-input x-model="curveB.asset" 
                                     x-bind:disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel" 
                                     class="w-full mt-1 transition-colors duration-300"
-                                    :class="{
+                                    x-bind:class="{
                                         'opacity-50 cursor-not-allowed': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
                                         'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
                                         'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel
