@@ -17,42 +17,7 @@
     ][$size] ?? 'text-xs px-3 py-2 h-[34px] min-w-[170px]';
 @endphp
 
-<div class="relative" x-data="{
-    open: false,
-    searchAssetGroup: '',
-    stripHtml(html) {
-        if (!html) return '';
-        if (typeof html !== 'string') return String(html);
-        if (!html.includes('<')) return html;
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        const firstSpan = tmp.querySelector('span');
-        return (firstSpan ? firstSpan.textContent : tmp.textContent || '').trim();
-    },
-    getOptionLabel(optionsObj, idVal, placeholder) {
-        if (idVal === null || idVal === undefined || idVal === '') return placeholder || '';
-        if (!optionsObj) return String(idVal);
-        let val = optionsObj[idVal] ?? optionsObj[String(idVal)] ?? optionsObj[Number(idVal)];
-        if (val === null || val === undefined) return String(idVal);
-        if (typeof val === 'object') return val.label || val.name || val.title || val.text || String(idVal);
-        return this.stripHtml(String(val));
-    },
-    getItemTitle(val, id) {
-        if (val === null || val === undefined) return String(id || '');
-        if (typeof val === 'object') return val.label || val.name || val.title || val.text || String(id || '');
-        if (typeof val === 'string' && val.includes('<')) return this.stripHtml(val);
-        return String(val);
-    },
-    getItemDescription(val) {
-        if (typeof val === 'object' && val !== null) {
-            return val.description || val.desc || val.subtitle || null;
-        }
-        return null;
-    },
-    isHtml(val) {
-        return typeof val === 'string' && val.includes('<');
-    }
-}" @click.outside="open = false">
+<div class="relative" x-data="uiAssetSelector()" @click.outside="open = false">
     <button @click="if (!$el.hasAttribute('disabled') && !$el.disabled) open = !open" type="button"
             {{ $attributes->merge([
                 'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"

@@ -1,7 +1,9 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import { uiAssetSelector } from './components/ui-asset-selector';
 
 window.Alpine = Alpine;
+window.uiAssetSelector = uiAssetSelector;
 
 // Theme Controller Component
 Alpine.data('themeControl', () => ({
@@ -13,6 +15,8 @@ Alpine.data('themeControl', () => ({
         });
     }
 }));
+
+Alpine.data('uiAssetSelector', uiAssetSelector);
 
 Alpine.start();
 
