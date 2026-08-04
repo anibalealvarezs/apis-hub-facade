@@ -341,7 +341,7 @@
             <div
                 class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
-                    x-text="(availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab)?.label || '').toUpperCase()"></h3>
+                    x-text="((availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab) || {}).label || '').toUpperCase()"></h3>
             </div>
 
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -547,16 +547,82 @@
 
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="fb-close-btn">
-                        <span class="sr-only">Close</span>
-                        <x-heroicon-o-x-mark style="width: 20px; height: 20px;"/>
-                    </button>
+                <table class="fb-table">
+                    <thead>
+                    <tr>
+                        <th>
+                            <span x-text="activeBreakdownTab === 'posts' ? '{{ __('Post') }}' : '{{ __('Name') }}'"></span>
+                        </th>
+                        <template x-for="m in currentBreakdownMetrics" :key="m">
+                            <th class="metric-cell cursor-pointer" @click="breakdownSortBy(m)">
+                                <span x-text="metricLabels[m] || m"></span>
+                                <span x-show="breakdownSortColumn === m"
+                                      x-text="breakdownSortDirection === 'desc' ? '↓' : '↑'"></span>
+                            </th>
+                        </template>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="(row, idx) in paginatedBreakdownRows" :key="(row.id || idx) + '_' + idx">
+                        <tr class="transition duration-150 hover:bg-gray-50 dark:hover:bg-white/5">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <template x-if="activeBreakdownTab === 'posts'">
+                                        <button @click="openPostDetailsModal(row)"
+                                                class="text-left font-semibold text-primary-600 dark:text-primary-400 hover:underline max-w-md truncate"
+                                                x-text="row.message || row.caption || '{{ __('Untitled Post') }}'"></button>
+                                    </template>
+                                    <template x-if="activeBreakdownTab !== 'posts'">
+                                        <div class="text-sm font-semibold text-[var(--fb-text-main)] truncate max-w-md"
+                                             x-text="row.name || row.title || row.id" :title="row.name || row.title || row.id"></div>
+                                    </template>
+                                </div>
+                            </td>
+                            <template x-for="m in currentBreakdownMetrics" :key="m">
+                                <td class="metric-cell">
+                                    <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                             :style="`width: ${(row[m] / maxBreakdownMetric(m)) * 100}%; background: ${metricColors[m] || 'var(--fb-blue)'}`"></div>
+                                    </div>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                    <tr x-show="paginatedBreakdownRows.length === 0">
+                        <td :colspan="currentBreakdownMetrics.length + 1"
+                            class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            {{ __('No data available.') }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                    <!-- Left Side: Post Preview -->
-                    <div class="fb-modal-left bg-gray-50 dark:bg-gray-800 p-6 relative h-full overflow-y-auto">
+            <!-- Modal for post details -->
+            <div x-show="isPostDetailsModalOpen"
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                 x-cloak
+                 @click.self="isPostDetailsModalOpen = false"
+                 @keydown.escape.window="isPostDetailsModalOpen = false">
+                <div
+                    class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800">
+                    <!-- Header -->
+                    <div
+                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                        <h3 class="font-bold text-gray-900 dark:text-white text-base">
+                            {{ __('Post Details') }}</h3>
+                        <button @click="isPostDetailsModalOpen = false"
+                                class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <x-heroicon-o-x-mark class="w-5 h-5"/>
+                        </button>
+                    </div>
 
+                    <!-- Body -->
+                    <div class="p-6 overflow-y-auto flex-1 flex flex-col">
                         <div x-show="isPostDetailsLoading"
-                             class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-black/50 backdrop-blur-sm rounded-l-xl">
-                            <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                             class="flex justify-center items-center py-12">
+                            <x-filament::loading-indicator class="w-8 h-8 text-primary-500"/>
                         </div>
 
                         <div x-show="!isPostDetailsLoading && selectedPostData"
@@ -564,55 +630,55 @@
                             <!-- Media Preview -->
                             <div class="fb-modal-image-container bg-gray-200 dark:bg-gray-950 relative shadow-inner">
                                 <template
-                                    x-if="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture">
+                                    x-if="(selectedPostData && selectedPostData.data) && (selectedPostData.data.media_url || selectedPostData.data.full_picture)">
                                     <div class="w-full h-full relative">
                                         <template
-                                            x-if="selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
+                                            x-if="selectedPostData.data.media_type === 'VIDEO' || (selectedPostData.data.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData.data.full_picture && selectedPostData.data.full_picture.includes('.mp4'))">
                                             <video
-                                                :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture"
+                                                :src="selectedPostData.data.media_url || selectedPostData.data.full_picture"
                                                 controls preload="metadata"
                                                 class="w-full h-full object-contain bg-black" muted loop
                                                 playsinline></video>
                                         </template>
                                         <template
-                                            x-if="!(selectedPostData?.data?.media_type === 'VIDEO' || (selectedPostData?.data?.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData?.data?.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
+                                            x-if="!(selectedPostData.data.media_type === 'VIDEO' || (selectedPostData.data.media_url && selectedPostData.data.media_url.includes('.mp4')) || (selectedPostData.data.full_picture && selectedPostData.data.full_picture.includes('.mp4')))">
                                             <img
-                                                :src="selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture"
+                                                :src="selectedPostData.data.media_url || selectedPostData.data.full_picture"
                                                 class="w-full h-full object-contain" alt="Post preview"/>
                                         </template>
                                     </div>
                                 </template>
                                 <template
-                                    x-if="!(selectedPostData?.data?.media_url || selectedPostData?.data?.full_picture)">
+                                    x-if="!((selectedPostData && selectedPostData.data) && (selectedPostData.data.media_url || selectedPostData.data.full_picture))">
                                     <div class="text-gray-400 dark:text-gray-500 flex flex-col items-center">
                                         <x-heroicon-o-photo class="w-12 h-12 mb-2 opacity-50"/>
                                         <span class="text-xs uppercase font-medium">{{ __('No Media') }}</span>
                                     </div>
                                 </template>
-                                <div x-show="selectedPostData?.data?.media_type"
+                                <div x-show="selectedPostData && selectedPostData.data && selectedPostData.data.media_type"
                                      class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm"
-                                     x-text="selectedPostData?.data?.media_type"></div>
+                                     x-text="selectedPostData && selectedPostData.data ? selectedPostData.data.media_type : ''"></div>
                             </div>
 
                             <!-- Post Details -->
                             <div class="flex-1 pr-2 mb-4">
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium"
-                                     x-text="(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp) ? new Date(selectedPostData?.data?.created_time || selectedPostData?.data?.timestamp).toLocaleString() : ''"></div>
+                                     x-text="(selectedPostData && selectedPostData.data && (selectedPostData.data.created_time || selectedPostData.data.timestamp)) ? new Date(selectedPostData.data.created_time || selectedPostData.data.timestamp).toLocaleString() : ''"></div>
                                 <div class="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-line break-words"
-                                     x-text="selectedPostData?.data?.message || selectedPostData?.data?.caption || '{{ __('No caption') }}'"></div>
+                                     x-text="(selectedPostData && selectedPostData.data) ? (selectedPostData.data.message || selectedPostData.data.caption || '{{ __('No caption') }}') : ''"></div>
                             </div>
 
                             <!-- Actions -->
                             <div class="shrink-0 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <a :href="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink"
+                                <a :href="(selectedPostData && selectedPostData.data) ? (selectedPostData.data.permalink_url || selectedPostData.data.permalink) : '#'"
                                    target="_blank"
-                                   x-show="selectedPostData?.data?.permalink_url || selectedPostData?.data?.permalink"
+                                   x-show="selectedPostData && selectedPostData.data && (selectedPostData.data.permalink_url || selectedPostData.data.permalink)"
                                    class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-sm font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors border border-primary-200 dark:border-primary-800/30">
                                     <x-heroicon-o-link class="w-4 h-4 mr-2"/>
                                     {{ __('View Original Post') }}
                                 </a>
                             </div>
-                        </div>
+                        </div>  </div>
                     </div>
 
                     <!-- Right Side: Metrics Chart -->

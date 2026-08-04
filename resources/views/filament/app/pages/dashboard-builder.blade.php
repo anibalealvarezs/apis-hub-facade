@@ -191,7 +191,7 @@
                                             <template x-if="widget.source_type === 'kpi'">
                                                 <div class="flex flex-wrap items-center justify-center gap-2">
                                                     <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">KPI</span>
-                                                    <template x-if="widget.source_config?.custom_kpi_id && kpis[widget.source_config.custom_kpi_id]">
+                                                    <template x-if="widget.source_config && widget.source_config.custom_kpi_id && kpis[widget.source_config.custom_kpi_id]">
                                                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700" x-text="kpis[widget.source_config.custom_kpi_id].name"></span>
                                                     </template>
                                                 </div>
@@ -205,7 +205,7 @@
                                             <template x-if="widget.source_type === 'derived_metric'">
                                                 <div class="flex flex-wrap items-center justify-center gap-2">
                                                     <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">DM</span>
-                                                    <template x-if="widget.source_config?.derived_metric_id && derivedMetrics[widget.source_config.derived_metric_id]">
+                                                    <template x-if="widget.source_config && widget.source_config.derived_metric_id && derivedMetrics[widget.source_config.derived_metric_id]">
                                                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700" x-text="derivedMetrics[widget.source_config.derived_metric_id].name"></span>
                                                     </template>
                                                 </div>
@@ -460,105 +460,105 @@
                                 </label>
                             </div>
                             <div class="p-6 flex flex-row items-center gap-3">
-                                <template x-if="widgetControlsForm.date_inherit">
-                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + ((widgetKpiConfig?.start_date || dashboardControls.date_start) || '—') + ' → ' + ((widgetKpiConfig?.end_date || dashboardControls.date_end) || '—')"></div>
-                                </template>
-                                <template x-if="!widgetControlsForm.date_inherit">
-                                    <div class="w-full flex flex-row items-center gap-3">
-                                        <input type="date" x-model="widgetControlsForm.date_start"
-                                               :min="dashboardControls.date_start || ''"
-                                               :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                               class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                        <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
-                                        <input type="date" x-model="widgetControlsForm.date_end"
-                                               :min="widgetControlsForm.date_start || dashboardControls.date_start || ''" 
-                                               :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                               class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
+                                 <template x-if="widgetControlsForm.date_inherit">
+                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                          x-text="'Inherited: ' + ((((widgetKpiConfig && widgetKpiConfig.start_date) || dashboardControls.date_start) || '—')) + ' → ' + ((((widgetKpiConfig && widgetKpiConfig.end_date) || dashboardControls.date_end) || '—'))"></div>
+                                 </template>
+                                 <template x-if="!widgetControlsForm.date_inherit">
+                                     <div class="w-full flex flex-row items-center gap-3">
+                                         <input type="date" x-model="widgetControlsForm.date_start"
+                                                :min="dashboardControls.date_start || ''"
+                                                :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                                class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                         <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
+                                         <input type="date" x-model="widgetControlsForm.date_end"
+                                                :min="widgetControlsForm.date_start || dashboardControls.date_start || ''" 
+                                                :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
+                                                class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                     </div>
+                                 </template>
+                             </div>
+                         </div>
 
-                        {{-- Card: Zero / Missing Data --}}
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
-                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                <div class="flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Zero / Missing Data</span>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" x-model="widgetControlsForm.zero_inherit" class="sr-only peer"/>
-                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
-                                </label>
-                            </div>
-                            <div class="p-6">
-                                <template x-if="widgetControlsForm.zero_inherit">
-                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', widgetKpiConfig?.zero_handling ?? dashboardControls.zero_handling) || 'Remove zeros')"></div>
-                                </template>
-                                <template x-if="!widgetControlsForm.zero_inherit">
-                                    <x-ui.select-input x-model="widgetControlsForm.zero_handling" class="w-full">
-                                        <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
-                                        <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
-                                        <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
-                                    </x-ui.select-input>
-                                </template>
-                            </div>
-                        </div>
+                         {{-- Card: Zero / Missing Data --}}
+                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                             <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                 <div class="flex items-center gap-2">
+                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                     </svg>
+                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Zero / Missing Data</span>
+                                 </div>
+                                 <label class="relative inline-flex items-center cursor-pointer">
+                                     <input type="checkbox" x-model="widgetControlsForm.zero_inherit" class="sr-only peer"/>
+                                     <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                     <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.zero_inherit ? 'Inherit' : 'Custom'"></span>
+                                 </label>
+                             </div>
+                             <div class="p-6">
+                                 <template x-if="widgetControlsForm.zero_inherit">
+                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                          x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', (widgetKpiConfig && widgetKpiConfig.zero_handling !== undefined ? widgetKpiConfig.zero_handling : dashboardControls.zero_handling)) || 'Remove zeros')"></div>
+                                 </template>
+                                 <template x-if="!widgetControlsForm.zero_inherit">
+                                     <x-ui.select-input x-model="widgetControlsForm.zero_handling" class="w-full">
+                                         <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
+                                         <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
+                                         <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
+                                     </x-ui.select-input>
+                                 </template>
+                             </div>
+                         </div>
 
-                        {{-- Card: Granularity --}}
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
-                            <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                <div class="flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Granularity</span>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" x-model="widgetControlsForm.granularity_inherit" class="sr-only peer"/>
-                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.granularity_inherit ? 'Inherit' : 'Custom'"></span>
-                                </label>
-                            </div>
-                            <div class="p-6">
-                                <template x-if="widgetControlsForm.granularity_inherit">
-                                    <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-                                         x-text="'Inherited: ' + (inheritedControlLabel('granularity', widgetKpiConfig?.granularity ?? dashboardControls.granularity) || 'Default')"></div>
-                                </template>
-                                <template x-if="!widgetControlsForm.granularity_inherit">
-                                    <div class="space-y-4">
-                                        <!-- Dependency/Matrix Selector -->
-                                        <template x-if="widgetControlsTarget?.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
-                                            <div>
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
-                                                <x-ui.select-input x-model="widgetControlsForm.dependency" @change="updateGranularities()" class="w-full">
-                                                    <template x-for="(label, key) in availableDependencies" :key="key">
-                                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                                    </template>
-                                                </x-ui.select-input>
-                                            </div>
-                                        </template>
-                                        
-                                        <!-- Granularity Selector -->
-                                        <div>
-                                            <template x-if="widgetControlsTarget?.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
-                                            </template>
-                                            <template x-if="widgetControlsTarget?.source_type === 'metric'">
-                                                <x-ui.select-input x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()" class="w-full">
-                                                    <template x-for="(label, key) in availableGranularities" :key="key">
-                                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                                    </template>
-                                                </x-ui.select-input>
-                                            </template>
-                                            
-                                            <!-- Fallback for KPIs -->
-                                            <template x-if="widgetControlsTarget?.source_type !== 'metric'">
+                         {{-- Card: Granularity --}}
+                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                             <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                 <div class="flex items-center gap-2">
+                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                     </svg>
+                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Granularity</span>
+                                 </div>
+                                 <label class="relative inline-flex items-center cursor-pointer">
+                                     <input type="checkbox" x-model="widgetControlsForm.granularity_inherit" class="sr-only peer"/>
+                                     <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                     <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.granularity_inherit ? 'Inherit' : 'Custom'"></span>
+                                 </label>
+                             </div>
+                             <div class="p-6">
+                                 <template x-if="widgetControlsForm.granularity_inherit">
+                                     <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                          x-text="'Inherited: ' + (inheritedControlLabel('granularity', (widgetKpiConfig && widgetKpiConfig.granularity !== undefined ? widgetKpiConfig.granularity : dashboardControls.granularity)) || 'Default')"></div>
+                                 </template>
+                                 <template x-if="!widgetControlsForm.granularity_inherit">
+                                     <div class="space-y-4">
+                                         <!-- Dependency/Matrix Selector -->
+                                         <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
+                                             <div>
+                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
+                                                 <x-ui.select-input x-model="widgetControlsForm.dependency" @change="updateGranularities()" class="w-full">
+                                                     <template x-for="(label, key) in availableDependencies" :key="key">
+                                                         <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
+                                                     </template>
+                                                 </x-ui.select-input>
+                                             </div>
+                                         </template>
+                                         
+                                         <!-- Granularity Selector -->
+                                         <div>
+                                             <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
+                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
+                                             </template>
+                                             <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric'">
+                                                 <x-ui.select-input x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()" class="w-full">
+                                                     <template x-for="(label, key) in availableGranularities" :key="key">
+                                                         <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
+                                                     </template>
+                                                 </x-ui.select-input>
+                                             </template>
+                                             
+                                             <!-- Fallback for KPIs -->
+                                             <template x-if="widgetControlsTarget && widgetControlsTarget.source_type !== 'metric'">
                                                 <x-ui.select-input x-model="widgetControlsForm.granularity" class="w-full">
                                                     <x-ui.select-option value="daily">Daily</x-ui.select-option>
                                                     <x-ui.select-option value="weekly">Weekly</x-ui.select-option>
@@ -569,12 +569,13 @@
                                                     <x-ui.select-option value="device">Device</x-ui.select-option>
                                                     <x-ui.select-option value="post">Post</x-ui.select-option>
                                                 </x-ui.select-input>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
+                                             </template>
+                                         </div>
+                                     </div>
+                                 </template>
+                             </div>
                         </div>
+
                             {{-- Card: Edge Case Handling (KPI widgets only) --}}
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
@@ -788,7 +789,7 @@
                                                     <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400" x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
                                                 </template>
                                                 <template x-if="!widgetKpiConfig.dependent_metric">
-                                                    <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">Dynamic Metric</span>
+                                                    <span class="text-[10px] font-semibold text-amber-600 dark:amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">Dynamic Metric</span>
                                                 </template>
                                             </div>
                                         </div>
@@ -880,7 +881,7 @@
                                             </div>
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
-                                            <template x-for="(series, sIdx) in (derivedMetrics[widgetKpiConfig.dependent_dm_id]?.source_series || [])" :key="sIdx">
+                                            <template x-for="(series, sIdx) in ((derivedMetrics[widgetKpiConfig.dependent_dm_id] && derivedMetrics[widgetKpiConfig.dependent_dm_id].source_series) || [])" :key="sIdx">
                                                 <div class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
                                                     <div class="flex items-center justify-between mb-3">
                                                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="series.label || ('Source ' + String.fromCharCode(97 + sIdx))"></span>
@@ -951,7 +952,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
-                                                    <template x-for="(series, sIdx) in (derivedMetrics[varCfg.independent_dm_id]?.source_series || [])" :key="sIdx">
+                                                    <template x-for="(series, sIdx) in ((derivedMetrics[varCfg.independent_dm_id] && derivedMetrics[varCfg.independent_dm_id].source_series) || [])" :key="sIdx">
                                                         <div class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
                                                             <div class="flex items-center justify-between mb-3">
                                                                 <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider" x-text="series.label || ('Source ' + String.fromCharCode(97 + sIdx))"></span>

@@ -597,7 +597,7 @@
                                 <template x-if="vConfig">
                                     <div
                                         class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
-                                        x-init="console.log('DEBUG loop:', { vKey: vKey, options: settingsSeriesOptions[vKey]?.options, keysLength: settingsSeriesOptions[vKey]?.options ? Object.keys(settingsSeriesOptions[vKey].options).length : 0 })">
+                                        x-init="console.log('DEBUG loop:', { vKey: vKey, options: settingsSeriesOptions[vKey] ? settingsSeriesOptions[vKey].options : null, keysLength: (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].options) ? Object.keys(settingsSeriesOptions[vKey].options).length : 0 })">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
@@ -686,7 +686,7 @@
                                                             <label
                                                                 class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Assets</label>
                                                             <template
-                                                                x-if="(settingsSeriesOptions[vKey]?.mode || 'multiple') === 'multiple'">
+                                                                x-if="(settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'multiple'">
                                                                 <div class="flex gap-3">
                                                                     <button @click="settingsSelectAll(vKey)"
                                                                             class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
@@ -715,7 +715,7 @@
                                                             <div
                                                                 class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                                 <template
-                                                                    x-for="[assetId, assetName] in Object.entries(settingsSeriesOptions[vKey]?.options || {})"
+                                                                    x-for="[assetId, assetName] in Object.entries((settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].options) || {})"
                                                                     :key="assetId">
                                                                     <div
                                                                         x-show="isViewAssetInGroup(vConfig.channel, assetId) && (settingsSearchQueries[vKey] === '' || assetName.toLowerCase().includes(settingsSearchQueries[vKey].toLowerCase()))"
@@ -724,12 +724,12 @@
                                                                         :class="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                         <div class="w-4 h-4 shrink-0 flex items-center justify-center border transition-colors"
                                                                              :class="{
-                                                                                 'rounded': (settingsSeriesOptions[vKey]?.mode || 'multiple') === 'multiple',
-                                                                                 'rounded-full': (settingsSeriesOptions[vKey]?.mode || 'multiple') === 'single',
+                                                                                 'rounded': (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'multiple',
+                                                                                 'rounded-full': (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'single',
                                                                                  'bg-primary-600 border-primary-600': ((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)),
                                                                                  'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800': !((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId))
                                                                              }">
-                                                                            <svg x-show="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) && (settingsSeriesOptions[vKey]?.mode || 'multiple') === 'multiple'"
+                                                                            <svg x-show="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) && (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'multiple'"
                                                                                  class="w-3 h-3 text-white" fill="none"
                                                                                  viewBox="0 0 24 24" stroke-width="3"
                                                                                  stroke="currentColor">
@@ -737,7 +737,7 @@
                                                                                       stroke-linejoin="round"
                                                                                       d="m4.5 12.75 6 6 9-13.5"/>
                                                                             </svg>
-                                                                            <div x-show="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) && (settingsSeriesOptions[vKey]?.mode || 'multiple') === 'single'"
+                                                                            <div x-show="((settingsControls.series_assets || {})[vKey] || []).includes(String(assetId)) && (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'single'"
                                                                                  class="w-2 h-2 rounded-full bg-white"></div>
                                                                         </div>
                                                                         <span class="truncate font-medium"

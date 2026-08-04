@@ -267,7 +267,7 @@
                     <template x-for="play in getAvailablePlays()" :key="play.id">
                         <div @click="applyPlay(play)" 
                              class="p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between"
-                             :class="selectedPlay?.id === play.id ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/20 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'">
+                             :class="(selectedPlay && selectedPlay.id === play.id) ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/20 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'">
                             <div>
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></span>
@@ -276,7 +276,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2" x-text="play.theory"></p>
                             </div>
                             <div class="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs">
-                                <span class="text-primary-600 dark:text-primary-400 font-medium" x-text="selectedPlay?.id === play.id ? '{{ __('Active') }}' : '{{ __('Apply Scenario') }}'"></span>
+                                <span class="text-primary-600 dark:text-primary-400 font-medium" x-text="(selectedPlay && selectedPlay.id === play.id) ? '{{ __('Active') }}' : '{{ __('Apply Scenario') }}'"></span>
                                 <x-heroicon-m-arrow-right class="w-3.5 h-3.5 text-primary-500" />
                             </div>
                         </div>
@@ -287,10 +287,10 @@
                 <div x-show="selectedPlay" class="mt-4 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-start gap-3">
                     <x-heroicon-o-light-bulb class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                     <div>
-                        <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay?.name"></h4>
+                        <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay ? selectedPlay.name : ''"></h4>
                         <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                            <p><strong>Theory:</strong> <span x-text="selectedPlay?.theory"></span></p>
-                            <p><strong>Expected Results:</strong> <span x-text="selectedPlay?.expected"></span></p>
+                            <p><strong>Theory:</strong> <span x-text="selectedPlay ? selectedPlay.theory : ''"></span></p>
+                            <p><strong>Expected Results:</strong> <span x-text="selectedPlay ? selectedPlay.expected : ''"></span></p>
                             <p class="text-xs italic mt-2 opacity-80">{{ __('Note: Please select your specific assets below to complete the configuration.') }}</p>
                         </div>
                     </div>

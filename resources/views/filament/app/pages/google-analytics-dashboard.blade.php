@@ -306,7 +306,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.campaigns.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.campaigns === t ? 'active' : ''"
-                         @click="setSectionSubTab('campaigns', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('campaigns', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -324,8 +324,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.campaigns]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.campaigns]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.campaigns] && tabConfig[ss.campaigns].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('campaigns', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.campaigns === m" x-text="sd2.campaigns === 'desc' ? '↓' : '↑'"></span>
@@ -341,7 +341,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.campaigns]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -353,7 +353,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('campaigns').length === 0">
-                        <td :colspan="(tabConfig[ss.campaigns]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics && tabConfig[ss.campaigns].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -394,7 +394,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.channels.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.channels === t ? 'active' : ''"
-                         @click="setSectionSubTab('channels', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('channels', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -412,8 +412,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.channels]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.channels]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.channels] && tabConfig[ss.channels].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.channels] && tabConfig[ss.channels].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('channels', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.channels === m" x-text="sd2.channels === 'desc' ? '↓' : '↑'"></span>
@@ -429,7 +429,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.channels]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.channels] && tabConfig[ss.channels].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -441,7 +441,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('channels').length === 0">
-                        <td :colspan="(tabConfig[ss.channels]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.channels] && tabConfig[ss.channels].metrics && tabConfig[ss.channels].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -482,7 +482,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.traffic.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.traffic === t ? 'active' : ''"
-                         @click="setSectionSubTab('traffic', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('traffic', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -500,8 +500,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.traffic]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.traffic]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.traffic] && tabConfig[ss.traffic].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('traffic', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.traffic === m" x-text="sd2.traffic === 'desc' ? '↓' : '↑'"></span>
@@ -517,7 +517,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.traffic]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -529,7 +529,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('traffic').length === 0">
-                        <td :colspan="(tabConfig[ss.traffic]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics && tabConfig[ss.traffic].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -570,7 +570,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.acquisition.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.acquisition === t ? 'active' : ''"
-                         @click="setSectionSubTab('acquisition', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('acquisition', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -588,8 +588,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.acquisition]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.acquisition]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.acquisition] && tabConfig[ss.acquisition].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('acquisition', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.acquisition === m" x-text="sd2.acquisition === 'desc' ? '↓' : '↑'"></span>
@@ -605,7 +605,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.acquisition]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -617,7 +617,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('acquisition').length === 0">
-                        <td :colspan="(tabConfig[ss.acquisition]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics && tabConfig[ss.acquisition].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -658,7 +658,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.events.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.events === t ? 'active' : ''"
-                         @click="setSectionSubTab('events', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('events', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -676,8 +676,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.events]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.events]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.events] && tabConfig[ss.events].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.events] && tabConfig[ss.events].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('events', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.events === m" x-text="sd2.events === 'desc' ? '↓' : '↑'"></span>
@@ -693,7 +693,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.events]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.events] && tabConfig[ss.events].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -705,7 +705,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('events').length === 0">
-                        <td :colspan="(tabConfig[ss.events]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.events] && tabConfig[ss.events].metrics && tabConfig[ss.events].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -746,7 +746,7 @@
             <div class="tab-nav-ga4">
                 <template x-for="t in sectionConfig.adtouchpoints.tabs" :key="t">
                     <div class="tab-ga4" :class="ss.adtouchpoints === t ? 'active' : ''"
-                         @click="setSectionSubTab('adtouchpoints', t)" x-text="tabConfig[t]?.label || t"></div>
+                         @click="setSectionSubTab('adtouchpoints', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                 </template>
             </div>
             <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
@@ -764,8 +764,8 @@
                 <table class="ga4-table">
                     <thead>
                     <tr>
-                        <th><span x-text="tabConfig[ss.adtouchpoints]?.label || 'Name'"></span></th>
-                        <template x-for="m in (tabConfig[ss.adtouchpoints]?.metrics || [])" :key="m">
+                        <th><span x-text="(tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].label) || 'Name'"></span></th>
+                        <template x-for="m in ((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics) || [])" :key="m">
                             <th class="metric-cell cursor-pointer" @click="sectionSortBy('adtouchpoints', m)">
                                 <span x-text="metricLabels[m] || m"></span>
                                 <span x-show="sc.adtouchpoints === m" x-text="sd2.adtouchpoints === 'desc' ? '↓' : '↑'"></span>
@@ -781,7 +781,7 @@
                                     <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
                                 </div>
                             </td>
-                            <template x-for="m in (tabConfig[ss.adtouchpoints]?.metrics || [])" :key="m">
+                            <template x-for="m in ((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics) || [])" :key="m">
                                 <td class="metric-cell">
                                     <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
                                     <div class="progress-bar-container">
@@ -793,7 +793,7 @@
                         </tr>
                     </template>
                     <tr x-show="sectionPaginated('adtouchpoints').length === 0">
-                        <td :colspan="(tabConfig[ss.adtouchpoints]?.metrics?.length || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                        <td :colspan="((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics && tabConfig[ss.adtouchpoints].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                     </tr>
                     </tbody>
                 </table>
