@@ -166,7 +166,7 @@ class JointDashboard extends Page
         }
         
         uasort($accounts, fn($a, $b) => strcasecmp($a, $b));
-        return $accounts;
+        return (object) $accounts;
     }
 
     public function fetchJointData(array $a, array $b, string $dStart, string $dEnd)
