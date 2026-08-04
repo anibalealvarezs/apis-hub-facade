@@ -84,6 +84,39 @@ class JointDashboard extends Page
         'google_search_console' => []
     ];
 
+    public function getJointConfig(): array
+    {
+        return [
+            'channels' => $this->channels,
+            'metricsDict' => $this->metricsDict,
+            'availableAccounts' => $this->availableAccounts,
+            'analysisLevelOptions' => [
+                'level' => __('Level (Original)'),
+                'diff1' => __('1st Difference (Δ)'),
+                'diff2' => __('2nd Difference (ΔΔ)'),
+                'zscore' => __('Z-Score (Normalized)'),
+            ],
+            'lagOptions' => [
+                '0' => __('No Lag'),
+                '1' => __('+1 Day'),
+                '2' => __('+2 Days'),
+                '3' => __('+3 Days'),
+                '4' => __('+4 Days'),
+                '5' => __('+5 Days'),
+                '6' => __('+6 Days'),
+                '7' => __('+7 Days'),
+                '-1' => __('-1 Day'),
+                '-2' => __('-2 Days'),
+                '-3' => __('-3 Days'),
+                '-4' => __('-4 Days'),
+                '-5' => __('-5 Days'),
+                '-6' => __('-6 Days'),
+                '-7' => __('-7 Days'),
+            ],
+            'allPlays' => \App\Services\Analytics\JointCorrelationPlaybookRegistry::getPlays(),
+        ];
+    }
+
     public function mount(): void
     {
         $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
