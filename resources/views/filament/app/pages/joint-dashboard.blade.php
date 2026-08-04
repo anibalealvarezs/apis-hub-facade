@@ -219,10 +219,14 @@
     ];
 @endphp
 
+    <script>
+        window.jointConfig = @js($jointConfig);
+    </script>
+
     <div id="joint-dashboard-container" x-data="jointDashboard(Object.assign({
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
-    }, @js($jointConfig)))" x-init="initDashboard()">
+    }, window.jointConfig || {}))" x-init="initDashboard()">
         <div class="joint-header-row">
             <div>
                 <h1 class="joint-header-title">
