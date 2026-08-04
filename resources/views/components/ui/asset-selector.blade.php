@@ -20,18 +20,37 @@
 <div class="relative" x-data="{
     open: false,
     searchAssetGroup: '',
+    stripHtml(html) {
+        if (!html) return '';
+        if (typeof html !== 'string') return String(html);
+        if (!html.includes('<')) return html;
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        const firstSpan = tmp.querySelector('span');
+        return (firstSpan ? firstSpan.textContent : tmp.textContent || '').trim();
+    },
     getOptionLabel(optionsObj, idVal, placeholder) {
         if (idVal === null || idVal === undefined || idVal === '') return placeholder || '';
         if (!optionsObj) return String(idVal);
         let val = optionsObj[idVal] ?? optionsObj[String(idVal)] ?? optionsObj[Number(idVal)];
         if (val === null || val === undefined) return String(idVal);
         if (typeof val === 'object') return val.label || val.name || val.title || val.text || String(idVal);
-        return String(val);
+        return this.stripHtml(String(val));
     },
-    getItemLabel(val, id) {
+    getItemTitle(val, id) {
         if (val === null || val === undefined) return String(id || '');
         if (typeof val === 'object') return val.label || val.name || val.title || val.text || String(id || '');
+        if (typeof val === 'string' && val.includes('<')) return this.stripHtml(val);
         return String(val);
+    },
+    getItemDescription(val) {
+        if (typeof val === 'object' && val !== null) {
+            return val.description || val.desc || val.subtitle || null;
+        }
+        return null;
+    },
+    isHtml(val) {
+        return typeof val === 'string' && val.includes('<');
     }
 }" @click.outside="open = false">
     <button @click="if (!$el.hasAttribute('disabled') && !$el.disabled) open = !open" type="button"
@@ -84,9 +103,9 @@
                 </div>
             @endif
             <template x-for="(val, id) in {{ $options }}" :key="id">
-                <div x-show="searchAssetGroup === '' || getItemLabel(val, id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || String(id).toLowerCase().includes(searchAssetGroup.toLowerCase())"
+                <div x-show="searchAssetGroup === '' || getItemTitle(val, id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || (getItemDescription(val) && getItemDescription(val).toLowerCase().includes(searchAssetGroup.toLowerCase())) || String(id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || (typeof val === 'string' && val.toLowerCase().includes(searchAssetGroup.toLowerCase()))"
                      @if($multiple)
-                         @click="{{ $model }}.includes(String(id)) ? {{ $model }} = {{ $model }}.filter(a => a != id) : {{ $model }}.push(String(id)); {{ $changeEvent }}"
+                         @click="{{ $model }}.includes(String(id)) ? {{ $model }} = {{ $model }}.filter(a => a != id) : {{ $model }} = [...({{ $model }} || []), String(id)]; {{ $changeEvent }}"
                      @else
                          @click="{{ $model }} = id; {{ $changeEvent ? $changeEvent . ';' : '' }} open = false;"
                      @endif
@@ -98,7 +117,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                         </svg>
                     </div>
-                    <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="getItemLabel(val, id)"></span>
+
+                    <template x-if="isHtml(val)">
+                        <div class="flex-1 overflow-hidden" x-html="val"></div>
+                    </template>
+                    <template x-if="!isHtml(val)">
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="getItemTitle(val, id)"></span>
+                            <template x-if="getItemDescription(val)">
+                                <span class="truncate text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="getItemDescription(val)"></span>
+                            </template>
+                        </div>
+                    </template>
                 </div>
             </template>
         </div>
