@@ -229,10 +229,6 @@ class GoogleSearchConsoleController extends Controller
                 if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
                 $row['id'] = $val;
                 $row['name'] = $val;
-                
-                if (isset($row['ctr']) && is_numeric($row['ctr'])) {
-                    $row['ctr'] = round((float) $row['ctr'] * 100, 4);
-                }
             }
 
             return response()->json([
