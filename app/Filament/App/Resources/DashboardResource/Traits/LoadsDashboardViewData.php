@@ -653,13 +653,15 @@ trait LoadsDashboardViewData
                     continue;
                 }
 
-                $templateKey = $widgetControls['template_key'] ?? null;
+                $templateKey = $widgetControls['template_key']
+                    ?? (isset($kpi) ? ($kpi->filters['_ui_state']['template_key'] ?? null) : null);
 
                 // Fallback for existing KPIs: try to match by name in the predefined registry
                 if (!$templateKey && isset($kpi) && !empty($kpi->name)) {
+                    $rawKpiName = is_array($kpi->name) ? ($kpi->name['en'] ?? reset($kpi->name)) : $kpi->name;
                     $predefinedAll = PredefinedKpiRegistry::getPredefinedKpis();
                     foreach ($predefinedAll as $key => $def) {
-                        if (($def['name'] ?? '') === $kpi->name) {
+                        if (($def['name'] ?? '') === $rawKpiName || ($def['name'] ?? '') === $kpi->name) {
                             $templateKey = $key;
                             break;
                         }
