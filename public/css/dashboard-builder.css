@@ -4,6 +4,29 @@
     min-height: 500px;
 }
 
+/* Color scheme & dropdown option defaults for selects & datepickers */
+select {
+    color-scheme: light;
+}
+.dark select {
+    color-scheme: dark;
+}
+input[type="date"] {
+    color-scheme: light;
+}
+.dark input[type="date"] {
+    color-scheme: dark;
+}
+
+select option, select optgroup {
+    background-color: #ffffff;
+    color: #111827;
+}
+.dark select option, .dark select optgroup {
+    background-color: #1f2937;
+    color: #ffffff;
+}
+
 /* Gridstack overrides for Filament dark mode */
 .dark .grid-stack-item-content {
     background: rgb(24 24 27) !important;
