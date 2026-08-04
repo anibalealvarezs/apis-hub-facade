@@ -172,7 +172,7 @@
                 id: 'brand_search_synergy',
                 name: @json(__('Brand Search Synergy')),
                 short_desc: @json(__('FB Ads vs GSC')),
-                theory: @json(__('Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.')),
+                theory: @json(__("Paid social campaigns drive top-of-funnel awareness. People see an ad, don't click, but later search for the brand on Google.")),
                 expected: @json(__('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.')),
                 requires: ['facebook_marketing', 'google_search_console'],
                 config: {
