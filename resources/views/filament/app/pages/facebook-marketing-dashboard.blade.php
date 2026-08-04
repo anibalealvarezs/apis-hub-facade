@@ -136,13 +136,13 @@
     </style>
 
     <div x-data="fbDashboard({
-        tenantId: @json(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
-        accounts: @json($selectedAccounts),
-        accountNames: @json($accounts),
-        dateStart: @json($dateStart),
-        dateEnd: @json($dateEnd),
+        tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
+        accounts: @js($selectedAccounts),
+        accountNames: @js($accounts),
+        dateStart: @js($dateStart),
+        dateEnd: @js($dateEnd),
         activeTab: 'campaigns',
-        csrfToken: @json(csrf_token())
+        csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="fb-header-row">
             <div>

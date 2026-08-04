@@ -222,7 +222,7 @@
     <div id="joint-dashboard-container" x-data="jointDashboard(Object.assign({
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
-    }, @json($jointConfig)))" x-init="initDashboard()">
+    }, @js($jointConfig)))" x-init="initDashboard()">
         <div class="joint-header-row">
             <div>
                 <h1 class="joint-header-title">

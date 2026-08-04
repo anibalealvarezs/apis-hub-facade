@@ -2,20 +2,20 @@
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
 
     <div x-data="dashboardBuilder({
-        widgets: @json($this->widgets ?? []),
-        gridState: @json($this->gridState ?? []),
-        widgetLabels: @json(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
-        widgetDescriptions: @json(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
-        widgetSvgs: @json(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),
-        channels: @json($this->getActiveChannels()),
-        dashboardControls: @json($this->getDashboardControls()),
-        assetGroups: @json($this->getAllAssetGroups()),
+        widgets: @js($this->widgets ?? []),
+        gridState: @js($this->gridState ?? []),
+        widgetLabels: @js(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
+        widgetDescriptions: @js(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
+        widgetSvgs: @js(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),
+        channels: @js($this->getActiveChannels()),
+        dashboardControls: @js($this->getDashboardControls()),
+        assetGroups: @js($this->getAllAssetGroups()),
         isPublic: {{ $this->dashboard->is_public ? 'true' : 'false' }},
-        sourceTypes: @json($this->getAvailableSourceTypes()),
-        kpis: @json($this->getKpisForWidgetPicker()),
-        derivedMetrics: @json($this->getDerivedMetricsForWidgetPicker()),
-        derivedMetricWidgetTypes: @json(\App\Services\WidgetTypeRegistry::getWidgetTypesForSource('derived_metric')),
-        defaultEndDate: @json(date('Y-m-d', strtotime('-1 day')))
+        sourceTypes: @js($this->getAvailableSourceTypes()),
+        kpis: @js($this->getKpisForWidgetPicker()),
+        derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
+        derivedMetricWidgetTypes: @js(\App\Services\WidgetTypeRegistry::getWidgetTypesForSource('derived_metric')),
+        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">

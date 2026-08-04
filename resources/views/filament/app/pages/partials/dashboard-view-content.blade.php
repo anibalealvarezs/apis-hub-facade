@@ -23,8 +23,8 @@
         date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
         zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
     },
-    assetGroups: @json($viewObj->getAllAssetGroups()),
-    channelAssetGroupMap: @json($viewObj->getChannelAssetGroupMap()),
+    assetGroups: @js($viewObj->getAllAssetGroups()),
+    channelAssetGroupMap: @js($viewObj->getChannelAssetGroupMap()),
     selectedAssetGroup: '{{ $dashboardGroup }}'
 })" x-init="init()" id="dashboard-view-container" class="space-y-4"
      @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)"

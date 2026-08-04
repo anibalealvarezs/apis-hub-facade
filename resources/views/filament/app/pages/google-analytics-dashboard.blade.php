@@ -110,14 +110,14 @@
     </style>
 
     <div x-data="ga4Dashboard({
-        tenantId: @json(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
+        tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
         account: @entangle('selectedAccount'),
         selectedAccount: @entangle('selectedAccount'),
-        accountNames: @json($accounts),
+        accountNames: @js($accounts),
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
-        csrfToken: @json(csrf_token())
+        csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="ga4-header-row">
             <div>
