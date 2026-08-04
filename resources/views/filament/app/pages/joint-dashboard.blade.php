@@ -13,37 +13,43 @@
             margin-bottom: 25px;
         }
         .dark .joint-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+            border-color: rgba(255,255,255,0.05);
         }
 
-        .joint-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .joint-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
         .joint-curve-section {
-            padding: 20px;
             border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.1);
-            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
         }
         .dark .joint-curve-section {
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.03);
+            border-color: rgba(255,255,255,0.08);
         }
-        .curve-a { border-top: 4px solid #00a7f9; }
-        .curve-b { border-top: 4px solid #f43f5e; }
+        .curve-a { border-left: 4px solid #00a7f9; }
+        .curve-b { border-left: 4px solid #f43f5e; }
 
-        /* Selector CSS replaced by Tailwind form classes */
-
-        .chart-container-joint { height: 450px; position: relative; }
+        .chart-container-joint {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
 
         .correlation-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
-            border-radius: 12px;
+            padding: 8px 16px;
+            border-radius: 9999px;
             font-weight: 700;
-            font-size: 1.1rem;
-            margin-top: 20px;
+            font-size: 1.25rem;
         }
         .corr-strong-pos { background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
         .dark .corr-strong-pos { color: #4ade80; }
@@ -120,13 +126,107 @@
         }
     </style>
 
-    <div id="joint-dashboard-container" x-data="jointDashboard()" x-init="initDashboard()">
+    <div id="joint-dashboard-container" x-data="jointDashboard({
+        dateStart: @entangle('dateStart'),
+        dateEnd: @entangle('dateEnd'),
+        channels: @json($channels),
+        metricsDict: @json($metricsDict),
+        availableAccounts: @json($availableAccounts, JSON_FORCE_OBJECT),
+        analysisLevelOptions: {
+            'level': @json(__('Level (Original)')),
+            'diff1': @json(__('1st Difference (Δ)')),
+            'diff2': @json(__('2nd Difference (ΔΔ)')),
+            'zscore': @json(__('Z-Score (Normalized)'))
+        },
+        lagOptions: {
+            '0': @json(__('No Lag')),
+            '1': @json(__('+1 Day')),
+            '2': @json(__('+2 Days')),
+            '3': @json(__('+3 Days')),
+            '4': @json(__('+4 Days')),
+            '5': @json(__('+5 Days')),
+            '6': @json(__('+6 Days')),
+            '7': @json(__('+7 Days')),
+            '-1': @json(__('-1 Day')),
+            '-2': @json(__('-2 Days')),
+            '-3': @json(__('-3 Days')),
+            '-4': @json(__('-4 Days')),
+            '-5': @json(__('-5 Days')),
+            '-6': @json(__('-6 Days')),
+            '-7': @json(__('-7 Days'))
+        },
+        allPlays: [
+            {
+                id: 'custom_analysis',
+                name: @json(__('Custom Analysis')),
+                short_desc: @json(__('Free Exploration')),
+                theory: @json(__('Start with a blank canvas to explore your own hypotheses across any channels and metrics.')),
+                expected: @json(__('No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.')),
+                requires: [],
+                config: {
+                    curveA: { channel: '', metric: '', level: 'zscore', lag: '0' },
+                    curveB: { channel: '', metric: '', level: 'zscore', lag: '0' }
+                }
+            },
+            {
+                id: 'brand_search_synergy',
+                name: @json(__('Brand Search Synergy')),
+                short_desc: @json(__('FB Ads vs GSC')),
+                theory: @json(__('Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.')),
+                expected: @json(__('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.')),
+                requires: ['facebook_marketing', 'google_search_console'],
+                config: {
+                    curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
+                    curveB: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '3' }
+                }
+            },
+            {
+                id: 'organic_lift_paid',
+                name: @json(__('Organic Lift via Paid')),
+                short_desc: @json(__('FB Ads vs FB Organic')),
+                theory: @json(__('Aggressive paid spending can create a halo effect on your organic profile visits and reach.')),
+                expected: @json(__('Positive correlation. When spend spikes, organic reach should spike proportionally.')),
+                requires: ['facebook_marketing', 'facebook_organic'],
+                config: {
+                    curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
+                    curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '0' }
+                }
+            },
+            {
+                id: 'ad_fatigue',
+                name: @json(__('Ad Fatigue & Efficiency')),
+                short_desc: @json(__('FB CTR vs FB Cost')),
+                theory: @json(__('As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.')),
+                expected: @json(__('Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.')),
+                requires: ['facebook_marketing'],
+                config: {
+                    curveA: { channel: 'facebook_marketing', metric: 'ctr', level: 'zscore', lag: '0' },
+                    curveB: { channel: 'facebook_marketing', metric: 'cpc', level: 'zscore', lag: '0' }
+                }
+            },
+            {
+                id: 'search_to_organic_lag',
+                name: @json(__('Search Demand to Organic Engagement')),
+                short_desc: @json(__('GSC Clicks vs FB Organic')),
+                theory: @json(__('Surges in search demand often precede user engagement on social channels as consumers research before interacting.')),
+                expected: @json(__('Positive correlation with 1-3 day lag.')),
+                requires: ['google_search_console', 'facebook_organic'],
+                config: {
+                    curveA: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '0' },
+                    curveB: { channel: 'facebook_organic', metric: 'page_engaged_users', level: 'zscore', lag: '2' }
+                }
+            }
+        ]
+    })" x-init="initDashboard()">
         <div class="joint-header-row">
             <div>
                 <h1 class="joint-header-title">
-                    <x-heroicon-o-arrows-right-left class="w-8 h-8 text-[#00a7f9]"/>
-                    {{ __('Performance Correlations') }}
+                    <x-heroicon-o-arrows-right-left class="w-8 h-8 text-primary-500" />
+                    {{ __('Cross-Channel Joint Correlations') }}
                 </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {{ __('Analyze statistical dependencies, lead/lag effects, and z-score normalized cross-channel trends.') }}
+                </p>
             </div>
             <div class="joint-header-controls">
                 <button type="button" @click="window.print()" class="export-btn">
@@ -137,7 +237,7 @@
                 </button>
                 <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
                 <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
-                <button type="button" @click="fetchData()"
+                <button type="button" @click="fetchData((a,b,s,e) => $wire.fetchJointData(a,b,s,e))"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 text-white text-sm font-medium rounded-lg px-6 py-2.5 transition shadow-sm"
                         :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                         :disabled="isLoading || !isReadyToFetch()">
@@ -158,20 +258,30 @@
                     {{ __('Select a predefined marketing theory scenario to auto-configure the dashboard. You will only need to select your specific assets.') }}
                 </p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="play in getAvailablePlays()" :key="play.id">
-                        <button type="button" @click="applyPlay(play)" 
-                                class="text-left px-4 py-3 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                :class="selectedPlay?.id === play.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-primary-300 dark:hover:border-primary-500/50'">
-                            <div class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate" x-text="play.short_desc"></div>
-                        </button>
+                        <div @click="applyPlay(play)" 
+                             class="p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between"
+                             :class="selectedPlay?.id === play.id ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/20 ring-2 ring-primary-500/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-gray-900 dark:text-white" x-text="play.name"></span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium" x-text="play.short_desc"></span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2" x-text="play.theory"></p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs">
+                                <span class="text-primary-600 dark:text-primary-400 font-medium" x-text="selectedPlay?.id === play.id ? '{{ __('Active') }}' : '{{ __('Apply Scenario') }}'"></span>
+                                <x-heroicon-m-arrow-right class="w-3.5 h-3.5 text-primary-500" />
+                            </div>
+                        </div>
                     </template>
                 </div>
 
-                <!-- Active Play Info -->
-                <div x-show="selectedPlay" x-collapse class="mt-3">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <!-- Theory Explanation Callout -->
+                <div x-show="selectedPlay" class="mt-4 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-start gap-3">
+                    <x-heroicon-o-light-bulb class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                    <div>
                         <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay?.name"></h4>
                         <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
                             <p><strong>Theory:</strong> <span x-text="selectedPlay?.theory"></span></p>
@@ -359,586 +469,4 @@
             </div>
         </div>
     </div>
-
-    @script
-    <script>
-        Alpine.data('jointDashboard', () => ({
-                    isLoading: false,
-                    chartRendered: false,
-                    chartInstance: null,
-                    dateStart: @entangle('dateStart'),
-                    dateEnd: @entangle('dateEnd'),
-                    channels: @json($channels),
-                    metricsDict: @json($metricsDict),
-                    availableAccounts: @json($availableAccounts),
-                    analysisLevelOptions: {
-                        'level': @json(__('Level (Original)')),
-                        'diff1': @json(__('1st Difference (Δ)')),
-                        'diff2': @json(__('2nd Difference (ΔΔ)')),
-                        'zscore': @json(__('Z-Score (Normalized)'))
-                    },
-                    lagOptions: {
-                        '0': @json(__('No Lag')),
-                        '1': @json(__('+1 Day')),
-                        '2': @json(__('+2 Days')),
-                        '3': @json(__('+3 Days')),
-                        '4': @json(__('+4 Days')),
-                        '5': @json(__('+5 Days')),
-                        '6': @json(__('+6 Days')),
-                        '7': @json(__('+7 Days')),
-                        '-1': @json(__('-1 Day')),
-                        '-2': @json(__('-2 Days')),
-                        '-3': @json(__('-3 Days')),
-                        '-4': @json(__('-4 Days')),
-                        '-5': @json(__('-5 Days')),
-                        '-6': @json(__('-6 Days')),
-                        '-7': @json(__('-7 Days'))
-                    },
-                    curveA: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
-                    curveB: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
-                    chartData: null,
-                    correlation: null,
-                    subtitle: '',
-                    scatterChartInstance: null,
-                    rollingChartInstance: null,
-                    selectedPlay: null,
-
-                    allPlays: [
-                        {
-                            id: 'custom_analysis',
-                            name: {!! json_encode(__('Custom Analysis')) !!},
-                            short_desc: {!! json_encode(__('Free Exploration')) !!},
-                            theory: {!! json_encode(__('Start with a blank canvas to explore your own hypotheses across any channels and metrics.')) !!},
-                            expected: {!! json_encode(__('No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.')) !!},
-                            requires: [],
-                            config: {
-                                curveA: { channel: '', metric: '', level: 'zscore', lag: '0' },
-                                curveB: { channel: '', metric: '', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'brand_search_synergy',
-                            name: {!! json_encode(__('Brand Search Synergy')) !!},
-                            short_desc: {!! json_encode(__('FB Ads vs GSC')) !!},
-                            theory: {!! json_encode(__('Paid social campaigns drive top-of-funnel awareness. People see an ad, don\'t click, but later search for the brand on Google.')) !!},
-                            expected: {!! json_encode(__('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.')) !!},
-                            requires: ['facebook_marketing', 'google_search_console'],
-                            config: {
-                                curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '3' }
-                            }
-                        },
-                        {
-                            id: 'organic_lift_paid',
-                            name: {!! json_encode(__('Organic Lift via Paid')) !!},
-                            short_desc: {!! json_encode(__('FB Ads vs FB Organic')) !!},
-                            theory: {!! json_encode(__('Aggressive paid spending can create a halo effect on your organic profile visits and reach.')) !!},
-                            expected: {!! json_encode(__('Positive correlation. When spend spikes, organic reach should spike proportionally.')) !!},
-                            requires: ['facebook_marketing', 'facebook_organic'],
-                            config: {
-                                curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'ad_fatigue',
-                            name: {!! json_encode(__('Ad Fatigue & Efficiency')) !!},
-                            short_desc: {!! json_encode(__('FB CTR vs FB Cost')) !!},
-                            theory: {!! json_encode(__('As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.')) !!},
-                            expected: {!! json_encode(__('Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.')) !!},
-                            requires: ['facebook_marketing'],
-                            config: {
-                                curveA: { channel: 'facebook_marketing', metric: 'ctr', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'facebook_marketing', metric: 'cost_per_result', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'google_evaluation_cycle',
-                            name: {!! json_encode(__('SEO Evaluation Cycle')) !!},
-                            short_desc: {!! json_encode(__('GSC Impressions vs Position')) !!},
-                            theory: {!! json_encode(__('When Google gives you an impression spike, it takes the algorithm a few days to process the user-behavior signals (CTR, Bounce Rate) from that traffic before adjusting your ranking.')) !!},
-                            expected: {!! json_encode(__('Positive correlation with Lag +4. A spike in impressions 4 days ago often correlates with a temporary drop in ranking (higher position number) today as Google processes the broad, low-engagement traffic test.')) !!},
-                            requires: ['google_search_console'],
-                            config: {
-                                curveA: { channel: 'google_search_console', metric: 'impressions', level: 'zscore', lag: '4' },
-                                curveB: { channel: 'google_search_console', metric: 'position', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'empty_traffic',
-                            name: {!! json_encode(__('Empty Traffic Check')) !!},
-                            short_desc: {!! json_encode(__('FB Clicks vs Conversions')) !!},
-                            theory: {!! json_encode(__('More clicks should theoretically mean more conversions. If they don\'t, you might have a "clickbait" ad or a broken landing page.')) !!},
-                            expected: {!! json_encode(__('Should be a strong positive correlation. If the correlation drops to zero or goes negative, your ads are driving low-intent traffic that doesn\'t convert.')) !!},
-                            requires: ['facebook_marketing'],
-                            config: {
-                                curveA: { channel: 'facebook_marketing', metric: 'clicks', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'facebook_marketing', metric: 'results', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'cpm_vs_roas',
-                            name: {!! json_encode(__('Auction Competition vs ROAS')) !!},
-                            short_desc: {!! json_encode(__('FB CPM vs ROAS')) !!},
-                            theory: {!! json_encode(__('When market competition drives up the cost of impressions (CPM), does your return on ad spend (ROAS) immediately drop, or does the higher quality of expensive traffic maintain the ROAS?')) !!},
-                            expected: {!! json_encode(__('Typically a negative correlation. As CPMs rise, ROAS drops unless the more expensive audience is converting at a proportionally higher rate.')) !!},
-                            requires: ['facebook_marketing'],
-                            config: {
-                                curveA: { channel: 'facebook_marketing', metric: 'cpm', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'facebook_marketing', metric: 'purchase_roas', level: 'zscore', lag: '0' }
-                            }
-                        },
-                        {
-                            id: 'organic_algorithm_reward',
-                            name: {!! json_encode(__('Algorithm Reward')) !!},
-                            short_desc: {!! json_encode(__('FB Engagements vs Reach')) !!},
-                            theory: {!! json_encode(__('Social algorithms reward high engagement (likes/comments) today with broader reach tomorrow.')) !!},
-                            expected: {!! json_encode(__('Positive correlation with a 1 to 2 day lag. A spike in interactions today should cause a delayed spike in reach as the algorithm pushes the content.')) !!},
-                            requires: ['facebook_organic'],
-                            config: {
-                                curveA: { channel: 'facebook_organic', metric: 'total_interactions', level: 'zscore', lag: '0' },
-                                curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '2' }
-                            }
-                        }
-                    ],
-
-                    getAvailablePlays() {
-                        let availableKeys = Object.keys(this.channels);
-                        return this.allPlays.filter(play => {
-                            return play.requires.every(req => availableKeys.includes(req) && Object.keys(this.availableAccounts[req] || {}).length > 0);
-                        });
-                    },
-
-                    applyPlay(play) {
-                        this.selectedPlay = play;
-                        
-                        // Determine assets
-                        let assetA = this.curveA.channel === play.config.curveA.channel ? this.curveA.asset : '';
-                        let assetB = this.curveB.channel === play.config.curveB.channel ? this.curveB.asset : '';
-                        
-                        // If channels will match, sync assetB to assetA
-                        if (play.config.curveA.channel && play.config.curveA.channel === play.config.curveB.channel && assetA) {
-                            assetB = assetA;
-                        }
-                        
-                        // Update channels immediately so DOM can render new <option> elements
-                        this.curveA.channel = play.config.curveA.channel;
-                        this.curveB.channel = play.config.curveB.channel;
-
-                        // Use nextTick to assign metrics AFTER DOM <options> are ready
-                        this.$nextTick(() => {
-                            this.curveA = { ...play.config.curveA, asset: assetA };
-                            this.curveB = { ...play.config.curveB, asset: assetB };
-                        });
-                    },
-
-                    transformData(dates, values, level, lag, targetStart, targetEnd) {
-                        let resDates = [...dates];
-                        let resValues = [...values];
-
-                        // Apply differencing
-                        if (level === 'diff1' || level === 'diff2') {
-                            let newDates = [];
-                            let newVals = [];
-                            for (let i = 1; i < resValues.length; i++) {
-                                newDates.push(resDates[i]);
-                                if (resValues[i] === null || resValues[i-1] === null) {
-                                    newVals.push(null);
-                                } else {
-                                    newVals.push(resValues[i] - resValues[i-1]);
-                                }
-                            }
-                            resDates = newDates;
-                            resValues = newVals;
-                        }
-                        if (level === 'diff2') {
-                            let newDates = [];
-                            let newVals = [];
-                            for (let i = 1; i < resValues.length; i++) {
-                                newDates.push(resDates[i]);
-                                if (resValues[i] === null || resValues[i-1] === null) {
-                                    newVals.push(null);
-                                } else {
-                                    newVals.push(resValues[i] - resValues[i-1]);
-                                }
-                            }
-                            resDates = newDates;
-                            resValues = newVals;
-                        }
-
-                        // Apply Lag (Shift)
-                        // A positive lag of +2 means today's value is what happened 2 days ago.
-                        // So we shift the values array to the right relative to the dates array.
-                        let l = parseInt(lag, 10);
-                        if (l !== 0) {
-                            let shiftedVals = [];
-                            for (let i = 0; i < resDates.length; i++) {
-                                let sourceIdx = i - l;
-                                if (sourceIdx >= 0 && sourceIdx < resValues.length) {
-                                    shiftedVals.push(resValues[sourceIdx]);
-                                } else {
-                                    shiftedVals.push(null);
-                                }
-                            }
-                            resValues = shiftedVals;
-                        }
-
-                        // Truncate to target start and end dates
-                        let finalDates = [];
-                        let finalValues = [];
-                        for (let i = 0; i < resDates.length; i++) {
-                            if (resDates[i] >= targetStart && resDates[i] <= targetEnd) {
-                                finalDates.push(resDates[i]);
-                                finalValues.push(resValues[i]);
-                            }
-                        }
-
-                        // Apply Z-Score normalization over the truncated window
-                        if (level === 'zscore') {
-                            let validVals = finalValues.filter(v => v !== null);
-                            if (validVals.length > 1) {
-                                let mean = validVals.reduce((a, b) => a + b, 0) / validVals.length;
-                                let variance = validVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / validVals.length;
-                                let stdDev = Math.sqrt(variance);
-                                if (stdDev === 0) stdDev = 1; // avoid division by zero
-
-                                for (let i = 0; i < finalValues.length; i++) {
-                                    if (finalValues[i] !== null) {
-                                        finalValues[i] = (finalValues[i] - mean) / stdDev;
-                                    }
-                                }
-                            }
-                        }
-
-                        return { dates: finalDates, values: finalValues };
-                    },
-
-                    calculatePearson(arr1, arr2) {
-                        let valid1 = [];
-                        let valid2 = [];
-                        for (let i = 0; i < arr1.length; i++) {
-                            if (arr1[i] !== null && arr2[i] !== null) {
-                                valid1.push(arr1[i]);
-                                valid2.push(arr2[i]);
-                            }
-                        }
-
-                        if (valid1.length < 3) return null;
-
-                        const n = valid1.length;
-                        const sum1 = valid1.reduce((a, b) => a + b, 0);
-                        const sum2 = valid2.reduce((a, b) => a + b, 0);
-                        const sum1Sq = valid1.reduce((a, b) => a + b * b, 0);
-                        const sum2Sq = valid2.reduce((a, b) => a + b * b, 0);
-                        const pSum = valid1.reduce((acc, val, i) => acc + val * valid2[i], 0);
-
-                        const num = pSum - (sum1 * sum2 / n);
-                        const den = Math.sqrt((sum1Sq - sum1 * sum1 / n) * (sum2Sq - sum2 * sum2 / n));
-
-                        if (den === 0) return 0;
-                        return num / den;
-                    },
-
-                    calculateRollingPearson(arr1, arr2, windowSize) {
-                        let rolling = [];
-                        for (let i = 0; i < arr1.length; i++) {
-                            if (i < windowSize - 1) {
-                                rolling.push(null);
-                            } else {
-                                let slice1 = arr1.slice(i - windowSize + 1, i + 1);
-                                let slice2 = arr2.slice(i - windowSize + 1, i + 1);
-                                rolling.push(this.calculatePearson(slice1, slice2));
-                            }
-                        }
-                        return rolling;
-                    },
-
-                    initDashboard() {
-                        window.addEventListener('joint-data-loaded', (e) => {
-                            // Livewire 3 sometimes passes named params inside e.detail.data, or unnamed as e.detail[0]
-                            let payload = e.detail;
-                            if (payload && payload[0]) payload = payload[0];
-                            if (payload && payload.data) payload = payload.data;
-                            
-                            this.chartData = payload;
-                            if (this.chartData && this.chartData.curveA && this.chartData.curveB) {
-                                this.renderChart();
-                            } else {
-                                console.error("Invalid chart data payload received:", e.detail);
-                            }
-                            this.isLoading = false;
-                            this.chartRendered = true;
-                        });
-                    },
-
-                    isReadyToFetch() {
-                        return this.curveA.channel && this.curveA.asset && this.curveA.metric &&
-                               this.curveB.channel && this.curveB.asset && this.curveB.metric &&
-                               this.dateStart && this.dateEnd;
-                    },
-
-                    fetchData() {
-                        if (!this.isReadyToFetch()) return;
-                        this.isLoading = true;
-                        if (this.chartRendered) this.chartRendered = true;
-                        
-                        @this.fetchJointData(this.curveA, this.curveB, this.dateStart, this.dateEnd);
-                    },
-
-                    getCorrelationClass() {
-                        if (!this.correlation) return 'corr-weak';
-                        const coef = this.correlation;
-                        if (coef > 0.4) return 'corr-strong-pos';
-                        if (coef < -0.4) return 'corr-strong-neg';
-                        return 'corr-weak';
-                    },
-
-                    getCorrelationIcon() {
-                        if (!this.correlation) return '≈';
-                        const coef = this.correlation;
-                        if (coef > 0.4) return '↗';
-                        if (coef < -0.4) return '↘';
-                        return '≈';
-                    },
-
-                    renderChart() {
-                        if (typeof Chart === 'undefined' && window.importChartJs) {
-                            window.importChartJs().then(module => {
-                                window.Chart = module.default;
-                                this.renderChart();
-                            }).catch(err => console.error("Failed to load Chart.js", err));
-                            return;
-                        }
-
-                        if (this.chartInstance) {
-                            this.chartInstance.destroy();
-                        }
-                        if (this.scatterChartInstance) {
-                            this.scatterChartInstance.destroy();
-                        }
-                        if (this.rollingChartInstance) {
-                            this.rollingChartInstance.destroy();
-                        }
-
-                        const targetStart = this.chartData.originalStartDate;
-                        const targetEnd = this.chartData.originalEndDate;
-
-                        const rawA = this.chartData.curveA;
-                        const rawB = this.chartData.curveB;
-
-                        const dataA = this.transformData(rawA.dates, rawA.values, this.curveA.level, this.curveA.lag, targetStart, targetEnd);
-                        const dataB = this.transformData(rawB.dates, rawB.values, this.curveB.level, this.curveB.lag, targetStart, targetEnd);
-
-                        const pearson = this.calculatePearson(dataA.values, dataB.values);
-                        this.correlation = pearson;
-
-                        let titleA = rawA.name;
-                        if (this.curveA.level === 'diff1') titleA = 'Δ ' + titleA;
-                        if (this.curveA.level === 'diff2') titleA = 'ΔΔ ' + titleA;
-                        if (this.curveA.level === 'zscore') titleA = 'Z-Score ' + titleA;
-                        if (parseInt(this.curveA.lag) !== 0) titleA += ` (Lag ${this.curveA.lag})`;
-
-                        let titleB = rawB.name;
-                        if (this.curveB.level === 'diff1') titleB = 'Δ ' + titleB;
-                        if (this.curveB.level === 'diff2') titleB = 'ΔΔ ' + titleB;
-                        if (this.curveB.level === 'zscore') titleB = 'Z-Score ' + titleB;
-                        if (parseInt(this.curveB.lag) !== 0) titleB += ` (Lag ${this.curveB.lag})`;
-
-                        this.subtitle = `${titleA} vs ${titleB}`;
-
-                        const isDarkMode = document.documentElement.classList.contains('dark');
-                        const textColor = isDarkMode ? '#9ca3af' : '#6b7280';
-                        const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-
-                        const ctx = document.getElementById("jointChart").getContext('2d');
-                        this.chartInstance = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: dataA.dates,
-                                datasets: [
-                                    {
-                                        label: titleA,
-                                        data: dataA.values,
-                                        borderColor: '#00a7f9',
-                                        backgroundColor: 'rgba(0, 167, 249, 0.1)',
-                                        borderWidth: 2,
-                                        pointRadius: 0,
-                                        pointHoverRadius: 6,
-                                        yAxisID: 'yA',
-                                        tension: 0.4,
-                                        fill: true
-                                    },
-                                    {
-                                        label: titleB,
-                                        data: dataB.values,
-                                        borderColor: '#f43f5e',
-                                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                                        borderWidth: 2,
-                                        pointRadius: 0,
-                                        pointHoverRadius: 6,
-                                        yAxisID: 'yB',
-                                        tension: 0.4,
-                                        fill: true
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                layout: {
-                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
-                                },
-                                interaction: {
-                                    mode: 'index',
-                                    intersect: false,
-                                },
-                                plugins: {
-                                    legend: {
-                                        labels: { color: textColor }
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        grid: { color: gridColor },
-                                        ticks: { color: textColor }
-                                    },
-                                    yA: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'left',
-                                        grid: { color: gridColor },
-                                        ticks: { color: '#00a7f9' },
-                                        title: {
-                                            display: true,
-                                            text: titleA,
-                                            color: '#00a7f9',
-                                            font: { weight: 'bold' }
-                                        }
-                                    },
-                                    yB: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'right',
-                                        grid: { drawOnChartArea: false },
-                                        ticks: { color: '#f43f5e' },
-                                        title: {
-                                            display: true,
-                                            text: titleB,
-                                            color: '#f43f5e',
-                                            font: { weight: 'bold' }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-
-                        // Render Scatter Plot
-                        const scatterData = [];
-                        for(let i=0; i<dataA.values.length; i++) {
-                            if (dataA.values[i] !== null && dataB.values[i] !== null) {
-                                scatterData.push({ x: dataA.values[i], y: dataB.values[i] });
-                            }
-                        }
-
-                        const scatterCtx = document.getElementById("scatterChart").getContext('2d');
-                        this.scatterChartInstance = new Chart(scatterCtx, {
-                            type: 'scatter',
-                            data: {
-                                datasets: [{
-                                    label: 'Distribution',
-                                    data: scatterData,
-                                    backgroundColor: '#8b5cf6',
-                                    pointRadius: 6,
-                                    pointHoverRadius: 8
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                layout: {
-                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: function(context) {
-                                                return `(${context.parsed.x}, ${context.parsed.y})`;
-                                            }
-                                        }
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        grid: { color: gridColor },
-                                        ticks: { color: textColor },
-                                        title: {
-                                            display: true,
-                                            text: titleA,
-                                            color: textColor
-                                        }
-                                    },
-                                    y: {
-                                        grid: { color: gridColor },
-                                        ticks: { color: textColor },
-                                        title: {
-                                            display: true,
-                                            text: titleB,
-                                            color: textColor
-                                        }
-                                    }
-                                }
-                            }
-                        });
-
-                        // Render Rolling Correlation Chart
-                        const rollingData = this.calculateRollingPearson(dataA.values, dataB.values, 7);
-                        const rollingCtx = document.getElementById("rollingChart").getContext('2d');
-                        this.rollingChartInstance = new Chart(rollingCtx, {
-                            type: 'line',
-                            data: {
-                                labels: dataA.dates,
-                                datasets: [{
-                                    label: '7-Day Rolling Pearson Correlation',
-                                    data: rollingData,
-                                    borderColor: '#10b981',
-                                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                    borderWidth: 2,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 5,
-                                    tension: 0.3,
-                                    fill: true
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                layout: {
-                                    padding: { top: 20, bottom: 20, left: 10, right: 10 }
-                                },
-                                interaction: {
-                                    mode: 'index',
-                                    intersect: false,
-                                },
-                                plugins: {
-                                    legend: { labels: { color: textColor } }
-                                },
-                                scales: {
-                                    x: {
-                                        grid: { color: gridColor },
-                                        ticks: { color: textColor }
-                                    },
-                                    y: {
-                                        min: -1,
-                                        max: 1,
-                                        grid: { color: gridColor },
-                                        ticks: { color: textColor }
-                                    }
-                                }
-                            }
-                        });
-                    }
-        }));
-    </script>
-    @endscript
 </x-filament-panels::page>
