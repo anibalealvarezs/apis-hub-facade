@@ -126,98 +126,103 @@
         }
     </style>
 
-    <div id="joint-dashboard-container" x-data="jointDashboard({
+@php
+    $jointConfig = [
+        'channels' => $channels,
+        'metricsDict' => $metricsDict,
+        'availableAccounts' => (object) $availableAccounts,
+        'analysisLevelOptions' => [
+            'level' => __('Level (Original)'),
+            'diff1' => __('1st Difference (Δ)'),
+            'diff2' => __('2nd Difference (ΔΔ)'),
+            'zscore' => __('Z-Score (Normalized)'),
+        ],
+        'lagOptions' => [
+            '0' => __('No Lag'),
+            '1' => __('+1 Day'),
+            '2' => __('+2 Days'),
+            '3' => __('+3 Days'),
+            '4' => __('+4 Days'),
+            '5' => __('+5 Days'),
+            '6' => __('+6 Days'),
+            '7' => __('+7 Days'),
+            '-1' => __('-1 Day'),
+            '-2' => __('-2 Days'),
+            '-3' => __('-3 Days'),
+            '-4' => __('-4 Days'),
+            '-5' => __('-5 Days'),
+            '-6' => __('-6 Days'),
+            '-7' => __('-7 Days'),
+        ],
+        'allPlays' => [
+            [
+                'id' => 'custom_analysis',
+                'name' => __('Custom Analysis'),
+                'short_desc' => __('Free Exploration'),
+                'theory' => __('Start with a blank canvas to explore your own hypotheses across any channels and metrics.'),
+                'expected' => __('No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.'),
+                'requires' => [],
+                'config' => [
+                    'curveA' => ['channel' => '', 'metric' => '', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => '', 'metric' => '', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'brand_search_synergy',
+                'name' => __('Brand Search Synergy'),
+                'short_desc' => __('FB Ads vs GSC'),
+                'theory' => __("Paid social campaigns drive top-of-funnel awareness. People see an ad, don't click, but later search for the brand on Google."),
+                'expected' => __('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.'),
+                'requires' => ['facebook_marketing', 'google_search_console'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'spend', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'google_search_console', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '3'],
+                ],
+            ],
+            [
+                'id' => 'organic_lift_paid',
+                'name' => __('Organic Lift via Paid'),
+                'short_desc' => __('FB Ads vs FB Organic'),
+                'theory' => __('Aggressive paid spending can create a halo effect on your organic profile visits and reach.'),
+                'expected' => __('Positive correlation. When spend spikes, organic reach should spike proportionally.'),
+                'requires' => ['facebook_marketing', 'facebook_organic'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'spend', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_organic', 'metric' => 'reach', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'ad_fatigue',
+                'name' => __('Ad Fatigue & Efficiency'),
+                'short_desc' => __('FB CTR vs FB Cost'),
+                'theory' => __('As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.'),
+                'expected' => __('Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.'),
+                'requires' => ['facebook_marketing'],
+                'config' => [
+                    'curveA' => ['channel' => 'facebook_marketing', 'metric' => 'ctr', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'cpc', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'search_to_organic_lag',
+                'name' => __('Search Demand to Organic Engagement'),
+                'short_desc' => __('GSC Clicks vs FB Organic'),
+                'theory' => __('Surges in search demand often precede user engagement on social channels as consumers research before interacting.'),
+                'expected' => __('Positive correlation with 1-3 day lag.'),
+                'requires' => ['google_search_console', 'facebook_organic'],
+                'config' => [
+                    'curveA' => ['channel' => 'google_search_console', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_organic', 'metric' => 'page_engaged_users', 'level' => 'zscore', 'lag' => '2'],
+                ],
+            ],
+        ],
+    ];
+@endphp
+
+    <div id="joint-dashboard-container" x-data="jointDashboard(Object.assign({
         dateStart: @entangle('dateStart'),
-        dateEnd: @entangle('dateEnd'),
-        channels: @json($channels),
-        metricsDict: @json($metricsDict),
-        availableAccounts: @json($availableAccounts, JSON_FORCE_OBJECT),
-        analysisLevelOptions: {
-            'level': @json(__('Level (Original)')),
-            'diff1': @json(__('1st Difference (Δ)')),
-            'diff2': @json(__('2nd Difference (ΔΔ)')),
-            'zscore': @json(__('Z-Score (Normalized)'))
-        },
-        lagOptions: {
-            '0': @json(__('No Lag')),
-            '1': @json(__('+1 Day')),
-            '2': @json(__('+2 Days')),
-            '3': @json(__('+3 Days')),
-            '4': @json(__('+4 Days')),
-            '5': @json(__('+5 Days')),
-            '6': @json(__('+6 Days')),
-            '7': @json(__('+7 Days')),
-            '-1': @json(__('-1 Day')),
-            '-2': @json(__('-2 Days')),
-            '-3': @json(__('-3 Days')),
-            '-4': @json(__('-4 Days')),
-            '-5': @json(__('-5 Days')),
-            '-6': @json(__('-6 Days')),
-            '-7': @json(__('-7 Days'))
-        },
-        allPlays: [
-            {
-                id: 'custom_analysis',
-                name: @json(__('Custom Analysis')),
-                short_desc: @json(__('Free Exploration')),
-                theory: @json(__('Start with a blank canvas to explore your own hypotheses across any channels and metrics.')),
-                expected: @json(__('No predefined expectations. Select your channels, assets, metrics, and lags manually to discover new correlations.')),
-                requires: [],
-                config: {
-                    curveA: { channel: '', metric: '', level: 'zscore', lag: '0' },
-                    curveB: { channel: '', metric: '', level: 'zscore', lag: '0' }
-                }
-            },
-            {
-                id: 'brand_search_synergy',
-                name: @json(__('Brand Search Synergy')),
-                short_desc: @json(__('FB Ads vs GSC')),
-                theory: @json(__("Paid social campaigns drive top-of-funnel awareness. People see an ad, don't click, but later search for the brand on Google.")),
-                expected: @json(__('Positive correlation with a 2-4 day lag. If correlation is 0, your ads are not generating residual search intent.')),
-                requires: ['facebook_marketing', 'google_search_console'],
-                config: {
-                    curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
-                    curveB: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '3' }
-                }
-            },
-            {
-                id: 'organic_lift_paid',
-                name: @json(__('Organic Lift via Paid')),
-                short_desc: @json(__('FB Ads vs FB Organic')),
-                theory: @json(__('Aggressive paid spending can create a halo effect on your organic profile visits and reach.')),
-                expected: @json(__('Positive correlation. When spend spikes, organic reach should spike proportionally.')),
-                requires: ['facebook_marketing', 'facebook_organic'],
-                config: {
-                    curveA: { channel: 'facebook_marketing', metric: 'spend', level: 'zscore', lag: '0' },
-                    curveB: { channel: 'facebook_organic', metric: 'reach', level: 'zscore', lag: '0' }
-                }
-            },
-            {
-                id: 'ad_fatigue',
-                name: @json(__('Ad Fatigue & Efficiency')),
-                short_desc: @json(__('FB CTR vs FB Cost')),
-                theory: @json(__('As audience saturates, click-through rates drop while cost per acquisition (CPA) spikes.')),
-                expected: @json(__('Strong negative correlation. The Rolling Correlation chart is critical here to spot the exact day fatigue started.')),
-                requires: ['facebook_marketing'],
-                config: {
-                    curveA: { channel: 'facebook_marketing', metric: 'ctr', level: 'zscore', lag: '0' },
-                    curveB: { channel: 'facebook_marketing', metric: 'cpc', level: 'zscore', lag: '0' }
-                }
-            },
-            {
-                id: 'search_to_organic_lag',
-                name: @json(__('Search Demand to Organic Engagement')),
-                short_desc: @json(__('GSC Clicks vs FB Organic')),
-                theory: @json(__('Surges in search demand often precede user engagement on social channels as consumers research before interacting.')),
-                expected: @json(__('Positive correlation with 1-3 day lag.')),
-                requires: ['google_search_console', 'facebook_organic'],
-                config: {
-                    curveA: { channel: 'google_search_console', metric: 'clicks', level: 'zscore', lag: '0' },
-                    curveB: { channel: 'facebook_organic', metric: 'page_engaged_users', level: 'zscore', lag: '2' }
-                }
-            }
-        ]
-    })" x-init="initDashboard()">
+        dateEnd: @entangle('dateEnd')
+    }, @json($jointConfig)))" x-init="initDashboard()">
         <div class="joint-header-row">
             <div>
                 <h1 class="joint-header-title">
