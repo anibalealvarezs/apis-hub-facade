@@ -1,5 +1,4 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
 import { uiAssetSelector } from './components/ui-asset-selector';
 import { jointDashboard } from './dashboards/joint-dashboard';
 import { gscDashboard } from './dashboards/gsc-dashboard';
@@ -10,7 +9,7 @@ import { kpiBrowser } from './dashboards/kpi-reference';
 import { dashboardView, widgetHeader } from './dashboards/dashboard-view';
 import { dashboardBuilder } from './dashboards/dashboard-builder';
 
-window.Alpine = Alpine;
+// Export functions to window
 window.uiAssetSelector = uiAssetSelector;
 window.jointDashboard = jointDashboard;
 window.gscDashboard = gscDashboard;
@@ -22,29 +21,41 @@ window.dashboardView = dashboardView;
 window.widgetHeader = widgetHeader;
 window.dashboardBuilder = dashboardBuilder;
 
-// Theme Controller Component
-Alpine.data('themeControl', () => ({
-    darkMode: document.documentElement.classList.contains('dark'),
-    init() {
-        this.$watch('darkMode', val => {
-            document.documentElement.classList.toggle('dark', val);
-            localStorage.setItem('color-theme', val ? 'dark' : 'light');
-        });
+const registerAlpineComponents = (Alpine) => {
+    if (!Alpine || Alpine._componentsRegistered) return;
+    Alpine._componentsRegistered = true;
+
+    Alpine.data('themeControl', () => ({
+        darkMode: document.documentElement.classList.contains('dark'),
+        init() {
+            this.$watch('darkMode', val => {
+                document.documentElement.classList.toggle('dark', val);
+                localStorage.setItem('color-theme', val ? 'dark' : 'light');
+            });
+        }
+    }));
+
+    Alpine.data('uiAssetSelector', uiAssetSelector);
+    Alpine.data('jointDashboard', jointDashboard);
+    Alpine.data('gscDashboard', gscDashboard);
+    Alpine.data('fbDashboard', fbDashboard);
+    Alpine.data('fboDashboard', fboDashboard);
+    Alpine.data('ga4Dashboard', ga4Dashboard);
+    Alpine.data('kpiBrowser', kpiBrowser);
+    Alpine.data('dashboardView', dashboardView);
+    Alpine.data('widgetHeader', widgetHeader);
+    Alpine.data('dashboardBuilder', dashboardBuilder);
+};
+
+document.addEventListener('alpine:init', () => {
+    if (window.Alpine) {
+        registerAlpineComponents(window.Alpine);
     }
-}));
+});
 
-Alpine.data('uiAssetSelector', uiAssetSelector);
-Alpine.data('jointDashboard', jointDashboard);
-Alpine.data('gscDashboard', gscDashboard);
-Alpine.data('fbDashboard', fbDashboard);
-Alpine.data('fboDashboard', fboDashboard);
-Alpine.data('ga4Dashboard', ga4Dashboard);
-Alpine.data('kpiBrowser', kpiBrowser);
-Alpine.data('dashboardView', dashboardView);
-Alpine.data('widgetHeader', widgetHeader);
-Alpine.data('dashboardBuilder', dashboardBuilder);
-
-Alpine.start();
+if (window.Alpine) {
+    registerAlpineComponents(window.Alpine);
+}
 
 // Portal Link Global Handler
 document.addEventListener('click', (e) => {
