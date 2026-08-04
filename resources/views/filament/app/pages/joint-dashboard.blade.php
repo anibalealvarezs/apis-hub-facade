@@ -191,8 +191,8 @@
                     <div>
                         <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-2" x-text="selectedPlay ? selectedPlay.name : ''"></h4>
                         <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                            <p><strong>Theory:</strong> <span x-text="selectedPlay ? selectedPlay.theory : ''"></span></p>
-                            <p><strong>Expected Results:</strong> <span x-text="selectedPlay ? selectedPlay.expected : ''"></span></p>
+                            <p><strong>{{ __('Theory:') }}</strong> <span x-text="selectedPlay ? selectedPlay.theory : ''"></span></p>
+                            <p><strong>{{ __('Expected Results:') }}</strong> <span x-text="selectedPlay ? selectedPlay.expected : ''"></span></p>
                             <p class="text-xs italic mt-2 opacity-80">{{ __('Note: Please select your specific assets below to complete the configuration.') }}</p>
                         </div>
                     </div>
