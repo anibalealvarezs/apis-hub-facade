@@ -18,8 +18,10 @@
 @endphp
 
 <div class="relative" x-data="{ open: false, searchAssetGroup: '' }" @click.outside="open = false">
-    <button @click="open = !open" type="button"
-            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white {{ $sizeClasses }} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between">
+    <button @click="if (!$el.hasAttribute('disabled') && !$el.disabled) open = !open" type="button"
+            {{ $attributes->merge([
+                'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
+            ]) }}>
         @if($multiple)
             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                   x-text="!{{ $model }} || {{ $model }}.length === 0 ? '{{ $placeholder }}' : ({{ $model }}.length === 1 ? ({{ $options }}[{{ $model }}[0]] || {{ $model }}[0]) : {{ $model }}.length + ' {{ __('selected') }}')"></span>
@@ -40,9 +42,9 @@
             <input type="text" x-model="searchAssetGroup"
                    class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-1.5"
                    placeholder="{{ __('Search...') }}">
-            @if($multiple && $allKeys)
+            @if($multiple)
                 <div class="flex items-center justify-between px-1">
-                    <button type="button" @click="{{ $model }} = {{ $allKeys }}; {{ $changeEvent }}"
+                    <button type="button" @click="{{ $model }} = {{ $allKeys ?? ('Object.keys(' . $options . ')') }}; {{ $changeEvent }}"
                             class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">{{ __('Select All') }}</button>
                     <button type="button" @click="{{ $model }} = []; {{ $changeEvent }}"
                             class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">{{ __('Clear All') }}</button>
@@ -80,7 +82,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                         </svg>
                     </div>
-                    <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }}.includes(String(id)) @else {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="name"></span>
+                    <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="name"></span>
                 </div>
             </template>
         </div>

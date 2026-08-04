@@ -191,67 +191,52 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Channel') }}</label>
-                            <x-ui.select-input x-model="curveA.channel" @change="curveA.asset = ''; curveA.metric = ''; if (curveA.channel === curveB.channel) curveB.asset = ''" class="w-full mt-1">
-                                <x-ui.select-option value="">{{ __('Select Channel...') }}</x-ui.select-option>
-                                <template x-for="(label, key) in channels" :key="key">
-                                    <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
-                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                    </template>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveA.channel"
+                                                 options="channels"
+                                                 placeholder="{{ __('Select Channel...') }}"
+                                                 change-event="curveA.asset = ''; curveA.metric = ''; if (curveA.channel === curveB.channel) curveB.asset = ''"
+                                                 size="sm"
+                                                 class="w-full mt-1" />
                         </div>
                         <div x-show="curveA.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Asset / Property') }}</label>
-                            <x-ui.select-input x-model="curveA.asset" @change="if (curveA.channel === curveB.channel) curveB.asset = curveA.asset" 
-                                    class="w-full mt-1 transition-colors duration-300"
-                                    x-bind:class="{
-                                        'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
-                                        'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
-                                    }">
-                                <x-ui.select-option value="">{{ __('Select Asset...') }}</x-ui.select-option>
-                                <template x-for="(name, id) in availableAccounts[curveA.channel] || {}" :key="id">
-                                    <x-ui.select-option x-bind:value="id" x-text="name"></x-ui.select-option>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveA.asset"
+                                                 options="availableAccounts[curveA.channel] || {}"
+                                                 placeholder="{{ __('Select Asset...') }}"
+                                                 change-event="if (curveA.channel === curveB.channel) curveB.asset = curveA.asset"
+                                                 size="sm"
+                                                 class="w-full mt-1 transition-colors duration-300"
+                                                 x-bind:class="{
+                                                     'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveA.asset,
+                                                     'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveA.asset
+                                                 }" />
                         </div>
                         <div x-show="curveA.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Metric') }}</label>
-                            <x-ui.select-input x-model="curveA.metric" class="w-full mt-1">
-                                <x-ui.select-option value="">{{ __('Select Metric...') }}</x-ui.select-option>
-                                <template x-for="(label, key) in metricsDict[curveA.channel] || {}" :key="key">
-                                    <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveA.metric"
+                                                 options="metricsDict[curveA.channel] || {}"
+                                                 placeholder="{{ __('Select Metric...') }}"
+                                                 size="sm"
+                                                 class="w-full mt-1" />
                         </div>
                         <div x-show="curveA.channel" class="grid grid-cols-2 gap-3 mt-3">
                             <div>
                                 <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Analysis Level') }}</label>
-                                <x-ui.select-input x-model="curveA.level" @change="chartRendered && renderChart()" class="w-full mt-1">
-                                    <x-ui.select-option value="level">{{ __('Level (Original)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="diff1">{{ __('1st Difference (Δ)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="diff2">{{ __('2nd Difference (ΔΔ)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="zscore">{{ __('Z-Score (Normalized)') }}</x-ui.select-option>
-                                </x-ui.select-input>
+                                <x-ui.asset-selector model="curveA.level"
+                                                     options="analysisLevelOptions"
+                                                     placeholder="{{ __('Analysis Level') }}"
+                                                     change-event="chartRendered && renderChart()"
+                                                     size="sm"
+                                                     class="w-full mt-1" />
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Lag (Shift)') }}</label>
-                                <x-ui.select-input x-model="curveA.lag" @change="curveB.lag = '0'; chartRendered && renderChart()" class="w-full mt-1">
-                                    <x-ui.select-option value="0">{{ __('No Lag') }}</x-ui.select-option>
-                                    <x-ui.select-option value="1">{{ __('+1 Day') }}</x-ui.select-option>
-                                    <x-ui.select-option value="2">{{ __('+2 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="3">{{ __('+3 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="4">{{ __('+4 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="5">{{ __('+5 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="6">{{ __('+6 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="7">{{ __('+7 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-1">{{ __('-1 Day') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-2">{{ __('-2 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-3">{{ __('-3 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-4">{{ __('-4 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-5">{{ __('-5 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-6">{{ __('-6 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-7">{{ __('-7 Days') }}</x-ui.select-option>
-                                </x-ui.select-input>
+                                <x-ui.asset-selector model="curveA.lag"
+                                                     options="lagOptions"
+                                                     placeholder="{{ __('Lag (Shift)') }}"
+                                                     change-event="curveB.lag = '0'; chartRendered && renderChart()"
+                                                     size="sm"
+                                                     class="w-full mt-1" />
                             </div>
                         </div>
                     </div>
@@ -265,72 +250,53 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Channel') }}</label>
-                            <x-ui.select-input x-model="curveB.channel" @change="curveB.asset = (curveB.channel === curveA.channel) ? curveA.asset : ''; curveB.metric = ''" class="w-full mt-1">
-                                <x-ui.select-option value="">{{ __('Select Channel...') }}</x-ui.select-option>
-                                <template x-for="(label, key) in channels" :key="key">
-                                    <template x-if="Object.keys(availableAccounts[key] || {}).length > 0">
-                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                    </template>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveB.channel"
+                                                 options="channels"
+                                                 placeholder="{{ __('Select Channel...') }}"
+                                                 change-event="curveB.asset = (curveB.channel === curveA.channel) ? curveA.asset : ''; curveB.metric = ''"
+                                                 size="sm"
+                                                 class="w-full mt-1" />
                         </div>
                         <div x-show="curveB.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Asset / Property') }}</label>
-                            <x-ui.select-input x-model="curveB.asset" 
-                                    x-bind:disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel" 
-                                    class="w-full mt-1 transition-colors duration-300"
-                                    x-bind:class="{
-                                        'opacity-50 cursor-not-allowed': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
-                                        'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
-                                        'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel
-                                    }">
-                                <x-ui.select-option value="">{{ __('Select Asset...') }}</x-ui.select-option>
-                                <template x-if="curveA.channel && curveB.channel && curveA.channel === curveB.channel">
-                                    <x-ui.select-option value="" disabled>{{ __('Locked to Curve A Asset') }}</x-ui.select-option>
-                                </template>
-                                <template x-for="(name, id) in availableAccounts[curveB.channel] || {}" :key="id">
-                                    <x-ui.select-option x-bind:value="id" x-text="name"></x-ui.select-option>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveB.asset"
+                                                 options="availableAccounts[curveB.channel] || {}"
+                                                 placeholder="{{ __('Select Asset...') }}"
+                                                 size="sm"
+                                                 class="w-full mt-1 transition-colors duration-300"
+                                                 x-bind:disabled="curveA.channel && curveB.channel && curveA.channel === curveB.channel"
+                                                 x-bind:class="{
+                                                     'opacity-50 cursor-not-allowed': curveA.channel && curveB.channel && curveA.channel === curveB.channel,
+                                                     'select-warning': selectedPlay && selectedPlay.id !== 'custom_analysis' && !curveB.asset && curveA.channel !== curveB.channel,
+                                                     'select-success': selectedPlay && selectedPlay.id !== 'custom_analysis' && curveB.asset && curveA.channel !== curveB.channel
+                                                 }" />
                         </div>
                         <div x-show="curveB.channel">
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Metric') }}</label>
-                            <x-ui.select-input x-model="curveB.metric" class="w-full mt-1">
-                                <x-ui.select-option value="">{{ __('Select Metric...') }}</x-ui.select-option>
-                                <template x-for="(label, key) in metricsDict[curveB.channel] || {}" :key="key">
-                                    <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
-                                </template>
-                            </x-ui.select-input>
+                            <x-ui.asset-selector model="curveB.metric"
+                                                 options="metricsDict[curveB.channel] || {}"
+                                                 placeholder="{{ __('Select Metric...') }}"
+                                                 size="sm"
+                                                 class="w-full mt-1" />
                         </div>
                         <div x-show="curveB.channel" class="grid grid-cols-2 gap-3 mt-3">
                             <div>
                                 <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Analysis Level') }}</label>
-                                <x-ui.select-input x-model="curveB.level" @change="chartRendered && renderChart()" class="w-full mt-1">
-                                    <x-ui.select-option value="level">{{ __('Level (Original)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="diff1">{{ __('1st Difference (Δ)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="diff2">{{ __('2nd Difference (ΔΔ)') }}</x-ui.select-option>
-                                    <x-ui.select-option value="zscore">{{ __('Z-Score (Normalized)') }}</x-ui.select-option>
-                                </x-ui.select-input>
+                                <x-ui.asset-selector model="curveB.level"
+                                                     options="analysisLevelOptions"
+                                                     placeholder="{{ __('Analysis Level') }}"
+                                                     change-event="chartRendered && renderChart()"
+                                                     size="sm"
+                                                     class="w-full mt-1" />
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-gray-600 dark:text-gray-400">{{ __('Lag (Shift)') }}</label>
-                                <x-ui.select-input x-model="curveB.lag" @change="curveA.lag = '0'; chartRendered && renderChart()" class="w-full mt-1">
-                                    <x-ui.select-option value="0">{{ __('No Lag') }}</x-ui.select-option>
-                                    <x-ui.select-option value="1">{{ __('+1 Day') }}</x-ui.select-option>
-                                    <x-ui.select-option value="2">{{ __('+2 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="3">{{ __('+3 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="4">{{ __('+4 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="5">{{ __('+5 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="6">{{ __('+6 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="7">{{ __('+7 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-1">{{ __('-1 Day') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-2">{{ __('-2 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-3">{{ __('-3 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-4">{{ __('-4 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-5">{{ __('-5 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-6">{{ __('-6 Days') }}</x-ui.select-option>
-                                    <x-ui.select-option value="-7">{{ __('-7 Days') }}</x-ui.select-option>
-                                </x-ui.select-input>
+                                <x-ui.asset-selector model="curveB.lag"
+                                                     options="lagOptions"
+                                                     placeholder="{{ __('Lag (Shift)') }}"
+                                                     change-event="curveA.lag = '0'; chartRendered && renderChart()"
+                                                     size="sm"
+                                                     class="w-full mt-1" />
                             </div>
                         </div>
                     </div>
@@ -405,6 +371,29 @@
                     channels: @json($channels),
                     metricsDict: @json($metricsDict),
                     availableAccounts: @json($availableAccounts),
+                    analysisLevelOptions: {
+                        'level': @json(__('Level (Original)')),
+                        'diff1': @json(__('1st Difference (Δ)')),
+                        'diff2': @json(__('2nd Difference (ΔΔ)')),
+                        'zscore': @json(__('Z-Score (Normalized)'))
+                    },
+                    lagOptions: {
+                        '0': @json(__('No Lag')),
+                        '1': @json(__('+1 Day')),
+                        '2': @json(__('+2 Days')),
+                        '3': @json(__('+3 Days')),
+                        '4': @json(__('+4 Days')),
+                        '5': @json(__('+5 Days')),
+                        '6': @json(__('+6 Days')),
+                        '7': @json(__('+7 Days')),
+                        '-1': @json(__('-1 Day')),
+                        '-2': @json(__('-2 Days')),
+                        '-3': @json(__('-3 Days')),
+                        '-4': @json(__('-4 Days')),
+                        '-5': @json(__('-5 Days')),
+                        '-6': @json(__('-6 Days')),
+                        '-7': @json(__('-7 Days'))
+                    },
                     curveA: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
                     curveB: { channel: '', asset: '', metric: '', level: 'zscore', lag: '0' },
                     chartData: null,
