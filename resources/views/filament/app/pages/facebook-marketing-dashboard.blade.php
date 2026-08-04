@@ -231,10 +231,8 @@
                         </div>
                     </div>
                 </div>
-                <input type="date" x-model.lazy="dateStart"
-                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
-                <input type="date" x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
-                       class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-40 p-2.5">
+                <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
+                <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
             </div>
         </div>
 

@@ -486,12 +486,11 @@
                                          x-text="'Inherited: ' + (inheritedControlLabel('zero_handling', widgetKpiConfig?.zero_handling ?? dashboardControls.zero_handling) || 'Remove zeros')"></div>
                                 </template>
                                 <template x-if="!widgetControlsForm.zero_inherit">
-                                    <select x-model="widgetControlsForm.zero_handling"
-                                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                        <option value="remove" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Remove zeros from results') }}</option>
-                                        <option value="keep" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Keep zeros in results') }}</option>
-                                        <option value="trim" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Trim leading/trailing zeros') }}</option>
-                                    </select>
+                                    <x-ui.select-input x-model="widgetControlsForm.zero_handling" class="w-full">
+                                        <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
+                                        <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
+                                    </x-ui.select-input>
                                 </template>
                             </div>
                         </div>
@@ -522,12 +521,11 @@
                                         <template x-if="widgetControlsTarget?.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
-                                                <select x-model="widgetControlsForm.dependency" @change="updateGranularities()"
-                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                <x-ui.select-input x-model="widgetControlsForm.dependency" @change="updateGranularities()" class="w-full">
                                                     <template x-for="(label, key) in availableDependencies" :key="key">
-                                                        <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
                                                     </template>
-                                                </select>
+                                                </x-ui.select-input>
                                             </div>
                                         </template>
                                         
@@ -537,27 +535,25 @@
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
                                             </template>
                                             <template x-if="widgetControlsTarget?.source_type === 'metric'">
-                                                <select x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()"
-                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                <x-ui.select-input x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()" class="w-full">
                                                     <template x-for="(label, key) in availableGranularities" :key="key">
-                                                        <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
                                                     </template>
-                                                </select>
+                                                </x-ui.select-input>
                                             </template>
                                             
                                             <!-- Fallback for KPIs -->
                                             <template x-if="widgetControlsTarget?.source_type !== 'metric'">
-                                                <select x-model="widgetControlsForm.granularity"
-                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                                    <option value="daily" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Daily</option>
-                                                    <option value="weekly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Weekly</option>
-                                                    <option value="monthly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Monthly</option>
-                                                    <option value="query" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Query</option>
-                                                    <option value="dimensions.page" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Page</option>
-                                                    <option value="country" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Country</option>
-                                                    <option value="device" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Device</option>
-                                                    <option value="post" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Post</option>
-                                                </select>
+                                                <x-ui.select-input x-model="widgetControlsForm.granularity" class="w-full">
+                                                    <x-ui.select-option value="daily">Daily</x-ui.select-option>
+                                                    <x-ui.select-option value="weekly">Weekly</x-ui.select-option>
+                                                    <x-ui.select-option value="monthly">Monthly</x-ui.select-option>
+                                                    <x-ui.select-option value="query">Query</x-ui.select-option>
+                                                    <x-ui.select-option value="dimensions.page">Page</x-ui.select-option>
+                                                    <x-ui.select-option value="country">Country</x-ui.select-option>
+                                                    <x-ui.select-option value="device">Device</x-ui.select-option>
+                                                    <x-ui.select-option value="post">Post</x-ui.select-option>
+                                                </x-ui.select-input>
                                             </template>
                                         </div>
                                     </div>
@@ -597,12 +593,11 @@
                                                 <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.</p>
                                                 <div>
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group low-frequency values</label>
-                                                    <select x-model="widgetControlsForm.edge_case_grouping"
-                                                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                                        <option value="none" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">No grouping</option>
-                                                        <option value="histogram" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Auto histogram-elbow</option>
-                                                        <option value="percentile" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Bottom percentile</option>
-                                                    </select>
+                                                    <x-ui.select-input x-model="widgetControlsForm.edge_case_grouping" class="w-full">
+                                                        <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="histogram">{{ __('Auto histogram-elbow') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
+                                                    </x-ui.select-input>
                                                 </div>
                                             </div>
                                         </template>
@@ -670,14 +665,14 @@
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Channel</label>
-                                                <select x-model="series.channel" x-on:change="updateSeriesMetrics()"
-                                                        x-init="$nextTick(() => { $el.value = series.channel })"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                    <option value="">Select a channel...</option>
+                                                <x-ui.select-input x-model="series.channel" x-on:change="updateSeriesMetrics()"
+                                                                    x-init="$nextTick(() => { $el.value = series.channel })"
+                                                                    class="w-full">
+                                                    <x-ui.select-option value="">Select a channel...</x-ui.select-option>
                                                     <template x-for="(label, key) in channels" :key="key">
-                                                        <option :value="key" x-text="label"></option>
+                                                        <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
                                                     </template>
-                                                </select>
+                                                </x-ui.select-input>
                                             </div>
                                             
                                             <div class="my-2">
@@ -1208,13 +1203,12 @@
                         <template x-if="addWidgetForm.source_type === 'kpi'">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select KPI</label>
-                                <select x-model="addWidgetForm.custom_kpi_id"
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-                                    <option value="">{{ __('Choose a KPI...') }}</option>
+                                <x-ui.select-input x-model="addWidgetForm.custom_kpi_id" class="w-full">
+                                    <x-ui.select-option value="">{{ __('Choose a KPI...') }}</x-ui.select-option>
                                     <template x-for="(kpi, id) in kpis" :key="id">
-                                        <option :value="id" x-text="kpi.name"></option>
+                                        <x-ui.select-option x-bind:value="id" x-text="kpi.name"></x-ui.select-option>
                                     </template>
-                                </select>
+                                </x-ui.select-input>
                             </div>
                         </template>
 
@@ -1222,13 +1216,12 @@
                         <template x-if="addWidgetForm.source_type === 'derived_metric'">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Derived Metric</label>
-                                <select x-model="addWidgetForm.derived_metric_id"
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-                                    <option value="">{{ __('Choose a Derived Metric...') }}</option>
+                                <x-ui.select-input x-model="addWidgetForm.derived_metric_id" class="w-full">
+                                    <x-ui.select-option value="">{{ __('Choose a Derived Metric...') }}</x-ui.select-option>
                                     <template x-for="(dm, id) in derivedMetrics" :key="id">
-                                        <option :value="id" x-text="dm.name"></option>
+                                        <x-ui.select-option x-bind:value="id" x-text="dm.name"></x-ui.select-option>
                                     </template>
-                                </select>
+                                </x-ui.select-input>
                             </div>
                         </template>
                     </div>
@@ -1328,15 +1321,14 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add
                         collaborator</label>
                     <div class="flex gap-2">
-                        <select x-model="shareUserId"
-                                class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="">{{ __('Select a user...') }}</option>
+                        <x-ui.select-input x-model="shareUserId" class="flex-1">
+                            <x-ui.select-option value="">{{ __('Select a user...') }}</x-ui.select-option>
                             <template x-for="user in collaborators" :key="user.id">
                                 <template x-if="!isShared(user.id)">
-                                    <option :value="user.id" x-text="user.name + ' (' + user.email + ')'"></option>
+                                    <x-ui.select-option x-bind:value="user.id" x-text="user.name + ' (' + user.email + ')'"></x-ui.select-option>
                                 </template>
                             </template>
-                        </select>
+                        </x-ui.select-input>
                         <button
                             class="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 disabled:opacity-50"
                             :disabled="!shareUserId"
