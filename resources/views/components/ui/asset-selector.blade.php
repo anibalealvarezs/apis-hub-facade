@@ -88,7 +88,7 @@
                     </template>
                     <template x-if="!isHtml(val)">
                         <div class="flex flex-col overflow-hidden">
-                            <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="getItemTitle(val, id)"></span>
+                            <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }}.includes(String(id)) @else {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="getItemTitle(val, id)"></span>
                             <template x-if="getItemDescription(val)">
                                 <span class="truncate text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="getItemDescription(val)"></span>
                             </template>
