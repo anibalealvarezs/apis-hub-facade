@@ -233,12 +233,12 @@
                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
                             <input type="date" x-model="dashboardControls.date_start"
                                    :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
+                                   class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5"/>
                         </div>
                         <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
                             <input type="date" x-model="dashboardControls.date_end" max="{{ date('Y-m-d', strtotime('-1 day')) }}"
-                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"/>
+                                   class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5"/>
                         </div>
                     </div>
                 </div>
@@ -248,10 +248,10 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Asset Group') }}</label>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Filters available assets for widgets that don&rsquo;t have their own asset group selected.</p>
                     <select x-model="dashboardControls.asset_group"
-                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                        <option value="">{{ __('All Assets (no filter)') }}</option>
+                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                        <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('All Assets (no filter)') }}</option>
                         <template x-for="(name, id) in assetGroups" :key="id">
-                            <option :value="id" x-text="name"></option>
+                            <option :value="id" x-text="name" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                         </template>
                     </select>
                     <label class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -266,10 +266,10 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Zero / Missing
                         Data</label>
                     <select x-model="dashboardControls.zero_handling"
-                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                        <option value="remove">{{ __('Remove zeros from results') }}</option>
-                        <option value="keep">{{ __('Keep zeros in results') }}</option>
-                        <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
+                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                        <option value="remove" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Remove zeros from results') }}</option>
+                        <option value="keep" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Keep zeros in results') }}</option>
+                        <option value="trim" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Trim leading/trailing zeros') }}</option>
                     </select>
                 </div>
 
@@ -277,15 +277,15 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
                     <select x-model="dashboardControls.granularity"
-                            class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="query">Query</option>
-                        <option value="dimensions.page">Page</option>
-                        <option value="country">Country</option>
-                        <option value="device">Device</option>
-                        <option value="post">Post</option>
+                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                        <option value="daily" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Daily</option>
+                        <option value="weekly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Weekly</option>
+                        <option value="monthly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Monthly</option>
+                        <option value="query" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Query</option>
+                        <option value="dimensions.page" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Page</option>
+                        <option value="country" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Country</option>
+                        <option value="device" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Device</option>
+                        <option value="post" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Post</option>
                     </select>
                 </div>
 
@@ -299,10 +299,10 @@
                             Weighted regression (WLS)
                         </label>
                         <select x-model="dashboardControls.edge_case_grouping"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="none">{{ __('No grouping') }}</option>
-                            <option value="histogram">{{ __('Auto histogram-elbow') }}</option>
-                            <option value="percentile">{{ __('Bottom percentile') }}</option>
+                                class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                            <option value="none" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('No grouping') }}</option>
+                            <option value="histogram" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Auto histogram-elbow') }}</option>
+                            <option value="percentile" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Bottom percentile') }}</option>
                         </select>
                     </div>
                 </div>
@@ -461,12 +461,12 @@
                                         <input type="date" x-model="widgetControlsForm.date_start"
                                                :min="dashboardControls.date_start || ''"
                                                :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                               class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
                                         <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
                                         <input type="date" x-model="widgetControlsForm.date_end"
                                                :min="widgetControlsForm.date_start || dashboardControls.date_start || ''" 
                                                :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                               class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
                                     </div>
                                 </template>
                             </div>
@@ -494,10 +494,10 @@
                                 </template>
                                 <template x-if="!widgetControlsForm.zero_inherit">
                                     <select x-model="widgetControlsForm.zero_handling"
-                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                        <option value="remove">{{ __('Remove zeros from results') }}</option>
-                                        <option value="keep">{{ __('Keep zeros in results') }}</option>
-                                        <option value="trim">{{ __('Trim leading/trailing zeros') }}</option>
+                                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                        <option value="remove" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Remove zeros from results') }}</option>
+                                        <option value="keep" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Keep zeros in results') }}</option>
+                                        <option value="trim" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Trim leading/trailing zeros') }}</option>
                                     </select>
                                 </template>
                             </div>
@@ -530,9 +530,9 @@
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
                                                 <select x-model="widgetControlsForm.dependency" @change="updateGranularities()"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
                                                     <template x-for="(label, key) in availableDependencies" :key="key">
-                                                        <option :value="key" x-text="label"></option>
+                                                        <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                     </template>
                                                 </select>
                                             </div>
@@ -545,9 +545,9 @@
                                             </template>
                                             <template x-if="widgetControlsTarget?.source_type === 'metric'">
                                                 <select x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
                                                     <template x-for="(label, key) in availableGranularities" :key="key">
-                                                        <option :value="key" x-text="label"></option>
+                                                        <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                     </template>
                                                 </select>
                                             </template>
@@ -555,15 +555,15 @@
                                             <!-- Fallback for KPIs -->
                                             <template x-if="widgetControlsTarget?.source_type !== 'metric'">
                                                 <select x-model="widgetControlsForm.granularity"
-                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                    <option value="daily">Daily</option>
-                                                    <option value="weekly">Weekly</option>
-                                                    <option value="monthly">Monthly</option>
-                                                    <option value="query">Query</option>
-                                                    <option value="dimensions.page">Page</option>
-                                                    <option value="country">Country</option>
-                                                    <option value="device">Device</option>
-                                                    <option value="post">Post</option>
+                                                        class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                    <option value="daily" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Daily</option>
+                                                    <option value="weekly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Weekly</option>
+                                                    <option value="monthly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Monthly</option>
+                                                    <option value="query" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Query</option>
+                                                    <option value="dimensions.page" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Page</option>
+                                                    <option value="country" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Country</option>
+                                                    <option value="device" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Device</option>
+                                                    <option value="post" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Post</option>
                                                 </select>
                                             </template>
                                         </div>
@@ -605,10 +605,10 @@
                                                 <div>
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group low-frequency values</label>
                                                     <select x-model="widgetControlsForm.edge_case_grouping"
-                                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                        <option value="none">No grouping</option>
-                                                        <option value="histogram">Auto histogram-elbow</option>
-                                                        <option value="percentile">Bottom percentile</option>
+                                                            class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                        <option value="none" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">No grouping</option>
+                                                        <option value="histogram" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Auto histogram-elbow</option>
+                                                        <option value="percentile" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Bottom percentile</option>
                                                     </select>
                                                 </div>
                                             </div>

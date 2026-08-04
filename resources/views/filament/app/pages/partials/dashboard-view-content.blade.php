@@ -40,21 +40,21 @@
         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ __('Date range:') }}</span>
         <input type="date" x-model="dashboardOverrides.date_start"
                x-on:change.debounce.500ms="applyDateRange()"
-               class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
+               class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block px-3 py-2"
                :max="dashboardOverrides.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'">
-        <span class="text-gray-400">â†’</span>
+        <span class="text-gray-400">→</span>
         <input type="date" x-model="dashboardOverrides.date_end"
                x-on:change.debounce.500ms="applyDateRange()"
-               class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs"
+               class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block px-3 py-2"
                :min="dashboardOverrides.date_start || ''" :max="dashboardDefaults.date_end">
         <template x-if="dashboardDefaults.show_asset_group_selector">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium ml-2">{{ __('Asset Group:') }}</span>
         </template>
         <template x-if="dashboardDefaults.show_asset_group_selector">
             <select x-model="selectedAssetGroup" x-on:change="applyAssetGroup()"
-                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs">
+                    class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block px-3 py-2">
                 <template x-for="(name, id) in assetGroups" :key="id">
-                    <option :value="id" x-text="name"></option>
+                    <option :value="id" x-text="name" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                 </template>
             </select>
         </template>
@@ -501,28 +501,28 @@
                                         </template>
                                         <template x-if="settingsSourceType !== 'kpi'">
                                             <select x-model="settingsControls.granularity"
-                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
+                                                    class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
                                                 <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="{{ __('Time Granularities') }}">
-                                                        <option value="">{{ __('Dashboard Default') }}</option>
-                                                        <option value="daily">{{ __('Daily') }}</option>
-                                                        <option value="weekly">{{ __('Weekly') }}</option>
-                                                        <option value="monthly">{{ __('Monthly') }}</option>
-                                                        <option value="quarterly">{{ __('Quarterly') }}</option>
-                                                        <option value="semiannual">{{ __('Semiannual') }}</option>
-                                                        <option value="annually">{{ __('Annually') }}</option>
-                                                        <option value="lifetime">{{ __('Lifetime') }}</option>
+                                                    <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                                        <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Dashboard Default') }}</option>
+                                                        <option value="daily" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Daily') }}</option>
+                                                        <option value="weekly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Weekly') }}</option>
+                                                        <option value="monthly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Monthly') }}</option>
+                                                        <option value="quarterly" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Quarterly') }}</option>
+                                                        <option value="semiannual" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Semiannual') }}</option>
+                                                        <option value="annually" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Annually') }}</option>
+                                                        <option value="lifetime" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Lifetime') }}</option>
                                                     </optgroup>
                                                 </template>
                                                 <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="{{ __('Dimension') }}">
+                                                    <optgroup label="{{ __('Dimension') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                         <option :value="settingsBuilderControls.granularity" x-text="{
                                                             'query': 'Query (SEO)',
                                                             'dimensions.page': 'Page (SEO)',
                                                             'country': 'Country',
                                                             'device': 'Device',
                                                             'post': 'Post / Media'
-                                                        }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))"></option>
+                                                        }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                     </optgroup>
                                                 </template>
                                             </select>
@@ -556,10 +556,10 @@
                                             <label
                                                 class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Group low-frequency values') }}</label>
                                             <select x-model="settingsControls.edge_case_grouping"
-                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                <option value="none">{{ __('No grouping') }}</option>
-                                                <option value="histogram">{{ __('Auto histogram-elbow') }}</option>
-                                                <option value="percentile">{{ __('Bottom percentile') }}</option>
+                                                    class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                <option value="none" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('No grouping') }}</option>
+                                                <option value="histogram" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Auto histogram-elbow') }}</option>
+                                                <option value="percentile" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Bottom percentile') }}</option>
                                             </select>
                                         </div>
                                         <div>
@@ -567,7 +567,7 @@
                                                 class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max ratio cap') }}</label>
                                             <input type="number" step="0.01" min="0"
                                                    x-model="settingsControls.max_ratio"
-                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5"
                                                    placeholder="{{ __('No cap') }}"/>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Filter out ratio values above this threshold.') }}</p>
                                         </div>
@@ -629,10 +629,10 @@
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                                         <select x-model="settingsControls.metrics[vConfig.index]"
-                                                                class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500">
-                                                            <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></option>
+                                                                class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                            <option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] == key"></option>
+                                                                <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] == key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             </template>
                                                         </select>
                                                     </div>
