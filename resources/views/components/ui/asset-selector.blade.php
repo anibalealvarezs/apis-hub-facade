@@ -17,17 +17,25 @@
     ][$size] ?? 'text-xs px-3 py-2 h-[34px] min-w-[170px]';
 @endphp
 
-<div class="relative" x-data="{ open: false, searchAssetGroup: '' }" @click.outside="open = false">
+<div class="relative" x-data="{
+    open: false,
+    searchAssetGroup: '',
+    getLabel(val, id) {
+        if (val === null || val === undefined) return id || '';
+        if (typeof val === 'object') return val.label || val.name || val.title || val.text || id || '';
+        return String(val);
+    }
+}" @click.outside="open = false">
     <button @click="if (!$el.hasAttribute('disabled') && !$el.disabled) open = !open" type="button"
             {{ $attributes->merge([
                 'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
             ]) }}>
         @if($multiple)
             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
-                  x-text="!{{ $model }} || {{ $model }}.length === 0 ? '{{ $placeholder }}' : ({{ $model }}.length === 1 ? ({{ $options }}[{{ $model }}[0]] || {{ $model }}[0]) : {{ $model }}.length + ' {{ __('selected') }}')"></span>
+                  x-text="!{{ $model }} || {{ $model }}.length === 0 ? '{{ $placeholder }}' : ({{ $model }}.length === 1 ? getLabel({{ $options }}[{{ $model }}[0]], {{ $model }}[0]) : {{ $model }}.length + ' {{ __('selected') }}')"></span>
         @else
             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
-                  x-text="!{{ $model }} ? '{{ $emptyOption ?? $placeholder }}' : ({{ $options }}[{{ $model }}] || '{{ $placeholder }}')"></span>
+                  x-text="!{{ $model }} ? '{{ $emptyOption ?? $placeholder }}' : (getLabel({{ $options }}[{{ $model }}], {{ $model }}) || '{{ $placeholder }}')"></span>
         @endif
         <svg class="w-3.5 h-3.5 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -67,8 +75,8 @@
                     <span class="truncate font-medium text-gray-900 dark:text-white" :class="!{{ $model }} ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''">{{ $emptyOption }}</span>
                 </div>
             @endif
-            <template x-for="(name, id) in {{ $options }}" :key="id">
-                <div x-show="searchAssetGroup === '' || name.toLowerCase().includes(searchAssetGroup.toLowerCase()) || String(id).toLowerCase().includes(searchAssetGroup.toLowerCase())"
+            <template x-for="(val, id) in {{ $options }}" :key="id">
+                <div x-show="searchAssetGroup === '' || getLabel(val, id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || String(id).toLowerCase().includes(searchAssetGroup.toLowerCase())"
                      @if($multiple)
                          @click="{{ $model }}.includes(String(id)) ? {{ $model }} = {{ $model }}.filter(a => a != id) : {{ $model }}.push(String(id)); {{ $changeEvent }}"
                      @else
@@ -82,7 +90,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                         </svg>
                     </div>
-                    <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="name"></span>
+                    <span class="truncate font-medium text-gray-900 dark:text-white" :class="@if($multiple) {{ $model }} == id @endif ? 'text-primary-700 dark:text-primary-300 font-semibold' : ''" x-text="getLabel(val, id)"></span>
                 </div>
             </template>
         </div>
