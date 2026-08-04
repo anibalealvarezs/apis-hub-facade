@@ -71,7 +71,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::scripts.after',
-                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
+                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/app.js\', \'resources/js/filament-charts.js\'])')
             )
             ->renderHook(
                 'panels::head.end',
