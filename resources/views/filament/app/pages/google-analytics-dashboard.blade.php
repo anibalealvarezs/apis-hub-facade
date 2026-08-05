@@ -31,7 +31,23 @@
             --ga4-chart-ticks: #94a3b8;
         }
 
-        .ga4-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+        .ga4-header-row {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            padding: 1rem 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--ga4-border);
+        }
+        .dark .ga4-header-row {
+            background: rgba(17, 24, 39, 0.9);
+        }
         .ga4-header-title { font-size: 1.8rem; font-weight: 800; color: var(--ga4-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
         .ga4-header-subtitle { color: var(--ga4-text-dim); font-size: 0.9rem; }
         .ga4-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
