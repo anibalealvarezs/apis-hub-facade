@@ -40,6 +40,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body { font-family: 'Outfit', system-ui, sans-serif; }
         select { color-scheme: light; }
