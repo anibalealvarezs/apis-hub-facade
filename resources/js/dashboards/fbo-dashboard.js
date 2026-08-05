@@ -156,6 +156,12 @@ export function fboDashboard(config = {}) {
             }
         },
 
+        handleAccountChange() {
+            this.syncToUrl();
+            this.trendData = {};
+            this.fetchAll();
+        },
+
         setTab(tab) {
             this.activeTab = tab;
             this.currentPage = 1;
