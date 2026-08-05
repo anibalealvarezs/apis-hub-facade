@@ -69,14 +69,14 @@ class GoogleAnalyticsController extends Controller
     private function mapFromGa4(string $metric): string
     {
         return match ($metric) {
-            'screenPageViews' => 'pageviews',
-            'bounceRate' => 'bounce_rate',
-            'newUsers' => 'new_users',
-            'averageSessionDuration' => 'average_session_duration',
-            'totalRevenue' => 'revenue',
-            'eventCount' => 'event_count',
-            'activeUsers' => 'reach',
-            'totalUsers' => 'total_users',
+            'pageviews' => 'screenPageViews',
+            'bounce_rate' => 'bounceRate',
+            'new_users' => 'newUsers',
+            'average_session_duration' => 'averageSessionDuration',
+            'totalRevenue', 'total_revenue' => 'revenue',
+            'events', 'event_count' => 'eventCount',
+            'reach', 'active_users' => 'activeUsers',
+            'total_users' => 'totalUsers',
             default => $metric,
         };
     }
@@ -397,12 +397,16 @@ class GoogleAnalyticsController extends Controller
             foreach ($scopesToQuery as $scope) {
                 if (isset($results["summary_{$scope}"]['data'][0])) {
                     foreach ($results["summary_{$scope}"]['data'][0] as $k => $v) {
-                        $summary[$this->mapFromGa4($k)] = $v;
+                        $mappedKey = $this->mapFromGa4($k);
+                        $summary[$mappedKey] = $v;
+                        $summary[$k] = $v;
                     }
                 }
                 if (isset($results["previous_{$scope}"]['data'][0])) {
                     foreach ($results["previous_{$scope}"]['data'][0] as $k => $v) {
-                        $previous[$this->mapFromGa4($k)] = $v;
+                        $mappedKey = $this->mapFromGa4($k);
+                        $previous[$mappedKey] = $v;
+                        $previous[$k] = $v;
                     }
                 }
             }
@@ -664,7 +668,9 @@ class GoogleAnalyticsController extends Controller
             foreach ($tableData as $row) {
                 $mappedRow = [];
                 foreach ($row as $k => $v) {
-                    $mappedRow[$this->mapFromGa4($k)] = $v;
+                    $mappedKey = $this->mapFromGa4($k);
+                    $mappedRow[$mappedKey] = $v;
+                    $mappedRow[$k] = $v;
                 }
                 $mappedTableData[] = $mappedRow;
             }
