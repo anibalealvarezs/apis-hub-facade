@@ -27,6 +27,15 @@
             --fb-bg-active: rgba(255, 255, 255, 0.08);
             --fb-chart-grid: rgba(255, 255, 255, 0.05);
             --fb-chart-ticks: #94a3b8;
+        .sticky-header-section {
+            background-color: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .dark .sticky-header-section {
+            background-color: #111827 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
         .fb-header-row {
             position: sticky;
             top: 4rem;

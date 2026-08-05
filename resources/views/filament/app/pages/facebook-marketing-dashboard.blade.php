@@ -43,6 +43,12 @@
             justify-content: space-between;
             align-items: flex-end;
             margin-bottom: 30px;
+            background-color: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .dark .fb-header-row {
+            background-color: #111827 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
         .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }

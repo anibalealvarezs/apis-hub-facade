@@ -39,6 +39,12 @@
             justify-content: space-between;
             align-items: flex-end;
             margin-bottom: 30px;
+            background-color: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .dark .ga4-header-row {
+            background-color: #111827 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
         .ga4-header-title { font-size: 1.8rem; font-weight: 800; color: var(--ga4-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
         .ga4-header-subtitle { color: var(--ga4-text-dim); font-size: 0.9rem; }

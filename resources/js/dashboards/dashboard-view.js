@@ -233,7 +233,7 @@ export function dashboardView(config = {}) {
             metrics: [],
             series_assets: {}
         },
-        settingsControls: { date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
+        settingsControls: { titles: { en: '', es: '' }, descriptions: { en: '', es: '' }, date_start: '', date_end: '', granularity: '', metrics: [], series_assets: {} },
         settingsSeriesOptions: {},
         settingsVariables: {},
         settingsGranularityOnTheGo: false,
@@ -248,12 +248,12 @@ export function dashboardView(config = {}) {
             this.settingsControls = controls || {};
             const widgetObj = (this.widgets || []).find(w => w.id === widgetId);
             this.settingsControls.titles = {
-                en: widgetObj?.titles?.en || (typeof widgetObj?.title === 'string' ? widgetObj?.title : ''),
-                es: widgetObj?.titles?.es || (typeof widgetObj?.title === 'string' ? widgetObj?.title : '')
+                en: this.settingsControls.titles?.en || widgetObj?.titles?.en || (typeof widgetObj?.title === 'string' ? widgetObj?.title : ''),
+                es: this.settingsControls.titles?.es || widgetObj?.titles?.es || (typeof widgetObj?.title === 'string' ? widgetObj?.title : '')
             };
             this.settingsControls.descriptions = {
-                en: widgetObj?.descriptions?.en || (typeof widgetObj?.description === 'string' ? widgetObj?.description : ''),
-                es: widgetObj?.descriptions?.es || (typeof widgetObj?.description === 'string' ? widgetObj?.description : '')
+                en: this.settingsControls.descriptions?.en || widgetObj?.descriptions?.en || (typeof widgetObj?.description === 'string' ? widgetObj?.description : ''),
+                es: this.settingsControls.descriptions?.es || widgetObj?.descriptions?.es || (typeof widgetObj?.description === 'string' ? widgetObj?.description : '')
             };
             if (!this.settingsControls.metrics) this.settingsControls.metrics = [];
             if (!Array.isArray(this.settingsControls.metrics)) {
@@ -313,6 +313,8 @@ export function dashboardView(config = {}) {
                 series_assets: {}
             };
             this.settingsControls = {
+                titles: { en: '', es: '' },
+                descriptions: { en: '', es: '' },
                 date_start: '',
                 date_end: '',
                 granularity: '',

@@ -14,11 +14,24 @@
         sourceTypes: @js($this->getAvailableSourceTypes()),
         kpis: @js($this->getKpisForWidgetPicker()),
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
-        derivedMetricWidgetTypes: @js(\App\Services\WidgetTypeRegistry::getWidgetTypesForSource('derived_metric')),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
+        <style>
+            .builder-toolbar {
+                position: sticky;
+                top: 4rem;
+                z-index: 20;
+                background-color: #f9fafb !important;
+                border: 1px solid #e5e7eb !important;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            }
+            .dark .builder-toolbar {
+                background-color: #111827 !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            }
+        </style>
         {{-- Toolbar --}}
-        <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50/98 dark:bg-gray-900/98 p-4 backdrop-blur-md border border-gray-200 dark:border-white/10 shadow-sm transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
             <div class="flex items-center gap-2">
                 <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400"/>
                 <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $this->dashboard->name }}</span>
@@ -28,14 +41,14 @@
                     class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                     x-on:click="openDashboardControls()">
                     <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1"/>
-                    Controls
+                    {{ __('Controls') }}
                 </button>
                 @can('edit_preferences')
                     <button
                         class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                         x-on:click="openShareDialog()">
                         <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1"/>
-                        Share
+                        {{ __('Share') }}
                     </button>
                 @endcan
 
@@ -60,7 +73,7 @@
                     ::color="isDirty ? 'warning' : 'primary'" 
                     icon="heroicon-o-check"
                     ::class="isDirty ? 'ring-2 ring-warning-500/50 shadow-md animate-pulse' : ''">
-                    Save Layout
+                    {{ __('Save Layout') }}
                 </x-filament::button>
             </div>
         </div>
@@ -69,8 +82,7 @@
             {{-- Widget Palette (sidebar) --}}
             <div class="col-span-2 hidden lg:block">
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 space-y-4">
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Widget
-                        Palette</h3>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Widget Palette') }}</h3>
                     <div class="space-y-2">
                         <div
                             class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
@@ -85,11 +97,11 @@
                         <div class="text-xs text-gray-400 dark:text-gray-500">
                             <div class="flex items-center gap-1 mb-1">
                                 <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
-                                <span>Control inherited from dashboard</span>
+                                <span>{{ __('Control inherited from dashboard') }}</span>
                             </div>
                             <div class="flex items-center gap-1">
                                 <span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                                <span>Custom control set</span>
+                                <span>{{ __('Custom control set') }}</span>
                             </div>
                         </div>
                     </div>
@@ -221,8 +233,8 @@
                             <x-filament::icon name="heroicon-o-squares-2x2"
                                               class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4"/>
                             <p class="text-gray-500 dark:text-gray-400 text-lg">{{ __('No widgets yet') }}</p>
-                            <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Click "Add Widget" in the palette
-                                to get started.</p>
+                            <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">{{ __('Click "Add Widget" in the palette
+                                to get started.') }}</p>
                         </div>
                     </template>
                 </div>
@@ -237,8 +249,8 @@
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">These defaults apply to all widgets. Widgets can
-                    override individually.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('These defaults apply to all widgets. Widgets can
+                    override individually.') }}</p>
 
                 {{-- Date Range --}}
                 @php
@@ -264,7 +276,7 @@
                 {{-- Asset Group --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Asset Group') }}</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Filters available assets for widgets that don&rsquo;t have their own asset group selected.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Filters available assets for widgets that don&rsquo;t have their own asset group selected.') }}</p>
                     <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent="" size="sm" />
                     <label class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
                         <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
@@ -287,14 +299,14 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
                     <x-ui.select-input x-model="dashboardControls.granularity" class="w-full">
-                        <x-ui.select-option value="daily">Daily</x-ui.select-option>
-                        <x-ui.select-option value="weekly">Weekly</x-ui.select-option>
-                        <x-ui.select-option value="monthly">Monthly</x-ui.select-option>
-                        <x-ui.select-option value="query">Query</x-ui.select-option>
-                        <x-ui.select-option value="dimensions.page">Page</x-ui.select-option>
-                        <x-ui.select-option value="country">Country</x-ui.select-option>
-                        <x-ui.select-option value="device">Device</x-ui.select-option>
-                        <x-ui.select-option value="post">Post</x-ui.select-option>
+                        <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
+                        <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                        <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                        <x-ui.select-option value="query">{{ __('Query') }}</x-ui.select-option>
+                        <x-ui.select-option value="dimensions.page">{{ __('Page') }}</x-ui.select-option>
+                        <x-ui.select-option value="country">{{ __('Country') }}</x-ui.select-option>
+                        <x-ui.select-option value="device">{{ __('Device') }}</x-ui.select-option>
+                        <x-ui.select-option value="post">{{ __('Post') }}</x-ui.select-option>
                     </x-ui.select-input>
                 </div>
 
@@ -305,7 +317,7 @@
                         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <input type="checkbox" x-model="dashboardControls.edge_case_weighted"
                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                            Weighted regression (WLS)
+                            {{ __('Weighted regression (WLS)') }}
                         </label>
                         <x-ui.select-input x-model="dashboardControls.edge_case_grouping" class="w-full">
                             <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
@@ -318,10 +330,10 @@
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <button
                         class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
-                        x-on:click="showDashboardControls = false">Cancel
+                        x-on:click="showDashboardControls = false">{{ __('Cancel') }}
                     </button>
                     <button class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 text-sm"
-                            x-on:click="confirmDashboardControls()">Save Controls
+                            x-on:click="confirmDashboardControls()">{{ __('Save Controls') }}
                     </button>
                 </div>
             </div>
@@ -355,9 +367,9 @@
                         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400" x-show="!widgetHasCustomControls(widgetControlsTarget)"></span>
                             <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" x-show="widgetHasCustomControls(widgetControlsTarget)"></span>
-                            <span x-show="!widgetHasCustomControls(widgetControlsTarget)">All controls inherited from dashboard defaults.</span>
-                            <span x-show="widgetHasCustomControls(widgetControlsTarget)">Some controls have custom overrides.</span>
-                            <button class="ml-2 text-primary-600 dark:text-primary-400 hover:underline font-medium" x-on:click="resetWidgetControls()">Reset all to inherit</button>
+                            <span x-show="!widgetHasCustomControls(widgetControlsTarget)">{{ __('All controls inherited from dashboard defaults.') }}</span>
+                            <span x-show="widgetHasCustomControls(widgetControlsTarget)">{{ __('Some controls have custom overrides.') }}</span>
+                            <button class="ml-2 text-primary-600 dark:text-primary-400 hover:underline font-medium" x-on:click="resetWidgetControls()">{{ __('Reset all to inherit') }}</button>
                         </div>
                     </div>
                     <button @click="showWidgetControls = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -401,17 +413,17 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                                 </svg>
-                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Identity</span>
+                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
                             </div>
                             <div class="p-6 space-y-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Widget Title <span class="text-red-500">*</span></label>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} <span class="text-red-500">*</span></label>
                                     <input type="text" x-model="widgetControlsForm.title"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
                                            placeholder="Enter widget title">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Description <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} <span class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
                                     <textarea x-model="widgetControlsForm.description" rows="2"
                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
                                               placeholder="Enter a brief description..."></textarea>
@@ -425,7 +437,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
-                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Chart Type</span>
+                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Chart Type') }}</span>
                             </div>
                             <div class="p-6">
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -440,7 +452,7 @@
                                         </button>
                                     </template>
                                 </div>
-                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">Changing the chart type affects how data is displayed. Some types may not show all data dimensions.</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">{{ __('Changing the chart type affects how data is displayed. Some types may not show all data dimensions.') }}</p>
                             </div>
                         </div>
 
@@ -451,12 +463,12 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                                     </svg>
-                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Date Range</span>
+                                    <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Date Range') }}</span>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" x-model="widgetControlsForm.date_inherit" class="sr-only peer"/>
                                     <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
+                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.date_inherit ? __('Inherit') : __('Custom')"></span>
                                 </label>
                             </div>
                             <div class="p-6 flex flex-row items-center gap-3">
