@@ -94,9 +94,9 @@
             margin-top: 20px;
         }
 
-        .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); }
+        .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 
-        .tab-fb { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
+        .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
 
         .tab-fb:hover { background: var(--fb-bg-hover); }
 
@@ -228,46 +228,42 @@
         activeBreakdownTab: 'reaction_type',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="fb-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
-            <div>
-                <h1 class="fb-header-title">
-                    <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('FB & IG Insights') }}
-                </h1>
-            </div>
-            <div class="fb-header-controls">
-                <div class="flex items-center mr-4 gap-2">
-                    <button type="button" 
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
-                            :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
-                            @click="showTrends = !showTrends; handleTrendToggle()" 
-                            role="switch" 
-                            :aria-checked="showTrends.toString()">
-                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
-                              :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+        <div class="sticky-header-section py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+            <div class="fb-header-row mb-3">
+                <div class="fb-header-controls">
+                    <div class="flex items-center mr-4 gap-2">
+                        <button type="button" 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                                :class="showTrends ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'" 
+                                @click="showTrends = !showTrends; handleTrendToggle()" 
+                                role="switch" 
+                                :aria-checked="showTrends.toString()">
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                  :class="showTrends ? 'translate-x-5' : 'translate-x-0'"></span>
+                        </button>
+                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                    </div>
+                    <button type="button" @click="forceRefresh()"
+                            class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
+                            :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
+                            :disabled="isSummaryLoading || isChartLoading || isTableLoading">
+                        <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
+                                                 x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
+                        <span>{{ __('Update') }}</span>
                     </button>
-                    <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
+                    <x-ui.asset-selector model="accounts[0]" options="accountNames" placeholder="{{ __('Select Page...') }}" change-event="handleAccountChange()" size="sm" />
+                    <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
+                    <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
                 </div>
-                <button type="button" @click="forceRefresh()"
-                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
-                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
-                        :disabled="isSummaryLoading || isChartLoading || isTableLoading">
-                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
-                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
-                    <span>{{ __('Update') }}</span>
-                </button>
-                <x-ui.asset-selector model="accounts[0]" options="accountNames" placeholder="{{ __('Select Page...') }}" change-event="handleAccountChange()" size="sm" />
-                <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
-                <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
             </div>
-        </div>
 
-        <div class="tab-nav-fb"
-             style="margin-bottom: 25px; border-radius: 8px; overflow: hidden; border: 1px solid var(--fb-border);">
-            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
-                 @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
-            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
-                 @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+            <div class="tab-nav-fb"
+                 style="border-radius: 8px; border: 1px solid var(--fb-border);">
+                <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
+                     @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
+                <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
+                     @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+            </div>
         </div>
 
         <div class="metrics-grid-fb relative">

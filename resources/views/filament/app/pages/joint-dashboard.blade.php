@@ -143,15 +143,6 @@
         dateEnd: @entangle('dateEnd')
     }, window.jointConfig || {}))" x-init="initDashboard()">
         <div class="joint-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
-            <div>
-                <h1 class="joint-header-title">
-                    <x-heroicon-o-arrows-right-left class="w-8 h-8 text-primary-500" />
-                    {{ __('Cross-Channel Joint Correlations') }}
-                </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {{ __('Analyze statistical dependencies, lead/lag effects, and z-score normalized cross-channel trends.') }}
-                </p>
-            </div>
             <div class="joint-header-controls">
                 <button type="button" @click="window.print()" class="export-btn">
                     <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

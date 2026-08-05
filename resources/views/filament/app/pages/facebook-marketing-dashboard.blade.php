@@ -104,9 +104,9 @@
             margin-top: 20px;
         }
 
-        .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); }
+        .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 
-        .tab-fb { padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
+        .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
 
         .tab-fb:hover { background: var(--fb-bg-hover); }
 
@@ -153,12 +153,6 @@
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="fb-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
-            <div>
-                <h1 class="fb-header-title">
-                    <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]"/>
-                    {{ __('Meta Ads Insights') }}
-                </h1>
-            </div>
             <div class="fb-header-controls">
                 <div class="flex items-center mr-4 gap-2">
                     <button type="button" 
