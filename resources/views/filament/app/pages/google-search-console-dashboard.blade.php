@@ -142,7 +142,7 @@
         activeTab: @entangle('activeTab'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="gsc-header-row sticky top-0 z-10 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+        <div class="gsc-header-row sticky top-[4rem] z-20 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]"/>
