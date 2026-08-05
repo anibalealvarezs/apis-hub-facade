@@ -40,13 +40,15 @@
             align-items: flex-end;
             margin-bottom: 30px;
             padding: 1rem 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(249, 250, 251, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--ga4-border);
         }
-        .dark .ga4-header-row {
-            background: rgba(17, 24, 39, 0.9);
+        .dark .ga4-header-row,
+        html.dark .ga4-header-row {
+            background: rgba(17, 24, 39, 0.85);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
         }
         .ga4-header-title { font-size: 1.8rem; font-weight: 800; color: var(--ga4-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
         .ga4-header-subtitle { color: var(--ga4-text-dim); font-size: 0.9rem; }

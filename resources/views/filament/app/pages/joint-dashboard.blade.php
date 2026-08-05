@@ -9,13 +9,14 @@
             align-items: flex-end;
             margin-bottom: 30px;
             padding: 1rem 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(249, 250, 251, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .dark .joint-header-row {
-            background: rgba(17, 24, 39, 0.9);
+        .dark .joint-header-row,
+        html.dark .joint-header-row {
+            background: rgba(17, 24, 39, 0.85);
             border-bottom-color: rgba(255, 255, 255, 0.05);
         }
         .joint-header-title { font-size: 1.8rem; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 12px; }
