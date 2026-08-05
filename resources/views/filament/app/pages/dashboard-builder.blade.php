@@ -468,7 +468,7 @@
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" x-model="widgetControlsForm.date_inherit" class="sr-only peer"/>
                                     <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.date_inherit ? __('Inherit') : __('Custom')"></span>
+                                    <span class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400" x-text="widgetControlsForm.date_inherit ? 'Inherit' : 'Custom'"></span>
                                 </label>
                             </div>
                             <div class="p-6 flex flex-row items-center gap-3">
@@ -499,7 +499,7 @@
                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                      </svg>
-                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">Zero / Missing Data</span>
+                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Zero / Missing Data') }}</span>
                                  </div>
                                  <label class="relative inline-flex items-center cursor-pointer">
                                      <input type="checkbox" x-model="widgetControlsForm.zero_inherit" class="sr-only peer"/>
@@ -547,7 +547,7 @@
                                          <!-- Dependency/Matrix Selector -->
                                          <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
                                              <div>
-                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Data Scope / Matrix</label>
+                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
                                                  <x-ui.select-input x-model="widgetControlsForm.dependency" @change="updateGranularities()" class="w-full">
                                                      <template x-for="(label, key) in availableDependencies" :key="key">
                                                          <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
@@ -559,7 +559,7 @@
                                          <!-- Granularity Selector -->
                                          <div>
                                              <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
-                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Granularity</label>
+                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
                                              </template>
                                              <template x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric'">
                                                  <x-ui.select-input x-model="widgetControlsForm.granularity" @change="updateSeriesMetrics()" class="w-full">
@@ -572,14 +572,14 @@
                                              <!-- Fallback for KPIs -->
                                              <template x-if="widgetControlsTarget && widgetControlsTarget.source_type !== 'metric'">
                                                 <x-ui.select-input x-model="widgetControlsForm.granularity" class="w-full">
-                                                    <x-ui.select-option value="daily">Daily</x-ui.select-option>
-                                                    <x-ui.select-option value="weekly">Weekly</x-ui.select-option>
-                                                    <x-ui.select-option value="monthly">Monthly</x-ui.select-option>
-                                                    <x-ui.select-option value="query">Query</x-ui.select-option>
-                                                    <x-ui.select-option value="dimensions.page">Page</x-ui.select-option>
-                                                    <x-ui.select-option value="country">Country</x-ui.select-option>
-                                                    <x-ui.select-option value="device">Device</x-ui.select-option>
-                                                    <x-ui.select-option value="post">Post</x-ui.select-option>
+                                                    <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="query">{{ __('Query') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="dimensions.page">{{ __('Page') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="country">{{ __('Country') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="device">{{ __('Device') }}</x-ui.select-option>
+                                                    <x-ui.select-option value="post">{{ __('Post') }}</x-ui.select-option>
                                                 </x-ui.select-input>
                                              </template>
                                          </div>
@@ -608,7 +608,7 @@
                                         <template x-if="widgetControlsForm.edge_case_inherit">
                                             <div class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                                                 <span x-text="`WLS: ${widgetControlsForm.edge_case_weighted ? 'On' : 'Off'}, Grouping: ${widgetControlsForm.edge_case_grouping === 'none' ? 'No grouping' : widgetControlsForm.edge_case_grouping === 'histogram' ? 'Auto histogram-elbow' : 'Bottom percentile'}`"></span>
-                                                <span class="block text-xs text-gray-400 mt-1">Inherited from KPI configuration</span>
+                                                <span class="block text-xs text-gray-400 mt-1">{{ __('Inherited from KPI configuration') }}</span>
                                             </div>
                                         </template>
                                         <template x-if="!widgetControlsForm.edge_case_inherit">
@@ -616,11 +616,11 @@
                                                 <label class="flex items-center gap-3 cursor-pointer">
                                                     <input type="checkbox" x-model="widgetControlsForm.edge_case_weighted"
                                                            class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
-                                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Weighted regression (WLS)</span>
+                                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ __('Weighted regression (WLS)') }}</span>
                                                 </label>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">{{ __('Weight each dimension value by its volume so high-volume items influence the regression line proportionally more.') }}</p>
                                                 <div>
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Group low-frequency values</label>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Group low-frequency values') }}</label>
                                                     <x-ui.select-input x-model="widgetControlsForm.edge_case_grouping" class="w-full">
                                                         <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
                                                         <x-ui.select-option value="histogram">{{ __('Auto histogram-elbow') }}</x-ui.select-option>
