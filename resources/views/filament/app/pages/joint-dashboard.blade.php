@@ -1,6 +1,14 @@
 <x-filament-panels::page>
     <style>
-        .joint-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+        .joint-header-row {
+            position: sticky;
+            top: 4rem;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
         .joint-header-title { font-size: 1.8rem; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 12px; }
         .dark .joint-header-title { color: #ffffff; }
         .joint-header-controls { display: flex; align-items: center; gap: 15px; }
@@ -134,7 +142,7 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
     }, window.jointConfig || {}))" x-init="initDashboard()">
-        <div class="joint-header-row sticky top-[4rem] z-20 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+        <div class="joint-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div>
                 <h1 class="joint-header-title">
                     <x-heroicon-o-arrows-right-left class="w-8 h-8 text-primary-500" />

@@ -35,7 +35,15 @@
             --fb-chart-ticks: #94a3b8;
         }
 
-        .fb-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+        .fb-header-row {
+            position: sticky;
+            top: 4rem;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
 
         .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
 
@@ -144,7 +152,7 @@
         activeTab: 'campaigns',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="fb-header-row sticky top-[4rem] z-20 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+        <div class="fb-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-presentation-chart-line class="w-8 h-8 text-[#1877F2]"/>

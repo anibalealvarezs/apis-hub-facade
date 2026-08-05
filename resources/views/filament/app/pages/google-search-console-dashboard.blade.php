@@ -27,7 +27,15 @@
             --gsc-chart-ticks: #94a3b8;
         }
 
-        .gsc-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+        .gsc-header-row {
+            position: sticky;
+            top: 4rem;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+        }
 
         .gsc-header-title { font-size: 1.8rem; font-weight: 800; color: var(--gsc-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
 
@@ -142,7 +150,7 @@
         activeTab: @entangle('activeTab'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="gsc-header-row sticky top-[4rem] z-20 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+        <div class="gsc-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div>
                 <h1 class="gsc-header-title">
                     <x-heroicon-o-magnifying-glass class="w-8 h-8 text-[#4285f4]"/>

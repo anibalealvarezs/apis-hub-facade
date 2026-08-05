@@ -18,7 +18,7 @@
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
         {{-- Toolbar --}}
-        <div class="sticky top-[4rem] z-20 flex items-center justify-between gap-4 rounded-xl bg-gray-50/95 dark:bg-gray-900/95 p-4 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors">
+        <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50/95 dark:bg-gray-900/95 p-4 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div class="flex items-center gap-2">
                 <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400"/>
                 <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $this->dashboard->name }}</span>
