@@ -134,7 +134,7 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
     }, window.jointConfig || {}))" x-init="initDashboard()">
-        <div class="joint-header-row sticky top-16 z-20 py-4 -mt-4 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
+        <div class="joint-header-row sticky top-0 z-10 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div>
                 <h1 class="joint-header-title">
                     <x-heroicon-o-arrows-right-left class="w-8 h-8 text-primary-500" />

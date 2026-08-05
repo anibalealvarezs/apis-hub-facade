@@ -220,7 +220,7 @@
         activeBreakdownTab: 'reaction_type',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="fb-header-row sticky top-16 z-20 py-4 -mt-4 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
+        <div class="fb-header-row sticky top-0 z-10 py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
