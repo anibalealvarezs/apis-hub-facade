@@ -27,25 +27,7 @@
             --fb-bg-active: rgba(255, 255, 255, 0.08);
             --fb-chart-grid: rgba(255, 255, 255, 0.05);
             --fb-chart-ticks: #94a3b8;
-        .fb-header-row {
-            position: sticky;
-            top: 0;
-            z-index: 30;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            padding: 1rem 0;
-            background: rgba(249, 250, 251, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--fb-border);
-        }
-        .dark .fb-header-row,
-        html.dark .fb-header-row {
-            background: rgba(17, 24, 39, 0.85);
-            border-bottom-color: rgba(255, 255, 255, 0.08);
-        }
+        .fb-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
 
         .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
 
@@ -238,7 +220,7 @@
         activeBreakdownTab: 'reaction_type',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="fb-header-row">
+        <div class="fb-header-row sticky top-0 z-30 py-4 -mt-4 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
             <div>
                 <h1 class="fb-header-title">
                     <x-heroicon-o-users class="w-8 h-8 text-[#1877F2]"/>
