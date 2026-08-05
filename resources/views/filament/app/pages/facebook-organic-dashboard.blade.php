@@ -94,7 +94,19 @@
             margin-top: 20px;
         }
 
-        .tab-nav-fb { display: flex; border-bottom: 1px solid var(--fb-border); background: var(--fb-bg-active); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .tab-nav-fb {
+            position: sticky;
+            top: 7.25rem;
+            z-index: 15;
+            display: flex;
+            border-bottom: 1px solid var(--fb-border);
+            background: var(--fb-bg-card);
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            flex-wrap: nowrap;
+        }
 
         .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
 
@@ -228,7 +240,7 @@
         activeBreakdownTab: 'reaction_type',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="sticky-header-section py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="sticky-header-section py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div class="fb-header-row mb-3">
                 <div class="fb-header-controls">
                     <div class="flex items-center mr-4 gap-2">

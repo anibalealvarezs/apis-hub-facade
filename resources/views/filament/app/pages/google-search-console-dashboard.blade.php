@@ -96,7 +96,19 @@
             margin-top: 40px;
         }
 
-        .tab-nav-gsc { display: flex; border-bottom: 1px solid var(--gsc-border); background: var(--gsc-bg-active); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: thin; flex-wrap: nowrap; }
+        .tab-nav-gsc {
+            position: sticky;
+            top: 7.25rem;
+            z-index: 15;
+            display: flex;
+            border-bottom: 1px solid var(--gsc-border);
+            background: var(--gsc-bg-card);
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            flex-wrap: nowrap;
+        }
 
         .tab-gsc { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gsc-text-dim); border-right: 1px solid var(--gsc-border); transition: all 0.2s; }
 
@@ -150,7 +162,7 @@
         activeTab: @entangle('activeTab'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="gsc-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div class="gsc-header-controls">
                 <div class="flex items-center mr-2 gap-2">
                     <button type="button" 

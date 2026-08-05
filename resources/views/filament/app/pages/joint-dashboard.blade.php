@@ -142,7 +142,7 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
     }, window.jointConfig || {}))" x-init="initDashboard()">
-        <div class="joint-header-row py-3 mb-6 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="joint-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div class="joint-header-controls">
                 <button type="button" @click="window.print()" class="export-btn">
                     <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
