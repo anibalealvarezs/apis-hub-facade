@@ -580,8 +580,8 @@ window.dashboardRenderer = {
         html += '</tbody></table></div>';
 
         // Scrollable Remaining Columns Table
-        html += '<div class="table-scroll-wrap" style="flex-1;overflow:auto;height:100%;">';
-        html += '<table style="width:100%;min-width:max-content;border-collapse:separate;border-spacing:0;">';
+        html += '<div class="table-scroll-wrap" style="flex:1 1 auto;overflow:auto;height:100%;min-width:0;">';
+        html += '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
         columns.slice(1).forEach((col) => {

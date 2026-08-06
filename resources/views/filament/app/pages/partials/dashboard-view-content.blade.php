@@ -489,7 +489,12 @@
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig">
                                     <div
-                                        class="flex-none w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                        class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                        :class="{
+                                            'md:w-full': Object.keys(settingsVariables || {}).length === 1,
+                                            'md:w-[calc(50%-0.75rem)]': Object.keys(settingsVariables || {}).length === 2,
+                                            'md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]': Object.keys(settingsVariables || {}).length >= 3
+                                        }">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
