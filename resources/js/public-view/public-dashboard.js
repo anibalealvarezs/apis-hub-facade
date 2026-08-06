@@ -18,12 +18,13 @@ export function sharedView(config = {}) {
                             columnOpts: {
                                 columnMax: 12,
                                 breakpointForWindow: true,
+                                layout: 'moveScale',
                                 breakpoints: [
                                     { w: 1280, c: 12 },
                                     { w: 1024, c: 8 },
                                     { w: 768, c: 6 },
                                     { w: 640, c: 4 },
-                                    { w: 480, c: 1 }
+                                    { w: 576, c: 1 }
                                 ]
                             }
                         }, '#view-grid-stack');
