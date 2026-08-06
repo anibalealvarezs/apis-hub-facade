@@ -100,7 +100,7 @@ class PublicViewsRelationManager extends RelationManager
                     })
                     ->extraAttributes(fn (DashboardPublicView $record) => [
                         'x-data' => '{}',
-                        'x-on:click' => 'window.navigator.clipboard.writeText(' . json_encode($record->getPublicUrl()) . ')',
+                        'x-on:click' => 'window.navigator.clipboard.writeText(' . \Illuminate\Support\Js::from($record->getPublicUrl()) . ')',
                     ]),
                 Tables\Actions\Action::make('copy_embed')
                     ->label(__('Embed Code'))
