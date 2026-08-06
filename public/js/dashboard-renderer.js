@@ -650,7 +650,7 @@ window.dashboardRenderer = {
                     sort.column = key;
                     sort.direction = 'asc';
                 }
-                this.renderTable(containerEl, data);
+                this.renderTable(containerEl, data, controls);
             });
         });
     },
