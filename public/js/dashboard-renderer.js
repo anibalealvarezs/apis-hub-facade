@@ -518,7 +518,7 @@ window.dashboardRenderer = {
 
     // ─── Table ───
 
-    renderTable(containerEl, data) {
+    renderTable(containerEl, data, controls) {
         const columns = data?.columns ?? [];
         const rows = data?.rows ?? [];
 
