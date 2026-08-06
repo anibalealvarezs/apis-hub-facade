@@ -1,6 +1,9 @@
 <x-filament-panels::page>
     <div
-        x-data="kpiBrowser()"
+        x-data="kpiBrowser({
+            kpis: @js($this->getKpisWithGuidance()),
+            categoryGroups: @js($this->getCategoryGroups())
+        })"
         class="space-y-6"
     >
         <div class="prose prose-sm max-w-none text-gray-500 dark:text-gray-400 mb-2">

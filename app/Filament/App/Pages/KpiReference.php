@@ -54,6 +54,7 @@ class KpiReference extends Page
 
             $result[] = [
                 'key' => $key,
+                'type' => $key,
                 'name' => __($kpi['name']),
                 'description' => __($kpi['description']),
                 'type_label' => __($guidance['type_label']),
