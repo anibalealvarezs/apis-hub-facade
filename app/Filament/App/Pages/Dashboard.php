@@ -16,6 +16,16 @@ class Dashboard extends BaseDashboard
         return '';
     }
 
+    public function getNavigationLabel(): string
+    {
+        return __('Home');
+    }
+
+    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Home');
+    }
+
     public function getWidgets(): array
     {
         return [];

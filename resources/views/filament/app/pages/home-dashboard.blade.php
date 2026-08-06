@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     @if(isset($this->dashboard))
-        @include('filament.app.pages.partials.dashboard-view-content')
+        @include('filament.app.pages.partials.dashboard-view-content', ['viewObj' => $this])
     @else
         <div class="flex flex-col items-center justify-center py-24 text-center">
             <x-filament::icon name="heroicon-o-presentation-chart-line"
