@@ -40,6 +40,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="pv-page bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">

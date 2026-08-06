@@ -19,6 +19,7 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen">
