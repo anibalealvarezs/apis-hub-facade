@@ -52,14 +52,12 @@
             <template x-for="kpi in filteredKpis" :key="kpi.key">
                 <x-filament::section x-bind:id="kpi.key">
                     <x-slot name="heading">
-                        <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                        <div class="flex items-center gap-2 group" x-data="copyLink()">
                             <x-filament::icon icon="heroicon-o-chart-bar" class="h-5 w-5 text-primary-500" />
                             <a x-bind:href="'#' + kpi.key"
                                class="flex items-center gap-2 hover:underline text-inherit"
                                @click.prevent="
-                                   navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + kpi.key);
-                                   copied = true;
-                                   setTimeout(() => copied = false, 2000);
+                                   copy(kpi.key);
                                ">
                                 <span x-text="kpi.name"></span>
                                 <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />

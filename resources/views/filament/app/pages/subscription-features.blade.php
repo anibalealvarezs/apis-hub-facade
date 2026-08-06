@@ -14,14 +14,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-paper-airplane" class="h-6 w-6 text-gray-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Free</span>
                         <x-filament::icon 
@@ -84,14 +82,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-rocket-launch" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Pro</span>
                         <x-filament::icon 
@@ -160,14 +156,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-bolt" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Ultra / Founder</span>
                         <x-filament::icon 
@@ -240,14 +234,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 text-warning-500 dark:text-warning-400 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 text-warning-500 dark:text-warning-400 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-building-office-2" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Enterprise</span>
                         <x-filament::icon 
@@ -335,13 +327,11 @@
         @endphp
         <x-filament::section id="{{ $id }}" icon="heroicon-o-information-circle" icon-color="warning">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + '{{ $id }}');
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span class="text-warning-600 dark:text-warning-400">{{ __('Important Note on API Access') }}</span>
                         <x-filament::icon 

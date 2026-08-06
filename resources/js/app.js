@@ -1,5 +1,8 @@
 import './bootstrap';
 import { uiAssetSelector } from './components/ui-asset-selector';
+import { copyLink } from './components/copy-link';
+import { floatingTooltip } from './components/floating-tooltip';
+import { dataSources } from './pages/data-sources';
 import { jointDashboard } from './dashboards/joint-dashboard';
 import { gscDashboard } from './dashboards/gsc-dashboard';
 import { fbDashboard } from './dashboards/fbm-dashboard';
@@ -11,6 +14,9 @@ import { dashboardBuilder } from './dashboards/dashboard-builder';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
+window.copyLink = copyLink;
+window.floatingTooltip = floatingTooltip;
+window.dataSources = dataSources;
 window.jointDashboard = jointDashboard;
 window.gscDashboard = gscDashboard;
 window.fbDashboard = fbDashboard;
@@ -36,6 +42,9 @@ const registerAlpineComponents = (Alpine) => {
     }));
 
     Alpine.data('uiAssetSelector', uiAssetSelector);
+    Alpine.data('copyLink', copyLink);
+    Alpine.data('floatingTooltip', floatingTooltip);
+    Alpine.data('dataSources', dataSources);
     Alpine.data('jointDashboard', jointDashboard);
     Alpine.data('gscDashboard', gscDashboard);
     Alpine.data('fbDashboard', fbDashboard);

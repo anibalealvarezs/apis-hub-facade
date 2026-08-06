@@ -140,14 +140,10 @@
         }
     </style>
 
-    <script>
-        window.jointConfig = @js($this->getJointConfig());
-    </script>
-
     <div id="joint-dashboard-container" x-data="jointDashboard(Object.assign({
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
-    }, window.jointConfig || {}))" x-init="initDashboard()">
+    }, @js($this->getJointConfig())))" x-init="initDashboard()">
         <div class="joint-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
             <div class="joint-header-controls">
                 <button type="button" @click="window.print()" class="export-btn">

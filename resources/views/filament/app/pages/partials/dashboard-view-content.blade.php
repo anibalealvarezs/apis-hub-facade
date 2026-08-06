@@ -97,33 +97,17 @@
                             <div class="flex items-center gap-2">
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
-                                    <div x-data="{ showKpi: false, pos: '', ts: {} }"
-                                         @click.outside="showKpi = false"
+                                    <div x-data="floatingTooltip({ width: 384 })"
+                                         @click.outside="show = false"
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
-                                             @click.stop="
-                                                 if (!showKpi) {
-                                                     const r = $el.getBoundingClientRect();
-                                                     const gap = 8;
-                                                     const tw = 384;
-                                                     const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
-                                                     const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
-                                                     pos = v + '-' + h;
-                                                     const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
-                                                     if (v === 'top') {
-                                                         ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                     } else {
-                                                         ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                     }
-                                                 }
-                                                 showKpi = !showKpi;
-                                             "
+                                             @click.stop="toggle($el)"
                                              class="w-4 h-4 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
                                         </svg>
-                                        <div x-show="showKpi"
+                                        <div x-show="show"
                                              x-transition:enter="transition ease-out duration-100"
                                              x-transition:enter-start="opacity-0 translate-y-1"
                                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -197,33 +181,17 @@
                                     </div>
                                 @elseif (!empty($widget['description']))
                                     {{-- Info button (simple tooltip) --}}
-                                    <div x-data="{ showDesc: false, pos: '', ts: {} }"
-                                         @click.outside="showDesc = false"
+                                    <div x-data="floatingTooltip({ width: 256 })"
+                                         @click.outside="show = false"
                                          class="relative flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                              stroke-width="2" stroke="currentColor"
-                                              @click.stop="
-                                                  if (!showDesc) {
-                                                      const r = $el.getBoundingClientRect();
-                                                      const gap = 8;
-                                                      const tw = 256;
-                                                      const v = r.top < window.innerHeight / 2 ? 'top' : 'bottom';
-                                                      const h = r.left + r.width / 2 < window.innerWidth / 2 ? 'left' : 'right';
-                                                      pos = v + '-' + h;
-                                                      const lt = h === 'left' ? r.left : Math.max(8, Math.min(r.right - tw, window.innerWidth - tw - 8));
-                                                      if (v === 'top') {
-                                                          ts = { position: 'fixed', top: (r.bottom + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                      } else {
-                                                          ts = { position: 'fixed', bottom: (window.innerHeight - r.top + gap) + 'px', left: lt + 'px', zIndex: 9999 };
-                                                      }
-                                                  }
-                                                  showDesc = !showDesc;
-                                              "
+                                             @click.stop="toggle($el)"
                                              class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer transition-colors">
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
                                         </svg>
-                                        <div x-show="showDesc"
+                                        <div x-show="show"
                                              x-transition:enter="transition ease-out duration-100"
                                              x-transition:enter-start="opacity-0 translate-y-1"
                                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -578,8 +546,7 @@
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig">
                                     <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
-                                        x-init="console.log('DEBUG loop:', { vKey: vKey, options: settingsSeriesOptions[vKey] ? settingsSeriesOptions[vKey].options : null, keysLength: (settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].options) ? Object.keys(settingsSeriesOptions[vKey].options).length : 0 })">
+                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
