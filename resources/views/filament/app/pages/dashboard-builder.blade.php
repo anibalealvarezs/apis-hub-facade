@@ -639,7 +639,7 @@
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Value cap (null = no cap)') }}</label>
                                                 <input type="number" step="0.01" min="0" x-model="widgetControlsForm.max_ratio"
                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                       :placeholder="__('e.g. 1.0')"/>
+                                                       placeholder="e.g. 1.0"/>
                                             </div>
                                         </template>
                                     </div>
