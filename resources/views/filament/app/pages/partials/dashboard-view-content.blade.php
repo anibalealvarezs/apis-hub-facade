@@ -478,6 +478,7 @@
                                         <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">{{ __('Remove the unknown query from the chart and recalculate the regression line without it.') }}</p>
                                     </div>
                                 </div>
+                            </template>
                             {{-- Card: Table Options (Table widgets only) --}}
                             <template x-if="settingsSourceType === 'table' || settingsOriginalControls.widget_type === 'table'">
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">

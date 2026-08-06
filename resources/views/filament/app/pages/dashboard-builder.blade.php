@@ -642,6 +642,10 @@
                                                        :placeholder="__('e.g. 1.0')"/>
                                             </div>
                                         </template>
+                                    </div>
+                                </div>
+                            </template>
+
                             {{-- Card: Table Options (Table widgets only) --}}
                             <template x-if="widgetControlsTarget.widget_type === 'table'">
                                 <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
