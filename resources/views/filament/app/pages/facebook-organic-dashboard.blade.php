@@ -52,7 +52,7 @@
 
         .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
 
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 25px; margin-bottom: 25px; }
 
         .card-stat-fb {
             background: var(--fb-bg-card);
@@ -123,6 +123,10 @@
         .tab-fb:hover { background: var(--fb-bg-hover); }
 
         .tab-fb.active { background: var(--fb-bg-card); color: var(--fb-reach); border-bottom: 2px solid var(--fb-reach); }
+
+        .tab-nav-fb-split .tab-fb { flex: 1 1 0; width: 50%; text-align: center; }
+
+        .tab-nav-fb-split .tab-fb:last-child { border-right: none; }
 
         .fb-table { width: 100%; border-collapse: collapse; text-align: left; }
 
@@ -279,14 +283,13 @@
                 </div>
             </div>
 
-        </div>
-
-        <div class="tab-nav-fb mb-6"
-             style="border-radius: 8px; border: 1px solid var(--fb-border);">
-            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
-                 @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
-            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
-                 @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+            <div class="tab-nav-fb tab-nav-fb-split mt-2"
+                 style="border-radius: 8px; border: 1px solid var(--fb-border);">
+                <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
+                     @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
+                <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
+                     @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
+            </div>
         </div>
 
         <div class="metrics-grid-fb relative">
