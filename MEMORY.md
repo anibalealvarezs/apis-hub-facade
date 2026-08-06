@@ -233,3 +233,9 @@
 - **Internal JS:** `resources/js/dashboards/dashboard-view.js` — removed `getBadges()`, `_getAssetText()`, `popOutBadges` state, `syncPopOutBadges()`, and its 3 call sites (in `reloadWidget`, the settings-save pop-out refresh, and `openPopOut`).
 - **Public view:** `resources/views/shared/public-dashboard.blade.php` — removed badge pills under widget titles and the inline `getBadges()` method in its `widgetHeader` Alpine component.
 - **Verification:** `node --check` on `dashboard-view.js` passes; `php artisan view:cache` compiles all Blade templates. Note the inline `<style>`/JS lives in Blade, but `dashboard-view.js` is bundled — rebuild Vite assets for the internal view JS change to take effect.
+
+### FB Organic Dashboard Sticky Header / Table Heading Color Fix (2026-08-05)
+- **Bug:** On the FB Organic dashboard (`resources/views/filament/app/pages/facebook-organic-dashboard.blade.php`), the sticky header and table headings appeared unstyled/wrong colors, unlike the other channels' dashboards.
+- **Root cause:** The `.dark { ... }` CSS block (page inline `<style>`) was **missing its closing `}`** after `--fb-chart-ticks: #94a3b8;` — the `.sticky-header-section`, `.fb-table th`, and every rule that followed got nested inside `.dark`, so they only applied when the page was in dark mode (light mode had no styles for them).
+- **Fix:** Added the missing `}` after line 29 so `.dark` closes before `.sticky-header-section` (mirrors the structure of `facebook-marketing-dashboard.blade.php` where `.fb-header-row` carries the `#f9fafb !important` / dark `#111827 !important` overrides at top level).
+- **Verification:** Brace count in the inline `<style>` went from 49 open / 48 close to 49/49; all five dashboard blade files now balanced (marketing 41/41, organic 49/49, GA4 45/45, GSC 43/43, joint 38/38). Blade-only change — run `php artisan view:cache` / `view:clear`, no Vite rebuild needed.
