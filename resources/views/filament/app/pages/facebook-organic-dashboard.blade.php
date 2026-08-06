@@ -1,250 +1,7 @@
 <x-filament-panels::page>
-    <style>
-        :root {
-            --fb-reach: #10b981;
-            --fb-interactions: #6366f1;
-            --fb-likes: #0ea5e9;
-            --fb-comments: #8b5cf6;
-            --fb-views: #f59e0b;
-            --fb-follows: #ec4899;
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
-            --fb-text-main: #111827;
-            --fb-text-dim: #6b7280;
-            --fb-bg-card: rgba(0, 0, 0, 0.02);
-            --fb-border: rgba(0, 0, 0, 0.06);
-            --fb-bg-hover: rgba(0, 0, 0, 0.04);
-            --fb-bg-active: rgba(0, 0, 0, 0.06);
-            --fb-chart-grid: rgba(0, 0, 0, 0.05);
-            --fb-chart-ticks: #6b7280;
-        }
-
-        .dark {
-            --fb-text-main: #ffffff;
-            --fb-text-dim: #94a3b8;
-            --fb-bg-card: rgba(255, 255, 255, 0.03);
-            --fb-border: rgba(255, 255, 255, 0.05);
-            --fb-bg-hover: rgba(255, 255, 255, 0.05);
-            --fb-bg-active: rgba(255, 255, 255, 0.08);
-            --fb-chart-grid: rgba(255, 255, 255, 0.05);
-            --fb-chart-ticks: #94a3b8;
-        }
-
-        .sticky-header-section {
-            background-color: #f9fafb !important;
-            border-bottom: 1px solid #e5e7eb !important;
-        }
-        .dark .sticky-header-section {
-            background-color: #111827 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .fb-header-row {
-            position: sticky;
-            top: 4rem;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-        }
-
-        .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
-
-        .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
-
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 25px; margin-bottom: 25px; }
-
-        .card-stat-fb {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-bottom: 4px solid var(--color, transparent);
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.5;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-stat-fb:hover { transform: translateY(-3px); background: var(--fb-bg-hover); }
-
-        .card-stat-fb.active { opacity: 1; border-bottom-color: var(--color); background: var(--fb-bg-active); }
-
-        .fb-label { font-size: 0.65rem; font-weight: 700; color: var(--fb-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
-
-        .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--fb-text-main); line-height: 1.2; }
-
-        .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
-
-        .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-
-        .dark .trend-up { color: #4ade80; }
-
-        .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-
-        .dark .trend-down { color: #f87171; }
-
-        .trend-neutral { background: var(--fb-border); color: var(--fb-text-dim); }
-
-        .chart-container-fb {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            height: 400px;
-            position: relative;
-        }
-
-        .fb-table-container {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .tab-nav-fb {
-            display: flex;
-            border-bottom: 1px solid var(--fb-border);
-            background-color: #f9fafb;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            flex-wrap: nowrap;
-        }
-
-        .dark .tab-nav-fb { background-color: #111827; }
-
-        .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
-
-        .tab-fb:hover { background: var(--fb-bg-hover); }
-
-        .tab-fb.active { background: var(--fb-bg-card); color: var(--fb-reach); border-bottom: 2px solid var(--fb-reach); }
-
-        .tab-nav-fb-split .tab-fb { flex: 1 1 0; width: 50%; text-align: center; }
-
-        .tab-nav-fb-split .tab-fb:last-child { border-right: none; }
-
-        .fb-table { width: 100%; border-collapse: collapse; text-align: left; }
-
-        .fb-table th { padding: 12px 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--fb-text-dim); font-weight: 700; border-bottom: 1px solid var(--fb-border); }
-
-        .fb-table td { padding: 12px 20px; border-bottom: 1px solid var(--fb-border); vertical-align: middle; font-size: 0.9rem; color: var(--fb-text-main); }
-
-        .fb-table tr:hover { background: var(--fb-bg-hover); }
-
-        .metric-cell { text-align: right; }
-
-        .fb-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--fb-border); background: var(--fb-bg-active); }
-
-        .fb-pagination-text { font-size: 0.875rem; color: var(--fb-text-dim); }
-
-        .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
-
-        .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
-
-        .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
-
-        .fb-pagination-btn:hover:not(:disabled) { background: var(--fb-bg-hover); }
-
-        .fb-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .fb-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--fb-bg-card); border-radius: 4px; font-size: 0.75rem; }
-
-        /* Custom Modal Layout */
-        .fb-modal-panel {
-            display: flex;
-            flex-direction: row;
-            height: 85vh;
-            min-height: 500px;
-            max-height: 900px;
-            width: 100%;
-            max-width: 1152px; /* max-w-6xl */
-        }
-
-        .fb-modal-left {
-            width: 380px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            border-right: 1px solid var(--fb-border);
-        }
-
-        .fb-modal-right {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            min-height: 0;
-            overflow-y: auto;
-        }
-
-        .fb-modal-image-container {
-            width: 100%;
-            height: 280px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .fb-modal-panel {
-                flex-direction: column;
-            }
-
-            .fb-modal-left {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid var(--fb-border);
-            }
-        }
-
-        .fb-close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 50;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            color: var(--fb-text-dim);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .fb-close-btn:hover {
-            background: var(--fb-bg-hover);
-            color: var(--fb-text-main);
-            transform: scale(1.05);
-        }
-
-        .fb-modal-image-container {
-            width: 100%;
-            aspect-ratio: 4/5;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-    </style>
-
-    <div x-data="fboDashboard({
+    <div class="fb-organic-page" x-data="fboDashboard({
         tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
         accounts: @js($selectedAccounts),
         accountNames: @js($accounts),
@@ -254,7 +11,7 @@
         activeBreakdownTab: 'reaction_type',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="sticky-header-section py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="sticky-header-section py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="fb-header-row mb-3">
                 <div class="fb-header-controls">
                     <div class="flex items-center mr-4 gap-2">
@@ -283,8 +40,7 @@
                 </div>
             </div>
 
-            <div class="tab-nav-fb tab-nav-fb-split mt-2"
-                 style="border-radius: 8px; border: 1px solid var(--fb-border);">
+<div class="tab-nav-fb tab-nav-fb-split mt-2 fbo-tabs">
                 <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
                      @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
                 <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
@@ -301,7 +57,7 @@
             <template x-for="metric in dynamicMetrics" :key="metric.key">
                 <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
                      @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
-                    <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
                          x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
                         <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                     </div>
@@ -320,14 +76,14 @@
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
-            <div style="position: relative; width: 100%; height: 100%; display: block;">
+            <div class="dash-chart-canvas">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 
-        <div x-show="hasAnyFilters"
+        <div x-show="hasAnyFilters" x-cloak
              class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 shadow-sm"
-             style="display: none;" x-transition>
+             x-transition>
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <x-heroicon-o-funnel class="w-4 h-4 text-primary-500"/>
@@ -353,7 +109,7 @@
             </div>
         </div>
 
-        <div class="fb-table-container relative" style="margin-bottom: 20px;">
+        <div class="fb-table-container relative dash-mb-20">
             <div x-show="isBreakdownTableLoading"
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
@@ -379,14 +135,13 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="breakdownSearchQuery"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter breakdown values...') }}">
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="fb-table" style="min-width: 800px;">
+                <table class="fb-table dash-table-wide">
                     <thead>
                     <tr>
                         <th>{{ __('BREAKDOWN VALUE') }}</th>
@@ -466,14 +221,13 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="searchQuery"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="fb-table" style="min-width: 800px;">
+                <table class="fb-table dash-table-wide">
                     <thead>
                     <tr>
                         <th>{{ __('POST / PAGE') }}</th>
@@ -546,7 +300,6 @@
 
         <!-- Post Details & History Modal -->
         <div x-show="isPostModalOpen"
-             style="display: none;"
              class="fixed inset-0 z-[999] overflow-y-auto"
              aria-labelledby="modal-title"
              role="dialog"
@@ -640,7 +393,7 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Historical timeline of metrics since publication') }}</p>
                         </div>
 
-                        <div class="relative flex-1 min-h-0 min-w-0" style="position: relative; height: 100%; width: 100%;">
+                        <div class="relative flex-1 min-h-0 min-w-0 dash-fill">
                             <div x-show="isPostChartLoading"
                                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-lg">
                                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>

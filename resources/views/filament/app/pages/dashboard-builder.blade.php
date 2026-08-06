@@ -16,20 +16,6 @@
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
-        <style>
-            .builder-toolbar {
-                position: sticky;
-                top: 4rem;
-                z-index: 20;
-                background-color: #f9fafb !important;
-                border: 1px solid #e5e7eb !important;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            }
-            .dark .builder-toolbar {
-                background-color: #111827 !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            }
-        </style>
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
             <div class="flex items-center gap-2">
@@ -93,7 +79,7 @@
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('Drag title to reposition. Grab bottom-right corner') }} <span class="inline-block w-3 h-3 align-text-bottom" style="background:linear-gradient(135deg,transparent 5px,#9CA3AF 5px,transparent 6px),linear-gradient(135deg,transparent 8px,#9CA3AF 8px,transparent 9px);background-size:12px 12px;background-position:0 0,3px 3px;border-radius:1px;"></span> {{ __('to resize.') }}</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('Drag title to reposition. Grab bottom-right corner') }} <span class="inline-block w-3 h-3 align-text-bottom bd-resize-hint"></span> {{ __('to resize.') }}</p>
                         <div class="text-xs text-gray-400 dark:text-gray-500">
                             <div class="flex items-center gap-1 mb-1">
                                 <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
@@ -342,9 +328,9 @@
         {{-- ============================================================ --}}
         {{-- WIDGET-LEVEL CONTROLS MODAL                                 --}}
         {{-- ============================================================ --}}
-        <div x-show="showWidgetControls" style="display: none; z-index: 999999;" class="fixed inset-0 flex items-start justify-center pt-10 sm:pt-16" x-trap.noscroll="showWidgetControls" x-cloak>
+        <div x-show="showWidgetControls" class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16" x-trap.noscroll="showWidgetControls" x-cloak>
             <div @click="showWidgetControls = false" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10" style="width: 95vw; max-width: 1400px; height: 90vh;" @click.away="showWidgetControls = false">
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel" @click.away="showWidgetControls = false">
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
                     <div class="flex flex-col gap-1.5">
                         <div class="flex flex-wrap items-center gap-3">
@@ -379,33 +365,10 @@
                     </button>
                 </div>
 
-                    <style>
-                        .modal-body-absolute-wrapper-custom {
-                            position: absolute !important;
-                            top: 1.5rem !important;
-                            bottom: 1.5rem !important;
-                            left: 1.5rem !important;
-                            right: 1.5rem !important;
-                        }
-                        .flex-shrink-0 {
-                            flex-shrink: 0 !important;
-                        }
-                        @media (min-width: 768px) {
-                            .desktop-overflow-hidden {
-                                overflow: hidden !important;
-                            }
-                            .modal-body-absolute-wrapper-custom {
-                                top: 2rem !important;
-                                bottom: 2rem !important;
-                                left: 2rem !important;
-                                right: 2rem !important;
-                            }
-                        }
-                    </style>
                     <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative">
-                        <div class="modal-body-absolute-wrapper-custom flex flex-col md:flex-row gap-6">
+                        <div class="modal-body-absolute-wrapper flex flex-col md:flex-row gap-6">
                             {{-- Left Column: Global Configuration --}}
-                            <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0" style="flex: 1 1 250px; max-width: 100%; height: 100%; padding-right: 5px;">
+                            <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 bd-config-col">
 
                         {{-- Card: Identity --}}
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
@@ -670,7 +633,7 @@
                         </div>
 
                     {{-- Right Column: Variables Configuration --}}
-                    <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory" style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
+                    <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col">
                         
                         {{-- Series: Raw Metric --}}
                         <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
@@ -743,7 +706,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['raw_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                    <input type="text" x-model="searchQueries['raw_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -849,7 +812,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['dependent']" :disabled="widgetControlsForm.series_asset_groups.dependent" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed" style="padding-left: 2.5rem;">
+                                                    <input type="text" x-model="searchQueries['dependent']" :disabled="widgetControlsForm.series_asset_groups.dependent" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -916,7 +879,7 @@
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                                 </svg>
                                                             </div>
-                                                            <input type="text" x-model="searchQueries['dep_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                            <input type="text" x-model="searchQueries['dep_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                         </div>
                                                         <div class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                             <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -987,7 +950,7 @@
                                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                                         </svg>
                                                                     </div>
-                                                                    <input type="text" x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                                    <input type="text" x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                                 </div>
                                                                 <div class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                                     <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1078,7 +1041,7 @@
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                             </svg>
                                                         </div>
-                                                        <input type="text" x-model="searchQueries['independent_' + idx]" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed" style="padding-left: 2.5rem;">
+                                                        <input type="text" x-model="searchQueries['independent_' + idx]" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
                                                     </div>
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1146,7 +1109,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['dm_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                                    <input type="text" x-model="searchQueries['dm_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1181,7 +1144,7 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
-                    <span x-show="widgetControlsError" x-text="widgetControlsError" class="text-sm text-red-600 dark:text-red-400 mr-auto font-medium" style="display: none;"></span>
+                    <span x-show="widgetControlsError" x-cloak x-text="widgetControlsError" class="text-sm text-red-600 dark:text-red-400 mr-auto font-medium"></span>
                     <button class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-6 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
                             x-on:click="showWidgetControls = false">{{ __('Cancel') }}
                     </button>
@@ -1276,7 +1239,7 @@
                                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">{{ __('Recommended') }}</span>
                                                     </template>
                                                 </div>
-                                                <span class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;" x-text="getWidgetDescription(type)"></span>
+                                                <span class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5 bd-line-clamp-2" x-text="getWidgetDescription(type)"></span>
                                             </div>
                                         </button>
                                     </template>
@@ -1414,27 +1377,6 @@
     </div>
 
     @push('scripts')
-        <style>
-            /* Force native GridStack resize handle to bottom right */
-            .grid-stack-item > .ui-resizable-handle,
-            .grid-stack-item > .gs-resize-handle {
-                display: block !important;
-                position: absolute !important;
-                bottom: 0px !important;
-                right: 0px !important;
-                width: 20px !important;
-                height: 20px !important;
-                cursor: se-resize !important;
-                z-index: 1000 !important;
-                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23666" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>') !important;
-                background-repeat: no-repeat !important;
-                background-position: center !important;
-            }
-            .dark .grid-stack-item > .ui-resizable-handle,
-            .dark .grid-stack-item > .gs-resize-handle {
-                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>') !important;
-            }
-        </style>
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
     @endpush

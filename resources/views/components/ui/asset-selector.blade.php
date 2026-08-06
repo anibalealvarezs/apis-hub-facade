@@ -34,8 +34,8 @@
         </svg>
     </button>
 
-    <div x-show="open" x-transition style="display: none; min-width: 260px;"
-         class="absolute z-50 w-64 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 flex flex-col">
+    <div x-show="open" x-transition x-cloak
+         class="ui-asset-dropdown absolute z-50 w-64 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 flex flex-col">
 
         <!-- Search & Actions Header -->
         <div class="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">

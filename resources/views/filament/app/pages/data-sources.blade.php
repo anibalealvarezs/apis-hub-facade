@@ -45,14 +45,14 @@
 
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto" style="max-width: 16rem;">
+        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
                 @endphp
                 <div class="flex flex-col gap-2" x-data="{ expanded: {{ $hasActiveChannel ? 'true' : 'false' }} }">
                     <!-- Provider Header -->
-                    <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500" style="padding-bottom: 0.5rem;">
+                    <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500 ds-provider-header">
                         <div class="flex items-center gap-2">
                             @if($pKey === 'google')
                                 <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-500" />
@@ -125,18 +125,18 @@
         </div>
 
         <!-- Content Area -->
-        <div class="w-full relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6" style="flex: 1 1 0%;">
+        <div class="w-full relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6 ds-content">
             
-            <div wire:loading.flex wire:target="activeChannel, save" class="absolute inset-0 rounded-xl" style="z-index: 9999; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-                <div class="fixed inset-0 flex items-center justify-center pointer-events-none" style="z-index: 10000;">
-                    <svg class="animate-spin text-primary-500 drop-shadow-lg" style="width: 4rem; height: 4rem;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div wire:loading.flex wire:target="activeChannel, save" class="absolute inset-0 rounded-xl ds-loading-overlay">
+                <div class="fixed inset-0 flex items-center justify-center pointer-events-none ds-loading-inner">
+                    <svg class="animate-spin text-primary-500 drop-shadow-lg ds-loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10" style="margin-bottom: 1.5rem;">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10 ds-mb-6">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                         {{ $this->getChannelLabel($activeChannel) }}

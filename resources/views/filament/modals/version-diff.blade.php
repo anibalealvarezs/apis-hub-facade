@@ -196,42 +196,6 @@
                 <span class="text-xs font-medium diff-change-count">(highlighted = changed)</span>
             @endif
         </div>
-        <pre style="max-height: 55vh; overflow-y: auto;" class="px-5 py-4 bg-white dark:bg-white/5 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre">{!! $highlightedJson !!}</pre>
+        <pre class="px-5 py-4 bg-white dark:bg-white/5 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre diff-pre">{!! $highlightedJson !!}</pre>
     </div>
 </div>
-
-<style>
-.diff-warning { color: #d97706; font-weight: 500; }
-.diff-danger { color: #dc2626; }
-.diff-success { color: #16a34a; font-weight: 500; }
-.diff-change-count { color: #d97706; font-weight: 500; }
-.diff-badge {
-    display: inline-flex; align-items: center; gap: 0.375rem;
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem; font-weight: 500;
-    border-radius: 9999px;
-    ring: 1px solid;
-}
-.diff-badge-success {
-    background: #f0fdf4; color: #15803d;
-    box-shadow: inset 0 0 0 1px #bbf7d0;
-}
-.diff-badge-warning {
-    background: #fffbeb; color: #b45309;
-    box-shadow: inset 0 0 0 1px #fde68a;
-}
-.dark .diff-change-count { color: #fbbf24; }
-.dark .diff-badge-success {
-    background: rgba(34,197,94,0.1); color: #86efac;
-    box-shadow: inset 0 0 0 1px #166534;
-}
-.dark .diff-badge-warning {
-    background: rgba(251,191,36,0.1); color: #fde68a;
-    box-shadow: inset 0 0 0 1px #78350f;
-}
-.dark .diff-badge-other {
-    background: rgb(31 41 55 / var(--tw-bg-opacity, 1));
-    color: #9ca3af;
-    box-shadow: inset 0 0 0 1px rgb(55 65 81 / var(--tw-ring-opacity, 1));
-}
-</style>

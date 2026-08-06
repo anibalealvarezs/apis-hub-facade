@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div style="max-height: 55vh; overflow-y: auto;" class="space-y-4 pr-1">
+    <div class="collab-asset-list space-y-4 pr-1">
         @foreach ($entries as $entry)
             <div class="rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10">
                 <div class="flex items-center justify-between gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-700">

@@ -1,150 +1,11 @@
 <x-filament-panels::page>
-    <style>
-        .joint-header-row {
-            position: sticky;
-            top: 4rem;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            background-color: #f9fafb !important;
-            border-bottom: 1px solid #e5e7eb !important;
-        }
-        .dark .joint-header-row {
-            background-color: #111827 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-        .joint-header-title { font-size: 1.8rem; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 12px; }
-        .dark .joint-header-title { color: #ffffff; }
-        .joint-header-controls { display: flex; align-items: center; gap: 15px; }
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
-        .joint-card {
-            background: rgba(0,0,0,0.03);
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        .dark .joint-card {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(255,255,255,0.05);
-        }
-
-        .joint-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        .joint-curve-section {
-            border-radius: 12px;
-            padding: 20px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-        }
-        .dark .joint-curve-section {
-            background: rgba(255,255,255,0.03);
-            border-color: rgba(255,255,255,0.08);
-        }
-        .curve-a { border-left: 4px solid #00a7f9; }
-        .curve-b { border-left: 4px solid #f43f5e; }
-
-        .chart-container-joint {
-            position: relative;
-            height: 400px;
-            width: 100%;
-        }
-
-        .correlation-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 9999px;
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-        .corr-strong-pos { background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
-        .dark .corr-strong-pos { color: #4ade80; }
-        .corr-strong-neg { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
-        .dark .corr-strong-neg { color: #f87171; }
-        .corr-weak { background: rgba(156,163,175,0.1); color: #4b5563; border: 1px solid rgba(156,163,175,0.2); }
-        .dark .corr-weak { color: #9ca3af; }
-
-        .export-btn {
-            background-color: #4b5563;
-            color: #ffffff;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            padding: 0.625rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            margin-right: 0.5rem;
-        }
-        .export-btn:hover { background-color: #374151; }
-        .dark .export-btn { background-color: #374151; border: 1px solid rgba(255,255,255,0.1); }
-        .dark .export-btn:hover { background-color: #4b5563; }
-
-        .select-warning {
-            box-shadow: 0 0 0 2px #f59e0b;
-            border-color: #f59e0b !important;
-            background-color: #fffbeb !important;
-            color: #78350f !important;
-        }
-        .dark .select-warning {
-            background-color: rgba(120, 53, 15, 0.2) !important;
-            color: #fef3c7 !important;
-        }
-
-        .select-success {
-            box-shadow: 0 0 0 2px #22c55e;
-            border-color: #22c55e !important;
-            background-color: #f0fdf4 !important;
-            color: #065f46 !important;
-        }
-        .dark .select-success {
-            background-color: rgba(6, 78, 59, 0.2) !important;
-            color: #d1fae5 !important;
-        }
-
-        select { color-scheme: light; }
-        .dark select { color-scheme: dark; }
-        select option { background-color: #ffffff; color: #111827; }
-        .dark select option { background-color: #1f2937; color: #f9fafb; }
-
-        @media print {
-            .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
-                display: none !important;
-            }
-            html, body, .fi-layout, .fi-main, .fi-main-content {
-                height: auto !important;
-                min-height: auto !important;
-                overflow: visible !important;
-                position: static !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            .fi-main {
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            .joint-card, .chart-container-joint, .mt-16 {
-                page-break-inside: avoid;
-            }
-            body { background: white !important; }
-        }
-    </style>
-
-    <div id="joint-dashboard-container" x-data="jointDashboard(Object.assign({
+    <div id="joint-dashboard-container" class="joint-page" x-data="jointDashboard(Object.assign({
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd')
     }, @js($this->getJointConfig())))" x-init="initDashboard()">
-        <div class="joint-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="joint-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="joint-header-controls">
                 <button type="button" @click="window.print()" class="export-btn">
                     <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -203,7 +64,7 @@
             <div class="joint-form-grid">
                 <!-- Curve A -->
                 <div class="joint-curve-section curve-a">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #00a7f9;">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2 joint-title-a">
                         <span class="w-3 h-3 rounded-full bg-[#00a7f9]"></span> {{ __('Curve A (Blue)') }}
                     </h3>
                     <div class="space-y-3">
@@ -262,7 +123,7 @@
 
                 <!-- Curve B -->
                 <div class="joint-curve-section curve-b">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: #f43f5e;">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2 joint-title-b">
                         <span class="w-3 h-3 rounded-full bg-[#f43f5e]"></span> {{ __('Curve B (Red)') }}
                     </h3>
                     <div class="space-y-3">
@@ -322,7 +183,7 @@
             </div>
         </div>
 
-        <div class="joint-card" x-show="chartRendered" style="display: none;">
+        <div class="joint-card" x-show="chartRendered" x-cloak>
             <div x-show="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-xl">
                 <div class="flex flex-col items-center">
                     <svg class="animate-spin h-10 w-10 text-primary-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -361,7 +222,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Shows how the Pearson correlation between the two metrics evolves day by day. A drop to zero indicates the day a relationship broke (e.g., ad fatigue or an algorithm update).') }}
                 </p>
-                <div class="chart-container-joint pb-8" style="height: 250px;">
+                <div class="chart-container-joint pb-8 joint-chart-sm">
                     <canvas id="rollingChart"></canvas>
                 </div>
             </div>
@@ -371,7 +232,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 max-w-4xl leading-relaxed">
                     {{ __('Removes the element of time. Helps identify non-linear relationships, data clustering, or points of diminishing returns (where higher values on the X axis stop producing higher values on the Y axis).') }}
                 </p>
-                <div class="chart-container-joint" style="height: 350px;">
+                <div class="chart-container-joint joint-chart-md">
                     <canvas id="scatterChart"></canvas>
                 </div>
             </div>

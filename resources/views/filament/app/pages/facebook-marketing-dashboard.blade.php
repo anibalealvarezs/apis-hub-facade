@@ -1,166 +1,7 @@
 <x-filament-panels::page>
-    <style>
-        :root {
-            --fb-spend: #10b981;
-            --fb-impr: #6366f1;
-            --fb-reach: #3b82f6;
-            --fb-freq: #f43f5e;
-            --fb-cpm: #eab308;
-            --fb-clicks: #0ea5e9;
-            --fb-ctr: #8b5cf6;
-            --fb-cpc: #f59e0b;
-            --fb-roas: #ec4899;
-            --fb-purchases: #14b8a6;
-            --fb-cpr: #a855f7;
-            --fb-rr: #ef4444;
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
-            --fb-text-main: #111827;
-            --fb-text-dim: #6b7280;
-            --fb-bg-card: rgba(0, 0, 0, 0.02);
-            --fb-border: rgba(0, 0, 0, 0.06);
-            --fb-bg-hover: rgba(0, 0, 0, 0.04);
-            --fb-bg-active: rgba(0, 0, 0, 0.06);
-            --fb-chart-grid: rgba(0, 0, 0, 0.05);
-            --fb-chart-ticks: #6b7280;
-        }
-
-        .dark {
-            --fb-text-main: #ffffff;
-            --fb-text-dim: #94a3b8;
-            --fb-bg-card: rgba(255, 255, 255, 0.03);
-            --fb-border: rgba(255, 255, 255, 0.05);
-            --fb-bg-hover: rgba(255, 255, 255, 0.05);
-            --fb-bg-active: rgba(255, 255, 255, 0.08);
-            --fb-chart-grid: rgba(255, 255, 255, 0.05);
-            --fb-chart-ticks: #94a3b8;
-        }
-
-        .fb-header-row {
-            position: sticky;
-            top: 4rem;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            background-color: #f9fafb !important;
-            border-bottom: 1px solid #e5e7eb !important;
-        }
-        .dark .fb-header-row {
-            background-color: #111827 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .fb-header-title { font-size: 1.8rem; font-weight: 800; color: var(--fb-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
-
-        .fb-header-subtitle { color: var(--fb-text-dim); font-size: 0.9rem; }
-
-        .fb-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
-
-        .metrics-grid-fb { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
-
-        .card-stat-fb {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-bottom: 4px solid var(--color, transparent);
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.5;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-stat-fb:hover { transform: translateY(-3px); background: var(--fb-bg-hover); }
-
-        .card-stat-fb.active { opacity: 1; border-bottom-color: var(--color); background: var(--fb-bg-active); }
-
-        .fb-label { font-size: 0.65rem; font-weight: 700; color: var(--fb-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
-
-        .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--fb-text-main); line-height: 1.2; }
-
-        .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
-
-        .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-
-        .dark .trend-up { color: #4ade80; }
-
-        .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-
-        .dark .trend-down { color: #f87171; }
-
-        .trend-neutral { background: var(--fb-border); color: var(--fb-text-dim); }
-
-        .chart-container-fb {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            height: 400px;
-            position: relative;
-        }
-
-        .fb-table-container {
-            background: var(--fb-bg-card);
-            border: 1px solid var(--fb-border);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .tab-nav-fb {
-            display: flex;
-            border-bottom: 1px solid var(--fb-border);
-            background-color: #f9fafb;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            flex-wrap: nowrap;
-        }
-
-        .dark .tab-nav-fb { background-color: #111827; }
-
-        .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
-
-        .tab-fb:hover { background: var(--fb-bg-hover); }
-
-        .tab-fb.active { background: var(--fb-bg-card); color: var(--fb-spend); border-bottom: 2px solid var(--fb-spend); }
-
-        .fb-table { width: 100%; border-collapse: collapse; text-align: left; }
-
-        .fb-table th { padding: 12px 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--fb-text-dim); font-weight: 700; border-bottom: 1px solid var(--fb-border); }
-
-        .fb-table td { padding: 12px 20px; border-bottom: 1px solid var(--fb-border); vertical-align: middle; font-size: 0.9rem; color: var(--fb-text-main); }
-
-        .fb-table tr:hover { background: var(--fb-bg-hover); }
-
-        .metric-cell { text-align: right; }
-
-        .fb-status-active { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; margin-right: 6px; }
-
-        .fb-status-paused { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8; margin-right: 6px; }
-
-        .fb-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--fb-border); background: var(--fb-bg-active); }
-
-        .fb-pagination-text { font-size: 0.875rem; color: var(--fb-text-dim); }
-
-        .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
-
-        .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
-
-        .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
-
-        .fb-pagination-btn:hover:not(:disabled) { background: var(--fb-bg-hover); }
-
-        .fb-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .fb-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--fb-bg-card); border-radius: 4px; font-size: 0.75rem; }
-    </style>
-
-    <div x-data="fbDashboard({
+    <div class="fb-marketing-page" x-data="fbDashboard({
         tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
         accounts: @js($selectedAccounts),
         accountNames: @js($accounts),
@@ -169,7 +10,7 @@
         activeTab: 'campaigns',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="fb-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="fb-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="fb-header-controls">
                 <div class="flex items-center mr-4 gap-2">
                     <button type="button" 
@@ -203,7 +44,7 @@
             </div>
 
             <div class="card-stat-fb" :class="activeMetrics.spend ? 'active' : ''" @click="toggleMetric('spend')"
-                 style="--color: var(--fb-spend);">
+                 data-metric="spend">
                 <div class="fb-label">{{ __('Amount Spent') }}</div>
                 <div class="card-metric-value" x-text="formatCurrency(summary.spend)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.spend, true)">
@@ -212,7 +53,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.impressions ? 'active' : ''"
-                 @click="toggleMetric('impressions')" style="--color: var(--fb-impr);">
+                 @click="toggleMetric('impressions')" data-metric="impressions">
                 <div class="fb-label">{{ __('Impressions') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
@@ -221,7 +62,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''"
-                 @click="toggleMetric('reach')" style="--color: var(--fb-reach);">
+                 @click="toggleMetric('reach')" data-metric="reach">
                 <div class="fb-label">{{ __('Reach') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
@@ -230,7 +71,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.frequency ? 'active' : ''"
-                 @click="toggleMetric('frequency')" style="--color: var(--fb-freq);">
+                 @click="toggleMetric('frequency')" data-metric="frequency">
                 <div class="fb-label">{{ __('Frequency') }}</div>
                 <div class="card-metric-value" x-text="formatDecimal(summary.frequency)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.frequency, true)">
@@ -239,7 +80,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''"
-                 @click="toggleMetric('cpm')" style="--color: var(--fb-cpm);">
+                 @click="toggleMetric('cpm')" data-metric="cpm">
                 <div class="fb-label">{{ __('CPM') }}</div>
                 <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
@@ -248,7 +89,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
-                 style="--color: var(--fb-clicks);">
+                 data-metric="clicks">
                 <div class="fb-label">{{ __('Link Clicks') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
@@ -257,7 +98,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
-                 style="--color: var(--fb-ctr);">
+                 data-metric="ctr">
                 <div class="fb-label">{{ __('CTR (Link)') }}</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
@@ -266,7 +107,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cpc ? 'active' : ''" @click="toggleMetric('cpc')"
-                 style="--color: var(--fb-cpc);">
+                 data-metric="cpc">
                 <div class="fb-label">{{ __('CPC (Link)') }}</div>
                 <div class="card-metric-value" x-text="formatCurrency(summary.cpc)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.cpc, true)">
@@ -275,7 +116,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.results ? 'active' : ''" @click="toggleMetric('results')"
-                 style="--color: var(--fb-purchases);">
+                 data-metric="results">
                 <div class="fb-label">{{ __('Purchases/Results') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.results)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.results)">
@@ -284,8 +125,8 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
-                 @click="toggleMetric('cost_per_result')" style="--color: var(--fb-cpr);">
-                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                 @click="toggleMetric('cost_per_result')" data-metric="cost_per_result">
+                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="fb-label">{{ __('Cost per Result') }}</div>
@@ -296,7 +137,7 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.result_rate ? 'active' : ''"
-                 @click="toggleMetric('result_rate')" style="--color: var(--fb-rr);">
+                 @click="toggleMetric('result_rate')" data-metric="result_rate">
                 <div class="fb-label">{{ __('Result Rate') }}</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.result_rate)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.result_rate)">
@@ -305,8 +146,8 @@
                 </div>
             </div>
             <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
-                 @click="toggleMetric('purchase_roas')" style="--color: var(--fb-roas);">
-                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                 @click="toggleMetric('purchase_roas')" data-metric="purchase_roas">
+                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="fb-label">{{ __('ROAS') }}</div>
@@ -323,14 +164,14 @@
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
-            <div style="position: relative; width: 100%; height: 100%; display: block;">
+            <div class="dash-chart-canvas">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 
-        <div x-show="hasAnyFilters"
+        <div x-show="hasAnyFilters" x-cloak
              class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm"
-             style="display: none;" x-transition>
+             x-transition>
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <x-heroicon-o-funnel class="w-4 h-4 text-primary-500"/>
@@ -383,8 +224,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="searchQuery"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -491,3 +331,4 @@
             </div>
     </div>
 </x-filament-panels::page>
+

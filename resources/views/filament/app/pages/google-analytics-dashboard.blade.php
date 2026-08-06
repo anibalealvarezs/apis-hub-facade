@@ -1,138 +1,5 @@
 <x-filament-panels::page>
-    <style>
-        :root {
-            --ga4-sessions: #4285f4;
-            --ga4-activeUsers: #0f9d58;
-            --ga4-newUsers: #fbbc04;
-            --ga4-conversions: #ea4335;
-            --ga4-pageViews: #9c27b0;
-            --ga4-revenue: #10b981;
-            --ga4-avgSessionDuration: #ff6d6d;
-            --ga4-totalUsers: #00bcd4;
-
-            --ga4-text-main: #111827;
-            --ga4-text-dim: #6b7280;
-            --ga4-bg-card: rgba(0, 0, 0, 0.03);
-            --ga4-border: rgba(0, 0, 0, 0.05);
-            --ga4-bg-hover: rgba(0, 0, 0, 0.05);
-            --ga4-bg-active: rgba(0, 0, 0, 0.08);
-            --ga4-chart-grid: rgba(0, 0, 0, 0.05);
-            --ga4-chart-ticks: #6b7280;
-        }
-
-        .dark {
-            --ga4-text-main: #ffffff;
-            --ga4-text-dim: #94a3b8;
-            --ga4-bg-card: rgba(255, 255, 255, 0.03);
-            --ga4-border: rgba(255, 255, 255, 0.05);
-            --ga4-bg-hover: rgba(255, 255, 255, 0.05);
-            --ga4-bg-active: rgba(255, 255, 255, 0.08);
-            --ga4-chart-grid: rgba(255, 255, 255, 0.05);
-            --ga4-chart-ticks: #94a3b8;
-        }
-
-        .ga4-header-row {
-            position: sticky;
-            top: 4rem;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            background-color: #f9fafb !important;
-            border-bottom: 1px solid #e5e7eb !important;
-        }
-        .dark .ga4-header-row {
-            background-color: #111827 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-        .ga4-header-title { font-size: 1.8rem; font-weight: 800; color: var(--ga4-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
-        .ga4-header-subtitle { color: var(--ga4-text-dim); font-size: 0.9rem; }
-        .ga4-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
-
-        .metrics-grid-ga4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
-
-        .card-stat-ga4 {
-            background: var(--ga4-bg-card);
-            border: 1px solid var(--ga4-border);
-            border-bottom: 4px solid var(--color, transparent);
-            border-radius: 12px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.5;
-            position: relative;
-            overflow: hidden;
-        }
-        .card-stat-ga4:hover { transform: translateY(-3px); background: var(--ga4-bg-hover); }
-        .card-stat-ga4.active { opacity: 1; border-bottom-color: var(--color); background: var(--ga4-bg-active); }
-
-        .ga4-label { font-size: 0.65rem; font-weight: 700; color: var(--ga4-text-dim); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
-        .card-metric-value { font-size: 1.5rem; font-weight: 800; color: var(--ga4-text-main); line-height: 1.2; }
-        .card-metric-trend { font-size: 0.75rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 6px; width: fit-content; }
-        .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-        .dark .trend-up { color: #4ade80; }
-        .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-        .dark .trend-down { color: #f87171; }
-        .trend-neutral { background: var(--ga4-border); color: var(--ga4-text-dim); }
-
-        .chart-container-ga4 {
-            background: var(--ga4-bg-card);
-            border: 1px solid var(--ga4-border);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            height: 450px;
-            position: relative;
-        }
-
-        .ga4-table-container {
-            background: var(--ga4-bg-card);
-            border: 1px solid var(--ga4-border);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 40px;
-        }
-
-        .tab-nav-ga4 {
-            display: flex;
-            border-bottom: 1px solid var(--ga4-border);
-            background-color: #f9fafb;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            flex-wrap: nowrap;
-        }
-
-        .dark .tab-nav-ga4 { background-color: #111827; }
-        .tab-ga4 { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--ga4-text-dim); border-right: 1px solid var(--ga4-border); transition: all 0.2s; }
-        .tab-ga4:hover { background: var(--ga4-bg-hover); }
-        .tab-ga4.active { background: var(--ga4-bg-card); color: var(--ga4-sessions); border-bottom: 2px solid var(--ga4-sessions); }
-        .tab-group-label { padding: 15px 12px 15px 20px; font-size: 0.7rem; font-weight: 700; color: var(--ga4-text-dim); text-transform: uppercase; letter-spacing: 0.1em; border-right: 1px solid var(--ga4-border); background: transparent; display: flex; align-items: center; }
-
-        .ga4-table { width: 100%; border-collapse: collapse; text-align: left; }
-        .ga4-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--ga4-text-dim); font-weight: 700; border-bottom: 1px solid var(--ga4-border); }
-        .ga4-table td { padding: 15px 25px; border-bottom: 1px solid var(--ga4-border); vertical-align: middle; }
-        .metric-cell { text-align: right; width: 12.5%; min-width: 110px; }
-        .ga4-table th:first-child, .ga4-table td:first-child { width: 40%; min-width: 250px; }
-
-        .progress-bar-container { width: 100%; height: 4px; background: var(--ga4-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; transition: width 0.6s ease; }
-        .metric-val-main { color: var(--ga4-text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-
-        .ga4-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--ga4-border); background: var(--ga4-bg-active); }
-        .ga4-pagination-text { font-size: 0.875rem; color: var(--ga4-text-dim); }
-        .ga4-pagination-text strong { color: var(--ga4-text-main); font-weight: 700; }
-        .ga4-pagination-select { background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); color: var(--ga4-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; }
-        .ga4-pagination-btn { padding: 8px 16px; background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--ga4-text-main); cursor: pointer; transition: background 0.2s; }
-        .ga4-pagination-btn:hover:not(:disabled) { background: var(--ga4-bg-hover); }
-        .ga4-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .ga4-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--ga4-bg-card); border-radius: 4px; font-size: 0.75rem; }
-
-        .ga4-section-header { padding: 15px 20px; border-bottom: 1px solid var(--ga4-border); background: var(--ga4-bg-card); }
-        .ga4-section-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--ga4-text-main); margin: 0; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
     <div x-data="ga4Dashboard({
         tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
@@ -144,7 +11,7 @@
         activeTab: @entangle('activeTab'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="ga4-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="ga4-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="ga4-header-controls">
                 <button type="button" @click="forceRefresh()"
                         class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
@@ -156,15 +23,14 @@
                 </button>
                 <div class="relative" x-data="{ open: false, searchAccount: '' }" @click.outside="open = false">
                     <button @click="open = !open" type="button"
-                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px]"
-                            style="max-width:250px;">
+class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px] dash-select-wide">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                               x-text="!selectedAccount ? '{{ __('Select Property...') }}' : (accountNames[selectedAccount] || selectedAccount)"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
                     </button>
 
-                    <div x-show="open" x-transition style="display: none; min-width: 320px;"
-                         class="absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                    <div x-show="open" x-transition x-cloak
+                         class="dash-dropdown absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
 
                         <!-- Search Header -->
                         <div class="p-3 border-b border-gray-200 dark:border-gray-700">
@@ -173,8 +39,7 @@
                                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                                 </div>
                                 <input type="text" x-model="searchAccount"
-                                       class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-9 p-2"
-                                       style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                                        placeholder="{{ __('Search properties...') }}">
                             </div>
                         </div>
@@ -221,7 +86,7 @@
             </div>
 
             <div class="card-stat-ga4" :class="activeMetrics.sessions ? 'active' : ''" @click="toggleMetric('sessions')"
-                 style="--color: var(--ga4-sessions);">
+                 data-metric="sessions">
                 <div class="ga4-label">{{ __('Sessions') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.sessions)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.sessions)">
@@ -230,7 +95,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.activeUsers ? 'active' : ''" @click="toggleMetric('activeUsers')"
-                 style="--color: var(--ga4-activeUsers);">
+                 data-metric="activeUsers">
                 <div class="ga4-label">{{ __('Active Users') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.activeUsers)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.activeUsers)">
@@ -239,7 +104,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.newUsers ? 'active' : ''" @click="toggleMetric('newUsers')"
-                 style="--color: var(--ga4-newUsers);">
+                 data-metric="newUsers">
                 <div class="ga4-label">{{ __('New Users') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.newUsers)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.newUsers)">
@@ -248,7 +113,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.screenPageViews ? 'active' : ''" @click="toggleMetric('screenPageViews')"
-                 style="--color: #a855f7;">
+                 data-metric="screenPageViews">
                 <div class="ga4-label">{{ __('Pageviews') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.screenPageViews)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.screenPageViews)">
@@ -257,7 +122,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
-                 style="--color: var(--ga4-conversions);">
+                 data-metric="conversions">
                 <div class="ga4-label">{{ __('Conversions') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.conversions)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.conversions)">
@@ -266,7 +131,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.averageSessionDuration ? 'active' : ''" @click="toggleMetric('averageSessionDuration')"
-                 style="--color: #06b6d4;">
+                 data-metric="averageSessionDuration">
                 <div class="ga4-label">{{ __('Avg Duration') }}</div>
                 <div class="card-metric-value" x-text="formatDuration(summary.averageSessionDuration)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.averageSessionDuration)">
@@ -275,7 +140,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.bounceRate ? 'active' : ''" @click="toggleMetric('bounceRate')"
-                 style="--color: #ec4899;">
+                 data-metric="bounceRate">
                 <div class="ga4-label">{{ __('Bounce Rate') }}</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.bounceRate)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.bounceRate, true)">
@@ -284,7 +149,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.totalUsers ? 'active' : ''" @click="toggleMetric('totalUsers')"
-                 style="--color: #6366f1;">
+                 data-metric="totalUsers">
                 <div class="ga4-label">{{ __('Total Users') }}</div>
                 <div class="card-metric-value" x-text="formatNumber(summary.totalUsers)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.totalUsers)">
@@ -293,7 +158,7 @@
                 </div>
             </div>
             <div class="card-stat-ga4" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')"
-                 style="--color: #10b981;">
+                 data-metric="revenue">
                 <div class="ga4-label">{{ __('Revenue') }}</div>
                 <div class="card-metric-value" x-text="'$' + formatDecimals(summary.revenue)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.revenue)">
@@ -308,7 +173,7 @@
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
-            <div style="position: relative; width: 100%; height: 100%; display: block;">
+            <div class="dash-chart-canvas">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
@@ -334,8 +199,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.campaigns"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -422,8 +286,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.channels"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -510,8 +373,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.traffic"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -598,8 +460,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.acquisition"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -686,8 +547,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.events"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -774,8 +634,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="sq.adtouchpoints"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -842,3 +701,4 @@
         </div>
     </div>
 </x-filament-panels::page>
+

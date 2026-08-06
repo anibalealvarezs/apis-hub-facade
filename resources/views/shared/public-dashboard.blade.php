@@ -20,9 +20,6 @@
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
     @vite(['resources/js/app.js'])
-    <style>
-        body { font-family: 'Outfit', system-ui, sans-serif; }
-    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div x-data="sharedView({
@@ -64,9 +61,9 @@
                      gs-y="{{ $widget->grid_y }}"
                      gs-w="{{ $widget->grid_w }}"
                      gs-h="{{ $widget->grid_h }}">
-                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
                         @if ($widget->title || $widget->name)
-                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative pd-widget-header"
                                  x-data="widgetHeaderPv({{ $widget->id }}, @js($widget->resolved_controls), @js($widget->series_assets_options))"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget->id }}) controls = $event.detail.controls">
                                 <div>
@@ -81,7 +78,7 @@
                                                 <span x-show="getActiveFilterCount() > 0" class="ml-1 bg-primary-100 text-primary-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="getActiveFilterCount()"></span>
                                             </button>
                                             
-                                            <div x-show="openFilters" x-transition style="display: none;" class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 flex flex-col overflow-hidden">
+                                            <div x-show="openFilters" x-transition x-cloak class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 flex flex-col overflow-hidden">
                                                 <div class="max-h-96 overflow-y-auto p-4 space-y-6">
                                                     <template x-for="(seriesData, seriesKey) in seriesOptions" :key="seriesKey">
                                                         <div class="space-y-2">

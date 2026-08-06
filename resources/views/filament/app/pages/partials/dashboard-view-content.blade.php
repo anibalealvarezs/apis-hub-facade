@@ -79,8 +79,7 @@
                  gs-w="{{ $widget['grid_w'] }}"
                  gs-h="{{ $widget['grid_h'] }}">
                 <div
-                    class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col"
-                    style="overflow: visible !important;">
+                    class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
                     <div
                         class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
                             x-data="widgetHeader"
@@ -256,19 +255,17 @@
     @endif
 
     {{-- Fullscreen Pop-Out Modal --}}
-    <div x-show="popOutActive"
+    <div x-show="popOutActive" x-cloak
+         class="dvc-popout-root fixed inset-0 flex items-center justify-center bg-black/50"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-out duration-300"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         style="display: none; z-index: 999998;"
-         class="fixed inset-0 flex items-center justify-center bg-black/50"
          @click.self="closePopOut()">
         <div x-ref="popOutCard"
-             class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden"
-             style="width: 95vw; height: 95vh; max-width: 1400px;">
+             class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden dvc-popout-panel">
             <div
                 class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
                 <div class="flex items-center gap-2 min-w-0 pr-4">
@@ -305,23 +302,21 @@
                     </button>
                 </div>
             </div>
-            <div x-ref="popOutContent" class="flex-grow relative overflow-hidden" style="padding: 2.5rem;">
+            <div x-ref="popOutContent" class="flex-grow relative overflow-hidden dvc-popout-content">
             </div>
         </div>
     </div>
 
     {{-- Settings Modal (teleported to body to avoid z-index issues) --}}
     <template x-teleport="body">
-        <div x-show="openSettings" style="display: none; z-index: 999999;"
-             class="fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
-             x-trap.noscroll="openSettings"
-             x-cloak>
+        <div x-show="openSettings" x-cloak
+             class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
+             x-trap.noscroll="openSettings">
             <div @click="closeSettings()"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10"
-                style="width: 95vw; max-width: 1400px; height: 90vh;"
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
                 @click.away="closeSettings()">
                 <div
                     class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
@@ -335,38 +330,11 @@
                     </button>
                 </div>
 
-                <style>
-                    .modal-body-absolute-wrapper-custom {
-                        position: absolute !important;
-                        top: 1.5rem !important;
-                        bottom: 1.5rem !important;
-                        left: 1.5rem !important;
-                        right: 1.5rem !important;
-                    }
-
-                    .flex-shrink-0 {
-                        flex-shrink: 0 !important;
-                    }
-
-                    @media (min-width: 768px) {
-                        .desktop-overflow-hidden {
-                            overflow: hidden !important;
-                        }
-
-                        .modal-body-absolute-wrapper-custom {
-                            top: 2rem !important;
-                            bottom: 2rem !important;
-                            left: 2rem !important;
-                            right: 2rem !important;
-                        }
-                    }
-                </style>
                 <div
                     class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative">
-                    <div class="modal-body-absolute-wrapper-custom flex flex-col md:flex-row gap-6">
+                    <div class="modal-body-absolute-wrapper flex flex-col md:flex-row gap-6">
                         {{-- Left Column: Global Configuration --}}
-                        <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pb-2 min-h-0"
-                             style="flex: 1 1 250px; max-width: 100%; height: 100%; padding-right: 5px;">
+                        <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pb-2 min-h-0 bd-config-col">
                             {{-- Card: Widget Title & Description (Translatable) --}}
                             <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0" x-data="{ activeTitleTab: '{{ app()->getLocale() }}' }">
                                 <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -541,8 +509,7 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
-                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory"
-                            style="flex: 2 1 500px; max-width: 100%; max-height: 100%;">
+                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col">
                             <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig">
                                     <div
@@ -657,8 +624,7 @@
                                                             </div>
                                                             <input type="text" x-model="settingsSearchQueries[vKey]"
                                                                    placeholder="Search assets..."
-                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                                                                   style="padding-left: 2.5rem;">
+                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                         </div>
                                                         <div class="flex-1 relative min-h-0">
                                                             <div

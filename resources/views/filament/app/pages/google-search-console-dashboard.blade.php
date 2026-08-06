@@ -1,160 +1,5 @@
 <x-filament-panels::page>
-    <style>
-        :root {
-            --gsc-clicks: #4285f4;
-            --gsc-impressions: #7e57c2;
-            --gsc-ctr: #0097a7;
-            --gsc-pos: #f4511e;
-
-            --gsc-text-main: #111827;
-            --gsc-text-dim: #6b7280;
-            --gsc-bg-card: rgba(0, 0, 0, 0.03);
-            --gsc-border: rgba(0, 0, 0, 0.05);
-            --gsc-bg-hover: rgba(0, 0, 0, 0.05);
-            --gsc-bg-active: rgba(0, 0, 0, 0.08);
-            --gsc-chart-grid: rgba(0, 0, 0, 0.05);
-            --gsc-chart-ticks: #6b7280;
-        }
-
-        .dark {
-            --gsc-text-main: #ffffff;
-            --gsc-text-dim: #94a3b8;
-            --gsc-bg-card: rgba(255, 255, 255, 0.03);
-            --gsc-border: rgba(255, 255, 255, 0.05);
-            --gsc-bg-hover: rgba(255, 255, 255, 0.05);
-            --gsc-bg-active: rgba(255, 255, 255, 0.08);
-            --gsc-chart-grid: rgba(255, 255, 255, 0.05);
-            --gsc-chart-ticks: #94a3b8;
-        }
-
-        .gsc-header-row {
-            position: sticky;
-            top: 4rem;
-            z-index: 20;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            background-color: #f9fafb !important;
-            border-bottom: 1px solid #e5e7eb !important;
-        }
-        .dark .gsc-header-row {
-            background-color: #111827 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .gsc-header-title { font-size: 1.8rem; font-weight: 800; color: var(--gsc-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
-
-        .gsc-header-subtitle { color: var(--gsc-text-dim); font-size: 0.9rem; }
-
-        .gsc-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
-
-        .metrics-grid-gsc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-
-        .card-stat-gsc {
-            background: var(--gsc-bg-card);
-            border: 1px solid var(--gsc-border);
-            border-bottom: 4px solid var(--color, transparent);
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.5;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-stat-gsc:hover { transform: translateY(-3px); background: var(--gsc-bg-hover); }
-
-        .card-stat-gsc.active { opacity: 1; border-bottom-color: var(--color); background: var(--gsc-bg-active); }
-
-        .gsc-label { font-size: 0.72rem; font-weight: 700; color: var(--gsc-text-dim); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
-
-        .card-metric-value { font-size: 2.2rem; font-weight: 800; color: var(--gsc-text-main); line-height: 1.2; }
-
-        .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; width: fit-content; }
-
-        .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-
-        .dark .trend-up { color: #4ade80; }
-
-        .trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
-
-        .dark .trend-down { color: #f87171; }
-
-        .trend-neutral { background: var(--gsc-border); color: var(--gsc-text-dim); }
-
-        .chart-container-gsc {
-            background: var(--gsc-bg-card);
-            border: 1px solid var(--gsc-border);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            height: 450px;
-            position: relative;
-        }
-
-        .gsc-table-container {
-            background: var(--gsc-bg-card);
-            border: 1px solid var(--gsc-border);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 40px;
-        }
-
-        .tab-nav-gsc {
-            display: flex;
-            border-bottom: 1px solid var(--gsc-border);
-            background-color: #f9fafb;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            flex-wrap: nowrap;
-        }
-
-        .dark .tab-nav-gsc { background-color: #111827; }
-
-        .tab-gsc { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gsc-text-dim); border-right: 1px solid var(--gsc-border); transition: all 0.2s; }
-
-        .tab-gsc:hover { background: var(--gsc-bg-hover); }
-
-        .tab-gsc.active { background: var(--gsc-bg-card); color: var(--gsc-clicks); border-bottom: 2px solid var(--gsc-clicks); }
-
-        .gsc-table { width: 100%; border-collapse: collapse; text-align: left; }
-
-        .gsc-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--gsc-text-dim); font-weight: 700; border-bottom: 1px solid var(--gsc-border); }
-
-        .gsc-table td { padding: 15px 25px; border-bottom: 1px solid var(--gsc-border); vertical-align: middle; }
-
-        .metric-cell { text-align: right; width: 12.5%; min-width: 110px; }
-
-        .gsc-table th:first-child, .gsc-table td:first-child { width: 50%; min-width: 300px; }
-
-        .progress-bar-container { width: 100%; height: 4px; background: var(--gsc-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-
-        .progress-bar-fill { height: 100%; transition: width 0.6s ease; }
-
-        .metric-val-main { color: var(--gsc-text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-
-        .gsc-url-text { font-weight: 600; color: var(--gsc-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
-
-        .gsc-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--gsc-border); background: var(--gsc-bg-active); }
-
-        .gsc-pagination-text { font-size: 0.875rem; color: var(--gsc-text-dim); }
-
-        .gsc-pagination-text strong { color: var(--gsc-text-main); font-weight: 700; }
-
-        .gsc-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
-
-        .gsc-pagination-btn { padding: 8px 16px; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gsc-text-main); cursor: pointer; transition: background 0.2s; }
-
-        .gsc-pagination-btn:hover:not(:disabled) { background: var(--gsc-bg-hover); }
-
-        .gsc-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .gsc-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--gsc-bg-card); border-radius: 4px; font-size: 0.75rem; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
 
     <div x-data="gscDashboard({
@@ -167,7 +12,7 @@
         activeTab: @entangle('activeTab'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors" style="position: sticky; top: 4rem; z-index: 20;">
+        <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="gsc-header-controls">
                 <div class="flex items-center mr-2 gap-2">
                     <button type="button" 
@@ -191,15 +36,14 @@
                 </button>
                 <div class="relative" x-data="{ open: false, searchAccount: '' }" @click.outside="open = false">
                     <button @click="open = !open" type="button"
-                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px]"
-                            style="max-width:250px;">
+class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px] dash-select-wide">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                               x-text="!selectedAccount ? '{{ __('Select Property...') }}' : (accountNames[selectedAccount] || selectedAccount)"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
                     </button>
 
-                    <div x-show="open" x-transition style="display: none; min-width: 320px;"
-                         class="absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                    <div x-show="open" x-transition x-cloak
+                         class="dash-dropdown absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
 
                         <!-- Search Header -->
                         <div class="p-3 border-b border-gray-200 dark:border-gray-700">
@@ -208,8 +52,7 @@
                                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                                 </div>
                                 <input type="text" x-model="searchAccount"
-                                       class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-9 p-2"
-                                       style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                                        placeholder="{{ __('Search properties...') }}">
                             </div>
                         </div>
@@ -256,8 +99,8 @@
             </div>
 
             <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
-                 style="--color: #4285f4;">
-                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                 data-metric="clicks">
+                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="gsc-label">{{ __('Total Clicks') }}</div>
@@ -268,8 +111,8 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''"
-                 @click="toggleMetric('impressions')" style="--color: #7e57c2;">
-                <div style="position: absolute; top: 12px; right: 12px;" class="text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                 @click="toggleMetric('impressions')" data-metric="impressions">
+                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
                     <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                 </div>
                 <div class="gsc-label">{{ __('Total Impressions') }}</div>
@@ -280,7 +123,7 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
-                 style="--color: #0097a7;">
+                 data-metric="ctr">
                 <div class="gsc-label">{{ __('Average CTR') }}</div>
                 <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
@@ -289,7 +132,7 @@
                 </div>
             </div>
             <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')"
-                 style="--color: #f4511e;">
+                 data-metric="position">
                 <div class="gsc-label">{{ __('Average Position') }}</div>
                 <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
                 <div class="card-metric-trend" :class="getVarianceClass(variance.position, true)">
@@ -304,14 +147,14 @@
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                 <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
             </div>
-            <div style="position: relative; width: 100%; height: 100%; display: block;">
+            <div class="dash-chart-canvas">
                 <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 
-        <div x-show="hasAnyFilters"
+        <div x-show="hasAnyFilters" x-cloak
              class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm"
-             style="display: none;" x-transition>
+             x-transition>
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <x-heroicon-o-funnel class="w-4 h-4 text-primary-500"/>
@@ -362,8 +205,7 @@
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                     </div>
                     <input type="text" x-model.debounce.300ms="searchQuery"
-                           class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2"
-                           style="padding-left: 2.75rem;"
+class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                            placeholder="{{ __('Filter rows...') }}">
                 </div>
             </div>
@@ -402,22 +244,22 @@
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
                                 <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: #4285f4;"
-                                         :style="`width: ${(row.clicks / maxClicks) * 100}%`"></div>
+<div class="progress-bar-fill gsc-bar-clicks"
+:style="`width: ${(row.clicks / maxClicks) * 100}%`"></div>
                                 </div>
                             </td>
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.impressions)"></div>
                                 <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: #7e57c2;"
-                                         :style="`width: ${(row.impressions / maxImpressions) * 100}%`"></div>
+<div class="progress-bar-fill gsc-bar-impressions"
+:style="`width: ${(row.impressions / maxImpressions) * 100}%`"></div>
                                 </div>
                             </td>
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatPercent(row.ctr)"></div>
                                 <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="background: #0097a7;"
-                                         :style="`width: ${row.ctr * 100}%`"></div>
+<div class="progress-bar-fill gsc-bar-ctr"
+:style="`width: ${row.ctr * 100}%`"></div>
                                 </div>
                             </td>
                             <td class="metric-cell">
@@ -456,3 +298,4 @@
             </div>
     </div>
 </x-filament-panels::page>
+

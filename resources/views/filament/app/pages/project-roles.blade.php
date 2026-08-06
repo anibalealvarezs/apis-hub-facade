@@ -20,7 +20,7 @@
                                    ">
                                     <h3 class="text-lg font-semibold text-gray-950 dark:text-white">{{ \Illuminate\Support\Str::headline($role->name) }}</h3>
                                     <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
-                                    <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                                    <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" x-cloak />
                                 </a>
                             </div>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">

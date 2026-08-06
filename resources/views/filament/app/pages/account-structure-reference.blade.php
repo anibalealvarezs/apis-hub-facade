@@ -26,7 +26,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -65,7 +65,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -105,7 +105,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -145,7 +145,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -196,7 +196,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -236,7 +236,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>

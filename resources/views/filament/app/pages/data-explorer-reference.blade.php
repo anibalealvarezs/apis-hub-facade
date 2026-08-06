@@ -26,7 +26,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -64,7 +64,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -93,7 +93,7 @@
                        ">
                         <span>{{ __('Performance Correlations') }}</span>
                         <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
-                        <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                        <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" x-cloak />
                     </a>
                 </div>
             </x-slot>

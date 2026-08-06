@@ -41,15 +41,6 @@
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        body { font-family: 'Outfit', system-ui, sans-serif; }
-        select { color-scheme: light; }
-        .dark select { color-scheme: dark; }
-        input[type="date"] { color-scheme: light; }
-        .dark input[type="date"] { color-scheme: dark; }
-        select option, select optgroup { background-color: #ffffff; color: #111827; }
-        .dark select option, .dark select optgroup { background-color: #1f2937; color: #ffffff; }
-    </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">
 

@@ -50,14 +50,3 @@
         </div>
     @endif
 </div>
-
-<style>
-.version-restore-btn { color: #2563eb; }
-.version-restore-btn:hover { color: #3b82f6; }
-.dark .version-restore-btn { color: #60a5fa; }
-.dark .version-restore-btn:hover { color: #93c5fd; }
-.version-duplicate-btn { color: #059669; }
-.version-duplicate-btn:hover { color: #10b981; }
-.dark .version-duplicate-btn { color: #34d399; }
-.dark .version-duplicate-btn:hover { color: #6ee7b7; }
-</style>

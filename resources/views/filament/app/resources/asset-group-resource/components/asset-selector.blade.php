@@ -30,26 +30,9 @@
         })"
         class="w-full"
     >
-        <style>
-            .custom-scrollbar::-webkit-scrollbar {
-                width: 6px;
-                height: 6px;
-            }
-            .custom-scrollbar::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-                background-color: rgba(156, 163, 175, 0.5);
-                border-radius: 20px;
-            }
-            .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-                background-color: rgba(75, 85, 99, 0.5);
-            }
-        </style>
-
-        <div class="min-w-0 flex overflow-x-auto gap-6 custom-scrollbar pb-4 items-stretch snap-x snap-mandatory" style="max-width: 100%; min-height: 700px; height: 700px;">
+        <div class="min-w-0 flex overflow-x-auto gap-6 custom-scrollbar pb-4 items-stretch snap-x snap-mandatory asg-container">
             <template x-for="(channelData, channelKey) in options" :key="channelKey">
-                <div class="flex-none h-full min-h-0 flex flex-col snap-start" style="width: calc((100% - 3rem) / 3);">
+                <div class="flex-none h-full min-h-0 flex flex-col snap-start asg-column">
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                         <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex-shrink-0">
                             <div class="flex items-center gap-2">
@@ -76,7 +59,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                         </svg>
                                     </div>
-                                    <input type="text" x-model="searchQueries[channelKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" style="padding-left: 2.5rem;">
+                                    <input type="text" x-model="searchQueries[channelKey]" placeholder="Search assets..." class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 asg-search-input">
                                 </div>
                                 <div class="flex-1 relative min-h-0 mt-2">
                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
