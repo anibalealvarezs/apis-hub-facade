@@ -239,3 +239,19 @@
 - **Root cause:** The `.dark { ... }` CSS block (page inline `<style>`) was **missing its closing `}`** after `--fb-chart-ticks: #94a3b8;` — the `.sticky-header-section`, `.fb-table th`, and every rule that followed got nested inside `.dark`, so they only applied when the page was in dark mode (light mode had no styles for them).
 - **Fix:** Added the missing `}` after line 29 so `.dark` closes before `.sticky-header-section` (mirrors the structure of `facebook-marketing-dashboard.blade.php` where `.fb-header-row` carries the `#f9fafb !important` / dark `#111827 !important` overrides at top level).
 - **Verification:** Brace count in the inline `<style>` went from 49 open / 48 close to 49/49; all five dashboard blade files now balanced (marketing 41/41, organic 49/49, GA4 45/45, GSC 43/43, joint 38/38). Blade-only change — run `php artisan view:cache` / `view:clear`, no Vite rebuild needed.
+
+### FB Organic Dashboard Header/Tabs/Tiles Layout Tweaks (2026-08-05)
+- **Changes** to `resources/views/filament/app/pages/facebook-organic-dashboard.blade.php`:
+  1. Moved the FACEBOOK PAGE / INSTAGRAM ACCOUNT channel tabs back INTO the sticky header section (below the controls row) so they stay visible on scroll — reversed the "move out" part of the earlier tab-bar fix (the static-tab-nav-outside decision), per user request.
+  2. Added `.tab-nav-fb-split` class: tabs get `flex: 1 1 0; width: 50%; text-align: center;` (and `border-right: none` on `:last-child`) so both buttons split the bar 50/50.
+  3. Added `margin-top: 25px` to `.metrics-grid-fb` for separation from the controls.
+- **Verification:** `php artisan view:cache` compiles all Blade. Blade-only, no Vite rebuild.
+
+### Main Menu Navigation Group Refactor (2026-08-05)
+- **Change:** Reorganized the App panel's Filament navigation groups. Old `Exploration & Telemetry` renamed to `Analytics`; old `Data & Integrations` split into `Data` and `Integrations`.
+- **New group layout:**
+  - `Analytics`: `Clusters\Dashboards`, `Resources\DerivedMetricResource`, `Resources\CustomKpiResource` (`getNavigationGroup()` → `__('Analytics')`)
+  - `Data`: `Clusters\DataExplorer`, `Resources\AssetGroupResource` (`getNavigationGroup()` → `__('Data')`)
+  - `Integrations`: `Pages\DataSources`, `Pages\SyncSettings`, `Pages\DataSync` (`getNavigationGroup()` → `__('Integrations')`)
+- **Files modified:** `app/Providers/Filament/AppPanelProvider.php` (navigationGroups list), the 8 class files above, `lang/es.json` (added `Data`, `Integrations`, `Analytics` translations; kept legacy keys).
+- **Verification:** `php -l` passes on all modified classes; `es.json` is valid JSON.

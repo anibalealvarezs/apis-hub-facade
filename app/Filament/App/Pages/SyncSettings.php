@@ -19,7 +19,7 @@ class SyncSettings extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Data & Integrations');
+        return __('Integrations');
     }
 
     public static function getNavigationLabel(): string

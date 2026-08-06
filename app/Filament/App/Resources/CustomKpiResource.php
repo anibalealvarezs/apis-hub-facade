@@ -54,7 +54,7 @@
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Exploration & Telemetry');
+            return __('Analytics');
         }
 
         public static function canAccess(): bool

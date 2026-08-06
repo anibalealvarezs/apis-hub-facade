@@ -21,7 +21,7 @@ class AssetGroupResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Data & Integrations');
+        return __('Data');
     }
 
     public static function getNavigationLabel(): string

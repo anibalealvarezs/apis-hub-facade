@@ -182,9 +182,11 @@ class AppPanelProvider extends PanelProvider
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Exploration & Telemetry')),
+                    ->label(fn () => __('Analytics')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Data & Integrations')),
+                    ->label(fn () => __('Data')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Integrations')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
