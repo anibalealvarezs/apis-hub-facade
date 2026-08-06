@@ -1,6 +1,9 @@
 export function dashboardView(config = {}) {
     return {
         loadedCount: 0,
+        _loadedWidgets: {},
+        _pendingRenders: 0,
+        _startedCount: 0,
         totalCount: config.totalCount || 0,
         tenant: config.tenant || '',
         dashboardDefaults: config.dashboardDefaults || { date_start: '', date_end: '', zero_handling: 'remove', show_asset_group_selector: false },
@@ -17,7 +20,7 @@ export function dashboardView(config = {}) {
             }
             this.$nextTick(() => {
                 if (this.selectedAssetGroup && !this._dashboardConfiguredGroup) {
-                    this.applyAssetGroup();
+                    this._applyAssetGroupAfterInitialRender();
                 }
                 const tryInit = () => {
                     if (typeof GridStack !== 'undefined') {
@@ -27,7 +30,17 @@ export function dashboardView(config = {}) {
                             column: 12,
                             cellHeight: 100,
                             margin: 12,
-                            minRow: 6
+                            minRow: 6,
+                            columnOpts: {
+                                columnMax: 12,
+                                breakpoints: [
+                                    { w: 1280, c: 12 },
+                                    { w: 1024, c: 8 },
+                                    { w: 768, c: 6 },
+                                    { w: 640, c: 4 },
+                                    { w: 480, c: 1 }
+                                ]
+                            }
                         }, '#view-grid-stack');
                     } else {
                         setTimeout(tryInit, 50);
@@ -35,6 +48,31 @@ export function dashboardView(config = {}) {
                 };
                 tryInit();
             });
+        },
+
+        _applyAssetGroupAfterInitialRender() {
+            const attempt = () => {
+                const settled = this._pendingRenders <= 0 && this._startedCount >= this.totalCount;
+                if (settled) {
+                    this.applyAssetGroup();
+                } else {
+                    setTimeout(attempt, 50);
+                }
+            };
+            setTimeout(attempt, 50);
+        },
+
+        _markLoaded(widgetId) {
+            if (this._loadedWidgets[widgetId]) return;
+            this._loadedWidgets[widgetId] = true;
+            this.loadedCount++;
+        },
+
+        _markUnloaded(widgetId) {
+            if (this._loadedWidgets[widgetId]) {
+                delete this._loadedWidgets[widgetId];
+                this.loadedCount = Math.max(0, this.loadedCount - 1);
+            }
         },
 
         applyDateRange() {
@@ -159,13 +197,17 @@ export function dashboardView(config = {}) {
             return new Promise(resolve => {
                 const tryRender = () => {
                     if (window.dashboardRenderer) {
+                        this._pendingRenders++;
+                        this._startedCount++;
                         window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
                             .then(() => {
-                                this.loadedCount++;
+                                this._pendingRenders--;
+                                this._markLoaded(widgetId);
                                 resolve();
                             })
                             .catch(() => {
-                                this.loadedCount++;
+                                this._pendingRenders--;
+                                this._markLoaded(widgetId);
                                 resolve();
                             });
                     } else {
@@ -178,6 +220,7 @@ export function dashboardView(config = {}) {
 
         refreshAll() {
             this.loadedCount = 0;
+            this._loadedWidgets = {};
             const widgets = document.querySelectorAll('.grid-stack-item-content .widget-content');
             widgets.forEach(el => {
                 el.innerHTML = '';
@@ -213,7 +256,7 @@ export function dashboardView(config = {}) {
             const el = widgetItem.querySelector('.widget-content');
             if (!el) return Promise.resolve();
             el.innerHTML = '';
-            if (this.loadedCount > 0) this.loadedCount--;
+            this._markUnloaded(widgetId);
             window.dispatchEvent(new CustomEvent('reload-widget', {
                 detail: { id: widgetId, controls: controls }
             }));

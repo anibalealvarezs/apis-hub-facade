@@ -14,7 +14,17 @@ export function sharedView(config = {}) {
                             column: 12,
                             cellHeight: 100,
                             margin: 12,
-                            minRow: 6
+                            minRow: 6,
+                            columnOpts: {
+                                columnMax: 12,
+                                breakpoints: [
+                                    { w: 1280, c: 12 },
+                                    { w: 1024, c: 8 },
+                                    { w: 768, c: 6 },
+                                    { w: 640, c: 4 },
+                                    { w: 480, c: 1 }
+                                ]
+                            }
                         }, '#view-grid-stack');
                     } else {
                         setTimeout(tryInit, 50);
