@@ -33,6 +33,7 @@ export function dashboardView(config = {}) {
                             minRow: 6,
                             columnOpts: {
                                 columnMax: 12,
+                                breakpointForWindow: true,
                                 breakpoints: [
                                     { w: 1280, c: 12 },
                                     { w: 1024, c: 8 },
