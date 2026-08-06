@@ -213,13 +213,14 @@
 
         <!-- Post Details & History Modal -->
         <div x-show="isPostModalOpen"
-             class="fixed inset-0 z-[999] overflow-y-auto"
+             x-trap.noscroll="isPostModalOpen"
+             class="fb-modal-root fixed inset-0 z-[999] overflow-y-auto"
              aria-labelledby="modal-title"
              role="dialog"
              aria-modal="true"
              x-cloak>
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xl transition-opacity"
+            <div class="fb-modal-overlay fixed inset-0 bg-gray-900/60 backdrop-blur-xl transition-opacity"
                  x-show="isPostModalOpen"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0"
@@ -230,7 +231,7 @@
                  @click="closePostModal()"></div>
 
             <!-- Modal panel -->
-            <div class="flex min-h-full items-center justify-center p-4 sm:p-8 text-center">
+            <div class="flex min-h-full justify-center p-4 sm:p-8 text-center">
                 <div x-show="isPostModalOpen"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -238,7 +239,7 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="fb-modal-panel relative transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-xl transition-all border border-gray-200 dark:border-white/10">
+                     class="fb-modal-panel relative m-auto transform overflow-hidden rounded-xl bg-white dark:bg-gray-900 text-left shadow-xl transition-all border border-gray-200 dark:border-white/10">
 
                     <!-- Close Button -->
                     <button @click="closePostModal()" type="button" class="fb-close-btn">

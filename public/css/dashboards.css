@@ -857,3 +857,22 @@
     }
     body { background: white !important; }
 }
+
+/* FB Organic Post Modal — sticky-bar overlap + dimming fixes (2026-08-06) */
+.fb-organic-page .fb-modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    overflow-y: auto;
+}
+.fb-organic-page .fb-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(2, 6, 23, 0.65);
+    z-index: 0;
+}
+.fb-organic-page .fb-modal-panel {
+    position: relative;
+    z-index: 1;
+    margin: auto;
+}
