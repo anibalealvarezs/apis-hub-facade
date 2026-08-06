@@ -53,6 +53,7 @@ export function dashboardBuilder(config = {}) {
         assetGroups: config.assetGroups || {},
 
         // ─── Widget Controls ──
+        activeMobileTab: 'config',
         widgetControlsTarget: {},
         widgetControlsForm: {
             date_inherit: true,

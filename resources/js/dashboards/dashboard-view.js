@@ -264,6 +264,7 @@ export function dashboardView(config = {}) {
         },
 
         settingsWidgetId: null,
+        activeSettingsMobileTab: 'config',
         settingsBuilderControls: { date_start: '', date_end: '' },
         settingsOriginalControls: {
             date_start: '',
