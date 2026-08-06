@@ -8,6 +8,29 @@
     --glow-shadow: 0 0 15px -3px rgba(0, 167, 249, 0.4);
 }
 
+/* Global Thin Scrollbars (matches main menu) */
+* {
+    scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 20px;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+}
+
 /* Glassmorphism Panels & Cards */
 .fi-sidebar {
     backdrop-filter: blur(12px) !important;
