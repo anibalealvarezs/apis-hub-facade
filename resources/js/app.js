@@ -1,5 +1,6 @@
 import './bootstrap';
 import { uiAssetSelector } from './components/ui-asset-selector';
+import { assetSelector } from './components/asset-selector';
 import { copyLink } from './components/copy-link';
 import { floatingTooltip } from './components/floating-tooltip';
 import { dataSources } from './pages/data-sources';
@@ -14,6 +15,7 @@ import { dashboardBuilder } from './dashboards/dashboard-builder';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
+window.assetSelector = assetSelector;
 window.copyLink = copyLink;
 window.floatingTooltip = floatingTooltip;
 window.dataSources = dataSources;
@@ -42,6 +44,7 @@ const registerAlpineComponents = (Alpine) => {
     }));
 
     Alpine.data('uiAssetSelector', uiAssetSelector);
+    Alpine.data('assetSelector', assetSelector);
     Alpine.data('copyLink', copyLink);
     Alpine.data('floatingTooltip', floatingTooltip);
     Alpine.data('dataSources', dataSources);

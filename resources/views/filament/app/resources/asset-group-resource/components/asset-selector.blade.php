@@ -24,63 +24,10 @@
     @endphp
 
     <div
-        x-data="{
-            state: {},
+        x-data="assetSelector({
             options: @js($options),
-            searchQueries: {},
-
-            init() {
-                let raw = @js($existingSelections);
-                let parsed = {};
-                if (typeof raw === 'string') {
-                    try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
-                } else if (raw && typeof raw === 'object') {
-                    parsed = raw;
-                }
-                if (Array.isArray(parsed)) parsed = {};
-                this.state = parsed;
-
-                for (const key in this.options) {
-                    this.searchQueries[key] = '';
-                    if (this.state[key] === undefined) {
-                        this.state[key] = [];
-                    }
-                }
-
-                // Sync initial state to server
-                this.syncState();
-            },
-
-            syncState() {
-                $wire.call('setAssetSelections', JSON.stringify(this.state));
-            },
-
-            toggleAsset(channelKey, assetId) {
-                const current = this.state[channelKey] || [];
-                const idStr = String(assetId);
-                const idx = current.indexOf(idStr);
-
-                if (idx > -1) {
-                    this.state[channelKey] = current.filter((id) => id !== idStr);
-                } else {
-                    this.state[channelKey] = [...current, idStr];
-                }
-
-                this.syncState();
-            },
-
-            selectAll(channelKey) {
-                this.state[channelKey] = Object.entries(this.options[channelKey].assets)
-                    .filter(([id, obj]) => obj.enabled)
-                    .map(([id, obj]) => String(id));
-                this.syncState();
-            },
-
-            clearAll(channelKey) {
-                this.state[channelKey] = [];
-                this.syncState();
-            }
-        }"
+            existingSelections: @js($existingSelections)
+        })"
         class="w-full"
     >
         <style>
