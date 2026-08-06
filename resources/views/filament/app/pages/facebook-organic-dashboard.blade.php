@@ -104,18 +104,17 @@
         }
 
         .tab-nav-fb {
-            position: sticky;
-            top: 7.25rem;
-            z-index: 15;
             display: flex;
             border-bottom: 1px solid var(--fb-border);
-            background: var(--fb-bg-card);
+            background-color: #f9fafb;
             overflow-x: auto;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             flex-wrap: nowrap;
         }
+
+        .dark .tab-nav-fb { background-color: #111827; }
 
         .tab-fb { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--fb-text-dim); border-right: 1px solid var(--fb-border); transition: all 0.2s; }
 
@@ -278,13 +277,14 @@
                 </div>
             </div>
 
-            <div class="tab-nav-fb"
-                 style="border-radius: 8px; border: 1px solid var(--fb-border);">
-                <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
-                     @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
-                <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
-                     @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
-            </div>
+        </div>
+
+        <div class="tab-nav-fb mb-6"
+             style="border-radius: 8px; border: 1px solid var(--fb-border);">
+            <div class="tab-fb" :class="activeTab === 'facebook' ? 'active' : ''"
+                 @click="setTab('facebook')">{{ __('FACEBOOK PAGE') }}</div>
+            <div class="tab-fb" :class="activeTab === 'instagram' ? 'active' : ''"
+                 @click="setTab('instagram')">{{ __('INSTAGRAM ACCOUNT') }}</div>
         </div>
 
         <div class="metrics-grid-fb relative">

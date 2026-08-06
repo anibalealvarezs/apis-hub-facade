@@ -95,18 +95,17 @@
         }
 
         .tab-nav-ga4 {
-            position: sticky;
-            top: 7.25rem;
-            z-index: 15;
             display: flex;
             border-bottom: 1px solid var(--ga4-border);
-            background: var(--ga4-bg-card);
+            background-color: #f9fafb;
             overflow-x: auto;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             flex-wrap: nowrap;
         }
+
+        .dark .tab-nav-ga4 { background-color: #111827; }
         .tab-ga4 { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--ga4-text-dim); border-right: 1px solid var(--ga4-border); transition: all 0.2s; }
         .tab-ga4:hover { background: var(--ga4-bg-hover); }
         .tab-ga4.active { background: var(--ga4-bg-card); color: var(--ga4-sessions); border-bottom: 2px solid var(--ga4-sessions); }

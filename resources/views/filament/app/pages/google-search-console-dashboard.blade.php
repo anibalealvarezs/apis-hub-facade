@@ -103,18 +103,17 @@
         }
 
         .tab-nav-gsc {
-            position: sticky;
-            top: 7.25rem;
-            z-index: 15;
             display: flex;
             border-bottom: 1px solid var(--gsc-border);
-            background: var(--gsc-bg-card);
+            background-color: #f9fafb;
             overflow-x: auto;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             flex-wrap: nowrap;
         }
+
+        .dark .tab-nav-gsc { background-color: #111827; }
 
         .tab-gsc { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gsc-text-dim); border-right: 1px solid var(--gsc-border); transition: all 0.2s; }
 
