@@ -51,42 +51,12 @@
         .dark select option, .dark select optgroup { background-color: #1f2937; color: #ffffff; }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}">
-    <script>
-        window.pvToken = '{{ $pv->token }}';
-        window.isEmbedded = {{ $isEmbedded ? 'true' : 'false' }};
-        const config = { isEmbedded: {{ $isEmbedded ? 'true' : 'false' }} };
-        if (window.isEmbedded) {
-            const sendResize = () => {
-                window.parent.postMessage({ type: 'apis-hub-resize', height: document.body.scrollHeight }, '*');
-            };
-            window.addEventListener('load', sendResize);
-            window.addEventListener('resize', sendResize);
-        }
-    </script>
+<body class="bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">
 
     {{-- Public View Bar: Dark/Light Mode & Language Selector --}}
-    <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-800 text-xs" x-data="{
-        theme: localStorage.getItem('pv_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-        currentLang: '{{ app()->getLocale() }}',
-        toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('pv_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-            if (window.isEmbedded) {
-                window.parent.postMessage({ type: 'apis-hub-theme', theme: this.theme }, '*');
-            }
-        },
-        changeLang(newLang) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('lang', newLang);
-            window.location.href = url.toString();
-        }
-    }">
+    <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-800 text-xs" x-data="publicViewBar({
+        currentLang: '{{ app()->getLocale() }}'
+    })">
         <div class="flex items-center gap-2">
             {{-- Theme Toggle Button --}}
             <button @click="toggleTheme()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none">

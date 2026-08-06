@@ -12,6 +12,9 @@ import { ga4Dashboard } from './dashboards/ga4-dashboard';
 import { kpiBrowser } from './dashboards/kpi-reference';
 import { dashboardView, widgetHeader } from './dashboards/dashboard-view';
 import { dashboardBuilder } from './dashboards/dashboard-builder';
+import { publicViewBar } from './public-view/public-view-bar';
+import { sharedView, widgetHeaderPv } from './public-view/public-dashboard';
+import { initPublicViewEmbed } from './public-view/embed';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
@@ -28,6 +31,9 @@ window.kpiBrowser = kpiBrowser;
 window.dashboardView = dashboardView;
 window.widgetHeader = widgetHeader;
 window.dashboardBuilder = dashboardBuilder;
+window.publicViewBar = publicViewBar;
+window.sharedView = sharedView;
+window.widgetHeaderPv = widgetHeaderPv;
 
 const registerAlpineComponents = (Alpine) => {
     if (!Alpine || Alpine._componentsRegistered) return;
@@ -57,6 +63,9 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('dashboardView', dashboardView);
     Alpine.data('widgetHeader', widgetHeader);
     Alpine.data('dashboardBuilder', dashboardBuilder);
+    Alpine.data('publicViewBar', publicViewBar);
+    Alpine.data('sharedView', sharedView);
+    Alpine.data('widgetHeaderPv', widgetHeaderPv);
 };
 
 document.addEventListener('alpine:init', () => {
@@ -68,6 +77,8 @@ document.addEventListener('alpine:init', () => {
 if (window.Alpine) {
     registerAlpineComponents(window.Alpine);
 }
+
+initPublicViewEmbed();
 
 // Portal Link Global Handler
 document.addEventListener('click', (e) => {

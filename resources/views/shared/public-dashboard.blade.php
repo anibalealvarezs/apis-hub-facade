@@ -19,12 +19,16 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    @vite(['resources/js/app.js'])
     <style>
         body { font-family: 'Outfit', system-ui, sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div x-data="sharedView()" x-init="init()" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div x-data="sharedView({
+        totalCount: {{ $widgets->count() }},
+        tenant: '{{ $project->subdomain }}'
+    })" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {{-- Header --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
@@ -63,7 +67,7 @@
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
                         @if ($widget->title || $widget->name)
                             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
-                                 x-data="widgetHeader({{ $widget->id }}, '{{ addslashes(json_encode($widget->resolved_controls)) }}', '{{ addslashes(json_encode($widget->series_assets_options)) }}')"
+                                 x-data="widgetHeaderPv({{ $widget->id }}, @js($widget->resolved_controls), @js($widget->series_assets_options))"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget->id }}) controls = $event.detail.controls">
                                 <div>
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget->title ?? $widget->name }}</h3>
@@ -120,7 +124,7 @@
                             </div>
                         @endif
                         <div class="widget-content flex-grow p-4 relative overflow-y-auto"
-                             x-init="renderWidget({{ $widget->id }}, $el, {{ json_encode($widget->resolved_controls) }})">
+                             x-init="renderWidget({{ $widget->id }}, $el, @js($widget->resolved_controls))">
                         </div>
                     </div>
                 </div>
@@ -142,134 +146,5 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
     <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ filemtime(public_path('js/dashboard-renderer.js')) }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <script>
-        function sharedView() {
-            return {
-                loadedCount: 0,
-                totalCount: {{ $widgets->count() }},
-                tenant: '{{ $project->subdomain }}',
-
-                init() {
-                    this.$nextTick(() => {
-                        const tryInit = () => {
-                            if (typeof GridStack !== 'undefined') {
-                                GridStack.init({
-                                    staticGrid: true,
-                                    float: true,
-                                    column: 12,
-                                    cellHeight: 100,
-                                    margin: 12,
-                                    minRow: 6
-                                }, '#view-grid-stack');
-                            } else {
-                                setTimeout(tryInit, 50);
-                            }
-                        };
-                        tryInit();
-                    });
-                },
-
-
-                renderWidget(widgetId, el, controls) {
-                    el.setAttribute('data-raw-controls', JSON.stringify(controls));
-                    
-                    let effectiveControls = { ...controls };
-
-                    const tryRender = () => {
-                        if (window.dashboardRenderer) {
-                            window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
-                                .then(() => { this.loadedCount++; })
-                                .catch(() => { this.loadedCount++; });
-                        } else {
-                            setTimeout(tryRender, 50);
-                        }
-                    };
-                    tryRender();
-                },
-
-                reloadWidget(widgetId, controls) {
-                    const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
-                    if (!widgetItem) return;
-                    
-                    const el = widgetItem.querySelector('.widget-content');
-                    if (!el) return;
-
-                    el.innerHTML = '';
-                    if (this.loadedCount > 0) this.loadedCount--;
-                    this.renderWidget(widgetId, el, controls);
-                }
-            };
-        }
-
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('widgetHeader', (widgetId, rawControls, rawSeriesOptions) => ({
-                widgetId: widgetId,
-                controls: JSON.parse(rawControls),
-                seriesOptions: JSON.parse(rawSeriesOptions) || {},
-                openFilters: false,
-                searchQueries: {},
-                
-                init() {
-                    if (!this.controls.series_assets) this.controls.series_assets = {};
-                    for (const key in this.seriesOptions) {
-                        this.searchQueries[key] = '';
-                    }
-                },
-                
-                isSelected(seriesKey, assetId) {
-                    if (!this.controls.series_assets[seriesKey]) return false;
-                    return this.controls.series_assets[seriesKey].includes(String(assetId));
-                },
-                
-                toggleAsset(seriesKey, assetId) {
-                    if (!this.controls.series_assets[seriesKey]) {
-                        this.controls.series_assets[seriesKey] = [];
-                    }
-                    let arr = this.controls.series_assets[seriesKey];
-                    const idx = arr.indexOf(String(assetId));
-                    if (idx > -1) {
-                        arr.splice(idx, 1);
-                    } else {
-                        arr.push(String(assetId));
-                    }
-                    this.controls.series_assets[seriesKey] = arr;
-                    this.updateWidget();
-                },
-                
-                selectAll(seriesKey) {
-                    const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
-                    this.controls.series_assets[seriesKey] = allIds;
-                    this.updateWidget();
-                },
-                
-                clearAll(seriesKey) {
-                    this.controls.series_assets[seriesKey] = [];
-                    this.updateWidget();
-                },
-
-                getActiveFilterCount() {
-                    let count = 0;
-                    for (const key in this.seriesOptions) {
-                        if (this.controls.series_assets[key] && this.controls.series_assets[key].length > 0 && this.controls.series_assets[key].length < Object.keys(this.seriesOptions[key].options).length) {
-                            count++;
-                        }
-                    }
-                    return count;
-                },
-                
-                updateWidget() {
-                    const raw = JSON.stringify(this.controls);
-                    const el = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .widget-content`);
-                    if (el) {
-                        el.setAttribute('data-raw-controls', raw);
-                    }
-                    const dbView = document.getElementById('view-grid-stack');
-                    if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                        dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
-                    }
-                }
-            }));
-        });
-    </script>
 </body>
 </html>
