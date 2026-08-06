@@ -175,6 +175,7 @@ class DashboardResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_default'),
                 Tables\Filters\TrashedFilter::make(),
             ])
+            ->recordUrl(fn (Dashboard $record): string => DashboardResource::getUrl('edit', ['record' => $record]))
             ->actions([
                 Tables\Actions\Action::make('open_builder')
                     ->label(__('Open Builder'))
