@@ -556,35 +556,40 @@ window.dashboardRenderer = {
             });
         }
 
+        const blockFirstCol = controls.block_first_col !== undefined ? !!controls.block_first_col : true;
+
         let html = '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
         
-        // Fixed First Column Table
-        const firstCol = columns[0];
-        const firstKey = firstCol.key || firstCol;
-        const firstRawLabel = firstCol.label || firstCol;
-        const firstDisplayLabel = this.getMetricName(firstRawLabel) || firstRawLabel;
-        const firstIsActive = sort.column === firstKey;
-        const firstArrow = firstIsActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+        if (blockFirstCol) {
+            // Fixed First Column Table
+            const firstCol = columns[0];
+            const firstKey = firstCol.key || firstCol;
+            const firstRawLabel = firstCol.label || firstCol;
+            const firstDisplayLabel = this.getMetricName(firstRawLabel) || firstRawLabel;
+            const firstIsActive = sort.column === firstKey;
+            const firstArrow = firstIsActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
 
-        html += '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;border-r:1px solid rgba(229,231,235,1);" class="border-r border-gray-200 dark:border-gray-700">';
-        html += '<table style="border-collapse:separate;border-spacing:0;">';
-        html += '<thead style="position:sticky;top:0;z-index:2;">';
-        html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
-        html += '<tbody class="bg-white dark:bg-gray-900">';
-        sortedRows.forEach((row, ri) => {
-            const isEven = ri % 2 === 0;
-            const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
-            const val = row[firstKey] ?? row[firstCol] ?? '';
-            html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-300 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
-        });
-        html += '</tbody></table></div>';
+            html += '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+            html += '<table style="border-collapse:separate;border-spacing:0;">';
+            html += '<thead style="position:sticky;top:0;z-index:2;">';
+            html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
+            html += '<tbody class="bg-white dark:bg-gray-900">';
+            sortedRows.forEach((row, ri) => {
+                const isEven = ri % 2 === 0;
+                const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
+                const val = row[firstKey] ?? row[firstCol] ?? '';
+                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-300 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+        }
 
-        // Scrollable Remaining Columns Table
+        // Scrollable Columns Table (all columns if !blockFirstCol, columns.slice(1) if blockFirstCol)
+        const scrollCols = blockFirstCol ? columns.slice(1) : columns;
         html += '<div class="table-scroll-wrap" style="flex:1 1 auto;overflow:auto;height:100%;min-width:0;">';
         html += '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
-        columns.slice(1).forEach((col) => {
+        scrollCols.forEach((col) => {
             const key = col.key || col;
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
@@ -602,7 +607,7 @@ window.dashboardRenderer = {
             const isEven = ri % 2 === 0;
             const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
             html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800">`;
-            columns.slice(1).forEach((col) => {
+            scrollCols.forEach((col) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
                 const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
@@ -625,6 +630,16 @@ window.dashboardRenderer = {
         }
 
         containerEl.innerHTML = html;
+
+        if (blockFirstCol) {
+            const scrollWrap = containerEl.querySelector('.table-scroll-wrap');
+            const fixedWrap = containerEl.querySelector('.fixed-col-wrap');
+            if (scrollWrap && fixedWrap) {
+                scrollWrap.addEventListener('scroll', () => {
+                    fixedWrap.scrollTop = scrollWrap.scrollTop;
+                });
+            }
+        }
 
         containerEl.querySelectorAll('th[data-sort-key]').forEach(th => {
             th.addEventListener('click', () => {

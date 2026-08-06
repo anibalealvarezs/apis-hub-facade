@@ -642,6 +642,24 @@
                                                        :placeholder="__('e.g. 1.0')"/>
                                             </div>
                                         </template>
+                            {{-- Card: Table Options (Table widgets only) --}}
+                            <template x-if="widgetControlsTarget.widget_type === 'table'">
+                                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                            </svg>
+                                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Table Options') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6">
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" x-model="widgetControlsForm.block_first_col"
+                                                   class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary-600 focus:ring-primary-500">
+                                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ __('Freeze first column') }}</span>
+                                        </label>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Keep the first column fixed on the left while horizontal scrolling.') }}</p>
                                     </div>
                                 </div>
                             </template>

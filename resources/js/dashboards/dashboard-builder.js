@@ -592,6 +592,7 @@ export function dashboardBuilder(config = {}) {
                 edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
                 max_ratio_inherit: wc.max_ratio === undefined,
                 max_ratio: wc.max_ratio !== undefined ? wc.max_ratio : null,
+                block_first_col: wc.block_first_col !== undefined ? !!wc.block_first_col : true,
                 raw_series: [],
                 dm_assets: wc.dm_assets || {},
             };
@@ -1083,6 +1084,8 @@ export function dashboardBuilder(config = {}) {
             if (!c.max_ratio_inherit) {
                 payload.max_ratio = c.max_ratio !== '' && c.max_ratio !== null ? parseFloat(c.max_ratio) : null;
             }
+
+            payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
 
             this.widgetControlsError = '';
             if (this.widgetControlsTarget.source_type === 'derived_metric') {
