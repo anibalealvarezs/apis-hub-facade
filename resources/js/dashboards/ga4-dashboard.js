@@ -1,3 +1,5 @@
+import { dataTable } from './data-table';
+
 export function ga4Dashboard(config = {}) {
     return {
         tenantId: config.tenantId || '',
@@ -28,13 +30,13 @@ export function ga4Dashboard(config = {}) {
             revenue: false,
         },
 
-        sd: {
-            campaigns: [],
-            channels: [],
-            traffic: [],
-            acquisition: [],
-            events: [],
-            adtouchpoints: [],
+        sections: {
+            campaigns: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            acquisition: dataTable({ sortCol: 'newUsers', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            events: dataTable({ sortCol: 'eventCount', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
         },
         sl: {
             campaigns: false, channels: false, traffic: false,
@@ -45,17 +47,6 @@ export function ga4Dashboard(config = {}) {
             acquisition: 'acquisition_channels', events: 'events',
             adtouchpoints: 'adtouchpoints_adgroups',
         },
-        sq: { campaigns: '', channels: '', traffic: '', acquisition: '', events: '', adtouchpoints: '' },
-        sc: {
-            campaigns: 'sessions', channels: 'sessions', traffic: 'sessions',
-            acquisition: 'newUsers', events: 'eventCount', adtouchpoints: 'sessions',
-        },
-        sd2: {
-            campaigns: 'desc', channels: 'desc', traffic: 'desc',
-            acquisition: 'desc', events: 'desc', adtouchpoints: 'desc',
-        },
-        sp: { campaigns: 1, channels: 1, traffic: 1, acquisition: 1, events: 1, adtouchpoints: 1 },
-        pageSize: 10,
 
         sectionConfig: {
             campaigns: { label: 'Campaigns', tabs: ['campaigns', 'adgroups'] },
@@ -96,6 +87,10 @@ export function ga4Dashboard(config = {}) {
 
         get isAnySectionLoading() {
             return Object.values(this.sl).some(v => v);
+        },
+
+        get sectionPageSizes() {
+            return Object.values(this.sections).map(s => s.pageSize).join(',');
         },
 
         get tabLabel() {
@@ -165,8 +160,8 @@ export function ga4Dashboard(config = {}) {
                     this.fetchAll();
                 });
 
-                this.$watch('pageSize', () => {
-                    Object.keys(this.sp).forEach(k => this.sp[k] = 1);
+                this.$watch('sectionPageSizes', () => {
+                    Object.keys(this.sections).forEach(k => this.sections[k].currentPage = 1);
                 });
 
                 if (this.account && this.dateStart && this.dateEnd) {
@@ -192,11 +187,12 @@ export function ga4Dashboard(config = {}) {
 
         setSectionSubTab(section, tab) {
             this.ss[section] = tab;
-            this.sp[section] = 1;
-            this.sq[section] = '';
+            const state = this.sections[section];
+            state.currentPage = 1;
+            state.searchQuery = '';
             const metrics = this.tabConfig[tab]?.metrics;
-            this.sc[section] = (metrics && metrics.length) ? metrics[0] : 'sessions';
-            this.sd2[section] = 'desc';
+            state.sortCol = (metrics && metrics.length) ? metrics[0] : 'sessions';
+            state.sortDir = 'desc';
             this.activeTab = tab;
             this.syncToUrl();
             this.fetchSection(section);
@@ -348,7 +344,7 @@ export function ga4Dashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.sd[section] = data.table || [];
+                this.sections[section].rows = data.table || [];
                 return;
             }
 
@@ -358,8 +354,8 @@ export function ga4Dashboard(config = {}) {
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.sd[section] = data.table || [];
-                    this.sp[section] = 1;
+                    this.sections[section].rows = data.table || [];
+                    this.sections[section].currentPage = 1;
                 }
             } catch (error) {
                 console.error('Error fetching section ' + section + ':', error);
@@ -703,57 +699,8 @@ export function ga4Dashboard(config = {}) {
             chart.update();
         },
 
-        sectionData(section) {
-            let data = [...(this.sd[section] || [])];
-            const query = (this.sq[section] || '').toLowerCase().trim();
-            if (query) {
-                data = data.filter(row => String(row.name || row.id || '').toLowerCase().includes(query));
-            }
-            const metrics = this.tabConfig[this.ss[section]]?.metrics || [];
-            const sortKey = metrics.includes(this.sc[section]) ? this.sc[section] : (metrics[0] || 'sessions');
-            return data.sort((a, b) => {
-                let valA = Number(a[sortKey]);
-                let valB = Number(b[sortKey]);
-                if (isNaN(valA) || isNaN(valB)) {
-                    valA = String(a[sortKey] || '').toLowerCase();
-                    valB = String(b[sortKey] || '').toLowerCase();
-                }
-                if (valA === valB) return 0;
-                if (this.sd2[section] === 'desc') return valA < valB ? 1 : -1;
-                return valA > valB ? 1 : -1;
-            });
-        },
-
-        sectionTotalPages(section) {
-            return Math.ceil((this.sd[section] || []).length / this.pageSize) || 1;
-        },
-
-        sectionPaginated(section) {
-            const start = (this.sp[section] - 1) * this.pageSize;
-            const end = start + Number(this.pageSize);
-            return this.sectionData(section).slice(start, end);
-        },
-
-        sectionNextPage(section) {
-            if (this.sp[section] < this.sectionTotalPages(section)) this.sp[section]++;
-        },
-
-        sectionPrevPage(section) {
-            if (this.sp[section] > 1) this.sp[section]--;
-        },
-
-        sectionSortBy(section, col) {
-            if (this.sc[section] === col) {
-                this.sd2[section] = this.sd2[section] === 'desc' ? 'asc' : 'desc';
-            } else {
-                this.sc[section] = col;
-                this.sd2[section] = 'desc';
-            }
-            this.sp[section] = 1;
-        },
-
         sectionMaxMetric(section, metric) {
-            const data = this.sectionData(section);
+            const data = this.sections[section]?.sortedRows || [];
             if (!data.length) return 1;
             return Math.max(...data.map(r => r[metric] || 0));
         },

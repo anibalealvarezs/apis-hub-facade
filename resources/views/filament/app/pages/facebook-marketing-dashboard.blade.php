@@ -198,137 +198,84 @@
             </div>
         </div>
 
-        <div class="fb-table-container relative">
-            <div x-show="isTableLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-
-            <div class="tab-nav-fb">
-                <div class="tab-fb" :class="activeTab === 'campaigns' ? 'active' : ''"
-                     @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'adsets' ? 'active' : ''"
-                     @click="setTab('adsets')">{{ __('AD SETS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'ads' ? 'active' : ''"
-                     @click="setTab('ads')">{{ __('ADS') }}</div>
-                <div class="tab-fb" :class="activeTab === 'age' ? 'active' : ''"
-                     @click="setTab('age')">{{ __('AGE') }}</div>
-                <div class="tab-fb" :class="activeTab === 'gender' ? 'active' : ''"
-                     @click="setTab('gender')">{{ __('GENDER') }}</div>
-            </div>
-
-            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
-                <div class="relative w-full max-w-md">
-                    <div
-                        class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
-                    </div>
-                    <input type="text" x-model.debounce.300ms="searchQuery"
-class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
-                           placeholder="{{ __('Filter rows...') }}">
+        <x-data-table variant="fb" state="tableState" loading="isTableLoading" search>
+            <x-slot:header>
+                <div class="tab-nav-fb">
+                    <div class="tab-fb" :class="activeTab === 'campaigns' ? 'active' : ''"
+                         @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'adsets' ? 'active' : ''"
+                         @click="setTab('adsets')">{{ __('AD SETS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'ads' ? 'active' : ''"
+                         @click="setTab('ads')">{{ __('ADS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'age' ? 'active' : ''"
+                         @click="setTab('age')">{{ __('AGE') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'gender' ? 'active' : ''"
+                         @click="setTab('gender')">{{ __('GENDER') }}</div>
                 </div>
-            </div>
+            </x-slot:header>
 
-            <div class="overflow-x-auto">
-                <table class="fb-table">
-                    <thead>
-                    <tr>
-                        <th><span x-text="activeTab.toUpperCase()"></span></th>
-                        <th x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)">{{ __('Delivery') }}</th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('spend')">{{ __('Amount Spent') }} <span
-                                x-show="sortCol === 'spend'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('impressions')">{{ __('Impressions') }}
-                            <span x-show="sortCol === 'impressions'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('reach')">{{ __('Reach') }}
-                            <span x-show="sortCol === 'reach'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('frequency')">{{ __('Freq.') }}
-                            <span x-show="sortCol === 'frequency'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('cpm')">{{ __('CPM') }}
-                            <span x-show="sortCol === 'cpm'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('clicks')">{{ __('Link Clicks') }} <span
-                                x-show="sortCol === 'clicks'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('results')">{{ __('Purchases') }} <span
-                                x-show="sortCol === 'results'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('cost_per_result')">{{ __('CPR') }} <span
-                                x-show="sortCol === 'cost_per_result'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('result_rate')">{{ __('RR') }} <span
-                                x-show="sortCol === 'result_rate'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span></th>
-                        <th class="metric-cell cursor-pointer" @click="sortBy('purchase_roas')">{{ __('ROAS') }} <span
-                                x-show="sortCol === 'purchase_roas'" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                        <tr @click="canFilter(activeTab) ? toggleFilter(activeTab, row) : null"
-                            class="transition duration-150"
-                            :class="[isFilterActive(activeTab, row.id) ? 'bg-primary-50 dark:bg-primary-900/20 shadow-inner' : 'hover:bg-gray-50 dark:hover:bg-white/5', canFilter(activeTab) ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed']">
-                            <td class="font-medium">
-                                <div class="flex items-center gap-2">
-                                    <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
-                                        <x-heroicon-s-check-circle class="w-4 h-4"/>
-                                    </div>
-                                    <span x-text="row.name"></span>
+            <table class="fb-table">
+                <thead>
+                <tr>
+                    <x-data-table.column sortable="false">
+                        <span x-text="activeTab.toUpperCase()"></span>
+                    </x-data-table.column>
+                    <x-data-table.column sortable="false" label="{{ __('Delivery') }}"
+                                         x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)"/>
+                    <x-data-table.column state="tableState" key="spend" label="{{ __('Amount Spent') }}"/>
+                    <x-data-table.column state="tableState" key="impressions" label="{{ __('Impressions') }}"/>
+                    <x-data-table.column state="tableState" key="reach" label="{{ __('Reach') }}"/>
+                    <x-data-table.column state="tableState" key="frequency" label="{{ __('Freq.') }}"/>
+                    <x-data-table.column state="tableState" key="cpm" label="{{ __('CPM') }}"/>
+                    <x-data-table.column state="tableState" key="clicks" label="{{ __('Link Clicks') }}"/>
+                    <x-data-table.column state="tableState" key="results" label="{{ __('Purchases') }}"/>
+                    <x-data-table.column state="tableState" key="cost_per_result" label="{{ __('CPR') }}"/>
+                    <x-data-table.column state="tableState" key="result_rate" label="{{ __('RR') }}"/>
+                    <x-data-table.column state="tableState" key="purchase_roas" label="{{ __('ROAS') }}"/>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, index) in tableState.paginatedRows" :key="row.id + '_' + index">
+                    <x-data-table.row onClick="canFilter(activeTab) ? toggleFilter(activeTab, row) : null"
+                                      clickable="canFilter(activeTab)"
+                                      active="isFilterActive(activeTab, row.id)"
+                                      inactive-class="">
+                        <td class="font-medium">
+                            <div class="flex items-center gap-2">
+                                <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
+                                    <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
-                            </td>
-                            <td x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)">
-                                <div class="flex items-center"
-                                     x-data="{ status: activeTab === 'campaigns' ? row.campaign_status : (activeTab === 'adsets' ? row.adset_status : row.ad_status) }">
-                                    <span :class="status === 'ACTIVE' ? 'fb-status-active' : 'fb-status-paused'"></span>
-                                    <span x-text="status || '{{ __('Unknown') }}'"
-                                          class="text-xs uppercase font-semibold"></span>
-                                </div>
-                            </td>
-                            <td class="metric-cell" x-text="formatCurrency(row.spend)"></td>
-                            <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
-                            <td class="metric-cell" x-text="formatNumber(row.reach)"></td>
-                            <td class="metric-cell" x-text="formatDecimal(row.frequency)"></td>
-                            <td class="metric-cell" x-text="formatCurrency(row.cpm)"></td>
-                            <td class="metric-cell" x-text="formatNumber(row.clicks)"></td>
-                            <td class="metric-cell" x-text="formatNumber(row.results)"></td>
-                            <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
-                            <td class="metric-cell" x-text="formatPercent(row.result_rate)"></td>
-                            <td class="metric-cell" x-text="formatNumber(row.purchase_roas) + 'x'"></td>
-                        </tr>
-                    </template>
-                    <tr x-show="paginatedTableData.length === 0">
-                        <td colspan="9"
-                            class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="fb-pagination-container" x-show="tableDataRaw.length > 0">
-                <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="fb-pagination-text font-medium">{{ __('Rows per page:') }}</span>
-                    <select x-model="pageSize" class="fb-pagination-select">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="250">250</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-6">
-                    <span class="fb-pagination-text">
-                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong
-                            x-text="totalPages"></strong>
-                        <span class="fb-pagination-badge">(<span x-text="tableDataRaw.length"></span> {{ __('results') }})</span>
-                    </span>
-                    <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1"
-                                class="fb-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages"
-                                class="fb-pagination-btn">{{ __('Next') }}</button>
-                    </div>
-                </div>
-            </div>
+                                <span x-text="row.name"></span>
+                            </div>
+                        </td>
+                        <td x-show="['campaigns', 'adsets', 'ads'].includes(activeTab)">
+                            <div class="flex items-center"
+                                 x-data="{ status: activeTab === 'campaigns' ? row.campaign_status : (activeTab === 'adsets' ? row.adset_status : row.ad_status) }">
+                                <span :class="status === 'ACTIVE' ? 'fb-status-active' : 'fb-status-paused'"></span>
+                                <span x-text="status || '{{ __('Unknown') }}'"
+                                      class="text-xs uppercase font-semibold"></span>
+                            </div>
+                        </td>
+                        <td class="metric-cell" x-text="formatCurrency(row.spend)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.reach)"></td>
+                        <td class="metric-cell" x-text="formatDecimal(row.frequency)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.cpm)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.clicks)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.results)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
+                        <td class="metric-cell" x-text="formatPercent(row.result_rate)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.purchase_roas) + 'x'"></td>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="tableState.paginatedRows.length === 0">
+                    <td colspan="9"
+                        class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
     </div>
 </x-filament-panels::page>
+
 

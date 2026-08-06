@@ -1,3 +1,5 @@
+import { dataTable } from './data-table';
+
 export function fboDashboard(config = {}) {
     return {
         tenantId: config.tenantId || '',
@@ -17,8 +19,22 @@ export function fboDashboard(config = {}) {
         summaryRaw: {},
         previousRaw: {},
         chartDataRaw: [],
-        tableDataRaw: [],
-        breakdownDataRaw: [],
+        postsTable: dataTable({
+            sortCol: 'reach',
+            sortDir: 'desc',
+            searchKeys: ['name'],
+            valueOf: (row, col) => {
+                if (col === 'interactions') return Number(row.total_interactions || row.interactions || 0);
+                if (col === 'views') return Number(row.views || row.video_views || row.page_views_total || row.ig_reels_video_view_total_time || 0);
+                if (col === 'follows') return Number(row.follows || row.follows_and_unfollows || 0);
+                return Number(row[col] || 0);
+            },
+        }),
+        breakdownTable: dataTable({
+            sortCol: 'reach',
+            sortDir: 'desc',
+            searchKeys: ['name'],
+        }),
         isPostModalOpen: false,
         selectedPost: null,
         selectedPostData: null,
@@ -60,23 +76,12 @@ export function fboDashboard(config = {}) {
 
         activeMetrics: {},
 
-        searchQuery: '',
-        sortCol: 'reach',
-        sortDir: 'desc',
-        breakdownSearchQuery: '',
-        breakdownSortCol: 'reach',
-        breakdownSortDir: 'desc',
         activeFilters: {
             reaction_type: [],
             contact_button_type: [],
             follow_type: [],
             media_product_type: [],
         },
-
-        currentPage: 1,
-        pageSize: 10,
-        breakdownCurrentPage: 1,
-        breakdownPageSize: 10,
 
         restoreFromUrl() {
             const params = new URLSearchParams(window.location.search);
@@ -130,11 +135,11 @@ export function fboDashboard(config = {}) {
                     this.trendData = {};
                     this.fetchAll();
                 });
-                this.$watch('pageSize', () => {
-                    this.currentPage = 1;
+                this.$watch('postsTable.pageSize', () => {
+                    this.postsTable.currentPage = 1;
                 });
-                this.$watch('breakdownPageSize', () => {
-                    this.breakdownCurrentPage = 1;
+                this.$watch('breakdownTable.pageSize', () => {
+                    this.breakdownTable.currentPage = 1;
                 });
 
                 if (this.accounts.length > 0 && this.dateStart && this.dateEnd) {
@@ -164,14 +169,14 @@ export function fboDashboard(config = {}) {
 
         setTab(tab) {
             this.activeTab = tab;
-            this.currentPage = 1;
-            this.breakdownCurrentPage = 1;
-            this.searchQuery = '';
-            this.breakdownSearchQuery = '';
+            this.postsTable.currentPage = 1;
+            this.breakdownTable.currentPage = 1;
+            this.postsTable.searchQuery = '';
+            this.breakdownTable.searchQuery = '';
             this.activeMetrics = {};
             this.chartDataRaw = [];
-            this.tableDataRaw = [];
-            this.breakdownDataRaw = [];
+            this.postsTable.rows = [];
+            this.breakdownTable.rows = [];
             this.activeBreakdownTab = this.availableBreakdownTabs[0]?.value || '';
             Object.keys(this.activeFilters).forEach((key) => {
                 if (!this.availableBreakdownTabs.some(t => t.value === key)) {
@@ -226,7 +231,7 @@ export function fboDashboard(config = {}) {
 
         setBreakdownTab(tab) {
             this.activeBreakdownTab = tab;
-            this.breakdownCurrentPage = 1;
+            this.breakdownTable.currentPage = 1;
             this.fetchBreakdownTable();
         },
 
@@ -247,7 +252,7 @@ export function fboDashboard(config = {}) {
                 this.activeFilters[tab].push(normalized);
             }
 
-            this.currentPage = 1;
+            this.postsTable.currentPage = 1;
             this.fetchAll();
         },
 
@@ -260,7 +265,7 @@ export function fboDashboard(config = {}) {
             Object.keys(this.activeFilters).forEach((key) => {
                 this.activeFilters[key] = [];
             });
-            this.currentPage = 1;
+            this.postsTable.currentPage = 1;
             this.fetchAll();
         },
 
@@ -716,7 +721,7 @@ export function fboDashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.tableDataRaw = data.table || [];
+                this.postsTable.rows = data.table || [];
                 return;
             }
 
@@ -726,8 +731,8 @@ export function fboDashboard(config = {}) {
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.tableDataRaw = data.table || [];
-                    this.currentPage = 1;
+                    this.postsTable.rows = data.table || [];
+                    this.postsTable.currentPage = 1;
                 }
             } catch (error) {
                 console.error('Error fetching table:', error);
@@ -742,7 +747,7 @@ export function fboDashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.breakdownDataRaw = data.table || [];
+                this.breakdownTable.rows = data.table || [];
                 return;
             }
 
@@ -752,8 +757,8 @@ export function fboDashboard(config = {}) {
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.breakdownDataRaw = data.table || [];
-                    this.breakdownCurrentPage = 1;
+                    this.breakdownTable.rows = data.table || [];
+                    this.breakdownTable.currentPage = 1;
                 }
             } catch (error) {
                 console.error('Error fetching breakdown table:', error);
@@ -829,15 +834,15 @@ export function fboDashboard(config = {}) {
         },
 
         get availableTableMetrics() {
-            if (this.tableDataRaw.length === 0) return [];
-            const firstRow = this.tableDataRaw[0];
+            if (this.postsTable.rows.length === 0) return [];
+            const firstRow = this.postsTable.rows[0];
             const ignoredKeys = ['id', 'name', 'page', 'page_id', 'page_title', 'channeledaccount', 'channeled_account_id', 'post_id', 'caption', 'message', 'media_type', 'permalink', 'permalink_url', 'timestamp', 'created_time', 'daily'];
             return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
         },
 
         get availableBreakdownMetrics() {
-            if (this.breakdownDataRaw.length === 0) return [];
-            const firstRow = this.breakdownDataRaw[0];
+            if (this.breakdownTable.rows.length === 0) return [];
+            const firstRow = this.breakdownTable.rows[0];
             const ignoredKeys = ['id', 'name', 'daily'];
             return Object.keys(firstRow).filter(key => !ignoredKeys.includes(key.toLowerCase()) && !key.startsWith('trend_total_'));
         },
@@ -1067,115 +1072,6 @@ export function fboDashboard(config = {}) {
             chart.data.labels = labels;
             chart.data.datasets = datasets;
             chart.update();
-        },
-
-        sortBy(col) {
-            if (this.sortCol === col) {
-                this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
-            } else {
-                this.sortCol = col;
-                this.sortDir = 'desc';
-            }
-            this.currentPage = 1;
-        },
-
-        sortBreakdownBy(col) {
-            if (this.breakdownSortCol === col) {
-                this.breakdownSortDir = this.breakdownSortDir === 'desc' ? 'asc' : 'desc';
-            } else {
-                this.breakdownSortCol = col;
-                this.breakdownSortDir = 'desc';
-            }
-            this.breakdownCurrentPage = 1;
-        },
-
-        get sortedTableData() {
-            let data = [...this.tableDataRaw];
-
-            if (this.searchQuery && this.searchQuery.trim() !== '') {
-                const query = this.searchQuery.toLowerCase().trim();
-                data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
-            }
-
-            return data.sort((a, b) => {
-                const getValue = (row, field) => {
-                    if (field === 'interactions') return Number(row.total_interactions || row.interactions || 0);
-                    if (field === 'views') return Number(row.views || row.video_views || row.page_views_total || row.ig_reels_video_view_total_time || 0);
-                    if (field === 'follows') return Number(row.follows || row.follows_and_unfollows || 0);
-                    return Number(row[field] || 0);
-                };
-
-                let valA = getValue(a, this.sortCol);
-                let valB = getValue(b, this.sortCol);
-
-                if (isNaN(valA) || isNaN(valB)) {
-                    valA = String(a[this.sortCol] || '').toLowerCase();
-                    valB = String(b[this.sortCol] || '').toLowerCase();
-                }
-
-                if (valA === valB) return 0;
-                if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
-                return valA > valB ? 1 : -1;
-            });
-        },
-
-        get totalPages() {
-            return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
-        },
-
-        get sortedBreakdownData() {
-            let data = [...this.breakdownDataRaw];
-
-            if (this.breakdownSearchQuery && this.breakdownSearchQuery.trim() !== '') {
-                const query = this.breakdownSearchQuery.toLowerCase().trim();
-                data = data.filter(row => String(row.name || '').toLowerCase().includes(query));
-            }
-
-            return data.sort((a, b) => {
-                let valA = Number(a[this.breakdownSortCol] || 0);
-                let valB = Number(b[this.breakdownSortCol] || 0);
-
-                if (isNaN(valA) || isNaN(valB)) {
-                    valA = String(a[this.breakdownSortCol] || '').toLowerCase();
-                    valB = String(b[this.breakdownSortCol] || '').toLowerCase();
-                }
-
-                if (valA === valB) return 0;
-                if (this.breakdownSortDir === 'desc') return valA < valB ? 1 : -1;
-                return valA > valB ? 1 : -1;
-            });
-        },
-
-        get breakdownTotalPages() {
-            return Math.ceil(this.sortedBreakdownData.length / this.breakdownPageSize) || 1;
-        },
-
-        get paginatedTableData() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            const end = start + Number(this.pageSize);
-            return this.sortedTableData.slice(start, end);
-        },
-
-        get paginatedBreakdownData() {
-            const start = (this.breakdownCurrentPage - 1) * this.breakdownPageSize;
-            const end = start + Number(this.breakdownPageSize);
-            return this.sortedBreakdownData.slice(start, end);
-        },
-
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
-        },
-
-        nextBreakdownPage() {
-            if (this.breakdownCurrentPage < this.breakdownTotalPages) this.breakdownCurrentPage++;
-        },
-
-        prevBreakdownPage() {
-            if (this.breakdownCurrentPage > 1) this.breakdownCurrentPage--;
         },
 
         formatNumber(num) {

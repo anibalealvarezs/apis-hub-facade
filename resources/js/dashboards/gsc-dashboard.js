@@ -1,3 +1,5 @@
+import { dataTable } from './data-table';
+
 export function gscDashboard(config = {}) {
     return {
         tenantId: config.tenantId || '',
@@ -16,20 +18,13 @@ export function gscDashboard(config = {}) {
         summary: { clicks: 0, impressions: 0, ctr: 0, position: 0 },
         previous: { clicks: 0, impressions: 0, ctr: 0, position: 0 },
         chartDataRaw: [],
-        tableDataRaw: [],
+        tableState: dataTable({ sortCol: 'clicks', sortDir: 'desc', searchKeys: ['id'] }),
         trendData: {},
         showTrends: false,
 
         activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
 
         activeFilters: { queries: [], pages: [], countries: [], devices: [] },
-        searchQuery: '',
-
-        sortCol: 'clicks',
-        sortDir: 'desc',
-
-        currentPage: 1,
-        pageSize: 10,
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -99,8 +94,8 @@ export function gscDashboard(config = {}) {
                     this.fetchAll();
                 });
 
-                this.$watch('pageSize', () => {
-                    this.currentPage = 1;
+                this.$watch('tableState.pageSize', () => {
+                    this.tableState.currentPage = 1;
                 });
 
                 if (this.account && this.dateStart && this.dateEnd) {
@@ -127,8 +122,8 @@ export function gscDashboard(config = {}) {
 
         setTab(tab) {
             this.activeTab = tab;
-            this.currentPage = 1;
-            this.searchQuery = '';
+            this.tableState.currentPage = 1;
+            this.tableState.searchQuery = '';
             this.syncToUrl();
             this.fetchTable();
             if (this.$wire && typeof this.$wire.setActiveTab === 'function') {
@@ -365,7 +360,7 @@ export function gscDashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.tableDataRaw = data.table || [];
+                this.tableState.rows = data.table || [];
                 return;
             }
 
@@ -375,8 +370,8 @@ export function gscDashboard(config = {}) {
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.tableDataRaw = data.table || [];
-                    this.currentPage = 1;
+                    this.tableState.rows = data.table || [];
+                    this.tableState.currentPage = 1;
                 }
             } catch (error) {
                 console.error('Error fetching table:', error);
@@ -710,65 +705,14 @@ export function gscDashboard(config = {}) {
             chart.update();
         },
 
-        sortBy(col) {
-            if (this.sortCol === col) {
-                this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
-            } else {
-                this.sortCol = col;
-                this.sortDir = 'desc';
-            }
-            this.currentPage = 1;
-        },
-
-        get sortedTableData() {
-            let data = [...this.tableDataRaw];
-
-            if (this.searchQuery && this.searchQuery.trim() !== '') {
-                const query = this.searchQuery.toLowerCase().trim();
-                data = data.filter(row => String(row.id || '').toLowerCase().includes(query));
-            }
-
-            return data.sort((a, b) => {
-                let valA = Number(a[this.sortCol]);
-                let valB = Number(b[this.sortCol]);
-
-                if (isNaN(valA) || isNaN(valB)) {
-                    valA = String(a[this.sortCol] || '').toLowerCase();
-                    valB = String(b[this.sortCol] || '').toLowerCase();
-                }
-
-                if (valA === valB) return 0;
-                if (this.sortDir === 'desc') return valA < valB ? 1 : -1;
-                return valA > valB ? 1 : -1;
-            });
-        },
-
-        get totalPages() {
-            return Math.ceil(this.sortedTableData.length / this.pageSize) || 1;
-        },
-
-        get paginatedTableData() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            const end = start + Number(this.pageSize);
-            return this.sortedTableData.slice(start, end);
-        },
-
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
-        },
-
         get maxClicks() {
-            if (!this.sortedTableData.length) return 1;
-            return Math.max(...this.sortedTableData.map(r => r.clicks));
+            if (!this.tableState.sortedRows.length) return 1;
+            return Math.max(...this.tableState.sortedRows.map(r => r.clicks));
         },
 
         get maxImpressions() {
-            if (!this.sortedTableData.length) return 1;
-            return Math.max(...this.sortedTableData.map(r => r.impressions));
+            if (!this.tableState.sortedRows.length) return 1;
+            return Math.max(...this.tableState.sortedRows.map(r => r.impressions));
         },
 
         formatNumber(num) {

@@ -109,194 +109,107 @@
             </div>
         </div>
 
-        <div class="fb-table-container relative dash-mb-20">
-            <div x-show="isBreakdownTableLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-
-            <div class="tab-nav-fb">
-                <template x-for="tab in availableBreakdownTabs" :key="tab.value">
-                    <div class="tab-fb" :class="activeBreakdownTab === tab.value ? 'active' : ''"
-                         @click="setBreakdownTab(tab.value)" x-text="tab.label"></div>
-                </template>
-            </div>
-
-            <div
-                class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
-                    x-text="((availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab) || {}).label || '').toUpperCase()"></h3>
-            </div>
-
-            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
-                <div class="relative w-full max-w-md">
-                    <div
-                        class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
-                    </div>
-                    <input type="text" x-model.debounce.300ms="breakdownSearchQuery"
-class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
-                           placeholder="{{ __('Filter breakdown values...') }}">
+        <x-data-table variant="fb" state="breakdownTable" loading="isBreakdownTableLoading"
+                      search searchPlaceholder="{{ __('Filter breakdown values...') }}"
+                      class="dash-mb-20">
+            <x-slot:header>
+                <div class="tab-nav-fb">
+                    <template x-for="tab in availableBreakdownTabs" :key="tab.value">
+                        <div class="tab-fb" :class="activeBreakdownTab === tab.value ? 'active' : ''"
+                             @click="setBreakdownTab(tab.value)" x-text="tab.label"></div>
+                    </template>
                 </div>
-            </div>
 
-            <div class="overflow-x-auto">
-                <table class="fb-table dash-table-wide">
-                    <thead>
-                    <tr>
-                        <th>{{ __('BREAKDOWN VALUE') }}</th>
+                <div
+                    class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
+                        x-text="((availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab) || {}).label || '').toUpperCase()"></h3>
+                </div>
+            </x-slot:header>
+
+            <table class="fb-table dash-table-wide">
+                <thead>
+                <tr>
+                    <th>{{ __('BREAKDOWN VALUE') }}</th>
+                    <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
+                        <x-data-table.column state="breakdownTable" key-bind="metricKey">
+                            <span x-text="getMetricInfo(metricKey).label"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, index) in breakdownTable.paginatedRows" :key="row.id + '_' + index">
+                    <x-data-table.row>
+                        <td class="font-medium">
+                            <div class="flex items-center gap-2">
+                                <span x-text="row.name"></span>
+                            </div>
+                        </td>
                         <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
-                            <th class="metric-cell cursor-pointer" @click="sortBreakdownBy(metricKey)">
-                                <span x-text="getMetricInfo(metricKey).label"></span>
-                                <span x-show="breakdownSortCol === metricKey"
-                                      x-text="breakdownSortDir === 'desc' ? '↓' : '↑'"></span>
-                            </th>
+                            <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
                         </template>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="(row, index) in paginatedBreakdownData" :key="row.id + '_' + index">
-                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
-                            <td class="font-medium">
-                                <div class="flex items-center gap-2">
-                                    <span x-text="row.name"></span>
-                                </div>
-                            </td>
-                            <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
-                                <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
-                            </template>
-                        </tr>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="breakdownTable.paginatedRows.length === 0">
+                    <td :colspan="availableBreakdownMetrics.length + 1"
+                        class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No breakdown data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
+        <x-data-table variant="fb" state="postsTable" loading="isTableLoading"
+                      search searchPlaceholder="{{ __('Filter rows...') }}">
+            <x-slot:header>
+                <div
+                    class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
+                        x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
+                </div>
+            </x-slot:header>
+
+            <table class="fb-table dash-table-wide">
+                <thead>
+                <tr>
+                    <th>{{ __('POST / PAGE') }}</th>
+                    <template x-for="metricKey in availableTableMetrics" :key="metricKey">
+                        <x-data-table.column state="postsTable" key-bind="metricKey">
+                            <span x-text="getMetricInfo(metricKey).label"></span>
+                        </x-data-table.column>
                     </template>
-                    <tr x-show="paginatedBreakdownData.length === 0">
-                        <td :colspan="availableBreakdownMetrics.length + 1"
-                            class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No breakdown data available.') }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="fb-pagination-container" x-show="breakdownDataRaw.length > 0">
-                <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="fb-pagination-text font-medium">{{ __('Rows per page:') }}</span>
-                    <select x-model="breakdownPageSize" class="fb-pagination-select">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="250">250</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-6">
-                    <span class="fb-pagination-text">
-                        {{ __('Page') }} <strong x-text="breakdownCurrentPage"></strong> {{ __('of') }} <strong
-                            x-text="breakdownTotalPages"></strong>
-                        <span class="fb-pagination-badge">(<span x-text="breakdownDataRaw.length"></span> {{ __('results') }})</span>
-                    </span>
-                    <div class="flex gap-2">
-                        <button @click="prevBreakdownPage()" :disabled="breakdownCurrentPage === 1"
-                                class="fb-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextBreakdownPage()" :disabled="breakdownCurrentPage === breakdownTotalPages"
-                                class="fb-pagination-btn">{{ __('Next') }}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="fb-table-container relative">
-            <div x-show="isTableLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-
-            <div
-                class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
-                    x-text="activeTab === 'facebook' ? '{{ __('Facebook Posts') }}' : '{{ __('Instagram Posts') }}'"></h3>
-            </div>
-
-            <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
-                <div class="relative w-full max-w-md">
-                    <div
-                        class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
-                    </div>
-                    <input type="text" x-model.debounce.300ms="searchQuery"
-class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
-                           placeholder="{{ __('Filter rows...') }}">
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="fb-table dash-table-wide">
-                    <thead>
-                    <tr>
-                        <th>{{ __('POST / PAGE') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, index) in postsTable.paginatedRows" :key="row.id + '_' + index">
+                    <x-data-table.row onClick="openPostModal(row.id)" clickable="true">
+                        <td class="font-medium">
+                            <div class="flex items-center gap-2">
+                                <a x-show="row.permalink_url || row.permalink"
+                                   :href="row.permalink_url || row.permalink" target="_blank"
+                                   class="text-primary-500 hover:text-primary-700">
+                                    <x-heroicon-o-link class="w-4 h-4"/>
+                                </a>
+                                <span x-text="row.name"></span>
+                            </div>
+                            <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase"
+                                 x-text="row.media_type"></div>
+                        </td>
                         <template x-for="metricKey in availableTableMetrics" :key="metricKey">
-                            <th class="metric-cell cursor-pointer" @click="sortBy(metricKey)">
-                                <span x-text="getMetricInfo(metricKey).label"></span>
-                                <span x-show="sortCol === metricKey" x-text="sortDir === 'desc' ? '↓' : '↑'"></span>
-                            </th>
+                            <td class="metric-cell"
+                                x-text="(metricKey === 'ig_reels_avg_watch_time') || (metricKey === 'ig_reels_video_view_total_time')
+                                ? formatMetaDuration(row[metricKey] || 0)
+                                : formatNumber(row[metricKey] || 0)"></td>
                         </template>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="(row, index) in paginatedTableData" :key="row.id + '_' + index">
-                        <tr @click="openPostModal(row.id)"
-                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
-                            <td class="font-medium">
-                                <div class="flex items-center gap-2">
-                                    <a x-show="row.permalink_url || row.permalink"
-                                       :href="row.permalink_url || row.permalink" target="_blank"
-                                       class="text-primary-500 hover:text-primary-700">
-                                        <x-heroicon-o-link class="w-4 h-4"/>
-                                    </a>
-                                    <span x-text="row.name"></span>
-                                </div>
-                                <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase"
-                                     x-text="row.media_type"></div>
-                            </td>
-                            <template x-for="metricKey in availableTableMetrics" :key="metricKey">
-                                <td class="metric-cell"
-                                    x-text="(metricKey === 'ig_reels_avg_watch_time') || (metricKey === 'ig_reels_video_view_total_time')
-                                    ? formatMetaDuration(row[metricKey] || 0)
-                                    : formatNumber(row[metricKey] || 0)"></td>
-                            </template>
-                        </tr>
-                    </template>
-                    <tr x-show="paginatedTableData.length === 0">
-                        <td :colspan="availableTableMetrics.length + 1"
-                            class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="fb-pagination-container" x-show="tableDataRaw.length > 0">
-                <div class="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span class="fb-pagination-text font-medium">{{ __('Rows per page:') }}</span>
-                    <select x-model="pageSize" class="fb-pagination-select">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="250">250</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-6">
-                    <span class="fb-pagination-text">
-                        {{ __('Page') }} <strong x-text="currentPage"></strong> {{ __('of') }} <strong
-                            x-text="totalPages"></strong>
-                        <span class="fb-pagination-badge">(<span x-text="tableDataRaw.length"></span> {{ __('results') }})</span>
-                    </span>
-                    <div class="flex gap-2">
-                        <button @click="prevPage()" :disabled="currentPage === 1"
-                                class="fb-pagination-btn">{{ __('Prev') }}</button>
-                        <button @click="nextPage()" :disabled="currentPage === totalPages"
-                                class="fb-pagination-btn">{{ __('Next') }}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="postsTable.paginatedRows.length === 0">
+                    <td :colspan="availableTableMetrics.length + 1"
+                        class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
 
         <!-- Post Details & History Modal -->
         <div x-show="isPostModalOpen"
