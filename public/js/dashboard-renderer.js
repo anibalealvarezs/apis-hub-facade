@@ -556,12 +556,35 @@ window.dashboardRenderer = {
             });
         }
 
-        let html = '<div class="table-wrap" style="overflow:auto;height:100%;border-radius:inherit;">';
-        html += '<table style="width:100%;min-width:max-content;border-collapse:separate;border-spacing:0;">';
+        let html = '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
+        
+        // Fixed First Column Table
+        const firstCol = columns[0];
+        const firstKey = firstCol.key || firstCol;
+        const firstRawLabel = firstCol.label || firstCol;
+        const firstDisplayLabel = this.getMetricName(firstRawLabel) || firstRawLabel;
+        const firstIsActive = sort.column === firstKey;
+        const firstArrow = firstIsActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
 
+        html += '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;border-r:1px solid rgba(229,231,235,1);" class="border-r border-gray-200 dark:border-gray-700">';
+        html += '<table style="border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:2;">';
+        html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
+        html += '<tbody class="bg-white dark:bg-gray-900">';
+        sortedRows.forEach((row, ri) => {
+            const isEven = ri % 2 === 0;
+            const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
+            const val = row[firstKey] ?? row[firstCol] ?? '';
+            html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-300 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+
+        // Scrollable Remaining Columns Table
+        html += '<div class="table-scroll-wrap" style="flex-1;overflow:auto;height:100%;">';
+        html += '<table style="width:100%;min-width:max-content;border-collapse:separate;border-spacing:0;">';
+        html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
-        columns.forEach((col, idx) => {
+        columns.slice(1).forEach((col) => {
             const key = col.key || col;
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
@@ -569,12 +592,8 @@ window.dashboardRenderer = {
             const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
             const thAlign = isNumeric ? 'text-right' : 'text-left';
-            let thStyle = isNumeric ? 'min-width:130px;' : (idx === 0 ? 'min-width:140px;' : 'min-width:120px;');
-            if (idx === 0) {
-                thStyle += 'position:sticky;left:0;z-index:3;';
-            }
-            const stickyClass = idx === 0 ? 'bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700' : '';
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 ${stickyClass}" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            const thStyle = isNumeric ? 'min-width:130px;' : 'min-width:120px;';
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
 
@@ -583,7 +602,7 @@ window.dashboardRenderer = {
             const isEven = ri % 2 === 0;
             const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
             html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800">`;
-            columns.forEach((col, idx) => {
+            columns.slice(1).forEach((col) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? '';
                 const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
@@ -594,16 +613,12 @@ window.dashboardRenderer = {
                 const tdClass = isNumeric
                     ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
                     : 'px-3 py-2 text-gray-700 dark:text-gray-300';
-                let tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-                if (idx === 0) {
-                    tdStyle += 'position:sticky;left:0;z-index:1;';
-                }
-                const stickyBorderClass = idx === 0 ? 'border-r border-gray-200 dark:border-gray-700' : '';
-                html += `<td class="${tdClass} ${cellBgClass} ${stickyBorderClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
+                const tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                html += `<td class="${tdClass} ${cellBgClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += '</tr>';
         });
-        html += '</tbody></table></div>';
+        html += '</tbody></table></div></div>';
 
         if (data.total !== undefined) {
             html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">${this._formatTableNumber(data.total)} results</div>`;
