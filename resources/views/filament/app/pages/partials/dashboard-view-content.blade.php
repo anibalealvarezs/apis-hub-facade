@@ -53,7 +53,7 @@
 
     {{-- Dashboard Controls (on-the-go) --}}
     <div class="dvc-controls-bar flex flex-wrap items-center gap-3 text-xs py-3 px-3">
-        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ __('Date range:') }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">{{ __('Date range:') }}</span>
         <x-ui.date-input size="xs" x-model="dashboardOverrides.date_start"
                          x-on:change.debounce.500ms="applyDateRange()"
                          x-bind:max="dashboardOverrides.date_end || '{{ $yesterdayDate }}'" />
@@ -62,7 +62,7 @@
                          x-on:change.debounce.500ms="applyDateRange()"
                          x-bind:min="dashboardOverrides.date_start || ''" x-bind:max="dashboardDefaults.date_end" />
         <template x-if="dashboardDefaults.show_asset_group_selector">
-            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium ml-2">{{ __('Asset Group:') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium ml-2 hidden sm:inline">{{ __('Asset Group:') }}</span>
         </template>
         <template x-if="dashboardDefaults.show_asset_group_selector">
             <x-ui.asset-selector model="selectedAssetGroup" options="assetGroups" changeEvent="applyAssetGroup()" size="xs" />
@@ -283,16 +283,6 @@
                         </svg>
                     </button>
                     <button @click="closePopOut()"
-                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                            title="Restore to Dashboard">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                             stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-                        </svg>
-                    </button>
-                    <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                    <button @click="closePopOut()"
                             class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                             title="Close">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -349,36 +339,6 @@
                         {{-- Left Column: Global Configuration --}}
                         <div class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pb-2 min-h-0 bd-config-col"
                              :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'config' }">
-                            {{-- Card: Widget Title & Description (Translatable) --}}
-                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0" x-data="{ activeTitleTab: '{{ app()->getLocale() }}' }">
-                                <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                    <div class="flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                        </svg>
-                                        <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Title & Description') }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <button type="button" @click="activeTitleTab = 'en'" class="px-2 py-0.5 rounded text-xs font-semibold transition-colors" :class="activeTitleTab === 'en' ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">EN</button>
-                                        <button type="button" @click="activeTitleTab = 'es'" class="px-2 py-0.5 rounded text-xs font-semibold transition-colors" :class="activeTitleTab === 'es' ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">ES</button>
-                                    </div>
-                                </div>
-                                <div class="p-6 space-y-4">
-                                    <div x-show="activeTitleTab === 'en'">
-                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Title (English)') }}</label>
-                                        <input type="text" x-model="(settingsControls.titles = settingsControls.titles || { en: '', es: '' }).en" class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500 mb-3" placeholder="{{ __('Widget Title in English') }}">
-                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Description (English)') }}</label>
-                                        <textarea x-model="(settingsControls.descriptions = settingsControls.descriptions || { en: '', es: '' }).en" rows="2" class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500" placeholder="{{ __('Widget Description in English') }}"></textarea>
-                                    </div>
-                                    <div x-show="activeTitleTab === 'es'">
-                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Title (Spanish)') }}</label>
-                                        <input type="text" x-model="(settingsControls.titles = settingsControls.titles || { en: '', es: '' }).es" class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500 mb-3" placeholder="{{ __('Título del Widget en Español') }}">
-                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Description (Spanish)') }}</label>
-                                        <textarea x-model="(settingsControls.descriptions = settingsControls.descriptions || { en: '', es: '' }).es" rows="2" class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500" placeholder="{{ __('Descripción del Widget en Español') }}"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
                             {{-- Card: Date Range --}}
                             <div
                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
