@@ -302,7 +302,7 @@ select option, select optgroup {
 .builder-toolbar {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     background-color: #f9fafb !important;
     border: 1px solid #e5e7eb !important;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);

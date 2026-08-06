@@ -92,7 +92,7 @@
 .ga4-header-row {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -218,7 +218,7 @@
 .gsc-header-row {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -372,7 +372,7 @@
 .fb-marketing-page .fb-header-row {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -518,7 +518,7 @@
 .fb-organic-page .sticky-header-section {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     background-color: #f9fafb !important;
     border-bottom: 1px solid #e5e7eb !important;
 }
@@ -530,7 +530,7 @@
 .fb-organic-page .fb-header-row {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -718,7 +718,7 @@
 .joint-header-row {
     position: sticky;
     top: 4rem;
-    z-index: 20;
+    z-index: 15;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
