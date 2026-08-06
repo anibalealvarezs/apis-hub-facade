@@ -19,6 +19,10 @@
             }
         })();
     </script>
+    <style>
+        html { background-color: #f9fafb; color-scheme: light; }
+        html.dark { background-color: #030712; color-scheme: dark; }
+    </style>
     <script>
         const origWarn = console.warn;
         console.warn = function(...args) {

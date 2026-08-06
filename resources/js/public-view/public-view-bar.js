@@ -11,6 +11,11 @@ export function publicViewBar(config = {}) {
             } else {
                 document.documentElement.classList.remove('dark');
             }
+            const html = document.documentElement;
+            html.style.overflow = 'hidden';
+            requestAnimationFrame(() => {
+                html.style.overflow = '';
+            });
             if (window.isEmbedded) {
                 window.parent.postMessage({ type: 'apis-hub-theme', theme: this.theme }, '*');
             }
