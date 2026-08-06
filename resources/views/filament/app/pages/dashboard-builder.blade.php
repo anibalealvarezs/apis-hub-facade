@@ -648,13 +648,23 @@
                         </div>
 
                     {{-- Right Column: Variables Configuration --}}
-                    <div class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
+                    <div class="min-w-0 min-h-0 flex flex-col md:flex-row overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                          :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
+                        
+                        {{-- Mobile Series Step Selector (Visible on mobile only when multiple series exist) --}}
+                        <template x-if="widgetControlsForm.raw_series && widgetControlsForm.raw_series.length > 1">
+                            <div class="md:hidden flex items-center justify-between gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2">
+                                <button type="button" @click="activeSeriesIndex = Math.max(0, activeSeriesIndex - 1)" :disabled="activeSeriesIndex === 0" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-40">← {{ __('Prev') }}</button>
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-200" x-text="'Series ' + (activeSeriesIndex + 1) + ' of ' + widgetControlsForm.raw_series.length"></span>
+                                <button type="button" @click="activeSeriesIndex = Math.min(widgetControlsForm.raw_series.length - 1, activeSeriesIndex + 1)" :disabled="activeSeriesIndex >= widgetControlsForm.raw_series.length - 1" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-40">{{ __('Next') }} →</button>
+                            </div>
+                        </template>
                         
                         {{-- Series: Raw Metric --}}
                         <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
                             <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
-                                <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                <div class="flex-none w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                     :class="{ 'hidden md:flex': activeSeriesIndex !== index }">
                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                         <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                             <div class="flex items-center gap-2">

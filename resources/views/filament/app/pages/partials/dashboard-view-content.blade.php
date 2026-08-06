@@ -523,12 +523,23 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
-                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
+                            class="min-w-0 min-h-0 flex flex-col md:flex-row overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'series' }">
-                            <template x-for="(vConfig, vKey) in settingsVariables" :key="vKey">
+                            
+                            {{-- Mobile Series Step Selector --}}
+                            <template x-if="settingsVariables && Object.keys(settingsVariables).length > 1">
+                                <div class="md:hidden flex items-center justify-between gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2">
+                                    <button type="button" @click="activeSettingsSeriesIndex = Math.max(0, activeSettingsSeriesIndex - 1)" :disabled="activeSettingsSeriesIndex === 0" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-40">← {{ __('Prev') }}</button>
+                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-200" x-text="'Series ' + (activeSettingsSeriesIndex + 1) + ' of ' + Object.keys(settingsVariables).length"></span>
+                                    <button type="button" @click="activeSettingsSeriesIndex = Math.min(Object.keys(settingsVariables).length - 1, activeSettingsSeriesIndex + 1)" :disabled="activeSettingsSeriesIndex >= Object.keys(settingsVariables).length - 1" class="px-2.5 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-40">{{ __('Next') }} →</button>
+                                </div>
+                            </template>
+
+                            <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig">
                                     <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                        class="flex-none w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                        :class="{ 'hidden md:flex': activeSettingsSeriesIndex !== vIdx }">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div

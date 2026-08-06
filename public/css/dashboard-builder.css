@@ -282,15 +282,17 @@ select option, select optgroup {
 
 /* ─── Modal Inner Absolute Wrapper ─── */
 .modal-body-absolute-wrapper {
-    position: relative !important;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    height: 100%;
+    position: absolute !important;
+    top: 2rem !important;
+    bottom: 2rem !important;
+    left: 2rem !important;
+    right: 2rem !important;
 }
 
 @media (max-width: 767px) {
+    .bd-modal-root {
+        padding-top: 1rem !important;
+    }
     .modal-body-absolute-wrapper {
         position: relative !important;
         inset: auto !important;

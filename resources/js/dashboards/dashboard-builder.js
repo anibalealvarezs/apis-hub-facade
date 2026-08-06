@@ -54,6 +54,7 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Widget Controls ──
         activeMobileTab: 'config',
+        activeSeriesIndex: 0,
         widgetControlsTarget: {},
         widgetControlsForm: {
             date_inherit: true,

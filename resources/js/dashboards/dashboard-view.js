@@ -24,7 +24,7 @@ export function dashboardView(config = {}) {
                 }
                 const tryInit = () => {
                     if (typeof GridStack !== 'undefined') {
-                        GridStack.init({
+                        const grid = GridStack.init({
                             staticGrid: true,
                             float: true,
                             column: 12,
@@ -41,6 +41,9 @@ export function dashboardView(config = {}) {
                                 ]
                             }
                         }, '#view-grid-stack');
+                        if (grid && window.innerWidth < 1024) {
+                            grid.column(1, 'moveScale');
+                        }
                     } else {
                         setTimeout(tryInit, 50);
                     }
@@ -265,6 +268,7 @@ export function dashboardView(config = {}) {
 
         settingsWidgetId: null,
         activeSettingsMobileTab: 'config',
+        activeSettingsSeriesIndex: 0,
         settingsBuilderControls: { date_start: '', date_end: '' },
         settingsOriginalControls: {
             date_start: '',
