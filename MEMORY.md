@@ -212,6 +212,12 @@
 - **Verification:** `php artisan view:cache` succeeds (all Blade templates compile); `view:clear` run after.
 - **Note:** The sticky *controls* headers (`.fb-header-row`, `.ga4-header-row`, `.gsc-header-row`, `.sticky-header-section`) still pin at `top: 4rem` and can cover content that scrolls beneath — that's the intended sticky-header behavior and contains no tab buttons anymore.
 
+### Joint Dashboard Chart "Canvas is already in use" Fix (2026-08-05)
+- **Bug:** `Uncaught Error: Canvas is already in use. Chart with ID '4' must be destroyed before the canvas with ID 'jointChart' can be reused.` thrown from Chart.js when re-rendering the Joint Dashboard.
+- **Root cause:** `renderChart()` only destroyed the Chart instances it tracked via Alpine scope state (`this.chartInstance` / `this.scatterChartInstance` / `this.rollingChartInstance`). After `$wire.fetchJointData()` dispatches `joint-data-loaded` (`app/Filament/App/Pages/JointDashboard.php:232`), Livewire re-renders/morphs the page and Alpine re-initializes the `x-data="jointDashboard(...)"` scope (joint-dashboard.blade.php:147) with `chartInstance = null`. The previous Chart.js instance stays registered on the canvas, so `new Chart(ctx, ...)` throws. The `change-event="chartRendered && renderChart()"` handlers (analysis level / lag selects) hit the same path.
+- **Fix:** Added `destroyCharts()` in `resources/js/dashboards/joint-dashboard.js` that uses Chart.js's per-canvas registry — `Chart.getChart(canvas)` (Chart.js v4.5.1) — to find and destroy any existing chart on `jointChart`, `scatterChart`, and `rollingChart` regardless of scope, then nulls the tracked refs. `renderChart()` calls it before creating charts.
+- **Verification:** `node --check` passes; `pnpm run build` succeeded (`app-BLrBBMpe.js`); bundle contains `destroyCharts`/`getChart`.
+
 ### Widget Channel/Asset Badges Removed (2026-08-05)
 - **Change:** Removed the channel/asset badges shown under each widget title on dashboard load, in both the internal and public dashboard views. That info remains available in the widget config modal and the chart.
 - **Internal view:** `resources/views/filament/app/pages/partials/dashboard-view-content.blade.php` — removed badge pills under widget titles and the badge pills in the fullscreen pop-out modal header.

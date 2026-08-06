@@ -210,6 +210,18 @@ export function jointDashboard(config = {}) {
             return '≈';
         },
 
+        destroyCharts() {
+            ['jointChart', 'scatterChart', 'rollingChart'].forEach(id => {
+                const canvas = document.getElementById(id);
+                if (!canvas) return;
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
+            });
+            this.chartInstance = null;
+            this.scatterChartInstance = null;
+            this.rollingChartInstance = null;
+        },
+
         renderChart() {
             if (typeof Chart === 'undefined' && window.importChartJs) {
                 window.importChartJs().then(module => {
@@ -219,15 +231,7 @@ export function jointDashboard(config = {}) {
                 return;
             }
 
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-            }
-            if (this.scatterChartInstance) {
-                this.scatterChartInstance.destroy();
-            }
-            if (this.rollingChartInstance) {
-                this.rollingChartInstance.destroy();
-            }
+            this.destroyCharts();
 
             const targetStart = this.chartData.originalStartDate;
             const targetEnd = this.chartData.originalEndDate;
