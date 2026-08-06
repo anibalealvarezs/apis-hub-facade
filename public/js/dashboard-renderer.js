@@ -569,7 +569,7 @@ window.dashboardRenderer = {
         html += '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;border-r:1px solid rgba(229,231,235,1);" class="border-r border-gray-200 dark:border-gray-700">';
         html += '<table style="border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:2;">';
-        html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
+        html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
         html += '<tbody class="bg-white dark:bg-gray-900">';
         sortedRows.forEach((row, ri) => {
             const isEven = ri % 2 === 0;
@@ -592,8 +592,8 @@ window.dashboardRenderer = {
             const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
             const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
             const thAlign = isNumeric ? 'text-right' : 'text-left';
-            const thStyle = isNumeric ? 'min-width:130px;' : 'min-width:120px;';
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            const thStyle = isNumeric ? 'min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' : 'min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}" title="${this.escapeHtml(displayLabel)}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += '</tr></thead>';
 
