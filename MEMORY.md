@@ -218,6 +218,15 @@
 - **Fix:** Added `destroyCharts()` in `resources/js/dashboards/joint-dashboard.js` that uses Chart.js's per-canvas registry — `Chart.getChart(canvas)` (Chart.js v4.5.1) — to find and destroy any existing chart on `jointChart`, `scatterChart`, and `rollingChart` regardless of scope, then nulls the tracked refs. `renderChart()` calls it before creating charts.
 - **Verification:** `node --check` passes; `pnpm run build` succeeded (`app-BLrBBMpe.js`); bundle contains `destroyCharts`/`getChart`.
 
+### Joint Dashboard "Cannot read properties of null (reading 'save')" Fix (2026-08-05)
+- **Bug:** On re-render (changing asset then comparing, or analysis-level/lag change), Chart.js threw `Uncaught TypeError: Cannot read properties of null (reading 'save')` at `clipArea` → `Chart._drawDataset` → `_drawDatasets` → `draw` ← `Animator._update` (`Map.forEach`). After it fired, all three charts stopped rendering until F5.
+- **Root cause:** A destroy-during-animation race (confirmed via Chart.js issue #11743 — identical stack; maintainer note: "try not to update the chart while it's playing animation", "This problem does not happen if the animation is turned off"). `renderChart()` destroys the previous chart instance and synchronously creates a new one on the same canvas while the old chart's animation frames are still registered; a pending `Animator._update` then calls `draw()` on the destroyed chart whose `ctx` was nulled by `destroy()`. This surfaced only after the earlier "Canvas is already in use" fix (destroy path now actually reaches the animation phase).
+- **Fix** (`resources/js/dashboards/joint-dashboard.js`):
+  - `destroyCharts()` now calls `existing.stop()` before `existing.destroy()`.
+  - Added `animation: false` to the options of all three charts (jointChart line, scatter, rolling Pearson) so no animation frames are ever scheduled, eliminating the race.
+- **Verification:** `node --check` passes; `pnpm run build` succeeded (`app-CpZmX4nH.js`); bundle contains `animation:!1` x3, `destroyCharts`, `stop()`.
+- **Note:** Charts now render instantly (no entrance animation) — intentional tradeoff for stability.
+
 ### Widget Channel/Asset Badges Removed (2026-08-05)
 - **Change:** Removed the channel/asset badges shown under each widget title on dashboard load, in both the internal and public dashboard views. That info remains available in the widget config modal and the chart.
 - **Internal view:** `resources/views/filament/app/pages/partials/dashboard-view-content.blade.php` — removed badge pills under widget titles and the badge pills in the fullscreen pop-out modal header.

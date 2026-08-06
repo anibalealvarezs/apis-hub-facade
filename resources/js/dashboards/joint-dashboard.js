@@ -215,7 +215,10 @@ export function jointDashboard(config = {}) {
                 const canvas = document.getElementById(id);
                 if (!canvas) return;
                 const existing = Chart.getChart(canvas);
-                if (existing) existing.destroy();
+                if (existing) {
+                    existing.stop();
+                    existing.destroy();
+                }
             });
             this.chartInstance = null;
             this.scatterChartInstance = null;
@@ -298,6 +301,7 @@ export function jointDashboard(config = {}) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     layout: {
                         padding: { top: 20, bottom: 20, left: 10, right: 10 }
                     },
@@ -367,6 +371,7 @@ export function jointDashboard(config = {}) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     layout: {
                         padding: { top: 20, bottom: 20, left: 10, right: 10 }
                     },
@@ -424,6 +429,7 @@ export function jointDashboard(config = {}) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     layout: {
                         padding: { top: 20, bottom: 20, left: 10, right: 10 }
                     },
