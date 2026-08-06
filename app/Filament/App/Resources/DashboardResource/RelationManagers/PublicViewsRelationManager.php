@@ -98,10 +98,8 @@ class PublicViewsRelationManager extends RelationManager
                             ->success()
                             ->send();
                     })
-                    ->extraAttributes(fn (DashboardPublicView $record) => [
-                        'x-data' => '{}',
-                        'x-on:click' => 'window.navigator.clipboard.writeText(' . \Illuminate\Support\Js::from($record->getPublicUrl()) . ')',
-                    ]),
+                    ->alpineClickHandler(fn (DashboardPublicView $record): string => 'window.navigator.clipboard.writeText(' . \Illuminate\Support\Js::from($record->getPublicUrl()) . ')')
+                    ->livewireClickHandlerEnabled(),
                 Tables\Actions\Action::make('copy_embed')
                     ->label(__('Embed Code'))
                     ->icon('heroicon-o-code-bracket')
