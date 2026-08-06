@@ -16,7 +16,7 @@ class Dashboard extends BaseDashboard
         return '';
     }
 
-    public function getNavigationLabel(): string
+    public static function getNavigationLabel(): string
     {
         return __('Home');
     }
