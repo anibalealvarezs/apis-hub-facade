@@ -8,6 +8,7 @@
 ])
 
 @php
+    $sortable = $sortable === true || $sortable === 'true' || $sortable === '1' || $sortable === 1;
     $prefix = $state ? $state . '.' : '';
     $sortKey = $keyBind ?? ($key !== null ? "'" . $key . "'" : null);
 @endphp

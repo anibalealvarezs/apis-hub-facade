@@ -7,7 +7,7 @@ export function dataTable(config = {}) {
         sortDir: config.sortDir || 'desc',
         currentPage: config.currentPage || 1,
         pageSize: config.pageSize || 10,
-        valueOf: config.valueOf || null,
+        valueOf: Object.prototype.hasOwnProperty.call(config, 'valueOf') ? config.valueOf : null,
 
         sortBy(col) {
             if (this.sortCol === col) {
