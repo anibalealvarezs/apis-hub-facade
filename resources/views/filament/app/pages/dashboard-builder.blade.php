@@ -125,10 +125,10 @@
                                         <div class="flex items-center gap-2 min-w-0">
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
-                                                  :title="__('Has custom controls')"></span>
+                                                  :title="'{{ __('Has custom controls') }}'"></span>
                                             <span x-show="!widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
-                                                  :title="__('Inheriting dashboard controls')"></span>
+                                                  :title="'{{ __('Inheriting dashboard controls') }}'"></span>
                                             <span class="text-sm font-medium text-gray-900 dark:text-white truncate"
                                                   :title="widget.title || widget.name"
                                                   x-text="widget.title || widget.name"></span>
@@ -150,7 +150,7 @@
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                 x-on:click="openWidgetControls(widget)"
-                                                :title="__('Configure')">
+                                                :title="'{{ __('Configure') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -162,7 +162,7 @@
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                 x-on:click="duplicateWidget(widget.id)"
-                                                :title="__('Duplicate')">
+                                                :title="'{{ __('Duplicate') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -172,7 +172,7 @@
                                             <button
                                                 class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                                 x-on:click="deleteWidget(widget.id)"
-                                                :title="__('Remove')">
+                                                :title="'{{ __('Remove') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -398,13 +398,13 @@
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} <span class="text-red-500">*</span></label>
                                     <input type="text" x-model="widgetControlsForm.title"
                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                           :placeholder="__('Enter widget title')">
+                                           :placeholder="'{{ __('Enter widget title') }}'">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} <span class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
                                     <textarea x-model="widgetControlsForm.description" rows="2"
                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                              :placeholder="__('Enter a brief description...')"></textarea>
+                                              :placeholder="'{{ __('Enter a brief description...') }}'"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -639,7 +639,7 @@
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Value cap (null = no cap)') }}</label>
                                                 <input type="number" step="0.01" min="0" x-model="widgetControlsForm.max_ratio"
                                                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                       placeholder="e.g. 1.0"/>
+                                                       :placeholder="'{{ __('e.g. 1.0') }}'"/>
                                             </div>
                                         </template>
                                     </div>
@@ -749,7 +749,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['raw_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                    <input type="text" x-model="searchQueries['raw_' + index]" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -855,7 +855,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['dependent']" :disabled="widgetControlsForm.series_asset_groups.dependent" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
+                                                    <input type="text" x-model="searchQueries['dependent']" :disabled="widgetControlsForm.series_asset_groups.dependent" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -922,7 +922,7 @@
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                                 </svg>
                                                             </div>
-                                                            <input type="text" x-model="searchQueries['dep_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                            <input type="text" x-model="searchQueries['dep_dm_' + sIdx]" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                         </div>
                                                         <div class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                             <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -993,7 +993,7 @@
                                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                                         </svg>
                                                                     </div>
-                                                                    <input type="text" x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                                    <input type="text" x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                                 </div>
                                                                 <div class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                                     <div class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1084,7 +1084,7 @@
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                             </svg>
                                                         </div>
-                                                        <input type="text" x-model="searchQueries['independent_' + idx]" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
+                                                        <input type="text" x-model="searchQueries['independent_' + idx]" :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
                                                     </div>
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1152,7 +1152,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                                         </svg>
                                                     </div>
-                                                    <input type="text" x-model="searchQueries['dm_' + index]" :placeholder="__('Search assets...')" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                    <input type="text" x-model="searchQueries['dm_' + index]" :placeholder="'{{ __('Search assets...') }}'" class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                 </div>
                                                 <div class="flex-1 relative min-h-0">
                                                     <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
@@ -1214,7 +1214,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
                             <input type="text" x-model="addWidgetForm.name"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                   :placeholder="__('My Widget')"/>
+                                   :placeholder="'{{ __('My Widget') }}'"/>
                         </div>
 
                         {{-- Source Type --}}
