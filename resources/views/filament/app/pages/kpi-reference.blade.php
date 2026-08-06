@@ -100,9 +100,9 @@
                             <x-heroicon-m-arrow-right class="w-3.5 h-3.5" />
                         </a>
                     </div>
-                </div>
+                </x-filament::section>
             </template>
-        </div>
+        </x-filament::grid>
 
         <div x-show="filteredKpis.length === 0" class="text-center py-12 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
             <x-filament::icon icon="heroicon-o-magnifying-glass" class="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
