@@ -52,7 +52,7 @@
     </div>
 
     {{-- Dashboard Controls (on-the-go) --}}
-    <div class="flex flex-wrap items-center gap-3 text-xs">
+    <div class="dvc-controls-bar flex flex-wrap items-center gap-3 text-xs py-3 px-3">
         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ __('Date range:') }}</span>
         <x-ui.date-input size="xs" x-model="dashboardOverrides.date_start"
                          x-on:change.debounce.500ms="applyDateRange()"

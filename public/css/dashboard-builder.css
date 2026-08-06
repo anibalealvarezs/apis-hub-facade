@@ -390,3 +390,21 @@ select option, select optgroup {
 .dark .grid-stack-item > .gs-resize-handle {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%23A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 20 20"><path d="m10 3 2 2H8l2-2v14l-2-2h4l-2 2"/></svg>') !important;
 }
+
+/* Dashboard View - sticky controls bar (internal + public view) */
+.dvc-controls-bar {
+    position: sticky;
+    top: 4rem;
+    z-index: 15;
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s ease;
+}
+.dark .dvc-controls-bar {
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+body.pv-page .dvc-controls-bar {
+    top: 0;
+}
