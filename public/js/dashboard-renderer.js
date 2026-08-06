@@ -1756,7 +1756,7 @@ window.dashboardRenderer = {
                 this.renderBarChart(containerEl, data, controls);
                 break;
             case 'table':
-                this.renderTable(containerEl, data);
+                this.renderTable(containerEl, data, controls);
                 break;
             case 'gauge':
                 this.renderGauge(containerEl, data, controls);
