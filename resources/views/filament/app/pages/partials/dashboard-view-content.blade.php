@@ -93,16 +93,6 @@
                             @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                             <div>
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
-                                <div class="flex flex-wrap gap-1 mt-1" x-show="getBadges().length > 0">
-                                    <template x-for="(badge, index) in getBadges()" :key="index">
-                                            <span
-                                                class="inline-flex items-center rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm"
-                                                style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
-                                                <span class="font-bold mr-1" x-text="badge.label + ':'"></span>
-                                                <span x-text="badge.text"></span>
-                                            </span>
-                                    </template>
-                                </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 @if (!empty($widget['kpi_theory']))
@@ -315,14 +305,6 @@
                 class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
                 <div class="flex items-center gap-2 min-w-0 pr-4">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" x-text="popOutTitle"></h3>
-                    <template x-for="(badge, index) in popOutBadges" :key="index">
-                        <span
-                            class="inline-flex items-center rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm whitespace-nowrap"
-                            style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
-                            <span class="font-semibold mr-1" x-text="badge.label + ':'"></span>
-                            <span x-text="badge.text"></span>
-                        </span>
-                    </template>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
                     <button @click="openModalSettings()"

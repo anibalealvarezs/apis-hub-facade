@@ -218,9 +218,6 @@ export function dashboardView(config = {}) {
                 detail: { id: widgetId, controls: controls }
             }));
             const result = this.renderWidget(widgetId, el, controls) || Promise.resolve();
-            if (this.popOutActive && this.popOutWidgetId === widgetId) {
-                Promise.resolve(result).then(() => this.$nextTick(() => this.syncPopOutBadges()));
-            }
             return result;
         },
 
@@ -360,7 +357,6 @@ export function dashboardView(config = {}) {
             if (this.popOutActive && this.popOutWidgetId === widgetId) {
                 Promise.resolve(reloadPromise).then(() => {
                     this.$nextTick(() => {
-                        this.syncPopOutBadges();
                         const renderer = window.dashboardRenderer;
                         if (!renderer) return;
                         const target = this.$refs.popOutContent;
@@ -439,27 +435,7 @@ export function dashboardView(config = {}) {
 
         popOutActive: false,
         popOutTitle: '',
-        popOutBadges: [],
         popOutWidgetId: null,
-
-        syncPopOutBadges() {
-            if (!this.popOutWidgetId) {
-                this.popOutBadges = [];
-                return;
-            }
-            const widgetEl = document.querySelector(`.grid-stack-item[gs-id="${this.popOutWidgetId}"]`);
-            const headerDataEl = widgetEl?.querySelector('[data-widget-id]');
-            if (headerDataEl && window.Alpine) {
-                try {
-                    const data = window.Alpine.$data(headerDataEl);
-                    if (data && typeof data.getBadges === 'function') {
-                        this.popOutBadges = data.getBadges();
-                        return;
-                    }
-                } catch (e) {}
-            }
-            this.popOutBadges = [];
-        },
 
         openPopOut(widgetId) {
             if (this._popOutAnimating) return;
@@ -471,7 +447,6 @@ export function dashboardView(config = {}) {
 
             this.popOutTitle = title;
             this.popOutWidgetId = widgetId;
-            this.syncPopOutBadges();
             this._popFromRect = rect;
             this._popOutAnimating = true;
             this.popOutActive = true;
@@ -704,43 +679,6 @@ export function widgetHeader() {
             if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
                 dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
             }
-        },
-
-        getBadges() {
-            let badges = [];
-            for (const [key, vConfig] of Object.entries(this.variables)) {
-                const metricKey = this.controls.metrics?.[vConfig.index];
-                const metricLabel = metricKey && vConfig.metrics?.[metricKey]
-                    ? vConfig.metrics[metricKey] : metricKey || '';
-                const channelName = vConfig.channel_name || '';
-                const assetText = this._getAssetText(key);
-                let text = metricLabel;
-                if (assetText && assetText !== 'All') {
-                    text += ' · ' + assetText;
-                }
-                if (text) {
-                    badges.push({ label: channelName, text: text });
-                }
-            }
-            if (badges.length === 0) {
-                for (const [key, data] of Object.entries(this.seriesOptions)) {
-                    const selected = this.controls.series_assets[key] || [];
-                    let label = data.label.replace(/ \(.+\)/, '');
-                    let text = this._getAssetText(key);
-                    if (text) badges.push({ label, text });
-                }
-            }
-            return badges;
-        },
-
-        _getAssetText(key) {
-            const data = this.seriesOptions[key];
-            if (!data) return '';
-            const selected = this.controls.series_assets[key] || [];
-            if (selected.length === 0 || selected.length === Object.keys(data.options).length) return '';
-            const names = selected.map(id => data.options[id]).filter(Boolean);
-            if (names.length <= 2) return names.join(', ');
-            return names.slice(0, 2).join(', ') + ' +' + (names.length - 2) + ' more';
         }
     };
 }

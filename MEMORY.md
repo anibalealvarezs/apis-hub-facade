@@ -211,3 +211,10 @@
   3. Organic dashboard: moved the channel tab bar (`.tab-nav-fb` with FACEBOOK PAGE / INSTAGRAM ACCOUNT) OUT of the sticky header into a static row below it (above the metrics grid / table containers), so the pinned controls header no longer carries tab buttons over the filters.
 - **Verification:** `php artisan view:cache` succeeds (all Blade templates compile); `view:clear` run after.
 - **Note:** The sticky *controls* headers (`.fb-header-row`, `.ga4-header-row`, `.gsc-header-row`, `.sticky-header-section`) still pin at `top: 4rem` and can cover content that scrolls beneath — that's the intended sticky-header behavior and contains no tab buttons anymore.
+
+### Widget Channel/Asset Badges Removed (2026-08-05)
+- **Change:** Removed the channel/asset badges shown under each widget title on dashboard load, in both the internal and public dashboard views. That info remains available in the widget config modal and the chart.
+- **Internal view:** `resources/views/filament/app/pages/partials/dashboard-view-content.blade.php` — removed badge pills under widget titles and the badge pills in the fullscreen pop-out modal header.
+- **Internal JS:** `resources/js/dashboards/dashboard-view.js` — removed `getBadges()`, `_getAssetText()`, `popOutBadges` state, `syncPopOutBadges()`, and its 3 call sites (in `reloadWidget`, the settings-save pop-out refresh, and `openPopOut`).
+- **Public view:** `resources/views/shared/public-dashboard.blade.php` — removed badge pills under widget titles and the inline `getBadges()` method in its `widgetHeader` Alpine component.
+- **Verification:** `node --check` on `dashboard-view.js` passes; `php artisan view:cache` compiles all Blade templates. Note the inline `<style>`/JS lives in Blade, but `dashboard-view.js` is bundled — rebuild Vite assets for the internal view JS change to take effect.
