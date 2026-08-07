@@ -1242,7 +1242,7 @@
                                                             </div>
                                                             <div class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                                 <div
-                                                                    class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                                    class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
                                                                     <template
                                                                         x-for="(name, id) in allChannelAssets[series.channel] || {}"
                                                                         :key="id">
@@ -1369,7 +1369,7 @@
                                                                         <div
                                                                             class="flex-1 relative min-h-0 mt-2 max-h-40">
                                                                             <div
-                                                                                class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                                                class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
                                                                                 <template
                                                                                     x-for="(name, id) in allChannelAssets[series.channel] || {}"
                                                                                     :key="id">
