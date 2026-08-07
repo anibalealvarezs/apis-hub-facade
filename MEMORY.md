@@ -351,3 +351,8 @@
 - **Verification:** `php -l` clean; `npm run build` → bundle `public/build/assets/app-gFoOUd1Y.js` (confirmed `widgetHeaderPv` toggleAsset/selectAll single-mode guards present); `php artisan view:cache` + `view:clear` OK. Browser smoke test PENDING (docker down).
 - **Not yet committed.** Together with the earlier "no response on save" hardening (DashboardBuilder/JS saveLayout + notification) this is a second pending batch.
 
+### Series Column Layout — 2 cols max (2026-08-07)
+- **Bug:** The dashboard VIEW settings modal (`resources/views/filament/app/pages/partials/dashboard-view-content.blade.php`) forced series cards to 3 columns at `lg` (`lg:w-[calc(33.333%-1rem)]` when `Object.keys(settingsVariables).length >= 3`), while the builder caps at 2 columns. (Only 3-col series layout in the codebase — grep for `33.333` confirmed just line 517.)
+- **Fix:** `dashboard-view-content.blade.php` line ~514-517 `:class` now: `'md:w-full': length === 1`, `'sm:w-[calc(50%-0.75rem)]': length >= 2` — 2 columns max, breakpoint aligned with the builder's DM series cards (`sm:w-[calc(50%-0.75rem)]`).
+- **Verification:** `php artisan view:cache` + `view:clear` OK. Browser smoke test PENDING.
+
