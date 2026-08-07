@@ -507,7 +507,9 @@
                             class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'series' }">
                             
+                            <div x-init="console.log('DEBUG VIEW settingsVariables:', settingsVariables)" style="display:none;"></div>
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
+                                <div x-init="console.log('DEBUG VIEW varCfg[' + vKey + ']:', vConfig, 'shouldShow:', shouldShowSeries(vKey))" style="display:none;"></div>
                                 <template x-if="vConfig && shouldShowSeries(vKey)">
                                     <div
                                         class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"

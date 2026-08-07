@@ -646,6 +646,7 @@ export function dashboardBuilder(config = {}) {
             this.widgetKpiConfig = {};
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
+                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
                     this.widgetKpiConfig = config || {};
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
