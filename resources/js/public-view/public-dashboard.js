@@ -92,21 +92,28 @@ export function widgetHeaderPv(widgetId, controls, seriesOptions) {
         },
 
         toggleAsset(seriesKey, assetId) {
+            const mode = (this.seriesOptions[seriesKey] || {}).mode || 'multiple';
             if (!this.controls.series_assets[seriesKey]) {
                 this.controls.series_assets[seriesKey] = [];
             }
-            const arr = this.controls.series_assets[seriesKey];
-            const idx = arr.indexOf(String(assetId));
-            if (idx > -1) {
-                arr.splice(idx, 1);
+            let arr = this.controls.series_assets[seriesKey];
+            if (mode === 'single') {
+                arr = [String(assetId)];
             } else {
-                arr.push(String(assetId));
+                const idx = arr.indexOf(String(assetId));
+                if (idx > -1) {
+                    arr.splice(idx, 1);
+                } else {
+                    arr.push(String(assetId));
+                }
             }
             this.controls.series_assets[seriesKey] = arr;
             this.updateWidget();
         },
 
         selectAll(seriesKey) {
+            const mode = (this.seriesOptions[seriesKey] || {}).mode || 'multiple';
+            if (mode === 'single') return;
             const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
             this.controls.series_assets[seriesKey] = allIds;
             this.updateWidget();

@@ -86,7 +86,7 @@
                                                             <div class="flex items-center justify-between">
                                                                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider" x-text="seriesData.label"></label>
                                                                 <div class="flex gap-2">
-                                                                    <button @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 hover:underline">All</button>
+                                                                    <button x-show="(seriesData.mode || 'multiple') === 'multiple'" @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 hover:underline">All</button>
                                                                     <button @click="clearAll(seriesKey)" class="text-[10px] font-medium text-gray-500 hover:underline">Clear</button>
                                                                 </div>
                                                             </div>
@@ -102,11 +102,17 @@
                                                                          @click="toggleAsset(seriesKey, assetId)"
                                                                          class="flex gap-x-2 items-center px-2 py-1.5 text-xs text-gray-700 rounded cursor-pointer transition-colors"
                                                                          :class="isSelected(seriesKey, assetId) ? 'bg-primary-50' : 'hover:bg-gray-100'">
-                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded-sm border transition-colors"
-                                                                             :class="isSelected(seriesKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'">
-                                                                            <svg x-show="isSelected(seriesKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center border transition-colors"
+                                                                             :class="{
+                                                                                 'rounded': (seriesData.mode || 'multiple') === 'multiple',
+                                                                                 'rounded-full': (seriesData.mode || 'multiple') === 'single',
+                                                                                 'bg-primary-600 border-primary-600': isSelected(seriesKey, assetId),
+                                                                                 'border-gray-300 bg-white': !isSelected(seriesKey, assetId)
+                                                                             }">
+                                                                            <svg x-show="isSelected(seriesKey, assetId) && (seriesData.mode || 'multiple') === 'multiple'" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                                             </svg>
+                                                                            <div x-show="isSelected(seriesKey, assetId) && (seriesData.mode || 'multiple') === 'single'" class="w-2 h-2 rounded-full bg-white"></div>
                                                                         </div>
                                                                         <span class="truncate font-medium" :class="isSelected(seriesKey, assetId) ? 'text-primary-700' : ''" x-text="assetName"></span>
                                                                     </div>
