@@ -488,10 +488,20 @@ export function dashboardView(config = {}) {
             if (vKey === 'dependent') {
                 return !allKeys.some(k => k.startsWith('dep_dm_'));
             }
-            // Base independent series (e.g., independent_0): hide if there's a corresponding ind_X_dm_* series
+            // Base independent series (e.g., independent_0 or independent_<uuid>): hide if there's a corresponding ind_X_dm_* series
             if (vKey.startsWith('independent_')) {
                 const idx = vKey.replace('independent_', '');
-                return !allKeys.some(k => k.startsWith('ind_' + idx + '_dm_'));
+                // Check for corresponding DM series
+                if (allKeys.some(k => k.startsWith('ind_' + idx + '_dm_'))) {
+                    return false;
+                }
+                // Also hide base independent if there are ANY DM series (dep or ind) AND this base has no valid config
+                const hasAnyDm = allKeys.some(k => k.includes('dm'));
+                const vConfig = this.settingsVariables[vKey];
+                const hasValidConfig = vConfig && (vConfig.channel || (vConfig.metrics && Object.keys(vConfig.metrics).length > 0) || vConfig.selected_metric);
+                if (hasAnyDm && !hasValidConfig) {
+                    return false;
+                }
             }
             // Show other series by default
             return true;
