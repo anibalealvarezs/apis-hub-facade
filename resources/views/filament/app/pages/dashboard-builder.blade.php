@@ -1291,7 +1291,11 @@
                                             x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)">
                                             <template x-if="varCfg.independent_dm_id">
                                                 <div
-                                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                                    class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                                    :class="{
+                                                        'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
+                                                        'md:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
+                                                    }">
                                                     <div
                                                         class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                         <div
@@ -1408,10 +1412,14 @@
                                                     </div>
                                                 </div>
                                             </template>
-                                            <template
+<template
                                                 x-if="varCfg.independent_channel && !varCfg.independent_dm_id && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
-                                                <div
-                                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                            <div
+                                                class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                                :class="{
+                                                    'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
+                                                    'md:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
+                                                }">
                                                     <div
                                                         class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                         <div

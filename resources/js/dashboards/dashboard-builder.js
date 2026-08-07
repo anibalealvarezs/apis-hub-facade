@@ -646,6 +646,7 @@ export function dashboardBuilder(config = {}) {
             this.widgetKpiConfig = {};
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
+                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
                     // Extract the actual UI state from the KPI filters
                     const uiState = config?.filters?._ui_state || config;
                     this.widgetKpiConfig = {
@@ -701,6 +702,11 @@ export function dashboardBuilder(config = {}) {
                     };
                     if (this.widgetKpiConfig.dependent_dm_id) {
                         initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
+                        // Populate dependent_channel from DM's source_series if not already set
+                        const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
+                        if (depDm && depDm.source_series && depDm.source_series.length > 0 && !this.widgetKpiConfig.dependent_channel) {
+                            this.widgetKpiConfig.dependent_channel = depDm.source_series[0].channel;
+                        }
                     }
                     if (this.widgetKpiConfig.independent_variables) {
                         for (let key in this.widgetKpiConfig.independent_variables) {
@@ -751,6 +757,21 @@ export function dashboardBuilder(config = {}) {
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                // Auto-select first metric for KPI dependent series if dynamic and none selected
+                                if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
+                                    const firstMetric = Object.keys(metrics)[0];
+                                    this.widgetControlsForm.metrics[0] = firstMetric;
+                                }
+                                // Auto-select for independent variables
+                                if (this.widgetKpiConfig.independent_variables) {
+                                    for (let key in this.widgetKpiConfig.independent_variables) {
+                                        const v = this.widgetKpiConfig.independent_variables[key];
+                                        if (v.independent_channel === ch && !v.independent_metric && metrics && Object.keys(metrics).length > 0) {
+                                            const firstMetric = Object.keys(metrics)[0];
+                                            this.widgetControlsForm.metrics[parseInt(key) + 1] = firstMetric;
+                                        }
+                                    }
+                                }
                             });
                         }
                     });
