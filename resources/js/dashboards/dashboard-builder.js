@@ -1294,19 +1294,20 @@ export function dashboardBuilder(config = {}) {
         },
 
         shouldShowSeries(vKey) {
-            const allKeys = Object.keys(this.widgetKpiConfig?.independent_variables || {});
-            // If it's a DM series (key contains 'dm'), always show
-            if (vKey.includes('dm')) return true;
-            // Base dependent series: hide if there's a dep_dm_* series
+            // Handle builder data structure (array of objects with independent_dm_id)
+            if (vKey && vKey.includes('dm')) return true;
+            
+            const indepVars = this.widgetKpiConfig?.independent_variables || [];
+            // For dependent: hide if dependent_dm_id exists
             if (vKey === 'dependent') {
-                return !allKeys.some(k => k.startsWith('dep_dm_'));
+                return !this.widgetKpiConfig?.dependent_dm_id;
             }
-            // Base independent series (e.g., independent_0): hide if there's a corresponding ind_X_dm_* series
+            // For independent_X: check if that index has independent_dm_id
             if (vKey.startsWith('independent_')) {
-                const idx = vKey.replace('independent_', '');
-                return !allKeys.some(k => k.startsWith('ind_' + idx + '_dm_'));
+                const idx = parseInt(vKey.replace('independent_', ''), 10);
+                const varCfg = indepVars[idx];
+                return !varCfg?.independent_dm_id;
             }
-            // Show other series by default
             return true;
         }
     };
