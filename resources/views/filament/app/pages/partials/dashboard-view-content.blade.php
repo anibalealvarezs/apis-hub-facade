@@ -508,7 +508,7 @@
                             :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'series' }">
                             
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
-                                <template x-if="vConfig">
+                                <template x-if="vConfig && shouldShowSeries(vKey)">
                                     <div
                                         class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
                                         :class="{

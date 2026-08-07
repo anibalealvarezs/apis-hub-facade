@@ -480,6 +480,23 @@ export function dashboardView(config = {}) {
             return ['___EMPTY_GROUP___'];
         },
 
+        shouldShowSeries(vKey) {
+            const allKeys = Object.keys(this.settingsVariables || {});
+            // If it's a DM series (key contains 'dm'), always show
+            if (vKey.includes('dm')) return true;
+            // Base dependent series: hide if there's a dep_dm_* series
+            if (vKey === 'dependent') {
+                return !allKeys.some(k => k.startsWith('dep_dm_'));
+            }
+            // Base independent series (e.g., independent_0): hide if there's a corresponding ind_X_dm_* series
+            if (vKey.startsWith('independent_')) {
+                const idx = vKey.replace('independent_', '');
+                return !allKeys.some(k => k.startsWith('ind_' + idx + '_dm_'));
+            }
+            // Show other series by default
+            return true;
+        },
+
         popOutActive: false,
         popOutTitle: '',
         popOutWidgetId: null,
