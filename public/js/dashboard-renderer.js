@@ -1683,6 +1683,15 @@ window.dashboardRenderer = {
         }
         // HTML widget — clone content into target
         targetEl.innerHTML = containerEl.innerHTML;
+
+        // Re-attach scroll sync for table widgets (blocked first column)
+        const scrollWrap = targetEl.querySelector('.table-scroll-wrap');
+        const fixedWrap = targetEl.querySelector('.fixed-col-wrap');
+        if (scrollWrap && fixedWrap) {
+            scrollWrap.addEventListener('scroll', () => {
+                fixedWrap.scrollTop = scrollWrap.scrollTop;
+            });
+        }
     },
 
     /**
