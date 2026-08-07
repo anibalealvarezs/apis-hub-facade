@@ -658,6 +658,7 @@ export function dashboardBuilder(config = {}) {
                         independent_variables: uiState.independent_variables || {},
                     };
                     console.log('DEBUG BUILDER widgetKpiConfig:', this.widgetKpiConfig);
+                    console.log('DEBUG BUILDER dependentDm:', this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id], 'allDMs:', Object.keys(this.derivedMetrics || {}));
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
