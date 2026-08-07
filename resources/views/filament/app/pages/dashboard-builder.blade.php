@@ -852,6 +852,7 @@
                             {{-- Series: Raw Metric --}}
                             <template
                                 x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
+                                <div style="display: contents">
                                 <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                     <div class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
                                          :class="{
@@ -1027,13 +1028,13 @@
                                             class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
                                     </button>
                                 </div>
+                                </div>
                             </template>
 
                             {{-- Variables: Assets per variable (KPI) --}}
-                            <template x-if="widgetControlsTarget.source_type === 'kpi'">
-                                <template x-if="widgetKpiConfig.dependent_channel && !widgetKpiConfig.dependent_dm_id">
-                                    <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                            <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel && !widgetKpiConfig.dependent_dm_id">
+                                <div
+                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
@@ -1171,7 +1172,7 @@
                                 </template>
 
                                 {{-- Dependent Derived Metric series box (KPI) --}}
-                                <template x-if="widgetKpiConfig.dependent_dm_id">
+                                <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_dm_id">
                                     <div
                                         class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <div
@@ -1282,13 +1283,13 @@
                                         </div>
                                     </div>
                                 </template>
-                            </template>
 
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <template x-if="widgetKpiConfig.independent_variables">
                                     <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
                                         <template
                                             x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)">
+                                            <div style="display: contents">
                                             <template x-if="varCfg.independent_dm_id">
                                                 <div
                                                     class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
@@ -1566,9 +1567,11 @@
                                                     </div>
                                                 </div>
                                             </template>
+                                        </div>
                                         </template>
                                     </template>
                                 </template>
+                            </template>
 
                                 {{-- Series: Derived Metric source series --}}
                                 <template x-if="widgetControlsTarget.source_type === 'derived_metric'">
@@ -1673,7 +1676,6 @@
                                         </div>
                                     </template>
                                 </template>
-                            </template>
                         </div>
                     </div>
                 </div>
