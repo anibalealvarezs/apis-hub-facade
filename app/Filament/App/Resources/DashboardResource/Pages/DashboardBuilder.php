@@ -85,7 +85,7 @@ class DashboardBuilder extends Page
     public function saveLayout(array $gridItems): void
     {
         $service = app(\App\Services\DashboardService::class);
-        $service->updateLayout($this->dashboard, $gridItems);
+        $service->saveLayout($this->dashboard, $gridItems);
         $this->gridState = $gridItems;
         $this->unsavedChanges = true;
     }
