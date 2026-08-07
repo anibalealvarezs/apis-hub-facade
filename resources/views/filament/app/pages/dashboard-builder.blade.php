@@ -853,265 +853,108 @@
                             <template
                                 x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
                                 <div style="display: contents">
-                                <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
-                                    <div class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
-                                         :class="{
+                                    <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                        <div
+                                            class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                            :class="{
                                          'md:w-full': widgetControlsForm.raw_series.length === 1,
                                          'md:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
                                      }">
-                                        <div
-                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
-                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                <div class="flex items-center gap-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                         class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                              d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
-                                                    </svg>
-                                                    <span
-                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                        x-text="'{{ __('Series') }} ' + (index + 1)"></span>
-                                                </div>
-                                                <button class="text-red-500 hover:text-red-700"
-                                                        x-show="widgetControlsForm.raw_series.length > 1"
-                                                        x-on:click="widgetControlsForm.raw_series.splice(index, 1)">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                         viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                              stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
-                                                    <x-ui.select-input x-model="series.channel"
-                                                                       x-on:change="updateSeriesMetrics()"
-                                                                       x-init="$nextTick(() => { $el.value = series.channel })"
-                                                                       class="w-full">
-                                                        <x-ui.select-option
-                                                            value="">{{ __('Select a channel...') }}</x-ui.select-option>
-                                                        <template x-for="(label, key) in channels" :key="key">
-                                                            <x-ui.select-option x-bind:value="key"
-                                                                                x-text="label"></x-ui.select-option>
-                                                        </template>
-                                                    </x-ui.select-input>
-                                                </div>
-
-                                                <div class="my-2">
-                                                    <label
-                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
-                                                    <div
-                                                        class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-                                                        <div
-                                                            class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
-                                                            <template
-                                                                x-for="(label, key) in allChannelMetrics[series.channel] || {}"
-                                                                :key="key">
-                                                                <div
-                                                                    @click="if ((series.metrics || []).includes(key)) { series.metrics = series.metrics.filter(m => m !== key); } else { series.metrics = [...(series.metrics || []), key]; }"
-                                                                    class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
-                                                                    :class="(series.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                    <div
-                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                        :class="(series.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                        <svg
-                                                                            x-show="(series.metrics || []).includes(key)"
-                                                                            class="w-3 h-3 text-white" fill="none"
-                                                                            viewBox="0 0 24 24" stroke-width="3"
-                                                                            stroke="currentColor">
-                                                                            <path stroke-linecap="round"
-                                                                                  stroke-linejoin="round"
-                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span class="truncate font-medium"
-                                                                          :class="(series.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                          x-text="label"></span>
-                                                                </div>
-                                                            </template>
-                                                            <template
-                                                                x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
-                                                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                    <div class="flex items-center justify-between">
-                                                        <label
-                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
-                                                        <template x-if="series.channel">
-                                                            <div class="flex gap-3">
-                                                                <button @click="selectAllRawAssets(index)"
-                                                                        class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                <button @click="clearAllRawAssets(index)"
-                                                                        class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                    <div class="relative">
-                                                        <div
-                                                            class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                 viewBox="0 0 24 24" stroke-width="2"
-                                                                 stroke="currentColor" class="w-4 h-4 text-gray-400">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                            </svg>
-                                                        </div>
-                                                        <input type="text" x-model="searchQueries['raw_' + index]"
-                                                               :placeholder="'{{ __('Search assets...') }}'"
-                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
-                                                    </div>
-                                                    <div class="flex-1 relative min-h-0">
-                                                        <div
-                                                            class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                            <template
-                                                                x-for="(name, id) in allChannelAssets[series.channel] || {}"
-                                                                :key="id">
-                                                                <div
-                                                                    x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
-                                                                    @click="toggleRawAsset(index, id)"
-                                                                    class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                    :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                    <div
-                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                        :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                        <svg
-                                                                            x-show="(series.assets || []).includes(String(id))"
-                                                                            class="w-3 h-3 text-white" fill="none"
-                                                                            viewBox="0 0 24 24" stroke-width="3"
-                                                                            stroke="currentColor">
-                                                                            <path stroke-linecap="round"
-                                                                                  stroke-linejoin="round"
-                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
-                                                                        </svg>
-                                                                    </div>
-                                                                    <span class="truncate font-medium"
-                                                                          :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                          x-text="name"></span>
-                                                                </div>
-                                                            </template>
-                                                            <template
-                                                                x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
-                                                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Select a channel first.') }}</p>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                {{-- Add Series Button Card --}}
-                                <div
-                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
-                                    <button
-                                        x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metrics: [], assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);"
-                                        class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
-                                        <div
-                                            class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
-                                            <svg
-                                                class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400"
-                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M12 4v16m8-8H4"></path>
-                                            </svg>
-                                        </div>
-                                        <span
-                                            class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
-                                    </button>
-                                </div>
-                                </div>
-                            </template>
-
-                            {{-- Variables: Assets per variable (KPI) --}}
-                            <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel && !widgetKpiConfig.dependent_dm_id">
-                                <div
-                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
-                                        <div
-                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
-                                            <div
-                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
-                                                </div>
-                                                <div class="flex flex-col items-end gap-1">
-                                                    <span
-                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
-                                                        x-text="channels[widgetKpiConfig.dependent_channel]"></span>
-                                                    <template x-if="widgetKpiConfig.dependent_metric">
+                                                class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                                <div
+                                                    class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                    <div class="flex items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                             viewBox="0 0 24 24" stroke-width="1.5"
+                                                             stroke="currentColor"
+                                                             class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
+                                                        </svg>
                                                         <span
-                                                            class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
-                                                            x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
-                                                    </template>
-                                                    <template x-if="!widgetKpiConfig.dependent_metric">
-                                                        <span
-                                                            class="text-[10px] font-semibold text-amber-600 dark:amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
-                                                    </template>
+                                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                            x-text="'{{ __('Series') }} ' + (index + 1)"></span>
+                                                    </div>
+                                                    <button class="text-red-500 hover:text-red-700"
+                                                            x-show="widgetControlsForm.raw_series.length > 1"
+                                                            x-on:click="widgetControlsForm.raw_series.splice(index, 1)">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                             viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-
-                                                <template x-if="!widgetKpiConfig.dependent_metric">
+                                                <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                                     <div>
                                                         <label
-                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
-                                                        <select x-model="widgetControlsForm.metrics[0]"
-                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                                            <option value="">{{ __('Select a metric...') }}</option>
-                                                            <template
-                                                                x-for="(label, key) in allChannelMetrics[widgetKpiConfig.dependent_channel] || {}"
-                                                                :key="key">
-                                                                <option :value="key" x-text="label"></option>
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                        <x-ui.select-input x-model="series.channel"
+                                                                           x-on:change="updateSeriesMetrics()"
+                                                                           x-init="$nextTick(() => { $el.value = series.channel })"
+                                                                           class="w-full">
+                                                            <x-ui.select-option
+                                                                value="">{{ __('Select a channel...') }}</x-ui.select-option>
+                                                            <template x-for="(label, key) in channels" :key="key">
+                                                                <x-ui.select-option x-bind:value="key"
+                                                                                    x-text="label"></x-ui.select-option>
                                                             </template>
-                                                        </select>
+                                                        </x-ui.select-input>
                                                     </div>
-                                                </template>
 
-                                                <template
-                                                    x-if="!widgetKpiConfig.dependent_asset_filter || (Array.isArray(widgetKpiConfig.dependent_asset_filter) && widgetKpiConfig.dependent_asset_filter.length === 0)">
+                                                    <div class="my-2">
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
+                                                        <div
+                                                            class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                            <div
+                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
+                                                                <template
+                                                                    x-for="(label, key) in allChannelMetrics[series.channel] || {}"
+                                                                    :key="key">
+                                                                    <div
+                                                                        @click="if ((series.metrics || []).includes(key)) { series.metrics = series.metrics.filter(m => m !== key); } else { series.metrics = [...(series.metrics || []), key]; }"
+                                                                        class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
+                                                                        :class="(series.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div
+                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                            :class="(series.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg
+                                                                                x-show="(series.metrics || []).includes(key)"
+                                                                                class="w-3 h-3 text-white" fill="none"
+                                                                                viewBox="0 0 24 24" stroke-width="3"
+                                                                                stroke="currentColor">
+                                                                                <path stroke-linecap="round"
+                                                                                      stroke-linejoin="round"
+                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium"
+                                                                              :class="(series.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                              x-text="label"></span>
+                                                                    </div>
+                                                                </template>
+                                                                <template
+                                                                    x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
+                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                        <template x-if="!widgetKpiConfig.dependent_asset_group">
-                                                            <div>
-                                                                <label
-                                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Group') }}</label>
-                                                                <select
-                                                                    x-model="widgetControlsForm.series_asset_groups.dependent"
-                                                                    :disabled="widgetControlsForm.series_assets.dependent && widgetControlsForm.series_assets.dependent.length > 0"
-                                                                    class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                                                                    <option
-                                                                        value="">{{ __('Select an asset group') }}</option>
-                                                                    <template
-                                                                        x-for="(groupData, groupId) in allChannelAssetGroups[widgetKpiConfig.dependent_channel] || {}"
-                                                                        :key="groupId">
-                                                                        <option :value="groupId"
-                                                                                x-text="groupData.name"></option>
-                                                                    </template>
-                                                                </select>
-                                                            </div>
-                                                        </template>
-
-                                                        <div class="flex items-center justify-between mt-2">
+                                                        <div class="flex items-center justify-between">
                                                             <label
-                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets') }}
-                                                                <span x-show="widgetKpiConfig.dependent_asset_group">({{ __('Limited to KPI Group') }})</span><span
-                                                                    x-show="!widgetKpiConfig.dependent_asset_group">({{ __('Leave empty for All Assets') }})</span></label>
-                                                            <div class="flex gap-3">
-                                                                <button
-                                                                    @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel, widgetKpiConfig.dependent_asset_group)"
-                                                                    :disabled="widgetControlsForm.series_asset_groups.dependent"
-                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Select All') }}</button>
-                                                                <button @click="clearAllKpiAssets('dependent')"
-                                                                        class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
-                                                            </div>
+                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
+                                                            <template x-if="series.channel">
+                                                                <div class="flex gap-3">
+                                                                    <button @click="selectAllRawAssets(index)"
+                                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                    <button @click="clearAllRawAssets(index)"
+                                                                            class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                </div>
+                                                            </template>
                                                         </div>
                                                         <div class="relative">
                                                             <div
@@ -1124,27 +967,26 @@
                                                                           d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
                                                                 </svg>
                                                             </div>
-                                                            <input type="text" x-model="searchQueries['dependent']"
-                                                                   :disabled="widgetControlsForm.series_asset_groups.dependent"
+                                                            <input type="text" x-model="searchQueries['raw_' + index]"
                                                                    :placeholder="'{{ __('Search assets...') }}'"
-                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
+                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                         </div>
                                                         <div class="flex-1 relative min-h-0">
                                                             <div
                                                                 class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                                 <template
-                                                                    x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}"
+                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
                                                                     :key="id">
                                                                     <div
-                                                                        x-show="isAssetAllowedByGroups('dependent', widgetKpiConfig.dependent_channel, id) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
-                                                                        @click="if (!widgetControlsForm.series_asset_groups.dependent) toggleKpiAsset('dependent', id)"
+                                                                        x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
+                                                                        @click="toggleRawAsset(index, id)"
                                                                         class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                        :class="(widgetControlsForm.series_asset_groups.dependent) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
+                                                                        :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                         <div
                                                                             class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                            :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                             <svg
-                                                                                x-show="(widgetControlsForm.series_assets.dependent || []).includes(String(id))"
+                                                                                x-show="(series.assets || []).includes(String(id))"
                                                                                 class="w-3 h-3 text-white" fill="none"
                                                                                 viewBox="0 0 24 24" stroke-width="3"
                                                                                 stroke="currentColor">
@@ -1154,135 +996,299 @@
                                                                             </svg>
                                                                         </div>
                                                                         <span class="truncate font-medium"
-                                                                              :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                              :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
                                                                               x-text="name"></span>
                                                                     </div>
                                                                 </template>
                                                                 <template
-                                                                    x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
+                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Select a channel first.') }}</p>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    {{-- Add Series Button Card --}}
+                                    <div
+                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                        <button
+                                            x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metrics: [], assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);"
+                                            class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
+                                            <div
+                                                class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
+                                                <svg
+                                                    class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M12 4v16m8-8H4"></path>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Variables: Assets per variable (KPI) --}}
+                            <template
+                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_channel && !widgetKpiConfig.dependent_dm_id">
+                                <div
+                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div
+                                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                        <div
+                                            class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                    <span
+                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
+                                            </div>
+                                            <div class="flex flex-col items-end gap-1">
+                                                    <span
+                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                        x-text="channels[widgetKpiConfig.dependent_channel]"></span>
+                                                <template x-if="widgetKpiConfig.dependent_metric">
+                                                        <span
+                                                            class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                            x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
+                                                </template>
+                                                <template x-if="!widgetKpiConfig.dependent_metric">
+                                                        <span
+                                                            class="text-[10px] font-semibold text-amber-600 dark:amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+
+                                            <template x-if="!widgetKpiConfig.dependent_metric">
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
+                                                    <select x-model="widgetControlsForm.metrics[0]"
+                                                            class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                        <option value="">{{ __('Select a metric...') }}</option>
+                                                        <template
+                                                            x-for="(label, key) in allChannelMetrics[widgetKpiConfig.dependent_channel] || {}"
+                                                            :key="key">
+                                                            <option :value="key" x-text="label"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </template>
+
+                                            <template
+                                                x-if="!widgetKpiConfig.dependent_asset_filter || (Array.isArray(widgetKpiConfig.dependent_asset_filter) && widgetKpiConfig.dependent_asset_filter.length === 0)">
+                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                    <template x-if="!widgetKpiConfig.dependent_asset_group">
+                                                        <div>
+                                                            <label
+                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Group') }}</label>
+                                                            <select
+                                                                x-model="widgetControlsForm.series_asset_groups.dependent"
+                                                                :disabled="widgetControlsForm.series_assets.dependent && widgetControlsForm.series_assets.dependent.length > 0"
+                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                                <option
+                                                                    value="">{{ __('Select an asset group') }}</option>
+                                                                <template
+                                                                    x-for="(groupData, groupId) in allChannelAssetGroups[widgetKpiConfig.dependent_channel] || {}"
+                                                                    :key="groupId">
+                                                                    <option :value="groupId"
+                                                                            x-text="groupData.name"></option>
+                                                                </template>
+                                                            </select>
+                                                        </div>
+                                                    </template>
+
+                                                    <div class="flex items-center justify-between mt-2">
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets') }}
+                                                            <span x-show="widgetKpiConfig.dependent_asset_group">({{ __('Limited to KPI Group') }})</span><span
+                                                                x-show="!widgetKpiConfig.dependent_asset_group">({{ __('Leave empty for All Assets') }})</span></label>
+                                                        <div class="flex gap-3">
+                                                            <button
+                                                                @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel, widgetKpiConfig.dependent_asset_group)"
+                                                                :disabled="widgetControlsForm.series_asset_groups.dependent"
+                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Select All') }}</button>
+                                                            <button @click="clearAllKpiAssets('dependent')"
+                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="relative">
+                                                        <div
+                                                            class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24" stroke-width="2"
+                                                                 stroke="currentColor"
+                                                                 class="w-4 h-4 text-gray-400">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                            </svg>
+                                                        </div>
+                                                        <input type="text" x-model="searchQueries['dependent']"
+                                                               :disabled="widgetControlsForm.series_asset_groups.dependent"
+                                                               :placeholder="'{{ __('Search assets...') }}'"
+                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
+                                                    </div>
+                                                    <div class="flex-1 relative min-h-0">
+                                                        <div
+                                                            class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                            <template
+                                                                x-for="(name, id) in allChannelAssets[widgetKpiConfig.dependent_channel] || {}"
+                                                                :key="id">
+                                                                <div
+                                                                    x-show="isAssetAllowedByGroups('dependent', widgetKpiConfig.dependent_channel, id) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
+                                                                    @click="if (!widgetControlsForm.series_asset_groups.dependent) toggleKpiAsset('dependent', id)"
+                                                                    class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                    :class="(widgetControlsForm.series_asset_groups.dependent) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
+                                                                    <div
+                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                        :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                        <svg
+                                                                            x-show="(widgetControlsForm.series_assets.dependent || []).includes(String(id))"
+                                                                            class="w-3 h-3 text-white" fill="none"
+                                                                            viewBox="0 0 24 24" stroke-width="3"
+                                                                            stroke="currentColor">
+                                                                            <path stroke-linecap="round"
+                                                                                  stroke-linejoin="round"
+                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span class="truncate font-medium"
+                                                                          :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                          x-text="name"></span>
+                                                                </div>
+                                                            </template>
+                                                            <template
+                                                                x-if="!allChannelAssets[widgetKpiConfig.dependent_channel] || Object.keys(allChannelAssets[widgetKpiConfig.dependent_channel]).length === 0">
+                                                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Dependent Derived Metric series box (KPI) --}}
+                            <template
+                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_dm_id">
+                                <div
+                                    class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                    <div
+                                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                        <div
+                                            class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
+                                                    <span
+                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
+                                                <span
+                                                    class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
+                                            </div>
+                                            <div class="flex flex-col items-end gap-1">
+                                                    <span
+                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                        x-text="(derivedMetrics[widgetKpiConfig.dependent_dm_id] || {}).name || '{{ __('Derived Metric') }}'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
+                                            <template
+                                                x-for="(series, sIdx) in ((derivedMetrics[widgetKpiConfig.dependent_dm_id] && derivedMetrics[widgetKpiConfig.dependent_dm_id].source_series) || [])"
+                                                :key="sIdx">
+                                                <div
+                                                    class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
+                                                    <div class="flex items-center justify-between mb-3">
+                                                            <span
+                                                                class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                                                                x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
+                                                        <span
+                                                            class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                            x-text="channels[series.channel] || series.channel"></span>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
+                                                        <p class="text-sm text-gray-900 dark:text-white"
+                                                           x-text="series.metric"></p>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Override') }}
+                                                            <span class="text-gray-400 font-normal">({{ __('leave empty for DM default') }})</span></label>
+                                                        <div class="flex items-center justify-between mb-2">
+                                                            <div></div>
+                                                            <button
+                                                                @click="selectAllKpiAssets('dep_dm_' + sIdx, series.channel)"
+                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                            <button @click="clearAllKpiAssets('dep_dm_' + sIdx)"
+                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline ml-2">{{ __('Clear') }}</button>
+                                                        </div>
+                                                        <div class="relative">
+                                                            <div
+                                                                class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                     viewBox="0 0 24 24" stroke-width="2"
+                                                                     stroke="currentColor"
+                                                                     class="w-4 h-4 text-gray-400">
+                                                                    <path stroke-linecap="round"
+                                                                          stroke-linejoin="round"
+                                                                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                                </svg>
+                                                            </div>
+                                                            <input type="text"
+                                                                   x-model="searchQueries['dep_dm_' + sIdx]"
+                                                                   :placeholder="'{{ __('Search assets...') }}'"
+                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                        </div>
+                                                        <div class="flex-1 relative min-h-0 mt-2 max-h-40">
+                                                            <div
+                                                                class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
+                                                                <template
+                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                    :key="id">
+                                                                    <div
+                                                                        x-show="(searchQueries['dep_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['dep_dm_' + sIdx] || '').toLowerCase())"
+                                                                        @click="toggleKpiAsset('dep_dm_' + sIdx, id)"
+                                                                        class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                        :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div
+                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                            :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg
+                                                                                x-show="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))"
+                                                                                class="w-3 h-3 text-white"
+                                                                                fill="none" viewBox="0 0 24 24"
+                                                                                stroke-width="3"
+                                                                                stroke="currentColor">
+                                                                                <path stroke-linecap="round"
+                                                                                      stroke-linejoin="round"
+                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium"
+                                                                              :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                              x-text="name"></span>
+                                                                    </div>
+                                                                </template>
+                                                                <template
+                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
                                                                     <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
                                                                 </template>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </template>
-                                            </div>
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
-                                </template>
-
-                                {{-- Dependent Derived Metric series box (KPI) --}}
-                                <template x-if="widgetControlsTarget.source_type === 'kpi' && widgetKpiConfig.dependent_dm_id">
-                                    <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
-                                        <div
-                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
-                                            <div
-                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
-                                                    <span
-                                                        class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
-                                                </div>
-                                                <div class="flex flex-col items-end gap-1">
-                                                    <span
-                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
-                                                        x-text="(derivedMetrics[widgetKpiConfig.dependent_dm_id] || {}).name || '{{ __('Derived Metric') }}'"></span>
-                                                </div>
-                                            </div>
-                                            <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
-                                                <template
-                                                    x-for="(series, sIdx) in ((derivedMetrics[widgetKpiConfig.dependent_dm_id] && derivedMetrics[widgetKpiConfig.dependent_dm_id].source_series) || [])"
-                                                    :key="sIdx">
-                                                    <div
-                                                        class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
-                                                        <div class="flex items-center justify-between mb-3">
-                                                            <span
-                                                                class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
-                                                                x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
-                                                            <span
-                                                                class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
-                                                                x-text="channels[series.channel] || series.channel"></span>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label
-                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
-                                                            <p class="text-sm text-gray-900 dark:text-white"
-                                                               x-text="series.metric"></p>
-                                                        </div>
-                                                        <div>
-                                                            <label
-                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Override') }}
-                                                                <span class="text-gray-400 font-normal">({{ __('leave empty for DM default') }})</span></label>
-                                                            <div class="flex items-center justify-between mb-2">
-                                                                <div></div>
-                                                                <button
-                                                                    @click="selectAllKpiAssets('dep_dm_' + sIdx, series.channel)"
-                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                <button @click="clearAllKpiAssets('dep_dm_' + sIdx)"
-                                                                        class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline ml-2">{{ __('Clear') }}</button>
-                                                            </div>
-                                                            <div class="relative">
-                                                                <div
-                                                                    class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                         viewBox="0 0 24 24" stroke-width="2"
-                                                                         stroke="currentColor"
-                                                                         class="w-4 h-4 text-gray-400">
-                                                                        <path stroke-linecap="round"
-                                                                              stroke-linejoin="round"
-                                                                              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                                    </svg>
-                                                                </div>
-                                                                <input type="text"
-                                                                       x-model="searchQueries['dep_dm_' + sIdx]"
-                                                                       :placeholder="'{{ __('Search assets...') }}'"
-                                                                       class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
-                                                            </div>
-                                                            <div class="flex-1 relative min-h-0 mt-2 max-h-40">
-                                                                <div
-                                                                    class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
-                                                                    <template
-                                                                        x-for="(name, id) in allChannelAssets[series.channel] || {}"
-                                                                        :key="id">
-                                                                        <div
-                                                                            x-show="(searchQueries['dep_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['dep_dm_' + sIdx] || '').toLowerCase())"
-                                                                            @click="toggleKpiAsset('dep_dm_' + sIdx, id)"
-                                                                            class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                            :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                            <div
-                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                <svg
-                                                                                    x-show="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))"
-                                                                                    class="w-3 h-3 text-white"
-                                                                                    fill="none" viewBox="0 0 24 24"
-                                                                                    stroke-width="3"
-                                                                                    stroke="currentColor">
-                                                                                    <path stroke-linecap="round"
-                                                                                          stroke-linejoin="round"
-                                                                                          d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                </svg>
-                                                                            </div>
-                                                                            <span class="truncate font-medium"
-                                                                                  :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                  x-text="name"></span>
-                                                                        </div>
-                                                                    </template>
-                                                                    <template
-                                                                        x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
-                                                                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
-                                                                    </template>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
+                                </div>
+                            </template>
 
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <template x-if="widgetKpiConfig.independent_variables">
@@ -1290,63 +1296,226 @@
                                         <template
                                             x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)">
                                             <div style="display: contents">
-                                            <template x-if="varCfg.independent_dm_id">
-                                                <div
-                                                    class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
-                                                    :class="{
+                                                <template x-if="varCfg.independent_dm_id">
+                                                    <div
+                                                        class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                                        :class="{
                                                         'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
                                                         'md:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
                                                     }">
-                                                    <div
-                                                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                         <div
-                                                            class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                            <div class="flex items-center gap-2">
+                                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                                            <div
+                                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                                <div class="flex items-center gap-2">
                                                                 <span
                                                                     class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                                     x-text="'{{ __('Independent') }} ' + idx"></span>
-                                                                <span
-                                                                    class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
-                                                            </div>
-                                                            <div class="flex flex-col items-end gap-1">
+                                                                    <span
+                                                                        class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
+                                                                </div>
+                                                                <div class="flex flex-col items-end gap-1">
                                                                 <span
                                                                     class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                                     x-text="(derivedMetrics[varCfg.independent_dm_id] || {}).name || '{{ __('Derived Metric') }}'"></span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
-                                                            <template
-                                                                x-for="(series, sIdx) in ((derivedMetrics[varCfg.independent_dm_id] && derivedMetrics[varCfg.independent_dm_id].source_series) || [])"
-                                                                :key="sIdx">
-                                                                <div
-                                                                    class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
-                                                                    <div class="flex items-center justify-between mb-3">
+                                                            <div class="p-6 flex-1 flex flex-col gap-4 min-h-0">
+                                                                <template
+                                                                    x-for="(series, sIdx) in ((derivedMetrics[varCfg.independent_dm_id] && derivedMetrics[varCfg.independent_dm_id].source_series) || [])"
+                                                                    :key="sIdx">
+                                                                    <div
+                                                                        class="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
+                                                                        <div
+                                                                            class="flex items-center justify-between mb-3">
                                                                         <span
                                                                             class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
                                                                             x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
-                                                                        <span
-                                                                            class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
-                                                                            x-text="channels[series.channel] || series.channel"></span>
+                                                                            <span
+                                                                                class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                                                x-text="channels[series.channel] || series.channel"></span>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label
+                                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
+                                                                            <p class="text-sm text-gray-900 dark:text-white"
+                                                                               x-text="series.metric"></p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label
+                                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Override') }}
+                                                                                <span class="text-gray-400 font-normal">({{ __('leave empty for DM default') }})</span></label>
+                                                                            <div
+                                                                                class="flex items-center justify-between mb-2">
+                                                                                <div></div>
+                                                                                <button
+                                                                                    @click="selectAllKpiAssets('ind_' + idx + '_dm_' + sIdx, series.channel)"
+                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                <button
+                                                                                    @click="clearAllKpiAssets('ind_' + idx + '_dm_' + sIdx)"
+                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline ml-2">{{ __('Clear') }}</button>
+                                                                            </div>
+                                                                            <div class="relative">
+                                                                                <div
+                                                                                    class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                                                    <svg
+                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                        fill="none" viewBox="0 0 24 24"
+                                                                                        stroke-width="2"
+                                                                                        stroke="currentColor"
+                                                                                        class="w-4 h-4 text-gray-400">
+                                                                                        <path stroke-linecap="round"
+                                                                                              stroke-linejoin="round"
+                                                                                              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                                                    </svg>
+                                                                                </div>
+                                                                                <input type="text"
+                                                                                       x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]"
+                                                                                       :placeholder="'{{ __('Search assets...') }}'"
+                                                                                       class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                                            </div>
+                                                                            <div
+                                                                                class="flex-1 relative min-h-0 mt-2 max-h-40">
+                                                                                <div
+                                                                                    class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
+                                                                                    <template
+                                                                                        x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                                        :key="id">
+                                                                                        <div
+                                                                                            x-show="(searchQueries['ind_' + idx + '_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['ind_' + idx + '_dm_' + sIdx] || '').toLowerCase())"
+                                                                                            @click="toggleKpiAsset('ind_' + idx + '_dm_' + sIdx, id)"
+                                                                                            class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                                            :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                            <div
+                                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                                :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                <svg
+                                                                                                    x-show="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))"
+                                                                                                    class="w-3 h-3 text-white"
+                                                                                                    fill="none"
+                                                                                                    viewBox="0 0 24 24"
+                                                                                                    stroke-width="3"
+                                                                                                    stroke="currentColor">
+                                                                                                    <path
+                                                                                                        stroke-linecap="round"
+                                                                                                        stroke-linejoin="round"
+                                                                                                        d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                                </svg>
+                                                                                            </div>
+                                                                                            <span
+                                                                                                class="truncate font-medium"
+                                                                                                :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                                                x-text="name"></span>
+                                                                                        </div>
+                                                                                    </template>
+                                                                                    <template
+                                                                                        x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
+                                                                                    </template>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="mb-3">
-                                                                        <label
-                                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
-                                                                        <p class="text-sm text-gray-900 dark:text-white"
-                                                                           x-text="series.metric"></p>
-                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template
+                                                    x-if="varCfg.independent_channel && !varCfg.independent_dm_id && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
+                                                    <div
+                                                        class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                                        :class="{
+                                                    'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
+                                                    'md:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
+                                                }">
+                                                        <div
+                                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                                            <div
+                                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                                <div class="flex items-center gap-2">
+                                                                <span
+                                                                    class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                                    x-text="'{{ __('Independent') }} ' + idx"></span>
+                                                                </div>
+                                                                <div class="flex flex-col items-end gap-1">
+                                                                <span
+                                                                    class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                                    x-text="channels[varCfg.independent_channel]"></span>
+                                                                    <template x-if="varCfg.independent_metric">
+                                                                    <span
+                                                                        class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                                        x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
+                                                                    </template>
+                                                                    <template x-if="!varCfg.independent_metric">
+                                                                    <span
+                                                                        class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+
+                                                                <template x-if="!varCfg.independent_metric">
                                                                     <div>
                                                                         <label
-                                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Override') }}
-                                                                            <span class="text-gray-400 font-normal">({{ __('leave empty for DM default') }})</span></label>
+                                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
+                                                                        <select
+                                                                            x-model="widgetControlsForm.metrics[idx + 1]"
+                                                                            class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                                            <option
+                                                                                value="">{{ __('Select a metric...') }}</option>
+                                                                            <template
+                                                                                x-for="(label, key) in allChannelMetrics[varCfg.independent_channel] || {}"
+                                                                                :key="key">
+                                                                                <option :value="key"
+                                                                                        x-text="label"></option>
+                                                                            </template>
+                                                                        </select>
+                                                                    </div>
+                                                                </template>
+
+                                                                <template
+                                                                    x-if="!varCfg.independent_asset_filter || (Array.isArray(varCfg.independent_asset_filter) && varCfg.independent_asset_filter.length === 0)">
+                                                                    <div
+                                                                        class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                                        <template
+                                                                            x-if="!varCfg.independent_asset_group">
+                                                                            <div>
+                                                                                <label
+                                                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Group') }}</label>
+                                                                                <select
+                                                                                    x-model="widgetControlsForm.series_asset_groups['independent_' + idx]"
+                                                                                    :disabled="widgetControlsForm.series_assets['independent_' + idx] && widgetControlsForm.series_assets['independent_' + idx].length > 0"
+                                                                                    class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                                                    <option
+                                                                                        value="">{{ __('Select an asset group') }}</option>
+                                                                                    <template
+                                                                                        x-for="(groupData, groupId) in allChannelAssetGroups[varCfg.independent_channel] || {}"
+                                                                                        :key="groupId">
+                                                                                        <option :value="groupId"
+                                                                                                x-text="groupData.name"></option>
+                                                                                    </template>
+                                                                                </select>
+                                                                            </div>
+                                                                        </template>
+
                                                                         <div
-                                                                            class="flex items-center justify-between mb-2">
-                                                                            <div></div>
-                                                                            <button
-                                                                                @click="selectAllKpiAssets('ind_' + idx + '_dm_' + sIdx, series.channel)"
-                                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                            <button
-                                                                                @click="clearAllKpiAssets('ind_' + idx + '_dm_' + sIdx)"
-                                                                                class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline ml-2">{{ __('Clear') }}</button>
+                                                                            class="flex items-center justify-between mt-2">
+                                                                            <label
+                                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets') }}
+                                                                                <span
+                                                                                    x-show="varCfg.independent_asset_group">({{ __('Limited to KPI Group') }})</span><span
+                                                                                    x-show="!varCfg.independent_asset_group">({{ __('Leave empty for All Assets') }})</span></label>
+                                                                            <div class="flex gap-3">
+                                                                                <button
+                                                                                    @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)"
+                                                                                    :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
+                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Select All') }}</button>
+                                                                                <button
+                                                                                    @click="clearAllKpiAssets('independent_' + idx)"
+                                                                                    :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
+                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Clear') }}</button>
+                                                                            </div>
                                                                         </div>
                                                                         <div class="relative">
                                                                             <div
@@ -1362,27 +1531,27 @@
                                                                                 </svg>
                                                                             </div>
                                                                             <input type="text"
-                                                                                   x-model="searchQueries['ind_' + idx + '_dm_' + sIdx]"
+                                                                                   x-model="searchQueries['independent_' + idx]"
+                                                                                   :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
                                                                                    :placeholder="'{{ __('Search assets...') }}'"
-                                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
                                                                         </div>
-                                                                        <div
-                                                                            class="flex-1 relative min-h-0 mt-2 max-h-40">
+                                                                        <div class="flex-1 relative min-h-0">
                                                                             <div
-                                                                                class="flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar max-h-40">
+                                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
                                                                                 <template
-                                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                                    x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}"
                                                                                     :key="id">
                                                                                     <div
-                                                                                        x-show="(searchQueries['ind_' + idx + '_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['ind_' + idx + '_dm_' + sIdx] || '').toLowerCase())"
-                                                                                        @click="toggleKpiAsset('ind_' + idx + '_dm_' + sIdx, id)"
-                                                                                        class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                                        :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                        x-show="isAssetAllowedByGroups('independent_' + idx, varCfg.independent_channel, id) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
+                                                                                        @click="if (!widgetControlsForm.series_asset_groups['independent_' + idx]) toggleKpiAsset('independent_' + idx, id)"
+                                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                                        :class="(widgetControlsForm.series_asset_groups['independent_' + idx]) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
                                                                                         <div
                                                                                             class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                            :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                            :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                                             <svg
-                                                                                                x-show="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))"
+                                                                                                x-show="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))"
                                                                                                 class="w-3 h-3 text-white"
                                                                                                 fill="none"
                                                                                                 viewBox="0 0 24 24"
@@ -1396,286 +1565,131 @@
                                                                                         </div>
                                                                                         <span
                                                                                             class="truncate font-medium"
-                                                                                            :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                                            :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
                                                                                             x-text="name"></span>
                                                                                     </div>
                                                                                 </template>
                                                                                 <template
-                                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                                    x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
                                                                                     <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
                                                                                 </template>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
-<template
-                                                x-if="varCfg.independent_channel && !varCfg.independent_dm_id && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
-                                            <div
-                                                class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
-                                                :class="{
-                                                    'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
-                                                    'md:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
-                                                }">
-                                                    <div
-                                                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
-                                                        <div
-                                                            class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                            <div class="flex items-center gap-2">
-                                                                <span
-                                                                    class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                                    x-text="'{{ __('Independent') }} ' + idx"></span>
-                                                            </div>
-                                                            <div class="flex flex-col items-end gap-1">
-                                                                <span
-                                                                    class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
-                                                                    x-text="channels[varCfg.independent_channel]"></span>
-                                                                <template x-if="varCfg.independent_metric">
-                                                                    <span
-                                                                        class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
-                                                                        x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
-                                                                </template>
-                                                                <template x-if="!varCfg.independent_metric">
-                                                                    <span
-                                                                        class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
                                                                 </template>
                                                             </div>
                                                         </div>
-                                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-
-                                                            <template x-if="!varCfg.independent_metric">
-                                                                <div>
-                                                                    <label
-                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Metric') }}</label>
-                                                                    <select
-                                                                        x-model="widgetControlsForm.metrics[idx + 1]"
-                                                                        class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                                                        <option
-                                                                            value="">{{ __('Select a metric...') }}</option>
-                                                                        <template
-                                                                            x-for="(label, key) in allChannelMetrics[varCfg.independent_channel] || {}"
-                                                                            :key="key">
-                                                                            <option :value="key"
-                                                                                    x-text="label"></option>
-                                                                        </template>
-                                                                    </select>
-                                                                </div>
-                                                            </template>
-
-                                                            <template
-                                                                x-if="!varCfg.independent_asset_filter || (Array.isArray(varCfg.independent_asset_filter) && varCfg.independent_asset_filter.length === 0)">
-                                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                                    <template x-if="!varCfg.independent_asset_group">
-                                                                        <div>
-                                                                            <label
-                                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Asset Group') }}</label>
-                                                                            <select
-                                                                                x-model="widgetControlsForm.series_asset_groups['independent_' + idx]"
-                                                                                :disabled="widgetControlsForm.series_assets['independent_' + idx] && widgetControlsForm.series_assets['independent_' + idx].length > 0"
-                                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                                                                                <option
-                                                                                    value="">{{ __('Select an asset group') }}</option>
-                                                                                <template
-                                                                                    x-for="(groupData, groupId) in allChannelAssetGroups[varCfg.independent_channel] || {}"
-                                                                                    :key="groupId">
-                                                                                    <option :value="groupId"
-                                                                                            x-text="groupData.name"></option>
-                                                                                </template>
-                                                                            </select>
-                                                                        </div>
-                                                                    </template>
-
-                                                                    <div class="flex items-center justify-between mt-2">
-                                                                        <label
-                                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets') }}
-                                                                            <span
-                                                                                x-show="varCfg.independent_asset_group">({{ __('Limited to KPI Group') }})</span><span
-                                                                                x-show="!varCfg.independent_asset_group">({{ __('Leave empty for All Assets') }})</span></label>
-                                                                        <div class="flex gap-3">
-                                                                            <button
-                                                                                @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel, varCfg.independent_asset_group)"
-                                                                                :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
-                                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Select All') }}</button>
-                                                                            <button
-                                                                                @click="clearAllKpiAssets('independent_' + idx)"
-                                                                                :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
-                                                                                class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">{{ __('Clear') }}</button>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="relative">
-                                                                        <div
-                                                                            class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                 fill="none" viewBox="0 0 24 24"
-                                                                                 stroke-width="2" stroke="currentColor"
-                                                                                 class="w-4 h-4 text-gray-400">
-                                                                                <path stroke-linecap="round"
-                                                                                      stroke-linejoin="round"
-                                                                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                                            </svg>
-                                                                        </div>
-                                                                        <input type="text"
-                                                                               x-model="searchQueries['independent_' + idx]"
-                                                                               :disabled="widgetControlsForm.series_asset_groups['independent_' + idx]"
-                                                                               :placeholder="'{{ __('Search assets...') }}'"
-                                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 disabled:opacity-50 disabled:cursor-not-allowed bd-search-input">
-                                                                    </div>
-                                                                    <div class="flex-1 relative min-h-0">
-                                                                        <div
-                                                                            class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                                            <template
-                                                                                x-for="(name, id) in allChannelAssets[varCfg.independent_channel] || {}"
-                                                                                :key="id">
-                                                                                <div
-                                                                                    x-show="isAssetAllowedByGroups('independent_' + idx, varCfg.independent_channel, id) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
-                                                                                    @click="if (!widgetControlsForm.series_asset_groups['independent_' + idx]) toggleKpiAsset('independent_' + idx, id)"
-                                                                                    class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                                    :class="(widgetControlsForm.series_asset_groups['independent_' + idx]) ? 'opacity-50 cursor-not-allowed' : ((widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5')">
-                                                                                    <div
-                                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                        :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                        <svg
-                                                                                            x-show="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))"
-                                                                                            class="w-3 h-3 text-white"
-                                                                                            fill="none"
-                                                                                            viewBox="0 0 24 24"
-                                                                                            stroke-width="3"
-                                                                                            stroke="currentColor">
-                                                                                            <path stroke-linecap="round"
-                                                                                                  stroke-linejoin="round"
-                                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                        </svg>
-                                                                                    </div>
-                                                                                    <span class="truncate font-medium"
-                                                                                          :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                          x-text="name"></span>
-                                                                                </div>
-                                                                            </template>
-                                                                            <template
-                                                                                x-if="!allChannelAssets[varCfg.independent_channel] || Object.keys(allChannelAssets[varCfg.independent_channel]).length === 0">
-                                                                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
-                                                                            </template>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </template>
-                                                        </div>
                                                     </div>
-                                                </div>
-                                            </template>
-                                        </div>
+                                                </template>
+                                            </div>
                                         </template>
                                     </template>
                                 </template>
                             </template>
 
-                                {{-- Series: Derived Metric source series --}}
-                                <template x-if="widgetControlsTarget.source_type === 'derived_metric'">
-                                    <template x-for="(series, index) in widgetControlsTarget.dmSourceSeries"
-                                              :key="index">
+                            {{-- Series: Derived Metric source series --}}
+                            <template x-if="widgetControlsTarget.source_type === 'derived_metric'">
+                                <template x-for="(series, index) in widgetControlsTarget.dmSourceSeries"
+                                          :key="index">
+                                    <div
+                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <div
-                                            class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
+                                            class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
-                                                class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
-                                                <div
-                                                    class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                    <div class="flex items-center gap-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                             viewBox="0 0 24 24" stroke-width="1.5"
-                                                             stroke="currentColor"
-                                                             class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                  d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
-                                                        </svg>
-                                                        <span
-                                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                            x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + index))"></span>
-                                                    </div>
+                                                class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                <div class="flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                         viewBox="0 0 24 24" stroke-width="1.5"
+                                                         stroke="currentColor"
+                                                         class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                              d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
+                                                    </svg>
+                                                    <span
+                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                        x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + index))"></span>
                                                 </div>
-                                                <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                                    <div>
-                                                        <label
-                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
-                                                        <p class="text-sm text-gray-900 dark:text-white"
-                                                           x-text="channels[series.channel] || series.channel"></p>
-                                                    </div>
-                                                    <div class="my-2">
-                                                        <label
-                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
-                                                        <p class="text-sm text-gray-900 dark:text-white"
-                                                           x-text="series.metric"></p>
-                                                    </div>
+                                            </div>
+                                            <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                    <p class="text-sm text-gray-900 dark:text-white"
+                                                       x-text="channels[series.channel] || series.channel"></p>
+                                                </div>
+                                                <div class="my-2">
+                                                    <label
+                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
+                                                    <p class="text-sm text-gray-900 dark:text-white"
+                                                       x-text="series.metric"></p>
+                                                </div>
 
-                                                    <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                        <div class="flex items-center justify-between">
-                                                            <label
-                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Asset Override') }}
-                                                                ({{ __('leave empty for DM default') }})</label>
-                                                            <button @click="selectAllDmAssets(index)"
-                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                            <button @click="clearAllDmAssets(index)"
-                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                    <div class="flex items-center justify-between">
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Asset Override') }}
+                                                            ({{ __('leave empty for DM default') }})</label>
+                                                        <button @click="selectAllDmAssets(index)"
+                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                        <button @click="clearAllDmAssets(index)"
+                                                                class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                    </div>
+                                                    <div class="relative">
+                                                        <div
+                                                            class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24" stroke-width="2"
+                                                                 stroke="currentColor"
+                                                                 class="w-4 h-4 text-gray-400">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                            </svg>
                                                         </div>
-                                                        <div class="relative">
-                                                            <div
-                                                                class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                     viewBox="0 0 24 24" stroke-width="2"
-                                                                     stroke="currentColor"
-                                                                     class="w-4 h-4 text-gray-400">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                                </svg>
-                                                            </div>
-                                                            <input type="text" x-model="searchQueries['dm_' + index]"
-                                                                   :placeholder="'{{ __('Search assets...') }}'"
-                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
-                                                        </div>
-                                                        <div class="flex-1 relative min-h-0">
-                                                            <div
-                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                                <template
-                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
-                                                                    :key="id">
+                                                        <input type="text" x-model="searchQueries['dm_' + index]"
+                                                               :placeholder="'{{ __('Search assets...') }}'"
+                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                    </div>
+                                                    <div class="flex-1 relative min-h-0">
+                                                        <div
+                                                            class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                            <template
+                                                                x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                :key="id">
+                                                                <div
+                                                                    x-show="(searchQueries['dm_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['dm_' + index] || '').toLowerCase())"
+                                                                    @click="toggleDmAsset(index, id)"
+                                                                    class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                    :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                     <div
-                                                                        x-show="(searchQueries['dm_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['dm_' + index] || '').toLowerCase())"
-                                                                        @click="toggleDmAsset(index, id)"
-                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                        :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                        <div
-                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                            :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                            <svg
-                                                                                x-show="(widgetControlsForm.dm_assets[index] || []).includes(String(id))"
-                                                                                class="w-3 h-3 text-white" fill="none"
-                                                                                viewBox="0 0 24 24" stroke-width="3"
-                                                                                stroke="currentColor">
-                                                                                <path stroke-linecap="round"
-                                                                                      stroke-linejoin="round"
-                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
-                                                                            </svg>
-                                                                        </div>
-                                                                        <span class="truncate font-medium"
-                                                                              :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                              x-text="name"></span>
+                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                        :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                        <svg
+                                                                            x-show="(widgetControlsForm.dm_assets[index] || []).includes(String(id))"
+                                                                            class="w-3 h-3 text-white" fill="none"
+                                                                            viewBox="0 0 24 24" stroke-width="3"
+                                                                            stroke="currentColor">
+                                                                            <path stroke-linecap="round"
+                                                                                  stroke-linejoin="round"
+                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
+                                                                        </svg>
                                                                     </div>
-                                                                </template>
-                                                                <template
-                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
-                                                                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
-                                                                </template>
-                                                            </div>
+                                                                    <span class="truncate font-medium"
+                                                                          :class="(widgetControlsForm.dm_assets[index] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                          x-text="name"></span>
+                                                                </div>
+                                                            </template>
+                                                            <template
+                                                                x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
+                                                            </template>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </template>
+                                    </div>
                                 </template>
+                            </template>
                         </div>
                     </div>
                 </div>
