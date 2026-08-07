@@ -646,8 +646,16 @@ export function dashboardBuilder(config = {}) {
             this.widgetKpiConfig = {};
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
-                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
-                    this.widgetKpiConfig = config || {};
+                    // Extract the actual UI state from the KPI filters
+                    const uiState = config?.filters?._ui_state || config;
+                    this.widgetKpiConfig = {
+                        dependent_channel: uiState.dependent_channel,
+                        dependent_metric: uiState.dependent_metric,
+                        dependent_dm_id: uiState.dependent_dm_id,
+                        dependent_asset_group: uiState.dependent_asset_group,
+                        dependent_asset_filter: uiState.dependent_asset_filter,
+                        independent_variables: uiState.independent_variables || {},
+                    };
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';

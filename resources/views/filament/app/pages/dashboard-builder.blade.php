@@ -1287,12 +1287,7 @@
 
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <template x-if="widgetKpiConfig.independent_variables">
-                                    <div
-                                        x-init="console.log('DEBUG independent_variables:', widgetKpiConfig.independent_variables)"
-                                        style="display:none;"></div>
                                     <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
-                                        <div x-init="console.log('DEBUG varCfg[' + idx + ']:', varCfg)"
-                                             style="display:none;"></div>
                                         <template
                                             x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)">
                                             <template x-if="varCfg.independent_dm_id">
