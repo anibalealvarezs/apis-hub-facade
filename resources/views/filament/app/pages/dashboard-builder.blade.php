@@ -856,8 +856,7 @@
                                     <div class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
                                          :class="{
                                          'md:w-full': widgetControlsForm.raw_series.length === 1,
-                                         'md:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length === 2,
-                                         'md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]': widgetControlsForm.raw_series.length >= 3
+                                         'md:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
                                      }">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
