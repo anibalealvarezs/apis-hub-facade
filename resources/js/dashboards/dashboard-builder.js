@@ -1291,6 +1291,23 @@ export function dashboardBuilder(config = {}) {
                     }, 500);
                 });
             });
+        },
+
+        shouldShowSeries(vKey) {
+            const allKeys = Object.keys(this.widgetKpiConfig?.independent_variables || {});
+            // If it's a DM series (key contains 'dm'), always show
+            if (vKey.includes('dm')) return true;
+            // Base dependent series: hide if there's a dep_dm_* series
+            if (vKey === 'dependent') {
+                return !allKeys.some(k => k.startsWith('dep_dm_'));
+            }
+            // Base independent series (e.g., independent_0): hide if there's a corresponding ind_X_dm_* series
+            if (vKey.startsWith('independent_')) {
+                const idx = vKey.replace('independent_', '');
+                return !allKeys.some(k => k.startsWith('ind_' + idx + '_dm_'));
+            }
+            // Show other series by default
+            return true;
         }
     };
 }

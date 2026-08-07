@@ -794,7 +794,7 @@
 
                         {{-- Variables: Assets per variable (KPI) --}}
                         <template x-if="widgetControlsTarget.source_type === 'kpi'">
-                            <template x-if="widgetKpiConfig.dependent_channel">
+                            <template x-if="widgetKpiConfig.dependent_channel && !widgetKpiConfig.dependent_dm_id">
                                 <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                         <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -1024,7 +1024,7 @@
                                             </div>
                                         </div>
                                     </template>
-                                    <template x-if="varCfg.independent_channel && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
+                                    <template x-if="varCfg.independent_channel && !varCfg.independent_dm_id && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
                                     <div class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
