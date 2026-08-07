@@ -103,9 +103,29 @@ class PublicViewService
     iframe.setAttribute("loading", "lazy");
     container.appendChild(iframe);
 
+    var popOutLocked = false;
+
     window.addEventListener("message", function(e) {
-        if (e.data && e.data.type === "apis-hub-resize" && e.source === iframe.contentWindow) {
+        if (e.source !== iframe.contentWindow || !e.data) return;
+
+        if (e.data.type === "apis-hub-popout") {
+            popOutLocked = !!e.data.active;
+            if (popOutLocked) {
+                // Pin the iframe to the real visible viewport while a widget is expanded,
+                // so the fullscreen modal doesn't grow to the whole dashboard height.
+                iframe.style.height = window.innerHeight + "px";
+                iframe.scrollIntoView();
+            } else {
+                iframe.contentWindow.postMessage({ type: "apis-hub-measure" }, "*");
+            }
+        } else if (e.data.type === "apis-hub-resize" && !popOutLocked) {
             iframe.style.height = e.data.height + "px";
+        }
+    });
+
+    window.addEventListener("resize", function() {
+        if (popOutLocked) {
+            iframe.style.height = window.innerHeight + "px";
         }
     });
 })();

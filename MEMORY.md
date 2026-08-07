@@ -356,3 +356,13 @@
 - **Fix:** `dashboard-view-content.blade.php` line ~514-517 `:class` now: `'md:w-full': length === 1`, `'sm:w-[calc(50%-0.75rem)]': length >= 2` — 2 columns max, breakpoint aligned with the builder's DM series cards (`sm:w-[calc(50%-0.75rem)]`).
 - **Verification:** `php artisan view:cache` + `view:clear` OK. Browser smoke test PENDING.
 
+### Public Embed Pop-Out Height Overflow Fix (2026-08-07)
+- **Bug:** On the embedded public view (`?embedded=1`), the iframe auto-resizes to the full dashboard height (`document.body.scrollHeight`). The widget expand/pop-out modal sizes to `95vh` — inside the iframe `vh` = the iframe's viewport = the FULL dashboard height, so the expanded widget grows to the whole dashboard and overflows the screen, becoming unreadable.
+- **Fix (parent/child postMessage lock protocol):**
+  - `resources/js/dashboards/dashboard-view.js` `openPopOut()`/`closePopOut()`: when `window.isEmbedded`, call `window.pvNotifyPopOut(true/false)`.
+  - `resources/js/public-view/embed.js`: exposes `window.pvNotifyPopOut(active)` (posts `{ type: 'apis-hub-popout', active }` to parent); listens for `apis-hub-measure` → re-sends `apis-hub-resize`.
+  - `app/Services/PublicViewService::getEmbedJs()` (parent side): on `apis-hub-popout` true → lock iframe to `window.innerHeight` + `scrollIntoView` (modal now = real viewport); on false → unlock + post `apis-hub-measure` so normal auto-resize resumes; `apis-hub-resize` ignored while locked; parent `resize` keeps lock height synced.
+- **Tests (`tests/Feature/PublicView/EmbedScriptTest.php`):** added `apis-hub-popout`/`apis-hub-measure` assertions to embed.js test; fixed 2 stale assertions on the `?embedded=1` render test (`isEmbedded: true` → `data-embedded="1"` escaped `false`; removed `apis-hub-resize` assertSee which lived in the Vite bundle, not the HTML — was masked by the earlier stale assertion).
+- **Verification:** `node --check` clean on both JS files; `php -l` clean on service; `php artisan test tests/Feature/PublicView/EmbedScriptTest.php` → 3 passed; `npm run build` → bundle `public/build/assets/app-BiGxK5EO.js` (contains `pvNotifyPopOut`). Browser smoke test PENDING (docker down). Not yet committed.
+
+

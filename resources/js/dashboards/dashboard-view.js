@@ -514,6 +514,10 @@ export function dashboardView(config = {}) {
         openPopOut(widgetId) {
             if (this._popOutAnimating) return;
 
+            if (window.isEmbedded && typeof window.pvNotifyPopOut === 'function') {
+                window.pvNotifyPopOut(true);
+            }
+
             const widgetEl = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
             const headerEl = widgetEl?.querySelector('.grid-stack-item-content');
             const title = headerEl?.querySelector('h3')?.textContent?.trim() || '';
@@ -607,12 +611,18 @@ export function dashboardView(config = {}) {
                     this.popOutActive = false;
                     this.popOutWidgetId = null;
                     this.popOutTitle = '';
+                    if (window.isEmbedded && typeof window.pvNotifyPopOut === 'function') {
+                        window.pvNotifyPopOut(false);
+                    }
                 }, { once: true });
             } else {
                 this._popFromRect = null;
                 this.popOutActive = false;
                 this.popOutWidgetId = null;
                 this.popOutTitle = '';
+                if (window.isEmbedded && typeof window.pvNotifyPopOut === 'function') {
+                    window.pvNotifyPopOut(false);
+                }
             }
         },
 

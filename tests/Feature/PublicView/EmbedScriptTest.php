@@ -27,7 +27,9 @@ it('GET /pv/{token}/embed.js returns 200 with javascript content-type', function
     $this->get(route('public-view.embed', ['token' => $pv->token]))
         ->assertSuccessful()
         ->assertHeader('Content-Type', 'application/javascript; charset=utf-8')
-        ->assertSee('iframe.src =');
+        ->assertSee('iframe.src =')
+        ->assertSee('apis-hub-popout')
+        ->assertSee('apis-hub-measure');
 });
 
 it('GET /pv/{token}/embed.js returns 404 for unknown token', function () {
@@ -43,6 +45,5 @@ it('public view with ?embedded=1 renders without header and notifies resize', fu
 
     $this->get(route('public-view.show', ['token' => $pv->token, 'embedded' => 1]))
         ->assertSuccessful()
-        ->assertSee('isEmbedded: true')
-        ->assertSee('apis-hub-resize');
+        ->assertSee('data-embedded="1"', false);
 });
