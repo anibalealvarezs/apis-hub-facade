@@ -267,7 +267,10 @@ export function dashboardBuilder(config = {}) {
 
         initAllAssets() {
             const channelKeys = Object.keys(this.channels);
-            if (!this.$wire) return;
+            if (!this.$wire || typeof this.$wire.getAssetsForChannel !== 'function') {
+                console.error('[dashboard-builder] Livewire $wire unavailable; channel assets will not load.');
+                return;
+            }
             channelKeys.forEach(ch => {
                 this.$wire.getAssetsForChannel(ch).then(assets => {
                     this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
@@ -457,18 +460,45 @@ export function dashboardBuilder(config = {}) {
         },
 
         saveLayout() {
-            const currentLayout = this.getLayout();
-            if (this.$wire) {
-                this.$wire.saveLayout(currentLayout).then(() => {
+            let currentLayout = [];
+            try {
+                currentLayout = this.getLayout();
+            } catch (error) {
+                console.error('[dashboard-builder] getLayout() failed:', error);
+                currentLayout = this.grid ? (this.grid.save(false) || []) : [];
+            }
+
+            if (!this.$wire || typeof this.$wire.saveLayout !== 'function') {
+                console.error('[dashboard-builder] Livewire $wire is unavailable; layout was NOT saved.');
+                this.notify('danger', 'Layout not saved', 'Livewire bridge unavailable — try reloading the page.');
+                return;
+            }
+
+            this.$wire.saveLayout(currentLayout)
+                .then(() => {
                     this._initialLayoutSignature = JSON.stringify(currentLayout);
                     this.isDirty = false;
+                    this.notify('success', 'Layout saved');
+                })
+                .catch((error) => {
+                    console.error('[dashboard-builder] saveLayout() failed:', error);
+                    this.isDirty = true;
+                    this.notify('danger', 'Save failed', 'There was a problem saving the layout. Please try again.');
                 });
+        },
+
+        notify(type, title, body = '') {
+            if (typeof FilamentNotification !== 'undefined' && FilamentNotification.make) {
+                FilamentNotification.make().title(title).body(body)[type]().send();
+            } else {
+                console[type === 'danger' ? 'error' : 'log'](`[dashboard-builder] ${title} ${body}`);
             }
         },
 
         getLayout() {
             if (!this.grid) return [];
-            return this.grid.engine.nodes.map(node => ({
+            const nodes = (this.grid.engine && this.grid.engine.nodes) ? this.grid.engine.nodes : (this.grid.save(false) || []);
+            return nodes.map(node => ({
                 id: node.id || (node.el ? parseInt(node.el.getAttribute('gs-id')) : 0),
                 x: node.x,
                 y: node.y,

@@ -88,6 +88,11 @@ class DashboardBuilder extends Page
         $service->saveLayout($this->dashboard, $gridItems);
         $this->gridState = $gridItems;
         $this->unsavedChanges = true;
+
+        Notification::make()
+            ->title(__('Layout saved'))
+            ->success()
+            ->send();
     }
 
     public function getHasUnsavedChanges(): bool
