@@ -348,7 +348,7 @@
                     </div>
                 {{-- Dashboard Content Languages --}}
                 @php
-                    $projectLangs = Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
+                    $projectLangs = \Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
                 @endphp
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Dashboard Content Languages') }}</label>
