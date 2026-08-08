@@ -49,7 +49,7 @@ export function dashboardBuilder(config = {}) {
         // ─── Dashboard Controls ──
         showDashboardControls: false,
         showWidgetControls: false,
-        widgetControlsTarget: null,
+        widgetControlsTarget: {},
         availableLanguages: config.availableLanguages || {},
         dashboardControls,
         assetGroups: config.assetGroups || {},

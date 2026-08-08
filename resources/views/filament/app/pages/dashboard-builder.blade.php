@@ -388,10 +388,8 @@
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
                 @click.away="showWidgetControls = false">
-                <template x-if="widgetControlsTarget">
-                    <div class="flex flex-col flex-1 min-h-0">
-                        <div
-                            class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+                <div
+                    class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
                     <div class="flex flex-col gap-1.5">
                         <div class="flex flex-wrap items-center gap-3">
                             <h3 class="text-base font-bold text-gray-900 dark:text-white"
@@ -1713,8 +1711,6 @@
                         x-on:click="confirmWidgetControls()">{{ __('Save Controls') }}
                     </button>
                 </div>
-                    </div>
-                </template>
             </div>
         </div>
 
