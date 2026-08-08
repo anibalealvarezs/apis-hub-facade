@@ -83,9 +83,21 @@ class DeployProjectJob implements ShouldQueue
 
                 // 6. Hydrate remote API Hub with existing channel configuration (if any)
                 $syncConfig = $this->project->sync_config ?? [];
+                $remoteService = app(\App\Services\RemoteEngineService::class);
+
+                // 6.1 Hydrate global configuration (e.g. jobs timeout)
+                try {
+                    $remoteService->updateCredentials($this->project, [
+                        'type' => 'global',
+                        'jobs_timeout_hours' => $syncConfig['jobs_timeout_hours'] ?? 1,
+                    ]);
+                    Log::info("Hydrated global configuration into newly deployed project {$this->project->id}");
+                } catch (\Exception $e) {
+                    Log::error("Failed to hydrate global config for project {$this->project->id}: " . $e->getMessage());
+                }
+
                 if (!empty($syncConfig)) {
                     $configPayloadService = app(\App\Services\ConfigPayloadService::class);
-                    $remoteService = app(\App\Services\RemoteEngineService::class);
                     $release = $this->project->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
                     
                     if ($release) {

@@ -13,14 +13,40 @@ class GoogleSearchConsoleController extends Controller
     private function validateRequest(Request $request): array
     {
         return $request->validate([
-            'tenant' => 'required|string',
+            'tenant' => 'required|integer',
             'account' => 'required|string',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:queries,pages,countries,devices,appearances',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'string'
         ]);
+    }
+
+    private function getRequestedAggregations(Request $request): array
+    {
+        $availableAggs = ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'];
+        $requestedMetrics = $request->input('metrics');
+        
+        $aggregations = [];
+        if (empty($requestedMetrics)) {
+            return $availableAggs;
+        }
+        
+        foreach ((array)$requestedMetrics as $m) {
+            if (isset($availableAggs[$m])) {
+                $aggregations[$m] = $availableAggs[$m];
+            }
+        }
+
+        // Force include impressions if position or ctr is requested, to allow weighted average calculation
+        if ((isset($aggregations['position']) || isset($aggregations['ctr'])) && !isset($aggregations['impressions'])) {
+            $aggregations['impressions'] = $availableAggs['impressions'];
+        }
+        
+        return empty($aggregations) ? $availableAggs : $aggregations;
     }
 
     private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
@@ -68,16 +94,18 @@ class GoogleSearchConsoleController extends Controller
             $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
+            $aggs = $this->getRequestedAggregations($request);
+
             $payloads = [
                 'summary' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => [],
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd']
                 ],
                 'previous' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => [],
                     'filters' => $baseFilters,
                     'startDate' => $prevStart->format('Y-m-d'),
@@ -115,9 +143,11 @@ class GoogleSearchConsoleController extends Controller
             $baseFilters = ['channeledAccount' => (string)$validated['account']];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
+            $aggs = $this->getRequestedAggregations($request);
+
             $payloads = [
                 'chart' => [
-                    'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                    'aggregations' => $aggs,
                     'groupBy' => ['daily'], // or 'date' if daily fails
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
@@ -149,8 +179,11 @@ class GoogleSearchConsoleController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
+            $tab = $validated['activeTab'] ?? 'queries';
+            $aggs = $this->getRequestedAggregations($request);
+
             $tabPayload = [
-                'aggregations' => ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'],
+                'aggregations' => $aggs,
                 'filters' => [
                     // The dashboard account selector sends channeled_account IDs, not page IDs.
                     'channeledAccount' => (string)$validated['account'],
@@ -161,13 +194,19 @@ class GoogleSearchConsoleController extends Controller
                 'limit' => 5000 // reasonable limit for frontend rendering
             ];
 
-            if ($validated['activeTab'] === 'queries') $tabPayload['groupBy'] = ['query'];
-            elseif ($validated['activeTab'] === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
-            elseif ($validated['activeTab'] === 'countries') $tabPayload['groupBy'] = ['country'];
-            elseif ($validated['activeTab'] === 'devices') $tabPayload['groupBy'] = ['device'];
-            elseif ($validated['activeTab'] === 'appearances') {
+            if ($tab === 'queries') $tabPayload['groupBy'] = ['query'];
+            elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
+            elseif ($tab === 'countries') $tabPayload['groupBy'] = ['country'];
+            elseif ($tab === 'devices') $tabPayload['groupBy'] = ['device'];
+            elseif ($tab === 'appearances') {
                 $tabPayload['groupBy'] = ['dimensions.searchAppearance'];
                 $tabPayload['filters']['dimensions.searchAppearance'] = ['operator' => 'not_equal', 'value' => 'standard'];
+            } else {
+                // Metric widget custom dimension
+                $tabPayload['groupBy'] = [$tab];
+                if ($tab === 'dimensions.searchAppearance' || $tab === 'searchAppearance') {
+                    $tabPayload['filters']['dimensions.searchAppearance'] = ['operator' => 'not_equal', 'value' => 'standard'];
+                }
             }
 
             $payloads = ['table' => $tabPayload];
@@ -180,15 +219,16 @@ class GoogleSearchConsoleController extends Controller
             $tableData = $results['table']['data'] ?? [];
 
             // Normalize ID for frontend
+            $rawKey = $tabPayload['groupBy'][0] ?? 'id';
+            $lookupFull = strtolower($rawKey);
+            $lookupStripped = strtolower(str_replace('dimensions.', '', $rawKey));
+            
             foreach ($tableData as &$row) {
-                if (isset($row['query'])) { $row['id'] = $row['query']; }
-                elseif (isset($row['dimensions.page'])) { $row['id'] = $row['dimensions.page']; }
-                elseif (isset($row['page'])) { $row['id'] = $row['page']; }
-                elseif (isset($row['country'])) { $row['id'] = $row['country']; }
-                elseif (isset($row['device'])) { $row['id'] = $row['device']; }
-                elseif (isset($row['dimensions.searchAppearance'])) { $row['id'] = $row['dimensions.searchAppearance']; }
-                elseif (isset($row['searchAppearance'])) { $row['id'] = $row['searchAppearance']; }
-                else { $row['id'] = 'Unknown'; }
+                $rowLower = array_change_key_case($row, CASE_LOWER);
+                $val = $rowLower[$lookupFull] ?? $rowLower[$lookupStripped] ?? $rowLower['id'] ?? 'Unknown';
+                if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
+                $row['id'] = $val;
+                $row['name'] = $val;
             }
 
             return response()->json([
@@ -204,7 +244,7 @@ class GoogleSearchConsoleController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+'tenant' => 'required|integer',
                 'metric' => 'required|string',
                 'series' => 'required|array',
                 'series.dates' => 'required|array',

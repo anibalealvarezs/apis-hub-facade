@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div wire:poll.10s="refreshData">
+    <div wire:poll.10s="refreshData" x-data="{ confirmModalOpen: false, modalChannel: '', modalAssetId: '', modalAssetName: '' }">
         @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
             <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
               <span class="font-bold">{{ __('Project Suspended') }}</span> {{ __('This project is currently inactive due to billing issues. Read-only access is allowed to view configuration, but editing, deployment, synchronization, and ownership transfer options are blocked.') }}
@@ -43,7 +43,7 @@
             @endphp
 
             {{-- 🟢 Layer 0: Worker Status --}}
-            <div class="mb-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
+            <div class="mb-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
                 <div>
                     <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">{{ __('Remote Workers Status') }}</h2>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -58,7 +58,7 @@
             </div>
 
             {{-- 🟢 Layer 1: Global Health Overview --}}
-            <div class="mb-8 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
+            <div class="mb-8 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div class="w-full md:w-1/2">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ __('Overall Sync Progress') }}</h2>
@@ -110,7 +110,7 @@
                         $chFailed = $channelData['failed'] ?? 0;
                         $hasAssets = !empty($channelData['assets']);
                     @endphp
-                    <div x-data="{ expanded: false }" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
+                    <div x-data="{ expanded: false }" class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
 
                         {{-- Channel Header Card --}}
                         <div class="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" @click="expanded = !expanded">
@@ -191,7 +191,8 @@
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Completed') }}</th>
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Processing') }}</th>
                                                     <th class="px-4 py-3 font-medium text-center">{{ __('Scheduled') }}</th>
-                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">{{ __('Failed') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center">{{ __('Failed') }}</th>
+                                                    <th class="px-4 py-3 font-medium text-center rounded-tr-lg">{{ __('Actions') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -219,6 +220,7 @@
                                                         $aPct = $aTotal > 0 ? min(100, round(($aComp / $aTotal) * 100)) : 100;
 
                                                         $rowClass = $aFail > 0 ? 'bg-danger-50/50 dark:bg-danger-500/5 hover:bg-danger-50 dark:hover:bg-danger-500/10' : 'hover:bg-gray-100/50 dark:hover:bg-white/5';
+                                                        $channelName = $channelData['channel'] ?? $channelKey;
                                                     @endphp
                                                     <tr class="{{ $rowClass }} transition-colors">
                                                         <td class="px-4 py-3">
@@ -308,6 +310,21 @@
                                                                 <span class="text-gray-300 dark:text-gray-600">-</span>
                                                             @endif
                                                         </td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            @if($aFail > 0 && auth()->user()->can('edit_preferences'))
+                                                                <x-filament::button
+                                                                    @click="modalChannel = '{{ $channelName }}'; modalAssetId = '{{ $assetId }}'; modalAssetName = '{{ addslashes($assetStats['name'] ?? $assetId) }}'; confirmModalOpen = true"
+                                                                    color="danger"
+                                                                    size="xs"
+                                                                    icon="heroicon-o-fire"
+                                                                    tooltip="{{ __('Reset jobs for this asset and force a historical resync') }}"
+                                                                >
+                                                                    {{ __('Resync') }}
+                                                                </x-filament::button>
+                                                            @else
+                                                                <span class="text-gray-300 dark:text-gray-600">-</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -322,6 +339,79 @@
                         </div>
                     </div>
                 @endforeach
+            </div>
+
+            {{-- 🛑 Asset Nuclear Resync Confirmation Modal --}}
+            <div
+                x-show="confirmModalOpen"
+                x-cloak
+                x-trap.noscroll="confirmModalOpen"
+                class="fixed inset-0 z-50 overflow-y-auto"
+                aria-labelledby="modal-title"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div
+                        x-show="confirmModalOpen"
+                        x-transition:enter="ease-out duration-300"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="ease-in duration-200"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity"
+                        @click="confirmModalOpen = false"
+                        aria-hidden="true"
+                    ></div>
+
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                    <div
+                        x-show="confirmModalOpen"
+                        x-transition:enter="ease-out duration-300"
+                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave="ease-in duration-200"
+                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        class="inline-block align-bottom bg-white dark:bg-gray-900 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-white/10 p-6"
+                    >
+                        <div class="flex items-start gap-4">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 dark:bg-danger-500/20 sm:mx-0 sm:h-10 sm:w-10">
+                                <x-heroicon-o-fire class="h-6 w-6 text-danger-600 dark:text-danger-400" />
+                            </div>
+                            <div class="mt-0 text-left flex-grow">
+                                <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                                    {{ __('Asset Historical Resync (Nuclear)') }}
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ __('Are you sure you want to perform a nuclear resync for asset') }} <strong class="text-gray-900 dark:text-white" x-text="modalAssetName"></strong>?
+                                    </p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                        {{ __('This action will clear pending/failed jobs for this specific asset and force a fresh synchronization fetch.') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 sm:mt-6 flex flex-row-reverse gap-3">
+                            <x-filament::button
+                                color="danger"
+                                icon="heroicon-o-fire"
+                                @click="$wire.resyncAsset(modalChannel, modalAssetId); confirmModalOpen = false;"
+                            >
+                                {{ __('Confirm Resync') }}
+                            </x-filament::button>
+                            <x-filament::button
+                                color="gray"
+                                @click="confirmModalOpen = false"
+                            >
+                                {{ __('Cancel') }}
+                            </x-filament::button>
+                        </div>
+                    </div>
+                </div>
             </div>
         @endif
     </div>

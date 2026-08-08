@@ -19,12 +19,17 @@ class DataSync extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Exploration & Telemetry');
+        return __('Integrations');
     }
 
     public function getTitle(): string
     {
         return __('Data Telemetry');
+    }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_data');
     }
 
     protected static string $view = 'filament.app.pages.data-sync';
@@ -74,22 +79,33 @@ class DataSync extends Page
 
                         // Check if current node represents an asset
                         $assetName = $data['title'] ?? $data['name'] ?? null;
-                        if (isset($data['id']) && is_string($assetName) && !empty($assetName)) {
-                            // Some telemetry systems prefix FB ids with 'act_'
-                            $cleanId = str_replace('act_', '', (string)$data['id']);
-                            
-                            $accountMap[$cleanId] = [
-                                'name' => $assetName,
-                                'ig_username' => null,
-                            ];
-                            $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
+                        
+                        $possibleIds = [];
+                        if (isset($data['id'])) $possibleIds[] = (string)$data['id'];
+                        if (isset($data['property_id'])) $possibleIds[] = (string)$data['property_id'];
+                        if (isset($data['url'])) {
+                            $possibleIds[] = (string)$data['url'];
+                            $possibleIds[] = md5((string)$data['url']);
+                        }
 
-                            // Check for IG account inside FB page
-                            if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
-                                $ig = $data['instagram_business_account'];
-                                if (isset($ig['username'])) {
-                                    $accountMap[$cleanId]['ig_username'] = $ig['username'];
-                                    $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
+                        if (!empty($possibleIds) && is_string($assetName) && !empty($assetName)) {
+                            foreach ($possibleIds as $extractedId) {
+                                // Some telemetry systems prefix FB ids with 'act_'
+                                $cleanId = str_replace('act_', '', $extractedId);
+                                
+                                $accountMap[$cleanId] = [
+                                    'name' => $assetName,
+                                    'ig_username' => null,
+                                ];
+                                $accountMap['act_' . $cleanId] = $accountMap[$cleanId]; // Map both variants
+
+                                // Check for IG account inside FB page
+                                if (isset($data['instagram_business_account']) && is_array($data['instagram_business_account'])) {
+                                    $ig = $data['instagram_business_account'];
+                                    if (isset($ig['username'])) {
+                                        $accountMap[$cleanId]['ig_username'] = $ig['username'];
+                                        $accountMap['act_' . $cleanId]['ig_username'] = $ig['username'];
+                                    }
                                 }
                             }
                         }
@@ -163,7 +179,12 @@ class DataSync extends Page
         $canResync = true;
         $resyncMessage = __('This action will clear pending jobs and force a fresh synchronization fetch. It will NOT remove any existing aggregated data.');
 
-        if ($tenant->last_historical_resync_at) {
+        $hasChannels = $tenant->countEnabledChannels(true) > 0;
+        
+        if (!$hasChannels) {
+            $canResync = false;
+            $resyncMessage = __('No active and connected channels configured for this project.');
+        } elseif ($tenant->last_historical_resync_at) {
             $daysSince = now()->diffInDays($tenant->last_historical_resync_at);
             if ($daysSince < $cooldownDays) {
                 $canResync = false;
@@ -188,21 +209,28 @@ class DataSync extends Page
                 ->requiresConfirmation()
                 ->modalHeading(__('Historical Resync (Nuclear)'))
                 ->modalDescription($resyncMessage.' '.__('Please, type "RESYNC" to confirm.'))
-                ->form(function () {
+                ->form(function () use ($tenant) {
                     $channels = [];
+                    $syncConfig = $tenant->sync_config ?? [];
                     if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
                         foreach (array_keys($this->syncData['channels']) as $c) {
-                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                            $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
+                            $isConnected = $tenant->isChannelConnected($c);
+                            if ($isConfigured && $isConnected) {
+                                $channels[$c] = ucwords(str_replace('_', ' ', $c));
+                            }
                         }
                     }
 
                     return [
-                        \Filament\Forms\Components\Select::make('channel')
-                            ->label(__('Target Channel'))
-                            ->options(array_merge(['all' => __('All Channels')], $channels))
-                            ->default('all')
+                        \Filament\Forms\Components\Select::make('channels')
+                            ->label(__('Target Channels'))
+                            ->options($channels)
+                            ->default(array_keys($channels))
+                            ->multiple()
                             ->required()
-                            ->helperText(__('Select a specific channel to limit the reset, or all channels.')),
+                            ->minItems(1)
+                            ->helperText(__('Select one or more channels to reset.')),
                         \Filament\Forms\Components\TextInput::make('confirmation')
                             ->label(__('Confirmation'))
                             ->required()
@@ -217,16 +245,41 @@ class DataSync extends Page
                     if ($data['confirmation'] !== 'RESYNC') {
                         return;
                     }
-                    $response = $service->triggerHistoricalResync($tenant, $data['channel']);
+                    $response = $service->triggerHistoricalResync($tenant, $data['channels']);
                     if (($response['status'] ?? '') === 'error') {
                         Notification::make()->title(__('Error:').' '.($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
-                        if ($data['channel'] === 'all') {
-                            $tenant->update(['last_historical_resync_at' => now()]);
-                        }
-                        Notification::make()->title(__('Historical resync initiated for ').($data['channel'] === 'all' ? __('all channels') : $data['channel']).__('... New jobs will be processed as soon as workers become available.'))->success()->send();
+                        $tenant->update(['last_historical_resync_at' => now()]);
+                        Notification::make()->title(__('Historical resync initiated for ').count($data['channels']).__(' channels... New jobs will be processed as soon as workers become available.'))->success()->send();
                     }
                 }),
         ];
+    }
+
+    public function resyncAsset(string $channel, string $assetId): void
+    {
+        if (! auth()->user()->can('edit_preferences')) {
+            Notification::make()->title(__('Permission Denied'))->danger()->send();
+            return;
+        }
+
+        $tenant = Filament::getTenant();
+        $service = app(RemoteEngineService::class);
+
+        $response = $service->triggerAssetHistoricalResync($tenant, $channel, $assetId);
+
+        if (($response['status'] ?? '') === 'error') {
+            Notification::make()
+                ->title(__('Error initiating resync for asset: ') . ($response['message'] ?? 'Unknown error'))
+                ->danger()
+                ->send();
+        } else {
+            Notification::make()
+                ->title(__('Historical resync initiated for asset ') . $assetId . __('...'))
+                ->success()
+                ->send();
+
+            $this->refreshData(true);
+        }
     }
 }

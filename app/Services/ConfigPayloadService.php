@@ -21,6 +21,7 @@ class ConfigPayloadService
     {
         $remoteAssetKeyMap = [
             'google_search_console' => 'gsc',
+            'google_analytics' => 'google_analytics',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
         ];
@@ -58,6 +59,26 @@ class ConfigPayloadService
         $payload['enabled'] = filter_var($channelConfig[$channel . '_enabled'] ?? $channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         unset($payload[$channel . '_enabled']);
 
+        // Check if the integration is disconnected
+        $provider = null;
+        $credential = null;
+        
+        foreach ($tenant->credentials as $cred) {
+            if (str_starts_with($channel, $cred->provider)) {
+                $provider = $cred->provider;
+                $credential = $cred;
+                break;
+            }
+        }
+
+        if ($provider) {
+            if (!$credential || empty($credential->token)) {
+                $payload['is_disconnected'] = true;
+            } else {
+                $payload['is_disconnected'] = false;
+            }
+        }
+
         // Enforce Global Defaults for Jobs
         $payload['granular_sync'] = true;
 
@@ -66,6 +87,12 @@ class ConfigPayloadService
             if (isset($channelConfig['calculate_synthetics'])) {
                 $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
             }
+        } elseif ($channel === 'google_analytics') {
+            $payload['max_workers'] = 3;
+
+            $payload['feature_toggles'] = [
+                'cache_aggregations' => false,
+            ];
         } elseif ($channel === 'facebook_organic') {
             $payload['max_workers'] = 1;
 
@@ -116,6 +143,7 @@ class ConfigPayloadService
         // FORCE CACHE HISTORY RANGE UNCONDITIONALLY
         $maxRanges = [
             'google_search_console' => '16 months',
+            'google_analytics'      => '2 years',
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
         ];
@@ -147,13 +175,13 @@ class ConfigPayloadService
         } else {
             $newAssetsList = [];
             foreach ($assetsListUi as $index => $uiAsset) {
-                $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? null;
+                $uiId = $uiAsset['id'] ?? $uiAsset['url'] ?? $uiAsset['platformId'] ?? null;
                 $dbAsset = null;
 
                 // Match by ID/URL if possible, otherwise by index
                 if ($uiId) {
                     foreach ($assetsListDb as $dbA) {
-                        if (($dbA['id'] ?? $dbA['url'] ?? null) === $uiId) {
+                        if (($dbA['id'] ?? $dbA['url'] ?? $dbA['platformId'] ?? null) === $uiId) {
                             $dbAsset = $dbA;
 
                             break;
@@ -185,7 +213,7 @@ class ConfigPayloadService
         // Filter out malformed/empty entries (e.g. YAML stubs '-' or null URLs).
         // The driver exits early and saves NOTHING if the incoming list is empty and type !== 'global'.
         $assetsListDb = array_values(array_filter($assetsListDb, function ($item) {
-            $id = $item['url'] ?? $item['id'] ?? null;
+            $id = $item['url'] ?? $item['id'] ?? $item['platformId'] ?? null;
             return !empty($id) && $id !== '-';
         }));
 
@@ -195,6 +223,9 @@ class ConfigPayloadService
         $assetsListDb = array_map(function ($item) {
             if (empty($item['url']) && !empty($item['id'])) {
                 $item['url'] = $item['id'];
+            }
+            if (empty($item['url']) && !empty($item['platformId'])) {
+                $item['url'] = $item['platformId'];
             }
             return $item;
         }, $assetsListDb);

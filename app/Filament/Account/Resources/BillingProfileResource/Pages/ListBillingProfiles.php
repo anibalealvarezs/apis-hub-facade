@@ -37,7 +37,7 @@ class ListBillingProfiles extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Account\Widgets\BillingRequestsWidget::class,
+            \App\Filament\Account\Resources\BillingProfileResource\Widgets\BillingRequestsWidget::class,
         ];
     }
 }

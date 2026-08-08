@@ -19,14 +19,30 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cost', 'cross-channel', 'agency', 'scope_global', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
                         'operator' => '/',
                         'left' => [
-                            'type' => 'metric',
-                            'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => [
+                                'type' => 'metric',
+                                'channel' => '__SPENDABLE_CHANNEL_1__',
+                                'metric' => 'spend',
+                            ],
+                            'right' => [
+                                'type' => 'metric',
+                                'channel' => '__SPENDABLE_CHANNEL_2__',
+                                'metric' => 'spend',
+                            ],
                         ],
                         'right' => [
                             'type' => 'operator',
@@ -34,16 +50,16 @@ class PredefinedKpiRegistry
                             'left' => [
                                 'type' => 'metric',
                                 'channel' => '__CLICKABLE_CHANNEL_1__',
-                                'metric' => 'clicks'
+                                'metric' => 'clicks',
                             ],
                             'right' => [
                                 'type' => 'metric',
                                 'channel' => '__CLICKABLE_CHANNEL_2__',
-                                'metric' => 'clicks'
-                            ]
-                        ]
-                    ]
-                ]
+                                'metric' => 'clicks',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'spend_elasticity' => [
                 'name' => 'Spend Scalability / Elasticity',
@@ -52,6 +68,13 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cost', 'scalability', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -59,15 +82,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__CLICKABLE_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'weekly_organic_seasonality' => [
                 'name' => 'Weekly Organic Seasonality',
@@ -76,13 +99,15 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social'],
                 'calculation_type' => 'calculate_autocorrelation',
+                'compatible_widgets' => ['bar_chart'],
+                'optimal_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'paid_to_organic_halo_effect' => [
                 'name' => 'Paid to Organic Halo Effect',
@@ -91,6 +116,8 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'cross-channel', 'organic', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'organic_social'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -98,16 +125,17 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
+                            'metric' => 'reach',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
+
             'cpc_momentum' => [
                 'name' => 'CPC Momentum (MACD)',
                 'description' => 'Detect when performance momentum flips. Example: Is our CPC getting cheaper or more expensive on a rolling basis?',
@@ -115,6 +143,8 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'trends', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'clickable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -122,30 +152,29 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'metric' => 'spend',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__CLICKABLE_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
-            'impression_anomaly_alert' => [
-                'name' => 'Impression Anomaly Alert',
-                'description' => 'Automated Alerting for unexpected spikes in impressions.',
+            'anomaly_alert' => [
+                'name' => 'Anomaly Alert',
+                'description' => 'Flags unusual spikes or drops in any time-series metric that fall outside normal statistical patterns. Adapts to your normal range and alerts when something truly unusual happens.',
                 'scope' => 'asset',
-                'categories' => ['impressions', 'alerts', 'scope_asset', 'org_mkt_marketing', 'source_src'],
-                'required_tags' => ['impressionable'],
+                'categories' => ['alerts', 'anomaly', 'scope_asset', 'org_mkt_marketing', 'source_src'],
                 'calculation_type' => 'calculate_anomaly',
+                'compatible_widgets' => ['anomaly_chart', 'tile', 'gauge'],
+                'optimal_widgets' => ['anomaly_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
-                        'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                        'metric' => 'impressions'
-                    ]
-                ]
+                    ],
+                ],
             ],
             'seo_click_momentum' => [
                 'name' => 'SEO Click Momentum',
@@ -154,13 +183,15 @@ class PredefinedKpiRegistry
                 'categories' => ['clicks', 'trends', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'clickable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SEO_CHANNEL_1__',
-                        'metric' => 'clicks'
-                    ]
-                ]
+                        'metric' => 'clicks',
+                    ],
+                ],
             ],
             'reach_elasticity' => [
                 'name' => 'Reach Scalability / Elasticity',
@@ -169,6 +200,13 @@ class PredefinedKpiRegistry
                 'categories' => ['impressions', 'scalability', 'cost', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -176,15 +214,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                            'metric' => 'impressions'
+                            'metric' => 'impressions',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'content_half_life' => [
                 'name' => 'Content Half-Life',
@@ -193,13 +231,15 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_autocorrelation',
+                'compatible_widgets' => ['bar_chart'],
+                'optimal_widgets' => ['bar_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'paid_organic_cannibalization' => [
                 'name' => 'Paid to Organic Cannibalization',
@@ -208,6 +248,8 @@ class PredefinedKpiRegistry
                 'categories' => ['cross-channel', 'performance', 'organic', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable', 'organic_social', 'impressionable'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -215,23 +257,32 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
+                            'metric' => 'reach',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
-            'ctr_efficiency' => [
-                'name' => 'CTR Efficiency (SEO)',
-                'description' => 'Is your organic search presence becoming more or less effective at turning impressions into clicks?',
-                'scope' => 'channel',
-                'categories' => ['clicks', 'impressions', 'seo', 'scope_channel', 'org_mkt_organic', 'source_src'],
+            'ctr_efficiency_page' => [
+                'name' => 'CTR Efficiency (By Page)',
+                'description' => 'Evaluates by landing page: Is your organic search presence becoming more or less effective at turning impressions into clicks?',
+                'scope' => 'asset',
+                'categories' => ['clicks', 'impressions', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'clickable', 'impressionable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -239,15 +290,48 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'impressions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
+            ],
+            'ctr_efficiency_query' => [
+                'name' => 'CTR Efficiency (By Keyword)',
+                'description' => 'Evaluates by search term: Is your organic search presence becoming more or less effective at turning impressions into clicks?',
+                'scope' => 'asset',
+                'categories' => ['clicks', 'impressions', 'seo', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'clickable', 'impressionable'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'query',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'default_max_ratio' => 1.0,
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
             ],
             'revenue_elasticity' => [
                 'name' => 'Revenue Elasticity (ROAS)',
@@ -256,6 +340,13 @@ class PredefinedKpiRegistry
                 'categories' => ['performance', 'results', 'scalability', 'agency', 'scope_global', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'revenue_tracked'],
                 'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -263,15 +354,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'cpa_trend' => [
                 'name' => 'CPA Trend (Cost per Acquisition)',
@@ -280,6 +371,8 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'results', 'trends', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -287,15 +380,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
+                            'metric' => 'spend',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
-                            'metric' => 'conversions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'conversions',
+                        ],
+                    ],
+                ],
             ],
             'seo_to_revenue_influence' => [
                 'name' => 'SEO to Revenue Influence',
@@ -304,6 +397,8 @@ class PredefinedKpiRegistry
                 'categories' => ['seo', 'results', 'cross-channel', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['seo', 'revenue_tracked'],
                 'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -311,15 +406,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
-                            'metric' => 'revenue'
+                            'metric' => 'revenue',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
-                        ]
-                    ]
-                ]
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
             ],
             'result_efficiency' => [
                 'name' => 'Result Efficiency',
@@ -328,6 +423,13 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'performance', 'cost', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -335,15 +437,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'results'
+                            'metric' => 'results',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'spend'
-                        ]
-                    ]
-                ]
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
             ],
             'result_rate_momentum' => [
                 'name' => 'Result Rate Momentum',
@@ -352,6 +454,8 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'trends', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_src', 'source_tracking'],
                 'required_tags' => ['spendable', 'impressionable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -359,15 +463,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SPENDABLE_CHANNEL_1__',
-                            'metric' => 'results'
+                            'metric' => 'results',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__IMPRESSIONABLE_CHANNEL_1__',
-                            'metric' => 'impressions'
-                        ]
-                    ]
-                ]
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
             ],
             'organic_engagement_efficiency' => [
                 'name' => 'Organic Engagement Efficiency',
@@ -376,6 +480,15 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'post',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'default_max_ratio' => 1.0,
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -383,15 +496,15 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'engaged_users'
+                            'metric' => 'engaged_users',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                            'metric' => 'reach'
-                        ]
-                    ]
-                ]
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
             ],
             'roas_momentum' => [
                 'name' => 'ROAS Momentum',
@@ -400,36 +513,31 @@ class PredefinedKpiRegistry
                 'categories' => ['results', 'trends', 'cost', 'agency', 'scope_channel', 'org_mkt_marketing', 'source_tracking'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'purchase_roas'
-                    ]
-                ]
+                        'metric' => 'purchase_roas',
+                    ],
+                ],
             ],
-            'cpc_anomaly' => [
-                'name' => 'CPC Anomaly Alert',
-                'description' => 'Alerts when your Cost Per Click deviates significantly from normal range. Helps catch auction changes, competitive shifts, or tracking issues early.',
-                'scope' => 'asset',
-                'categories' => ['cost', 'alerts', 'agency', 'scope_asset', 'org_mkt_marketing', 'source_src'],
-                'required_tags' => ['spendable'],
-                'calculation_type' => 'calculate_anomaly',
-                'template' => [
-                    'ast' => [
-                        'type' => 'metric',
-                        'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'cpc'
-                    ]
-                ]
-            ],
-            'search_position_efficiency' => [
-                'name' => 'Search Position Efficiency',
-                'description' => 'How many clicks do you get per unit of search position? Higher means more compelling snippets. A rising trend indicates your search listings are becoming more clickable.',
+            'search_position_efficiency_page' => [
+                'name' => 'Search Position Efficiency (By Page)',
+                'description' => 'Evaluates by landing page: How many clicks do you get per unit of search position? Higher means more compelling snippets.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo'],
                 'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
                 'template' => [
                     'ast' => [
                         'type' => 'operator',
@@ -437,30 +545,81 @@ class PredefinedKpiRegistry
                         'left' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'clicks'
+                            'metric' => 'clicks',
                         ],
                         'right' => [
                             'type' => 'metric',
                             'channel' => '__SEO_CHANNEL_1__',
-                            'metric' => 'position'
-                        ]
-                    ]
-                ]
+                            'metric' => 'position',
+                        ],
+                    ],
+                ],
+            ],
+            'search_position_efficiency_query' => [
+                'name' => 'Search Position Efficiency (By Keyword)',
+                'description' => 'Evaluates by search term: How many clicks do you get per unit of search position? Higher means more compelling snippets.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'agency', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'query',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'position',
+                        ],
+                    ],
+                ],
             ],
             'seo_structural_inertia' => [
-                'name' => 'SEO Structural Inertia (Linear + SMA)',
-                'description' => 'Calculates the underlying growth trend of your organic search presence by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
+                'name' => 'SEO (impressions) Structural Inertia (Linear + SMA)',
+                'description' => 'Calculates the underlying growth trend of your organic search impressions by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'impressionable'],
                 'calculation_type' => 'calculate_trend_linear',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SEO_CHANNEL_1__',
-                        'metric' => 'impressions'
-                    ]
-                ]
+                        'metric' => 'impressions',
+                    ],
+                ],
+            ],
+            'seo_position_structural_inertia' => [
+                'name' => 'SEO (position) Structural Inertia (Linear + SMA)',
+                'description' => 'Calculates the underlying growth trend of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'impressionable'],
+                'calculation_type' => 'calculate_trend_linear',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__SEO_CHANNEL_1__',
+                        'metric' => 'position',
+                    ],
+                ],
             ],
             'fb_algorithmic_inertia' => [
                 'name' => 'Algorithmic Basal Inertia (Holt-Winters)',
@@ -469,13 +628,15 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'trends', 'seasonality', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_holt_winters',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'reach'
-                    ]
-                ]
+                        'metric' => 'reach',
+                    ],
+                ],
             ],
             'ig_viral_momentum' => [
                 'name' => 'Viral Momentum (Logarithmic Trend)',
@@ -484,13 +645,15 @@ class PredefinedKpiRegistry
                 'categories' => ['organic', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_trend_logarithmic',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
-                        'metric' => 'total_interactions'
-                    ]
-                ]
+                        'metric' => 'total_interactions',
+                    ],
+                ],
             ],
             'paid_learning_inertia' => [
                 'name' => 'Learning Phase Inertia (EMA Crossover)',
@@ -499,13 +662,370 @@ class PredefinedKpiRegistry
                 'categories' => ['cost', 'trends', 'performance', 'scope_channel', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['spendable'],
                 'calculation_type' => 'calculate_trend_ema',
+                'compatible_widgets' => ['line_chart', 'sparkline', 'tile'],
+                'optimal_widgets' => ['line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SPENDABLE_CHANNEL_1__',
-                        'metric' => 'cost_per_result'
-                    ]
-                ]
+                        'metric' => 'cost_per_result',
+                    ],
+                ],
+            ],
+            'seo_intent_match' => [
+                'name' => 'SEO Intent Match (Bounce Rate vs Clicks)',
+                'description' => 'Compares organic search clicks with bounce rate to identify if the content matches search intent.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'bounce_rate',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
+            'organic_conversion_elasticity' => [
+                'name' => 'Organic Conversion Elasticity',
+                'description' => 'Measures how much real site conversions scale for every point improved in organic search position/clicks.',
+                'scope' => 'global',
+                'categories' => ['seo', 'results', 'scalability', 'scope_global', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'conversion_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
+                            'metric' => 'conversions',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
+            'seo_engagement_quality' => [
+                'name' => 'SEO Engagement Quality',
+                'description' => 'A quality indicator measuring session duration driven by organic landing pages.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'average_session_duration',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
+            'toxic_page_detector' => [
+                'name' => 'Toxic Page Detector',
+                'description' => 'Identifies pages with high bounce rate despite high search visibility (impressions).',
+                'scope' => 'asset',
+                'categories' => ['seo', 'alerts', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'bounce_rate',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
+            ],
+            'paid_acquisition_saturation' => [
+                'name' => 'Paid Acquisition Saturation',
+                'description' => 'Crosses Meta ad spend against New Users acquired to reveal audience saturation.',
+                'scope' => 'channel',
+                'categories' => ['performance', 'scalability', 'cost', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'traffic_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_granularity' => 'country',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'new_users',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
+            ],
+            'click_to_session_drop_off' => [
+                'name' => 'Click-to-Session Drop-off',
+                'description' => 'Detects percentage loss between ad clicks charged and actual web sessions.',
+                'scope' => 'channel',
+                'categories' => ['performance', 'alerts', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['paid_media', 'traffic_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'device',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'default_max_ratio' => 1.0,
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'sessions',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__PAID_MEDIA_CHANNEL_1__',
+                            'metric' => 'link_clicks',
+                        ],
+                    ],
+                ],
+            ],
+            'social_viral_to_revenue_pipeline' => [
+                'name' => 'Social Viral to Revenue Pipeline',
+                'description' => 'Evaluates if organic social virality statistically translates into website revenue in subsequent days.',
+                'scope' => 'global',
+                'categories' => ['organic', 'cross-channel', 'results', 'scope_global', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'revenue_tracked'],
+                'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
+                            'metric' => 'revenue',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
+            ],
+            'social_traffic_stickiness' => [
+                'name' => 'Social Traffic Stickiness',
+                'description' => 'Measures how engaged the audience from social media remains after landing on the website.',
+                'scope' => 'asset',
+                'categories' => ['organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['organic_social', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'average_session_duration',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                            'metric' => 'reach',
+                        ],
+                    ],
+                ],
+            ],
+            'brand_search_halo_effect' => [
+                'name' => 'Brand Search Halo Effect',
+                'description' => 'Tests whether paid advertising spend causes a statistically significant delayed increase in organic brand search clicks. Does paying for ads lift your brand\'s organic search visibility?',
+                'scope' => 'global',
+                'categories' => ['performance', 'cross-channel', 'seo', 'agency', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'seo', 'clickable'],
+                'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
+            ],
+            'omnichannel_revenue_attribution' => [
+                'name' => 'Omnichannel Revenue Attribution',
+                'description' => 'Multiple regression determining which marketing effort statistically pushes more global revenue.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'results', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['revenue_tracked', 'seo', 'spendable', 'organic_social'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
+                            'metric' => 'revenue',
+                        ],
+                        'right' => [
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => [
+                                'type' => 'metric',
+                                'channel' => '__SEO_CHANNEL_1__',
+                                'metric' => 'clicks',
+                            ],
+                            'right' => [
+                                'type' => 'operator',
+                                'operator' => '+',
+                                'left' => [
+                                    'type' => 'metric',
+                                    'channel' => '__SPENDABLE_CHANNEL_1__',
+                                    'metric' => 'spend',
+                                ],
+                                'right' => [
+                                    'type' => 'metric',
+                                    'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                                    'metric' => 'reach',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'traffic_to_conversion_inertia' => [
+                'name' => 'Traffic to Conversion Inertia',
+                'description' => 'Determines the natural conversion rhythm of the isolated site.',
+                'scope' => 'global',
+                'categories' => ['performance', 'results', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['traffic_tracked', 'conversion_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
+                            'metric' => 'conversions',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'sessions',
+                        ],
+                    ],
+                ],
             ],
         ];
     }
@@ -523,7 +1043,7 @@ class PredefinedKpiRegistry
         // Resolve all unique tags available across the user's active channels
         $availableTags = [];
         $registryTags = ChannelCapabilityRegistry::getTags();
-        
+
         foreach ($activeChannels as $channel) {
             if (isset($registryTags[$channel])) {
                 $availableTags = array_merge($availableTags, $registryTags[$channel]);
@@ -533,6 +1053,10 @@ class PredefinedKpiRegistry
 
         // Filter KPIs where all required_tags are present in availableTags
         return collect(self::getPredefinedKpis())->filter(function ($kpi) use ($availableTags) {
+            if (($kpi['status'] ?? 'active') === 'unavailable') {
+                return false;
+            }
+
             $requiredTags = $kpi['required_tags'] ?? [];
             return count(array_intersect($requiredTags, $availableTags)) === count($requiredTags);
         })->toArray();

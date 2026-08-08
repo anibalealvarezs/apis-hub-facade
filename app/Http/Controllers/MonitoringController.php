@@ -65,19 +65,9 @@ class MonitoringController extends Controller
             return response('Channel not provided', 400);
         }
 
-        // Clear connection by nullifying profile ID
-        $profileIdField = "{$channel}_profile_id";
-        
-        $updateData = [];
-
-        // Ensure we only nullify if the column exists on the model
-        if (\Illuminate\Support\Facades\Schema::hasColumn('projects', $profileIdField)) {
-            $updateData[$profileIdField] = null;
-        }
-
-        if (!empty($updateData)) {
-            $project->update($updateData);
-        }
+        // Do NOT nullify the profile ID as this alters project configuration and breaks billing.
+        // The Token Authority already handles marking the profile's access_token as null when the grant is invalid.
+        \Illuminate\Support\Facades\Log::warning("Permanent auth failure reported by worker for channel $channel on project {$project->name}. TokenAuthority should have already marked the profile as disconnected.");
 
         return response()->json([
             'status' => 'success',

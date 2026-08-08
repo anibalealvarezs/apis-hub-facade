@@ -9,14 +9,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-magnifying-glass" class="h-5 w-5 text-primary-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('Exploring Cached Data') }}</span>
                         <x-filament::icon 
@@ -28,7 +26,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -49,14 +47,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-chart-pie" class="h-5 w-5 text-indigo-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('Maximal Granularity and Interaction') }}</span>
                         <x-filament::icon 
@@ -68,7 +64,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -88,18 +84,16 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-arrows-right-left" class="h-5 w-5 text-fuchsia-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('Performance Correlations') }}</span>
                         <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
-                        <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                        <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" x-cloak />
                     </a>
                 </div>
             </x-slot>

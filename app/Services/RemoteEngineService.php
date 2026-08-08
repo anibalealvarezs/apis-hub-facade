@@ -12,8 +12,10 @@ class RemoteEngineService
     /**
      * Get an instance of the ApisHubApi client for a project.
      */
-    protected function getClient(Project $project): ApisHubApi
+    protected function getClient(Project $project, int $timeout = 15): ApisHubApi
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getClient ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
         $baseDomain = config('app.network_domain');
         $domain = "{$project->subdomain}.{$baseDomain}";
 
@@ -29,10 +31,45 @@ class RemoteEngineService
             throw new Exception("Remote Admin API Key not configured for project: {$project->name}");
         }
 
+        $handlerStack = \GuzzleHttp\HandlerStack::create();
+        $handlerStack->push(\GuzzleHttp\Middleware::mapRequest(function (\Psr\Http\Message\RequestInterface $request) {
+            $body = (string) $request->getBody();
+            $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000) . '...[truncated]' : $body;
+            \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Outgoing request', [
+                'method' => $request->getMethod(),
+                'uri' => (string) $request->getUri(),
+                'headers' => $request->getHeaders(),
+                'body' => $truncated,
+            ]);
+            if ($request->getBody()->isSeekable()) {
+                $request->getBody()->rewind();
+            }
+            return $request;
+        }));
+        $handlerStack->push(\GuzzleHttp\Middleware::mapResponse(function (\Psr\Http\Message\ResponseInterface $response) {
+            $body = (string) $response->getBody();
+            $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000) . '...[truncated]' : $body;
+            \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Incoming response', [
+                'status' => $response->getStatusCode(),
+                'body' => $truncated,
+            ]);
+            if ($response->getBody()->isSeekable()) {
+                $response->getBody()->rewind();
+            }
+            return $response;
+        }));
+        $guzzleClient = new \GuzzleHttp\Client([
+            'handler' => $handlerStack,
+            'timeout' => $timeout,
+            'connect_timeout' => $timeout,
+        ]);
+
         // Initialize SDK with base protocol and API Key
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getClient BEFORE SDK init", ['project_id' => $project->id, 'domain' => $domain, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
         return new ApisHubApi(
             baseUrl: "{$protocol}://{$domain}",
             apiKey: (string) $apiKey,
+            guzzleClient: $guzzleClient,
             debugMode: false // NEVER couple this to config('app.debug'), otherwise the SDK intercepts and mocks all requests
         );
     }
@@ -40,12 +77,18 @@ class RemoteEngineService
     /**
      * Execute a task via the SDK with centralized error handling.
      */
-    public function execute(Project $project, callable $callback)
+    public function execute(Project $project, callable $callback, int $timeout = 15)
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
         try {
-            $client = $this->getClient($project);
+            $client = $this->getClient($project, $timeout);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute getClient done", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
-            return $callback($client);
+            $result = $callback($client);
+            \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute callback done", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
+
+            return $result;
         } catch (Exception $e) {
             Log::error("Remote Engine Action Failed: {$project->name}", [
                 'error' => $e->getMessage(),
@@ -93,17 +136,34 @@ class RemoteEngineService
     }
 
     /**
-     * Trigger a nuclear historical resync via a tracked background job.
+     * Trigger a historical synchronization resync over SSH.
      */
-    public function triggerHistoricalResync(Project $project, string $channel = 'all')
+    public function triggerHistoricalResync(Project $project, array $channels)
     {
         try {
-            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channel);
+            \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channels);
 
             return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
 
         } catch (\Throwable $e) {
             Log::error("Nuclear Resync Job dispatch failed for {$project->name}: " . $e->getMessage());
+
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Trigger a single-asset historical synchronization resync over SSH.
+     */
+    public function triggerAssetHistoricalResync(Project $project, string $channel, string $assetId)
+    {
+        try {
+            \App\Jobs\NuclearResyncProjectJob::dispatch($project, [$channel], $assetId);
+
+            return ['status' => 'success', 'message' => 'Single asset nuclear resync initiated via background job.'];
+
+        } catch (\Throwable $e) {
+            Log::error("Asset Nuclear Resync Job dispatch failed for {$project->name} ({$channel}/{$assetId}): " . $e->getMessage());
 
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
@@ -205,7 +265,7 @@ class RemoteEngineService
      */
     public function validateTokens(Project $project, string $type = 'all')
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->validateTokens(['type' => $type]), 15);
     }
 
     /**
@@ -232,9 +292,53 @@ class RemoteEngineService
      */
     public function computeKpi(Project $project, array $payload)
     {
+        $t0 = microtime(true);
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi ENTER", ['project_id' => $project->id]);
         $payload['admin_api_key'] = env('ANALYTICS_API_KEY', 'dev_secret_key');
         $payload['analytics_engine_host'] = env('ANALYTICS_ENGINE_HOST', 'https://analytics.apis-hub.cloud/');
-        return $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+
+        $logPayload = $payload;
+        unset($logPayload['admin_api_key']);
+        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI payload', $logPayload);
+
+        $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi AFTER execute", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
+
+        \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => is_array($result['data'] ?? null) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
+
+        // Log full response data structure — check for intermediate/raw fields
+        if (is_array($result) && is_array($result['data'] ?? null)) {
+            $allDataKeys = array_keys($result['data']);
+            $extraKeys = array_diff($allDataKeys, ['baseline_intercept','coefficients','r_squared','data_points','scatter_data']);
+            if (!empty($extraKeys)) {
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI extra data keys', ['keys' => array_values($extraKeys)]);
+            }
+            // Log what data_points contains (it might hold raw keyword data)
+            if (isset($result['data']['data_points'])) {
+                $dp = $result['data']['data_points'];
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI data_points detail', [
+                    'type' => gettype($dp),
+                    'value' => is_scalar($dp) ? $dp : (is_array($dp) ? 'array(len=' . count($dp) . ')' : 'object'),
+                ]);
+            }
+            // Log the FULL scatter_data structure for completeness
+            if (isset($result['data']['scatter_data'])) {
+                $sd = $result['data']['scatter_data'];
+                \Illuminate\Support\Facades\Log::info('RemoteEngine KPI scatter_data structure', [
+                    'keys' => array_keys($sd),
+                    'x_type' => gettype($sd['x'] ?? null),
+                    'x_len' => is_array($sd['x'] ?? null) ? count($sd['x']) : 0,
+                    'y_type' => gettype($sd['y'] ?? null),
+                    'y_len' => is_array($sd['y'] ?? null) ? count($sd['y']) : 0,
+                    'labels_type' => gettype($sd['labels'] ?? null),
+                    'labels_len' => is_array($sd['labels'] ?? null) ? count($sd['labels']) : 0,
+                    'x_label' => $sd['x_label'] ?? null,
+                    'has_x_label_array' => isset($sd['x_label']) && is_array($sd['x_label']),
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     /**

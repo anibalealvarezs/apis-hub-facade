@@ -1,6 +1,9 @@
 <x-filament-panels::page>
     <div
-        x-data="kpiBrowser()"
+        x-data="kpiBrowser({
+            kpis: @js($this->getKpisWithGuidance()),
+            categoryGroups: @js($this->getCategoryGroups())
+        })"
         class="space-y-6"
     >
         <div class="prose prose-sm max-w-none text-gray-500 dark:text-gray-400 mb-2">
@@ -52,26 +55,32 @@
             <template x-for="kpi in filteredKpis" :key="kpi.key">
                 <x-filament::section x-bind:id="kpi.key">
                     <x-slot name="heading">
-                        <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                        <div class="flex items-center gap-2 group" x-data="copyLink()">
                             <x-filament::icon icon="heroicon-o-chart-bar" class="h-5 w-5 text-primary-500" />
                             <a x-bind:href="'#' + kpi.key"
                                class="flex items-center gap-2 hover:underline text-inherit"
                                @click.prevent="
-                                   navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + kpi.key);
-                                   copied = true;
-                                   setTimeout(() => copied = false, 2000);
+                                   copy(kpi.key);
                                ">
                                 <span x-text="kpi.name"></span>
                                 <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
-                                <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                                <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" x-cloak />
                             </a>
                         </div>
                     </x-slot>
 
                     <x-slot name="description">
-                        <x-filament::badge color="primary">
-                            <span x-text="kpi.type_label"></span>
-                        </x-filament::badge>
+                        <div class="flex items-center gap-2 mt-1">
+                            <x-filament::badge color="primary">
+                                <span x-text="kpi.type_label"></span>
+                            </x-filament::badge>
+                            
+                            <template x-if="kpi.status === 'unavailable'">
+                                <x-filament::badge color="danger" icon="heroicon-o-exclamation-triangle">
+                                    {{ __('Not Available') }}
+                                </x-filament::badge>
+                            </template>
+                        </div>
                     </x-slot>
 
                     <div class="space-y-5">
@@ -86,66 +95,22 @@
                                 <p x-text="kpi.use_case"></p>
                             </div>
                         </div>
-
-                        <div>
-                            <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">{{ __('Reading the result') }}</span>
-                            <div class="mt-1 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                <p x-text="kpi.interpretation"></p>
-                            </div>
-                        </div>
+                        <a
+                            :href="'/app/manage-kpis/create?type=' + kpi.type"
+                            class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+                        >
+                            <span>{{ __('Create this KPI') }}</span>
+                            <x-heroicon-m-arrow-right class="w-3.5 h-3.5" />
+                        </a>
                     </div>
                 </x-filament::section>
             </template>
         </x-filament::grid>
 
-        <div x-show="filteredKpis.length === 0" class="text-center py-12">
+        <div x-show="filteredKpis.length === 0" class="text-center py-12 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
             <x-filament::icon icon="heroicon-o-magnifying-glass" class="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
             <p class="mt-4 text-lg font-semibold text-gray-500 dark:text-gray-400">{{ __('No KPIs match your filters') }}</p>
             <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">{{ __('Try adjusting your search or selecting different categories.') }}</p>
         </div>
     </div>
-
-    @script
-    <script>
-        Alpine.data('kpiBrowser', () => ({
-            kpis: @js($this->getKpisWithGuidance()),
-            categoryGroups: @js($this->getCategoryGroups()),
-            search: '',
-            selectedCategories: [],
-
-            toggleCategory(cat) {
-                const idx = this.selectedCategories.indexOf(cat);
-                if (idx === -1) {
-                    this.selectedCategories.push(cat);
-                } else {
-                    this.selectedCategories.splice(idx, 1);
-                }
-            },
-
-            get filteredKpis() {
-                return this.kpis.filter(kpi => {
-                    const q = this.search.toLowerCase().trim();
-                    if (q) {
-                        const haystack = [
-                            kpi.name,
-                            kpi.type_label,
-                            kpi.explanation,
-                            kpi.use_case,
-                            kpi.interpretation,
-                        ].join(' ').toLowerCase();
-                        if (!haystack.includes(q)) return false;
-                    }
-
-                    if (this.selectedCategories.length > 0) {
-                        for (const cat of this.selectedCategories) {
-                            if (!kpi.categories.includes(cat)) return false;
-                        }
-                    }
-
-                    return true;
-                });
-            }
-        }));
-    </script>
-    @endscript
 </x-filament-panels::page>

@@ -51,7 +51,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function mount(): void
     {
-        $this->dateEnd = Carbon::now()->subDays(3)->format('Y-m-d');
+        $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
 
         $this->loadAccounts();
@@ -87,8 +87,11 @@ class GoogleSearchConsoleDashboard extends Page
                     }
                 }
                 
-                if (!empty($this->accounts) && !$this->selectedAccount) {
-                    $this->selectedAccount = array_key_first($this->accounts);
+                if (!empty($this->accounts)) {
+                    uasort($this->accounts, fn($a, $b) => strcasecmp((string)$a, (string)$b));
+                    if (!$this->selectedAccount) {
+                        $this->selectedAccount = array_key_first($this->accounts);
+                    }
                 }
             } else {
                 \Illuminate\Support\Facades\Log::info("GSC Dashboard - no data in response", ['response_keys' => is_array($response) ? array_keys($response) : gettype($response)]);

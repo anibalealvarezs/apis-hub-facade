@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Filament\Account\Widgets;
+namespace App\Filament\Account\Resources\BillingProfileResource\Widgets;
 
+use App\Models\BillingProfile;
+use App\Models\Project;
 use App\Notifications\BillingProfileAssignmentProcessedNotification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Support\Facades\DB;
-use App\Models\BillingProfile;
-use App\Models\Project;
 
 class BillingRequestsWidget extends BaseWidget
 {
@@ -66,6 +65,7 @@ class BillingRequestsWidget extends BaseWidget
                                     ->danger()
                                     ->persistent()
                                     ->send();
+
                                 return;
                             }
                         }

@@ -3,11 +3,21 @@
 namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
+use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateDashboard extends CreateRecord
 {
+    use \Filament\Resources\Pages\CreateRecord\Concerns\Translatable;
+
     protected static string $resource = DashboardResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\LocaleSwitcher::make(),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

@@ -11,7 +11,7 @@ class GlobalInfrastructureStatus extends Component
     {
         $tenant = Filament::getTenant();
 
-        if (!$tenant) {
+        if (!$tenant || !auth()->user()->can('view_data')) {
             return <<<'HTML'
             <div></div>
             HTML;

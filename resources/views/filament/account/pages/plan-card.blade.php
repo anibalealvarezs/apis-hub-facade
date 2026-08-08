@@ -1,7 +1,7 @@
 @php
     $isFounder = $plan->tier === 'founder';
 @endphp
-<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'shadow-lg relative' : 'border border-gray-200 dark:border-gray-800' }}" @if($isFounder) style="border-style: solid; border-color: #00a7f9; border-width: 6px 2px 2px 2px;" @endif>
+<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'shadow-lg relative pc-founder-card' : 'border border-gray-200 dark:border-gray-800' }}">
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
@@ -41,7 +41,7 @@
                         <input type="hidden" name="billing_profile_id" value="{{ $profile?->id }}">
                         <input type="hidden" name="billing_cycle" value="{{ $cycle }}">
                         
-                        <button type="submit" class="w-full font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all hover:opacity-90" style="background-color: #FFC439; color: #003087;">
+                        <button type="submit" class="w-full font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 text-sm shadow transition-all hover:opacity-90 pc-paypal-btn">
                             <x-heroicon-o-credit-card class="w-4 h-4"/>
                             {{ __('Subscribe via PayPal') }}
                         </button>

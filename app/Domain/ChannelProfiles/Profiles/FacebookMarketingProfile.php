@@ -51,7 +51,7 @@ class FacebookMarketingProfile extends AbstractChannelProfile
                             'item_schema' => [
                                 'id' => ['type' => 'string'],
                                 'name' => ['type' => 'string'],
-                                'enabled' => ['type' => 'boolean', 'default' => true],
+                                'enabled' => ['type' => 'boolean', 'default' => false],
                                 'lost_access' => ['type' => 'boolean', 'default' => false],
                             ]
                         ]
