@@ -382,7 +382,7 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls"
              class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
-             x-trap.noscroll="showWidgetControls" x-cloak>
+             x-cloak>
             <div @click="showWidgetControls = false"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div
