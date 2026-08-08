@@ -104,9 +104,9 @@
 
             {{-- Grid Area --}}
             <div class="col-span-12 lg:col-span-10">
-                <div id="grid-container" wire:ignore
+                <div id="grid-container"
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
-                    <div id="grid-stack" class="grid-stack">
+                    <div id="grid-stack" class="grid-stack" wire:ignore>
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
