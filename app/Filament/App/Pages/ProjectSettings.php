@@ -165,12 +165,12 @@ class ProjectSettings extends Page
                     ->required()
                     ->helperText(__('The timezone used by your virtual APIs Hub server to schedule tasks and log events.')),
                 \Filament\Forms\Components\CheckboxList::make('supported_locales')
-                    ->label(__('Available Project Languages'))
+                    ->label(__('Project Content Languages'))
                     ->options(\App\Models\Project::getSupportedLanguageCatalog())
                     ->columns(3)
                     ->required()
                     ->minItems(1)
-                    ->helperText(__('Configure which languages are enabled for dashboards and widget texts across this project.')),
+                    ->helperText(__('Target languages enabled for dashboard reports and widget texts across this project. This is separate from the application interface language.')),
             ])
             ->action(function (array $data) use ($project) {
                 $project->update([

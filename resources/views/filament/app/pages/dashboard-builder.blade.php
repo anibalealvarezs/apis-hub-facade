@@ -346,6 +346,22 @@
                             <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
                         </x-ui.select-input>
                     </div>
+                {{-- Dashboard Content Languages --}}
+                @php
+                    $projectLangs = Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
+                @endphp
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Dashboard Content Languages') }}</label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Target languages enabled for editing and viewing this specific dashboard&rsquo;s reports and widget texts. Separate from the app interface language.') }}</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                        @foreach($projectLangs as $code => $label)
+                            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <input type="checkbox" value="{{ $code }}" x-model="dashboardControls.supported_locales"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                <span>{{ $label }} ({{ strtoupper($code) }})</span>
+                            </label>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
