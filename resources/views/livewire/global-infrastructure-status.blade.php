@@ -41,7 +41,7 @@
             <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}"
                   style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
-        <span class="text-xs font-medium text-gray-600 dark:text-gray-300 max-w-[120px] truncate">
+        <span class="text-xs font-medium text-gray-600 dark:text-gray-200 max-w-[120px] truncate">
             {{ $statusText }}
         </span>
     </div>
@@ -55,7 +55,7 @@
                      style="width: {{ $syncPercentage }}%"></div>
             </div>
             <span
-                class="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors whitespace-nowrap">{{ $syncPercentage }}%</span>
+                class="text-xs font-semibold text-gray-700 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors whitespace-nowrap">{{ $syncPercentage }}%</span>
         </a>
     @endif
 
@@ -65,7 +65,7 @@
 
     {{-- Real-Time Tenant Clock & Timezone Widget --}}
     <div x-data="tenantClock({ timezone: '{{ $tenantTimezone }}' })" 
-       class="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200/50 dark:border-white/10 text-xs font-mono text-gray-700 dark:text-gray-300 select-none shrink-0" 
+       class="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200/50 dark:border-white/10 text-xs font-mono text-gray-700 dark:text-gray-200 select-none shrink-0" 
        title="{{ __('Current Tenant Local Time') }}">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-primary-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
