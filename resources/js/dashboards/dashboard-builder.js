@@ -50,7 +50,7 @@ export function dashboardBuilder(config = {}) {
         showDashboardControls: false,
         showWidgetControls: false,
         widgetControlsTarget: null,
-        availableLanguages: config.availableLanguages || { en: 'English', es: 'Español' },
+        availableLanguages: config.availableLanguages || {},
         dashboardControls,
         assetGroups: config.assetGroups || {},
 
@@ -630,8 +630,8 @@ export function dashboardBuilder(config = {}) {
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
 
-            let titles = { en: '', es: '' };
-            let descriptions = { en: '', es: '' };
+            let titles = {};
+            let descriptions = {};
 
             if (widget.titles && typeof widget.titles === 'object') {
                 titles = { ...widget.titles };
@@ -656,27 +656,25 @@ export function dashboardBuilder(config = {}) {
             const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
             const baseDesc = this.parseLocalizedValue(widget.description || '');
 
-            if (!titles.en && !titles.es) {
-                titles.en = baseTitle;
-                titles.es = baseTitle;
-            } else {
-                if (!titles.en) titles.en = titles.es || baseTitle;
-                if (!titles.es) titles.es = titles.en || baseTitle;
-            }
+            const langCodes = Object.keys(this.availableLanguages || {});
+            const defaultLang = langCodes[0] || (document.documentElement.lang || 'en');
 
-            if (!descriptions.en && !descriptions.es) {
-                descriptions.en = baseDesc;
-                descriptions.es = baseDesc;
-            } else {
-                if (!descriptions.en) descriptions.en = descriptions.es || baseDesc;
-                if (!descriptions.es) descriptions.es = descriptions.en || baseDesc;
+            if (langCodes.length > 0) {
+                langCodes.forEach(code => {
+                    if (!titles[code]) {
+                        titles[code] = titles[defaultLang] || baseTitle;
+                    }
+                    if (!descriptions[code]) {
+                        descriptions[code] = descriptions[defaultLang] || baseDesc;
+                    }
+                });
             }
 
             this.widgetControlsForm = {
                 titles: titles,
                 descriptions: descriptions,
-                title: titles[this.activeIdentityLang] || titles.en || baseTitle,
-                description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
+                title: titles[this.activeIdentityLang] || titles[defaultLang] || baseTitle,
+                description: descriptions[this.activeIdentityLang] || descriptions[defaultLang] || baseDesc,
                 widget_type: widget.widget_type || '',
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
