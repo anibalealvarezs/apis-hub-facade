@@ -895,6 +895,7 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     this.loadWidgetMetrics(savedMetrics);
+                    this.showWidgetControls = true;
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
@@ -921,7 +922,9 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
-            this.showWidgetControls = true;
+            if (widget.source_type !== 'kpi') {
+                this.showWidgetControls = true;
+            }
         },
 
         loadWidgetMetrics(savedMetrics) {
