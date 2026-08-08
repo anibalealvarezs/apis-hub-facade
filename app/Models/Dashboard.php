@@ -75,6 +75,26 @@ class Dashboard extends Model
         });
     }
 
+    public function getAvailableLanguages(): array
+    {
+        $project = $this->project ?? (\Filament\Facades\Filament::getTenant());
+        $projectLangs = $project ? $project->getAvailableLanguages() : \App\Models\Project::getSupportedLanguageCatalog();
+
+        $dashLocales = $this->controls['supported_locales'] ?? null;
+        if (empty($dashLocales) || !is_array($dashLocales)) {
+            return $projectLangs;
+        }
+
+        $result = [];
+        foreach ($dashLocales as $loc) {
+            if (isset($projectLangs[$loc])) {
+                $result[$loc] = $projectLangs[$loc];
+            }
+        }
+
+        return !empty($result) ? $result : $projectLangs;
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
