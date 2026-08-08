@@ -617,7 +617,9 @@ export function dashboardBuilder(config = {}) {
         openWidgetControls(widget) {
             console.log('[WIDGET_MODAL_DEBUG] openWidgetControls ENTER', widget);
             this.widgetControlsError = '';
-            this.activeIdentityLang = document.documentElement.lang || 'en';
+            const langCodes = Object.keys(this.availableLanguages || {});
+            const currentDocLang = document.documentElement.lang || 'en';
+            this.activeIdentityLang = langCodes.includes(currentDocLang) ? currentDocLang : (langCodes[0] || 'en');
             const wc = widget.controls || {};
 
             if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
@@ -657,7 +659,6 @@ export function dashboardBuilder(config = {}) {
             const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
             const baseDesc = this.parseLocalizedValue(widget.description || '');
 
-            const langCodes = Object.keys(this.availableLanguages || {});
             const defaultLang = langCodes[0] || (document.documentElement.lang || 'en');
 
             if (langCodes.length > 0) {
