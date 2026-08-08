@@ -1,19 +1,24 @@
 <?php
 
+use App\Filament\App\Resources\CustomKpiResource;
+use App\Filament\App\Resources\DashboardResource;
+use App\Filament\App\Resources\DashboardResource\Pages\DashboardBuilder;
+use App\Filament\App\Resources\DerivedMetricResource;
 use App\Models\CustomKpi;
 use App\Models\Dashboard;
 use App\Models\DashboardWidget;
 use App\Models\DerivedMetric;
 use App\Models\Project;
 use App\Models\User;
+use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->project = Project::factory()->create(['user_id' => $this->user->id]);
     $this->project->users()->attach($this->user->id);
-
     actingAs($this->user);
+    \Filament\Facades\Filament::setTenant($this->project);
 });
 
 // ─── Version History Visibility ───
@@ -28,7 +33,7 @@ it('shows version history on the CustomKpi edit page', function () {
         'is_active' => true,
     ]);
 
-    $this->get(DashboardResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
+    $this->get(CustomKpiResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
         ->assertSuccessful()
         ->assertSee('Version History');
 });
@@ -75,7 +80,7 @@ it('displays version number, change summary, user, and date in version history',
 
     $kpi->update(['name' => 'Updated KPI']);
 
-    $this->get(DashboardResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
+    $this->get(CustomKpiResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
         ->assertSuccessful()
         ->assertSee('v1')
         ->assertSee('v2')
@@ -100,6 +105,7 @@ it('restores a previous version from the relation manager', function () {
 
     Livewire::test(\App\Filament\App\Resources\CustomKpiResource\RelationManagers\VersionsRelationManager::class, [
         'ownerRecord' => $kpi,
+        'pageClass' => \App\Filament\App\Resources\CustomKpiResource\Pages\EditCustomKpi::class,
     ])
         ->callTableAction('restore', $firstVersion)
         ->assertHasNoTableActionErrors();
@@ -175,8 +181,8 @@ it('shows version history button in dashboard builder header', function () {
         'is_default' => false,
     ]);
 
-    Livewire::test(\App\Filament\App\Resources\DashboardResource\Pages\DashboardBuilder::class, [
-        'record' => $dashboard->subdomain,
+    Livewire::test(DashboardBuilder::class, [
+        'record' => $dashboard->id,
     ])
         ->assertSuccessful()
         ->assertSeeHtml('Version History');
@@ -195,8 +201,8 @@ it('restores a dashboard version from the builder', function () {
 
     $firstVersion = $dashboard->versions()->oldest('version_number')->first();
 
-    Livewire::test(\App\Filament\App\Resources\DashboardResource\Pages\DashboardBuilder::class, [
-        'record' => $dashboard->subdomain,
+    Livewire::test(DashboardBuilder::class, [
+        'record' => $dashboard->id,
     ])
         ->call('restoreVersion', $firstVersion->id)
         ->assertHasNoErrors();

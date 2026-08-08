@@ -313,7 +313,7 @@ class DashboardBuilder extends Page
             ];
         }
         
-        return $result;
+        return (array) (object) $result;
     }
 
     public function getDerivedMetricsForWidgetPicker(): array
@@ -333,7 +333,7 @@ class DashboardBuilder extends Page
             ];
         }
 
-        return $result;
+        return (array) (object) $result;
     }
 
     public function getKpiConfiguration(int $kpiId): array

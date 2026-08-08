@@ -594,8 +594,15 @@ export function dashboardBuilder(config = {}) {
         widgetControlsError: '',
         openWidgetControls(widget) {
             this.widgetControlsError = '';
-            this.widgetControlsTarget = widget;
             const wc = widget.controls || {};
+
+            if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
+                const dmId = widget.source_config.derived_metric_id;
+                const dm = (this.derivedMetrics || {})[dmId] || (this.derivedMetrics || {})[String(dmId)];
+                widget.dmSourceSeries = dm ? (dm.source_series || []) : [];
+            }
+
+            this.widgetControlsTarget = widget;
 
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
@@ -644,7 +651,7 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series = groupedSeries;
                 }
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: '', metrics: [], assets: [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', metrics: [], assets: wc.assets || [] });
                 }
 
                 if (this.$wire) {

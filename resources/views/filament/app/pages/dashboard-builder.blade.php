@@ -1282,7 +1282,7 @@
                                 <template x-if="widgetKpiConfig.independent_variables">
                                     <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
                                         <template
-                                            x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)">
+                                            x-if="varCfg.independent_dm_id || varCfg.independent_channel">
                                             <div style="display: contents">
                                                 <template x-if="varCfg.independent_dm_id">
                                                     <template
