@@ -14,7 +14,7 @@ class FacebookMarketingController extends Controller
     {
         \Illuminate\Support\Facades\Log::info("FBM Raw Request: ", $request->all());
         return $request->validate([
-            'tenant' => 'required|string',
+            'tenant' => 'required|integer',
             'account' => 'required|array',
             'account.*' => 'nullable', // Temporarily remove strict type check to bypass 422
             'dateStart' => 'required|date',
@@ -22,6 +22,8 @@ class FacebookMarketingController extends Controller
             'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
+            'metrics' => 'nullable|array',
+            'metrics.*' => 'nullable|string',
         ]);
     }
 
@@ -175,7 +177,7 @@ class FacebookMarketingController extends Controller
 
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
-            $aggregations = [
+            $defaultAggregations = [
                 'trend_total_spend' => 'spend',
                 'trend_total_clicks' => 'clicks',
                 'trend_total_impressions' => 'impressions',
@@ -190,6 +192,20 @@ class FacebookMarketingController extends Controller
                 'trend_average_result_rate' => 'result_rate'
             ];
 
+            $aggregations = $defaultAggregations;
+            if (!empty($validated['metrics']) && is_array($validated['metrics'])) {
+                $requestedMetrics = array_flip($validated['metrics']);
+                $filteredAggregations = [];
+                foreach ($defaultAggregations as $alias => $rawMetric) {
+                    if (isset($requestedMetrics[$rawMetric]) || isset($requestedMetrics[$alias])) {
+                        $filteredAggregations[$alias] = $rawMetric;
+                    }
+                }
+                if (!empty($filteredAggregations)) {
+                    $aggregations = $filteredAggregations;
+                }
+            }
+
             $payloads = [
                 'chart' => [
                     'aggregations' => $aggregations,
@@ -202,6 +218,13 @@ class FacebookMarketingController extends Controller
             ];
 
             $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+
+            \Illuminate\Support\Facades\Log::error('[FACADE FBM DEBUG] chart method results:', [
+                'status' => $results['chart']['status'] ?? null,
+                'error' => $results['chart']['error'] ?? null,
+                'data_count' => isset($results['chart']['data']) && is_array($results['chart']['data']) ? count($results['chart']['data']) : 0,
+                'payloads' => $payloads,
+            ]);
 
             if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("FBM Chart APIs Hub Error: " . json_encode($results['chart']));
@@ -221,7 +244,7 @@ class FacebookMarketingController extends Controller
     {
         try {
             $validated = $request->validate([
-                'tenant' => 'required|string',
+'tenant' => 'required|integer',
                 'series' => 'required|array',
                 'series.dates' => 'required|array',
                 'series.values' => 'required|array',
@@ -294,15 +317,16 @@ class FacebookMarketingController extends Controller
             \Illuminate\Support\Facades\Log::info("FBM Table Incoming Request ActiveFilters: ", $validated['activeFilters'] ?? []);
             \Illuminate\Support\Facades\Log::info("FBM Table Outgoing Payload: ", $tabPayload);
 
-            if ($validated['activeTab'] === 'campaigns') {
+            $tab = $validated['activeTab'] ?? 'campaigns';
+            if (in_array($tab, ['campaigns', 'campaign_level'])) {
                 $tabPayload['groupBy'] = ['channeledCampaign', 'campaign_status'];
-            } elseif ($validated['activeTab'] === 'adsets') {
+            } elseif (in_array($tab, ['adsets', 'adset_level'])) {
                 $tabPayload['groupBy'] = ['adGroup', 'adset_status'];
-            } elseif ($validated['activeTab'] === 'ads') {
+            } elseif (in_array($tab, ['ads', 'ad_level'])) {
                 $tabPayload['groupBy'] = ['ad', 'ad_status'];
-            } elseif ($validated['activeTab'] === 'age') {
+            } elseif ($tab === 'age') {
                 $tabPayload['groupBy'] = ['age'];
-            } elseif ($validated['activeTab'] === 'gender') {
+            } elseif ($tab === 'gender') {
                 $tabPayload['groupBy'] = ['gender'];
             }
 

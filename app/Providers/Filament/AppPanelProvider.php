@@ -2,16 +2,14 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\Project;
 use App\Http\Middleware\VerifyReCaptcha;
+use App\Models\Project;
 use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateBatch;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -33,7 +31,7 @@ class AppPanelProvider extends PanelProvider
             ->registration(\App\Filament\Pages\Auth\CustomRegister::class)
             ->passwordReset()
             ->emailVerification()
-            
+
             ->renderHook(
                 \Filament\View\PanelsRenderHook::TOPBAR_START,
                 fn () => view('filament.hooks.topbar-logo'),
@@ -48,7 +46,6 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('filament.hooks.beta-badge'),
             )
 
-            ->profile()
             ->sidebarCollapsibleOnDesktop()
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
                 <div class="w-full flex items-center justify-center">
@@ -70,11 +67,28 @@ class AppPanelProvider extends PanelProvider
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}">')
+                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/filament-extras.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/modals.css\') }}">')
             )
             ->renderHook(
                 'panels::scripts.after',
-                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/filament-charts.js\'])')
+                fn () => request()->routeIs('filament.app.auth.*') ? '' : \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/app.js\', \'resources/js/filament-charts.js\'])')
+            )
+            ->renderHook(
+                'panels::head.end',
+                function () {
+                    $path = resource_path('js/formula-editor.js');
+                    $jsContent = file_exists($path) ? file_get_contents($path) : '/* FILE NOT FOUND: ' . $path . ' */';
+                    $jsLen = strlen($jsContent);
+                    $seoHtml = view('filament.hooks.seo-auth')->render();
+                    $seoLen = strlen($seoHtml);
+                    $route = request()->route()?->getName() ?? 'NO_ROUTE';
+                    \Illuminate\Support\Facades\Log::debug('[FE] head.end hook: route=' . $route . ' jsLen=' . $jsLen . ' seoLen=' . $seoLen);
+                    return \Illuminate\Support\Facades\Blade::render('
+                        <script>console.log("[FE] formula-editor loaded, len=' . $jsLen . '")</script>
+                        <script>' . $jsContent . '</script>
+                        @verbatim' . $seoHtml . '@endverbatim
+                    ');
+                }
             )
             ->renderHook(
                 'panels::head.start',
@@ -86,10 +100,6 @@ class AppPanelProvider extends PanelProvider
                     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
                     @vite([\'resources/js/gtm.js\'])
                 ')
-            )
-            ->renderHook(
-                'panels::head.end',
-                fn () => view('filament.hooks.seo-auth')
             )
             ->renderHook(
                 'panels::auth.login.form.after',
@@ -172,9 +182,11 @@ class AppPanelProvider extends PanelProvider
             ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\\Filament\\App\\Clusters')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Exploration & Telemetry')),
+                    ->label(fn () => __('Analytics')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Data & Integrations')),
+                    ->label(fn () => __('Data')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Integrations')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
@@ -185,7 +197,7 @@ class AppPanelProvider extends PanelProvider
                     ->label(fn () => __('Meta')),
             ])
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\App\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
@@ -210,10 +222,10 @@ class AppPanelProvider extends PanelProvider
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
             ->userMenuItems([
-                'profile' => \Filament\Navigation\MenuItem::make()
+                /* 'profile' => \Filament\Navigation\MenuItem::make()
                     ->label(__('Profile'))
-                    ->url('/app/my-profile')
-                    ->icon('heroicon-o-user-circle'),
+                    ->url('/account/my-profile')
+                    ->icon('heroicon-o-user-circle'), */
                 'my_account' => \Filament\Navigation\MenuItem::make()
                     ->label(__('My Account'))
                     ->url('/account')
@@ -231,6 +243,10 @@ class AppPanelProvider extends PanelProvider
                         action: \Jeffgreco13\FilamentBreezy\Pages\TwoFactorPage::class
                     )
             )
-            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make());
+            ->plugin(\BezhanSalleh\FilamentShield\FilamentShieldPlugin::make())
+            ->plugin(
+                \Filament\SpatieLaravelTranslatablePlugin::make()
+                    ->defaultLocales(['en', 'es'])
+            );
     }
 }

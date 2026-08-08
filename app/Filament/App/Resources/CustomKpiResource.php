@@ -26,6 +26,10 @@
 
         public static function canCreate(): bool
         {
+            if (!auth()->user()->can('edit_preferences')) {
+                return false;
+            }
+
             $project = \Filament\Facades\Filament::getTenant();
             if (!$project || !$project->billingProfile) {
                 return false;
@@ -38,30 +42,34 @@
             return $currentCount < $maxKpis;
         }
 
+        public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+        {
+            return auth()->user()->can('edit_preferences');
+        }
+
+        public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+        {
+            return auth()->user()->can('edit_preferences');
+        }
+
         public static function getNavigationGroup(): ?string
         {
-            return __('Exploration & Telemetry');
+            return __('Analytics');
+        }
+
+        public static function canAccess(): bool
+        {
+            return auth()->user()->can('view_data');
         }
 
         public static function form(Form $form): Form
         {
+            $isEdit = $form->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
             return $form
                 ->schema([
-                    Forms\Components\Section::make('General Information')
-                        ->schema([
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\Textarea::make('description')
-                                ->maxLength(65535)
-                                ->columnSpanFull(),
-                            Forms\Components\Toggle::make('is_active')
-                                ->label(__('Active'))
-                                ->default(true),
-                        ])->columns(2),
-
-                    ... \App\Services\Analytics\KpiFormBuilder::getSchema(),
-                ]);
+                    ... \App\Services\Analytics\KpiFormBuilder::getSchema($isEdit),
+                ])
+                ->disabled(!auth()->user()->can('edit_preferences'));
         }
 
         public static function table(Table $table): Table
@@ -71,8 +79,19 @@
                     Tables\Columns\TextColumn::make('name')
                         ->searchable()
                         ->sortable(),
+                    Tables\Columns\TextColumn::make('description')
+                        ->searchable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('calculation_type')
+                        ->formatStateUsing(fn (string $state) => \App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()[$state] ?? $state)
+                        ->searchable()
+                        ->sortable(),
                     Tables\Columns\IconColumn::make('is_active')
                         ->boolean()
+                        ->sortable(),
+                    Tables\Columns\TextColumn::make('dashboards_count')
+                        ->counts('dashboards')
+                        ->label(__('Widgets'))
                         ->sortable(),
                     Tables\Columns\TextColumn::make('created_at')
                         ->dateTime()
@@ -84,233 +103,84 @@
                         ->toggleable(isToggledHiddenByDefault: true),
                 ])
                 ->filters([
-                    //
+                    Tables\Filters\SelectFilter::make('dashboards')
+                        ->label(__('Dashboards'))
+                        ->multiple()
+                        ->preload()
+                        ->options(fn () => \App\Models\Dashboard::pluck('name', 'id')->toArray())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['values'])) {
+                                $query->whereHas('dashboards', function ($q) use ($data) {
+                                    $q->whereIn('dashboards.id', $data['values']);
+                                });
+                            }
+                        }),
+                    Tables\Filters\SelectFilter::make('calculation_type')
+                        ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
+                    Tables\Filters\SelectFilter::make('asset_group')
+                        ->label(__('Asset Group'))
+                        ->options(fn () => \App\Models\AssetGroup::pluck('name', 'id')->toArray())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"global_asset_group":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"dependent_asset_group":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_asset_group":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\SelectFilter::make('metric')
+                        ->label(__('Metric'))
+                        ->options(\App\Services\Analytics\KpiFormBuilder::getAllMetricOptions())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"dependent_metric":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_metric":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\SelectFilter::make('channel')
+                        ->label(__('Channel'))
+                        ->options(fn () => \App\Services\Analytics\KpiFormBuilder::getActiveChannels())
+                        ->query(function (Builder $query, array $data) {
+                            if (!empty($data['value'])) {
+                                $val = $data['value'];
+                                $query->where(function ($q) use ($val) {
+                                    $q->where('filters', 'like', '%"dependent_channel":"' . $val . '"%')
+                                      ->orWhere('filters', 'like', '%"independent_channel":"' . $val . '"%');
+                                });
+                            }
+                        }),
+                    Tables\Filters\TernaryFilter::make('is_active')
+                        ->label(__('Status')),
                 ])
                 ->actions([
-                Tables\Actions\Action::make('execute')
-                    ->label(__('Execute KPI'))
-                    ->icon('heroicon-o-play')
-                    ->color('success')
-                    ->form(function (CustomKpi $record) {
-                        $uiState = $record->filters['_ui_state'] ?? [];
-                        $fields = [];
-
-                        if (empty($uiState['start_date'])) {
-                            $fields[] = Forms\Components\DatePicker::make('start_date')
-                                ->label(__('Start Date'));
-                        }
-                        if (empty($uiState['end_date'])) {
-                            $fields[] = Forms\Components\DatePicker::make('end_date')
-                                ->label(__('End Date'));
-                        }
-                        if (empty($uiState['granularity'])) {
-                            $fields[] = Forms\Components\Select::make('granularity')
-                                ->label(__('Granularity'))
-                                ->options([
-                                    'daily' => 'Daily',
-                                    'weekly' => 'Weekly',
-                                    'monthly' => 'Monthly',
-                                ]);
-                        }
-
-                        if (empty($uiState['dependent_channel'])) {
-                            $fields[] = Forms\Components\Select::make('runtime_dependent_channel')
-                                ->label(__('Dependent Channel'))
-                                ->options(fn () => KpiFormBuilder::getActiveChannels())
-                                ->live()
-                                ->afterStateUpdated(fn (Forms\Set $set) => $set('runtime_dependent_metric', null));
-                        }
-
-                        if (empty($uiState['dependent_metric'])) {
-                            $fields[] = Forms\Components\Select::make('runtime_dependent_metric')
-                                ->label(__('Dependent Metric'))
-                                ->options(function (Get $get) use ($uiState) {
-                                    $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
-                                    return KpiFormBuilder::getMetricOptionsForChannel($channel);
-                                })
-                                ->live();
-                        }
-
-                        if (empty($uiState['dependent_asset_filter'])) {
-                            $fields[] = Forms\Components\Select::make('runtime_dependent_asset_filter')
-                                ->label(__('Dependent Asset Filter'))
-                                ->options(function (Get $get) use ($uiState) {
-                                    $channel = $get('runtime_dependent_channel') ?? $uiState['dependent_channel'] ?? null;
-                                    return KpiFormBuilder::getAssetOptionsForChannel($channel);
-                                });
-                        }
-
-                        $independents = $uiState['independent_variables'] ?? [];
-                        $idx = 0;
-                        foreach ($independents as $var) {
-                            $prefix = "runtime_independent_{$idx}";
-
-                            if (empty($var['independent_channel'])) {
-                                $fields[] = Forms\Components\Select::make("{$prefix}_channel")
-                                    ->label(__('Variable ' . ($idx + 1) . ' - Channel'))
-                                    ->options(fn () => KpiFormBuilder::getActiveChannels())
-                                    ->live()
-                                    ->afterStateUpdated(fn (Forms\Set $set) => $set("{$prefix}_metric", null));
-                            }
-
-                            if (empty($var['independent_metric'])) {
-                                $fields[] = Forms\Components\Select::make("{$prefix}_metric")
-                                    ->label(__('Variable ' . ($idx + 1) . ' - Metric'))
-                                        ->options(function (Get $get) use ($var, $idx) {
-                                        $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
-                                        return KpiFormBuilder::getMetricOptionsForChannel($channel);
-                                    })
-                                    ->live();
-                            }
-
-                            if (empty($var['independent_asset_filter'])) {
-                                $fields[] = Forms\Components\Select::make("{$prefix}_asset_filter")
-                                    ->label(__('Variable ' . ($idx + 1) . ' - Asset Filter'))
-                                    ->options(function (Get $get) use ($var, $idx) {
-                                        $channel = $get("runtime_independent_{$idx}_channel") ?? $var['independent_channel'] ?? null;
-                                        return KpiFormBuilder::getAssetOptionsForChannel($channel);
-                                    });
-                            }
-
-                            $idx++;
-                        }
-
-                        if (empty($uiState['zero_handling'])) {
-                            $fields[] = Forms\Components\Select::make('zero_handling')
-                                ->label(__('Zero Handling'))
-                                ->options([
-                                    'remove' => 'Remove Zeroes',
-                                    'trim' => 'Trim Leading/Trailing Zeroes',
-                                    'keep' => 'Keep Zeroes',
-                                ])
-                                ->default('remove')
-                                ->helperText(__('How to treat zero values in the time series before analysis.'));
-                        }
-
-                        $fields[] = Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('previewPayload')
-                                ->label(__('Preview Payload'))
-                                ->icon('heroicon-o-code-bracket')
-                                ->color('gray')
-                                ->modalHeading(__('Payload Preview'))
-                                ->modalContent(function (Get $get, CustomKpi $record) {
-                                    $uiState = $record->filters['_ui_state'] ?? [];
-
-                                    foreach (['start_date', 'end_date', 'granularity'] as $field) {
-                                        $val = $get($field);
-                                        if (!empty($val)) {
-                                            $uiState[$field] = $val;
-                                        }
-                                    }
-
-                                    $channel = $get('runtime_dependent_channel');
-                                    if (!empty($channel)) {
-                                        $uiState['dependent_channel'] = $channel;
-                                    }
-                                    $metric = $get('runtime_dependent_metric');
-                                    if (!empty($metric)) {
-                                        $uiState['dependent_metric'] = $metric;
-                                    }
-                                    $asset = $get('runtime_dependent_asset_filter');
-                                    if (!empty($asset)) {
-                                        $uiState['dependent_asset_filter'] = $asset;
-                                    }
-
-                                    $independents = $uiState['independent_variables'] ?? [];
-                                    $idx = 0;
-                                    foreach ($independents as $key => $var) {
-                                        $prefix = "runtime_independent_{$idx}";
-                                        $ch = $get("{$prefix}_channel");
-                                        $me = $get("{$prefix}_metric");
-                                        $as = $get("{$prefix}_asset_filter");
-                                        if (!empty($ch)) {
-                                            $independents[$key]['independent_channel'] = $ch;
-                                        }
-                                        if (!empty($me)) {
-                                            $independents[$key]['independent_metric'] = $me;
-                                        }
-                                        if (!empty($as)) {
-                                            $independents[$key]['independent_asset_filter'] = $as;
-                                        }
-                                        $idx++;
-                                    }
-                                    $uiState['independent_variables'] = $independents;
-
-                                    $payload = KpiPayloadBuilder::build(
-                                        $record->calculation_type,
-                                        $uiState
-                                    );
-
-                                    return new HtmlString(
-                                        '<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'
-                                        . json_encode($payload, JSON_PRETTY_PRINT)
-                                        . '</pre>'
-                                    );
-                                })
-                                ->modalSubmitAction(false)
-                                ->modalCancelActionLabel('Close'),
-                        ])
-                            ->visible(fn () => auth()->user()->can('edit_preferences') && config('app.env') !== 'production');
-
-                        return $fields;
-                    })
-                    ->action(function (array $data, CustomKpi $record, RemoteEngineService $service) {
-                        $uiState = $record->filters['_ui_state'] ?? [];
-
-                        if (!empty($data['runtime_dependent_channel'])) {
-                            $uiState['dependent_channel'] = $data['runtime_dependent_channel'];
-                        }
-                        if (!empty($data['runtime_dependent_metric'])) {
-                            $uiState['dependent_metric'] = $data['runtime_dependent_metric'];
-                        }
-                        if (!empty($data['runtime_dependent_asset_filter'])) {
-                            $uiState['dependent_asset_filter'] = $data['runtime_dependent_asset_filter'];
-                        }
-
-                        $independents = $uiState['independent_variables'] ?? [];
-                        $idx = 0;
-                        foreach ($independents as $key => $var) {
-                            $prefix = "runtime_independent_{$idx}";
-                            if (!empty($data["{$prefix}_channel"])) {
-                                $independents[$key]['independent_channel'] = $data["{$prefix}_channel"];
-                            }
-                            if (!empty($data["{$prefix}_metric"])) {
-                                $independents[$key]['independent_metric'] = $data["{$prefix}_metric"];
-                            }
-                            if (!empty($data["{$prefix}_asset_filter"])) {
-                                $independents[$key]['independent_asset_filter'] = $data["{$prefix}_asset_filter"];
-                            }
-                            $idx++;
-                        }
-                        $uiState['independent_variables'] = $independents;
-
-                        $payload = KpiPayloadBuilder::build(
-                            $record->calculation_type,
-                            $uiState,
-                            $data
-                        );
-
-                        $project = \Filament\Facades\Filament::getTenant();
-                        $result = $service->computeKpi($project, $payload);
-
-                        if (isset($result['success']) && $result['success']) {
-                            \Filament\Notifications\Notification::make()
-                                ->title(__('Execution Successful'))
-                                ->success()
-                                ->body('<pre style="white-space: pre-wrap; font-size: 0.75rem;">'.json_encode($result['data'] ?? [], JSON_PRETTY_PRINT).'</pre>')
-                                ->persistent()
-                                ->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()
-                                ->title(__('Execution Failed'))
-                                ->danger()
-                                ->body($result['message'] ?? 'An unknown error occurred.')
-                                ->persistent()
-                                ->send();
-                        }
-                    }),
+                \App\Services\Analytics\KpiExecuteActionBuilder::configure(
+                    Tables\Actions\Action::make('execute'),
+                    fn ($record) => $record ? ($record->filters['_ui_state'] ?? []) : [],
+                    fn ($record) => $record ? $record->calculation_type : null
+                ),
+                    Tables\Actions\Action::make('preview')
+                        ->label(__('Preview'))
+                        ->icon('heroicon-o-magnifying-glass')
+                        ->color('gray')
+                        ->modalHeading(__('KPI Configuration Summary'))
+                        ->modalContent(function (CustomKpi $record) {
+                            $state = array_merge(
+                                $record->toArray(),
+                                $record->filters['_ui_state'] ?? []
+                            );
+                            return \App\Services\Analytics\KpiFormBuilder::generateSummaryHtml(function ($key) use ($state) {
+                                return \Illuminate\Support\Arr::get($state, $key);
+                            });
+                        })
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel(__('Close')),
                     Tables\Actions\Action::make('debugPayload')
-                        ->label(__('Debug Payload'))
+                        ->label(__('Payload'))
                         ->icon('heroicon-o-code-bracket')
                         ->color('gray')
                         ->visible(fn() => auth()->user()->can('edit_preferences') && config('app.env') !== 'production')
@@ -325,17 +195,83 @@
                             return new HtmlString('<pre style="background: #1f2937; color: #10b981; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;">'.json_encode($payload, JSON_PRETTY_PRINT).'</pre>');
                         })
                         ->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Close'),
-                    Tables\Actions\EditAction::make(),
+                        ->modalCancelActionLabel(__('Close')),
+                    Tables\Actions\ReplicateAction::make()
+                        ->label(__('Duplicate'))
+                        ->excludeAttributes(['id', 'dashboards_count'])
+                        ->beforeReplicaSaved(function (CustomKpi $replica) {
+                            $replica->name = $replica->name . ' (copy)';
+                        })
+                        ->visible(fn() => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\Action::make('clearCache')
+                        ->label(__('Clear Cache'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(function (CustomKpi $record) {
+                            app(\App\Services\WidgetDataService::class)->invalidateCache($record->id);
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Cache cleared successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn() => auth()->user()->can('edit_preferences')),
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn() => auth()->user()->can('edit_preferences')),
                 ])
                 ->bulkActions([
                     Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make()
+                        Tables\Actions\BulkAction::make('clearCache')
+                            ->label(__('Clear Cache'))
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                                $service = app(\App\Services\WidgetDataService::class);
+                                foreach ($records as $record) {
+                                    $service->invalidateCache($record->id);
+                                }
+                                \Filament\Notifications\Notification::make()
+                                    ->title(__('Cache cleared for selected KPIs'))
+                                    ->success()
+                                    ->send();
+                            })
                             ->visible(fn() => auth()->user()->can('edit_preferences')),
-                    ]),
-                ]);
+                Tables\Actions\DeleteBulkAction::make()
+                    ->visible(fn() => auth()->user()->can('edit_preferences')),
+                Tables\Actions\BulkAction::make('pruneVersions')
+                    ->label(__('Prune Versions'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('months')
+                            ->label(__('Delete versions older than'))
+                            ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
+                            ->required(),
+                    ])
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                        $cutoff = now()->subMonths((int) $data['months']);
+                        foreach ($records as $record) {
+                            $record->getVersions()
+                                ->where('created_at', '<', $cutoff)
+                                ->where('version_number', '>', 1)
+                                ->delete();
+                        }
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Old versions pruned successfully'))
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn() => auth()->user()->can('edit_preferences')),
+            ]),
+        ]);
+    }
+
+        public static function getRelations(): array
+        {
+            return [
+                RelationManagers\VersionsRelationManager::class,
+            ];
         }
 
         public static function getPages(): array

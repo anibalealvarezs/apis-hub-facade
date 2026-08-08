@@ -21,9 +21,12 @@ class DashboardService
 
     public function cloneDashboard(Dashboard $dashboard, ?string $newName = null): Dashboard
     {
+        $dashboard->load('widgets');
+
         $clone = $dashboard->replicate();
         $clone->name = $newName ?? $dashboard->name . ' (Copy)';
         $clone->is_default = false;
+        unset($clone->widgets_count);
         $clone->push();
 
         foreach ($dashboard->widgets as $widget) {
@@ -35,25 +38,82 @@ class DashboardService
         return $clone->fresh(['widgets']);
     }
 
+    public function cloneDashboardFromVersion(Dashboard $dashboard, $version): Dashboard
+    {
+        $versionData = collect($version->toArray())
+            ->only($dashboard->getTrackableFields())
+            ->toArray();
+
+        $clone = $dashboard->replicate();
+        $clone->fill($versionData);
+        $clone->name = ($versionData['name'] ?? $dashboard->name) . ' (From v' . $version->version_number . ')';
+        $clone->is_default = false;
+        unset($clone->widgets_count);
+        $clone->push();
+
+        $widgetVersionIds = $version->widget_version_ids ?? [];
+        $widgetVersions = \App\Models\WidgetVersion::whereIn('id', array_values($widgetVersionIds))->get()->keyBy('id');
+
+        foreach ($widgetVersionIds as $origWidgetId => $widgetVersionId) {
+            $wv = $widgetVersions->get($widgetVersionId);
+            if (!$wv) {
+                continue;
+            }
+
+            $widgetData = collect($wv->toArray())
+                ->only((new \App\Models\DashboardWidget)->getTrackableFields())
+                ->toArray();
+            $widgetData['dashboard_id'] = $clone->id;
+
+            $widgetClone = new \App\Models\DashboardWidget();
+            $widgetClone->fill($widgetData);
+            $widgetClone->push();
+        }
+
+        return $clone->fresh(['widgets']);
+    }
+
     public function saveLayout(Dashboard $dashboard, array $gridItems): void
     {
-        $dashboard->update(['grid_layout' => $gridItems]);
-
         foreach ($gridItems as $item) {
-            DashboardWidget::where('id', $item['id'])
-                ->where('dashboard_id', $dashboard->id)
-                ->update([
+            $widget = DashboardWidget::find($item['id']);
+            if ($widget && $widget->dashboard_id === $dashboard->id) {
+                $oldVals = [
+                    'grid_x' => $widget->grid_x,
+                    'grid_y' => $widget->grid_y,
+                    'grid_w' => $widget->grid_w,
+                    'grid_h' => $widget->grid_h,
+                ];
+
+                $widget->update([
                     'grid_x' => $item['x'] ?? 0,
                     'grid_y' => $item['y'] ?? 0,
                     'grid_w' => $item['w'] ?? 4,
                     'grid_h' => $item['h'] ?? 2,
                 ]);
+
+                $widget->refresh();
+                $latestVersion = $widget->versions()->latest('version_number')->first();
+
+                \Log::debug('[DashboardService:saveLayout] widget updated', [
+                    'widget_id' => $widget->id,
+                    'old' => $oldVals,
+                    'new' => ['grid_x' => $widget->grid_x, 'grid_y' => $widget->grid_y, 'grid_w' => $widget->grid_w, 'grid_h' => $widget->grid_h],
+                    'latest_version_id' => $latestVersion?->id,
+                    'latest_version_number' => $latestVersion?->version_number,
+                    'latest_version_grid_w' => $latestVersion?->grid_w,
+                ]);
+            }
         }
+
+        $dashboard->update(['grid_layout' => $gridItems]);
     }
 
     public function addWidget(Dashboard $dashboard, array $data): DashboardWidget
     {
         $data['dashboard_id'] = $dashboard->id;
+        if (!isset($data['grid_x'])) $data['grid_x'] = 0;
+        if (!isset($data['grid_y'])) $data['grid_y'] = 0;
         return DashboardWidget::create($data);
     }
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Project;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
+use Anibalealvarezs\GoogleApi\Services\AnalyticsAdmin\AnalyticsAdminApi;
 use Anibalealvarezs\GoogleApi\Services\SearchConsole\SearchConsoleApi;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,8 @@ class LocalAssetDiscoveryService
                     return $this->fetchFacebookPages($project);
                 case 'google_search_console':
                     return $this->fetchGoogleSearchConsoleSites($project);
+                case 'google_analytics':
+                    return $this->fetchGoogleAnalyticsProperties($project);
                 default:
                     return [
                         'success' => false,
@@ -78,6 +81,48 @@ class LocalAssetDiscoveryService
             scopes: config('services.google.channel_scopes.google_search_console') ?? [],
             token: $profile->access_token ?? ''
         );
+    }
+
+    protected function getGoogleAnalyticsClient(Project $project): AnalyticsAdminApi
+    {
+        $profile = $project->googleProfile;
+        if (!$profile || !$profile->refresh_token) {
+            throw new Exception("Google profile not linked or missing refresh token.");
+        }
+
+        return new AnalyticsAdminApi(
+            redirectUrl: config('services.google.redirect'),
+            clientId: config('services.google.client_id'),
+            clientSecret: config('services.google.client_secret'),
+            refreshToken: $profile->refresh_token,
+            userId: $profile->provider_account_id ?? '',
+            scopes: config('services.google.channel_scopes.google_analytics') ?? [],
+            token: $profile->access_token ?? ''
+        );
+    }
+
+    protected function fetchGoogleAnalyticsProperties(Project $project): array
+    {
+        $client = $this->getGoogleAnalyticsClient($project);
+        $properties = $client->getProperties();
+
+        // Normalize
+        $assets = [];
+        foreach ($properties as $property) {
+            $propertyName = $property['property'] ?? '';
+            $platformId = str_replace('properties/', '', $propertyName);
+
+            $assets[] = [
+                'platformId' => $platformId,
+                'name'       => $property['displayName'] ?? '',
+                'data'       => $property,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'assets' => ['properties' => $assets]
+        ];
     }
 
     protected function fetchFacebookAdAccounts(Project $project): array

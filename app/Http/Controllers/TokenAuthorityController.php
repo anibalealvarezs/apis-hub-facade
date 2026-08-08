@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
 use App\Models\ChannelProfile;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,20 +16,23 @@ class TokenAuthorityController extends Controller
     public function refresh(Request $request)
     {
         $bearerToken = $request->bearerToken();
-        if (!$bearerToken) {
+        if (! $bearerToken) {
             return response()->json(['error' => 'Missing Bearer Token'], 401);
         }
 
         // Validate the bearer token against the Tenant (Project)
-        // We injected the `public_api_key` as the TOKEN_AUTHORITY_BEARER
-        $project = Project::where('public_api_key', $bearerToken)->first();
+        // Since `public_api_key` and `remote_admin_api_key` are encrypted in the database,
+        // we cannot query them via SQL `where()`. We must filter the collection in memory.
+        $project = Project::get()->first(function ($p) use ($bearerToken) {
+            return $p->public_api_key === $bearerToken || $p->remote_admin_api_key === $bearerToken;
+        });
 
-        if (!$project) {
+        if (! $project) {
             return response()->json(['error' => 'Invalid Authority Token'], 403);
         }
 
         $channel = $request->input('channel');
-        if (!$channel) {
+        if (! $channel) {
             return response()->json(['error' => 'Channel is required'], 400);
         }
 
@@ -49,24 +52,84 @@ class TokenAuthorityController extends Controller
         $profileIdColumn = "{$provider}_profile_id";
         $profileId = $project->{$profileIdColumn};
 
-        if (!$profileId) {
+        if (! $profileId) {
             return response()->json(['error' => "No {$provider} profile linked to this project"], 404);
         }
 
         $profile = ChannelProfile::find($profileId);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['error' => "Profile not found"], 404);
         }
 
         try {
+            $cacheKey = "profile_{$profile->id}_last_refresher_project_id";
+            $lastRefresherProjectId = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+            // If the current token in the database is still technically unexpired...
+            if ($profile->access_token && $profile->expires_at && $profile->expires_at->isFuture()) {
+                
+                // If a DIFFERENT project is asking, they just need to catch up to the latest token!
+                // We return the existing token to them without hitting the provider API.
+                if ($lastRefresherProjectId !== $project->id) {
+                    return response()->json([
+                        'access_token' => $profile->access_token,
+                        'expires_at' => $profile->expires_at->toIso8601String(),
+                    ]);
+                }
+                
+                // If the SAME project is asking again, it implies the token we previously gave them 
+                // is being rejected by the provider, so we MUST allow a fresh API request.
+            }
+
             $newToken = $this->performRefresh($profile);
+
+            // Record that THIS project was the one who caused the fresh token to be issued
+            \Illuminate\Support\Facades\Cache::put($cacheKey, $project->id, now()->addDays(7));
+
             return response()->json([
                 'access_token' => $newToken,
                 'expires_at' => $profile->expires_at?->toIso8601String(),
             ]);
         } catch (\Exception $e) {
             Log::error("Token Authority Refresh Failed for Project {$project->id}: " . $e->getMessage());
-            return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], 500);
+
+            $statusCode = 500;
+            if (str_contains($e->getMessage(), 'Google API rejected refresh') || str_contains($e->getMessage(), 'Facebook API rejected refresh')) {
+                $statusCode = 400;
+
+                // Disable the profile tokens so the UI detects it as disconnected
+                if (isset($profile)) {
+                    $profile->update([
+                        'access_token' => null,
+                        'refresh_token' => null,
+                    ]);
+
+                    // Notify the true owner
+                    $owner = $project->trueOwner;
+                    if ($owner) {
+                        $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
+                    }
+
+                    // Also notify project editors (those with project_editor role)
+                    $editorIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                        ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                        ->where('roles.name', 'project_editor')
+                        ->where('model_has_roles.project_id', $project->id)
+                        ->pluck('model_has_roles.model_id');
+
+                    $project->users()
+                        ->where('users.id', '!=', $project->user_id)
+                        ->whereIn('users.id', $editorIds)
+                        ->each(fn ($user) => $user->notify(
+                            new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider)
+                        ));
+
+                    // Force a configuration deployment to the tenant so it receives the is_disconnected=true flag immediately
+                    \App\Jobs\HydrateProjectConfigJob::dispatch($project);
+                }
+            }
+
+            return response()->json(['error' => 'Refresh failed: ' . $e->getMessage()], $statusCode);
         }
     }
 
@@ -76,7 +139,7 @@ class TokenAuthorityController extends Controller
     protected function performRefresh(ChannelProfile $profile)
     {
         if ($profile->provider === 'google') {
-            if (!$profile->refresh_token) {
+            if (! $profile->refresh_token) {
                 throw new \Exception("No refresh token available for Google profile.");
             }
 

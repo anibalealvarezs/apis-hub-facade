@@ -174,11 +174,27 @@ class Project extends Model
     }
 
     /**
+     * Relationship: Derived Metrics defined for this project.
+     */
+    public function derivedMetrics(): HasMany
+    {
+        return $this->hasMany(DerivedMetric::class);
+    }
+
+    /**
      * Relationship: Dashboards belonging to this project.
      */
     public function dashboards(): HasMany
     {
         return $this->hasMany(Dashboard::class);
+    }
+
+    /**
+     * Relationship: Asset Groups belonging to this project.
+     */
+    public function assetGroups(): HasMany
+    {
+        return $this->hasMany(AssetGroup::class);
     }
 
     /**
@@ -364,7 +380,7 @@ class Project extends Model
             }
 
             // We explicitly target the known asset list keys defined by the driver schemas
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
             // 1. Check direct asset lists (e.g., $channelConfig['pages'])
             foreach ($assetKeys as $assetKey) {
@@ -395,13 +411,33 @@ class Project extends Model
     }
 
     /**
+     * Determine if a specific channel is actively connected (has valid credentials).
+     */
+    public function isChannelConnected(string $channel): bool
+    {
+        if (str_starts_with($channel, 'facebook_')) {
+            return !empty($this->facebook_user_token);
+        }
+        if (str_starts_with($channel, 'google_')) {
+            return !empty($this->google_refresh_token);
+        }
+        
+        // Fallback for other providers (shopify, klaviyo, etc.) using ProjectCredential
+        $provider = explode('_', $channel)[0];
+        return $this->credentials()->where('provider', $provider)->whereNotNull('token')->exists();
+    }
+
+    /**
      * Count the number of enabled channels.
      */
-    public function countEnabledChannels(): int
+    public function countEnabledChannels(bool $checkConnection = false): int
     {
         $count = 0;
-        foreach ($this->sync_config ?? [] as $channelConfig) {
+        foreach ($this->sync_config ?? [] as $channel => $channelConfig) {
             if (is_array($channelConfig) && !empty($channelConfig['enabled'])) {
+                if ($checkConnection && !$this->isChannelConnected((string) $channel)) {
+                    continue;
+                }
                 $count++;
             }
         }
@@ -453,7 +489,7 @@ class Project extends Model
                 continue;
             }
 
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
             // 1. Check direct asset lists
             foreach ($assetKeys as $assetKey) {

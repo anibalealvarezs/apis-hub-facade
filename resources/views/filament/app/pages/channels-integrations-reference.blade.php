@@ -9,14 +9,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5 text-success-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('Available Channels') }}</span>
                         <x-filament::icon 
@@ -28,7 +26,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -50,14 +48,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-beaker" class="h-5 w-5 text-warning-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('In Testing Phase') }}</span>
                         <x-filament::icon 
@@ -69,7 +65,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -91,14 +87,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-code-bracket" class="h-5 w-5 text-blue-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('In Development') }}</span>
                         <x-filament::icon 
@@ -110,7 +104,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -134,14 +128,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-map" class="h-5 w-5 text-primary-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>{{ __('Further Integrations') }}</span>
                         <x-filament::icon 
@@ -153,7 +145,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>

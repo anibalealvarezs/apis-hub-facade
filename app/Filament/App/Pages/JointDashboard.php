@@ -43,11 +43,11 @@ class JointDashboard extends Page
     public array $curveA = ['channel' => '', 'asset' => '', 'metric' => ''];
     public array $curveB = ['channel' => '', 'asset' => '', 'metric' => ''];
 
-    // Data for dropdowns
     public array $channels = [
         'facebook_marketing' => 'Meta Ads',
         'facebook_organic' => 'FB & IG Organic',
-        'google_search_console' => 'Google Search Console'
+        'google_search_console' => 'Google Search Console',
+        'google_analytics' => 'Google Analytics',
     ];
 
     public array $metricsDict = [
@@ -73,6 +73,13 @@ class JointDashboard extends Page
             'impressions' => 'Impressions',
             'ctr' => 'CTR',
             'position' => 'Position'
+        ],
+        'google_analytics' => [
+            'sessions' => 'Sessions',
+            'activeUsers' => 'Active Users',
+            'screenPageViews' => 'Page Views',
+            'conversions' => 'Conversions',
+            'purchaseRevenue' => 'Purchase Revenue',
         ]
     ];
 
@@ -81,8 +88,42 @@ class JointDashboard extends Page
     public array $availableAccounts = [
         'facebook_marketing' => [],
         'facebook_organic' => [],
-        'google_search_console' => []
+        'google_search_console' => [],
+        'google_analytics' => [],
     ];
+
+    public function getJointConfig(): array
+    {
+        return [
+            'channels' => $this->channels,
+            'metricsDict' => $this->metricsDict,
+            'availableAccounts' => $this->availableAccounts,
+            'analysisLevelOptions' => [
+                'level' => __('Level (Original)'),
+                'diff1' => __('1st Difference (Δ)'),
+                'diff2' => __('2nd Difference (ΔΔ)'),
+                'zscore' => __('Z-Score (Normalized)'),
+            ],
+            'lagOptions' => [
+                '0' => __('No Lag'),
+                '1' => __('+1 Day'),
+                '2' => __('+2 Days'),
+                '3' => __('+3 Days'),
+                '4' => __('+4 Days'),
+                '5' => __('+5 Days'),
+                '6' => __('+6 Days'),
+                '7' => __('+7 Days'),
+                '-1' => __('-1 Day'),
+                '-2' => __('-2 Days'),
+                '-3' => __('-3 Days'),
+                '-4' => __('-4 Days'),
+                '-5' => __('-5 Days'),
+                '-6' => __('-6 Days'),
+                '-7' => __('-7 Days'),
+            ],
+            'allPlays' => \App\Services\Analytics\JointCorrelationPlaybookRegistry::getPlays(),
+        ];
+    }
 
     public function mount(): void
     {
@@ -92,6 +133,7 @@ class JointDashboard extends Page
         $this->availableAccounts['facebook_marketing'] = $this->fetchAccounts('facebook_marketing');
         $this->availableAccounts['facebook_organic'] = $this->fetchAccounts('facebook_organic');
         $this->availableAccounts['google_search_console'] = $this->fetchAccounts('google_search_console');
+        $this->availableAccounts['google_analytics'] = $this->fetchAccounts('google_analytics');
     }
 
     public function fetchAccounts(string $channel)
@@ -166,7 +208,7 @@ class JointDashboard extends Page
         }
         
         uasort($accounts, fn($a, $b) => strcasecmp($a, $b));
-        return $accounts;
+        return (object) $accounts;
     }
 
     public function fetchJointData(array $a, array $b, string $dStart, string $dEnd)

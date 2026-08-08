@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\DashboardResource\Pages;
+use App\Filament\App\Resources\DashboardResource\RelationManagers;
 use App\Models\Dashboard;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,11 +14,32 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DashboardResource extends Resource
 {
+    use \Filament\Resources\Concerns\Translatable;
+
     protected static ?string $model = Dashboard::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
     protected static ?string $cluster = \App\Filament\App\Clusters\Dashboards::class;
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                \Illuminate\Database\Eloquent\SoftDeletingScope::class,
+            ]);
+        
+        if (!auth()->user()->can('view_data')) {
+            $query->where(function ($q) {
+                $q->where('user_id', auth()->id())
+                  ->orWhereHas('sharedUsers', function ($sq) {
+                      $sq->where('users.id', auth()->id());
+                  });
+            });
+        }
+        
+        return $query;
+    }
 
     public static function canCreate(): bool
     {
@@ -52,7 +74,7 @@ class DashboardResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Dashboard Details')
+                Forms\Components\Section::make(__('Dashboard Details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -60,6 +82,13 @@ class DashboardResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
                             ->columnSpanFull(),
+                        Forms\Components\Toggle::make('auto_duplicate_translations')
+                            ->label(__('Automatically duplicate title and description to all languages on creation'))
+                            ->helperText(__('When enabled, saving a single language automatically populates all other supported languages with the same text.'))
+                            ->default(true)
+                            ->dehydrated(true)
+                            ->columnSpanFull()
+                            ->visible(fn (string $operation) => $operation === 'create'),
                         Forms\Components\Toggle::make('is_public')
                             ->label(__('Public (accessible by any project collaborator and via shared link)'))
                             ->default(false)
@@ -125,6 +154,10 @@ class DashboardResource extends Resource
                     ->label(__('Widgets'))
                     ->counts('widgets')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('public_views_count')
+                    ->label(__('Public Views'))
+                    ->counts('publicViews')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Created by'))
                     ->sortable(),
@@ -140,40 +173,81 @@ class DashboardResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_public'),
                 Tables\Filters\TernaryFilter::make('is_default'),
+                Tables\Filters\TrashedFilter::make(),
             ])
+            ->recordUrl(fn (Dashboard $record): string => DashboardResource::getUrl('edit', ['record' => $record]))
             ->actions([
                 Tables\Actions\Action::make('open_builder')
                     ->label(__('Open Builder'))
                     ->icon('heroicon-o-pencil-square')
                     ->url(fn (Dashboard $record): string => DashboardResource::getUrl('builder', ['record' => $record]))
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('open_view')
                     ->label(__('View'))
                     ->icon('heroicon-o-eye')
-                    ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record])),
+                    ->url(fn (Dashboard $record): string => DashboardResource::getUrl('view', ['record' => $record]))
+                    ->visible(fn (Dashboard $record) => !$record->trashed()),
                 Tables\Actions\Action::make('set_default')
                     ->label(__('Set as default'))
                     ->icon('heroicon-o-star')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->setDefaultDashboard($record))
-                    ->visible(fn (Dashboard $record) => !$record->is_default && auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && !$record->is_default && auth()->user()->can('edit_preferences')),
                 Tables\Actions\Action::make('duplicate')
                     ->label(__('Duplicate'))
                     ->icon('heroicon-o-document-duplicate')
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
+                Tables\Actions\RestoreAction::make()
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
+                Tables\Actions\ForceDeleteAction::make()
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\RestoreBulkAction::make()
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\ForceDeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
+                    Tables\Actions\BulkAction::make('pruneVersions')
+                        ->label(__('Prune Versions'))
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->form([
+                            \Filament\Forms\Components\Select::make('months')
+                                ->label(__('Delete versions older than'))
+                                ->options([3 => '3 months', 6 => '6 months', 12 => '12 months'])
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                            $cutoff = now()->subMonths((int) $data['months']);
+                            foreach ($records as $record) {
+                                $record->getVersions()
+                                    ->where('created_at', '<', $cutoff)
+                                    ->where('version_number', '>', 1)
+                                    ->delete();
+                            }
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Old versions pruned successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn () => auth()->user()->can('edit_preferences')),
                 ]),
             ])
             ->defaultSort('is_default', 'desc')
             ->defaultSort('updated_at', 'desc');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\PublicViewsRelationManager::class,
+            RelationManagers\VersionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

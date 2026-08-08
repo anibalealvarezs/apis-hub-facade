@@ -50,7 +50,7 @@ class DeployerService
             $versionTag = escapeshellarg($project->apisHubRelease->version_tag);
             Log::info("Deploying pinned release series {$versionTag} (latest patch) for project {$project->name}");
             
-            $commands[] = "cd {$path} && git fetch --tags";
+            $commands[] = "cd {$path} && git fetch --tags --force";
             // Extract the major.minor prefix (e.g. 'v1.13') and resolve the highest patch tag.
             // If the repo doesn't contain the tags or resolution fails, fallback to the exact versionTag.
             $commands[] = "cd {$path} && PREFIX=\$(echo {$versionTag} | cut -d. -f1,2) && LATEST_PATCH=\$(git tag -l \"\${PREFIX}.*\" | sort -V | tail -n 1) && if [ -z \"\$LATEST_PATCH\" ]; then LATEST_PATCH={$versionTag}; fi && git checkout \$LATEST_PATCH";
@@ -99,7 +99,7 @@ class DeployerService
         $dbUser = $project->db_user ?: "postgres";
         $dbPass = $project->db_password ?: "secret-pass";
 
-        $tokenAuthorityUrl = config('app.url') . '/api/v1/tokens/refresh';
+        $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
@@ -233,14 +233,39 @@ EOT;
 
     /**
      * Trigger a nuclear historical resync over SSH.
+     * 
+     * @param Project $project
+     * @param string[] $channels
      */
-    public function nuclearResync(Project $project, string $channel = 'all')
+    public function nuclearResync(Project $project, array $channels)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $channelArg = ($channel && $channel !== 'all') ? '--channel=' . escapeshellarg($channel) : '';
+        
+        $channelArg = '--channel=' . implode(',', $channels);
         $commands = [
             "cd {$path}",
             "bash bin/nuclear-sync.sh {$channelArg}",
+        ];
+
+        return $this->runSshCommands($project->server, $commands);
+    }
+
+    /**
+     * Trigger a nuclear historical resync for a single asset over SSH.
+     * 
+     * @param Project $project
+     * @param string $channel
+     * @param string $assetId
+     */
+    public function nuclearResyncAsset(Project $project, string $channel, string $assetId)
+    {
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        
+        $channelArg = '--channel=' . $channel;
+        $assetArg = '--asset=' . escapeshellarg($assetId);
+        $commands = [
+            "cd {$path}",
+            "bash bin/nuclear-sync.sh {$channelArg} {$assetArg}",
         ];
 
         return $this->runSshCommands($project->server, $commands);
@@ -337,25 +362,38 @@ EOT;
     public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
-        $versionTag = escapeshellarg($targetRelease->version_tag);
+        $targetTag = escapeshellarg($targetRelease->version_tag);
+        
+        // Clean version tags to bare semantic numbers for the API
+        $currentVersionRaw = $project->apisHubRelease ? ltrim($project->apisHubRelease->version_tag, 'v') : '1.13.0';
+        $currentVersionArg = escapeshellarg($currentVersionRaw);
+        
+        $oldTag = escapeshellarg($project->apisHubRelease ? $project->apisHubRelease->version_tag : $targetRelease->version_tag);
 
-        Log::info("Upgrading project {$project->name} to release {$targetRelease->version_tag}");
+        Log::info("Upgrading project {$project->name} from {$currentVersionRaw} to release {$targetRelease->version_tag}");
 
         $commands = [
-            // 1. Fetch, discard local changes, and checkout new version
-            "cd {$path} && git fetch --tags && git reset --hard && git checkout {$versionTag}",
+            "cd {$path}",
+            // 1. Fetch and checkout new version
+            "git fetch --tags --force",
+            "git reset --hard",
+            "git checkout {$targetTag}",
+            
+            // 2. Kill current active workers instantly
+            "docker compose stop",
+            
+            // 3. Build the new images based on the target version
+            "docker compose build",
+            
+            // 3.5. Ensure the host's vendor directory matches the new composer.lock before mounting it in the isolated container
+            "MSYS_NO_PATHCONV=1 docker run --rm -v {$path}:/app -w /app composer:latest install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs",
+            
+            // 4. Execute Migration Sequencer in an isolated container (bypassing entrypoint.sh so crons/workers don't start)
+            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
+            
+            // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
+            "bash bin/full-deploy.sh"
         ];
-
-        // 2. Run per-version upgrade commands (e.g. DB migrations, data transformations)
-        foreach ($targetRelease->upgrade_commands ?? [] as $cmd) {
-            $cmdText = is_array($cmd) ? ($cmd['command'] ?? '') : $cmd;
-            if (filled($cmdText)) {
-                $commands[] = "cd {$path} && {$cmdText}";
-            }
-        }
-
-        // 3. Rebuild images and restart services (no full-deploy.sh — it's too heavy for upgrades)
-        $commands[] = "cd {$path} && docker compose up -d --build --remove-orphans";
 
         return $this->runSshCommands($project->server, $commands, timeout: 900);
     }

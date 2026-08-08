@@ -1,0 +1,99 @@
+/* ================================================================
+   Filament extras shared CSS (global via AppPanelProvider styles.after)
+   Loaded on every App panel page.
+   ================================================================ */
+
+/* ---------- Alpine pre-init hide (fallback for x-show elements) ---------- */
+[x-cloak] {
+    display: none !important;
+}
+
+/* ---------- Custom scrollbar (migrated from asset-selector inline styles) ---------- */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 20px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+}
+
+/* ---------- Data Sources page ---------- */
+.ds-sidebar {
+    max-width: 16rem;
+}
+.ds-provider-header {
+    padding-bottom: 0.5rem;
+}
+.ds-content {
+    flex: 1 1 0%;
+}
+.ds-loading-overlay {
+    z-index: 9999;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.ds-loading-inner {
+    z-index: 10000;
+}
+.ds-loading-spinner {
+    width: 4rem;
+    height: 4rem;
+}
+.ds-mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+/* ---------- Account Subscription page ---------- */
+.as-profile-card {
+    background-color: #111827;
+}
+.as-muted {
+    color: #9ca3af;
+}
+.as-tier-badge {
+    background-color: #ffffff;
+    color: #111827;
+}
+
+/* ---------- Plan card ---------- */
+.pc-founder-card {
+    border-style: solid;
+    border-color: #00a7f9;
+    border-width: 6px 2px 2px 2px;
+}
+.pc-paypal-btn {
+    background-color: #ffc439;
+    color: #003087;
+}
+
+/* ---------- Collaborator asset list modal ---------- */
+.collab-asset-list {
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+/* ---------- UI asset selector dropdown ---------- */
+.ui-asset-dropdown {
+    min-width: 260px;
+}
+
+/* ---------- Asset Group resource asset selector ---------- */
+.asg-container {
+    max-width: 100%;
+    min-height: 700px;
+    height: 700px;
+}
+.asg-column {
+    width: calc((100% - 3rem) / 3);
+}
+.asg-search-input {
+    padding-left: 2.5rem;
+}

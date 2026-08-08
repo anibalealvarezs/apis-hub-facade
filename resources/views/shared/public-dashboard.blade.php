@@ -19,12 +19,14 @@
         }
     </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
-    <style>
-        body { font-family: 'Outfit', system-ui, sans-serif; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
+    @vite(['resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div x-data="sharedView()" x-init="init()" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div x-data="sharedView({
+        totalCount: {{ $widgets->count() }},
+        tenant: '{{ $project->subdomain }}'
+    })" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {{-- Header --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
@@ -60,21 +62,13 @@
                      gs-y="{{ $widget->grid_y }}"
                      gs-w="{{ $widget->grid_w }}"
                      gs-h="{{ $widget->grid_h }}">
-                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col" style="overflow: visible !important;">
+                    <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
                         @if ($widget->title || $widget->name)
-                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative" style="z-index: 10;"
-                                 x-data="widgetHeader({{ $widget->id }}, '{{ addslashes(json_encode($widget->resolved_controls)) }}', '{{ addslashes(json_encode($widget->series_assets_options)) }}')"
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative pd-widget-header"
+                                 x-data="widgetHeaderPv({{ $widget->id }}, @js($widget->resolved_controls), @js($widget->series_assets_options))"
                                  @reload-widget.window="if ($event.detail.id === {{ $widget->id }}) controls = $event.detail.controls">
                                 <div>
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget->title ?? $widget->name }}</h3>
-                                <div class="flex flex-wrap gap-1 mt-1" x-show="getBadges().length > 0">
-                                    <template x-for="(badge, index) in getBadges()" :key="index">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 shadow-sm" style="font-size: 10px; line-height: 14px; padding: 2px 8px;">
-                                            <span class="font-bold mr-1" x-text="badge.label + ':'"></span>
-                                            <span x-text="badge.text"></span>
-                                        </span>
-                                    </template>
-                                </div>
                             </div>
                                 <div class="flex items-center gap-2">
                                     @if (!empty($widget->series_assets_options))
@@ -85,14 +79,14 @@
                                                 <span x-show="getActiveFilterCount() > 0" class="ml-1 bg-primary-100 text-primary-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="getActiveFilterCount()"></span>
                                             </button>
                                             
-                                            <div x-show="openFilters" x-transition style="display: none;" class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 flex flex-col overflow-hidden">
+                                            <div x-show="openFilters" x-transition x-cloak class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 flex flex-col overflow-hidden">
                                                 <div class="max-h-96 overflow-y-auto p-4 space-y-6">
                                                     <template x-for="(seriesData, seriesKey) in seriesOptions" :key="seriesKey">
                                                         <div class="space-y-2">
                                                             <div class="flex items-center justify-between">
                                                                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider" x-text="seriesData.label"></label>
                                                                 <div class="flex gap-2">
-                                                                    <button @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 hover:underline">All</button>
+                                                                    <button x-show="(seriesData.mode || 'multiple') === 'multiple'" @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 hover:underline">All</button>
                                                                     <button @click="clearAll(seriesKey)" class="text-[10px] font-medium text-gray-500 hover:underline">Clear</button>
                                                                 </div>
                                                             </div>
@@ -108,11 +102,17 @@
                                                                          @click="toggleAsset(seriesKey, assetId)"
                                                                          class="flex gap-x-2 items-center px-2 py-1.5 text-xs text-gray-700 rounded cursor-pointer transition-colors"
                                                                          :class="isSelected(seriesKey, assetId) ? 'bg-primary-50' : 'hover:bg-gray-100'">
-                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded-sm border transition-colors"
-                                                                             :class="isSelected(seriesKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 bg-white'">
-                                                                            <svg x-show="isSelected(seriesKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center border transition-colors"
+                                                                             :class="{
+                                                                                 'rounded': (seriesData.mode || 'multiple') === 'multiple',
+                                                                                 'rounded-full': (seriesData.mode || 'multiple') === 'single',
+                                                                                 'bg-primary-600 border-primary-600': isSelected(seriesKey, assetId),
+                                                                                 'border-gray-300 bg-white': !isSelected(seriesKey, assetId)
+                                                                             }">
+                                                                            <svg x-show="isSelected(seriesKey, assetId) && (seriesData.mode || 'multiple') === 'multiple'" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                                                             </svg>
+                                                                            <div x-show="isSelected(seriesKey, assetId) && (seriesData.mode || 'multiple') === 'single'" class="w-2 h-2 rounded-full bg-white"></div>
                                                                         </div>
                                                                         <span class="truncate font-medium" :class="isSelected(seriesKey, assetId) ? 'text-primary-700' : ''" x-text="assetName"></span>
                                                                     </div>
@@ -128,7 +128,7 @@
                             </div>
                         @endif
                         <div class="widget-content flex-grow p-4 relative overflow-y-auto"
-                             x-init="renderWidget({{ $widget->id }}, $el, {{ json_encode($widget->resolved_controls) }})">
+                             x-init="renderWidget({{ $widget->id }}, $el, @js($widget->resolved_controls))">
                         </div>
                     </div>
                 </div>
@@ -148,157 +148,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
-    <script src="{{ asset('js/dashboard-renderer.js') }}"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-extra.min.css"/>
+    <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ filemtime(public_path('js/dashboard-renderer.js')) }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <script>
-        function sharedView() {
-            return {
-                loadedCount: 0,
-                totalCount: {{ $widgets->count() }},
-                tenant: '{{ $project->subdomain }}',
-
-                init() {
-                    this.$nextTick(() => {
-                        const tryInit = () => {
-                            if (typeof GridStack !== 'undefined') {
-                                GridStack.init({
-                                    staticGrid: true,
-                                    column: 12,
-                                    cellHeight: 100,
-                                    margin: 12,
-                                    minRow: 6
-                                }, '#view-grid-stack');
-                            } else {
-                                setTimeout(tryInit, 50);
-                            }
-                        };
-                        tryInit();
-                    });
-                },
-
-
-                renderWidget(widgetId, el, controls) {
-                    el.setAttribute('data-raw-controls', JSON.stringify(controls));
-                    
-                    let effectiveControls = { ...controls };
-
-                    const tryRender = () => {
-                        if (window.dashboardRenderer) {
-                            window.dashboardRenderer.renderWidget(widgetId, el, effectiveControls, this.tenant)
-                                .then(() => { this.loadedCount++; })
-                                .catch(() => { this.loadedCount++; });
-                        } else {
-                            setTimeout(tryRender, 50);
-                        }
-                    };
-                    tryRender();
-                },
-
-                reloadWidget(widgetId, controls) {
-                    const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
-                    if (!widgetItem) return;
-                    
-                    const el = widgetItem.querySelector('.widget-content');
-                    if (!el) return;
-
-                    el.innerHTML = '';
-                    if (this.loadedCount > 0) this.loadedCount--;
-                    this.renderWidget(widgetId, el, controls);
-                }
-            };
-        }
-
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('widgetHeader', (widgetId, rawControls, rawSeriesOptions) => ({
-                widgetId: widgetId,
-                controls: JSON.parse(rawControls),
-                seriesOptions: JSON.parse(rawSeriesOptions) || {},
-                openFilters: false,
-                searchQueries: {},
-                
-                init() {
-                    if (!this.controls.series_assets) this.controls.series_assets = {};
-                    for (const key in this.seriesOptions) {
-                        this.searchQueries[key] = '';
-                    }
-                },
-                
-                isSelected(seriesKey, assetId) {
-                    if (!this.controls.series_assets[seriesKey]) return false;
-                    return this.controls.series_assets[seriesKey].includes(String(assetId));
-                },
-                
-                toggleAsset(seriesKey, assetId) {
-                    if (!this.controls.series_assets[seriesKey]) {
-                        this.controls.series_assets[seriesKey] = [];
-                    }
-                    let arr = this.controls.series_assets[seriesKey];
-                    const idx = arr.indexOf(String(assetId));
-                    if (idx > -1) {
-                        arr.splice(idx, 1);
-                    } else {
-                        arr.push(String(assetId));
-                    }
-                    this.controls.series_assets[seriesKey] = arr;
-                    this.updateWidget();
-                },
-                
-                selectAll(seriesKey) {
-                    const allIds = Object.keys(this.seriesOptions[seriesKey].options).map(String);
-                    this.controls.series_assets[seriesKey] = allIds;
-                    this.updateWidget();
-                },
-                
-                clearAll(seriesKey) {
-                    this.controls.series_assets[seriesKey] = [];
-                    this.updateWidget();
-                },
-
-                getActiveFilterCount() {
-                    let count = 0;
-                    for (const key in this.seriesOptions) {
-                        if (this.controls.series_assets[key] && this.controls.series_assets[key].length > 0 && this.controls.series_assets[key].length < Object.keys(this.seriesOptions[key].options).length) {
-                            count++;
-                        }
-                    }
-                    return count;
-                },
-                
-                updateWidget() {
-                    const raw = JSON.stringify(this.controls);
-                    const el = document.querySelector(`.grid-stack-item[gs-id="${this.widgetId}"] .widget-content`);
-                    if (el) {
-                        el.setAttribute('data-raw-controls', raw);
-                    }
-                    const dbView = document.getElementById('view-grid-stack');
-                    if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                        dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
-                    }
-                },
-                
-                getBadges() {
-                    if (Object.keys(this.seriesOptions).length === 0) return [];
-                    let badges = [];
-                    for (const [key, data] of Object.entries(this.seriesOptions)) {
-                        const selected = this.controls.series_assets[key] || [];
-                        let label = data.label.replace(/ \(.+\)/, '');
-                        let text = '';
-                        if (selected.length === 0 || selected.length === Object.keys(data.options).length) {
-                            text = 'All Assets';
-                        } else {
-                            let names = selected.map(id => data.options[id]).filter(Boolean);
-                            if (names.length <= 2) {
-                                text = names.join(', ');
-                            } else {
-                                text = names.slice(0, 2).join(', ') + ' + ' + (names.length - 2) + ' more';
-                            }
-                        }
-                        badges.push({ label: label, text: text });
-                    }
-                    return badges;
-                }
-            }));
-        });
-    </script>
 </body>
 </html>

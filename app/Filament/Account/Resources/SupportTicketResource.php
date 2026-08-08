@@ -27,6 +27,20 @@ class SupportTicketResource extends Resource
         return __('Account');
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getEloquentQuery()
+            ->where('status', 'waiting_on_user')
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'info';
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

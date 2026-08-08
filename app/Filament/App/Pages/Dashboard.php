@@ -7,6 +7,25 @@ use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
+    use \App\Filament\App\Resources\DashboardResource\Traits\LoadsDashboardViewData;
+
+    protected static string $view = 'filament.app.pages.home-dashboard';
+
+    public function getHeading(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Home');
+    }
+
+    public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Home');
+    }
+
     public function getWidgets(): array
     {
         return [];
@@ -14,19 +33,23 @@ class Dashboard extends BaseDashboard
 
     public function mount(): void
     {
-        $projectId = auth()->user()->currentProject?->id;
-        if (!$projectId) {
+        if (!auth()->user()->can('view_data')) {
+            $this->redirect(DashboardResource::getUrl('index'));
             return;
         }
 
-        $default = \App\Models\Dashboard::where('project_id', $projectId)
+        $project = \Filament\Facades\Filament::getTenant();
+
+        if (!$project) {
+            return;
+        }
+
+        $default = \App\Models\Dashboard::where('project_id', $project->id)
             ->where('is_default', true)
             ->first();
 
         if ($default) {
-            $this->redirect(DashboardResource::getUrl('view', ['record' => $default]));
-        } else {
-            $this->redirect(DashboardResource::getUrl('index'));
+            $this->loadDashboardViewData($default);
         }
     }
 }

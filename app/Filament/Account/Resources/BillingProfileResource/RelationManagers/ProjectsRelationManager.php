@@ -2,40 +2,44 @@
 
 namespace App\Filament\Account\Resources\BillingProfileResource\RelationManagers;
 
+use App\Models\Project;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\Project;
 
 class ProjectsRelationManager extends RelationManager
 {
     protected static string $relationship = 'projects';
+
     public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
     {
         return __('Associated Projects');
     }
 
-
-    
-
     public function table(Table $table): Table
     {
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops'];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
 
         $countAssets = function (Project $project) use ($assetKeys): int {
             $count = 0;
             $syncConfig = $project->sync_config ?? [];
-            if (!is_array($syncConfig)) return 0;
+            if (! is_array($syncConfig)) {
+                return 0;
+            }
 
             foreach ($syncConfig as $channelConfig) {
-                if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+                if (! is_array($channelConfig) || empty($channelConfig['enabled'])) {
+                    continue;
+                }
 
                 foreach ($assetKeys as $assetKey) {
                     $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
-                    if (!is_array($assets)) continue;
+                    if (! is_array($assets)) {
+                        continue;
+                    }
 
                     foreach ($assets as $asset) {
-                        if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                        if (is_array($asset) && ! empty($asset['enabled']) && empty($asset['lost_access'])) {
                             $count++;
                         }
                     }
@@ -54,12 +58,13 @@ class ProjectsRelationManager extends RelationManager
                     ->sortable()
                     ->html()
                     ->state(function (Project $record): string {
-                        $userId = auth()->id();
+                        $userId = \Illuminate\Support\Facades\Auth::id();
                         $hasAccess = $record->user_id === $userId
                             || $record->users()->where('users.id', $userId)->exists();
 
                         if ($hasAccess) {
                             $url = url("/app/{$record->subdomain}");
+
                             return "<a href=\"{$url}\" class=\"text-blue-600 dark:text-blue-400 hover:underline font-medium\">" . e($record->name) . "</a>";
                         }
 
@@ -103,7 +108,7 @@ class ProjectsRelationManager extends RelationManager
                     ->label(__('Access'))
                     ->boolean()
                     ->state(function (Project $record): bool {
-                        $userId = auth()->id();
+                        $userId = \Illuminate\Support\Facades\Auth::id();
                         return $record->user_id === $userId
                             || $record->users()->where('users.id', $userId)->exists();
                     })

@@ -15,5 +15,13 @@ class ProjectUser extends Pivot
      */
     public $incrementing = true;
 
-    // Additional configuration can be placed here if needed
+    protected $fillable = [
+        'project_id',
+        'user_id',
+        'asset_access_unrestricted',
+    ];
+
+    protected $casts = [
+        'asset_access_unrestricted' => 'boolean',
+    ];
 }

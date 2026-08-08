@@ -71,23 +71,31 @@ Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
 Route::post('/api/channels/auth-failed', [\App\Http\Controllers\MonitoringController::class, 'authFailed']);
 Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']);
-Route::post('/api/gsc/summary', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'summary'])->middleware(['web', 'auth']);
-Route::post('/api/gsc/chart', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'chart'])->middleware(['web', 'auth']);
-Route::post('/api/gsc/table', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'table'])->middleware(['web', 'auth']);
-Route::post('/api/gsc/trend', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'trend'])->middleware(['web', 'auth']);
+Route::post('/api/v1/tokens/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']); // Backwards compatibility for older worker deployments
+Route::post('/api/gsc/summary', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:google_search_console']);
+Route::post('/api/gsc/chart', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:google_search_console']);
+Route::post('/api/gsc/table', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:google_search_console']);
+Route::post('/api/gsc/trend', [\App\Http\Controllers\Api\GoogleSearchConsoleController::class, 'trend'])->middleware(['web', 'auth', 'channel.asset.access:google_search_console']);
 
-Route::post('/api/fbm/summary', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'summary'])->middleware(['web', 'auth']);
-Route::post('/api/fbm/chart', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'chart'])->middleware(['web', 'auth']);
-Route::post('/api/fbm/table', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'table'])->middleware(['web', 'auth']);
-Route::post('/api/fbm/trend', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'trend'])->middleware(['web', 'auth']);
+Route::post('/api/fbm/summary', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:facebook_marketing']);
+Route::post('/api/fbm/chart', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:facebook_marketing']);
+Route::post('/api/fbm/table', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:facebook_marketing']);
+Route::post('/api/fbm/trend', [\App\Http\Controllers\Api\FacebookMarketingController::class, 'trend'])->middleware(['web', 'auth', 'channel.asset.access:facebook_marketing']);
 
-Route::post('/api/fbo/summary', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'summary'])->middleware(['web', 'auth']);
-Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'chart'])->middleware(['web', 'auth']);
-Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth']);
-Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth']);
-Route::post('/api/fbo/trend', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'trend'])->middleware(['web', 'auth']);
+Route::post('/api/fbo/summary', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:facebook_organic']);
+Route::post('/api/fbo/chart', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:facebook_organic']);
+Route::post('/api/fbo/table', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:facebook_organic']);
+Route::post('/api/fbo/post', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'post'])->middleware(['web', 'auth', 'channel.asset.access:facebook_organic']);
+Route::post('/api/fbo/trend', [\App\Http\Controllers\Api\FacebookOrganicController::class, 'trend'])->middleware(['web', 'auth', 'channel.asset.access:facebook_organic']);
+
+Route::post('/api/ga4/summary', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
+Route::post('/api/ga4/chart', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
+Route::post('/api/ga4/table', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
+Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'listProperties'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
 
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
+
+Route::post('/api/derived-metrics/preview', [\App\Http\Controllers\Api\DerivedMetricPreviewController::class, 'preview'])->middleware(['web', 'auth']);
 
 Route::get('/login', fn () => redirect()->route('filament.app.auth.login'))->name('login');
 
@@ -102,3 +110,15 @@ Route::get('/es/tos', [\App\Http\Controllers\LegalController::class, 'tos'])->na
 Route::get('/es/data-deletion', [\App\Http\Controllers\LegalController::class, 'dataDeletion'])->name('legal.data-deletion.es');
 
 Route::get('/shared/dashboard/{subdomain}/{dashboard}', [\App\Http\Controllers\Shared\SharedDashboardController::class, 'show'])->name('shared.dashboard');
+
+// Public Dashboard Views (Issue #114 & #115)
+Route::get('/pv/{token}', [\App\Http\Controllers\PublicViewController::class, 'show'])
+    ->name('public-view.show')
+    ->middleware(['throttle:60,1', \App\Http\Middleware\VerifyBrowserUserAgent::class, \App\Http\Middleware\PublicViewNoIndex::class])
+    ->where('token', '[A-Za-z0-9._-]+');
+
+Route::get('/pv/{token}/embed.js', [\App\Http\Controllers\PublicViewEmbedController::class, 'script'])
+    ->name('public-view.embed')
+    ->middleware(['throttle:60,1', \App\Http\Middleware\VerifyBrowserUserAgent::class])
+    ->where('token', '[A-Za-z0-9._-]+');
+

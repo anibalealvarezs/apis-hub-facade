@@ -79,6 +79,15 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     }
 
     /**
+     * Relationship: Asset groups shared with this user within a given project.
+     */
+    public function sharedAssetGroups(Project $project): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(AssetGroup::class, 'project_user_asset_groups', 'user_id', 'asset_group_id')
+            ->wherePivot('project_id', $project->id);
+    }
+
+    /**
      * Relationship: Support tickets where this user is tagged internally (admin-only associations).
      */
     public function supportTicketInternalAssociations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

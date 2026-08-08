@@ -15,13 +15,11 @@ class CouponResource extends Resource
     protected static ?string $model = Coupon::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing');
     }
-
-    
-    
 
     public static function form(Form $form): Form
     {

@@ -10,3 +10,370 @@
 - Keep secrets, credentials, tokens, and private endpoints out of this file.
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
+
+### Derived Metrics Feature (2026-07-25)
+- **Status:** Core implementation complete (Steps 1-13, 17, 20-24 done)
+- **Plan:** `DERIVED_METRICS_PLAN.md` — 25 steps, tracks completion
+- **Versioning Plan:** `TRACKING_VERSIONING_PLAN.md` — DMs, KPIs, Dashboards
+- **New files created:**
+  - `database/migrations/2026_07_25_000001_create_derived_metrics_table.php`
+  - `database/migrations/2026_07_25_000002_add_derived_metric_id_to_dashboard_widgets_table.php`
+  - `database/migrations/2026_07_25_000003_create_derived_metric_results_table.php`
+  - `app/Models/DerivedMetric.php`
+  - `app/Models/DerivedMetricResult.php`
+  - `app/Services/DerivedMetricCacheService.php`
+  - `app/Filament/App/Resources/DerivedMetricResource.php`
+  - `app/Filament/App/Resources/DerivedMetricResource/Pages/ListDerivedMetrics.php`
+  - `app/Filament/App/Resources/DerivedMetricResource/Pages/CreateDerivedMetric.php`
+  - `app/Filament/App/Resources/DerivedMetricResource/Pages/EditDerivedMetric.php`
+  - `app/Http/Controllers/Api/DerivedMetricPreviewController.php`
+  - `apis-hub/.../Nodes/DerivedMetricNode.php`
+- **Modified files:**
+  - `app/Models/DashboardWidget.php` — added `derived_metric_id` FK + relationship
+  - `app/Services/WidgetTypeRegistry.php` — added `derived_metric` source type
+  - `app/Services/BillingLifecycleService.php` — added `getMaxDerivedMetricsForTier()`
+  - `app/Http/Controllers/Api/DashboardWidgetDataController.php` — added `handleDerivedMetricSource()`, `extractTimeSeriesFromResponse()`, extended `extractAssetFilter()` with `$seriesAssetFilter`
+  - `apis-hub/.../Nodes/OperatorNode.php` — added 6 new operators (ratio, avg, min, max, abs_diff, pct_change)
+  - `apis-hub/.../AstParser.php` — added `derived_metric` node type
+  - `apis-hub/.../EvaluationContext.php` — added `derivedMetricResolver` callback
+  - `routes/web.php` — added preview endpoint route
+- **Remaining steps:** 14 (Widget Builder UI), 15 (KPI picker integration), 16 (validation), 18 (shared dashboard), 19 (tests), 25 (export/import)
+- **Key architectural decisions:**
+  - Progressive asset restriction: DM definition ∩ KPI ∩ Widget builder ∩ Dashboard runtime
+  - AST evaluated locally in PHP (not via analytics engine) since DM source series are fetched independently
+  - Cache key: SHA-256 of controls (date_start, date_end, granularity, asset_group, assets)
+   - Recursive DM resolution via `EvaluationContext::setDerivedMetricResolver()`
+
+### Predefined Derived Metrics Registry (2026-07-28)
+- **Status:** Registry created with 21 entries
+- **New file:** `app/Services/Analytics/PredefinedDerivedMetricRegistry.php`
+- **Pattern:** Mirrors `PredefinedKpiRegistry` — same `required_tags` filtering via `ChannelCapabilityRegistry`, `getAvailable(array $activeChannels)` method, and placeholder channel references (`__SPENDABLE_CHANNEL_1__`, etc.)
+- **Categories:**
+  - **Single-Channel Paid Media (9):** `cpc`, `ctr`, `cpa`, `cvr`, `roas`, `cost_per_conversion`, `result_rate`, `cost_per_engagement`, `engagement_click_rate`
+  - **Single-Channel Organic Social (3):** `organic_engagement_rate`, `organic_reach_efficiency`, `organic_impression_engagement`
+  - **Single-Channel SEO (3):** `seo_ctr`, `click_position_efficiency`, `impression_position_efficiency`
+  - **Cross-Channel Paid (5):** `blended_cpc`, `blended_cpa`, `blended_ctr`, `blended_roas`, `budget_share_ratio`
+  - **Cross-Channel Paid + Organic (4):** `paid_organic_reach_ratio`, `paid_organic_reach_abs_diff`, `seo_paid_click_ratio`, `paid_organic_impression_ratio`
+  - **Cross-Channel Hybrid (1):** `organic_reach_vs_seo_ctr`
+  - **Cross-Channel Revenue (1):** `revenue_per_click`
+- **Status:** Integrated into `DerivedMetricResource` form with template picker step
+- **Form changes:** Added 2-step wizard prefix: `0_intent` (template vs scratch) → `1_template` (select + pre-fill) → `2_series` → `3_formula` → `4_details` → `5_summary`; existing steps renumbered
+- **Template pre-fill:** Channel placeholders resolved against user's active channels via `ChannelCapabilityRegistry`; keys (a, b, c…) auto-assigned; AST, format, output_granularity, name, description pre-filled
+- **Template details panel:** Shows name, description, format badge, source series keys/metrics, and AST preview
+- **Helper methods:** `getDerivedMetricCategoryOptions()` (13 categories) and `getDerivedMetricTemplateOptions(array $categoryFilter)` (filters by category + active channels) added to `DerivedMetricResource`
+- **Bug fix (2026-07-28):** DM table widget rendering — `handleDerivedMetricSource()` returned only chart-shaped data (`labels`/`datasets`). Added `elseif` branch in `show()` at line 961 that detects `$effectiveWidgetType === 'table' && isset($data['labels']) && isset($data['datasets'])` and transforms to `columns`/`rows` with Date column and dataset columns, respecting `percentage`/`currency` format flags.
+- **Next steps:** Add a reference page similar to `KpiReference`, add Spanish translations to `es.json`
+
+### KPI Derived Metric Integration (2026-07-29)
+- **Status:** DM variables can be selected in KPI form builder; next button issue unresolved
+- **Changes in KpiFormBuilder.php:** Added `getDerivedMetricOptions()`, source type selector in `getNodeSchema()`, DM select field, `afterStateUpdated` to clear opposing field values when switching source types, summary HTML for DM display. Removed `disabled()` on next_series, removed `searchable()` on DM select, removed `required()` on dependent_metric.
+- **Changes in KpiPayloadBuilder.php:** Handles `dm_<id>` metric keys in `buildAstFromState()` and `buildIndependentNodes()` for both dependent and independent variables
+- **Changes in DashboardWidgetDataController.php (handleKpiSource):** Pre-fetches DM series data for KPI variables using DMs; accepts DM source type for dependent variable; added `depSourceType`/`indSourceType` guards to skip asset_group resolution for DM variables (avoids `___EMPTY_GROUP___` sentinel from empty channel)
+- **Bug fix (2026-07-29):** DM KPI widget shows no data (`___EMPTY_GROUP___` short-circuit)
+  - **Root cause:** The independent variable's `independent_source_type` is not persisted in `_ui_state` (missing key), so `$indSourceType` defaults to `'channel'`. With `$indChannel` empty (DM has no channel), the asset group resolution at line 1362 sets `independent_asset_filter = ["___EMPTY_GROUP___"]`, which triggers the `$hasEmptyGroup` short-circuit and returns empty data.
+  - **Fix:** Added `&& ! empty($indChannel)` guard to both the independent variable asset_group route (line 1362) and assets route (line 1377), so empty-channel independent variables (DM or unconfigured) skip asset group/asset resolution entirely.
+  - **Logs confirmed:** The DM guard check correctly logs `depSourceType: "derived_metric"`, and the auto-resolve correctly skips DM source type. The independent variable downstream is now properly guarded.
+- **Bug fix (2026-07-29, builder):** DM KPI asset selectors not showing in builder
+  - **Root cause:** Blade template (`x-if`) and JS `openWidgetControls` both check `_source_type === 'derived_metric' && _dm_id` but the stored `_ui_state` only has `_dm_id` (no `_source_type`). The controller fix-ups `dependent_source_type` only during data fetch (line 1522), not for `getKpiConfiguration()` or independent vars.
+  - **Fix:** Simplified all 6 gating conditions (2 blade `x-if`, 2 JS `initDmKpiAssets`, 2 JS `channelsToLoad`) to check just `dependent_dm_id` / `independent_dm_id` — presence implies it's a derived metric.
+- **Known issues:**
+  - Next button in step 22_series may not advance when DM source type selected (user reports "can't select next because there's no channel selected") — root cause unknown; possibly client-side Livewire reactivity or validation
+  - Anomaly/KPI payload shows `metrics: ["", ""]` — cosmetic; actual AST is built correctly by KpiPayloadBuilder from `_ui_state` DM IDs
+  - Dashboard view may not display DM metric selection — `LoadsDashboardViewData.php` auto-resolve logic doesn't recognize DM source type variables (same `_source_type` gating issue)
+
+### Formula Editor Render Hook Fix (2026-07-29)
+- **Problem:** Formula editor Alpine component (`formulaEditor`) not loading in DM editor page
+- **Root cause chain:**
+  - Original `panels::head.end` hook rendered SEO auth view directly (returned `View` object)
+  - Formula editor JS was moved into `panels::head.end` alongside SEO auth via inline `<script>` (commit `152e49ac`), both wrapped in `Blade::render()`
+  - SEO auth view uses `@@context` which renders to `@context` (Alpine event listener). When passed through `Blade::render()`, `@context` collides with Filament's `@context` Blade directive — breaks login page
+  - Commit `647a2693` moved SEO auth OUT of `Blade::render()` to fix login page, but formula editor JS stopped loading
+  - Commit `f36e45fd` put only formula editor back in `Blade::render()` (SEO auth outside) — still broken
+- **Key insight from investigation:** `FilamentView::renderHook()` casts return to `(string)` before wrapping in `HtmlString` — so `Blade::render()` vs plain string shouldn't change HTML output. Root cause of formula editor not loading outside `Blade::render()` remains unclear, but `Blade::render()` context is required for it to function.
+- **Fix applied:** Both formula editor JS and SEO auth wrapped in single `Blade::render()` call, with SEO auth wrapped in `@verbatim`/`@endverbatim` to prevent `@context` from being processed as a Blade directive
+- **Current code** (`AppPanelProvider.php:78`):
+  ```php
+  fn () => \Illuminate\Support\Facades\Blade::render('
+      <script>' . file_get_contents(resource_path('js/formula-editor.js')) . '</script>
+      @verbatim' . view("filament.hooks.seo-auth")->render() . '@endverbatim
+  ')
+  ```
+- **Commit:** `a2e5bf4` (HEAD)
+
+### Dashboard Full-State Restore (2026-07-29)
+- **Status:** Implemented
+- **Problem:** Restoring a dashboard version only restored dashboard fields (name, description, grid_layout, controls), not the widget state — widgets remained as-is
+- **Solution:** Added `widget_ids` (JSON) and `widget_version_ids` (JSON) columns to `dashboard_versions` table. When creating a dashboard version, the current widget IDs and their latest version IDs are snapshotted via `getVersionExtraAttributes()`. 
+- **Restore flow:** `restoreFullVersion()` on Dashboard reconciles three cases:
+  1. **Extra widgets** (exist now but not in snapshot) → soft-deleted
+  2. **Missing widgets** (in snapshot but soft-deleted) → restored from trash
+  3. **Changed widgets** (exist in both) → restored to their snapshot version via stored `widget_version_ids`
+- **New files:** `database/migrations/2026_07_29_000005_add_widget_snapshot_to_dashboard_versions.php`
+- **Modified files:** `app\Models\Dashboard.php`, `app\Models\DashboardVersion.php`, `app\Filament\App\Resources\DashboardResource\RelationManagers\VersionsRelationManager.php`
+- **Bug fix (2026-07-29):** Widget size not restored on dashboard version restore
+  - **Root cause 1:** `DashboardService::saveLayout()` used bulk update (`DashboardWidget::where(...)->update(...)`) which bypasses Eloquent events — no `WidgetVersion` created when resizing widgets. Every dashboard version pointed to the initial `WidgetVersion` (snapshotted on creation), making widget-size restore a no-op.
+  - **Fix 1:** Changed to model-aware `update()` on each loaded `DashboardWidget` instance, firing `TracksVersions` and creating proper `WidgetVersion` records. Reordered: widgets updated first, then dashboard (so dashboard version captures post-update widget version IDs).
+  - **Root cause 2:**`reconcileWidgetsFromVersion` used `$version->widget_ids ?? []` — versions created before the feature (or during `created` event before widgets exist) had null `widget_ids`, which was silently converted to `[]`, causing all current widgets to be soft-deleted on restore.
+  - **Fix 2:** Explicit null check at top of `reconcileWidgetsFromVersion` skips widget reconciliation entirely when `widget_ids` is null.
+  - **Bug fix (2026-07-30):** 18/21 widgets had no WidgetVersion records (created before TracksVersions was applied to DashboardWidget). `getVersionExtraAttributes` only stored `widget_version_ids` for widgets that had versions, causing restore to silently skip the other 18.
+  - **Fix:** In `getVersionExtraAttributes`, if a widget has no WidgetVersion, one is created on-the-fly via `$widget->createVersion('Initial snapshot')` before snapshotting.
+  - **Note:** Existing `dashboard_versions` created before this fix still have incomplete `widget_version_ids`. To fully restore them, a data migration would need to backfill WidgetVersion records and update old dashboard versions. For now, new dashboard versions will correctly capture all widgets.
+
+### Save Version Snapshots Form Data, Not Stale Record (2026-07-30)
+- **Bug:** `EditDerivedMetric` and `EditCustomKpi` "Save Version" actions called `$this->record->createVersion(...)` which snapshots `$this->record`'s current attributes — the **stale DB values**. The form's unsaved changes were never filled into the model, so the version record captured the old state, not the new edits.
+- **Fix:** Before `createVersion()`, the form state is processed through `mutateFormDataBeforeSave()` and then filled into the record via `$this->record->fill($formData)`. This updates the in-memory model with the current form values without persisting to DB. `createVersion()` then snapshots the fresh values.
+- **Files:** `app/.../DerivedMetricResource/Pages/EditDerivedMetric.php:74-75`, `app/.../CustomKpiResource/Pages/EditCustomKpi.php:151-152`
+
+### Unsaved Changes Warning Persists on Reload (2026-07-30)
+- **Bug:** `$unsavedChanges` flag on DashboardBuilder Livewire component was initialized to `false` in the property declaration and never checked against `hasUnsavedChanges()` on mount. After page reload, the warning always disappeared—even when the dashboard state genuinely differed from the latest version (e.g., after restore without creating a version).
+- **Fix:** Added `$this->unsavedChanges = $this->dashboard->hasUnsavedChanges()` in `mount()`. On page load, if the current model state doesn't match the latest version snapshot, the warning now persists.
+- **Restore flow improved:** After `restoreFullVersion()` (which sets `unsavedChanges = true` then calls `window.location.reload()`), the reload causes `mount()` to re-evaluate `hasUnsavedChanges()`. Since restore creates no new version, the dashboard state differs from the latest version → `unsavedChanges = true` → warning persists.
+- **File:** `app/Filament/App/Resources/DashboardResource/Pages/DashboardBuilder.php:34`
+
+### Versioning Overhaul (2026-07-30)- **No auto-versioning on model update:** `TracksVersions::shouldAutoVersionOnUpdate()` returns `false` by default. Versioning is manual via "Save Version" button.
+- **DashboardWidget overrides** `shouldAutoVersionOnUpdate()` to `true` — WidgetVersions auto-create on widget saves (needed for dashboard restore accuracy).
+- **Unsaved changes indicator:** `$unsavedChanges` flag on DashboardBuilder (Livewire component), reset when version is saved, shown in toolbar header and Save Version action label.
+- **Custom version labels:** `label` column added to all 4 version tables via migration `2026_07_30_000006_add_label_to_version_tables.php`. `createVersion()` accepts optional `$versionName` param.
+- **Prune all versions:** Bulk action added to all 3 VersionsRelationManagers (Dashboard, CustomKPI, DerivedMetric).
+- **Duplicate dashboard from version:** `DashboardService::cloneDashboardFromVersion()` creates a new dashboard from a historic version's snapshot. Triggered from version-history modal.
+- **Duplicate current dashboard:** Header action on DashboardBuilder clones current state and redirects.
+- **Files modified:**
+  - `app/Traits/TracksVersions.php` — removed auto-versioning, added `hasUnsavedChanges()`, `$versionName` param, `shouldAutoVersionOnUpdate()`
+  - `app/Models/DashboardWidget.php` — `shouldAutoVersionOnUpdate() = true`
+  - `app/Models/DashboardVersion.php`, `WidgetVersion.php`, `CustomKpiVersion.php`, `DerivedMetricVersion.php` — `label` in fillable
+  - `app/Filament/App/Resources/DashboardResource/Pages/DashboardBuilder.php` — saveVersion action, duplicateCurrent, duplicateFromVersion, unsavedChanges flag
+  - `app/Services/DashboardService.php` — `cloneDashboardFromVersion()`
+  - `app/Filament/App/Resources/CustomKpiResource/Pages/EditCustomKpi.php` — saveVersion action
+  - `app/Filament/App/Resources/DerivedMetricResource/Pages/EditDerivedMetric.php` — saveVersion action
+  - All 3 VersionsRelationManagers — label column, pruneAll bulk action
+  - `resources/views/filament/modals/version-history.blade.php` — label column, duplicate button
+  - `resources/views/filament/app/pages/dashboard-builder.blade.php` — unsaved changes indicator in toolbar
+
+### Test Suite + Bugs Found (2026-07-30)
+- **New:** `TESTING_PLAN.md` — 112-case end-to-end plan covering DM/KPI/Dashboard/Widget lifecycle, versioning, duplication, data requests/rendering, and the DM→KPI→Builder→View heritage chain. Tracks IDs per domain for hand-off to future agents.
+- **New tests written (all passing):**
+  - `tests/Feature/Analytics/DashboardVersionRestoreTest.php` (11 tests) — DASHV/WIDV/DUP scenarios: widget snapshot capture, initial-snapshot fallback, saveLayout versioning, full restore reconciliation (delete extra/restore trashed/revert changed), no version on restore, unsaved-changes after restore, null widget_ids skip, clone current/from-version, duplicate widget.
+  - `tests/Unit/Analytics/DerivedMetricCacheServiceTest.php` (9 tests) — DM-007/008/009/010: controls hash stability/ordering/asset sensitivity, cache miss→store→hit with 60-min TTL, upsert, expiry miss, invalidate/flush.
+- **Fixed stale `tests/Unit/TracksVersionsTest.php` (11 tests):** rewrote pre-overhaul assertions (plain updates auto-versioning, before-restore snapshot) to new manual-versioning model (explicit `createVersion()`, `fill()` before snapshot, restore keeps count, `hasUnsavedChanges()`). Added coverage for `label`, widget auto-version change summary, no-snapshot-on-restore.
+- **Fixed stale `tests/Feature/VersionHistoryTest.php` pruning tests (2):** moved from `Livewire::test(CustomKpiResource::class)` (never a Livewire component → ComponentNotFoundException) to direct assertions mirroring the `pruneVersions` bulk action closure.
+- **Bugs found & fixed while testing:**
+  1. **Stale `widgets` relation in `Dashboard::getVersionExtraAttributes()`** — `loadMissing('widgets')` never reloads a relation already cached on the instance. The `created` event auto-versions the dashboard BEFORE widgets exist, caching an empty `widgets` relation; later `createVersion()` snapshotted empty `widget_ids`/`widget_version_ids`, making restore delete all widgets. **Fix:** `load('widgets')` (forces reload). Also applied to the two `loadMissing` calls in `reconcileWidgetsFromVersion()`.
+  2. **Same stale-relation bug in `DashboardService::cloneDashboard()`** — `$dashboard->widgets` returned empty cached collection → clones had no widgets. **Fix:** `$dashboard->load('widgets')` before iterating.
+  3. **`DashboardService::cloneDashboardFromVersion()` called protected `getTrackableFields()`** → `BadMethodCallException`. **Fix:** made `getTrackableFields()` public on `Dashboard`, `CustomKpi`, `DerivedMetric` (matches existing `DashboardWidget`).
+  4. **`cloneDashboardFromVersion()` fill-order bug** — `fill($versionData)` ran AFTER setting the `(From vN)` name suffix and `is_default=false`, overwriting both with the historical values. **Fix:** fill first, then apply suffix + is_default.
+- **Baseline:** full suite = 89 passing (was 87) / 25 failing — all 25 remaining failures are pre-existing on clean HEAD (VersionHistoryTest UI-mount tests, ProjectDeployment/ProjectTransfer/ProjectSoftDelete/RemoteEngineService/UserTierManagement) and unrelated to this work. Local SQLite test DB works fine; the Postgres unreachable issue only affects real migrations.
+
+### Widget Heritage + Asset Filtering Tests + Asset-Group Bypass Fix (2026-07-31)
+- **New tests written (all passing, 78 total):**
+  - `tests/Unit/Analytics/WidgetConfigHeritageTest.php` (60 tests) — REQ-010 / HIER-009: `WidgetTypeRegistry` per-source widget-type compatibility for ALL 9 widget types (kpi vs metric/derived_metric sets), `WidgetDataService::resolveControls` precedence (widget > dashboard > defaults, `__inherit__`/empty honored, KPI `_ui_state` edge_case_grouping/max_ratio only for kpi source). Used fresh in-memory models via helpers `heritageDashboard()`/`heritageWidget()` (names must stay unique — Pest helpers are global).
+  - `tests/Feature/Analytics/AssetFilteringTest.php` (18 tests) — REQ-009 asset-group filtering: `extractAssetFilter` asset_group → enabled channel assets (multi-asset facebook_marketing vs single-asset channels), `___EMPTY_GROUP___` sentinel, group no-bypass (foreign/missing group), invalid `controls['assets']`, series-filter intersection; DM source-series inheritance (group / DM-level `asset_filter` / view `series_assets.dm_N` override) and KPI dependent/independent asset groups reach the engine payload; empty-group short-circuit never calls the engine. Uses a `TestableDashboardWidgetDataController` subclass exposing the protected handlers + a Mockery `RemoteEngineService` bound via `app()->instance()`; call recording via closure-captured `stdClass`.
+  - **Pest gotchas learned:** `test()->app` is a protected property — use the global `app()->instance()` helper to bind mocks. With a single asset, the FBM controller emits a scalar `channeledAccount` (not the `['operator' => 'in', ...]` form).
+- **Bug found & fixed:** `extractAssetFilter()` in `DashboardWidgetDataController.php` returned `null` when the `asset_group` did not exist or belonged to another project — `null` then flowed to `forwardToChannelEndpoint`, the account filter was dropped, and the engine was called WITHOUT any channeledAccount filter (all-assets data leak). **Fix:** project-scoped lookup (`AssetGroup::where('project_id', $project->id)->first()`); missing group → `___EMPTY_GROUP___` (empty-result short-circuit). The KPI path was already safe (uses `active_items` + empty→`___EMPTY_GROUP___`).
+- **Baseline after changes:** full suite = 167 passing / 25 failing — 78 new tests green, 25 failures unchanged (pre-existing).
+
+### Widget Data-Integrity Test Suite (2026-07-31)
+- **New:** `tests/Feature/Analytics/WidgetDataIntegrityTest.php` (11 tests / 157 assertions, all passing) — REQ-011 data-integrity: SDK request-object/method correctness (FB `Act_` id build, raw FB params, GA4 metrics/dimensions, GSC request fields, FBM/GA4 pool request shape), channel endpoint forwarding (FBM/GA4 `listChanneled` pool per-endpoint map; FBO/GSC `aggregateChanneled`), widget source×type matrix coverage (table+metric → FBM chart path), and end-to-end `show()` response translation (`chart` rows → `value`/`previous` tile; `5.0` → `5` via JSON round-trip).
+- **Test infra learnings:** `test()->app` is protected → bind mocks with global `app()->instance()`; helper names must stay unique (`wid*` prefix) since Pest helpers are global (collides with `AssetFilteringTest`'s `af*`); engine mock must always stub `listChanneled` (FBO chart `hydrateResolvedFacebookPageIds()` calls `aggregateChanneled` only when `activeTab=facebook` + `fbPlatformIds` present, so pass `assets => ['fb_1']` with no activeTab); controls need `activeTab => 'campaigns'` for FBM `validateRequest::activeTab` and `assets => ['act_111']` for `channeledAccount`; engine pool response shape is per-endpoint map of `['status' => 'success', 'data' => [rows]]`; GA4 scope matrices supply scope-specific `chart_<scope>` keys so mock payloads must use `chart_traffic_matrix`; `widget_type === 'table'` + `source_type === 'metric'` routes to the FBM chart path, not the table path; `sync_config` uses top-level channel keys; FBO= `facebook_organic`, GSC=`google_search_console`, `source_config` (not `sourceChannel`/`sourceMetrics`).
+- **Baseline after changes:** full suite = 178 passing / 25 failing — 11 new tests green, 25 failures unchanged (pre-existing: Filament resource/action issues, locale `en` vs `en_US`, undefined routes, 5 known `RemoteEngineServiceTest` `Undefined array key "success"`).
+
+### Collaborator Asset Sharing via Asset Groups (2026-07-31)
+- **Feature:** replaced per-channel collaborator asset scoping (`project_user_allowed_assets`) with **asset-group** sharing. Plan: `ASSET_GROUP_SHARING_PLAN.md` (status COMPLETE).
+- **Data model:** new pivot `project_user_asset_groups` (unique `project_id, user_id, asset_group_id`) + `asset_access_unrestricted` boolean on `project_user` (default true). Migration `000003` data-migrates legacy per-channel rows per decision §C (allow-all → `unrestricted=true` + no snapshot groups; fully restricted → `unrestricted=false` + imported groups; mixed → `unrestricted=true`) and drops the legacy table (snapshot retained for `down()`). Legacy `ProjectUserAllowedAsset` model deleted; legacy migration kept for history.
+- **Enforcement:** `app/Services/CollaboratorAssetAccessService.php` is the single chokepoint — `isUnrestricted()` (owner/editor always true; regular collaborator honors flag; **no `project_user` row ⇒ unrestricted**), `getAllowedAssetIdsForChannel()`, `getAllowedAssetGroupQuery()`, `canAccessGroup()`, `filterAllowedAssets()`.
+- **Controller hardening** (`DashboardWidgetDataController.php`) — several leak paths found & fixed for restricted collaborators:
+  - `show()` gate: fully disallowed explicit list → `403 access_restricted`; partially allowed list is **narrowed** in `$resolvedControls['assets']` before handlers run (previously only 403'd when the whole list was blocked → partial leak); unscoped widgets default `assets` to the shared set; channel falls back to `widget->source_config['channel']`.
+  - `extractAssetFilter()`: now intersects every source (`asset`, `assets`, `asset_group`, DM `series asset_filter`, `series_assets`, and the **no-scope fallback** which previously returned `null` → all assets) with the shared set; single-element results still collapse to scalar in the FBM controller (test assertions must expect `'act_111'`, not the `['operator' => 'in', ...]` form).
+  - `handleKpiSource()`: restricted users get dependent/independent asset filters intersected with shared assets; missing scoping injects the shared set; empty intersection → `['___EMPTY_GROUP___']` short-circuit (never an empty array — empty array is ignored by `KpiPayloadBuilder` and would fall back to all assets).
+  - `sanitizeMergedGroupRefs()` replaces non-shared group refs with `___EMPTY_GROUP___` before `KpiPayloadBuilder`.
+- **Scoped listings:** `LoadsDashboardViewData` (groups map, view asset options, configured group lookups), `KpiFormBuilder::getAssetGroupOptions`, `DashboardBuilder::getAllAssetGroups`, `DataSources::getAssetGroupsData`, `KpiExecuteActionBuilder` group lookups.
+- **UI:** `ManageCollaborators` "Asset access" summary column + "Manage Asset Groups" modal (`asset_access_unrestricted` Toggle + `CheckboxList` `asset_group_ids`, hidden for owners); legacy `getActiveChannels`/`getAssetsForChannel`/`buildAssetScopeForm` removed. New Spanish strings added to `lang/es.json` (11 keys).
+- **Tests:** new `tests/Feature/Analytics/CollaboratorAssetGroupSharingTest.php` (18 tests) — helpers use `ag*` prefix (Pest globals collide). Uses `DB::table('project_user')->insertOrIgnore` + `model_has_roles` inserts + `Role::firstOrCreate`. HTTP `show()` tests must give the collaborator dashboard ownership (`dashboard_user_id`) or the `DashboardPolicy::view` returns 403 `Unauthorized` before the asset gate runs. Analytics suite = 58 passing.
+- **Pending manual step:** `php artisan migrate` against the docker PostgreSQL dev DB (`apis-hub-facade-db`) can't run from this shell (host unreachable) — migrations validated via SQLite in-memory test runs; user must run it in the dev environment.
+- **Baseline after changes:** full suite = 218 passing / 25 failing — 18 new tests green, 25 failures unchanged (pre-existing; verified via `git stash` that `ProjectTransferTest` etc. fail identically on clean HEAD).
+
+### Request-Plane Channel Guard + Missing-Assets Marker (2026-07-31)
+- **Feature:** closed remaining request-plane data-leak paths for restricted collaborators (`asset_access_unrestricted=false`) so unshared channel data cannot be fetched through raw channel endpoints, FBO post lookups, GA4 list-properties, or derived-metric previews.
+- **Middleware:** new `app/Http/Middleware/ScopeChannelAssetAccess.php` (alias `channel.asset.access` registered in `bootstrap/app.php`). Handles `tenant` as numeric id or subdomain; non-member → `403 access_denied`; unrestricted/owner/editor passthrough; empty `account` → `403 access_restricted`; partial lists narrowed in place (array kept when input array, scalar when scalar); empty after filter → `403 access_restricted`. Applied in `routes/web.php` to all `fbo`, `fbm`, `gsc`, `ga4` routes (incl. `ga4/list-properties` and `fbo/post`).
+- **Allowed-identifier model:** `CollaboratorAssetAccessService::buildAllowedIdentifierSet()` — allowed platform ids (raw, md5, `act_`-stripped/prefixed variants via `addIdentifierVariants()`) are the allowed set; engine **internal ids** are added only when their `platformId` maps to an allowed shared id via `channeledAccountList()` (`RemoteEngineService::listChanneled`, per-project/per-channel cached, fallback `[]`); FBO `|` composite parts split (empty/`NONE` skipped); GA4 numeric ids resolved through the same enrichment. `requestedIdentifierAllowed()` + `identifierAllowed()` (with `act_`-prepend fallback) do the checking.
+- **GA4 list-properties filter:** `GoogleAnalyticsController::listProperties()` returns only properties whose `platformId` is in `getAllowedAssetIdsForChannel(..., 'google_analytics')` for restricted members.
+- **FBO post guard:** `FacebookOrganicController::post()` fetches the post row, then for restricted members requires at least one candidate (`channeled_account_id`, `account_id`, `channeledAccount`, `account`, `page_id`, `page`, `page_platform_id`, `fb_page_id`, `linked_fb_page_id`, `platform_id`) to pass `identifierAllowed`; else `403 access_restricted`.
+- **DM preview guard:** `DerivedMetricPreviewController` — non-member → `403 access_denied`; restricted members intersect `getValidAssetsForChannel` with `getAllowedAssetIdsForChannel` per series before computing; all-empty → `['data' => ['dates'=>[], 'values'=>[]]]` with zero engine calls.
+- **Missing-assets marker reconciliation:** committed handler-output contracts (`AssetFilteringTest`) require handlers to return **plain empty arrays** (`['columns'=>[],'rows'=>[],'chart'=>[],'summary'=>[]]`) and the DM handler to still call `computeKpi` with empty series. So `_missing_assets` was removed from handler outputs and the DM all-empty short-circuit; `show()` now computes `missing_assets` via new `detectMissingAssets()` (metric/entity: `extractAssetFilter(...) === '___EMPTY_GROUP___'`; derived_metric: walks source series applying `series_assets.dm_N`/`dm_assets` overrides, true when no series yields a usable filter) OR the legacy `data['_missing_assets']` (KPI short-circuit still sets it).
+- **Tests:** `CollaboratorAssetGroupSharingTest` now 37 tests (added 17 request-guard + DM-preview tests with `agFboSyncConfig`/`agGscSyncConfig`/`agGa4SyncConfig` factories, and `agBindEngine` extended with `$listData`/`$listChanneledCallback` + `listChanneledCalls` capture) + 3 missing-assets marker tests (`agDm` helper added): metric/KPI widgets with an empty group → `missing_assets=true` and engine never called; DM widget → `missing_assets=true`, `aggregateChanneledPool` never called but `computeKpi` still runs once (committed contract).
+- **Baseline after changes:** `php artisan test tests/Feature/Analytics` = **77 passing / 370 assertions, zero failures**. Full-suite pre-existing 25 failures untouched.
+
+### Dashboard Sticky Tab Bar / Filter Overlap Fix (2026-08-05)
+- **Bug:** In the data-explorer dashboards, the tabbed tables' tab buttons (aligned left) covered/blocked the "Filter rows..." text input.
+- **Root cause:** `.tab-nav-fb`, `.tab-nav-ga4`, `.tab-nav-gsc` were `position: sticky; top: 7.25rem; z-index: 15;`, so the tab bars floated over their search boxes. In the organic dashboard the channel tab buttons (FACEBOOK PAGE / INSTAGRAM ACCOUNT) lived **inside** the sticky header (`.sticky-header-section`, `top: 4rem`), so when the header pinned, the tab buttons sat on top of the filter boxes.
+- **Fix (2026-08-05):**
+  1. Removed `position: sticky; top: 7.25rem; z-index: 15;` from `.tab-nav-fb`, `.tab-nav-ga4`, `.tab-nav-gsc` in all four dashboards — tab bars are now static rows sitting directly above their search boxes.
+  2. Gave the tab nav bars opaque backgrounds matching the page surface: light `background-color: #f9fafb;` and `.dark .tab-nav-* { background-color: #111827; }` (same colors as the sticky headers).
+  3. Organic dashboard: moved the channel tab bar (`.tab-nav-fb` with FACEBOOK PAGE / INSTAGRAM ACCOUNT) OUT of the sticky header into a static row below it (above the metrics grid / table containers), so the pinned controls header no longer carries tab buttons over the filters.
+- **Verification:** `php artisan view:cache` succeeds (all Blade templates compile); `view:clear` run after.
+- **Note:** The sticky *controls* headers (`.fb-header-row`, `.ga4-header-row`, `.gsc-header-row`, `.sticky-header-section`) still pin at `top: 4rem` and can cover content that scrolls beneath — that's the intended sticky-header behavior and contains no tab buttons anymore.
+
+### Joint Dashboard Chart "Canvas is already in use" Fix (2026-08-05)
+- **Bug:** `Uncaught Error: Canvas is already in use. Chart with ID '4' must be destroyed before the canvas with ID 'jointChart' can be reused.` thrown from Chart.js when re-rendering the Joint Dashboard.
+- **Root cause:** `renderChart()` only destroyed the Chart instances it tracked via Alpine scope state (`this.chartInstance` / `this.scatterChartInstance` / `this.rollingChartInstance`). After `$wire.fetchJointData()` dispatches `joint-data-loaded` (`app/Filament/App/Pages/JointDashboard.php:232`), Livewire re-renders/morphs the page and Alpine re-initializes the `x-data="jointDashboard(...)"` scope (joint-dashboard.blade.php:147) with `chartInstance = null`. The previous Chart.js instance stays registered on the canvas, so `new Chart(ctx, ...)` throws. The `change-event="chartRendered && renderChart()"` handlers (analysis level / lag selects) hit the same path.
+- **Fix:** Added `destroyCharts()` in `resources/js/dashboards/joint-dashboard.js` that uses Chart.js's per-canvas registry — `Chart.getChart(canvas)` (Chart.js v4.5.1) — to find and destroy any existing chart on `jointChart`, `scatterChart`, and `rollingChart` regardless of scope, then nulls the tracked refs. `renderChart()` calls it before creating charts.
+- **Verification:** `node --check` passes; `pnpm run build` succeeded (`app-BLrBBMpe.js`); bundle contains `destroyCharts`/`getChart`.
+
+### Joint Dashboard "Cannot read properties of null (reading 'save')" Fix (2026-08-05)
+- **Bug:** On re-render (changing asset then comparing, or analysis-level/lag change), Chart.js threw `Uncaught TypeError: Cannot read properties of null (reading 'save')` at `clipArea` → `Chart._drawDataset` → `_drawDatasets` → `draw` ← `Animator._update` (`Map.forEach`). After it fired, all three charts stopped rendering until F5.
+- **Root cause:** A destroy-during-animation race (confirmed via Chart.js issue #11743 — identical stack; maintainer note: "try not to update the chart while it's playing animation", "This problem does not happen if the animation is turned off"). `renderChart()` destroys the previous chart instance and synchronously creates a new one on the same canvas while the old chart's animation frames are still registered; a pending `Animator._update` then calls `draw()` on the destroyed chart whose `ctx` was nulled by `destroy()`. This surfaced only after the earlier "Canvas is already in use" fix (destroy path now actually reaches the animation phase).
+- **Fix** (`resources/js/dashboards/joint-dashboard.js`):
+  - `destroyCharts()` now calls `existing.stop()` before `existing.destroy()`.
+  - Added `animation: false` to the options of all three charts (jointChart line, scatter, rolling Pearson) so no animation frames are ever scheduled, eliminating the race.
+- **Verification:** `node --check` passes; `pnpm run build` succeeded (`app-CpZmX4nH.js`); bundle contains `animation:!1` x3, `destroyCharts`, `stop()`.
+- **Note:** Charts now render instantly (no entrance animation) — intentional tradeoff for stability.
+
+### Widget Channel/Asset Badges Removed (2026-08-05)
+- **Change:** Removed the channel/asset badges shown under each widget title on dashboard load, in both the internal and public dashboard views. That info remains available in the widget config modal and the chart.
+- **Internal view:** `resources/views/filament/app/pages/partials/dashboard-view-content.blade.php` — removed badge pills under widget titles and the badge pills in the fullscreen pop-out modal header.
+- **Internal JS:** `resources/js/dashboards/dashboard-view.js` — removed `getBadges()`, `_getAssetText()`, `popOutBadges` state, `syncPopOutBadges()`, and its 3 call sites (in `reloadWidget`, the settings-save pop-out refresh, and `openPopOut`).
+- **Public view:** `resources/views/shared/public-dashboard.blade.php` — removed badge pills under widget titles and the inline `getBadges()` method in its `widgetHeader` Alpine component.
+- **Verification:** `node --check` on `dashboard-view.js` passes; `php artisan view:cache` compiles all Blade templates. Note the inline `<style>`/JS lives in Blade, but `dashboard-view.js` is bundled — rebuild Vite assets for the internal view JS change to take effect.
+
+### FB Organic Dashboard Sticky Header / Table Heading Color Fix (2026-08-05)
+- **Bug:** On the FB Organic dashboard (`resources/views/filament/app/pages/facebook-organic-dashboard.blade.php`), the sticky header and table headings appeared unstyled/wrong colors, unlike the other channels' dashboards.
+- **Root cause:** The `.dark { ... }` CSS block (page inline `<style>`) was **missing its closing `}`** after `--fb-chart-ticks: #94a3b8;` — the `.sticky-header-section`, `.fb-table th`, and every rule that followed got nested inside `.dark`, so they only applied when the page was in dark mode (light mode had no styles for them).
+- **Fix:** Added the missing `}` after line 29 so `.dark` closes before `.sticky-header-section` (mirrors the structure of `facebook-marketing-dashboard.blade.php` where `.fb-header-row` carries the `#f9fafb !important` / dark `#111827 !important` overrides at top level).
+- **Verification:** Brace count in the inline `<style>` went from 49 open / 48 close to 49/49; all five dashboard blade files now balanced (marketing 41/41, organic 49/49, GA4 45/45, GSC 43/43, joint 38/38). Blade-only change — run `php artisan view:cache` / `view:clear`, no Vite rebuild needed.
+
+### FB Organic Dashboard Header/Tabs/Tiles Layout Tweaks (2026-08-05)
+- **Changes** to `resources/views/filament/app/pages/facebook-organic-dashboard.blade.php`:
+  1. Moved the FACEBOOK PAGE / INSTAGRAM ACCOUNT channel tabs back INTO the sticky header section (below the controls row) so they stay visible on scroll — reversed the "move out" part of the earlier tab-bar fix (the static-tab-nav-outside decision), per user request.
+  2. Added `.tab-nav-fb-split` class: tabs get `flex: 1 1 0; width: 50%; text-align: center;` (and `border-right: none` on `:last-child`) so both buttons split the bar 50/50.
+  3. Added `margin-top: 25px` to `.metrics-grid-fb` for separation from the controls.
+- **Verification:** `php artisan view:cache` compiles all Blade. Blade-only, no Vite rebuild.
+
+### Main Menu Navigation Group Refactor (2026-08-05)
+- **Change:** Reorganized the App panel's Filament navigation groups. Old `Exploration & Telemetry` renamed to `Analytics`; old `Data & Integrations` split into `Data` and `Integrations`.
+- **New group layout:**
+  - `Analytics`: `Clusters\Dashboards`, `Resources\DerivedMetricResource`, `Resources\CustomKpiResource` (`getNavigationGroup()` → `__('Analytics')`)
+  - `Data`: `Clusters\DataExplorer`, `Resources\AssetGroupResource` (`getNavigationGroup()` → `__('Data')`)
+  - `Integrations`: `Pages\DataSources`, `Pages\SyncSettings`, `Pages\DataSync` (`getNavigationGroup()` → `__('Integrations')`)
+- **Files modified:** `app/Providers/Filament/AppPanelProvider.php` (navigationGroups list), the 8 class files above, `lang/es.json` (added `Data`, `Integrations`, `Analytics` translations; kept legacy keys).
+- **Verification:** `php -l` passes on all modified classes; `es.json` is valid JSON.
+
+### Dashboard Inline Styles Extracted to CSS (2026-08-06)
+- **Change:** Removed the `<style>` blocks + static inline `style="..."` attributes from the 5 channel dashboards into a new shared `public/css/dashboards.css` (loaded via `asset()` `<link>` in each page, Filament pages don't load `resources/css/app.css`).
+- **Files:** `public/css/dashboards.css` (new, ~760 lines); modified `google-analytics-dashboard`, `google-search-console-dashboard`, `facebook-marketing-dashboard`, `facebook-organic-dashboard`, `joint-dashboard` — net **-906 lines** in the blades.
+- **Page-root scoping classes added** (markup): `fb-marketing-page`, `fb-organic-page`, `joint-page`. Needed because fbm/fbo both define `--fb-*` vars with different values (e.g. `--fb-reach`) and the shared class names (`.card-metric-value`, `.card-metric-trend`, `.trend-neutral`, `.metric-cell`, `.progress-bar-container`, `.metric-val-main`) referenced different vars/sizes per page. GA4/GSC vars kept on `:root` (unique namespaces). `.trend-up/.trend-down/.progress-bar-fill` deduplicated once globally (identical across pages).
+- **New utility classes** replacing repeated inline styles: `dash-alpine-hidden` (pre-Alpine hide for `x-show` elems), `dash-dropdown`, `dash-select-wide`, `dash-search-input` (replaces inline `padding-left:2.75rem`; removed the now-redundant Tailwind `pl-9`/`pl-10` on those inputs), `dash-chart-canvas`, `dash-modal-close`, `dash-table-wide`, `dash-mb-20`, `dash-fill`, `fbo-tabs`, `gsc-bar-clicks/impressions/ctr` (static progress-fill backgrounds — also fixes those fills being wiped by Alpine `:style` width), `joint-title-a/b`, `joint-chart-sm/md`.
+- **Left inline on purpose:** per-card `--color: ...` custom props and all dynamic styles (Alpine `:style` template literals, `--color: ${metric.color}`).
+- **Behavior notes:** joint `select { color-scheme }` rules scoped to `.joint-page select`; gsc `.gsc-pagination-select` bug fixed (`--fb-*` → `--gsc-*`); fbo `.sticky-header-section` gained the sticky rules (was inline).
+- **Verification:** `php -l` clean on 5 blades, `view:cache` OK, dashboards.css braces balanced (219/219). No Vite rebuild needed (plain CSS).
+
+### CSS Extraction F0: Builder, View-Content, Modals, Globals (2026-08-06)
+- **Change:** Completed the remaining CSS-extraction plan (F0) across builder/view-content/modals/globals, extending the dashboards extraction above. All static `<style>` blocks and `style="..."` attributes moved to plain CSS files; only dynamic styles (Alpine `:style`, Blade `{{ }}`, JS template strings) stay inline.
+- **4 CSS destinations now registered:**
+  - `public/css/dashboard-builder.css` (loaded by builder/view-content/public pages): added `[x-cloak]`, `body{font-family:'Outfit',system-ui,sans-serif}` (public pages), `.pd-widget-content{overflow:visible!important}`, `.pd-widget-header{z-index:10}`, `.builder-toolbar` (sticky top 4rem/z-20/#f9fafb, dark #111827), `.bd-*` utilities (`bd-modal-root` z-999999, `bd-modal-panel` 95vw/1400px/90vh, `bd-config-col` flex 1 1 250px, `bd-canvas-col` flex 2 1 500px, `bd-search-input` padding-left 2.5rem, `bd-line-clamp-2`, `dvc-popout-root/panel/content`), GridStack resize-handle rules (previously a `<style>` in the builder's `@push('scripts')`).
+  - `public/css/dashboards.css`: `.dash-alpine-hidden` **replaced by `[x-cloak]{display:none !important}`** (see Alpine finding below); added 25 metric-card `--color` bindings as attribute selectors (`[data-metric="..."]`) replacing per-card inline `--color` custom props.
+  - `public/css/filament-extras.css` (new, global): `[x-cloak]`, `.custom-scrollbar`, `.ds-*` (data-sources page), `.as-*`/`.pc-*`/`.collab-asset-list`/`.ui-asset-dropdown` (account pages + asset selector), `.asg-*` (AssetGroup asset selector).
+  - `public/css/modals.css` (new, global): `.diff-*` (version-diff modal), `.version-restore-btn`/`.version-duplicate-btn` (version-history modal), `.diff-pre` (max-height 55vh).
+  - All globals loaded via `AppPanelProvider` `panels::styles.after` render hook (3 `<link>` tags). Filament App panel does NOT load `resources/css/app.css`.
+- **CRITICAL Alpine finding (verified in Alpine v3 source `directives/x-show.js` + `x-cloak.js`):** `_x_doShow` only removes the **inline** `display` (`el.style.removeProperty('display')`); a class-based `display:none` (like `.dash-alpine-hidden`) is NEVER removed → element stays permanently hidden. Correct pattern: `x-cloak` attribute + `[x-cloak]{display:none !important}` — Alpine removes the attribute in init (`queueMicrotask`). Applied to all `x-show` elements that previously used a `display:none` fallback (5 dashboards, view-content popout/settings modals, public-dashboard filters dropdown, account-subscription annual grid).
+- **GA4/GSC dropdown dedup:** both had a **duplicate `class`** attribute (first with `dash-dropdown dash-alpine-hidden` was ignored by the HTML parser — min-width/hide never applied); merged into one `class="dash-dropdown absolute z-50 w-full sm:w-72 ..."` + `x-cloak`.
+- **`dashboard-builder.blade.php`:** now 0 `<style>` and 0 static `style=` (3 `<style>` blocks + 13 statics → `bd-*`).
+- **`dashboard-view-content.blade.php`:** 0 `<style>`, 0 static `style=`; removed the duplicated `.modal-body-absolute-wrapper-custom` `<style>` block (used existing `.modal-body-absolute-wrapper`), popout root → `x-cloak` + `.dvc-popout-root`, settings modal root → `x-cloak` + `.bd-modal-root`; dynamic `:style="ts"` bindings left inline.
+- **Reference/account/global pages** (`data-sources`, `account-subscription`, `plan-card`, `collaborator-asset-list`, `ui/asset-selector`, `asset-group-resource/asset-selector`, 8 reference pages): all statics → classes, `style="display: none;"` → `x-cloak`, `<style>` blocks removed. Reference pages migrated via PowerShell `Set-Content -Encoding utf8` (verified no BOM, no `\uFFFD`; non-ASCII preserved).
+- **Metric-card `--color` conversion (3 dashboards):** 25 inline `style="--color: var(--fb-x)/var(--ga4-x)/#hex;"` → `data-metric="<key>"` + CSS attribute selectors (`.card-stat-fb[data-metric=...]` scoped under `.fb-marketing-page`; `.card-stat-ga4`/`.card-stat-gsc` unscoped, matching existing rules). `.active` reads `var(--color)` so behavior is identical.
+- **Remaining inline styles are all DYNAMIC and intentionally left:** `formula-editor` (JS string concat), `data-sync` (`width: {{ $globalCompletion }}%`), `global-infrastructure-status` (`background-color: rgb({{ $statusColorRGB }})`, `width: {{ $syncPercentage }}%`). Excluded: `emails/*`, `vendor/mail/*`, `pdf/invoice.blade.php`.
+- **Verification:** `php -l` clean on modified PHP; `php artisan view:cache` OK; all 4 CSS brace-balanced (dashboards.css 244/244, filament-extras 22/22, modals 20/20, builder 70/70); global grep shows 0 static `<style>`/`style=` in scope. Docker unavailable → smoke visual test PENDING.
+- **Not yet committed:** none of the F0 batches (nor the 5-dashboard extraction) have been committed — awaiting user confirmation on commit grouping.
+
+### Reusable Data Table Component (2026-08-06)
+- **Feature:** Extracted the duplicated sort/search/paginate logic + table markup from the 4 channel dashboards (FBM 1 table, GSC 1 table, FBO 2 tables, GA4 6 sections) into a shared `dataTable()` JS factory + `<x-data-table>` Blade component with `column`/`row` subcomponents. All dashboards migrated; behavior preserved.
+- **JS factory** (`resources/js/dashboards/data-table.js`): `dataTable(config)` returns `{ rows, searchKeys (default ['name']), searchQuery, sortCol, sortDir (default 'desc'), currentPage, pageSize (default 10), valueOf, sortBy(col), getters sortedRows/totalPages/paginatedRows, nextPage(), prevPage() }`. Sort fallback: numeric `Number(valueOf(row,col))`, string-compare when NaN. Filter: `searchKeys.some(key => row[key].includes(query))`.
+- **`valueOf` hook** (added for FBO): custom value resolver `(row, col) => number` for metric-alias sorting (posts table resolves `interactions`→`total_interactions||interactions`, `views`→`views||video_views||page_views_total||ig_reels_video_view_total_time`, `follows`→`follows||follows_and_unfollows`).
+- **Bugs found in first smoke test (2026-08-06) and fixed:**
+  1. `valueOf: config.valueOf || null` read the **inherited** `Object.prototype.valueOf` (always truthy), so GSC/FBM/GA4 (no explicit `valueOf`) used it and `Object.prototype.valueOf.call(undefined)` threw `Cannot convert undefined or null to object` in `sortedRows`. Fix: `Object.prototype.hasOwnProperty.call(config, 'valueOf') ? config.valueOf : null` (`data-table.js`). Gotcha: `config.X` / `'X' in config` both see prototype-chain keys — always use `hasOwnProperty` for factory config option names that collide with `Object.prototype` methods.
+  2. Blade component boolean props passed as strings: `sortable="false"` arrives as the **truthy string** `"false"`, so non-sortable columns still rendered the sort indicator (`x-show="sortCol === "` → Alpine `Unexpected token '}'`) and the root-scope `sortDir` ref (undefined after migration). Fix: normalize in `data-table/column.blade.php` — `$sortable = $sortable === true || $sortable === 'true' || $sortable === '1' || $sortable === 1;`. Same pattern applies to any Blade component boolean prop passed via plain attribute.
+  - Rebuilt Vite assets (`app-BjPS30PT.js`); `node --check` + `view:cache` clean.
+- **Blade components** (`resources/views/components/`):
+  - `data-table.blade.php`: props `variant` (fb|ga4|gsc → `*-table-container`, `tab-nav-*`, `*-pagination-*` classes), `state` (Alpine prefix, e.g. `tableState` / `sections.campaigns`), `loading`, `search` (+`searchPlaceholder`), `pagination`; `header` slot (title/tabs) renders above search; slot = `<table>` with thead/tbody; footer = pageSize select + page badge + Prev/Next.
+  - `data-table/column.blade.php`: `key` (literal → `'col'`) or `keyBind` (dynamic Alpine expr, e.g. `metricKey`), `label`|slot, `sortable` (default true → `metric-cell cursor-pointer` + `@click="<state>.sortBy(<key>)"` + ↓/↑ indicator).
+  - `data-table/row.blade.php`: `onClick` (raw Alpine expression — **must be passed unquoted**, the component uses `{!! $onClick !!}`; quoted string literals would silently no-op), `clickable` (condition → cursor-pointer/disabled `opacity-50`), `active` (highlight), `hoverClass`/`inactiveClass`/`disabledClass`.
+- **Per-dashboard wiring:**
+  - FBM: `tableState: dataTable({ sortCol:'spend', sortDir:'desc', searchKeys:['name'] })`; `$watch('tableState.pageSize', ...)`; `fetchTable` sets `tableState.rows`/`currentPage`.
+  - GSC: `tableState: dataTable({ sortCol:'clicks', searchKeys:['id'] })`; `maxClicks`/`maxImpressions` use `tableState.sortedRows`.
+  - FBO: `postsTable` (with `valueOf`) + `breakdownTable` (`dataTable`), each with `searchKeys:['name']`, own `pageSize`; `availableTableMetrics`/`availableBreakdownMetrics` now read `postsTable.rows`/`breakdownTable.rows`; old `sortBy/sortBreakdownBy/sorted*/paginated*/next*/prev*` block removed.
+  - GA4: single `sections` object — 6 `dataTable` states (campaigns/channels/traffic `sortCol:'sessions'`, acquisition `'newUsers'`, events `'eventCount'`, adtouchpoints `'sessions'`; all `searchKeys:['name','id']`, own `pageSize`). Replaced `sd/sl/ss/sq/sc/sd2/sp` + `pageSize`; `setSectionSubTab` resets `state.sortCol` to first metric of the tab (kept the `metrics.includes(sc)` clamp semantics); pageSize-reset watch via `get sectionPageSizes` getter. `sectionMaxMetric` reads `sections[section].sortedRows`; `sl` loading map kept; `ss` (active sub-tab) kept (used by `getFetchOptions`/`getCacheKey`).
+- **Note:** GA4 `sq`→`searchQuery` filter is now multi-key (`name` OR `id`) vs old `name||id` fallback — intended improvement.
+- **Verification:** `node --check` passes on all 5 dashboard JS files; `php artisan view:cache` compiles all blades (then `view:clear`); repo-wide stale-ref greps clean (`tableDataRaw`, `sortedTableData`, `paginated*`, `sectionData/Paginated/TotalPages/SortBy`, `sp./sq./sc./sd2.`, per-table `pageSize` etc.).
+- **Not yet committed:** still awaiting user confirmation on commit grouping (alongside the F0 CSS batches).
+- **Smoke test PENDING:** Docker unavailable → visual verification of the 4 migrated dashboards (sort/search/pagination/tabs/row-click/filters) outstanding.
+
+### Public-View Widget Counter Duplication + Responsive Grid (2026-08-06)
+- **Bug (counter 40/20):** The public-view widget counter showed `loadedCount` double the widgets (e.g. 40/20). Root cause: `dashboardView.init()` (in `$nextTick`) called `applyAssetGroup()` **before** the async `x-init` `renderWidget` promises settled — `reloadWidget`'s guard `if (this.loadedCount > 0) this.loadedCount--` never fired (count still 0), so every widget rendered twice and `loadedCount` hit 2× `totalCount`. Triggered on public views because the PV passes a non-empty `selectedAssetGroup` while `_dashboardConfiguredGroup` is empty (dashboard has no configured/whitelisted asset group), so the init group-filter reload always runs.
+- **Fix (`resources/js/dashboards/dashboard-view.js`):**
+  1. Per-widget idempotent counting: added `_loadedWidgets` map + `_markLoaded()`/`_markUnloaded()`; `renderWidget` no longer blindly `loadedCount++` — it only increments when the widget isn't already tracked. `reloadWidget` uses `_markUnloaded()` instead of the broken `loadedCount>0` guard; `refreshAll` resets `_loadedWidgets`.
+  2. Init deferral: `applyAssetGroup()` at init is replaced by `_applyAssetGroupAfterInitialRender()`, which waits until all initial renders have started **and** settled (`_startedCount >= totalCount && _pendingRenders === 0`, polling every 50ms) before running the group-filter reload. This eliminates the wasted double render entirely.
+  - New state props: `_loadedWidgets`, `_pendingRenders`, `_startedCount`.
+- **Feature (responsive grid):** Both view grids were `GridStack.init({ staticGrid:true, float:true, column:12, ... })` with no responsive config, and the existing responsive CSS only targeted the builder's `#grid-stack`. Added GridStack v12 `columnOpts` (container-width based, `breakpointForWindow` NOT set) to `#view-grid-stack` init in **both** `resources/js/dashboards/dashboard-view.js` (dashboardView) and `resources/js/public-view/public-dashboard.js` (sharedView): `columnMax:12`, breakpoints `{1280,12}`, `{1024,8}`, `{768,6}`, `{640,4}`, `{480,1}` → widgets scale down proportionally and go full-width (1 col) below 480px. GridStack's `column()` has no static-grid guard, so it works with `staticGrid:true`.
+- **Verification:** `npm run build` OK → new bundle `public/build/assets/app-DBRDL-Jg.js`; bundle contains `columnOpts`/`_applyAssetGroupAfterInitialRender`/`_markLoaded`; `php artisan view:clear` OK. Smoke test of PV/shared/internal dashboards PENDING (counter should read 20/20; narrow viewport should stack widgets full-width).
+- **Not yet committed:** alongside all prior pending batches (F0 CSS, data-table).
+
+### KPI Widget Config UI — Dependent-Series & Scroll Fixes (2026-08-07)
+- **Status:** Blade structural fixes complete + structure-verified; browser smoke test PENDING (no dev server reachable from this shell).
+- **Bug fixed:** Dependent-series asset cards in the KPI widget config modal never rendered. Root cause (verified in Alpine 3.15.11 source): `<template x-if>`/`x-for` clone template content and use **only the first root element** — any template with 2+ direct root children silently drops the rest.
+- **Fix:** `resources/views/filament/app/pages/dashboard-builder.blade.php`:
+  - Dependent-series block: flattened two root `x-if` templates under a `source_type === 'kpi'` wrapper into sibling single-root templates — base box `x-if="... === 'kpi' && dependent_channel && !dependent_dm_id"` (~1035), DM box `x-if="... === 'kpi' && dependent_dm_id"` (~1175).
+  - Independent-variables block (~1288–1573): guard `x-if="varCfg.independent_dm_id || (varCfg.independent_channel && varCfg.independent_metric)"` had 2 root children (DM box + base box); wrapped both in `<div style="display: contents">` so the guard has a single root while boxes still participate in the flex layout.
+  - Raw-metric "Add Series" button never rendering: wrapped the `x-for` series + Add-Series div in `<div style="display: contents">` inside the `source_type !== 'kpi' && !== 'derived_metric'` `x-if` (~855–1031).
+  - Dead `derived_metric` series block: was nested inside the kpi `x-if` (impossible combination); closed kpi-x-if after the independent-variables block (~1574) and removed old close (~1678) so `derived_metric` (~1577) is a top-level sibling.
+- **Bug fixed (2026-08-07):** Dependent + independent DM asset lists didn't scroll — the list container was a plain block with `overflow-y-auto` but **no height constraint**, so content grew and was clipped by the card's `overflow-hidden` (no scrollbar). **Fix:** added `max-h-40` to the inner `overflow-y-auto` container in both DM boxes (dependent ~1245, independent ~1372). (The base dependent box already uses `absolute inset-0` scroll and is correct.)
+- **Gating notes (from prior session):** stored `_ui_state` only has `_dm_id` (no `_source_type`); all gating checks `dependent_dm_id` / `independent_dm_id` presence. `widgetKpiConfig` comes from `config?.filters?._ui_state` (DashboardBuilder `getKpiConfiguration`). `settingsVariables` keys can be UUIDs (`independent_<uuid>`); `shouldShowSeries` (builder + view JS) handles numeric and UUID keys. Series cards max 2 cols (`md:w-[calc(50%-0.75rem)]`); base independent vars with no config hidden when any DM series exists.
+- **Debug logs kept while testing:** `DEBUG BUILDER getKpiConfiguration result:`, `DEBUG BUILDER widgetKpiConfig:`, `DEBUG BUILDER dependentDm:` in `resources/js/dashboards/dashboard-builder.js` (~649/659) — remove after browser verification passes.
+- **Verification:** `php artisan view:cache` OK (then `view:clear`). Structure verified with a full-file token scanner (`C:\Users\manga\AppData\Local\Temp\opencode\scan_accurate2.js`): both `dashboard-builder.blade.php` and `dashboard-view-content.blade.php` report "CLEAN: all balanced, every template has exactly 1 root child". Scanner lessons: line-by-line scanning breaks on multi-line tags (desyncs the stack); Blade `::`/`.` component names must be matched; `textarea` is not void; self-closing/void elements count as template root children; the naive "pop-top-for-any-close" matcher produces noise — search the stack for the matching tag instead.
+
+### Dashboard Builder "No Response on Save" — Save-Flow Hardening (2026-08-07)
+- **Status:** Fixes applied + assets rebuilt; browser smoke test PENDING (docker down → DB host `apis-hub-facade-db` unreachable, `APP_URL=http://localhost:8001` refused).
+- **Fixed:** `DashboardBuilder::saveLayout()` called undefined `$service->updateLayout()` → changed to `saveLayout()` (page line 88). PHP `php -l` clean.
+- **Root-cause hypothesis (still unproven, no server error logged):** BOTH builder symptoms — "channel assets never list" and "no response on save" — are consistent with `this.$wire` being falsy in the `dashboardBuilder` Alpine component: `initAllAssets()` (line ~270) and the old `saveLayout()` both silently no-op'd on `!this.$wire`. dashboard-view.js uses the SAME `$wire` pattern (line 393: `if (this.$wire && typeof this.$wire.saveWidgetControls === 'function')`), so `$wire` should exist in Livewire 3 — needs browser-console confirmation.
+- **JS hardening (`resources/js/dashboards/dashboard-builder.js`):**
+  - `saveLayout()`: wraps `getLayout()` in try/catch (falls back to `this.grid.save(false)`); guards `!this.$wire || typeof this.$wire.saveLayout !== 'function'` → console.error + danger notification; adds `.catch()` on the Livewire promise → danger notification; success path shows a Filament success toast via new `notify()` helper.
+  - `notify(type, title, body)` helper: uses `window.FilamentNotification` (confirmed exposed in `public/js/filament/notifications/notifications.js` as `window.FilamentNotification=...`), falls back to console.
+  - `getLayout()`: defensive — `this.grid.engine?.nodes` else `this.grid.save(false) || []`.
+  - `initAllAssets()`: `!$wire` now logs `[dashboard-builder] Livewire $wire unavailable; channel assets will not load.`
+- **PHP (`DashboardBuilder::saveLayout()`):** added `Notification::make()->title('Layout saved')->success()->send()` so the user ALWAYS gets a visible response when the Livewire call completes (server-rendered toast, independent of JS `.then`).
+- **Verified:** blade crosses all `x-on:click` calls against defined component methods (all present); Filament button `::color`/`::class` attributes compile to Alpine `:color`/`:class` bindings (work as intended); gridstack 12.6.0 `engine.nodes` is valid public API; templates balanced 87/87.
+- **Current bundle:** `public/build/assets/app-DCNwjSZ6.js` (built 2026-08-07). Not yet committed.
+- **Next steps if save still silent:** open browser DevTools console — look for `[dashboard-builder] Livewire $wire unavailable...` (means Alpine plugin/Livewire wiring issue, not the save flow) or `saveLayout() failed`. No `laravel-2026-08-07.log` existed during diagnosis → if a request reaches PHP it should now toast "Layout saved" even on success.
+
+### Public View Series Rendering vs Internal View — DM Series Parity (2026-08-07)
+- **Bug:** Public dashboard (`shared/public-dashboard.blade.php` Filters dropdown) rendered series differently from the internal view (`dashboard-view-content.blade.php` settings modal) for KPI/DM widgets. Root cause: `SharedDashboardController::show()` built `series_assets_options` with ONLY channel-based `dependent`/`independent_<key>` keys — it had NO DM source series handling, while `LoadsDashboardViewData.php` (internal view) builds `dep_dm_<sIdx>`, `ind_<key>_dm_<sIdx>`, and `dm_<sIdx>` keys with the DM series' own label and per-series asset options.
+- **Also inconsistent:** public view guarded on `empty($dependent_asset_filter)`/`empty($independent_asset_filter)` (skipped filter entirely when KPI fixed assets) and never respected `mode` (single vs multiple) — internal view always provides asset filters and handles single-select.
+- **Fix (`app/Http/Controllers/Shared/SharedDashboardController.php`):** Rewrote `show()` to mirror `LoadsDashboardViewData::$provideAssetFilters`: shared closure that adds a series key to `series_assets_options` (label, `(object)` options, `mode` from `PredefinedKpiRegistry` template `asset_selection_mode`/`scope` overridden by `ChannelGranularityRegistry::allowsMultipleAssets`) and defaults `resolved_controls['series_assets'][$key]` ONLY when not already set (`!isset`) — never clobbers the author's saved selections (internal view overwrites channel-based keys; we deliberately use the safer DM-style `alreadySaved` check). Handles: dependent channel, independent channels, dependent DM series, independent DM series, `derived_metric` widget source series, and a non-KPI fallback now keyed `'0'` (was `'dependent'`, matching internal + `DashboardWidgetDataController` which reads `series_assets['0']`). `resolved_controls` re-assigned AFTER enrichment so initial charts use per-series defaults.
+- **JS (`resources/js/public-view/public-dashboard.js` `widgetHeaderPv`):** `toggleAsset` now respects `mode` ('single' replaces selection) and `selectAll` no-ops for single mode — same as internal `widgetHeader`.
+- **Blade (`resources/views/shared/public-dashboard.blade.php`):** "All" button hidden for single mode; checkbox renders `rounded-full` + white dot for `mode === 'single'` (radio look) vs square check for multiple — mirrors internal modal.
+- **Verification:** `php -l` clean; `npm run build` → bundle `public/build/assets/app-gFoOUd1Y.js` (confirmed `widgetHeaderPv` toggleAsset/selectAll single-mode guards present); `php artisan view:cache` + `view:clear` OK. Browser smoke test PENDING (docker down).
+- **Not yet committed.** Together with the earlier "no response on save" hardening (DashboardBuilder/JS saveLayout + notification) this is a second pending batch.
+
+### Series Column Layout — 2 cols max (2026-08-07)
+- **Bug:** The dashboard VIEW settings modal (`resources/views/filament/app/pages/partials/dashboard-view-content.blade.php`) forced series cards to 3 columns at `lg` (`lg:w-[calc(33.333%-1rem)]` when `Object.keys(settingsVariables).length >= 3`), while the builder caps at 2 columns. (Only 3-col series layout in the codebase — grep for `33.333` confirmed just line 517.)
+- **Fix:** `dashboard-view-content.blade.php` line ~514-517 `:class` now: `'md:w-full': length === 1`, `'sm:w-[calc(50%-0.75rem)]': length >= 2` — 2 columns max, breakpoint aligned with the builder's DM series cards (`sm:w-[calc(50%-0.75rem)]`).
+- **Verification:** `php artisan view:cache` + `view:clear` OK. Browser smoke test PENDING.
+
+### Public Embed Pop-Out Height Overflow Fix (2026-08-07)
+- **Bug:** On the embedded public view (`?embedded=1`), the iframe auto-resizes to the full dashboard height (`document.body.scrollHeight`). The widget expand/pop-out modal sizes to `95vh` — inside the iframe `vh` = the iframe's viewport = the FULL dashboard height, so the expanded widget grows to the whole dashboard and overflows the screen, becoming unreadable.
+- **Fix (parent/child postMessage lock protocol):**
+  - `resources/js/dashboards/dashboard-view.js` `openPopOut()`/`closePopOut()`: when `window.isEmbedded`, call `window.pvNotifyPopOut(true/false)`.
+  - `resources/js/public-view/embed.js`: exposes `window.pvNotifyPopOut(active)` (posts `{ type: 'apis-hub-popout', active }` to parent); listens for `apis-hub-measure` → re-sends `apis-hub-resize`.
+  - `app/Services/PublicViewService::getEmbedJs()` (parent side): on `apis-hub-popout` true → lock iframe to `window.innerHeight` + `scrollIntoView` (modal now = real viewport); on false → unlock + post `apis-hub-measure` so normal auto-resize resumes; `apis-hub-resize` ignored while locked; parent `resize` keeps lock height synced.
+- **Tests (`tests/Feature/PublicView/EmbedScriptTest.php`):** added `apis-hub-popout`/`apis-hub-measure` assertions to embed.js test; fixed 2 stale assertions on the `?embedded=1` render test (`isEmbedded: true` → `data-embedded="1"` escaped `false`; removed `apis-hub-resize` assertSee which lived in the Vite bundle, not the HTML — was masked by the earlier stale assertion).
+- **Verification:** `node --check` clean on both JS files; `php -l` clean on service; `php artisan test tests/Feature/PublicView/EmbedScriptTest.php` → 3 passed; `npm run build` → bundle `public/build/assets/app-BiGxK5EO.js` (contains `pvNotifyPopOut`). Browser smoke test PENDING (docker down). Not yet committed.
+
+### Embed Max-Height Config + Pop-Out Scroll Preservation (2026-08-07)
+- **Feature 1 — configurable embed max height:** The JS embed iframe can now be capped via a `data-max-height` attribute on the injected script tag: `<script src=".../embed.js" data-max-height="800" defer></script>`. Content taller than the cap scrolls INSIDE the iframe instead of stretching the page.
+- **Feature 2 — pop-out no longer scrolls the embedder page to the top:** Previously `getEmbedJs()` called `iframe.scrollIntoView()` when locking the iframe during a widget expand, which snapped the embedding page to the dashboard top (perceived as "iframe internal scroll resets to top"). Replaced with `position: fixed` pinning over the real viewport (`top:0`, `left:<rect.left>px`, `width:<rect.width>px`, `margin:0`, `z-index:999999`, height = `clampHeight(window.innerHeight)`); prior inline styles saved to `popOutRestore` and restored on close, then `apis-hub-measure` posted to resume auto-resize. Embedder's scroll position is preserved while the modal is open.
+- **Implementation (`app/Services/PublicViewService.php` `getEmbedJs()`):** scans `document.getElementsByTagName("script")` for src containing token + `embed.js` to read `data-max-height` AND derive the container (`parentElement` fallback → `document.body`) — this also fixes the old `document.currentScript` approach, which is `null` under `defer`. `clampHeight(h)` = `(maxHeight && h > maxHeight) ? maxHeight : h`, applied on `apis-hub-resize`, pop-out lock, and parent `resize` while locked. iframe `cssText` includes `max-height` when configured.
+- **UI (`resources/views/filament/modals/embed-code.blade.php`):** rewrote the "Embed Code" modal (PublicViewsRelationManager `copy_embed` action) with Alpine `embedCodeConfig({ embedUrl, publicUrl })` — max-height number input + live JS-snippet and iframe-HTML textareas + copy buttons using `window.FilamentNotification.make().title(...).success().send()`. RelationManager now passes `embedUrl`/`publicUrl` instead of precomputed snippets.
+- **Bug fixed while verifying:** the `jsScript` getter's template literal contained a literal `</script>`, which terminates the surrounding inline `<script>` block when the browser parses the modal HTML — escaped as `<\/script>`.
+- **Bug fixed (2026-08-07):** embed-code modal snippets were EMPTY. Root cause: the modal's `embedCodeConfig` Alpine component was defined in an inline `<script>` inside the modal blade — Filament modal content is injected via Livewire (innerHTML-style), so inline scripts don't execute and `x-data="embedCodeConfig(...)"` resolved to an undefined global. **Fix:** moved the component to `resources/js/components/embed-code.js`, imported + `window.embedCodeConfig` + `Alpine.data('embedCodeConfig', ...)` in `resources/js/app.js`, and removed the inline `<script>` from `embed-code.blade.php`. Filament modals must not rely on inline scripts — put components in the app.js bundle (loaded on all App panel pages via the `panels::scripts.after` render hook, `AppPanelProvider.php:74`).
+- **Default max height:** `embedCodeConfig` now defaults `maxHeight: 800` (user request), so the input pre-fills 800 and the generated script tag carries `data-max-height="800"` out of the box.
+- **Tests (`tests/Feature/PublicView/EmbedScriptTest.php`):** added asserts for `data-max-height`, `clampHeight`, `popOutRestore`, `position = "fixed"` (note: `assertSee` HTML-escapes its needle by default, so raw-JS assertions must pass `false` as 2nd arg) and `assertDontSee('iframe.scrollIntoView()')`. Full PublicView suite: **27 passed / 62 assertions**.
+- **Verification:** `php -l` clean; `php artisan test --filter=PublicView` → all green. Browser smoke test PENDING (docker down). Not yet committed.
+
+

@@ -12,17 +12,15 @@
                 @foreach($roles as $role)
                     <div class="p-6 flex flex-col md:flex-row md:items-start gap-4">
                         <div class="w-full md:w-1/3" id="role-{{ $role->name }}">
-                            <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                            <div class="flex items-center gap-2 group" x-data="copyLink()">
                                 <a href="#role-{{ $role->name }}"
                                    class="flex items-center gap-2 hover:underline text-inherit"
                                    @click.prevent="
-                                       navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#role-{{ $role->name }}');
-                                       copied = true;
-                                       setTimeout(() => copied = false, 2000);
+                                       copy('{{ $role->name }}');
                                    ">
                                     <h3 class="text-lg font-semibold text-gray-950 dark:text-white">{{ \Illuminate\Support\Str::headline($role->name) }}</h3>
                                     <x-filament::icon icon="heroicon-o-link" class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" x-show="!copied" />
-                                    <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" style="display: none;" />
+                                    <x-filament::icon icon="heroicon-o-check" class="h-4 w-4 text-success-500" x-show="copied" x-cloak />
                                 </a>
                             </div>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">

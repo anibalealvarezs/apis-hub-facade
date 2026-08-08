@@ -29,7 +29,12 @@ class DashboardPolicy
             return true;
         }
 
-        return false;
+        return \Illuminate\Support\Facades\DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('model_has_roles.project_id', $dashboard->project_id)
+            ->whereIn('roles.name', ['project_owner', 'project_editor'])
+            ->exists();
     }
 
     public function create(User $user): bool

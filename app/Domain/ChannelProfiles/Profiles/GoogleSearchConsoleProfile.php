@@ -50,7 +50,7 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                                 'url' => ['type' => 'string'],
                                 'title' => ['type' => 'string'],
                                 'hostname' => ['type' => 'string'],
-                                'enabled' => ['type' => 'boolean', 'default' => true],
+                                'enabled' => ['type' => 'boolean', 'default' => false],
                                 'target_countries' => ['type' => 'object', 'default' => []],
                                 'target_keywords' => ['type' => 'object', 'default' => []],
                                 'lost_access' => ['type' => 'boolean', 'default' => false],

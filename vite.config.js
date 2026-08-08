@@ -10,7 +10,8 @@ export default defineConfig({
                 'resources/js/app.js', 
                 'resources/js/theme.js', 
                 'resources/js/gtm.js',
-                'resources/js/filament-charts.js'
+                'resources/js/filament-charts.js',
+                'resources/js/formula-editor.js'
             ],
             refresh: true,
         }),

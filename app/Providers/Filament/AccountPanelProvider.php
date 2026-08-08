@@ -5,10 +5,10 @@ namespace App\Providers\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -16,7 +16,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\MenuItem;
 
 class AccountPanelProvider extends PanelProvider
 {
@@ -71,6 +70,12 @@ class AccountPanelProvider extends PanelProvider
                 \App\Http\Middleware\EnsureUserHasActiveProject::class,
                 \App\Http\Middleware\CheckLogoutAt::class,
             ])
+            ->userMenuItems([
+                'app_dashboard' => MenuItem::make()
+                    ->label(__('App Dashboard'))
+                    ->url(fn (): string => '/app')
+                    ->icon('heroicon-o-computer-desktop'),
+            ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
                     ->customMyProfilePage(\App\Filament\Account\Pages\Profile::class)
@@ -86,12 +91,6 @@ class AccountPanelProvider extends PanelProvider
                     ->enableTwoFactorAuthentication(
                         force: false,
                     )
-            )
-            ->userMenuItems([
-                'app_dashboard' => MenuItem::make()
-                    ->label(__('App Dashboard'))
-                    ->url(fn (): string => '/app')
-                    ->icon('heroicon-o-computer-desktop'),
-            ]);
+            );
     }
 }

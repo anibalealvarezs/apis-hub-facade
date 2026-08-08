@@ -15,13 +15,11 @@ class BillingLogResource extends Resource
     protected static ?string $model = BillingLog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing');
     }
-
-    
-    
 
     public static function canCreate(): bool
     {

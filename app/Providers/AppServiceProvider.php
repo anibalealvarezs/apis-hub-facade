@@ -20,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\GoogleSearchConsoleProfile());
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookMarketingProfile());
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookOrganicProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\GoogleAnalyticsProfile());
             return $registry;
         });
     }

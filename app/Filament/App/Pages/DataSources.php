@@ -29,12 +29,17 @@
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Data & Integrations');
+            return __('Integrations');
         }
 
         public function getTitle(): string
         {
             return __('Data Sources Configuration');
+        }
+
+        public static function canAccess(): bool
+        {
+            return auth()->user()->can('view_settings');
         }
 
         protected static string $view = 'filament.app.pages.data-sources';
@@ -69,6 +74,30 @@
                     ];
                 })
                 ->toArray();
+        }
+
+        public function getAssetGroupsData(): array
+        {
+            $tenant = Filament::getTenant();
+            $groups = app(\App\Services\CollaboratorAssetAccessService::class)
+                ->getAllowedAssetGroupQuery($tenant, auth()->user()?->getAuthIdentifier())
+                ->with('items')
+                ->get();
+
+            $assetMap = [];
+            foreach ($groups as $group) {
+                foreach ($group->items as $item) {
+                    if (!isset($assetMap[$item->asset_id])) {
+                        $assetMap[$item->asset_id] = [];
+                    }
+                    $assetMap[$item->asset_id][] = $group->name;
+                }
+            }
+
+            return [
+                'groups' => $groups->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->toArray(),
+                'assetMap' => $assetMap,
+            ];
         }
 
         public function getCycleBounds(): array
@@ -118,7 +147,7 @@
         {
             $tenant = Filament::getTenant();
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $limits = $quotaService->calculateLimits($tenant, auth()->user());
+            $limits = $quotaService->calculateLimits($tenant, \Illuminate\Support\Facades\Auth::user());
 
             return $limits['usage'];
         }
@@ -127,7 +156,7 @@
         {
             $tenant = Filament::getTenant();
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $limits = $quotaService->calculateLimits($tenant, auth()->user());
+            $limits = $quotaService->calculateLimits($tenant, \Illuminate\Support\Facades\Auth::user());
 
             return $limits['limit'];
         }
@@ -139,10 +168,10 @@
             if (!$billingProfile) {
                 $ownerId = $tenant->owner_id ?? $tenant->user_id;
 
-                return auth()->id() === $ownerId;
+                return \Illuminate\Support\Facades\Auth::id() === $ownerId;
             }
 
-            return auth()->id() === $billingProfile->user_id;
+            return \Illuminate\Support\Facades\Auth::id() === $billingProfile->user_id;
         }
 
         public function mount()
@@ -283,11 +312,12 @@
 
             $maxRanges = [
                 'google_search_console' => '16 months',
+                'google_analytics' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
             ];
 
-            foreach (['google_search_console', 'facebook_organic', 'facebook_marketing'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
@@ -309,11 +339,41 @@
                 $config['facebook_marketing']['metrics_level'] = 'AD';
             }
 
+            // Calculate staggered defaults for cron_time if missing
+            // Providers list defines the deterministic order of channels
+            $providers = $this->getProviders();
+            $enabledChannels = [];
+            foreach ($providers as $provider) {
+                foreach ($provider['channels'] as $ch) {
+                    if (!empty($config[$ch['key']]['enabled'])) {
+                        $enabledChannels[] = $ch['key'];
+                    }
+                }
+            }
+
             foreach ($config as $channelKey => &$channelConfig) {
                 if (is_array($channelConfig) && isset($channelConfig['enabled'])) {
                     $boolVal = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     $config[$channelKey . '_enabled'] = $boolVal;
                     $channelConfig['enabled'] = $boolVal; // Ensure strict boolean for nested toggle
+
+                    // Setup legacy backward compatibility and staggered default for cron_time
+                    if (!isset($channelConfig['cron_time'])) {
+                        if (isset($channelConfig['cron_recent_hour'])) {
+                            // Legacy fallback
+                            $h = $channelConfig['cron_recent_hour'];
+                            $m = $channelConfig['cron_recent_minute'] ?? 0;
+                            $channelConfig['cron_time'] = sprintf('%02d:%02d', $h, $m);
+                        } else {
+                            // Staggered default: 4:00 AM + 15 min per enabled channel
+                            $index = array_search($channelKey, $enabledChannels);
+                            if ($index === false) $index = 0; // fallback
+                            $totalMinutes = 4 * 60 + ($index * 15);
+                            $h = floor($totalMinutes / 60) % 24;
+                            $m = $totalMinutes % 60;
+                            $channelConfig['cron_time'] = sprintf('%02d:%02d', $h, $m);
+                        }
+                    }
                 }
                 
                 if (is_array($channelConfig)) {
@@ -362,7 +422,7 @@
                 if (!is_array($data)) {
                     return;
                 }
-                if (array_key_exists('enabled', $data) && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('lost_access', $data))) {
+                if (array_key_exists('enabled', $data) && (array_key_exists('id', $data) || array_key_exists('url', $data) || array_key_exists('lost_access', $data) || array_key_exists('platformId', $data))) {
                     if (!empty($data['enabled']) && empty($data['lost_access'])) {
                         $count++;
                     }
@@ -381,53 +441,58 @@
 
         public function getProviders(): array
         {
+            $tenant = Filament::getTenant();
+            $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->where('is_default', true)->first();
+            $supportedChannels = $release && is_array($release->supported_channels) ? $release->supported_channels : [];
+
             $providers = [
                 'google'   => [
                     'label'    => 'Google',
                     'channels' => [
-                        ['key' => 'google_search_console', 'label' => 'Google Search Console', 'status' => 'Active'],
-                        ['key' => 'google_analytics', 'label' => 'Google Analytics', 'status' => 'Maintenance'],
-                        ['key' => 'google_ads', 'label' => 'Google Ads', 'status' => 'Maintenance'],
+                        ['key' => 'google_search_console', 'label' => 'Google Search Console'],
+                        ['key' => 'google_analytics', 'label' => 'Google Analytics'],
+                        ['key' => 'google_ads', 'label' => 'Google Ads'],
                     ],
                 ],
                 'facebook' => [
                     'label'    => 'Facebook',
                     'channels' => [
-                        ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing', 'status' => 'Active'],
-                        ['key' => 'facebook_organic', 'label' => 'Facebook Organic', 'status' => 'Active'],
-                        ['key' => 'facebook_leads', 'label' => 'Facebook Leads', 'status' => 'Maintenance'],
+                        ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
+                        ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
+                        ['key' => 'facebook_leads', 'label' => 'Facebook Leads'],
                     ],
                 ],
                 'tiktok'   => [
                     'label'    => 'TikTok',
                     'channels' => [
-                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Coming Soon'],
-                        ['key' => 'tiktok_organic', 'label' => 'TikTok Organic', 'status' => 'Coming Soon'],
-                        ['key' => 'tiktok_leads', 'label' => 'TikTok Leads', 'status' => 'Coming Soon'],
+                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing'],
+                        ['key' => 'tiktok_organic', 'label' => 'TikTok Organic'],
+                        ['key' => 'tiktok_leads', 'label' => 'TikTok Leads'],
                     ],
                 ],
                 'klaviyo'  => [
                     'label'    => 'Klaviyo',
                     'channels' => [
-                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Coming Soon'],
-                        ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events', 'status' => 'Coming Soon'],
+                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics'],
+                        ['key' => 'klaviyo_events', 'label' => 'Klaviyo Events'],
                     ],
                 ],
                 'shopify'  => [
                     'label'    => 'Shopify',
                     'channels' => [
-                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_orders', 'label' => 'Shopify Orders', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_products', 'label' => 'Shopify Products', 'status' => 'Coming Soon'],
-                        ['key' => 'shopify_customers', 'label' => 'Shopify Customers', 'status' => 'Coming Soon'],
+                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics'],
+                        ['key' => 'shopify_orders', 'label' => 'Shopify Orders'],
+                        ['key' => 'shopify_products', 'label' => 'Shopify Products'],
+                        ['key' => 'shopify_customers', 'label' => 'Shopify Customers'],
                     ],
                 ],
             ];
 
-            // Sort channels inside providers
+            // Sort channels inside providers and set dynamic status
             foreach ($providers as $pKey => &$provider) {
                 $providerCount = 0;
                 foreach ($provider['channels'] as &$channel) {
+                    $channel['status'] = in_array($channel['key'], $supportedChannels) ? 'Active' : 'Coming Soon';
                     $channel['count'] = $this->getChannelAssetCount($channel['key']);
                     $providerCount += $channel['count'];
                 }
@@ -480,7 +545,7 @@
 
             $profile = \App\Models\ChannelProfile::find($tenant->{$profileIdColumn});
             if ($profile && is_array($profile->authorized_channels)) {
-                return in_array($channel, $profile->authorized_channels);
+                return in_array($channel, $profile->authorized_channels) && !empty($profile->access_token);
             }
 
             // Fallback for legacy connections before the column was added
@@ -563,7 +628,8 @@
             return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
-                ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !auth()->user()->can('manage_channels'))
+                ->visible(fn() => $this->isConnected($this->activeChannel))
+                ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
                     $response = $service->fetchAssets($tenant, $this->activeChannel);
@@ -572,6 +638,7 @@
                         // Hardcode correct resource keys for extraction since services.php is generic
                         $resourceKeyMap = [
                             'google_search_console' => 'sites',
+                            'google_analytics'      => 'properties',
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
@@ -654,7 +721,7 @@
             return Action::make('connect')
                 ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
-                ->visible(fn() => auth()->user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
+                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn() => $this->getChannelSelectionForm())
                 ->action(function (array $data) {
@@ -675,7 +742,7 @@
             return Action::make('updateCredentials')
                 ->label(__('Update Permissions'))
                 ->icon('heroicon-o-key')
-                ->visible(fn() => auth()->user()->can('manage_channels') && $this->isConnected($this->activeChannel))
+                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(fn() => $this->getChannelSelectionForm())
                 ->requiresConfirmation()
@@ -694,7 +761,7 @@
                         ]);
                     }
 
-                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, auth()->id(), $types);
+                    \App\Jobs\PrepareSafeTokenUpdateJob::dispatch($tenant, $provider, \Illuminate\Support\Facades\Auth::id(), $types);
 
                     Notification::make()
                         ->title(__('Safe Update Initiated'))
@@ -756,7 +823,7 @@
 
             // Build map of live assets by their ID or URL
             foreach ($actualLiveAssets as $live) {
-                $identifier = $live['id'] ?? $live['url'] ?? null;
+                $identifier = $live['id'] ?? $live['url'] ?? $live['platformId'] ?? null;
                 if ($identifier) {
                     $liveMap[$identifier] = $live;
                 }
@@ -764,7 +831,7 @@
 
             // Process existing local assets
             foreach ($localAssets as $local) {
-                $identifier = $local['id'] ?? $local['url'] ?? null;
+                $identifier = $local['id'] ?? $local['url'] ?? $local['platformId'] ?? null;
                 if ($identifier) {
                     if ($this->activeChannel === 'facebook_organic') {
                         $local['page_metrics'] = $local['page_metrics'] ?? true;
@@ -830,7 +897,7 @@
             return $form
                 ->schema($this->getDynamicSchema())
                 ->statePath('data')
-                ->disabled($isSuspended || !auth()->user()->can('manage_channels'));
+                ->disabled($isSuspended || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'));
         }
 
         protected function getDynamicSchema(): array
@@ -856,6 +923,18 @@
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
 
             $secondarySections = [];
+
+            $secondarySections[] = Section::make(__('Synchronization Schedule'))
+                ->description(__('Set the time when daily data should be synchronized for this channel.'))
+                ->schema([
+                    \Filament\Forms\Components\TimePicker::make($this->activeChannel.'.cron_time')
+                        ->label(__('Daily Sync Time'))
+                        ->seconds(false)
+                        ->format('H:i')
+                        ->required()
+                        ->helperText(__('Times are in your configured project timezone ('.(config('app.timezone') ?? 'Local').').')),
+                ])
+                ->columns(1);
 
             if (!empty($parts['advanced'])) {
                 $secondarySections[] = Section::make(__('Advanced Configuration'))
@@ -884,7 +963,7 @@
                                 ->label(__('Regex Generator'))
                                 ->icon('heroicon-m-beaker')
                                 ->color('primary')
-                                ->visible(fn() => auth()->user()->can('manage_channels'))
+                                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                                 ->form([
                                     \Filament\Forms\Components\Repeater::make('strings')
                                         ->label(__('Strings to Match'))
@@ -1234,7 +1313,7 @@
                 $type = $definition['type'] ?? 'string';
 
                 // Preserve data objects and identifying strings in the form state invisibly
-                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time'])) {
+                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
                     $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
 
                     continue;
@@ -1245,18 +1324,27 @@
                         ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? $get('url') ?? 'Unknown Asset'))
                         ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
                             <div class="flex items-center gap-2">
-                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
-                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
-                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
+                                <button type="button" 
+                                    x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\').length > 0"
+                                    x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\'), theme: $store.theme, trigger: \'click\', allowHTML: true }"
+                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                    </svg>
+                                </button>
+                                <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
+                                <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"
+                                      :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '').'\')"></span>
                             </div>
                         '))
                         ->helperText(fn(callable $get) => new \Illuminate\Support\HtmlString(
                             $get('lost_access') ? __('⚠️ Lost Access') : (
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
                                 ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://'.preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))).'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>' :
+                                    ($this->activeChannel === 'google_analytics' ? 'Property ID: '.($get('platformId') ?? 'N/A') :
                                     'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
                             )
-                        ))
+                        )))
                         ->inline(false)
                         ->default(true)
                         ->columnSpan(4);
@@ -1297,18 +1385,26 @@
                         </div>
                         <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Statuses').'</option>
-                                <option value="enabled">'.__('Enabled Only').'</option>
-                                <option value="disabled">'.__('Disabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option value="all">'.__('All States').'</option>
-                                <option value="grace">'.__('In Grace Period').'</option>
-                                <option value="locked">'.__('Asset Locked').'</option>
-                                <option value="none">'.__('No Grace Period status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
+                                <template x-for="group in assetGroupsData.groups" :key="group.id">
+                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
+                                </template>
                             </select>
                         </div>
                     </div>
@@ -1330,7 +1426,7 @@
                             ->label(__('Select All'))
                             ->button()
                             ->color('success')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1346,7 +1442,7 @@
                             ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1366,11 +1462,12 @@
                                 $get('name') ?? '',
                                 $get('url') ?? '',
                                 $get('id') ?? '',
+                                $get('platformId') ?? '',
                             ]));
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1381,7 +1478,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1401,6 +1498,14 @@
                 ->label(fn(callable $get) => e($get('title') ?? $get('name') ?? __('Unknown Asset')))
                 ->hint(fn(callable $get) => new \Illuminate\Support\HtmlString('
                     <div class="flex items-center gap-2">
+                        <button type="button" 
+                            x-show="getAssetGroups(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\').length > 0"
+                            x-tooltip="{ content: getAssetGroupsTooltip(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\'), theme: $store.theme, trigger: \'click\', allowHTML: true }"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                            </svg>
+                        </button>
                         <span x-text="getAssetBadgeText(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')" class="text-xs font-medium" :class="getAssetBadgeTextColor(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
                         <span :title="getAssetBadgeLabel(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"
                               :style="getBadgeStyle(\''.str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '').'\')"></span>
@@ -1483,18 +1588,26 @@
                         </div>
                         <div class="w-40">
                             <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="all">'.__('All Statuses').'</option>
-                                <option value="enabled">'.__('Enabled Only').'</option>
-                                <option value="disabled">'.__('Disabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
                             </select>
                         </div>
                         <div class="w-48">
                             <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option value="all">'.__('All States').'</option>
-                                <option value="grace">'.__('In Grace Period').'</option>
-                                <option value="locked">'.__('Asset Locked').'</option>
-                                <option value="none">'.__('No Grace Period status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
+                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
+                                <template x-for="group in assetGroupsData.groups" :key="group.id">
+                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
+                                </template>
                             </select>
                         </div>
                     </div>
@@ -1517,7 +1630,7 @@
                             ->button()
                             ->color('success')
                             ->icon('heroicon-m-check')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->modalHeading(__('Enable assets'))
                             ->modalDescription(__('Choose how you want to enable the selected assets.'))
                             ->modalWidth('md')
@@ -1569,7 +1682,7 @@
                             ->label(__('Deselect All'))
                             ->button()
                             ->color('danger')
-                            ->visible(fn() => auth()->user()->can('manage_channels'))
+                            ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                             ->action(function (\Filament\Forms\Components\Repeater $component) {
                                 $state = $component->getState();
                                 $newState = collect($state)->map(function ($item) {
@@ -1593,7 +1706,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1604,7 +1717,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void
@@ -1622,7 +1735,7 @@
                 return;
             }
 
-            if (!auth()->user()->can('manage_channels')) {
+            if (!\Illuminate\Support\Facades\Auth::user()->can('manage_channels')) {
                 Notification::make()->title(__('Permission Denied'))->body(__('You do not have permission to modify data sources.'))->danger()->send();
 
                 return;
@@ -1692,12 +1805,12 @@
             $scanner = function ($obj) use (&$scanner, &$proposedProjectAssets) {
                 if (is_array($obj)) {
                     // If it looks like an asset object
-                    if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj))) {
+                    if (isset($obj['enabled']) && (array_key_exists('id', $obj) || array_key_exists('url', $obj) || array_key_exists('lost_access', $obj) || array_key_exists('platformId', $obj))) {
                         $isEnabled = filter_var($obj['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
                         $hasLostAccess = filter_var($obj['lost_access'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                         if ($isEnabled && !$hasLostAccess) {
-                            $id = $obj['id'] ?? $obj['url'] ?? null;
+                            $id = $obj['id'] ?? $obj['url'] ?? $obj['platformId'] ?? null;
                             if ($id) {
                                 $proposedProjectAssets[] = $id;
                             }
@@ -1738,7 +1851,7 @@
             }
 
             $quotaService = app(\App\Services\AssetQuotaService::class);
-            $user = auth()->user();
+            $user = \Illuminate\Support\Facades\Auth::user();
 
             // Pass the newly staged count. The AssetQuotaService adds this to the global ledger count
             // (which includes both 'locked' and 'staged' assets) to determine the absolute usage.
@@ -1760,6 +1873,7 @@
             $service = app(\App\Services\RemoteEngineService::class);
             $remoteAssetKeyMap = [
                 'google_search_console' => 'gsc',
+                'google_analytics'      => 'google_analytics',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
             ];

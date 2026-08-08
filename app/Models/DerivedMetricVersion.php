@@ -6,20 +6,36 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ProjectUserAllowedAsset extends Model
+class DerivedMetricVersion extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'derived_metric_id',
         'project_id',
         'user_id',
-        'channel',
-        'allowed_assets',
+        'version_number',
+        'name',
+        'description',
+        'calculation_type',
+        'ast',
+        'source_series',
+        'output_granularity',
+        'is_active',
+        'change_summary',
+        'label',
     ];
 
     protected $casts = [
-        'allowed_assets' => 'array',
+        'ast' => 'array',
+        'source_series' => 'array',
+        'is_active' => 'boolean',
     ];
+
+    public function derivedMetric(): BelongsTo
+    {
+        return $this->belongsTo(DerivedMetric::class);
+    }
 
     public function project(): BelongsTo
     {

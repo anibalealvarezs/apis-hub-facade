@@ -14,14 +14,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-paper-airplane" class="h-6 w-6 text-gray-500" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Free</span>
                         <x-filament::icon 
@@ -33,7 +31,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -68,7 +66,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm text-purple-400">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 5)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 10)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
@@ -84,14 +82,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-rocket-launch" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Pro</span>
                         <x-filament::icon 
@@ -103,7 +99,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -139,7 +135,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm text-gray-500">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 20)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 30)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
@@ -160,14 +156,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 text-primary-600 dark:text-primary-500 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-bolt" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Ultra / Founder</span>
                         <x-filament::icon 
@@ -179,7 +173,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -215,7 +209,7 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm text-gray-500">{{ __('Custom KPIs') }}  <span
-                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 30)</span></span>
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 50)</span></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
@@ -240,14 +234,12 @@
         @endphp
         <x-filament::section id="{{ $id }}">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 text-warning-500 dark:text-warning-400 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 text-warning-500 dark:text-warning-400 group" x-data="copyLink()">
                     <x-filament::icon icon="heroicon-o-building-office-2" class="h-6 w-6" />
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + $id);
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span>Enterprise</span>
                         <x-filament::icon 
@@ -259,7 +251,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
@@ -335,13 +327,11 @@
         @endphp
         <x-filament::section id="{{ $id }}" icon="heroicon-o-information-circle" icon-color="warning">
             <x-slot name="heading">
-                <div class="flex items-center gap-2 group" x-data="{ copied: false }">
+                <div class="flex items-center gap-2 group" x-data="copyLink()">
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           navigator.clipboard.writeText(window.location.origin + window.location.pathname + '#' + '{{ $id }}');
-                           copied = true;
-                           setTimeout(() => copied = false, 2000);
+                           copy('{{ $id }}');
                        ">
                         <span class="text-warning-600 dark:text-warning-400">{{ __('Important Note on API Access') }}</span>
                         <x-filament::icon 
@@ -353,7 +343,7 @@
                             icon="heroicon-o-check" 
                             class="h-4 w-4 text-success-500" 
                             x-show="copied"
-                            style="display: none;"
+                            x-cloak
                         />
                     </a>
                 </div>
