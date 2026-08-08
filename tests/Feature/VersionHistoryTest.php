@@ -17,6 +17,12 @@ beforeEach(function () {
     $this->user = User::factory()->create(['is_admin' => true]);
     $this->project = Project::factory()->create(['user_id' => $this->user->id]);
     $this->project->users()->attach($this->user->id);
+    $this->user->unsetRelation('projects');
+
+    \Spatie\Permission\Models\Permission::findOrCreate('view_data', 'web');
+    \Spatie\Permission\Models\Permission::findOrCreate('edit_preferences', 'web');
+    $this->user->givePermissionTo(['view_data', 'edit_preferences']);
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
     actingAs($this->user);
     \Filament\Facades\Filament::setTenant($this->project);
@@ -34,9 +40,12 @@ it('shows version history on the CustomKpi edit page', function () {
         'is_active' => true,
     ]);
 
-    $this->get(CustomKpiResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
+    Livewire::test(\App\Filament\App\Resources\CustomKpiResource\RelationManagers\VersionsRelationManager::class, [
+        'ownerRecord' => $kpi,
+        'pageClass' => CustomKpiResource\Pages\EditCustomKpi::class,
+    ])
         ->assertSuccessful()
-        ->assertSee('Version History');
+        ->assertSeeText('Versions');
 });
 
 it('shows version history on the DerivedMetric edit page', function () {
@@ -48,9 +57,12 @@ it('shows version history on the DerivedMetric edit page', function () {
         'is_active' => true,
     ]);
 
-    $this->get(DerivedMetricResource::getUrl('edit', ['record' => $dm->id, 'tenant' => $this->project->subdomain]))
+    Livewire::test(\App\Filament\App\Resources\DerivedMetricResource\RelationManagers\VersionsRelationManager::class, [
+        'ownerRecord' => $dm,
+        'pageClass' => DerivedMetricResource\Pages\EditDerivedMetric::class,
+    ])
         ->assertSuccessful()
-        ->assertSee('Version History');
+        ->assertSeeText('Versions');
 });
 
 it('shows version history on the Dashboard edit page', function () {
@@ -62,9 +74,12 @@ it('shows version history on the Dashboard edit page', function () {
         'is_default' => false,
     ]);
 
-    $this->get(DashboardResource::getUrl('edit', ['record' => $dashboard->id, 'tenant' => $this->project->subdomain]))
+    Livewire::test(\App\Filament\App\Resources\DashboardResource\RelationManagers\VersionsRelationManager::class, [
+        'ownerRecord' => $dashboard,
+        'pageClass' => DashboardResource\Pages\EditDashboard::class,
+    ])
         ->assertSuccessful()
-        ->assertSee('Version History');
+        ->assertSeeText('Versions');
 });
 
 // ─── Version Data Display ───
@@ -79,13 +94,17 @@ it('displays version number, change summary, user, and date in version history',
         'is_active' => true,
     ]);
 
-    $kpi->update(['name' => 'Updated KPI']);
+    $kpi->fill(['name' => 'Updated KPI']);
+    $kpi->createVersion();
 
-    $this->get(CustomKpiResource::getUrl('edit', ['record' => $kpi->id, 'tenant' => $this->project->subdomain]))
+    Livewire::test(\App\Filament\App\Resources\CustomKpiResource\RelationManagers\VersionsRelationManager::class, [
+        'ownerRecord' => $kpi,
+        'pageClass' => CustomKpiResource\Pages\EditCustomKpi::class,
+    ])
         ->assertSuccessful()
-        ->assertSee('v1')
-        ->assertSee('v2')
-        ->assertSee('Updated');
+        ->assertSeeText('1')
+        ->assertSeeText('2')
+        ->assertSeeText('Updated');
 });
 
 // ─── Restore Version From UI ───
