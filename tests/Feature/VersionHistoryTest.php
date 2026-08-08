@@ -14,13 +14,9 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->create(['is_admin' => true]);
     $this->project = Project::factory()->create(['user_id' => $this->user->id]);
     $this->project->users()->attach($this->user->id);
-
-    \Spatie\Permission\Models\Permission::findOrCreate('edit_preferences');
-    \Spatie\Permission\Models\Permission::findOrCreate('deploy_project');
-    $this->user->givePermissionTo(['edit_preferences', 'deploy_project']);
 
     actingAs($this->user);
     \Filament\Facades\Filament::setTenant($this->project);
