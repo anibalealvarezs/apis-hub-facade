@@ -20,6 +20,7 @@ trait LoadsDashboardViewData
     public array $resolvedControls = [];
     public array $widgets = [];
     public array $allChannels = [];
+    public array $availableLanguages = [];
 
     public function getAllAssetGroups(): array
     {
@@ -65,6 +66,7 @@ trait LoadsDashboardViewData
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData ENTER', ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
+        $this->availableLanguages = $this->dashboard->getAvailableLanguages();
         $this->allChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
         \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData getActiveChannels done', ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
 

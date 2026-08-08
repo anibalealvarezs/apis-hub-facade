@@ -346,6 +346,22 @@
                             <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
                         </x-ui.select-input>
                     </div>
+                {{-- Dashboard Content Languages --}}
+                @php
+                    $projectLangs = \Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
+                @endphp
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Dashboard Content Languages') }}</label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Target languages enabled for editing and viewing this specific dashboard&rsquo;s reports and widget texts. Separate from the app interface language.') }}</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                        @foreach($projectLangs as $code => $label)
+                            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <input type="checkbox" value="{{ $code }}" x-model="dashboardControls.supported_locales"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                <span>{{ $label }} ({{ strtoupper($code) }})</span>
+                            </label>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -446,33 +462,69 @@
                             <div
                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
                                 <div
-                                    class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor"
-                                         class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
-                                    </svg>
-                                    <span
-                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
+                                    class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                    <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                             stroke-width="1.5" stroke="currentColor"
+                                             class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                                        </svg>
+                                        <span
+                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none">
+                                        <button type="button" @click="activeIdentityLang = 'en'"
+                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
+                                                :class="activeIdentityLang === 'en' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                                            EN
+                                        </button>
+                                        <button type="button" @click="activeIdentityLang = 'es'"
+                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
+                                                :class="activeIdentityLang === 'es' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                                            ES
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="p-6 space-y-4">
-                                    <div>
-                                        <label
-                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }}
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="text" x-model="widgetControlsForm.title"
-                                               class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                               :placeholder="'{{ __('Enter widget title') }}'">
+                                    <div x-show="activeIdentityLang === 'en'" class="space-y-4">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (EN)
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" x-model="widgetControlsForm.titles.en"
+                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   :placeholder="'{{ __('Enter widget title in English') }}'">
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (EN)
+                                                <span
+                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
+                                            <textarea x-model="widgetControlsForm.descriptions.en" rows="2"
+                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                      :placeholder="'{{ __('Enter a brief description in English...') }}'"></textarea>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label
-                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }}
-                                            <span
-                                                class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
-                                        <textarea x-model="widgetControlsForm.description" rows="2"
-                                                  class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                  :placeholder="'{{ __('Enter a brief description...') }}'"></textarea>
+
+                                    <div x-show="activeIdentityLang === 'es'" class="space-y-4" style="display: none;">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (ES)
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" x-model="widgetControlsForm.titles.es"
+                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   :placeholder="'{{ __('Enter widget title in Spanish') }}'">
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (ES)
+                                                <span
+                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
+                                            <textarea x-model="widgetControlsForm.descriptions.es" rows="2"
+                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                      :placeholder="'{{ __('Enter a brief description in Spanish...') }}'"></textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

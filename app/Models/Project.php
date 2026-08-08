@@ -62,6 +62,7 @@ class Project extends Model
         'apis_hub_release_id',
         'google_profile_id',
         'facebook_profile_id',
+        'supported_locales',
     ];
 
     /**
@@ -258,7 +259,38 @@ class Project extends Model
         'remote_admin_api_key' => 'encrypted',
         'remote_app_api_key' => 'encrypted',
         'public_api_key' => 'encrypted',
+        'supported_locales' => 'array',
     ];
+
+    public static function getSupportedLanguageCatalog(): array
+    {
+        return [
+            'en' => 'English',
+            'es' => 'Español',
+            'pt' => 'Português',
+            'fr' => 'Français',
+            'de' => 'Deutsch',
+            'it' => 'Italiano',
+        ];
+    }
+
+    public function getAvailableLanguages(): array
+    {
+        $catalog = static::getSupportedLanguageCatalog();
+        $configured = $this->supported_locales ?? ['en', 'es'];
+        if (empty($configured)) {
+            $configured = ['en', 'es'];
+        }
+
+        $result = [];
+        foreach ($configured as $loc) {
+            if (isset($catalog[$loc])) {
+                $result[$loc] = $catalog[$loc];
+            }
+        }
+
+        return !empty($result) ? $result : ['en' => 'English', 'es' => 'Español'];
+    }
 
     /**
      * Get the server that hosts this project.

@@ -155,6 +155,7 @@ class ProjectSettings extends Page
             ->visible(fn () => $user->can('edit_preferences'))
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
+                'supported_locales' => $project->supported_locales ?? ['en', 'es'],
             ])
             ->form([
                 Select::make('timezone')
@@ -163,10 +164,18 @@ class ProjectSettings extends Page
                     ->searchable()
                     ->required()
                     ->helperText(__('The timezone used by your virtual APIs Hub server to schedule tasks and log events.')),
+                \Filament\Forms\Components\CheckboxList::make('supported_locales')
+                    ->label(__('Project Content Languages'))
+                    ->options(\App\Models\Project::getSupportedLanguageCatalog())
+                    ->columns(3)
+                    ->required()
+                    ->minItems(1)
+                    ->helperText(__('Target languages enabled for dashboard reports and widget texts across this project. This is separate from the application interface language.')),
             ])
             ->action(function (array $data) use ($project) {
                 $project->update([
                     'timezone' => $data['timezone'],
+                    'supported_locales' => array_values($data['supported_locales'] ?? ['en', 'es']),
                 ]);
 
                 Notification::make()
