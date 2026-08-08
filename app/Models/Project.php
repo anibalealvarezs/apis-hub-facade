@@ -264,6 +264,19 @@ class Project extends Model
 
     public static function getSupportedLanguageCatalog(): array
     {
+        $configuredCatalog = config('languages.catalog');
+        if (is_array($configuredCatalog) && !empty($configuredCatalog)) {
+            return $configuredCatalog;
+        }
+
+        if (class_exists(\Symfony\Component\Intl\Languages::class)) {
+            try {
+                $names = \Symfony\Component\Intl\Languages::getNames(app()->getLocale());
+                asort($names);
+                return $names;
+            } catch (\Throwable $e) {}
+        }
+
         return [
             'en' => 'English',
             'es' => 'Español',
