@@ -119,12 +119,14 @@
                 <!-- Light Mode Logo: Standard Colored -->
                 <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
-                     class="h-24 md:h-32 w-auto mx-auto dark:hidden" 
+                     :class="darkMode ? 'hidden' : 'block'"
+                     class="h-24 md:h-32 w-auto mx-auto" 
                      fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly -->
                 <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
-                     class="h-24 md:h-32 w-auto mx-auto hidden dark:block" 
+                     :class="darkMode ? 'block' : 'hidden'"
+                     class="h-24 md:h-32 w-auto mx-auto" 
                      fetchpriority="high" decoding="async">
             </div>
 
