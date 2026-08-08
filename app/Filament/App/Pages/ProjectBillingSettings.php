@@ -91,6 +91,8 @@ class ProjectBillingSettings extends Page
                         'is_active' => true,
                     ]);
 
+                    $this->dispatch('refresh-infrastructure-status');
+
                     \Filament\Notifications\Notification::make()
                         ->title(__('Billing Profile Assigned'))
                         ->success()

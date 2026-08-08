@@ -590,6 +590,22 @@ export function dashboardBuilder(config = {}) {
             this.showDashboardControls = false;
         },
 
+        parseLocalizedValue(val, locale = (document.documentElement.lang || 'en')) {
+            if (!val) return '';
+            if (typeof val === 'object') {
+                return val[locale] || val['en'] || Object.values(val)[0] || '';
+            }
+            if (typeof val === 'string' && val.trim().startsWith('{') && val.trim().endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(val);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        return parsed[locale] || parsed['en'] || Object.values(parsed)[0] || val;
+                    }
+                } catch (e) {}
+            }
+            return String(val);
+        },
+
         // ─── Widget Controls ──
         widgetControlsError: '',
         openWidgetControls(widget) {
@@ -608,8 +624,8 @@ export function dashboardBuilder(config = {}) {
             const hasZero = wc.zero_handling !== undefined;
 
             this.widgetControlsForm = {
-                title: widget.title || widget.name || '',
-                description: widget.description || '',
+                title: this.parseLocalizedValue(widget.title || widget.name || ''),
+                description: this.parseLocalizedValue(widget.description || ''),
                 widget_type: widget.widget_type || '',
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',

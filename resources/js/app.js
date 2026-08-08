@@ -16,6 +16,7 @@ import { dashboardBuilder } from './dashboards/dashboard-builder';
 import { publicViewBar } from './public-view/public-view-bar';
 import { sharedView, widgetHeaderPv } from './public-view/public-dashboard';
 import { initPublicViewEmbed } from './public-view/embed';
+import { tenantClock } from './components/tenant-clock';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
@@ -23,6 +24,7 @@ window.assetSelector = assetSelector;
 window.copyLink = copyLink;
 window.embedCodeConfig = embedCodeConfig;
 window.floatingTooltip = floatingTooltip;
+window.tenantClock = tenantClock;
 window.dataSources = dataSources;
 window.jointDashboard = jointDashboard;
 window.gscDashboard = gscDashboard;
@@ -56,6 +58,7 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('copyLink', copyLink);
     Alpine.data('embedCodeConfig', embedCodeConfig);
     Alpine.data('floatingTooltip', floatingTooltip);
+    Alpine.data('tenantClock', tenantClock);
     Alpine.data('dataSources', dataSources);
     Alpine.data('jointDashboard', jointDashboard);
     Alpine.data('gscDashboard', gscDashboard);
@@ -79,6 +82,13 @@ document.addEventListener('alpine:init', () => {
 
 if (window.Alpine) {
     registerAlpineComponents(window.Alpine);
+} else {
+    import('alpinejs').then((AlpineModule) => {
+        const Alpine = AlpineModule.default;
+        window.Alpine = Alpine;
+        registerAlpineComponents(Alpine);
+        Alpine.start();
+    });
 }
 
 initPublicViewEmbed();

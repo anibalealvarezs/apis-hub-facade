@@ -94,14 +94,15 @@
     <!-- Static Footer -->
     <footer class="py-12 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none legal-footer">
         <div class="flex items-center justify-center opacity-70 flex-wrap gap-y-2">
-            <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">Privacy</a>
+            <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
             <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full"></span>
-            <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">Terms</a>
+            <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
             <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full"></span>
-            <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">Data Deletion</a>
+            <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-4 mx-2 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
         </div>
-        <div class="opacity-80">
-            Engineered by <a href="https://anibalalvarez.com" target="_blank" class="hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a> for the APIs Hub Network. (v1.0)
+        <div class="opacity-80 flex items-center justify-center gap-2">
+            <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
+            <span class="px-1.5 py-0.5 text-[8px] font-black text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded uppercase tracking-widest">Beta</span>
         </div>
     </footer>
     
