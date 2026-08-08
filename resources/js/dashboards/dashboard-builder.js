@@ -616,10 +616,12 @@ export function dashboardBuilder(config = {}) {
         activeIdentityLang: 'en',
         openWidgetControls(widget) {
             console.log('[WIDGET_MODAL_DEBUG] openWidgetControls ENTER', widget);
+            console.log('[WIDGET_MODAL_DEBUG] availableLanguages:', this.availableLanguages);
             this.widgetControlsError = '';
             const langCodes = Object.keys(this.availableLanguages || {});
             const currentDocLang = document.documentElement.lang || 'en';
             this.activeIdentityLang = langCodes.includes(currentDocLang) ? currentDocLang : (langCodes[0] || 'en');
+            console.log('[WIDGET_MODAL_DEBUG] activeIdentityLang set to:', this.activeIdentityLang);
             const wc = widget.controls || {};
 
             if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
