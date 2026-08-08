@@ -57,11 +57,9 @@
         <!-- Logo Left -->
         <a href="/" class="hover:opacity-80 transition-all block">
             <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
-                 alt="APIs Hub" class="h-10 md:h-12" 
-                 :class="darkMode ? 'hidden' : 'block'">
+                 alt="APIs Hub" class="h-10 md:h-12 dark:hidden">
             <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
-                 alt="APIs Hub" class="h-10 md:h-12" 
-                 :class="darkMode ? 'block' : 'hidden'">
+                 alt="APIs Hub" class="h-10 md:h-12 hidden dark:block">
         </a>
 
         <!-- Actions Right -->

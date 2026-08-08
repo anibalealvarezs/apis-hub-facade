@@ -79,6 +79,13 @@ document.addEventListener('alpine:init', () => {
 
 if (window.Alpine) {
     registerAlpineComponents(window.Alpine);
+} else {
+    import('alpinejs').then((AlpineModule) => {
+        const Alpine = AlpineModule.default;
+        window.Alpine = Alpine;
+        registerAlpineComponents(Alpine);
+        Alpine.start();
+    });
 }
 
 initPublicViewEmbed();
