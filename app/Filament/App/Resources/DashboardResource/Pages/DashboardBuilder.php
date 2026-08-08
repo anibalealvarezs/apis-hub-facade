@@ -278,6 +278,22 @@ class DashboardBuilder extends Page
         return \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($channel);
     }
 
+    public static function parseLocalizedValue(mixed $value, ?string $locale = null): string
+    {
+        if (empty($value)) return '';
+        $locale = $locale ?? app()->getLocale();
+        if (is_array($value)) {
+            return $value[$locale] ?? $value['en'] ?? reset($value) ?? '';
+        }
+        if (is_string($value) && str_starts_with(trim($value), '{') && str_ends_with(trim($value), '}')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $decoded[$locale] ?? $decoded['en'] ?? reset($decoded) ?? $value;
+            }
+        }
+        return (string) $value;
+    }
+
     public function getKpisForWidgetPicker(): array
     {
         $project = \Filament\Facades\Filament::getTenant();
@@ -307,7 +323,7 @@ class DashboardBuilder extends Page
             }
             
             $result[$kpi->id] = [
-                'name' => $kpi->name,
+                'name' => static::parseLocalizedValue($kpi->name),
                 'compatible_widgets' => $compatible,
                 'optimal_widgets' => $optimal
             ];
@@ -327,7 +343,7 @@ class DashboardBuilder extends Page
         foreach ($dms as $dm) {
             $sourceSeries = array_values($dm->source_series ?? []);
             $result[$dm->id] = [
-                'name' => $dm->name,
+                'name' => static::parseLocalizedValue($dm->name),
                 'source_series' => $sourceSeries,
                 'output_granularity' => $dm->output_granularity,
             ];
