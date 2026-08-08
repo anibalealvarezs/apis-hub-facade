@@ -615,6 +615,7 @@ export function dashboardBuilder(config = {}) {
         widgetControlsError: '',
         activeIdentityLang: 'en',
         openWidgetControls(widget) {
+            console.log('[WIDGET_MODAL_DEBUG] openWidgetControls ENTER', widget);
             this.widgetControlsError = '';
             this.activeIdentityLang = document.documentElement.lang || 'en';
             const wc = widget.controls || {};
@@ -747,9 +748,9 @@ export function dashboardBuilder(config = {}) {
 
             this.widgetKpiConfig = {};
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
+                console.log('[WIDGET_MODAL_DEBUG] Fetching getKpiConfiguration for custom_kpi_id:', widget.source_config.custom_kpi_id);
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
-                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
-                    // Extract the actual UI state from the KPI filters
+                    console.log('[WIDGET_MODAL_DEBUG] getKpiConfiguration resolved:', config);
                     const uiState = config?.filters?._ui_state || config;
                     this.widgetKpiConfig = {
                         dependent_channel: uiState.dependent_channel,
@@ -759,8 +760,6 @@ export function dashboardBuilder(config = {}) {
                         dependent_asset_filter: uiState.dependent_asset_filter,
                         independent_variables: uiState.independent_variables || {},
                     };
-                    console.log('DEBUG BUILDER widgetKpiConfig:', this.widgetKpiConfig);
-                    console.log('DEBUG BUILDER dependentDm:', this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id], 'allDMs:', Object.keys(this.derivedMetrics || {}));
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
@@ -805,7 +804,6 @@ export function dashboardBuilder(config = {}) {
                     };
                     if (this.widgetKpiConfig.dependent_dm_id) {
                         initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
-                        // Populate dependent_channel from DM's source_series if not already set
                         const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
                         if (depDm && depDm.source_series && depDm.source_series.length > 0 && !this.widgetKpiConfig.dependent_channel) {
                             this.widgetKpiConfig.dependent_channel = depDm.source_series[0].channel;
@@ -860,12 +858,10 @@ export function dashboardBuilder(config = {}) {
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                // Auto-select first metric for KPI dependent series if dynamic and none selected
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
                                     const firstMetric = Object.keys(metrics)[0];
                                     this.widgetControlsForm.metrics[0] = firstMetric;
                                 }
-                                // Auto-select for independent variables
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
@@ -895,7 +891,8 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     this.loadWidgetMetrics(savedMetrics);
-                    this.showWidgetControls = true;
+                }).catch(err => {
+                    console.error('[WIDGET_MODAL_DEBUG] getKpiConfiguration ERROR:', err);
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
@@ -922,9 +919,8 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
-            if (widget.source_type !== 'kpi') {
-                this.showWidgetControls = true;
-            }
+            this.showWidgetControls = true;
+            console.log('[WIDGET_MODAL_DEBUG] showWidgetControls set to TRUE');
         },
 
         loadWidgetMetrics(savedMetrics) {
