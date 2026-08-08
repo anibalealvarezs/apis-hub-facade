@@ -108,12 +108,10 @@ class PublicViewsRelationManager extends RelationManager
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel(__('Close'))
                     ->modalContent(function (DashboardPublicView $record) {
-                        $jsScript = '<script src="' . $record->getEmbedUrl() . '" defer></script>';
-                        $iframeSnippet = '<iframe src="' . $record->getPublicUrl() . '?embedded=1" style="width:100%;height:600px;border:none;"></iframe>';
                         return view('filament.modals.embed-code', [
                             'pv' => $record,
-                            'jsScript' => $jsScript,
-                            'iframeSnippet' => $iframeSnippet,
+                            'embedUrl' => $record->getEmbedUrl(),
+                            'publicUrl' => $record->getPublicUrl(),
                         ]);
                     }),
                 Tables\Actions\Action::make('regenerate_token')

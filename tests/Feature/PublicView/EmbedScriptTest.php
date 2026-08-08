@@ -29,7 +29,12 @@ it('GET /pv/{token}/embed.js returns 200 with javascript content-type', function
         ->assertHeader('Content-Type', 'application/javascript; charset=utf-8')
         ->assertSee('iframe.src =')
         ->assertSee('apis-hub-popout')
-        ->assertSee('apis-hub-measure');
+        ->assertSee('apis-hub-measure')
+        ->assertSee('data-max-height')
+        ->assertSee('clampHeight')
+        ->assertSee('popOutRestore')
+        ->assertSee('position = "fixed"', false)
+        ->assertDontSee('iframe.scrollIntoView()');
 });
 
 it('GET /pv/{token}/embed.js returns 404 for unknown token', function () {

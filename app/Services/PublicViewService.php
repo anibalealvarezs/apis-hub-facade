@@ -83,6 +83,7 @@ class PublicViewService
     {
         $publicUrl = $pv->getPublicUrl();
         $embedUrl = $publicUrl . (str_contains($publicUrl, '?') ? '&' : '?') . 'embedded=1';
+        $token = $pv->token;
         $prefix = substr(md5((string)$pv->id), 0, 8);
 
         return <<<JS
@@ -90,20 +91,41 @@ class PublicViewService
     var iframeSrc = "{$embedUrl}";
     var containerId = "apis-hub-pv-{$prefix}";
     var container = document.getElementById(containerId);
-    if (!container && document.currentScript) {
-        container = document.currentScript.parentElement;
+
+    // Optional max-height config: <script src="...embed.js" data-max-height="800" defer></script>
+    // The iframe never grows past this limit; content beyond it scrolls inside the iframe.
+    var maxHeight = 0;
+    var scriptTags = document.getElementsByTagName("script");
+    for (var i = 0; i < scriptTags.length; i++) {
+        var src = scriptTags[i].getAttribute("src") || "";
+        if (src.indexOf("{$token}") !== -1 && src.indexOf("embed.js") !== -1) {
+            if (!container && scriptTags[i].parentElement) {
+                container = scriptTags[i].parentElement;
+            }
+            var parsed = parseInt(scriptTags[i].getAttribute("data-max-height") || "0", 10);
+            if (!isNaN(parsed) && parsed > 0) {
+                maxHeight = parsed;
+            }
+            break;
+        }
     }
     if (!container) {
         container = document.body;
     }
+
+    function clampHeight(h) {
+        return (maxHeight && h > maxHeight) ? maxHeight : h;
+    }
+
     var iframe = document.createElement("iframe");
     iframe.src = iframeSrc;
-    iframe.style.cssText = "width:100%;border:none;display:block;min-height:400px;";
+    iframe.style.cssText = "width:100%;border:none;display:block;min-height:400px;" + (maxHeight ? "max-height:" + maxHeight + "px;" : "");
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
     iframe.setAttribute("loading", "lazy");
     container.appendChild(iframe);
 
     var popOutLocked = false;
+    var popOutRestore = null;
 
     window.addEventListener("message", function(e) {
         if (e.source !== iframe.contentWindow || !e.data) return;
@@ -111,21 +133,48 @@ class PublicViewService
         if (e.data.type === "apis-hub-popout") {
             popOutLocked = !!e.data.active;
             if (popOutLocked) {
-                // Pin the iframe to the real visible viewport while a widget is expanded,
+                // Pin the iframe over the real visible viewport while a widget is expanded,
                 // so the fullscreen modal doesn't grow to the whole dashboard height.
-                iframe.style.height = window.innerHeight + "px";
-                iframe.scrollIntoView();
+                // We pin it (instead of scrolling the page to the iframe top) so the
+                // embedder's scroll position is preserved while the modal is open.
+                var rect = iframe.getBoundingClientRect();
+                popOutRestore = {
+                    position: iframe.style.position,
+                    top: iframe.style.top,
+                    left: iframe.style.left,
+                    width: iframe.style.width,
+                    height: iframe.style.height,
+                    zIndex: iframe.style.zIndex,
+                    margin: iframe.style.margin
+                };
+                iframe.style.position = "fixed";
+                iframe.style.top = "0";
+                iframe.style.left = rect.left + "px";
+                iframe.style.width = rect.width + "px";
+                iframe.style.margin = "0";
+                iframe.style.zIndex = "999999";
+                iframe.style.height = clampHeight(window.innerHeight) + "px";
             } else {
+                if (popOutRestore) {
+                    iframe.style.position = popOutRestore.position;
+                    iframe.style.top = popOutRestore.top;
+                    iframe.style.left = popOutRestore.left;
+                    iframe.style.width = popOutRestore.width;
+                    iframe.style.height = popOutRestore.height;
+                    iframe.style.zIndex = popOutRestore.zIndex;
+                    iframe.style.margin = popOutRestore.margin;
+                    popOutRestore = null;
+                }
                 iframe.contentWindow.postMessage({ type: "apis-hub-measure" }, "*");
             }
         } else if (e.data.type === "apis-hub-resize" && !popOutLocked) {
-            iframe.style.height = e.data.height + "px";
+            iframe.style.height = clampHeight(e.data.height) + "px";
         }
     });
 
     window.addEventListener("resize", function() {
         if (popOutLocked) {
-            iframe.style.height = window.innerHeight + "px";
+            iframe.style.height = clampHeight(window.innerHeight) + "px";
         }
     });
 })();
