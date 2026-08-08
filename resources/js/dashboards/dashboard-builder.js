@@ -49,6 +49,8 @@ export function dashboardBuilder(config = {}) {
         // ─── Dashboard Controls ──
         showDashboardControls: false,
         showWidgetControls: false,
+        widgetControlsTarget: null,
+        availableLanguages: config.availableLanguages || { en: 'English', es: 'Español' },
         dashboardControls,
         assetGroups: config.assetGroups || {},
 
