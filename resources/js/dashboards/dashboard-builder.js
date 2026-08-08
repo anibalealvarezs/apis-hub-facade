@@ -608,8 +608,10 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Widget Controls ──
         widgetControlsError: '',
+        activeIdentityLang: 'en',
         openWidgetControls(widget) {
             this.widgetControlsError = '';
+            this.activeIdentityLang = document.documentElement.lang || 'en';
             const wc = widget.controls || {};
 
             if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
@@ -623,9 +625,53 @@ export function dashboardBuilder(config = {}) {
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
 
+            let titles = { en: '', es: '' };
+            let descriptions = { en: '', es: '' };
+
+            if (widget.titles && typeof widget.titles === 'object') {
+                titles = { ...widget.titles };
+            } else if (widget.title) {
+                if (typeof widget.title === 'object') {
+                    titles = { ...widget.title };
+                } else if (typeof widget.title === 'string' && widget.title.trim().startsWith('{')) {
+                    try { titles = JSON.parse(widget.title); } catch (e) {}
+                }
+            }
+
+            if (widget.descriptions && typeof widget.descriptions === 'object') {
+                descriptions = { ...widget.descriptions };
+            } else if (widget.description) {
+                if (typeof widget.description === 'object') {
+                    descriptions = { ...widget.description };
+                } else if (typeof widget.description === 'string' && widget.description.trim().startsWith('{')) {
+                    try { descriptions = JSON.parse(widget.description); } catch (e) {}
+                }
+            }
+
+            const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
+            const baseDesc = this.parseLocalizedValue(widget.description || '');
+
+            if (!titles.en && !titles.es) {
+                titles.en = baseTitle;
+                titles.es = baseTitle;
+            } else {
+                if (!titles.en) titles.en = titles.es || baseTitle;
+                if (!titles.es) titles.es = titles.en || baseTitle;
+            }
+
+            if (!descriptions.en && !descriptions.es) {
+                descriptions.en = baseDesc;
+                descriptions.es = baseDesc;
+            } else {
+                if (!descriptions.en) descriptions.en = descriptions.es || baseDesc;
+                if (!descriptions.es) descriptions.es = descriptions.en || baseDesc;
+            }
+
             this.widgetControlsForm = {
-                title: this.parseLocalizedValue(widget.title || widget.name || ''),
-                description: this.parseLocalizedValue(widget.description || ''),
+                titles: titles,
+                descriptions: descriptions,
+                title: titles[this.activeIdentityLang] || titles.en || baseTitle,
+                description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
@@ -1221,8 +1267,21 @@ export function dashboardBuilder(config = {}) {
                 payload.series_asset_groups = c.series_asset_groups;
             }
 
+            const titles = c.titles || {};
+            const descriptions = c.descriptions || {};
+            const activeLang = this.activeIdentityLang || document.documentElement.lang || 'en';
+            const fallbackTitle = (titles[activeLang] || titles.en || titles.es || c.title || '').trim();
+            const fallbackDesc = (descriptions[activeLang] || descriptions.en || descriptions.es || c.description || '').trim();
+
             if (this.$wire) {
-                this.$wire.saveWidgetControls(this.widgetControlsTarget.id, payload, c.title.trim(), c.description ? c.description.trim() : null);
+                this.$wire.saveWidgetControls(
+                    this.widgetControlsTarget.id,
+                    payload,
+                    fallbackTitle,
+                    fallbackDesc || null,
+                    titles,
+                    descriptions
+                );
             }
 
             const newType = c.widget_type;
@@ -1237,8 +1296,10 @@ export function dashboardBuilder(config = {}) {
             const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);
             if (idx !== -1) {
                 this.widgets[idx].controls = payload;
-                this.widgets[idx].title = c.title.trim();
-                this.widgets[idx].description = c.description ? c.description.trim() : null;
+                this.widgets[idx].titles = titles;
+                this.widgets[idx].descriptions = descriptions;
+                this.widgets[idx].title = fallbackTitle;
+                this.widgets[idx].description = fallbackDesc;
                 this.widgets[idx].widget_type = c.widget_type;
             }
         },
