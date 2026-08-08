@@ -163,7 +163,7 @@ class Project extends Model
      */
     public function pendingInvitations(): HasMany
     {
-        return $this->hasMany(Invitation::class)->where('status', 'pending');
+        return $this->hasMany(ProjectInvitation::class);
     }
 
     /**
