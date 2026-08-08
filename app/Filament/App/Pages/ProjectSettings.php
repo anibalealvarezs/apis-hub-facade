@@ -136,6 +136,8 @@ class ProjectSettings extends Page
                     $msgBody = __('The project has been reactivated. You can now deploy the infrastructure.');
                 }
 
+                $this->dispatch('refresh-infrastructure-status');
+
                 Notification::make()
                     ->title(__('Project Reactivating'))
                     ->body($msgBody)

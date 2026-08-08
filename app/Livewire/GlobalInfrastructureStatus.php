@@ -7,6 +7,19 @@ use Livewire\Component;
 
 class GlobalInfrastructureStatus extends Component
 {
+    protected $listeners = [
+        'refresh-infrastructure-status' => 'refreshStatus',
+        'refresh-telemetry' => 'refreshStatus',
+    ];
+
+    public function refreshStatus(): void
+    {
+        $tenant = Filament::getTenant();
+        if ($tenant) {
+            \Illuminate\Support\Facades\Cache::forget("telemetry_data_{$tenant->id}");
+        }
+    }
+
     public function render()
     {
         $tenant = Filament::getTenant();
