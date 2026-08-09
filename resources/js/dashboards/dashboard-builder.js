@@ -383,24 +383,48 @@ export function dashboardBuilder(config = {}) {
         },
 
         initGridItem(el, widget) {
+            const w = widget.grid_w || 4;
+            const h = widget.grid_h || 3;
+            const minW = 2;
+            const minH = 2;
+
             el.setAttribute('gs-id', widget.id);
-            el.setAttribute('gs-w', widget.grid_w || 4);
-            el.setAttribute('gs-h', widget.grid_h || 3);
-            el.setAttribute('gs-min-w', 2);
-            el.setAttribute('gs-min-h', 2);
-            if (widget.grid_x !== undefined && widget.grid_x !== null) {
+            el.setAttribute('gs-w', w);
+            el.setAttribute('gs-h', h);
+            el.setAttribute('gs-min-w', minW);
+            el.setAttribute('gs-min-h', minH);
+
+            const hasX = widget.grid_x !== undefined && widget.grid_x !== null;
+            const hasY = widget.grid_y !== undefined && widget.grid_y !== null;
+
+            if (hasX && hasY) {
                 el.setAttribute('gs-x', widget.grid_x);
+                el.setAttribute('gs-y', widget.grid_y);
+                el.removeAttribute('gs-auto-position');
             } else {
                 el.setAttribute('gs-auto-position', 'true');
-            }
-            if (widget.grid_y !== undefined && widget.grid_y !== null) {
-                el.setAttribute('gs-y', widget.grid_y);
+                el.removeAttribute('gs-x');
+                el.removeAttribute('gs-y');
             }
 
+            const setupWidget = () => {
+                if (!this.grid) return;
+                if (el.gridstackNode) {
+                    this.grid.update(el, {
+                        w: w,
+                        h: h,
+                        minW: minW,
+                        minH: minH,
+                        ...(hasX && hasY ? { x: widget.grid_x, y: widget.grid_y } : { autoPosition: true })
+                    });
+                } else {
+                    this.grid.makeWidget(el);
+                }
+            };
+
             if (this.grid) {
-                setTimeout(() => {
-                    if (this.grid) this.grid.makeWidget(el);
-                }, 50);
+                setupWidget();
+                requestAnimationFrame(() => setupWidget());
             }
 
             if (widget._isNew) {
