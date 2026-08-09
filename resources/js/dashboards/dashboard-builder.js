@@ -721,7 +721,23 @@ export function dashboardBuilder(config = {}) {
             };
 
             if (widget.source_type !== 'kpi') {
-                if (wc.metrics && wc.metrics.length > 0) {
+                if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
+                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
+                        channel: s.channel || '',
+                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                        assets: Array.isArray(s.assets) ? [...s.assets] : []
+                    }));
+                } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
+                    const seriesKeys = Object.keys(wc.series_channels);
+                    const groupedSeries = [];
+                    seriesKeys.forEach((key) => {
+                        const channel = wc.series_channels[key] || wc.channel || '';
+                        const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
+                        const metrics = (wc.metrics && Array.isArray(wc.metrics)) ? (wc.metrics[key] ? [wc.metrics[key]] : wc.metrics) : [];
+                        groupedSeries.push({ channel, metrics, assets });
+                    });
+                    this.widgetControlsForm.raw_series = groupedSeries;
+                } else if (wc.metrics && wc.metrics.length > 0) {
                     const groupedSeries = [];
                     wc.metrics.forEach((m, i) => {
                         const channel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
@@ -729,7 +745,7 @@ export function dashboardBuilder(config = {}) {
 
                         const existing = groupedSeries.find(s => s.channel === channel && JSON.stringify(s.assets) === JSON.stringify(assets));
                         if (existing) {
-                            if (m) existing.metrics.push(m);
+                            if (m && !existing.metrics.includes(m)) existing.metrics.push(m);
                         } else {
                             groupedSeries.push({ channel, metrics: m ? [m] : [], assets });
                         }
@@ -1263,8 +1279,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_assets = {};
                 payload.series_channels = {};
 
-                let validIdx = 0;
-                c.raw_series.forEach((s) => {
+                c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0) ? s.metrics : [''];
 
                     metricsToSave.forEach(m => {
@@ -1277,9 +1292,8 @@ export function dashboardBuilder(config = {}) {
                         validAssets = validAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
                     }
 
-                    payload.series_assets[validIdx] = validAssets;
-                    payload.series_channels[validIdx] = s.channel || '';
-                    validIdx++;
+                    payload.series_assets[sIdx] = validAssets;
+                    payload.series_channels[sIdx] = s.channel || '';
                 });
                 if (payload.series_channels['0']) {
                     payload.channel = payload.series_channels['0'];
