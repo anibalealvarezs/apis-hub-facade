@@ -474,6 +474,13 @@ export function dashboardBuilder(config = {}) {
                         node.id = widget.id;
                     }
                 }
+
+                if (typeof this.grid.movable === 'function') {
+                    this.grid.movable(el, true);
+                }
+                if (typeof this.grid.resizable === 'function') {
+                    this.grid.resizable(el, true);
+                }
             };
 
             registerNode();
