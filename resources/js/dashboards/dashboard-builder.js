@@ -1661,8 +1661,9 @@ export function dashboardBuilder(config = {}) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
             }
-            this.$wire.duplicateWidget(id).then(widget => {
-                console.log('[dashboard-builder] duplicateWidget backend returned widget:', widget);
+            this.$wire.duplicateWidget(id).then(rawWidget => {
+                console.log('[dashboard-builder] duplicateWidget backend returned widget:', rawWidget);
+                const widget = JSON.parse(JSON.stringify(rawWidget));
                 widget._isNew = true;
                 this.widgets.push(widget);
                 console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
