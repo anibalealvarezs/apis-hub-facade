@@ -1,4 +1,7 @@
-<div x-data="dashboardBuilder({
+<x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
+
+    <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
         gridState: @js($this->gridState ?? []),
         widgetLabels: @js(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
@@ -14,7 +17,6 @@
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
         availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
     })" class="space-y-4">
-        <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
             <div class="flex items-center gap-2">
@@ -1944,3 +1946,4 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-extra.min.css"/>
     @endpush
+</x-filament-panels::page>
