@@ -114,8 +114,7 @@
                                  :data-id="widget.id"
                                  :gs-id="widget.id"
                                  :id="widget.id"
-                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50': widget._isNew }"
-                                 x-init="$nextTick(() => initGridItem($el, widget))">
+                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50': widget._isNew }">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden transition-all"
                                     :class="{ 'ring-2 ring-primary-500 border-primary-500 dark:border-primary-500 shadow-lg shadow-primary-500/20': isWidgetSelected(widget.id) }">

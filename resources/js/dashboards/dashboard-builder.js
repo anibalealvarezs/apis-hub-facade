@@ -426,8 +426,6 @@ export function dashboardBuilder(config = {}) {
         },
 
         initGridItem(el, widget) {
-            if (!this.grid) return;
-
             const w = parseInt(widget.grid_w || 4, 10);
             const h = parseInt(widget.grid_h || 3, 10);
             const minW = 2;
@@ -457,10 +455,17 @@ export function dashboardBuilder(config = {}) {
                 el.removeAttribute('gs-y');
             }
 
+            let attempts = 0;
             const registerNode = () => {
-                if (!this.grid) return;
+                if (!el.isConnected) return;
+                if (!this.grid) {
+                    if (++attempts > 600) return;
+                    requestAnimationFrame(registerNode);
+                    return;
+                }
                 const header = el.querySelector('.widget-header');
                 if (!header) {
+                    if (++attempts > 600) return;
                     requestAnimationFrame(registerNode);
                     return;
                 }
@@ -638,10 +643,52 @@ export function dashboardBuilder(config = {}) {
                 this.isDirty = (currentSignature !== this._initialLayoutSignature);
             });
 
+            this.registerGridItemsObserver();
+            this.syncExistingGridItems();
+
             setTimeout(() => {
                 this._initialLayoutSignature = JSON.stringify(this.getLayout());
                 this.isDirty = false;
             }, 500);
+        },
+
+        syncExistingGridItems() {
+            if (!this.grid) return;
+            const container = document.getElementById('grid-stack');
+            if (!container) return;
+            container.querySelectorAll(':scope > .grid-stack-item').forEach(el => {
+                const rawId = el.getAttribute('gs-id') || el.getAttribute('data-id');
+                if (rawId === null || rawId === undefined) return;
+                const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                if (widget) {
+                    this.initGridItem(el, widget);
+                }
+            });
+        },
+
+        registerGridItemsObserver() {
+            if (this._gridItemsObserver || !this.grid) return;
+            const container = document.getElementById('grid-stack');
+            if (!container) return;
+
+            this._gridItemsObserver = new MutationObserver((mutations) => {
+                if (!this.grid) return;
+                mutations.forEach((mutation) => {
+                    if (mutation.type !== 'childList') return;
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType !== 1 || !node.classList || !node.classList.contains('grid-stack-item')) return;
+                        if (node.gridstackNode) return;
+                        const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
+                        if (rawId === null || rawId === undefined) return;
+                        const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                        if (widget) {
+                            this.initGridItem(node, widget);
+                        }
+                    });
+                });
+            });
+
+            this._gridItemsObserver.observe(container, { childList: true });
         },
 
         saveLayout() {
@@ -701,6 +748,10 @@ export function dashboardBuilder(config = {}) {
         },
 
         reloadGrid() {
+            if (this._gridItemsObserver) {
+                this._gridItemsObserver.disconnect();
+                this._gridItemsObserver = null;
+            }
             if (this.grid) {
                 this.grid.destroy(false);
                 this.grid = null;
@@ -1666,24 +1717,18 @@ export function dashboardBuilder(config = {}) {
         },
 
         duplicateWidget(id) {
-            console.log('[dashboard-builder] duplicateWidget called for id:', id);
             if (!this.$wire) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
             }
             this.$wire.duplicateWidget(id).then(rawWidget => {
-                console.log('[dashboard-builder] duplicateWidget backend returned widget:', rawWidget);
-                const widget = JSON.parse(JSON.stringify(rawWidget));
+                const widget = { ...rawWidget };
                 widget._isNew = true;
                 this.widgets.push(widget);
                 this.widgets = [...this.widgets];
                 this.$nextTick(() => {
                     const strId = String(widget.id);
                     const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
-                    if (el && this.grid) {
-                        this.initGridItem(el, widget);
-                    }
-                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
