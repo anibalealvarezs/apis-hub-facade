@@ -114,7 +114,7 @@
                                  :data-id="widget.id"
                                  :gs-id="widget.id"
                                  :id="widget.id"
-                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
+                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50': widget._isNew }"
                                  x-init="$nextTick(() => initGridItem($el, widget))">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden transition-all"
@@ -369,7 +369,7 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls"
              class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
-             x-trap.noscroll="showWidgetControls" x-cloak>
+             x-trap.noscroll="showWidgetControls">
             <div @click="showWidgetControls = false"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div
