@@ -446,6 +446,15 @@ export function dashboardBuilder(config = {}) {
             const hasX = widget.grid_x !== undefined && widget.grid_x !== null;
             const hasY = widget.grid_y !== undefined && widget.grid_y !== null;
 
+            const widgetOpts = {
+                id: widget.id,
+                w: w,
+                h: h,
+                minW: minW,
+                minH: minH,
+                ...(hasX && hasY ? { x: parseInt(widget.grid_x, 10), y: parseInt(widget.grid_y, 10), autoPosition: false } : { autoPosition: true })
+            };
+
             if (hasX && hasY) {
                 el.setAttribute('gs-x', widget.grid_x);
                 el.setAttribute('gs-y', widget.grid_y);
@@ -459,17 +468,12 @@ export function dashboardBuilder(config = {}) {
             if (this.grid) {
                 if (el.gridstackNode) {
                     el.gridstackNode.id = widget.id;
-                    this.grid.update(el, {
-                        id: widget.id,
-                        w: w,
-                        h: h,
-                        minW: minW,
-                        minH: minH,
-                        ...(hasX && hasY ? { x: widget.grid_x, y: widget.grid_y } : { autoPosition: true })
-                    });
+                    this.grid.update(el, widgetOpts);
                 } else {
-                    const node = this.grid.makeWidget(el);
-                    if (node) node.id = widget.id;
+                    const node = this.grid.makeWidget(el, widgetOpts);
+                    if (node && typeof node === 'object') {
+                        node.id = widget.id;
+                    }
                 }
             }
 
@@ -547,6 +551,7 @@ export function dashboardBuilder(config = {}) {
                             };
                         }
                     });
+                    if (this.grid) this.grid.batchUpdate(true);
                 } else {
                     multiDragStartPositions = null;
                 }
@@ -595,6 +600,9 @@ export function dashboardBuilder(config = {}) {
 
                 const cleanup = () => {
                     syncGroupMove();
+                    if (multiDragStartPositions && this.grid) {
+                        this.grid.batchUpdate(false);
+                    }
                     multiDragStartPositions = null;
                     if (autoScrollTimer) {
                         clearInterval(autoScrollTimer);
@@ -1674,9 +1682,12 @@ export function dashboardBuilder(config = {}) {
                 console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
 
                 this.$nextTick(() => {
+                    const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
+                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
+                    if (el && this.grid && !el.gridstackNode) {
+                        this.initGridItem(el, widget);
+                    }
                     setTimeout(() => {
-                        const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
-                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
