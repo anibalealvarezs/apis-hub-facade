@@ -458,15 +458,26 @@ export function dashboardBuilder(config = {}) {
                 el.removeAttribute('gs-y');
             }
 
-            if (el.gridstackNode) {
-                el.gridstackNode.id = widget.id;
-                this.grid.update(el, widgetOpts);
-            } else {
-                const node = this.grid.makeWidget(el, widgetOpts);
-                if (node && typeof node === 'object') {
-                    node.id = widget.id;
+            const registerNode = () => {
+                if (!this.grid) return;
+                const header = el.querySelector('.widget-header');
+                if (!header) {
+                    requestAnimationFrame(registerNode);
+                    return;
                 }
-            }
+
+                if (el.gridstackNode) {
+                    el.gridstackNode.id = widget.id;
+                    this.grid.update(el, widgetOpts);
+                } else {
+                    const node = this.grid.makeWidget(el, widgetOpts);
+                    if (node && typeof node === 'object') {
+                        node.id = widget.id;
+                    }
+                }
+            };
+
+            registerNode();
 
             if (widget._isNew) {
                 setTimeout(() => { widget._isNew = false; }, 2500);
