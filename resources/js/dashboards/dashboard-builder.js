@@ -11,21 +11,22 @@ export function dashboardBuilder(config = {}) {
         selectedWidgetIds: [],
 
         toggleWidgetSelection(id) {
-            const numId = parseInt(id, 10);
-            const idx = this.selectedWidgetIds.indexOf(numId);
+            const strId = String(id);
+            const idx = this.selectedWidgetIds.findIndex(item => String(item) === strId);
             if (idx > -1) {
                 this.selectedWidgetIds.splice(idx, 1);
             } else {
-                this.selectedWidgetIds.push(numId);
+                this.selectedWidgetIds.push(isNaN(id) ? id : parseInt(id, 10));
             }
         },
 
         isWidgetSelected(id) {
-            return this.selectedWidgetIds.includes(parseInt(id, 10));
+            const strId = String(id);
+            return this.selectedWidgetIds.some(item => String(item) === strId);
         },
 
         selectAllWidgets() {
-            this.selectedWidgetIds = (this.widgets || []).map(w => parseInt(w.id, 10));
+            this.selectedWidgetIds = (this.widgets || []).map(w => w.id);
         },
 
         clearWidgetSelection() {
