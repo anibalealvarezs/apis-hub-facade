@@ -482,15 +482,15 @@ export function dashboardBuilder(config = {}) {
 
                 autoScrollTimer = setInterval(() => {
                     if (!lastEvt) return;
-                    const clientY = lastEvt.clientY;
-                    const threshold = 100;
+                    const topThreshold = 45;
+                    const bottomThreshold = 35;
                     const viewportHeight = window.innerHeight;
 
-                    if (clientY < threshold) {
-                        const speed = Math.max(5, Math.round((threshold - clientY) / 2));
+                    if (clientY < topThreshold) {
+                        const speed = Math.max(4, Math.round((topThreshold - clientY) / 2));
                         window.scrollBy({ top: -speed, behavior: 'instant' });
-                    } else if (clientY > viewportHeight - threshold) {
-                        const speed = Math.max(5, Math.round((clientY - (viewportHeight - threshold)) / 2));
+                    } else if (clientY > viewportHeight - bottomThreshold) {
+                        const speed = Math.max(4, Math.round((clientY - (viewportHeight - bottomThreshold)) / 2));
                         window.scrollBy({ top: speed, behavior: 'instant' });
                     }
                 }, 16);
