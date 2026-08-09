@@ -431,18 +431,12 @@ export function dashboardBuilder(config = {}) {
         },
 
         initGridItem(el, widget) {
+            if (!this.grid) return;
+
             const w = parseInt(widget.grid_w || 4, 10);
             const h = parseInt(widget.grid_h || 3, 10);
             const minW = 2;
             const minH = 2;
-
-            el.setAttribute('gs-id', widget.id);
-            el.setAttribute('data-id', widget.id);
-            el.setAttribute('gs-w', w);
-            el.setAttribute('gs-h', h);
-            el.setAttribute('gs-min-w', minW);
-            el.setAttribute('gs-min-h', minH);
-
             const hasX = widget.grid_x !== undefined && widget.grid_x !== null;
             const hasY = widget.grid_y !== undefined && widget.grid_y !== null;
 
@@ -455,6 +449,9 @@ export function dashboardBuilder(config = {}) {
                 ...(hasX && hasY ? { x: parseInt(widget.grid_x, 10), y: parseInt(widget.grid_y, 10), autoPosition: false } : { autoPosition: true })
             };
 
+            el.setAttribute('gs-id', widget.id);
+            el.setAttribute('data-id', widget.id);
+
             if (hasX && hasY) {
                 el.setAttribute('gs-x', widget.grid_x);
                 el.setAttribute('gs-y', widget.grid_y);
@@ -465,27 +462,15 @@ export function dashboardBuilder(config = {}) {
                 el.removeAttribute('gs-y');
             }
 
-            const attachGrid = () => {
-                if (!this.grid) return;
-                // Ensure inner DOM children (like .widget-header) are rendered before initializing GridStack node
-                const header = el.querySelector('.widget-header');
-                if (!header) {
-                    setTimeout(attachGrid, 50);
-                    return;
+            if (el.gridstackNode) {
+                el.gridstackNode.id = widget.id;
+                this.grid.update(el, widgetOpts);
+            } else {
+                const node = this.grid.makeWidget(el, widgetOpts);
+                if (node && typeof node === 'object') {
+                    node.id = widget.id;
                 }
-
-                if (el.gridstackNode) {
-                    el.gridstackNode.id = widget.id;
-                    this.grid.update(el, widgetOpts);
-                } else {
-                    const node = this.grid.makeWidget(el, widgetOpts);
-                    if (node && typeof node === 'object') {
-                        node.id = widget.id;
-                    }
-                }
-            };
-
-            setTimeout(attachGrid, 50);
+            }
 
             if (widget._isNew) {
                 setTimeout(() => { widget._isNew = false; }, 2500);
