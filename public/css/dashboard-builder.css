@@ -513,3 +513,23 @@ select option, select optgroup {
 body.pv-page .dvc-controls-bar {
     top: 0;
 }
+
+/* Floating Vertical Multi-Select Action Bar */
+.floating-selection-bar {
+    position: fixed !important;
+    right: 1.5rem !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 999999 !important;
+}
+
+.floating-selection-bar .selection-tooltip {
+    position: absolute !important;
+    right: 100% !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin-right: 0.75rem !important;
+}
+
