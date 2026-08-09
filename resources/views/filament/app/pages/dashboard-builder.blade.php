@@ -457,59 +457,40 @@
                                         <span
                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none">
-                                        <button type="button" @click="activeIdentityLang = 'en'"
-                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
-                                                :class="activeIdentityLang === 'en' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-                                            EN
-                                        </button>
-                                        <button type="button" @click="activeIdentityLang = 'es'"
-                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
-                                                :class="activeIdentityLang === 'es' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-                                            ES
-                                        </button>
+                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none overflow-x-auto">
+                                        <template x-for="(label, code) in availableLanguages" :key="code">
+                                            <button type="button" @click="activeIdentityLang = code"
+                                                    class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider whitespace-nowrap"
+                                                    :class="activeIdentityLang === code ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                                                    x-text="code">
+                                            </button>
+                                        </template>
                                     </div>
                                 </div>
                                 <div class="p-6 space-y-4">
-                                    <div x-show="activeIdentityLang === 'en'" class="space-y-4">
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (EN)
-                                                <span class="text-red-500">*</span></label>
-                                            <input type="text" x-model="widgetControlsForm.titles.en"
-                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                   :placeholder="'{{ __('Enter widget title in English') }}'">
+                                    <template x-for="(label, code) in availableLanguages" :key="code">
+                                        <div x-show="activeIdentityLang === code" class="space-y-4">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                    {{ __('Widget Title') }} (<span x-text="code.toUpperCase()"></span>)
+                                                    <span class="text-red-500">*</span>
+                                                </label>
+                                                <input type="text" x-model="(widgetControlsForm.titles = widgetControlsForm.titles || {})[code]"
+                                                       class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                       :placeholder="'{{ __('Enter widget title') }} (' + label + ')'">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                    {{ __('Description') }} (<span x-text="code.toUpperCase()"></span>)
+                                                    <span class="text-gray-400 font-normal">{{ __('(Optional)') }}</span>
+                                                </label>
+                                                <textarea x-model="(widgetControlsForm.descriptions = widgetControlsForm.descriptions || {})[code]" rows="2"
+                                                          class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                          :placeholder="'{{ __('Enter description') }} (' + label + ')...'"></textarea>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (EN)
-                                                <span
-                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
-                                            <textarea x-model="widgetControlsForm.descriptions.en" rows="2"
-                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                      :placeholder="'{{ __('Enter a brief description in English...') }}'"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="activeIdentityLang === 'es'" class="space-y-4">
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (ES)
-                                                <span class="text-red-500">*</span></label>
-                                            <input type="text" x-model="widgetControlsForm.titles.es"
-                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                   :placeholder="'{{ __('Enter widget title in Spanish') }}'">
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (ES)
-                                                <span
-                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
-                                            <textarea x-model="widgetControlsForm.descriptions.es" rows="2"
-                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                      :placeholder="'{{ __('Enter a brief description in Spanish...') }}'"></textarea>
-                                        </div>
-                                    </div>
+                                    </template>
+                                </div>
                                 </div>
                             </div>
 
