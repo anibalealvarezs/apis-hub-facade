@@ -513,16 +513,16 @@
                                 </div>
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        <template x-for="(label, type) in availableChartTypesForControls" :key="type">
-                                            <button @click="widgetControlsForm.widget_type = type"
+                                        <template x-for="item in availableChartTypesForControls" :key="item.type">
+                                            <button @click="widgetControlsForm.widget_type = item.type"
                                                     class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-center"
-                                                    :class="widgetControlsForm.widget_type === type
+                                                    :class="widgetControlsForm.widget_type === item.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'">
-                                                <div class="w-10 h-7" x-html="getWidgetSvg(type)"></div>
+                                                <div class="w-10 h-7" x-html="getWidgetSvg(item.type)"></div>
                                                 <span
                                                     class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight"
-                                                    x-text="label"></span>
+                                                    x-text="item.label"></span>
                                             </button>
                                         </template>
                                     </div>

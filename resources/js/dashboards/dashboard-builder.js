@@ -197,48 +197,47 @@ export function dashboardBuilder(config = {}) {
         get availableChartTypesForControls() {
             const allTypes = this.widgetLabels || {};
             const target = this.widgetControlsTarget;
-            if (!target || !target.source_type) return allTypes;
 
-            let filtered = {};
-
-            if (target.source_type === 'metric') {
+            let typeMap = {};
+            if (!target || !target.source_type) {
+                typeMap = allTypes;
+            } else if (target.source_type === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
-                return filtered;
-            }
-
-            if (target.source_type === 'kpi') {
-                const kpiId = target.source_config?.custom_kpi_id;
-                if (!kpiId) return allTypes;
-
-                const kpiData = this.kpis[kpiId];
+            } else if (target.source_type === 'kpi') {
+                const kpiId = target.source_config?.custom_kpi_id || target.custom_kpi_id;
+                const kpiData = kpiId ? this.kpis[kpiId] : null;
                 const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
-
-                if (allowed.length === 0) return allTypes;
-
-                for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                if (allowed.length > 0) {
+                    for (const t of allowed) {
+                        if (allTypes[t]) typeMap[t] = allTypes[t];
+                    }
+                } else {
+                    typeMap = allTypes;
                 }
-                if (target.widget_type && !filtered[target.widget_type]) {
-                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
-                }
-                return filtered;
-            }
-
-            if (target.source_type === 'derived_metric') {
+            } else if (target.source_type === 'derived_metric') {
                 const allowed = config.derivedMetricWidgetTypes || [];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
-                if (target.widget_type && !filtered[target.widget_type]) {
-                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
-                }
-                return filtered;
+            } else {
+                typeMap = allTypes;
             }
 
-            return allTypes;
+            if (Object.keys(typeMap).length === 0) {
+                typeMap = {
+                    tile: 'Tile',
+                    line_chart: 'Line Chart',
+                    bar_chart: 'Bar Chart',
+                    sparkline: 'Sparkline',
+                    table: 'Table',
+                    gauge: 'Gauge'
+                };
+            }
+
+            return Object.entries(typeMap).map(([type, label]) => ({ type, label }));
         },
 
         // ─── UI Helpers ───
