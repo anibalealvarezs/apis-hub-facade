@@ -17,7 +17,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
                     @foreach($versions as $version)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                             <td class="px-3 py-2.5 text-xs font-mono text-gray-600 dark:text-gray-400">v{{ $version->version_number }}</td>
                             <td class="px-3 py-2.5 text-gray-900 dark:text-gray-100 font-medium">{{ $version->name }}</td>
                             <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 max-w-[120px] truncate">{{ $version->label ?? '-' }}</td>
