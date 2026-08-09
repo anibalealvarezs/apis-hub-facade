@@ -468,7 +468,7 @@ export function dashboardBuilder(config = {}) {
                 removable: false,
                 resizable: { handles: 'se' },
                 draggable: {
-                    handle: '.widget-header',
+                    handle: '.widget-header, .widget-drag-handle, .widget-body-drag',
                     scroll: true
                 },
             });

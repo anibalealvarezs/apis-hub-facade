@@ -115,7 +115,7 @@
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
                                     {{-- Widget Header --}}
                                     <div
-                                        class="widget-header rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
+                                        class="widget-header cursor-grab active:cursor-grabbing rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
                                         <div class="flex items-center gap-2 min-w-0">
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
@@ -183,10 +183,17 @@
                                     </div>
                                     {{-- Widget Content (placeholder) --}}
                                     <div
-                                        class="flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
+                                        class="widget-body-drag cursor-grab active:cursor-grabbing select-none flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
                                         <div
-                                            class="w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center opacity-70"
-                                            x-html="getWidgetSvg(widget.widget_type)"></div>
+                                            class="widget-drag-handle group/grab cursor-grab active:cursor-grabbing w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-700/60 flex flex-col items-center justify-center opacity-80 hover:opacity-100 transition-all shadow-sm relative"
+                                            :title="'{{ __('Click and drag to move widget') }}'">
+                                            <div class="absolute top-1 text-gray-400 dark:text-gray-500 group-hover/grab:text-primary-500 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+                                                    <path d="M4.5 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0Z" />
+                                                </svg>
+                                            </div>
+                                            <div class="mt-1" x-html="getWidgetSvg(widget.widget_type)"></div>
+                                        </div>
                                         <div class="flex flex-wrap items-center justify-center gap-2">
                                             <span
                                                 class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
