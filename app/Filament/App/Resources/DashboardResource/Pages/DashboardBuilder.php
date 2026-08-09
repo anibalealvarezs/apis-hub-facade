@@ -90,7 +90,7 @@ class DashboardBuilder extends Page
         $service = app(\App\Services\DashboardService::class);
         $service->saveLayout($this->dashboard, $gridItems);
         $this->gridState = $gridItems;
-        $this->dashboard->refresh();
+        $this->loadWidgets();
         $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
 
         Notification::make()

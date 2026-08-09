@@ -389,6 +389,7 @@ export function dashboardBuilder(config = {}) {
             const minH = 2;
 
             el.setAttribute('gs-id', widget.id);
+            el.setAttribute('data-id', widget.id);
             el.setAttribute('gs-w', w);
             el.setAttribute('gs-h', h);
             el.setAttribute('gs-min-w', minW);
@@ -409,7 +410,9 @@ export function dashboardBuilder(config = {}) {
 
             if (this.grid) {
                 if (el.gridstackNode) {
+                    el.gridstackNode.id = widget.id;
                     this.grid.update(el, {
+                        id: widget.id,
                         w: w,
                         h: h,
                         minW: minW,
@@ -417,7 +420,8 @@ export function dashboardBuilder(config = {}) {
                         ...(hasX && hasY ? { x: widget.grid_x, y: widget.grid_y } : { autoPosition: true })
                     });
                 } else {
-                    this.grid.makeWidget(el);
+                    const node = this.grid.makeWidget(el);
+                    if (node) node.id = widget.id;
                 }
             }
 
@@ -561,14 +565,21 @@ export function dashboardBuilder(config = {}) {
 
         getLayout() {
             if (!this.grid) return [];
-            const nodes = (this.grid.engine && this.grid.engine.nodes) ? this.grid.engine.nodes : (this.grid.save(false) || []);
-            return nodes.map(node => ({
-                id: parseInt(node.id || (node.el ? node.el.getAttribute('gs-id') : 0), 10) || 0,
-                x: parseInt(node.x, 10) || 0,
-                y: parseInt(node.y, 10) || 0,
-                w: parseInt(node.w, 10) || 4,
-                h: parseInt(node.h, 10) || 3,
-            })).filter(node => node.id !== 0)
+            const nodes = (this.grid.engine && this.grid.engine.nodes && this.grid.engine.nodes.length > 0)
+                ? this.grid.engine.nodes
+                : (this.grid.save(false) || []);
+
+            return nodes.map(node => {
+                const el = node.el;
+                const rawId = node.id || (el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0);
+                return {
+                    id: parseInt(rawId, 10) || 0,
+                    x: parseInt(node.x, 10) || 0,
+                    y: parseInt(node.y, 10) || 0,
+                    w: parseInt(node.w, 10) || 4,
+                    h: parseInt(node.h, 10) || 3,
+                };
+            }).filter(node => node.id !== 0)
               .sort((a, b) => a.id - b.id);
         },
 
