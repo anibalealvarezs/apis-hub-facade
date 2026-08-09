@@ -49,19 +49,14 @@ export function dashboardBuilder(config = {}) {
         // ─── Dashboard Controls ──
         showDashboardControls: false,
         showWidgetControls: false,
-        widgetControlsTarget: {},
-        availableLanguages: config.availableLanguages || {},
         dashboardControls,
         assetGroups: config.assetGroups || {},
 
         // ─── Widget Controls ──
         activeMobileTab: 'config',
         activeSeriesIndex: 0,
+        widgetControlsTarget: {},
         widgetControlsForm: {
-            titles: {},
-            descriptions: {},
-            title: '',
-            description: '',
             date_inherit: true,
             date_start: '',
             date_end: '',
@@ -615,13 +610,8 @@ export function dashboardBuilder(config = {}) {
         widgetControlsError: '',
         activeIdentityLang: 'en',
         openWidgetControls(widget) {
-            console.log('[WIDGET_MODAL_DEBUG] openWidgetControls ENTER', widget);
-            console.log('[WIDGET_MODAL_DEBUG] availableLanguages:', this.availableLanguages);
             this.widgetControlsError = '';
-            const langCodes = Object.keys(this.availableLanguages || {});
-            const currentDocLang = document.documentElement.lang || 'en';
-            this.activeIdentityLang = langCodes.includes(currentDocLang) ? currentDocLang : (langCodes[0] || 'en');
-            console.log('[WIDGET_MODAL_DEBUG] activeIdentityLang set to:', this.activeIdentityLang);
+            this.activeIdentityLang = document.documentElement.lang || 'en';
             const wc = widget.controls || {};
 
             if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id) {
@@ -635,8 +625,8 @@ export function dashboardBuilder(config = {}) {
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
 
-            let titles = {};
-            let descriptions = {};
+            let titles = { en: '', es: '' };
+            let descriptions = { en: '', es: '' };
 
             if (widget.titles && typeof widget.titles === 'object') {
                 titles = { ...widget.titles };
@@ -661,24 +651,27 @@ export function dashboardBuilder(config = {}) {
             const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
             const baseDesc = this.parseLocalizedValue(widget.description || '');
 
-            const defaultLang = langCodes[0] || (document.documentElement.lang || 'en');
+            if (!titles.en && !titles.es) {
+                titles.en = baseTitle;
+                titles.es = baseTitle;
+            } else {
+                if (!titles.en) titles.en = titles.es || baseTitle;
+                if (!titles.es) titles.es = titles.en || baseTitle;
+            }
 
-            if (langCodes.length > 0) {
-                langCodes.forEach(code => {
-                    if (!titles[code]) {
-                        titles[code] = titles[defaultLang] || baseTitle;
-                    }
-                    if (!descriptions[code]) {
-                        descriptions[code] = descriptions[defaultLang] || baseDesc;
-                    }
-                });
+            if (!descriptions.en && !descriptions.es) {
+                descriptions.en = baseDesc;
+                descriptions.es = baseDesc;
+            } else {
+                if (!descriptions.en) descriptions.en = descriptions.es || baseDesc;
+                if (!descriptions.es) descriptions.es = descriptions.en || baseDesc;
             }
 
             this.widgetControlsForm = {
                 titles: titles,
                 descriptions: descriptions,
-                title: titles[this.activeIdentityLang] || titles[defaultLang] || baseTitle,
-                description: descriptions[this.activeIdentityLang] || descriptions[defaultLang] || baseDesc,
+                title: titles[this.activeIdentityLang] || titles.en || baseTitle,
+                description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
@@ -751,9 +744,9 @@ export function dashboardBuilder(config = {}) {
 
             this.widgetKpiConfig = {};
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
-                console.log('[WIDGET_MODAL_DEBUG] Fetching getKpiConfiguration for custom_kpi_id:', widget.source_config.custom_kpi_id);
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
-                    console.log('[WIDGET_MODAL_DEBUG] getKpiConfiguration resolved:', config);
+                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
+                    // Extract the actual UI state from the KPI filters
                     const uiState = config?.filters?._ui_state || config;
                     this.widgetKpiConfig = {
                         dependent_channel: uiState.dependent_channel,
@@ -763,6 +756,8 @@ export function dashboardBuilder(config = {}) {
                         dependent_asset_filter: uiState.dependent_asset_filter,
                         independent_variables: uiState.independent_variables || {},
                     };
+                    console.log('DEBUG BUILDER widgetKpiConfig:', this.widgetKpiConfig);
+                    console.log('DEBUG BUILDER dependentDm:', this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id], 'allDMs:', Object.keys(this.derivedMetrics || {}));
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
@@ -807,6 +802,7 @@ export function dashboardBuilder(config = {}) {
                     };
                     if (this.widgetKpiConfig.dependent_dm_id) {
                         initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
+                        // Populate dependent_channel from DM's source_series if not already set
                         const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
                         if (depDm && depDm.source_series && depDm.source_series.length > 0 && !this.widgetKpiConfig.dependent_channel) {
                             this.widgetKpiConfig.dependent_channel = depDm.source_series[0].channel;
@@ -861,10 +857,12 @@ export function dashboardBuilder(config = {}) {
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                // Auto-select first metric for KPI dependent series if dynamic and none selected
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
                                     const firstMetric = Object.keys(metrics)[0];
                                     this.widgetControlsForm.metrics[0] = firstMetric;
                                 }
+                                // Auto-select for independent variables
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
@@ -894,8 +892,6 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     this.loadWidgetMetrics(savedMetrics);
-                }).catch(err => {
-                    console.error('[WIDGET_MODAL_DEBUG] getKpiConfiguration ERROR:', err);
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
@@ -923,7 +919,6 @@ export function dashboardBuilder(config = {}) {
 
             this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
             this.showWidgetControls = true;
-            console.log('[WIDGET_MODAL_DEBUG] showWidgetControls set to TRUE');
         },
 
         loadWidgetMetrics(savedMetrics) {

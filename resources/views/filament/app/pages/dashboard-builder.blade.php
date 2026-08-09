@@ -14,8 +14,7 @@
         sourceTypes: @js($this->getAvailableSourceTypes()),
         kpis: @js($this->getKpisForWidgetPicker()),
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
-        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
-        availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
+        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
@@ -104,9 +103,9 @@
 
             {{-- Grid Area --}}
             <div class="col-span-12 lg:col-span-10">
-                <div id="grid-container"
+                <div id="grid-container" wire:ignore
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
-                    <div id="grid-stack" class="grid-stack" wire:ignore>
+                    <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
@@ -164,7 +163,7 @@
                                             </template>
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                x-on:click.stop="openWidgetControls(widget)"
+                                                x-on:click="openWidgetControls(widget)"
                                                 :title="'{{ __('Configure') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -347,22 +346,6 @@
                             <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
                         </x-ui.select-input>
                     </div>
-                {{-- Dashboard Content Languages --}}
-                @php
-                    $projectLangs = \Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
-                @endphp
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Dashboard Content Languages') }}</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Target languages enabled for editing and viewing this specific dashboard&rsquo;s reports and widget texts. Separate from the app interface language.') }}</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                        @foreach($projectLangs as $code => $label)
-                            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                <input type="checkbox" value="{{ $code }}" x-model="dashboardControls.supported_locales"
-                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                <span>{{ $label }} ({{ strtoupper($code) }})</span>
-                            </label>
-                        @endforeach
-                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -380,11 +363,14 @@
         {{-- ============================================================ --}}
         {{-- WIDGET-LEVEL CONTROLS MODAL                                 --}}
         {{-- ============================================================ --}}
-        <template x-teleport="body">
-            <div x-show="showWidgetControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/50" x-on:click="showWidgetControls = false"></div>
+        <div x-show="showWidgetControls"
+             class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
+             x-trap.noscroll="showWidgetControls" x-cloak>
+            <div @click="showWidgetControls = false"
+                 class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-5xl w-full mx-4 flex flex-col max-h-[90vh] bd-modal-panel">
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
+                @click.away="showWidgetControls = false">
                 <div
                     class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
                     <div class="flex flex-col gap-1.5">
@@ -434,10 +420,10 @@
                 </div>
 
                 <div
-                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-hidden p-6 flex flex-col">
+                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col">
                     {{-- Mobile Accordion Navigation Bar (Visible on mobile only) --}}
                     <div
-                        class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20 mb-4">
+                        class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
                         <button type="button" @click="activeMobileTab = 'config'"
                                 class="flex-1 py-3 px-4 text-center text-xs font-bold uppercase tracking-wider transition-colors border-b-2"
                                 :class="activeMobileTab === 'config' ? 'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'">
@@ -450,7 +436,7 @@
                         </button>
                     </div>
 
-                    <div class="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+                    <div class="modal-body-absolute-wrapper flex flex-col md:flex-row gap-6 flex-1 min-h-0">
                         {{-- Left Column: Global Configuration --}}
                         <div
                             class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 bd-config-col"
@@ -471,39 +457,59 @@
                                         <span
                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none overflow-x-auto">
-                                        <template x-for="(label, code) in availableLanguages" :key="code">
-                                            <button type="button" @click="activeIdentityLang = code"
-                                                    class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider whitespace-nowrap"
-                                                    :class="activeIdentityLang === code ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
-                                                    x-text="code">
-                                            </button>
-                                        </template>
+                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none">
+                                        <button type="button" @click="activeIdentityLang = 'en'"
+                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
+                                                :class="activeIdentityLang === 'en' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                                            EN
+                                        </button>
+                                        <button type="button" @click="activeIdentityLang = 'es'"
+                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
+                                                :class="activeIdentityLang === 'es' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+                                            ES
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="p-6 space-y-4">
-                                    <template x-for="(label, code) in availableLanguages" :key="code">
-                                        <div x-show="activeIdentityLang === code" class="space-y-4">
-                                            <div>
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                    {{ __('Widget Title') }} (<span x-text="code.toUpperCase()"></span>)
-                                                    <span class="text-red-500">*</span>
-                                                </label>
-                                                <input type="text" x-model="(widgetControlsForm.titles = widgetControlsForm.titles || {})[code]"
-                                                       class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                       :placeholder="'{{ __('Enter widget title') }} (' + label + ')'">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                    {{ __('Description') }} (<span x-text="code.toUpperCase()"></span>)
-                                                    <span class="text-gray-400 font-normal">{{ __('(Optional)') }}</span>
-                                                </label>
-                                                <textarea x-model="(widgetControlsForm.descriptions = widgetControlsForm.descriptions || {})[code]" rows="2"
-                                                          class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                          :placeholder="'{{ __('Enter description') }} (' + label + ')...'"></textarea>
-                                            </div>
+                                    <div x-show="activeIdentityLang === 'en'" class="space-y-4">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (EN)
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" x-model="widgetControlsForm.titles.en"
+                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   :placeholder="'{{ __('Enter widget title in English') }}'">
                                         </div>
-                                    </template>
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (EN)
+                                                <span
+                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
+                                            <textarea x-model="widgetControlsForm.descriptions.en" rows="2"
+                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                      :placeholder="'{{ __('Enter a brief description in English...') }}'"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div x-show="activeIdentityLang === 'es'" class="space-y-4">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (ES)
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" x-model="widgetControlsForm.titles.es"
+                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                   :placeholder="'{{ __('Enter widget title in Spanish') }}'">
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (ES)
+                                                <span
+                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
+                                            <textarea x-model="widgetControlsForm.descriptions.es" rows="2"
+                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                      :placeholder="'{{ __('Enter a brief description in Spanish...') }}'"></textarea>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1710,7 +1716,6 @@
                 </div>
             </div>
         </div>
-        </template>
 
         {{-- ============================================================ --}}
         {{-- ADD WIDGET MODAL                                            --}}
