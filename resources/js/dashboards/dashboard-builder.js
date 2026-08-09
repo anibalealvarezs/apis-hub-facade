@@ -866,8 +866,11 @@ export function dashboardBuilder(config = {}) {
             Object.keys(titles).forEach(k => { titles[k] = cleanStr(titles[k]); });
             Object.keys(descriptions).forEach(k => { descriptions[k] = cleanStr(descriptions[k]); });
 
-            const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
-            const baseDesc = this.parseLocalizedValue(widget.description || '');
+            const validTitle = (widget.title && widget.title !== '[]' && widget.title !== '{}') ? widget.title : (widget.name || '');
+            const validDesc = (widget.description && widget.description !== '[]' && widget.description !== '{}') ? widget.description : '';
+
+            const baseTitle = this.parseLocalizedValue(validTitle);
+            const baseDesc = this.parseLocalizedValue(validDesc);
 
             if (!titles.en && !titles.es) {
                 titles.en = baseTitle;
