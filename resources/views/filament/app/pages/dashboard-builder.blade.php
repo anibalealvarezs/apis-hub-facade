@@ -482,7 +482,7 @@
                                 </div>
                                 <div class="p-6 space-y-4">
                                     <template x-for="(label, code) in availableLanguages" :key="code">
-                                        <div x-show="activeIdentityLang === code" class="space-y-4" style="display: none;">
+                                        <div x-show="activeIdentityLang === code" class="space-y-4">
                                             <div>
                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                                     {{ __('Widget Title') }} (<span x-text="code.toUpperCase()"></span>)
