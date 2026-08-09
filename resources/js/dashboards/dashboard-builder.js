@@ -260,10 +260,6 @@ export function dashboardBuilder(config = {}) {
                 this.initAllAssets();
             });
 
-            this.$watch('showWidgetControls', (val) => {
-                console.log('[dashboard-builder] showWidgetControls changed to:', val, new Error().stack);
-            });
-
             window.addEventListener('beforeunload', (e) => {
                 if (this.isDirty) {
                     e.preventDefault();
@@ -1664,21 +1660,18 @@ export function dashboardBuilder(config = {}) {
                 widget._isNew = true;
                 this.widgets.push(widget);
                 this.widgets = [...this.widgets];
-                console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
-
                 this.$nextTick(() => {
-                    setTimeout(() => {
-                        const strId = String(widget.id);
-                        const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
-                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
-                        if (el && this.grid && !el.gridstackNode) {
-                            this.initGridItem(el, widget);
-                        }
-                        if (this.$wire) this.$wire.saveLayout(this.getLayout());
-                        if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    }, 100);
+                    const strId = String(widget.id);
+                    const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
+                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
+                    if (el && this.grid) {
+                        this.initGridItem(el, widget);
+                        this.grid.makeWidget(el);
+                    }
+                    if (this.$wire) this.$wire.saveLayout(this.getLayout());
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
