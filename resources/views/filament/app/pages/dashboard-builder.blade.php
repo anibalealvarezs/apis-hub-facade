@@ -489,7 +489,6 @@
                                         </div>
                                     </template>
                                 </div>
-                                </div>
                             </div>
 
                             {{-- Card: Chart Type --}}
