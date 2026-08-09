@@ -19,6 +19,7 @@ export function dashboardBuilder(config = {}) {
                 this.selectedWidgetIds.push(isNaN(id) ? id : parseInt(id, 10));
             }
             this.selectedWidgetIds = [...this.selectedWidgetIds];
+            console.log('[DB][toggle]', { id: strId, after: this.selectedWidgetIds.map(String) });
         },
 
         isWidgetSelected(id) {
@@ -251,8 +252,15 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Initialization ──
         init() {
+            console.log('[DB][init] version=observer-2026-08-09', {
+                widgetCount: (this.widgets || []).length,
+                gridEl: !!document.getElementById('grid-stack'),
+                gridReady: !!this.grid
+            });
+
             this.$nextTick(() => {
                 const container = document.getElementById('grid-stack');
+                console.log('[DB][init] $nextTick', { container: !!container, gridReady: !!this.grid });
                 if (container && !this.grid) {
                     this.initGrid();
                 }
@@ -426,6 +434,16 @@ export function dashboardBuilder(config = {}) {
         },
 
         initGridItem(el, widget) {
+            console.log('[DB][initGridItem] CALL', {
+                id: widget.id,
+                grid: !!this.grid,
+                elConnected: el ? el.isConnected : false,
+                elId: el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : null,
+                hasNode: el ? !!el.gridstackNode : false,
+                parent: el ? (el.parentElement ? el.parentElement.id : null) : null,
+                isNew: !!widget._isNew,
+                gx: widget.grid_x, gy: widget.grid_y, gw: widget.grid_w, gh: widget.grid_h
+            });
             const w = parseInt(widget.grid_w || 4, 10);
             const h = parseInt(widget.grid_h || 3, 10);
             const minW = 2;
@@ -457,14 +475,19 @@ export function dashboardBuilder(config = {}) {
 
             let attempts = 0;
             const registerNode = () => {
-                if (!el.isConnected) return;
+                if (!el.isConnected) {
+                    console.log('[DB][initGridItem] retry-abandon el disconnected', { id: widget.id, attempts });
+                    return;
+                }
                 if (!this.grid) {
+                    console.log('[DB][initGridItem] retry grid missing', { id: widget.id, attempts });
                     if (++attempts > 600) return;
                     requestAnimationFrame(registerNode);
                     return;
                 }
                 const header = el.querySelector('.widget-header');
                 if (!header) {
+                    console.log('[DB][initGridItem] retry header missing', { id: widget.id, attempts });
                     if (++attempts > 600) return;
                     requestAnimationFrame(registerNode);
                     return;
@@ -472,9 +495,18 @@ export function dashboardBuilder(config = {}) {
 
                 if (el.gridstackNode) {
                     el.gridstackNode.id = widget.id;
+                    console.log('[DB][initGridItem] updating existing node', { id: widget.id });
                     this.grid.update(el, widgetOpts);
                 } else {
                     const node = this.grid.makeWidget(el, widgetOpts);
+                    console.log('[DB][initGridItem] makeWidget result', {
+                        id: widget.id,
+                        node: !!node,
+                        elHasNode: !!el.gridstackNode,
+                        parent: el.parentElement ? el.parentElement.id : null,
+                        style: el.getAttribute('style'),
+                        classList: el.className
+                    });
                     if (node && typeof node === 'object') {
                         node.id = widget.id;
                     }
@@ -522,6 +554,11 @@ export function dashboardBuilder(config = {}) {
 
             const container = document.getElementById('grid-stack');
             if (!container) return;
+
+            console.log('[DB][initGrid] initializing', {
+                childCount: container.children.length,
+                directItems: container.querySelectorAll(':scope > .grid-stack-item').length
+            });
 
             this.grid = GridStack.init({
                 column: 12,
@@ -646,6 +683,16 @@ export function dashboardBuilder(config = {}) {
             this.registerGridItemsObserver();
             this.syncExistingGridItems();
 
+            console.log('[DB][initGrid] initialized', {
+                grid: !!this.grid,
+                items: container.querySelectorAll(':scope > .grid-stack-item').length,
+                nodes: Array.from(container.querySelectorAll(':scope > .grid-stack-item')).map(el => ({
+                    id: el.getAttribute('gs-id') || el.getAttribute('data-id'),
+                    node: !!el.gridstackNode
+                })),
+                observerRegistered: !!this._gridItemsObserver
+            });
+
             setTimeout(() => {
                 this._initialLayoutSignature = JSON.stringify(this.getLayout());
                 this.isDirty = false;
@@ -656,12 +703,16 @@ export function dashboardBuilder(config = {}) {
             if (!this.grid) return;
             const container = document.getElementById('grid-stack');
             if (!container) return;
-            container.querySelectorAll(':scope > .grid-stack-item').forEach(el => {
+            const items = container.querySelectorAll(':scope > .grid-stack-item');
+            console.log('[DB][syncExistingGridItems] found', items.length, 'direct items');
+            items.forEach(el => {
                 const rawId = el.getAttribute('gs-id') || el.getAttribute('data-id');
                 if (rawId === null || rawId === undefined) return;
                 const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
                 if (widget) {
                     this.initGridItem(el, widget);
+                } else {
+                    console.log('[DB][syncExistingGridItems] NO widget match for el', { rawId });
                 }
             });
         },
@@ -681,6 +732,15 @@ export function dashboardBuilder(config = {}) {
                         const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
                         if (rawId === null || rawId === undefined) return;
                         const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                        console.log('[DB][observer] added grid-stack-item', {
+                            rawId,
+                            widgetFound: !!widget,
+                            widgetId: widget ? widget.id : null,
+                            elHasNode: !!node.gridstackNode,
+                            parent: node.parentElement ? node.parentElement.id : null,
+                            connected: node.isConnected,
+                            isNew: widget ? !!widget._isNew : false
+                        });
                         if (widget) {
                             this.initGridItem(node, widget);
                         }
@@ -689,6 +749,7 @@ export function dashboardBuilder(config = {}) {
             });
 
             this._gridItemsObserver.observe(container, { childList: true });
+            console.log('[DB][observer] registered on #grid-stack');
         },
 
         saveLayout() {
@@ -1717,6 +1778,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         duplicateWidget(id) {
+            console.log('[DB][duplicateWidget] CALL', { id, source: (this.widgets || []).find(w => String(w.id) === String(id)) });
             if (!this.$wire) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
@@ -1726,9 +1788,21 @@ export function dashboardBuilder(config = {}) {
                 widget._isNew = true;
                 this.widgets.push(widget);
                 this.widgets = [...this.widgets];
+                console.log('[DB][duplicateWidget] pushed, widgets now', {
+                    newId: widget.id,
+                    count: this.widgets.length,
+                    gx: widget.grid_x, gy: widget.grid_y, gw: widget.grid_w, gh: widget.grid_h
+                });
                 this.$nextTick(() => {
                     const strId = String(widget.id);
                     const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
+                    console.log('[DB][duplicateWidget] $nextTick lookup', {
+                        id: strId,
+                        el: el ? el.outerHTML.slice(0, 300) : null,
+                        hasNode: el ? !!el.gridstackNode : null,
+                        parent: el && el.parentElement ? el.parentElement.id : null,
+                        widgetsIncludes: (this.widgets || []).some(w => String(w.id) === strId)
+                    });
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
