@@ -382,6 +382,50 @@ export function dashboardBuilder(config = {}) {
             });
         },
 
+        initGridItem(el, widget) {
+            el.setAttribute('gs-id', widget.id);
+            el.setAttribute('gs-w', widget.grid_w || 4);
+            el.setAttribute('gs-h', widget.grid_h || 3);
+            el.setAttribute('gs-min-w', 2);
+            el.setAttribute('gs-min-h', 2);
+            if (widget.grid_x !== undefined && widget.grid_x !== null) {
+                el.setAttribute('gs-x', widget.grid_x);
+            } else {
+                el.setAttribute('gs-auto-position', 'true');
+            }
+            if (widget.grid_y !== undefined && widget.grid_y !== null) {
+                el.setAttribute('gs-y', widget.grid_y);
+            }
+
+            if (this.grid) {
+                setTimeout(() => {
+                    if (this.grid) this.grid.makeWidget(el);
+                }, 50);
+            }
+
+            if (widget._isNew) {
+                setTimeout(() => { widget._isNew = false; }, 2500);
+            }
+        },
+
+        addSeriesCard() {
+            this.widgetControlsForm.raw_series = this.widgetControlsForm.raw_series || [];
+            this.widgetControlsForm.raw_series.push({
+                channel: this.dashboardControls.channel || '',
+                metrics: [],
+                assets: []
+            });
+            if (this.dashboardControls.channel) {
+                this.onWidgetRawChannelChange(this.widgetControlsForm.raw_series.length - 1);
+            }
+        },
+
+        removeSeriesCard(index) {
+            if (this.widgetControlsForm.raw_series && index >= 0) {
+                this.widgetControlsForm.raw_series.splice(index, 1);
+            }
+        },
+
         // ─── Grid ──
         initGrid() {
             if (typeof GridStack === 'undefined') {

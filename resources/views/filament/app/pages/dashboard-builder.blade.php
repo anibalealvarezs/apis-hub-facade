@@ -110,31 +110,7 @@
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
-                                 x-init="
-                                    $el.setAttribute('gs-id', widget.id);
-                                    $el.setAttribute('gs-w', widget.grid_w || 4);
-                                    $el.setAttribute('gs-h', widget.grid_h || 3);
-                                    $el.setAttribute('gs-min-w', 2);
-                                    $el.setAttribute('gs-min-h', 2);
-                                    if (widget.grid_x !== undefined && widget.grid_x !== null) {
-                                        $el.setAttribute('gs-x', widget.grid_x);
-                                    } else {
-                                        $el.setAttribute('gs-auto-position', 'true');
-                                    }
-                                    if (widget.grid_y !== undefined && widget.grid_y !== null) {
-                                        $el.setAttribute('gs-y', widget.grid_y);
-                                    }
-
-                                    if (grid) {
-                                        setTimeout(() => {
-                                            if (grid) grid.makeWidget($el);
-                                        }, 50);
-                                    }
-
-                                    if (widget._isNew) {
-                                        setTimeout(() => { widget._isNew = false; }, 2500);
-                                    }
-                                 ">
+                                 x-init="initGridItem($el, widget)">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
                                     {{-- Widget Header --}}
@@ -904,7 +880,7 @@
                                                     </div>
                                                     <button class="text-red-500 hover:text-red-700"
                                                             x-show="widgetControlsForm.raw_series.length > 1"
-                                                            x-on:click="widgetControlsForm.raw_series.splice(index, 1)">
+                                                            x-on:click="removeSeriesCard(index)">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                              viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -1042,7 +1018,7 @@
                                     <div
                                         class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <button
-                                            x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metrics: [], assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);"
+                                            x-on:click="addSeriesCard()"
                                             class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
                                             <div
                                                 class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
