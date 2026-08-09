@@ -45,6 +45,7 @@ export function dashboardBuilder(config = {}) {
         dashboardMetrics: {},
         availableDependencies: {},
         availableGranularities: {},
+        availableLanguages: config.availableLanguages || {},
 
         // ─── Dashboard Controls ──
         showDashboardControls: false,

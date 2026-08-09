@@ -11,7 +11,8 @@
         sourceTypes: @js($this->getAvailableSourceTypes()),
         kpis: @js($this->getKpisForWidgetPicker()),
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
-        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
+        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
+        availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
     })" class="space-y-4">
         <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
         {{-- Toolbar --}}
