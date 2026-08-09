@@ -1682,17 +1682,18 @@ export function dashboardBuilder(config = {}) {
                 console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
 
                 this.$nextTick(() => {
-                    const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
-                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
-                    if (el && this.grid && !el.gridstackNode) {
-                        this.initGridItem(el, widget);
-                    }
                     setTimeout(() => {
+                        const strId = String(widget.id);
+                        const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
+                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
+                        if (el && this.grid && !el.gridstackNode) {
+                            this.initGridItem(el, widget);
+                        }
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 200);
+                    }, 100);
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
