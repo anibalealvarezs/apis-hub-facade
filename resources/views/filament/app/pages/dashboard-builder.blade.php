@@ -434,7 +434,7 @@
                 </div>
 
                 <div
-                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto p-6 flex flex-col">
+                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-hidden p-6 flex flex-col">
                     {{-- Mobile Accordion Navigation Bar (Visible on mobile only) --}}
                     <div
                         class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20 mb-4">
