@@ -1677,7 +1677,6 @@ export function dashboardBuilder(config = {}) {
                         this.initGridItem(el, widget);
                     }
                     console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
-                    if (this.$wire) this.$wire.saveLayout(this.getLayout());
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
