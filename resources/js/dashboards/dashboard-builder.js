@@ -18,6 +18,7 @@ export function dashboardBuilder(config = {}) {
             } else {
                 this.selectedWidgetIds.push(isNaN(id) ? id : parseInt(id, 10));
             }
+            this.selectedWidgetIds = [...this.selectedWidgetIds];
         },
 
         isWidgetSelected(id) {
@@ -259,6 +260,10 @@ export function dashboardBuilder(config = {}) {
                 this.initAllAssets();
             });
 
+            this.$watch('showWidgetControls', (val) => {
+                console.log('[dashboard-builder] showWidgetControls changed to:', val, new Error().stack);
+            });
+
             window.addEventListener('beforeunload', (e) => {
                 if (this.isDirty) {
                     e.preventDefault();
@@ -466,9 +471,6 @@ export function dashboardBuilder(config = {}) {
                     const node = this.grid.makeWidget(el);
                     if (node) node.id = widget.id;
                 }
-                // Force GridStack to (re-)initialize drag/drop handlers on this widget
-                // so custom handles (widget-header, widget-drag-handle) are properly bound
-                this.grid.prepareDragDrop(el);
             }
 
             if (widget._isNew) {
@@ -530,14 +532,15 @@ export function dashboardBuilder(config = {}) {
 
                 const primaryNode = el.gridstackNode;
                 const rawId = primaryNode ? (primaryNode.id || el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0;
-                const primaryId = parseInt(rawId, 10);
+                const primaryStrId = String(rawId);
 
-                if (primaryId && this.selectedWidgetIds.includes(primaryId) && this.selectedWidgetIds.length > 1) {
+                if (primaryStrId && this.selectedWidgetIds.some(id => String(id) === primaryStrId) && this.selectedWidgetIds.length > 1) {
                     multiDragStartPositions = {};
                     this.selectedWidgetIds.forEach(id => {
-                        const nodeEl = document.querySelector(`[gs-id="${id}"], [data-id="${id}"]`);
+                        const strId = String(id);
+                        const nodeEl = document.querySelector(`[gs-id="${strId}"], [data-id="${strId}"]`);
                         if (nodeEl && nodeEl.gridstackNode) {
-                            multiDragStartPositions[id] = {
+                            multiDragStartPositions[strId] = {
                                 x: parseInt(nodeEl.gridstackNode.x, 10) || 0,
                                 y: parseInt(nodeEl.gridstackNode.y, 10) || 0,
                                 el: nodeEl
@@ -568,8 +571,8 @@ export function dashboardBuilder(config = {}) {
                     if (!multiDragStartPositions) return;
                     const node = el.gridstackNode;
                     if (!node) return;
-                    const pId = parseInt(node.id || el.getAttribute('gs-id') || el.getAttribute('data-id'), 10);
-                    const pStart = multiDragStartPositions[pId];
+                    const pStrId = String(node.id || el.getAttribute('gs-id') || el.getAttribute('data-id'));
+                    const pStart = multiDragStartPositions[pStrId];
                     if (!pStart) return;
 
                     const dx = (parseInt(node.x, 10) || 0) - pStart.x;
@@ -577,7 +580,7 @@ export function dashboardBuilder(config = {}) {
 
                     Object.keys(multiDragStartPositions).forEach(idKey => {
                         const otherId = String(idKey);
-                        if (otherId !== String(pId)) {
+                        if (otherId !== pStrId) {
                             const start = multiDragStartPositions[idKey];
                             if (start && start.el && this.grid) {
                                 const targetX = Math.max(0, start.x + dx);
@@ -1140,7 +1143,9 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+            console.log('[dashboard-builder] about to set showWidgetControls = true');
             this.showWidgetControls = true;
+            console.log('[dashboard-builder] showWidgetControls is now:', this.showWidgetControls);
         },
 
         loadWidgetMetrics(savedMetrics) {
@@ -1665,11 +1670,9 @@ export function dashboardBuilder(config = {}) {
                 const widget = JSON.parse(JSON.stringify(rawWidget));
                 widget._isNew = true;
                 this.widgets.push(widget);
+                this.widgets = [...this.widgets];
                 console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
 
-                // initGridItem (called via x-init on the new element) handles
-                // makeWidget + refreshDragHandles. We just need to wait for that
-                // to finish, then save layout and scroll into view.
                 this.$nextTick(() => {
                     setTimeout(() => {
                         const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
