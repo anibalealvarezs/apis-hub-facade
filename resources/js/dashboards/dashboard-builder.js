@@ -1619,7 +1619,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         configureWidget(id) {
-            const widget = this.widgets.find(w => w.id === id);
+            const widget = this.widgets.find(w => String(w.id) === String(id));
             if (widget) this.openWidgetControls(widget);
         },
 
@@ -1627,9 +1627,9 @@ export function dashboardBuilder(config = {}) {
             if (confirm('Remove this widget?')) {
                 if (this.$wire) {
                     this.$wire.deleteWidget(id).then(() => {
-                        const el = document.querySelector(`[gs-id="${id}"]`);
+                        const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
                         if (el && this.grid) this.grid.removeWidget(el, false);
-                        this.widgets = this.widgets.filter(w => w.id !== id);
+                        this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
                     });
                 }
             }
