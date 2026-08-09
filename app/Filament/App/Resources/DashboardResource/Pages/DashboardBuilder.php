@@ -159,7 +159,11 @@ class DashboardBuilder extends Page
         }
         $widget->save();
 
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here.
+        // The JS (confirmWidgetControls) already updates Alpine state locally.
+        // Calling loadWidgets() triggers a Livewire re-render/morph that destroys
+        // Alpine scope on <template> elements, causing ReferenceErrors for
+        // widgetKpiConfig, channels, etc.
         $this->unsavedChanges = true;
 
         Notification::make()
