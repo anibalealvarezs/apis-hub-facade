@@ -573,13 +573,13 @@ export function dashboardBuilder(config = {}) {
                     const dy = (parseInt(node.y, 10) || 0) - pStart.y;
 
                     Object.keys(multiDragStartPositions).forEach(idKey => {
-                        const otherId = parseInt(idKey, 10);
-                        if (otherId !== pId) {
-                            const start = multiDragStartPositions[otherId];
-                            if (start && start.el) {
+                        const otherId = String(idKey);
+                        if (otherId !== String(pId)) {
+                            const start = multiDragStartPositions[idKey];
+                            if (start && start.el && this.grid) {
                                 const targetX = Math.max(0, start.x + dx);
                                 const targetY = Math.max(0, start.y + dy);
-                                this.grid.move(start.el, targetX, targetY);
+                                this.grid.update(start.el, { x: targetX, y: targetY });
                             }
                         }
                     });
@@ -1666,16 +1666,12 @@ export function dashboardBuilder(config = {}) {
                 this.$nextTick(() => {
                     setTimeout(() => {
                         const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
-                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el);
-                        if (el && this.grid && !el.gridstackNode) {
-                            this.grid.makeWidget(el);
-                            console.log('[dashboard-builder] makeWidget executed for duplicated element');
-                        }
+                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 200);
+                    }, 100);
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
