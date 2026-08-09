@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
-
     <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
         gridState: @js($this->gridState ?? []),
@@ -16,6 +14,7 @@
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
     })" class="space-y-4">
+        <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
             <div class="flex items-center gap-2">
