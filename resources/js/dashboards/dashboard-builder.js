@@ -594,16 +594,27 @@ export function dashboardBuilder(config = {}) {
 
         parseLocalizedValue(val, locale = (document.documentElement.lang || 'en')) {
             if (!val) return '';
+            if (Array.isArray(val)) return '';
             if (typeof val === 'object') {
                 return val[locale] || val['en'] || Object.values(val)[0] || '';
             }
-            if (typeof val === 'string' && val.trim().startsWith('{') && val.trim().endsWith('}')) {
-                try {
-                    const parsed = JSON.parse(val);
-                    if (typeof parsed === 'object' && parsed !== null) {
-                        return parsed[locale] || parsed['en'] || Object.values(parsed)[0] || val;
-                    }
-                } catch (e) {}
+            if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if (trimmed === '[]' || trimmed === '{}') return '';
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (typeof parsed === 'object' && parsed !== null) {
+                            return parsed[locale] || parsed['en'] || Object.values(parsed)[0] || '';
+                        }
+                    } catch (e) {}
+                }
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) return '';
+                    } catch (e) {}
+                }
             }
             return String(val);
         },
@@ -1250,9 +1261,10 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     let channelAssets = this.allChannelAssets[s.channel] || {};
-                    let validAssets = [...(s.assets || [])].filter(id => {
-                        return channelAssets[id] !== undefined;
-                    });
+                    let validAssets = [...(s.assets || [])];
+                    if (Object.keys(channelAssets).length > 0) {
+                        validAssets = validAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
+                    }
 
                     payload.series_assets[validIdx] = validAssets;
                     payload.series_channels[validIdx] = s.channel || '';
