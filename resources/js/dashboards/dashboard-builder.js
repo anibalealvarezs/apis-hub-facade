@@ -466,9 +466,9 @@ export function dashboardBuilder(config = {}) {
                     const node = this.grid.makeWidget(el);
                     if (node) node.id = widget.id;
                 }
-                // Re-scan custom drag handles so the widget is interactive
-                // (makeWidget doesn't auto-bind handles set via GridStack.init draggable.handle)
-                this.grid.refreshDragHandles(el);
+                // Force GridStack to (re-)initialize drag/drop handlers on this widget
+                // so custom handles (widget-header, widget-drag-handle) are properly bound
+                this.grid.prepareDragDrop(el);
             }
 
             if (widget._isNew) {
