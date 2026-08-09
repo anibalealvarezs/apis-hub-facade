@@ -579,7 +579,7 @@ export function dashboardBuilder(config = {}) {
                             if (start && start.el && this.grid) {
                                 const targetX = Math.max(0, start.x + dx);
                                 const targetY = Math.max(0, start.y + dy);
-                                this.grid.update(start.el, { x: targetX, y: targetY });
+                                this.grid.update(start.el, { x: targetX, y: targetY, autoPosition: false });
                             }
                         }
                     });
@@ -1667,11 +1667,18 @@ export function dashboardBuilder(config = {}) {
                     setTimeout(() => {
                         const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
                         console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
+                        if (el && this.grid) {
+                            if (!el.gridstackNode) {
+                                this.grid.makeWidget(el);
+                            } else {
+                                this.grid.update(el, { id: widget.id, x: widget.grid_x, y: widget.grid_y, w: widget.grid_w || 4, h: widget.grid_h || 3 });
+                            }
+                        }
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 100);
+                    }, 150);
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
