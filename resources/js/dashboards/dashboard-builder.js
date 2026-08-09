@@ -563,12 +563,13 @@ export function dashboardBuilder(config = {}) {
             if (!this.grid) return [];
             const nodes = (this.grid.engine && this.grid.engine.nodes) ? this.grid.engine.nodes : (this.grid.save(false) || []);
             return nodes.map(node => ({
-                id: node.id || (node.el ? parseInt(node.el.getAttribute('gs-id')) : 0),
-                x: node.x,
-                y: node.y,
-                w: node.w,
-                h: node.h,
-            })).filter(node => node.id !== 0);
+                id: parseInt(node.id || (node.el ? node.el.getAttribute('gs-id') : 0), 10) || 0,
+                x: parseInt(node.x, 10) || 0,
+                y: parseInt(node.y, 10) || 0,
+                w: parseInt(node.w, 10) || 4,
+                h: parseInt(node.h, 10) || 3,
+            })).filter(node => node.id !== 0)
+              .sort((a, b) => a.id - b.id);
         },
 
         reloadGrid() {
@@ -994,9 +995,18 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     this.loadWidgetMetrics(savedMetrics);
+                    this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                    this.showWidgetControls = true;
+                }).catch(err => {
+                    console.error('[dashboard-builder] getKpiConfiguration failed:', err);
+                    this.loadWidgetMetrics(savedMetrics);
+                    this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                    this.showWidgetControls = true;
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
+                this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                this.showWidgetControls = true;
             }
 
             if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id && this.$wire) {
