@@ -383,8 +383,8 @@ export function dashboardBuilder(config = {}) {
         },
 
         initGridItem(el, widget) {
-            const w = widget.grid_w || 4;
-            const h = widget.grid_h || 3;
+            const w = parseInt(widget.grid_w || 4, 10);
+            const h = parseInt(widget.grid_h || 3, 10);
             const minW = 2;
             const minH = 2;
 
