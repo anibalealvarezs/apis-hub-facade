@@ -1628,7 +1628,9 @@ export function dashboardBuilder(config = {}) {
                 if (this.$wire) {
                     this.$wire.deleteWidget(id).then(() => {
                         const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
-                        if (el && this.grid) this.grid.removeWidget(el, false);
+                        if (el && this.grid) {
+                            this.grid.removeWidget(el, true);
+                        }
                         this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
                     });
                 }
@@ -1643,12 +1645,15 @@ export function dashboardBuilder(config = {}) {
 
                 this.$nextTick(() => {
                     setTimeout(() => {
+                        const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
+                        if (el && this.grid && !el.gridstackNode) {
+                            this.grid.makeWidget(el);
+                        }
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
-                        const el = document.querySelector(`[gs-id="${widget.id}"]`);
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 500);
+                    }, 200);
                 });
             });
         },
