@@ -407,8 +407,7 @@ export function dashboardBuilder(config = {}) {
                 el.removeAttribute('gs-y');
             }
 
-            const setupWidget = () => {
-                if (!this.grid) return;
+            if (this.grid) {
                 if (el.gridstackNode) {
                     this.grid.update(el, {
                         w: w,
@@ -420,11 +419,6 @@ export function dashboardBuilder(config = {}) {
                 } else {
                     this.grid.makeWidget(el);
                 }
-            };
-
-            if (this.grid) {
-                setupWidget();
-                requestAnimationFrame(() => setupWidget());
             }
 
             if (widget._isNew) {

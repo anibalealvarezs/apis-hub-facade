@@ -110,7 +110,7 @@
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
-                                 x-init="initGridItem($el, widget)">
+                                 x-init="$nextTick(() => initGridItem($el, widget))">
                                 <div
                                     class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
                                     {{-- Widget Header --}}
