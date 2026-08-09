@@ -394,7 +394,11 @@ class DashboardBuilder extends Page
         $service = app(\App\Services\DashboardService::class);
         $widget = $service->addWidget($this->dashboard, $data);
 
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here.
+        // The JS (confirmAddWidget) already updates Alpine state locally.
+        // Calling loadWidgets() rewrites the x-data widgets JSON, forcing Alpine
+        // to re-initialize the whole dashboard-builder component (grid, selection,
+        // isDirty) on every add/duplicate/delete.
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -415,7 +419,7 @@ class DashboardBuilder extends Page
         }
 
         $service->removeWidget($widget);
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -434,7 +438,7 @@ class DashboardBuilder extends Page
         }
 
         $newWidget = $service->duplicateWidget($widget);
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
         $this->unsavedChanges = true;
 
         Notification::make()
