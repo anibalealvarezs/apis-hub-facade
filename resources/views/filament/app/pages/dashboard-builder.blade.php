@@ -380,11 +380,8 @@
         {{-- ============================================================ --}}
         {{-- WIDGET-LEVEL CONTROLS MODAL                                 --}}
         {{-- ============================================================ --}}
-        <div x-show="showWidgetControls"
-             class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
-             x-cloak>
-            <div @click="showWidgetControls = false"
-                 class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
+        <div x-show="showWidgetControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity" @click="showWidgetControls = false"></div>
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
                 @click.away="showWidgetControls = false">
@@ -437,10 +434,10 @@
                 </div>
 
                 <div
-                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col">
+                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto p-6 flex flex-col">
                     {{-- Mobile Accordion Navigation Bar (Visible on mobile only) --}}
                     <div
-                        class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
+                        class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20 mb-4">
                         <button type="button" @click="activeMobileTab = 'config'"
                                 class="flex-1 py-3 px-4 text-center text-xs font-bold uppercase tracking-wider transition-colors border-b-2"
                                 :class="activeMobileTab === 'config' ? 'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'">
@@ -453,7 +450,7 @@
                         </button>
                     </div>
 
-                    <div class="modal-body-absolute-wrapper flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+                    <div class="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
                         {{-- Left Column: Global Configuration --}}
                         <div
                             class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 bd-config-col"
