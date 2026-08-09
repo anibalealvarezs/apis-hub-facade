@@ -791,6 +791,7 @@ export function dashboardBuilder(config = {}) {
         widgetControlsError: '',
         activeIdentityLang: 'en',
         openWidgetControls(widget) {
+            console.log('[dashboard-builder] openWidgetControls called with widget:', widget);
             this.widgetControlsError = '';
             this.activeIdentityLang = document.documentElement.lang || 'en';
             const wc = widget.controls || {};
@@ -1619,35 +1620,55 @@ export function dashboardBuilder(config = {}) {
         },
 
         configureWidget(id) {
+            console.log('[dashboard-builder] configureWidget called for id:', id, 'type:', typeof id);
             const widget = this.widgets.find(w => String(w.id) === String(id));
-            if (widget) this.openWidgetControls(widget);
+            console.log('[dashboard-builder] configureWidget found widget:', widget);
+            if (widget) {
+                this.openWidgetControls(widget);
+            } else {
+                console.error('[dashboard-builder] configureWidget failed to find widget with id:', id, 'among available widgets:', this.widgets.map(w => w.id));
+            }
         },
 
         deleteWidget(id) {
+            console.log('[dashboard-builder] deleteWidget requested for id:', id);
             if (confirm('Remove this widget?')) {
                 if (this.$wire) {
                     this.$wire.deleteWidget(id).then(() => {
+                        console.log('[dashboard-builder] deleteWidget backend confirmed for id:', id);
                         const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
+                        console.log('[dashboard-builder] deleteWidget DOM element found:', el);
                         if (el && this.grid) {
                             this.grid.removeWidget(el, true);
                         }
                         this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
+                        console.log('[dashboard-builder] deleteWidget remaining widgets:', this.widgets.map(w => w.id));
+                    }).catch(err => {
+                        console.error('[dashboard-builder] deleteWidget wire call error:', err);
                     });
                 }
             }
         },
 
         duplicateWidget(id) {
-            if (!this.$wire) return;
+            console.log('[dashboard-builder] duplicateWidget called for id:', id);
+            if (!this.$wire) {
+                console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
+                return;
+            }
             this.$wire.duplicateWidget(id).then(widget => {
+                console.log('[dashboard-builder] duplicateWidget backend returned widget:', widget);
                 widget._isNew = true;
                 this.widgets.push(widget);
+                console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
 
                 this.$nextTick(() => {
                     setTimeout(() => {
                         const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
+                        console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el);
                         if (el && this.grid && !el.gridstackNode) {
                             this.grid.makeWidget(el);
+                            console.log('[dashboard-builder] makeWidget executed for duplicated element');
                         }
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
@@ -1655,6 +1676,8 @@ export function dashboardBuilder(config = {}) {
                         }
                     }, 200);
                 });
+            }).catch(err => {
+                console.error('[dashboard-builder] duplicateWidget wire call error:', err);
             });
         },
 
