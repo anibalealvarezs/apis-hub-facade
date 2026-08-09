@@ -1462,8 +1462,6 @@ export function dashboardBuilder(config = {}) {
             if (!this.$wire) return;
             this.$wire.duplicateWidget(id).then(widget => {
                 widget._isNew = true;
-                widget.grid_x = null;
-                widget.grid_y = null;
                 this.widgets.push(widget);
 
                 this.$nextTick(() => {

@@ -116,11 +116,20 @@
                                     $el.setAttribute('gs-h', widget.grid_h || 3);
                                     $el.setAttribute('gs-min-w', 2);
                                     $el.setAttribute('gs-min-h', 2);
-                                    if (widget.grid_x !== undefined && widget.grid_x !== null) $el.setAttribute('gs-x', widget.grid_x);
-                                    if (widget.grid_y !== undefined && widget.grid_y !== null) $el.setAttribute('gs-y', widget.grid_y);
-                                    else $el.setAttribute('gs-auto-position', 'true');
+                                    if (widget.grid_x !== undefined && widget.grid_x !== null) {
+                                        $el.setAttribute('gs-x', widget.grid_x);
+                                    } else {
+                                        $el.setAttribute('gs-auto-position', 'true');
+                                    }
+                                    if (widget.grid_y !== undefined && widget.grid_y !== null) {
+                                        $el.setAttribute('gs-y', widget.grid_y);
+                                    }
 
-                                    if (grid) grid.makeWidget($el);
+                                    if (grid) {
+                                        setTimeout(() => {
+                                            if (grid) grid.makeWidget($el);
+                                        }, 50);
+                                    }
 
                                     if (widget._isNew) {
                                         setTimeout(() => { widget._isNew = false; }, 2500);
