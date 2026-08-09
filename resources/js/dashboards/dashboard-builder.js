@@ -1674,10 +1674,10 @@ export function dashboardBuilder(config = {}) {
                 this.$nextTick(() => {
                     const strId = String(widget.id);
                     const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
-                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                     if (el && this.grid) {
                         this.initGridItem(el, widget);
                     }
+                    console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                     if (this.$wire) this.$wire.saveLayout(this.getLayout());
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
