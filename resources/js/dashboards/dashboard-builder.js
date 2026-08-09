@@ -466,6 +466,9 @@ export function dashboardBuilder(config = {}) {
                     const node = this.grid.makeWidget(el);
                     if (node) node.id = widget.id;
                 }
+                // Re-scan custom drag handles so the widget is interactive
+                // (makeWidget doesn't auto-bind handles set via GridStack.init draggable.handle)
+                this.grid.refreshDragHandles(el);
             }
 
             if (widget._isNew) {
@@ -1664,22 +1667,18 @@ export function dashboardBuilder(config = {}) {
                 this.widgets.push(widget);
                 console.log('[dashboard-builder] updated widgets array length:', this.widgets.length);
 
+                // initGridItem (called via x-init on the new element) handles
+                // makeWidget + refreshDragHandles. We just need to wait for that
+                // to finish, then save layout and scroll into view.
                 this.$nextTick(() => {
                     setTimeout(() => {
                         const el = document.querySelector(`[data-id="${widget.id}"]`) || document.querySelector(`[gs-id="${widget.id}"]`);
                         console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
-                        if (el && this.grid) {
-                            if (!el.gridstackNode) {
-                                this.grid.makeWidget(el);
-                            } else {
-                                this.grid.update(el, { id: widget.id, x: widget.grid_x, y: widget.grid_y, w: widget.grid_w || 4, h: widget.grid_h || 3 });
-                            }
-                        }
                         if (this.$wire) this.$wire.saveLayout(this.getLayout());
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 150);
+                    }, 200);
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
