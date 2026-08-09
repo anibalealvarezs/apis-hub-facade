@@ -1666,7 +1666,6 @@ export function dashboardBuilder(config = {}) {
                     console.log('[dashboard-builder] duplicateWidget post-render DOM element:', el, 'gridstackNode:', el ? el.gridstackNode : null);
                     if (el && this.grid) {
                         this.initGridItem(el, widget);
-                        this.grid.makeWidget(el);
                     }
                     if (this.$wire) this.$wire.saveLayout(this.getLayout());
                     if (el) {
