@@ -966,11 +966,28 @@ export function dashboardBuilder(config = {}) {
 
             const savedMetrics = wc.metrics || [];
 
-            this.widgetKpiConfig = {};
+            if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id && this.$wire) {
+                const dm = (this.derivedMetrics || {})[widget.source_config.derived_metric_id];
+                if (dm) {
+                    widget.dmSourceSeries = dm.source_series || [];
+                    widget.dmSourceSeries.forEach((series) => {
+                        const ch = series.channel;
+                        if (ch && !this.allChannelAssets[ch]) {
+                            this.$wire.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                            });
+                        }
+                        if (ch && !this.allChannelAssetGroups[ch]) {
+                            this.$wire.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
+                            });
+                        }
+                    });
+                }
+            }
+
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
-                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
-                    // Extract the actual UI state from the KPI filters
                     const uiState = config?.filters?._ui_state || config;
                     this.widgetKpiConfig = {
                         dependent_channel: uiState.dependent_channel,
@@ -980,8 +997,6 @@ export function dashboardBuilder(config = {}) {
                         dependent_asset_filter: uiState.dependent_asset_filter,
                         independent_variables: uiState.independent_variables || {},
                     };
-                    console.log('DEBUG BUILDER widgetKpiConfig:', this.widgetKpiConfig);
-                    console.log('DEBUG BUILDER dependentDm:', this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id], 'allDMs:', Object.keys(this.derivedMetrics || {}));
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
@@ -1026,7 +1041,6 @@ export function dashboardBuilder(config = {}) {
                     };
                     if (this.widgetKpiConfig.dependent_dm_id) {
                         initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
-                        // Populate dependent_channel from DM's source_series if not already set
                         const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
                         if (depDm && depDm.source_series && depDm.source_series.length > 0 && !this.widgetKpiConfig.dependent_channel) {
                             this.widgetKpiConfig.dependent_channel = depDm.source_series[0].channel;
@@ -1081,12 +1095,10 @@ export function dashboardBuilder(config = {}) {
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                // Auto-select first metric for KPI dependent series if dynamic and none selected
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
                                     const firstMetric = Object.keys(metrics)[0];
                                     this.widgetControlsForm.metrics[0] = firstMetric;
                                 }
-                                // Auto-select for independent variables
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
@@ -1129,31 +1141,6 @@ export function dashboardBuilder(config = {}) {
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
             }
-
-            if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id && this.$wire) {
-                const dm = this.derivedMetrics[widget.source_config.derived_metric_id];
-                if (dm) {
-                    widget.dmSourceSeries = dm.source_series || [];
-                    widget.dmSourceSeries.forEach((series, idx) => {
-                        const ch = series.channel;
-                        if (ch && !this.allChannelAssets[ch]) {
-                            this.$wire.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
-                            });
-                        }
-                        if (ch && !this.allChannelAssetGroups[ch]) {
-                            this.$wire.getAssetGroupsForChannel(ch).then(groups => {
-                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
-                            });
-                        }
-                    });
-                }
-            }
-
-            this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
-            console.log('[dashboard-builder] about to set showWidgetControls = true');
-            this.showWidgetControls = true;
-            console.log('[dashboard-builder] showWidgetControls is now:', this.showWidgetControls);
         },
 
         loadWidgetMetrics(savedMetrics) {
