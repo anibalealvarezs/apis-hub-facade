@@ -469,7 +469,7 @@ export function dashboardBuilder(config = {}) {
                 resizable: { handles: 'se' },
                 draggable: {
                     handle: '.widget-header, .widget-drag-handle, .widget-body-drag',
-                    scroll: true
+                    scroll: false
                 },
             });
 
@@ -477,16 +477,17 @@ export function dashboardBuilder(config = {}) {
             this.grid.on('dragstart', (event, el) => {
                 let lastEvt = null;
                 const onPointerMove = (e) => { lastEvt = e; };
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('pointermove', onPointerMove, { passive: true });
+                window.addEventListener('mousemove', onPointerMove, { passive: true });
 
                 autoScrollTimer = setInterval(() => {
                     if (!lastEvt) return;
-                    const topThreshold = 45;
-                    const bottomThreshold = 35;
+                    const clientY = lastEvt.clientY;
+                    const topThreshold = 40;
+                    const bottomThreshold = 40;
                     const viewportHeight = window.innerHeight;
 
-                    if (clientY < topThreshold) {
+                    if (clientY < topThreshold && window.scrollY > 0) {
                         const speed = Math.max(4, Math.round((topThreshold - clientY) / 2));
                         window.scrollBy({ top: -speed, behavior: 'instant' });
                     } else if (clientY > viewportHeight - bottomThreshold) {
