@@ -641,25 +641,36 @@ export function dashboardBuilder(config = {}) {
             let titles = { en: '', es: '' };
             let descriptions = { en: '', es: '' };
 
-            if (widget.titles && typeof widget.titles === 'object') {
+            if (widget.titles && typeof widget.titles === 'object' && !Array.isArray(widget.titles)) {
                 titles = { ...widget.titles };
             } else if (widget.title) {
-                if (typeof widget.title === 'object') {
+                if (typeof widget.title === 'object' && !Array.isArray(widget.title)) {
                     titles = { ...widget.title };
                 } else if (typeof widget.title === 'string' && widget.title.trim().startsWith('{')) {
-                    try { titles = JSON.parse(widget.title); } catch (e) {}
+                    try { 
+                        const parsed = JSON.parse(widget.title);
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) titles = parsed;
+                    } catch (e) {}
                 }
             }
 
-            if (widget.descriptions && typeof widget.descriptions === 'object') {
+            if (widget.descriptions && typeof widget.descriptions === 'object' && !Array.isArray(widget.descriptions)) {
                 descriptions = { ...widget.descriptions };
             } else if (widget.description) {
-                if (typeof widget.description === 'object') {
+                if (typeof widget.description === 'object' && !Array.isArray(widget.description)) {
                     descriptions = { ...widget.description };
                 } else if (typeof widget.description === 'string' && widget.description.trim().startsWith('{')) {
-                    try { descriptions = JSON.parse(widget.description); } catch (e) {}
+                    try { 
+                        const parsed = JSON.parse(widget.description);
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) descriptions = parsed;
+                    } catch (e) {}
                 }
             }
+
+            const cleanStr = (s) => (s && s !== '[]' && s !== '{}' && !s.startsWith('[')) ? String(s) : '';
+
+            Object.keys(titles).forEach(k => { titles[k] = cleanStr(titles[k]); });
+            Object.keys(descriptions).forEach(k => { descriptions[k] = cleanStr(descriptions[k]); });
 
             const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
             const baseDesc = this.parseLocalizedValue(widget.description || '');
