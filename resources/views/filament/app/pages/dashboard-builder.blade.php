@@ -1,5 +1,4 @@
-<x-filament-panels::page>
-    <div x-data="dashboardBuilder({
+<div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
         gridState: @js($this->gridState ?? []),
         widgetLabels: @js(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
@@ -1945,4 +1944,3 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-extra.min.css"/>
     @endpush
-</x-filament-panels::page>
