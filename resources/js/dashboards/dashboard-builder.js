@@ -465,7 +465,15 @@ export function dashboardBuilder(config = {}) {
                 el.removeAttribute('gs-y');
             }
 
-            if (this.grid) {
+            const attachGrid = () => {
+                if (!this.grid) return;
+                // Ensure inner DOM children (like .widget-header) are rendered before initializing GridStack node
+                const header = el.querySelector('.widget-header');
+                if (!header) {
+                    setTimeout(attachGrid, 50);
+                    return;
+                }
+
                 if (el.gridstackNode) {
                     el.gridstackNode.id = widget.id;
                     this.grid.update(el, widgetOpts);
@@ -475,7 +483,9 @@ export function dashboardBuilder(config = {}) {
                         node.id = widget.id;
                     }
                 }
-            }
+            };
+
+            setTimeout(attachGrid, 50);
 
             if (widget._isNew) {
                 setTimeout(() => { widget._isNew = false; }, 2500);
