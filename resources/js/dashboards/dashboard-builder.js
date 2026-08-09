@@ -194,54 +194,50 @@ export function dashboardBuilder(config = {}) {
         },
 
         get availableChartTypesForControls() {
-            const target = this.widgetControlsTarget;
-            if (!target || !target.source_type) return [];
-
             const allTypes = this.widgetLabels || {};
-            let result = [];
+            const target = this.widgetControlsTarget;
+            if (!target || !target.source_type) return allTypes;
+
+            let filtered = {};
 
             if (target.source_type === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
-                    if (allTypes[t]) result.push({ type: t, label: allTypes[t] });
+                    if (allTypes[t]) filtered[t] = allTypes[t];
                 }
-                return result;
+                return filtered;
             }
 
             if (target.source_type === 'kpi') {
                 const kpiId = target.source_config?.custom_kpi_id;
-                if (!kpiId) {
-                    return Object.entries(allTypes).map(([t, l]) => ({ type: t, label: l }));
-                }
+                if (!kpiId) return allTypes;
 
                 const kpiData = this.kpis[kpiId];
                 const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
 
-                if (allowed.length === 0) {
-                    return Object.entries(allTypes).map(([t, l]) => ({ type: t, label: l }));
-                }
+                if (allowed.length === 0) return allTypes;
 
                 for (const t of allowed) {
-                    if (allTypes[t]) result.push({ type: t, label: allTypes[t] });
+                    if (allTypes[t]) filtered[t] = allTypes[t];
                 }
-                if (target.widget_type && !result.some(item => item.type === target.widget_type)) {
-                    result.push({ type: target.widget_type, label: allTypes[target.widget_type] || target.widget_type });
+                if (target.widget_type && !filtered[target.widget_type]) {
+                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
                 }
-                return result;
+                return filtered;
             }
 
             if (target.source_type === 'derived_metric') {
                 const allowed = config.derivedMetricWidgetTypes || [];
                 for (const t of allowed) {
-                    if (allTypes[t]) result.push({ type: t, label: allTypes[t] });
+                    if (allTypes[t]) filtered[t] = allTypes[t];
                 }
-                if (target.widget_type && !result.some(item => item.type === target.widget_type)) {
-                    result.push({ type: target.widget_type, label: allTypes[target.widget_type] || target.widget_type });
+                if (target.widget_type && !filtered[target.widget_type]) {
+                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
                 }
-                return result;
+                return filtered;
             }
 
-            return Object.entries(allTypes).map(([t, l]) => ({ type: t, label: l }));
+            return allTypes;
         },
 
         // ─── UI Helpers ───
