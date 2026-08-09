@@ -383,16 +383,16 @@
                                 x-text="widgetControlsTarget.source_type === 'kpi' ? '{{ __('Custom KPI') }}' : widgetControlsTarget.source_type === 'derived_metric' ? '{{ __('Derived Metric') }}' : '{{ __('Metric') }}'"></span>
 
                             <template
-                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
+                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config?.custom_kpi_id">
                                 <span
                                     class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
-                                    x-text="kpis[widgetControlsTarget.source_config.custom_kpi_id] ? kpis[widgetControlsTarget.source_config.custom_kpi_id].name : ('{{ __('KPI ID:') }} ' + widgetControlsTarget.source_config.custom_kpi_id)"></span>
+                                    x-text="kpis[widgetControlsTarget.source_config?.custom_kpi_id] ? kpis[widgetControlsTarget.source_config?.custom_kpi_id].name : ('{{ __('KPI ID:') }} ' + (widgetControlsTarget.source_config?.custom_kpi_id || ''))"></span>
                             </template>
                             <template
-                                x-if="widgetControlsTarget.source_type === 'derived_metric' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.derived_metric_id">
+                                x-if="widgetControlsTarget.source_type === 'derived_metric' && widgetControlsTarget.source_config?.derived_metric_id">
                                 <span
                                     class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
-                                    x-text="derivedMetrics[widgetControlsTarget.source_config.derived_metric_id] ? derivedMetrics[widgetControlsTarget.source_config.derived_metric_id].name : ('{{ __('DM ID:') }} ' + widgetControlsTarget.source_config.derived_metric_id)"></span>
+                                    x-text="derivedMetrics[widgetControlsTarget.source_config?.derived_metric_id] ? derivedMetrics[widgetControlsTarget.source_config?.derived_metric_id].name : ('{{ __('DM ID:') }} ' + (widgetControlsTarget.source_config?.derived_metric_id || ''))"></span>
                             </template>
                         </div>
 
