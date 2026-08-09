@@ -39,6 +39,30 @@
                     </button>
                 @endcan
 
+                {{-- Multi-Select Action Bar --}}
+                <div x-show="selectedWidgetIds.length > 0" x-cloak
+                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-xs text-primary-700 dark:text-primary-300 font-medium">
+                    <span class="font-semibold" x-text="`${selectedWidgetIds.length} ${selectedWidgetIds.length === 1 ? 'widget' : 'widgets'} selected`"></span>
+                    <div class="h-3 w-px bg-primary-300 dark:bg-primary-700 mx-0.5"></div>
+                    <button x-on:click="selectAllWidgets()"
+                            class="hover:underline text-primary-600 dark:text-primary-400">
+                        {{ __('Select All') }}
+                    </button>
+                    <button x-on:click="clearWidgetSelection()"
+                            class="hover:underline text-gray-500 dark:text-gray-400">
+                        {{ __('Clear') }}
+                    </button>
+                    <div class="h-3 w-px bg-primary-300 dark:bg-primary-700 mx-0.5"></div>
+                    <button x-on:click="duplicateSelectedWidgets()"
+                            class="px-2 py-0.5 rounded bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors">
+                        {{ __('Duplicate Selected') }}
+                    </button>
+                    <button x-on:click="deleteSelectedWidgets()"
+                            class="px-2 py-0.5 rounded bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors">
+                        {{ __('Delete Selected') }}
+                    </button>
+                </div>
+
                 {{-- Version Unsaved Changes Indicator --}}
                 <div x-show="$wire.unsavedChanges" x-cloak
                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 text-xs font-semibold text-danger-700 dark:text-danger-400">
@@ -112,11 +136,17 @@
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
                                  x-init="$nextTick(() => initGridItem($el, widget))">
                                 <div
-                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
+                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden transition-all"
+                                    :class="{ 'ring-2 ring-primary-500 border-primary-500 dark:border-primary-500 shadow-lg shadow-primary-500/20': isWidgetSelected(widget.id) }">
                                     {{-- Widget Header --}}
                                     <div
                                         class="widget-header cursor-grab active:cursor-grabbing rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
                                         <div class="flex items-center gap-2 min-w-0">
+                                            <input type="checkbox"
+                                                   :checked="isWidgetSelected(widget.id)"
+                                                   x-on:click.stop="toggleWidgetSelection(widget.id)"
+                                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 cursor-pointer h-4 w-4 flex-shrink-0"
+                                                   :title="'{{ __('Select for multi-widget drag/actions') }}'"/>
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
                                                   :title="'{{ __('Has custom controls') }}'"></span>

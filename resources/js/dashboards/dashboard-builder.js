@@ -7,6 +7,48 @@ export function dashboardBuilder(config = {}) {
         showUnsavedNavModal: false,
         pendingNavUrl: null,
 
+        // ─── Multi-Widget Selection State ───
+        selectedWidgetIds: [],
+
+        toggleWidgetSelection(id) {
+            const numId = parseInt(id, 10);
+            const idx = this.selectedWidgetIds.indexOf(numId);
+            if (idx > -1) {
+                this.selectedWidgetIds.splice(idx, 1);
+            } else {
+                this.selectedWidgetIds.push(numId);
+            }
+        },
+
+        isWidgetSelected(id) {
+            return this.selectedWidgetIds.includes(parseInt(id, 10));
+        },
+
+        selectAllWidgets() {
+            this.selectedWidgetIds = (this.widgets || []).map(w => parseInt(w.id, 10));
+        },
+
+        clearWidgetSelection() {
+            this.selectedWidgetIds = [];
+        },
+
+        deleteSelectedWidgets() {
+            if (this.selectedWidgetIds.length === 0) return;
+            const idsToDelete = [...this.selectedWidgetIds];
+            idsToDelete.forEach(id => {
+                this.deleteWidget(id);
+            });
+            this.clearWidgetSelection();
+        },
+
+        duplicateSelectedWidgets() {
+            if (this.selectedWidgetIds.length === 0) return;
+            const idsToDuplicate = [...this.selectedWidgetIds];
+            idsToDuplicate.forEach(id => {
+                this.duplicateWidget(id);
+            });
+        },
+
         confirmDiscardAndLeave() {
             this.isDirty = false;
             this.showUnsavedNavModal = false;
@@ -474,11 +516,33 @@ export function dashboardBuilder(config = {}) {
             });
 
             let autoScrollTimer = null;
+            let multiDragStartPositions = null;
+
             this.grid.on('dragstart', (event, el) => {
                 let lastEvt = null;
                 const onPointerMove = (e) => { lastEvt = e; };
                 window.addEventListener('pointermove', onPointerMove, { passive: true });
                 window.addEventListener('mousemove', onPointerMove, { passive: true });
+
+                const primaryNode = el.gridstackNode;
+                const rawId = primaryNode ? (primaryNode.id || el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0;
+                const primaryId = parseInt(rawId, 10);
+
+                if (primaryId && this.selectedWidgetIds.includes(primaryId) && this.selectedWidgetIds.length > 1) {
+                    multiDragStartPositions = {};
+                    this.selectedWidgetIds.forEach(id => {
+                        const nodeEl = document.querySelector(`[gs-id="${id}"], [data-id="${id}"]`);
+                        if (nodeEl && nodeEl.gridstackNode) {
+                            multiDragStartPositions[id] = {
+                                x: parseInt(nodeEl.gridstackNode.x, 10) || 0,
+                                y: parseInt(nodeEl.gridstackNode.y, 10) || 0,
+                                el: nodeEl
+                            };
+                        }
+                    });
+                } else {
+                    multiDragStartPositions = null;
+                }
 
                 autoScrollTimer = setInterval(() => {
                     if (!lastEvt) return;
@@ -496,7 +560,35 @@ export function dashboardBuilder(config = {}) {
                     }
                 }, 16);
 
+                const syncGroupMove = () => {
+                    if (!multiDragStartPositions) return;
+                    const node = el.gridstackNode;
+                    if (!node) return;
+                    const pId = parseInt(node.id || el.getAttribute('gs-id') || el.getAttribute('data-id'), 10);
+                    const pStart = multiDragStartPositions[pId];
+                    if (!pStart) return;
+
+                    const dx = (parseInt(node.x, 10) || 0) - pStart.x;
+                    const dy = (parseInt(node.y, 10) || 0) - pStart.y;
+
+                    Object.keys(multiDragStartPositions).forEach(idKey => {
+                        const otherId = parseInt(idKey, 10);
+                        if (otherId !== pId) {
+                            const start = multiDragStartPositions[otherId];
+                            if (start && start.el) {
+                                const targetX = Math.max(0, start.x + dx);
+                                const targetY = Math.max(0, start.y + dy);
+                                this.grid.move(start.el, targetX, targetY);
+                            }
+                        }
+                    });
+                };
+
+                this.grid.on('drag', syncGroupMove);
+
                 const cleanup = () => {
+                    syncGroupMove();
+                    multiDragStartPositions = null;
                     if (autoScrollTimer) {
                         clearInterval(autoScrollTimer);
                         autoScrollTimer = null;
@@ -504,6 +596,7 @@ export function dashboardBuilder(config = {}) {
                     window.removeEventListener('pointermove', onPointerMove);
                     window.removeEventListener('mousemove', onPointerMove);
                     if (this.grid) {
+                        this.grid.off('drag', syncGroupMove);
                         this.grid.off('dragstop', cleanup);
                     }
                 };
