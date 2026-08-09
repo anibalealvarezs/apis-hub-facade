@@ -1941,99 +1941,101 @@
         </div>
 
         {{-- Floating Vertical Multi-Select Action Bar --}}
-        <div x-show="selectedWidgetIds.length > 0" x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-x-6 scale-95"
-             x-transition:enter-end="opacity-100 translate-x-0 scale-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 translate-x-0 scale-100"
-             x-transition:leave-end="opacity-0 translate-x-6 scale-95"
-             class="fixed right-6 top-1/2 -translate-y-1/2 z-[999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl shadow-gray-950/20">
+        <template x-teleport="body">
+            <div x-show="selectedWidgetIds.length > 0" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-x-6 scale-95"
+                 x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+                 x-transition:leave-end="opacity-0 translate-x-6 scale-95"
+                 class="fixed right-6 top-1/2 -translate-y-1/2 z-[9999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-200/80 dark:border-gray-800/80 shadow-2xl shadow-gray-900/10 dark:shadow-black/50 ring-1 ring-black/5 dark:ring-white/10">
 
-            {{-- Selected Badge Counter --}}
-            <div class="group relative flex flex-col items-center justify-center px-2 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="text-xs font-bold leading-none" x-text="selectedWidgetIds.length"></span>
-                <span class="text-[9px] font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
-                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white shadow-xl">
-                        {{ __('Selected widgets') }}
+                {{-- Selected Badge Counter --}}
+                <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
+                    <span class="text-xs font-bold leading-none" x-text="selectedWidgetIds.length"></span>
+                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
+                    <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[10000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Selected widgets') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+                <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
 
-            {{-- Select All Button --}}
-            <div class="group relative flex items-center justify-center">
-                <button x-on:click="selectAllWidgets()"
-                        type="button"
-                        class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        :title="'{{ __('Select All') }}'">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </button>
-                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white shadow-xl">
-                        {{ __('Select All') }}
+                {{-- Select All Button --}}
+                <div class="group relative flex items-center justify-center">
+                    <button x-on:click="selectAllWidgets()"
+                            type="button"
+                            class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            :title="'{{ __('Select All') }}'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                    <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[10000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Select All') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- Clear Selection Button --}}
-            <div class="group relative flex items-center justify-center">
-                <button x-on:click="clearWidgetSelection()"
-                        type="button"
-                        class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        :title="'{{ __('Clear Selection') }}'">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white shadow-xl">
-                        {{ __('Clear Selection') }}
+                {{-- Clear Selection Button --}}
+                <div class="group relative flex items-center justify-center">
+                    <button x-on:click="clearWidgetSelection()"
+                            type="button"
+                            class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            :title="'{{ __('Clear Selection') }}'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[10000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Clear Selection') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+                <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
 
-            {{-- Duplicate Selected Button --}}
-            <div class="group relative flex items-center justify-center">
-                <button x-on:click="duplicateSelectedWidgets()"
-                        type="button"
-                        class="p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
-                        :title="'{{ __('Duplicate Selected') }}'">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
-                    </svg>
-                </button>
-                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white shadow-xl">
-                        {{ __('Duplicate Selected') }}
+                {{-- Duplicate Selected Button --}}
+                <div class="group relative flex items-center justify-center">
+                    <button x-on:click="duplicateSelectedWidgets()"
+                            type="button"
+                            class="p-2 rounded-xl text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                            :title="'{{ __('Duplicate Selected') }}'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                        </svg>
+                    </button>
+                    <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[10000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Duplicate Selected') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- Delete Selected Button --}}
-            <div class="group relative flex items-center justify-center">
-                <button x-on:click="deleteSelectedWidgets()"
-                        type="button"
-                        class="p-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                        :title="'{{ __('Delete Selected') }}'">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                </button>
-                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white shadow-xl">
-                        {{ __('Delete Selected') }}
+                {{-- Delete Selected Button --}}
+                <div class="group relative flex items-center justify-center">
+                    <button x-on:click="deleteSelectedWidgets()"
+                            type="button"
+                            class="p-2 rounded-xl text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            :title="'{{ __('Delete Selected') }}'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </button>
+                    <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[10000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Delete Selected') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-        </div>
+            </div>
+        </template>
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
