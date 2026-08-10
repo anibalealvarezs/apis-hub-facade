@@ -40,16 +40,14 @@
                 @endcan
 
                 {{-- Version Unsaved Changes Indicator --}}
-                <div x-show="$wire.unsavedChanges" x-cloak
-                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20 text-xs font-semibold text-warning-700 dark:text-warning-400">
-                    <span class="w-2 h-2 rounded-full bg-warning-500 animate-pulse"></span>
+                <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge">
+                    <span class="bd-unsaved-dot"></span>
                     <span>{{ __('Unsaved version') }}</span>
                 </div>
 
                 {{-- Layout Dirty Status Badge --}}
-                <div x-show="isDirty" x-cloak
-                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20 text-xs font-semibold text-warning-700 dark:text-warning-400">
-                    <span class="w-2 h-2 rounded-full bg-warning-500 animate-pulse"></span>
+                <div x-show="isDirty" x-cloak class="bd-unsaved-badge">
+                    <span class="bd-unsaved-dot"></span>
                     <span>{{ __('Unsaved layout changes') }}</span>
                 </div>
                 <div x-show="!isDirty"
