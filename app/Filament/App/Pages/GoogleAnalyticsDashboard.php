@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
 
 class GoogleAnalyticsDashboard extends Page
 {
+    use \App\Filament\App\Pages\Concerns\RedirectsWhenChannelDisabled;
+
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
 
@@ -42,12 +44,15 @@ class GoogleAnalyticsDashboard extends Page
     public array $accounts = [];
     public string $activeTab = 'campaigns';
 
+    protected static function getChannelConfigKey(): string
+    {
+        return 'google_analytics';
+    }
+
     public static function canAccess(): bool
     {
         if (!auth()->user()->can('view_data')) return false;
-        $tenant = Filament::getTenant();
-        $config = $tenant->sync_config ?? [];
-        return !empty($config['google_analytics']['enabled']);
+        return static::isChannelEnabled();
     }
 
     public function mount(): void
