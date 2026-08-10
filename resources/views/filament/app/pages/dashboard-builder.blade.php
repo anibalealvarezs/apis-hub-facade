@@ -1950,37 +1950,24 @@
             x-show="deleteConfirmOpen"
             x-cloak
             x-trap.noscroll="deleteConfirmOpen"
-            class="fixed inset-0 z-[100] overflow-y-auto"
+            class="bd-modal-root fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-32"
             aria-labelledby="delete-modal-title"
             role="dialog"
             aria-modal="true"
         >
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div
-                    x-show="deleteConfirmOpen"
-                    x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity"
-                    @click="cancelDeleteConfirm()"
-                    aria-hidden="true"
-                ></div>
+            <div @click="cancelDeleteConfirm()"
+                 class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div
-                    x-show="deleteConfirmOpen"
-                    x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white dark:bg-gray-900 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-white/10 p-6"
-                >
+            <div
+                x-show="deleteConfirmOpen"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-4 sm:mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel p-6 w-full sm:max-w-lg"
+            >
                     <div class="flex items-start gap-4">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 dark:bg-danger-500/20 sm:mx-0 sm:h-10 sm:w-10">
                             <x-heroicon-o-trash class="h-6 w-6 text-danger-600 dark:text-danger-400" />
@@ -2012,7 +1999,6 @@
                             {{ __('Cancel') }}
                         </x-filament::button>
                     </div>
-                </div>
             </div>
         </div>
         </template>
