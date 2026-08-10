@@ -32,7 +32,7 @@ class IntegrationDisconnectedNotification extends Notification implements Should
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line("The authentication token for your {$providerName} integration on project '{$this->project->name}' has expired or was revoked.")
             ->line("To prevent synchronization failures, please reconnect your account as soon as possible.")
-            ->action('Reconnect Account', url("/app/{$this->project->id}/data-sources"))
+            ->action('Reconnect Account', url("/app/{$this->project->subdomain}/data-sources"))
             ->line('Thank you for using APIs Hub.');
     }
 
@@ -45,7 +45,7 @@ class IntegrationDisconnectedNotification extends Notification implements Should
             ->actions([
                 \Filament\Notifications\Actions\Action::make('reconnect')
                     ->button()
-                    ->url(url("/app/{$this->project->id}/data-sources"))
+                    ->url(url("/app/{$this->project->subdomain}/data-sources"))
                     ->label('Reconnect'),
             ])
             ->getDatabaseMessage();
