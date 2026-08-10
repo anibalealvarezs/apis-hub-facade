@@ -1942,8 +1942,10 @@
         </div>
 
         {{-- ============================================================ --}}
-        {{-- WIDGET REMOVE CONFIRMATION MODAL                             --}}
+        {{-- WIDGET REMOVE CONFIRMATION MODAL (teleported to body to       --}}
+        {{-- avoid z-index / fixed-position issues)                       --}}
         {{-- ============================================================ --}}
+        <template x-teleport="body">
         <div
             x-show="deleteConfirmOpen"
             x-cloak
@@ -1989,7 +1991,9 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500 dark:text-gray-400"
-                                   x-text="deleteConfirmTargets.length === 1 ? '{{ __('Remove this widget from the dashboard?') }}' : '{{ __('Remove the selected widgets from the dashboard?') }}"></p>
+                                   x-show="deleteConfirmTargets.length === 1">{{ __('Remove this widget from the dashboard?') }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400"
+                                   x-show="deleteConfirmTargets.length > 1">{{ __('Remove') }} <strong class="text-gray-900 dark:text-white" x-text="deleteConfirmTargets.length"></strong> {{ __('selected widgets from the dashboard?') }}</p>
                             </div>
                         </div>
                     </div>
@@ -2011,9 +2015,10 @@
                 </div>
             </div>
         </div>
+        </template>
 
         {{-- Floating Vertical Multi-Select Action Bar --}}
-        <div x-show="selectedWidgetIds.length > 0" x-cloak
+        <div x-show="selectedWidgetIds.length > 0 && !deleteConfirmOpen" x-cloak
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 translate-x-6 scale-95"
              x-transition:enter-end="opacity-100 translate-x-0 scale-100"
