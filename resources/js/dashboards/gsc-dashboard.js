@@ -497,7 +497,9 @@ export function gscDashboard(config = {}) {
                             position: 'right',
                             display: false,
                             grid: { drawOnChartArea: false, drawBorder: false },
-                            ticks: { color: '#7E57C2' }
+                            ticks: { color: '#7E57C2' },
+                            min: 0,
+                            suggestedMax: 5
                         },
                         yCtr: {
                             type: 'linear',
