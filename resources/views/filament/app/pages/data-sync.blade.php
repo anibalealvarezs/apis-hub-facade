@@ -342,77 +342,23 @@
             </div>
 
             {{-- 🛑 Asset Nuclear Resync Confirmation Modal --}}
-            <div
-                x-show="confirmModalOpen"
-                x-cloak
-                x-trap.noscroll="confirmModalOpen"
-                class="fixed inset-0 z-50 overflow-y-auto"
-                aria-labelledby="modal-title"
-                role="dialog"
-                aria-modal="true"
+            <x-confirm-modal
+                open="confirmModalOpen"
+                title="{{ __('Asset Historical Resync (Nuclear)') }}"
+                icon="heroicon-o-fire"
+                color="danger"
+                confirm-label="{{ __('Confirm Resync') }}"
+                confirm-color="danger"
+                confirm-icon="heroicon-o-fire"
+                on-confirm="$wire.resyncAsset(modalChannel, modalAssetId)"
             >
-                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                    <div
-                        x-show="confirmModalOpen"
-                        x-transition:enter="ease-out duration-300"
-                        x-transition:enter-start="opacity-0"
-                        x-transition:enter-end="opacity-100"
-                        x-transition:leave="ease-in duration-200"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                        class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity"
-                        @click="confirmModalOpen = false"
-                        aria-hidden="true"
-                    ></div>
-
-                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                    <div
-                        x-show="confirmModalOpen"
-                        x-transition:enter="ease-out duration-300"
-                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                        x-transition:leave="ease-in duration-200"
-                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        class="inline-block align-bottom bg-white dark:bg-gray-900 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-white/10 p-6"
-                    >
-                        <div class="flex items-start gap-4">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 dark:bg-danger-500/20 sm:mx-0 sm:h-10 sm:w-10">
-                                <x-heroicon-o-fire class="h-6 w-6 text-danger-600 dark:text-danger-400" />
-                            </div>
-                            <div class="mt-0 text-left flex-grow">
-                                <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
-                                    {{ __('Asset Historical Resync (Nuclear)') }}
-                                </h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ __('Are you sure you want to perform a nuclear resync for asset') }} <strong class="text-gray-900 dark:text-white" x-text="modalAssetName"></strong>?
-                                    </p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                        {{ __('This action will clear pending/failed jobs for this specific asset and force a fresh synchronization fetch.') }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6 sm:mt-6 flex flex-row-reverse gap-3">
-                            <x-filament::button
-                                color="danger"
-                                icon="heroicon-o-fire"
-                                @click="$wire.resyncAsset(modalChannel, modalAssetId); confirmModalOpen = false;"
-                            >
-                                {{ __('Confirm Resync') }}
-                            </x-filament::button>
-                            <x-filament::button
-                                color="gray"
-                                @click="confirmModalOpen = false"
-                            >
-                                {{ __('Cancel') }}
-                            </x-filament::button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('Are you sure you want to perform a nuclear resync for asset') }} <strong class="text-gray-900 dark:text-white" x-text="modalAssetName"></strong>?
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    {{ __('This action will clear pending/failed jobs for this specific asset and force a fresh synchronization fetch.') }}
+                </p>
+            </x-confirm-modal>
         @endif
     </div>
 </x-filament-panels::page>

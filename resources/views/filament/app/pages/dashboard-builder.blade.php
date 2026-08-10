@@ -1942,66 +1942,25 @@
         </div>
 
         {{-- ============================================================ --}}
-        {{-- WIDGET REMOVE CONFIRMATION MODAL (teleported to body to       --}}
-        {{-- avoid z-index / fixed-position issues)                       --}}
+        {{-- WIDGET REMOVE CONFIRMATION MODAL                             --}}
         {{-- ============================================================ --}}
-        <template x-teleport="body">
-        <div
-            x-show="deleteConfirmOpen"
-            x-cloak
-            x-trap.noscroll="deleteConfirmOpen"
-            class="bd-modal-root fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-32"
-            aria-labelledby="delete-modal-title"
-            role="dialog"
-            aria-modal="true"
+        <x-confirm-modal
+            open="deleteConfirmOpen"
+            title="{{ __('Remove widget') }}"
+            icon="heroicon-o-trash"
+            color="danger"
+            confirm-label="{{ __('Remove') }}"
+            confirm-color="danger"
+            confirm-icon="heroicon-o-trash"
+            on-confirm="proceedDelete()"
+            :close-on-confirm="false"
+            on-cancel="cancelDeleteConfirm()"
         >
-            <div @click="cancelDeleteConfirm()"
-                 class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-
-            <div
-                x-show="deleteConfirmOpen"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95"
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-4 sm:mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel p-6 w-full sm:max-w-lg"
-            >
-                    <div class="flex items-start gap-4">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 dark:bg-danger-500/20 sm:mx-0 sm:h-10 sm:w-10">
-                            <x-heroicon-o-trash class="h-6 w-6 text-danger-600 dark:text-danger-400" />
-                        </div>
-                        <div class="mt-0 text-left flex-grow">
-                            <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="delete-modal-title">
-                                {{ __('Remove widget') }}
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500 dark:text-gray-400"
-                                   x-show="deleteConfirmTargets.length === 1">{{ __('Remove this widget from the dashboard?') }}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400"
-                                   x-show="deleteConfirmTargets.length > 1">{{ __('Remove') }} <strong class="text-gray-900 dark:text-white" x-text="deleteConfirmTargets.length"></strong> {{ __('selected widgets from the dashboard?') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 sm:mt-6 flex flex-row-reverse gap-3">
-                        <x-filament::button
-                            color="danger"
-                            icon="heroicon-o-trash"
-                            @click="proceedDelete()"
-                        >
-                            {{ __('Remove') }}
-                        </x-filament::button>
-                        <x-filament::button
-                            color="gray"
-                            @click="cancelDeleteConfirm()"
-                        >
-                            {{ __('Cancel') }}
-                        </x-filament::button>
-                    </div>
-            </div>
-        </div>
-        </template>
+            <p class="text-sm text-gray-500 dark:text-gray-400"
+               x-show="deleteConfirmTargets.length === 1">{{ __('Remove this widget from the dashboard?') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400"
+               x-show="deleteConfirmTargets.length > 1">{{ __('Remove') }} <strong class="text-gray-900 dark:text-white" x-text="deleteConfirmTargets.length"></strong> {{ __('selected widgets from the dashboard?') }}</p>
+        </x-confirm-modal>
 
         {{-- Floating Vertical Multi-Select Action Bar --}}
         <div x-show="selectedWidgetIds.length > 0 && !deleteConfirmOpen" x-cloak
