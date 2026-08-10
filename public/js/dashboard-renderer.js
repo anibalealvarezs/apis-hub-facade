@@ -578,7 +578,7 @@ window.dashboardRenderer = {
                 const isEven = ri % 2 === 0;
                 const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
                 const val = row[firstKey] ?? row[firstCol] ?? '';
-                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-300 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
+                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
             });
             html += '</tbody></table></div>';
         }
@@ -616,8 +616,8 @@ window.dashboardRenderer = {
                         : isNumeric && col.format === 'number' ? this._formatTableNumber(val)
                             : val;
                 const tdClass = isNumeric
-                    ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300 text-right'
-                    : 'px-3 py-2 text-gray-700 dark:text-gray-300';
+                    ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right'
+                    : 'px-3 py-2 text-gray-700 dark:text-gray-200';
                 const tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
                 html += `<td class="${tdClass} ${cellBgClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
