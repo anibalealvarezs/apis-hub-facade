@@ -9,6 +9,8 @@ use Illuminate\Support\Carbon;
 
 class GoogleSearchConsoleDashboard extends Page
 {
+    use \App\Filament\App\Pages\Concerns\RedirectsWhenChannelDisabled;
+
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
     public static function getNavigationLabel(): string
@@ -41,12 +43,15 @@ class GoogleSearchConsoleDashboard extends Page
     public array $accounts = [];
     public string $activeTab = 'queries';
 
+    protected static function getChannelConfigKey(): string
+    {
+        return 'google_search_console';
+    }
+
     public static function canAccess(): bool
     {
         if (!auth()->user()->can('view_data')) return false;
-        $tenant = Filament::getTenant();
-        $config = $tenant->sync_config ?? [];
-        return !empty($config['google_search_console']['enabled']);
+        return static::isChannelEnabled();
     }
 
     public function mount(): void

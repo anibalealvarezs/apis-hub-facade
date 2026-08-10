@@ -687,4 +687,32 @@ trait LoadsDashboardViewData
         }
         \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData EXIT', ['total_widgets' => $wi, 'total_ms' => round((microtime(true) - $t0) * 1000, 1)]);
     }
+
+    public function saveWidgetControls(int $widgetId, array $controls, ?string $title = null, ?string $description = null, array $titles = [], array $descriptions = []): void
+    {
+        $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
+            ->findOrFail($widgetId);
+
+        $widget->controls = $controls;
+        if (! empty($titles)) {
+            $widget->setTranslations('title', array_filter($titles, fn ($v) => $v !== null && $v !== ''));
+        } elseif ($title !== null) {
+            $widget->title = $title;
+        }
+        if (! empty($descriptions)) {
+            $widget->setTranslations('description', array_filter($descriptions, fn ($v) => $v !== null && $v !== ''));
+        } elseif ($description !== null) {
+            $widget->description = $description;
+        }
+        $widget->save();
+
+        if (property_exists($this, 'unsavedChanges')) {
+            $this->unsavedChanges = true;
+        }
+
+        \Filament\Notifications\Notification::make()
+            ->title(__('Widget controls saved'))
+            ->success()
+            ->send();
+    }
 }

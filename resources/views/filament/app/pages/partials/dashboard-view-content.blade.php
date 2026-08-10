@@ -70,7 +70,7 @@
     </div>
 
     {{-- Grid --}}
-    <div id="view-grid-stack" class="grid-stack">
+    <div id="view-grid-stack" class="grid-stack" wire:ignore>
         @foreach ($viewObj->widgets as $widget)
             <div class="grid-stack-item"
                  gs-id="{{ $widget['id'] }}"

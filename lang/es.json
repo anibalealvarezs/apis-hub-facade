@@ -518,7 +518,7 @@
     "Device": "Dispositivo",
     "Dimension": "Dimensión",
     "Diminishing Returns Finder": "Buscador de Rendimientos Decrecientes",
-    "Discard & Leave": "Descartar y Salir",
+    "Discard and Leave": "Descartar y Salir",
     "Discover true marginal costs across blended channels.": "Descubre los costos marginales reales entre canales combinados.",
     "Displays both metrics mapped over time. Z-Score (default) scales both metrics by their standard deviations, allowing you to perfectly compare relative volatility regardless of their raw numbers.": "Muestra ambas métricas a lo largo del tiempo. Z-Score (predeterminado) escala ambas métricas por sus desviaciones estándar, permitiéndote comparar la volatilidad relativa sin importar sus números brutos.",
     "Disputed Payment": "Pago Disputado",
@@ -1186,7 +1186,7 @@
     "SaaS Management": "Gestión SaaS",
     "Safe Update Initiated": "Actualización Segura Iniciada",
     "Save": "Ahorra",
-    "Save & Leave": "Guardar y Salir",
+    "Save and Leave": "Guardar y Salir",
     "Save & Push Changes": "Guardar y Desplegar Cambios",
     "Save Changes": "Guardar Cambios",
     "Save Configuration": "Guardar Configuración",
@@ -1714,5 +1714,8 @@
     "up to": "hasta",
     "—": "—",
     "⚠️ Lost Access": "⚠️ Acceso Perdido",
-    "✓ Currently Active Plan": "✓ Plan Actualmente Activo"
+    "✓ Currently Active Plan": "✓ Plan Actualmente Activo",
+    "Remove widget": "Eliminar widget",
+    "Remove this widget from the dashboard?": "¿Eliminar este widget del panel?",
+    "Remove the selected widgets from the dashboard?": "¿Eliminar los widgets seleccionados del panel?"
 }
