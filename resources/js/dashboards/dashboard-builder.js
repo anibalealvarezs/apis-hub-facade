@@ -38,8 +38,10 @@ export function dashboardBuilder(config = {}) {
         deleteSelectedWidgets() {
             if (this.selectedWidgetIds.length === 0) return;
             const idsToDelete = [...this.selectedWidgetIds];
+            const count = idsToDelete.length;
+            if (!confirm(count === 1 ? 'Remove this widget?' : `Remove ${count} selected widgets?`)) return;
             idsToDelete.forEach(id => {
-                this.deleteWidget(id);
+                this.deleteWidget(id, true);
             });
             this.clearWidgetSelection();
         },
@@ -1757,23 +1759,24 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
-        deleteWidget(id) {
+        deleteWidget(id, skipConfirm = false) {
             console.log('[dashboard-builder] deleteWidget requested for id:', id);
-            if (confirm('Remove this widget?')) {
-                if (this.$wire) {
-                    this.$wire.deleteWidget(id).then(() => {
-                        console.log('[dashboard-builder] deleteWidget backend confirmed for id:', id);
-                        const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
-                        console.log('[dashboard-builder] deleteWidget DOM element found:', el);
-                        if (el && this.grid) {
-                            this.grid.removeWidget(el, true);
-                        }
-                        this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
-                        console.log('[dashboard-builder] deleteWidget remaining widgets:', this.widgets.map(w => w.id));
-                    }).catch(err => {
-                        console.error('[dashboard-builder] deleteWidget wire call error:', err);
-                    });
-                }
+            if (!skipConfirm && !confirm('Remove this widget?')) {
+                return;
+            }
+            if (this.$wire) {
+                this.$wire.deleteWidget(id).then(() => {
+                    console.log('[dashboard-builder] deleteWidget backend confirmed for id:', id);
+                    const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
+                    console.log('[dashboard-builder] deleteWidget DOM element found:', el);
+                    if (el && this.grid) {
+                        this.grid.removeWidget(el, true);
+                    }
+                    this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
+                    console.log('[dashboard-builder] deleteWidget remaining widgets:', this.widgets.map(w => w.id));
+                }).catch(err => {
+                    console.error('[dashboard-builder] deleteWidget wire call error:', err);
+                });
             }
         },
 
