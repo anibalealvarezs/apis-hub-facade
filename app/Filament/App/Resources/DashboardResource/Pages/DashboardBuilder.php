@@ -89,8 +89,11 @@ class DashboardBuilder extends Page
     {
         $service = app(\App\Services\DashboardService::class);
         $service->saveLayout($this->dashboard, $gridItems);
-        $this->gridState = $gridItems;
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() or rewrite $this->gridState here.
+        // Both are serialized into the x-data attribute; changing them makes Livewire
+        // re-initialize the dashboard-builder Alpine component and destroys Alpine scope
+        // on <template> x-for/x-if elements (ReferenceError: ... is not defined; series
+        // templates stop rendering). The client grid already holds the saved layout.
         $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
 
         Notification::make()
