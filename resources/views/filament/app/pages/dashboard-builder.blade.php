@@ -181,7 +181,7 @@
                                             </button>
                                             <button
                                                 class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                                                x-on:click.stop="deleteWidget(widget.id)"
+                                                x-on:click.stop="confirmDeleteWidget(widget.id)"
                                                 :title="'{{ __('Remove') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -1941,6 +1941,42 @@
             </div>
         </div>
 
+        {{-- ============================================================ --}}
+        {{-- WIDGET REMOVE CONFIRMATION MODAL                             --}}
+        {{-- ============================================================ --}}
+        <div x-show="deleteConfirmOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/50" x-on:click="cancelDeleteConfirm()"></div>
+            <div
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-5 border border-gray-200 dark:border-gray-800">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400">
+                        <x-filament::icon name="heroicon-o-trash" class="w-6 h-6"/>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white leading-6">
+                            {{ __('Remove widget') }}
+                        </h2>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed"
+                           x-text="deleteConfirmTargets.length === 1 ? '{{ __('Remove this widget from the dashboard?') }}' : '{{ __('Remove the selected widgets from the dashboard?') }}"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button"
+                            class="px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                            x-on:click="cancelDeleteConfirm()">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="button"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-sm transition-colors"
+                            x-on:click="proceedDelete()">
+                        {{ __('Remove') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {{-- Floating Vertical Multi-Select Action Bar --}}
         <div x-show="selectedWidgetIds.length > 0" x-cloak
              x-transition:enter="transition ease-out duration-200"
@@ -2019,7 +2055,7 @@
 
             {{-- Delete Selected Button --}}
             <div class="group relative flex items-center justify-center">
-                <button x-on:click="deleteSelectedWidgets()"
+                <button x-on:click="confirmDeleteSelectedWidgets()"
                         type="button"
                         class="p-2 rounded-xl text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         :title="'{{ __('Delete Selected') }}'">

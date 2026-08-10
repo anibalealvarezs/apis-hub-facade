@@ -7,6 +7,10 @@ export function dashboardBuilder(config = {}) {
         showUnsavedNavModal: false,
         pendingNavUrl: null,
 
+        // ─── Delete Confirmation Modal State ───
+        deleteConfirmOpen: false,
+        deleteConfirmTargets: [],
+
         // ─── Multi-Widget Selection State ───
         selectedWidgetIds: [],
 
@@ -35,12 +39,27 @@ export function dashboardBuilder(config = {}) {
             this.selectedWidgetIds = [];
         },
 
-        deleteSelectedWidgets() {
+        confirmDeleteWidget(id) {
+            this.deleteConfirmTargets = [id];
+            this.deleteConfirmOpen = true;
+        },
+
+        confirmDeleteSelectedWidgets() {
             if (this.selectedWidgetIds.length === 0) return;
-            const idsToDelete = [...this.selectedWidgetIds];
-            const count = idsToDelete.length;
-            if (!confirm(count === 1 ? 'Remove this widget?' : `Remove ${count} selected widgets?`)) return;
-            idsToDelete.forEach(id => {
+            this.deleteConfirmTargets = [...this.selectedWidgetIds];
+            this.deleteConfirmOpen = true;
+        },
+
+        cancelDeleteConfirm() {
+            this.deleteConfirmOpen = false;
+            this.deleteConfirmTargets = [];
+        },
+
+        proceedDelete() {
+            const targets = [...this.deleteConfirmTargets];
+            this.deleteConfirmOpen = false;
+            this.deleteConfirmTargets = [];
+            targets.forEach(id => {
                 this.deleteWidget(id, true);
             });
             this.clearWidgetSelection();
@@ -1761,7 +1780,8 @@ export function dashboardBuilder(config = {}) {
 
         deleteWidget(id, skipConfirm = false) {
             console.log('[dashboard-builder] deleteWidget requested for id:', id);
-            if (!skipConfirm && !confirm('Remove this widget?')) {
+            if (!skipConfirm) {
+                this.confirmDeleteWidget(id);
                 return;
             }
             if (this.$wire) {

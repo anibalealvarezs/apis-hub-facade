@@ -1714,5 +1714,8 @@
     "up to": "hasta",
     "—": "—",
     "⚠️ Lost Access": "⚠️ Acceso Perdido",
-    "✓ Currently Active Plan": "✓ Plan Actualmente Activo"
+    "✓ Currently Active Plan": "✓ Plan Actualmente Activo",
+    "Remove widget": "Eliminar widget",
+    "Remove this widget from the dashboard?": "¿Eliminar este widget del panel?",
+    "Remove the selected widgets from the dashboard?": "¿Eliminar los widgets seleccionados del panel?"
 }
