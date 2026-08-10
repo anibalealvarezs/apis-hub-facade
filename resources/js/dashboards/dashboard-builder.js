@@ -6,6 +6,7 @@ export function dashboardBuilder(config = {}) {
         _isInitializingGrid: true,
         showUnsavedNavModal: false,
         pendingNavUrl: null,
+        pendingNavReload: false,
 
         // ─── Delete Confirmation Modal State ───
         deleteConfirmOpen: false,
@@ -76,7 +77,9 @@ export function dashboardBuilder(config = {}) {
         confirmDiscardAndLeave() {
             this.isDirty = false;
             this.showUnsavedNavModal = false;
-            if (this.pendingNavUrl) {
+            if (this.pendingNavReload) {
+                window.location.reload();
+            } else if (this.pendingNavUrl) {
                 window.location.assign(this.pendingNavUrl);
             }
         },
@@ -87,7 +90,9 @@ export function dashboardBuilder(config = {}) {
                 this.$wire.saveLayout(currentLayout).then(() => {
                     this.isDirty = false;
                     this.showUnsavedNavModal = false;
-                    if (this.pendingNavUrl) {
+                    if (this.pendingNavReload) {
+                        window.location.reload();
+                    } else if (this.pendingNavUrl) {
                         window.location.assign(this.pendingNavUrl);
                     }
                 });
@@ -296,6 +301,21 @@ export function dashboardBuilder(config = {}) {
                 }
             });
 
+            window.addEventListener('keydown', (e) => {
+                if (!this.isDirty) return;
+                const key = e.key.toLowerCase();
+                const isReloadKey = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && key === 'r');
+                if (isReloadKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    this.pendingNavUrl = null;
+                    this.pendingNavReload = true;
+                    this.showUnsavedNavModal = true;
+                    return false;
+                }
+            }, true);
+
             const preventLivewireNav = (e) => {
                 if (!this.isDirty) return;
                 const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
@@ -308,6 +328,7 @@ export function dashboardBuilder(config = {}) {
                     e.stopImmediatePropagation();
 
                     if (e.type === 'click' || e.type === 'pointerdown') {
+                        this.pendingNavReload = false;
                         this.pendingNavUrl = href;
                         this.showUnsavedNavModal = true;
                     }
@@ -331,6 +352,7 @@ export function dashboardBuilder(config = {}) {
             const origPushState = window.history.pushState;
             window.history.pushState = (state, title, url) => {
                 if (this.isDirty) {
+                    this.pendingNavReload = false;
                     this.pendingNavUrl = url;
                     this.showUnsavedNavModal = true;
                     return;
