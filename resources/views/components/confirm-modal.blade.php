@@ -10,13 +10,20 @@
     'onConfirm' => null,
     'onCancel' => null,
     'closeOnConfirm' => true,
+    'secondaryLabel' => null,
+    'secondaryColor' => 'gray',
+    'secondaryIcon' => null,
+    'onSecondary' => null,
+    'closeOnSecondary' => true,
 ])
 
 @php
     $validColors = ['danger', 'primary', 'warning', 'success', 'gray'];
     $color = in_array($color, $validColors, true) ? $color : 'danger';
     $confirmColor = in_array($confirmColor, $validColors, true) ? $confirmColor : 'danger';
+    $secondaryColor = in_array($secondaryColor, $validColors, true) ? $secondaryColor : 'gray';
     $closeOnConfirm = filter_var($closeOnConfirm, FILTER_VALIDATE_BOOLEAN);
+    $closeOnSecondary = filter_var($closeOnSecondary, FILTER_VALIDATE_BOOLEAN);
 
     $circleClass = match ($color) {
         'primary' => 'bg-primary-100 dark:bg-primary-500/20',
@@ -35,9 +42,13 @@
 
     $onCancel = trim($onCancel ?? $open . ' = false;');
     $onConfirm = trim($onConfirm ?? '');
+    $onSecondary = trim($onSecondary ?? '');
     $confirmClick = $closeOnConfirm
         ? trim($onConfirm . '; ' . $open . ' = false;')
         : $onConfirm;
+    $secondaryClick = $closeOnSecondary
+        ? trim($onSecondary . '; ' . $open . ' = false;')
+        : $onSecondary;
 
     $confirmLabel = $confirmLabel ?? __('Confirm');
     $cancelLabel = $cancelLabel ?? __('Cancel');
@@ -87,6 +98,15 @@
                 >
                     {{ $confirmLabel }}
                 </x-filament::button>
+                @if($secondaryLabel !== null)
+                    <x-filament::button
+                        color="{{ $secondaryColor }}"
+                        :icon="$secondaryIcon"
+                        @click="{{ $secondaryClick }}"
+                    >
+                        {{ $secondaryLabel }}
+                    </x-filament::button>
+                @endif
                 <x-filament::button
                     color="gray"
                     @click="{{ $onCancel }}"
