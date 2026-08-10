@@ -1944,35 +1944,70 @@
         {{-- ============================================================ --}}
         {{-- WIDGET REMOVE CONFIRMATION MODAL                             --}}
         {{-- ============================================================ --}}
-        <div x-show="deleteConfirmOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/50" x-on:click="cancelDeleteConfirm()"></div>
-            <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-5 border border-gray-200 dark:border-gray-800">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400">
-                        <x-filament::icon name="heroicon-o-trash" class="w-6 h-6"/>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white leading-6">
-                            {{ __('Remove widget') }}
-                        </h2>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed"
-                           x-text="deleteConfirmTargets.length === 1 ? '{{ __('Remove this widget from the dashboard?') }}' : '{{ __('Remove the selected widgets from the dashboard?') }}"></p>
-                    </div>
-                </div>
+        <div
+            x-show="deleteConfirmOpen"
+            x-cloak
+            x-trap.noscroll="deleteConfirmOpen"
+            class="fixed inset-0 z-[100] overflow-y-auto"
+            aria-labelledby="delete-modal-title"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div
+                    x-show="deleteConfirmOpen"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity"
+                    @click="cancelDeleteConfirm()"
+                    aria-hidden="true"
+                ></div>
 
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-                    <button type="button"
-                            class="px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                            x-on:click="cancelDeleteConfirm()">
-                        {{ __('Cancel') }}
-                    </button>
-                    <button type="button"
-                            class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-sm transition-colors"
-                            x-on:click="proceedDelete()">
-                        {{ __('Remove') }}
-                    </button>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div
+                    x-show="deleteConfirmOpen"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="inline-block align-bottom bg-white dark:bg-gray-900 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-white/10 p-6"
+                >
+                    <div class="flex items-start gap-4">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-danger-100 dark:bg-danger-500/20 sm:mx-0 sm:h-10 sm:w-10">
+                            <x-heroicon-o-trash class="h-6 w-6 text-danger-600 dark:text-danger-400" />
+                        </div>
+                        <div class="mt-0 text-left flex-grow">
+                            <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="delete-modal-title">
+                                {{ __('Remove widget') }}
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400"
+                                   x-text="deleteConfirmTargets.length === 1 ? '{{ __('Remove this widget from the dashboard?') }}' : '{{ __('Remove the selected widgets from the dashboard?') }}"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 sm:mt-6 flex flex-row-reverse gap-3">
+                        <x-filament::button
+                            color="danger"
+                            icon="heroicon-o-trash"
+                            @click="proceedDelete()"
+                        >
+                            {{ __('Remove') }}
+                        </x-filament::button>
+                        <x-filament::button
+                            color="gray"
+                            @click="cancelDeleteConfirm()"
+                        >
+                            {{ __('Cancel') }}
+                        </x-filament::button>
+                    </div>
                 </div>
             </div>
         </div>
