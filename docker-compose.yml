@@ -52,6 +52,25 @@ services:
             - postgres
             - redis
 
+    # --- Scheduler (Laravel schedule daemon) ---
+    scheduler:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-scheduler
+        restart: always
+        command: php artisan schedule:work
+        volumes:
+            - ".:/var/www/html"
+            - "facade-storage-framework:/var/www/html/storage/framework"
+            - "facade-storage-logs:/var/www/html/storage/logs"
+        networks:
+            - facade_network
+        depends_on:
+            - master
+            - postgres
+            - redis
+
     postgres:
         image: 'postgres:16'
         container_name: ${CONTAINER_PREFIX:-apis-hub-facade}-db
