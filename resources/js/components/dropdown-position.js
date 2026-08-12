@@ -17,7 +17,6 @@ export function measurePanel(panel) {
     style.right = 'auto';
     style.bottom = 'auto';
     style.visibility = 'hidden';
-    style.zIndex = '-1';
     const height = panel.offsetHeight;
     Object.assign(style, prev);
     return height || 320;
