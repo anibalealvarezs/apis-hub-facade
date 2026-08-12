@@ -18,9 +18,9 @@
 @endphp
 
 <div class="relative" x-data="uiAssetSelector()" @click.outside="open = false">
-    <button @click="if (!$el.hasAttribute('disabled') && !$el.disabled) open = !open" type="button"
+    <button @click="toggle()" type="button" x-ref="trigger"
             {{ $attributes->merge([
-                'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
+                'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-gray-600 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
             ]) }}>
         @if($multiple)
             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
@@ -34,8 +34,9 @@
         </svg>
     </button>
 
-    <div x-show="open" x-transition x-cloak
-         class="ui-asset-dropdown absolute z-50 w-64 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 flex flex-col">
+    <div x-show="open" x-transition x-cloak x-ref="panel"
+         class="ui-asset-dropdown absolute z-50 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 flex flex-col"
+         :class="dropUp ? 'bottom-full mb-1' : 'mt-1'">
 
         <!-- Search & Actions Header -->
         <div class="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">

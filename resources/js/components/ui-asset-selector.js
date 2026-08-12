@@ -1,6 +1,7 @@
 export function uiAssetSelector() {
     return {
         open: false,
+        dropUp: false,
         searchAssetGroup: '',
         stripHtml(html) {
             if (!html) return '';
@@ -33,6 +34,41 @@ export function uiAssetSelector() {
         },
         isHtml(val) {
             return typeof val === 'string' && val.includes('<');
+        },
+        toggle() {
+            const trigger = this.$refs.trigger;
+            if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
+            this.open = !this.open;
+            if (this.open) this.computeDirection();
+        },
+        computeDirection() {
+            const trigger = this.$refs.trigger;
+            const panel = this.$refs.panel;
+            if (!trigger || !panel) return;
+            const panelHeight = this.measurePanel(panel);
+            const rect = trigger.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            this.dropUp = spaceBelow < panelHeight + 8 && rect.top > panelHeight + 8;
+        },
+        measurePanel(panel) {
+            const style = panel.style;
+            const prev = {
+                display: style.display,
+                position: style.position,
+                top: style.top,
+                left: style.left,
+                visibility: style.visibility,
+                zIndex: style.zIndex,
+            };
+            style.display = 'block';
+            style.position = 'fixed';
+            style.top = '-9999px';
+            style.left = '-9999px';
+            style.visibility = 'hidden';
+            style.zIndex = '-1';
+            const height = panel.offsetHeight;
+            Object.assign(style, prev);
+            return height || 320;
         }
     };
 }
