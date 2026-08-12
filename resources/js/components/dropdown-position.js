@@ -5,6 +5,8 @@ export function measurePanel(panel) {
         position: style.position,
         top: style.top,
         left: style.left,
+        right: style.right,
+        bottom: style.bottom,
         visibility: style.visibility,
         zIndex: style.zIndex,
     };
@@ -12,6 +14,8 @@ export function measurePanel(panel) {
     style.position = 'fixed';
     style.top = '-9999px';
     style.left = '-9999px';
+    style.right = 'auto';
+    style.bottom = 'auto';
     style.visibility = 'hidden';
     style.zIndex = '-1';
     const height = panel.offsetHeight;
@@ -30,11 +34,20 @@ export function computeDropUp(trigger, panel) {
 export function dropdownFlipBehavior() {
     return {
         dropUp: false,
+        init() {
+            this.$watch('open', (val) => {
+                if (!val) this.dropUp = false;
+            });
+        },
         toggle() {
             const trigger = this.$refs.trigger;
             if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
             this.open = !this.open;
-            if (this.open) this.recompute(true);
+            if (this.open) {
+                this.recompute(true);
+            } else {
+                this.dropUp = false;
+            }
         },
         recompute(immediate = false) {
             if (!this.open) return;
