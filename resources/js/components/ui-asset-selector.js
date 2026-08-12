@@ -1,10 +1,10 @@
-import { computeDropUp } from './dropdown-position';
+import { dropdownFlipBehavior } from './dropdown-position';
 
 export function uiAssetSelector() {
     return {
         open: false,
-        dropUp: false,
         searchAssetGroup: '',
+        ...dropdownFlipBehavior(),
         stripHtml(html) {
             if (!html) return '';
             if (typeof html !== 'string') return String(html);
@@ -36,12 +36,6 @@ export function uiAssetSelector() {
         },
         isHtml(val) {
             return typeof val === 'string' && val.includes('<');
-        },
-        toggle() {
-            const trigger = this.$refs.trigger;
-            if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
-            this.open = !this.open;
-            if (this.open) this.dropUp = computeDropUp(trigger, this.$refs.panel);
         }
     };
 }

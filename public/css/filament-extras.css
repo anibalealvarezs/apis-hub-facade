@@ -100,6 +100,16 @@
     margin-top: 0;
     margin-bottom: 0.25rem;
 }
+/* When the dropdown flips above the trigger, render the search header at the
+   bottom of the panel (closest to the input) and put the separator on top.
+   Colors still come from the tailwind border-gray-200/dark:border-gray-700
+   utilities (border-*-width is what we override). */
+.ui-asset-dropdown.dropdown-open-above .ui-asset-search-header,
+.dash-dropdown.dropdown-open-above .ui-asset-search-header {
+    order: 1;
+    border-top-width: 1px;
+    border-bottom-width: 0;
+}
 .ui-asset-options {
     max-height: 15rem;
     overflow-y: auto;

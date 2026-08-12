@@ -26,3 +26,33 @@ export function computeDropUp(trigger, panel) {
     const spaceBelow = window.innerHeight - rect.bottom;
     return spaceBelow < panelHeight + 8 && rect.top > panelHeight + 8;
 }
+
+export function dropdownFlipBehavior() {
+    return {
+        dropUp: false,
+        toggle() {
+            const trigger = this.$refs.trigger;
+            if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
+            this.open = !this.open;
+            if (this.open) this.recompute(true);
+        },
+        recompute(immediate = false) {
+            if (!this.open) return;
+            const compute = () => {
+                this.dropUp = computeDropUp(this.$refs.trigger, this.$refs.panel);
+            };
+            if (immediate) {
+                if (this._raf) {
+                    cancelAnimationFrame(this._raf);
+                    this._raf = null;
+                }
+                compute();
+            } else if (!this._raf) {
+                this._raf = requestAnimationFrame(() => {
+                    this._raf = null;
+                    compute();
+                });
+            }
+        }
+    };
+}

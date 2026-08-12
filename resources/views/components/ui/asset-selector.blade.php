@@ -17,7 +17,8 @@
     ][$size] ?? 'text-xs px-3 py-2 h-[34px] min-w-[170px]';
 @endphp
 
-<div class="relative" x-data="uiAssetSelector()" @click.outside="open = false">
+<div class="relative" x-data="uiAssetSelector()" @click.outside="open = false"
+     @scroll.document.capture="recompute()" @resize.window="recompute()">
     <button @click="toggle()" type="button" x-ref="trigger"
             {{ $attributes->merge([
                 'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-gray-600 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
@@ -39,7 +40,7 @@
          :class="dropUp ? 'dropdown-open-above' : ''">
 
         <!-- Search & Actions Header -->
-        <div class="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">
+        <div class="ui-asset-search-header p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">
             <input type="text" x-model="searchAssetGroup"
                    class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-1.5"
                    placeholder="{{ __('Search...') }}">
