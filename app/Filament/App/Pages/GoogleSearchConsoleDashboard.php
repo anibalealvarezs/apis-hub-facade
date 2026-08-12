@@ -13,6 +13,12 @@ class GoogleSearchConsoleDashboard extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
+
+    public static function getNavigationIcon(): string | \Illuminate\Contracts\Support\Htmlable | null
+    {
+        return \App\Support\BrandIcon::google();
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Google Search Console');
