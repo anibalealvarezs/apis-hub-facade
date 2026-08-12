@@ -21,6 +21,14 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        $this->app['view']->getFinder()->prependNamespace(
+            'filament-panels',
+            resource_path('views/vendor/filament-panels'),
+        );
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel

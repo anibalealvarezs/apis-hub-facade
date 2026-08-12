@@ -85,6 +85,36 @@
     min-width: 260px;
 }
 
+/* ---------- Collapsible page sub-navigation (cluster menu) sidebar ---------- */
+.fi-page-sub-navigation-sidebar-ctn {
+    width: 18rem;
+    transition: width 0.2s ease;
+}
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed {
+    width: 2.25rem;
+}
+.fi-subnav-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    color: #9ca3af;
+    outline: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+.fi-subnav-toggle:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+.dark .fi-subnav-toggle:hover {
+    background-color: rgb(255 255 255 / 0.05);
+    color: #d1d5db;
+}
+
 /* ---------- Asset Group resource asset selector ---------- */
 .asg-container {
     max-width: 100%;
