@@ -117,12 +117,23 @@
 }
 
 /* ---------- Collapsible page sub-navigation (cluster menu) sidebar ---------- */
+/* Sticks below the sticky topbar (h-16 = 4rem) so it never scrolls out of view,
+   and gets its own scroll (mirrors the main menu behavior in branding.css). */
 .fi-page-sub-navigation-sidebar-ctn {
+    position: sticky;
+    top: 5rem;
+    max-height: calc(100vh - 6rem);
     width: 18rem;
     transition: width 0.2s ease;
 }
 .fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed {
     width: 2.25rem;
+}
+.fi-page-sub-navigation-sidebar-ctn .fi-page-sub-navigation-sidebar {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 .fi-subnav-toggle {
     flex-shrink: 0;

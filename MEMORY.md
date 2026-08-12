@@ -439,4 +439,10 @@
 - **Gotchas:** Alpine 3.15 has no `destroy()` hook and no `x-cleanup` event in this build, so no `window.resize` listener was added (would leak across Livewire navigations) — direction is recomputed on every open instead. `bottom:100%` on an `absolute` panel works (top auto) — equivalent to Tailwind's `bottom-full`.
 - **Verification:** `node --check` + `npm run build` (app-*.js rebuilt) + `php artisan view:cache` clean. No PHP/tests render these blades (grep confirmed); `DataExplorerBrandIconsTest` still green. Browser smoke test PENDING (docker down). Not yet committed.
 
+### Cluster Menu - Own Scroll + Sticky Below Topbar (2026-08-12)
+- **Feature:** the page sub-navigation (cluster menu) sidebar now behaves like the main menu: it keeps its own scroll and stays pinned below the sticky topbar when the page scrolls, so it never scrolls out of view.
+- **CSS** (`public/css/filament-extras.css`): `.fi-page-sub-navigation-sidebar-ctn` gained `position: sticky; top: 5rem; max-height: calc(100vh - 6rem);` (topbar is `sticky top-0` at `h-16`/4rem, so `5rem` = topbar + 1rem gap, and the max-height reserves a matching 1rem at the bottom). Its `<ul>` (`.fi-page-sub-navigation-sidebar`) gained `flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin;` - the `min-height: 0` is required for a flex child to shrink and scroll inside the bounded container (same pattern as `branding.css` `.fi-sidebar-nav > .fi-sidebar-nav-groups`).
+- **Key facts checked:** the cluster menu did NOT have its own scroll before this change (its `<ul>` had no `overflow`), so the question "does it have its own scroll like the main menu?" was NO. Sticky works here because `.fi-layout` uses `overflow-x-clip` (clip does NOT create a scroll container, unlike `hidden`/`auto`/`scroll`) and the page flex row uses `md:items-start`, so the sidebar stays inside its containing block for the full page height. Collapsed state (`2.25rem` rail) is unaffected (sticky still applies, toggle stays visible).
+- **Verification:** `SubNavOverrideRenderTest` PASS (7 assertions). Plain CSS only - no Vite rebuild needed. Browser smoke test PENDING (docker down). Not yet committed.
+
 
