@@ -26,7 +26,6 @@ class SubNavOverrideRenderTest extends TestCase
                             NavigationItem::make('Analytics')->url('/app/kb/analytics'),
                         ]),
                 ]);
-
                 return view('filament-panels::components.page.sub-navigation.sidebar', [
                     'navigation' => $navigation,
                 ]);
@@ -40,5 +39,7 @@ class SubNavOverrideRenderTest extends TestCase
         $this->assertStringContainsString('$store.subnav.toggle()', $html);
         $this->assertStringContainsString("window.Alpine.store('subnav'", $html);
         $this->assertStringContainsString('fi-page-sub-navigation-sidebar', $html);
+        $this->assertStringContainsString('x-tooltip.html="tooltip"', $html);
+        $this->assertStringContainsString('$store.subnav.isOpen', $html);
     }
 }
