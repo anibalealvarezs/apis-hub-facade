@@ -6,7 +6,7 @@ use Filament\Clusters\Cluster;
 
 class Data extends Cluster
 {
-    protected static ?string $navigationIcon = 'heroicon-o-database';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
     protected static ?int $navigationSort = 2;
 
     public static function getNavigationLabel(): string
