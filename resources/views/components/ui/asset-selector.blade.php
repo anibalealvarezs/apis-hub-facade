@@ -36,7 +36,7 @@
 
     <div x-show="open" x-transition x-cloak x-ref="panel"
          class="ui-asset-dropdown absolute z-50 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 flex flex-col"
-         :class="dropUp ? 'bottom-full mb-1' : 'mt-1'">
+         :class="dropUp ? 'dropdown-open-above' : ''">
 
         <!-- Search & Actions Header -->
         <div class="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">
@@ -54,7 +54,7 @@
         </div>
 
         <!-- List of Options -->
-        <div class="p-1.5 flex flex-col gap-1 overflow-y-auto max-h-60">
+        <div class="ui-asset-options flex flex-col gap-1">
             @if(!$multiple && $emptyOption)
                 <div @click="{{ $model }} = ''; {{ $changeEvent ? $changeEvent . ';' : '' }} open = false;"
                      class="flex gap-x-2.5 items-center px-3 py-2 text-xs text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"

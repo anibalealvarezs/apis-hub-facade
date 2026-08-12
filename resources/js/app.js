@@ -1,5 +1,6 @@
 import './bootstrap';
 import { uiAssetSelector } from './components/ui-asset-selector';
+import { uiDropdown } from './components/ui-dropdown';
 import { assetSelector } from './components/asset-selector';
 import { copyLink } from './components/copy-link';
 import { embedCodeConfig } from './components/embed-code';
@@ -20,6 +21,7 @@ import { tenantClock } from './components/tenant-clock';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
+window.uiDropdown = uiDropdown;
 window.assetSelector = assetSelector;
 window.copyLink = copyLink;
 window.embedCodeConfig = embedCodeConfig;
@@ -54,6 +56,7 @@ const registerAlpineComponents = (Alpine) => {
     }));
 
     Alpine.data('uiAssetSelector', uiAssetSelector);
+    Alpine.data('uiDropdown', uiDropdown);
     Alpine.data('assetSelector', assetSelector);
     Alpine.data('copyLink', copyLink);
     Alpine.data('embedCodeConfig', embedCodeConfig);
