@@ -7,7 +7,7 @@
         @if (count($links) > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach ($links as $link)
-                    <a href="{{ $link['url'] }}" class="group block rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-5 transition hover:border-primary-500 hover:shadow-sm">
+                    <a href="{{ $link['url'] }}" class="group block rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 transition hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm">
                         <div class="flex items-start gap-3">
                             <x-filament::icon icon="{{ $link['icon'] }}" class="h-6 w-6 shrink-0 text-primary-500" />
                             <div>
