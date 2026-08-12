@@ -21,6 +21,23 @@
     $sidebarCollapsible = $sidebarCollapsible && filament()->isSidebarCollapsibleOnDesktop();
 
     $collapseStore = $subNavigation ? 'subnav' : 'sidebar';
+
+    $tooltipAnchors = $subNavigation ? \App\Support\KnowledgeBaseSections::anchorsFor($url ?? '') : [];
+
+    $tooltipContent = $slot->toHtml();
+
+    if (filled($tooltipAnchors)) {
+        $anchorItems = '';
+
+        foreach ($tooltipAnchors as $anchor) {
+            $anchorItems .= '<li><a href="' . e($url . '#' . $anchor['id']) . '">' . e($anchor['title']) . '</a></li>';
+        }
+
+        $tooltipContent = '<div class="fi-subnav-tooltip">'
+            . '<div class="fi-subnav-tooltip-title">' . $tooltipContent . '</div>'
+            . '<ul class="fi-subnav-tooltip-anchors">' . $anchorItems . '</ul>'
+            . '</div>';
+    }
 @endphp
 
 <li
@@ -42,9 +59,14 @@
                 tooltip = $store.{{ $collapseStore }}.isOpen
                     ? false
                     : {
-                          content: @js($slot->toHtml()),
+                          content: @js($tooltipContent),
                           placement: document.dir === 'rtl' ? 'left' : 'right',
                           theme: $store.theme,
+                          @if (filled($tooltipAnchors))
+                          interactive: true,
+                          interactiveBorder: 12,
+                          maxWidth: 320,
+                          @endif
                       }
             "
             x-tooltip.html="tooltip"
