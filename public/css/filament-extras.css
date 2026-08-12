@@ -203,6 +203,16 @@
     background-color: rgb(255 255 255 / 0.12);
     color: #fff;
 }
+.tippy-box[data-theme~='light'] .fi-subnav-tooltip-title {
+    border-bottom-color: rgb(15 23 42 / 0.1);
+}
+.tippy-box[data-theme~='light'] .fi-subnav-tooltip-anchors a {
+    color: rgb(15 23 42 / 0.8);
+}
+.tippy-box[data-theme~='light'] .fi-subnav-tooltip-anchors a:hover {
+    background-color: rgb(15 23 42 / 0.08);
+    color: rgb(15 23 42);
+}
 
 /* ---------- Asset Group resource asset selector ---------- */
 .asg-container {
