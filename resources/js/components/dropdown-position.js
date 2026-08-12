@@ -34,20 +34,11 @@ export function computeDropUp(trigger, panel) {
 export function dropdownFlipBehavior() {
     return {
         dropUp: false,
-        init() {
-            this.$watch('open', (val) => {
-                if (!val) this.dropUp = false;
-            });
-        },
         toggle() {
             const trigger = this.$refs.trigger;
             if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
             this.open = !this.open;
-            if (this.open) {
-                this.recompute(true);
-            } else {
-                this.dropUp = false;
-            }
+            if (this.open) this.recompute(true);
         },
         recompute(immediate = false) {
             if (!this.open) return;
