@@ -115,6 +115,20 @@
     color: #d1d5db;
 }
 
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-item-button,
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-group-button {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-group-label,
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-group-collapse-button,
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-item-label,
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-sidebar-item-badge,
+.fi-page-sub-navigation-sidebar-ctn.fi-subnav-closed .fi-badge {
+    display: none;
+}
+
 /* ---------- Asset Group resource asset selector ---------- */
 .asg-container {
     max-width: 100%;

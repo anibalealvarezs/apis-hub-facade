@@ -29,8 +29,6 @@
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::PAGE_SUB_NAVIGATION_SIDEBAR_BEFORE, scopes: $this->getRenderHookScopes()) }}
 
     <ul
-        x-show="$store.subnav.isOpen"
-        x-cloak
         wire:ignore
         class="fi-page-sub-navigation-sidebar flex flex-col gap-y-7"
     >
