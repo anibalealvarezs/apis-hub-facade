@@ -159,11 +159,14 @@ body.fi-body {
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    scrollbar-gutter: auto !important;
 }
 
 .fi-sidebar-nav > .fi-sidebar-nav-groups {
     overflow-y: auto !important;
     flex: 1 !important;
     scrollbar-width: thin;
+    margin-inline: calc(-1.5rem) !important;
+    padding-inline: 1rem;
 }
 
