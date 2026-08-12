@@ -2,22 +2,20 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Clusters\KnowledgeBase\Administration;
 use Filament\Pages\Page;
 use Spatie\Permission\Models\Role;
 
 class ProjectRoles extends Page
 {
+    protected static ?string $cluster = Administration::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 2;
     protected static string $view = 'filament.app.pages.project-roles';
 
     public static function getNavigationLabel(): string
     {
         return __('Roles & Permissions');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return __('Knowledge Base');
     }
 
     public function getTitle(): string

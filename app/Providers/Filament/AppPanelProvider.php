@@ -191,10 +191,6 @@ class AppPanelProvider extends PanelProvider
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Knowledge Base')),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Google')),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Meta')),
             ])
             ->pages([
                 \App\Filament\App\Pages\Dashboard::class,

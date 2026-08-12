@@ -2,22 +2,20 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Clusters\KnowledgeBase\Analytics;
 use App\Services\Analytics\PredefinedKpiRegistry;
 use Filament\Pages\Page;
 
 class KpiReference extends Page
 {
+    protected static ?string $cluster = Analytics::class;
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?int $navigationSort = 2;
     protected static string $view = 'filament.app.pages.kpi-reference';
 
     public static function getNavigationLabel(): string
     {
         return __('KPI Reference');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return __('Knowledge Base');
     }
 
     public function getTitle(): string
