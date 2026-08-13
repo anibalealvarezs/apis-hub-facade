@@ -62,6 +62,8 @@
                           content: @js($tooltipContent),
                           placement: document.dir === 'rtl' ? 'left' : 'right',
                           theme: $store.theme,
+                          delay: [0, 150],
+                          hideOnClick: false,
                           @if (filled($tooltipAnchors))
                           interactive: true,
                           interactiveBorder: 12,

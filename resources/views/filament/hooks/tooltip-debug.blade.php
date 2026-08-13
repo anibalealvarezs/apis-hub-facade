@@ -161,7 +161,7 @@
                     return {
                         href: (a.getAttribute('href') || '').slice(0, 70),
                         hasAnchorAttr: a.hasAttribute('x-tooltip.html'),
-                        tooltipVal: (tooltipVal || '').slice(0, 400),
+                        tooltipVal: (tooltipVal || '').slice(0, 800),
                         tippy: tippy
                             ? 'enabled=' + tippy.state.isEnabled + ' visible=' + tippy.state.isVisible + ' destroyed=' + tippy.state.isDestroyed
                             : 'NO_TIPPY',
@@ -200,6 +200,34 @@
                             var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
                             var topEl = document.elementFromPoint(cx, cy);
                             var topIsBox = topEl && topEl.closest('.tippy-box') === inner;
+                            var popper = box.hasAttribute('data-tippy-root') ? box : (box.closest('[data-tippy-root]') || null);
+                            var popperCs = popper ? getComputedStyle(popper) : null;
+                            var forcedTopIsBox = null;
+                            if (inner) {
+                                var prevPE1 = popper ? popper.style.pointerEvents : '';
+                                var prevPE2 = inner.style.pointerEvents;
+                                if (popper) popper.style.pointerEvents = 'auto';
+                                inner.style.pointerEvents = 'auto';
+                                try {
+                                    var t2 = document.elementFromPoint(cx, cy);
+                                    forcedTopIsBox = !!(t2 && t2.closest('.tippy-box') === inner);
+                                } catch (e) {
+                                    forcedTopIsBox = 'ERR ' + e.message;
+                                }
+                                if (popper) popper.style.pointerEvents = prevPE1;
+                                inner.style.pointerEvents = prevPE2;
+                            }
+                            function chain(el, depth) {
+                                var out = [], node = el;
+                                while (node && out.length < depth) {
+                                    var tag = (node.tagName || '#text').toLowerCase();
+                                    var id = node.id ? '#' + node.id : '';
+                                    var cls = typeof node.className === 'string' && node.className ? '.' + String(node.className).trim().split(/\s+/).join('.') : '';
+                                    out.push(tag + id + cls);
+                                    node = node.parentElement;
+                                }
+                                return out;
+                            }
                             dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50)
                                 + ' theme=' + (inner.getAttribute('data-theme') || 'none')
                                 + ' state=' + (inner.getAttribute('data-state') || 'none')
@@ -210,7 +238,18 @@
                                 + ' rendered=' + (inner.offsetParent !== null)
                                 + ' rect=' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)
                                 + ' onScreen=' + onScreen
-                                + ' topIsBox=' + topIsBox);
+                                + ' topIsBox=' + topIsBox
+                                + ' forcedTopIsBox=' + forcedTopIsBox
+                                + ' boxDisplay=' + cs.display
+                                + ' boxVisibility=' + cs.visibility
+                                + ' boxPE=' + cs.pointerEvents
+                                + ' popperPE=' + (popperCs ? popperCs.pointerEvents : 'noPopper')
+                                + ' popperZ=' + (popperCs ? popperCs.zIndex : '-')
+                                + ' popperParent=' + (popper && popper.parentElement ? popper.parentElement.tagName.toLowerCase() + '.' + (popper.parentElement.className || '') : '-')
+                                + ' topEl=' + (topEl ? (topEl.tagName + '.' + String(topEl.className || '').split(/\s+/).join('.')) : 'NULL')
+                                + ' topElChain=' + (topEl ? chain(topEl, 4).join(' < ') : '-'));
+                            dbg.mark('HOVERCFG ' + (a.getAttribute('href') || '').slice(0, 50)
+                                + ' tooltipVal=' + (JSON.stringify(window.Alpine && window.Alpine.$data ? window.Alpine.$data(a).tooltip : null) || 'n/a').slice(0, 800));
                             setTimeout(function () {
                                 try {
                                     var b2 = document.querySelector('.tippy-box');

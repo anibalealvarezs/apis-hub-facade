@@ -190,6 +190,12 @@
     box-shadow: 0 0 20px 4px rgb(154 161 177 / 0.15), 0 0 40px 8px rgb(36 40 47 / 0.11);
 }
 
+/* Keep every tippy popper above any sidebar/topbar stacking context. The
+   plugin sets z-index:9999 inline; this hard-caps it above Tailwind's z-50. */
+[data-tippy-root] {
+    z-index: 2147483000 !important;
+}
+
 /* Anchor submenu inside the collapsed cluster-menu tooltip */
 .tippy-box .fi-subnav-tooltip-title {
     padding: 0.375rem 0.75rem 0.5rem;
