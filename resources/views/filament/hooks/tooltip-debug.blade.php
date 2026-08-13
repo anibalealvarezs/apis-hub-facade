@@ -109,6 +109,13 @@
             data.anchorBoxes = safe(function () {
                 return document.querySelectorAll('.tippy-box .fi-subnav-tooltip-anchors').length;
             });
+            data.styleSheets = safe(function () {
+                return Array.prototype.map.call(document.styleSheets, function (s) {
+                    var status = 'ok';
+                    try { s.cssRules; } catch (e) { status = 'CROSS_ORIGIN/ERR'; }
+                    return { href: s.href || '(inline)', loaded: status };
+                });
+            });
             data.tippyCssLoaded = (function () {
                 try {
                     for (var i = 0; i < document.styleSheets.length; i++) {
@@ -154,7 +161,7 @@
                     return {
                         href: (a.getAttribute('href') || '').slice(0, 70),
                         hasAnchorAttr: a.hasAttribute('x-tooltip.html'),
-                        tooltipVal: (tooltipVal || '').slice(0, 200),
+                        tooltipVal: (tooltipVal || '').slice(0, 400),
                         tippy: tippy
                             ? 'enabled=' + tippy.state.isEnabled + ' visible=' + tippy.state.isVisible + ' destroyed=' + tippy.state.isDestroyed
                             : 'NO_TIPPY',
@@ -183,14 +190,20 @@
                                 dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50) + ' -> NO tippy box in DOM');
                                 return;
                             }
+                            var inner = box.querySelector('.tippy-box') || box;
                             var anchors = box.querySelectorAll('.fi-subnav-tooltip-anchors a');
                             var first = anchors[0];
+                            var cs = getComputedStyle(inner);
                             var color = first ? getComputedStyle(first).color : 'no-anchor-el';
                             dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50)
-                                + ' theme=' + (box.getAttribute('data-theme') || 'none')
+                                + ' theme=' + (inner.getAttribute('data-theme') || 'none')
+                                + ' state=' + (inner.getAttribute('data-state') || 'none')
                                 + ' anchors=' + anchors.length
                                 + ' anchorColor=' + color
-                                + ' display=' + getComputedStyle(box).display);
+                                + ' bg=' + cs.backgroundColor
+                                + ' opacity=' + cs.opacity
+                                + ' rendered=' + (inner.offsetParent !== null)
+                                + ' boxWxH=' + inner.offsetWidth + 'x' + inner.offsetHeight);
                             window.__tooltipDump();
                         } catch (e) {
                             dbg.mark('HOVER ERR ' + e.message);
