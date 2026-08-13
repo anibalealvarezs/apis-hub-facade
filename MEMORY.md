@@ -11,6 +11,14 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Graceful Un-deployed Project & Remote Server Offline Error Handling (2026-08-13)
+- **Problem:** When a project has never been deployed (`last_deployed_at === null`), background telemetry polls and remote engine calls triggered Guzzle requests resulting in 500 / 502 / connection errors that logged full `production.ERROR` stack traces to `laravel.log`.
+- **Fix:**
+  - Added `hasBeenDeployed()` helper to `Project` model (`last_deployed_at !== null || subdomain === 'alpha'`).
+  - In `RemoteEngineService::execute()`, check `$project->hasBeenDeployed()`. If `false`, skip HTTP request and return `['status' => 'error', 'message' => 'Project ... has not been deployed yet.']` while logging at `debug` level.
+  - In `RemoteEngineService::execute()` exception handler, use case-insensitive regex pattern matching (`/500|502|503|Connection refused|Could not resolve host|cURL error/i`) to log server-unreachable/offline errors as `Log::warning` instead of dumping full `production.ERROR` stack traces.
+
+
 ### Derived Metrics Feature (2026-07-25)
 - **Status:** Core implementation complete (Steps 1-13, 17, 20-24 done)
 - **Plan:** `DERIVED_METRICS_PLAN.md` — 25 steps, tracks completion

@@ -12,6 +12,10 @@ use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
+    \Spatie\Permission\Models\Permission::findOrCreate('edit_preferences', 'web');
+    \Spatie\Permission\Models\Permission::findOrCreate('deploy_project', 'web');
+    $this->user->givePermissionTo(['edit_preferences', 'deploy_project']);
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     
     // Create a server to satisfy the register logic
     $this->server = Server::factory()->create([
@@ -50,8 +54,9 @@ it('shows the manual deploy action if the project has never been deployed', func
     $project->users()->attach($this->user->id);
 
     actingAs($this->user);
+    \Filament\Facades\Filament::setTenant($project);
 
-    Livewire::test(ProjectSettings::class, ['tenant' => $project->subdomain])
+    Livewire::test(ProjectSettings::class)
         ->assertActionVisible('deploy_initial');
 });
 
@@ -68,8 +73,9 @@ it('prevents manual deployment if there are no configured assets', function () {
     $project->users()->attach($this->user->id);
 
     actingAs($this->user);
+    \Filament\Facades\Filament::setTenant($project);
 
-    Livewire::test(ProjectSettings::class, ['tenant' => $project->subdomain])
+    Livewire::test(ProjectSettings::class)
         ->callAction('deploy_initial')
         ->assertHasNoActionErrors();
 
@@ -97,8 +103,9 @@ it('queues DeployProjectJob when the manual deploy action is used and has config
     $project->users()->attach($this->user->id);
 
     actingAs($this->user);
+    \Filament\Facades\Filament::setTenant($project);
 
-    Livewire::test(ProjectSettings::class, ['tenant' => $project->subdomain])
+    Livewire::test(ProjectSettings::class)
         ->callAction('deploy_initial')
         ->assertHasNoActionErrors();
 
@@ -117,7 +124,8 @@ it('hides the manual deploy action if the project was already deployed', functio
     $project->users()->attach($this->user->id);
 
     actingAs($this->user);
+    \Filament\Facades\Filament::setTenant($project);
 
-    Livewire::test(ProjectSettings::class, ['tenant' => $project->subdomain])
+    Livewire::test(ProjectSettings::class)
         ->assertActionHidden('deploy_initial');
 });

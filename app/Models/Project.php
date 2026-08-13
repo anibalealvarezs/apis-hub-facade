@@ -562,4 +562,13 @@ class Project extends Model
         }
         return $count;
     }
+
+    /**
+     * Determine if the project has ever been deployed.
+     */
+    public function hasBeenDeployed(): bool
+    {
+        return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
+    }
 }
+
