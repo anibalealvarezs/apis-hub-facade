@@ -100,7 +100,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::head.start',
-                fn () => \Illuminate\Support\Facades\Blade::render('
+                fn () => \Illuminate\Support\Facades\Blade::render('@include(\'filament.hooks.tooltip-debug\')') . \Illuminate\Support\Facades\Blade::render('
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link rel="preconnect" href="https://www.googletagmanager.com">
