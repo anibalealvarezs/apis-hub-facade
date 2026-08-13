@@ -18,6 +18,19 @@
   - In `RemoteEngineService::execute()`, check `$project->hasBeenDeployed()`. If `false`, skip HTTP request and return `['status' => 'error', 'message' => 'Project ... has not been deployed yet.']` while logging at `debug` level.
   - In `RemoteEngineService::execute()` exception handler, use case-insensitive regex pattern matching (`/500|502|503|Connection refused|Could not resolve host|cURL error/i`) to log server-unreachable/offline errors as `Log::warning` instead of dumping full `production.ERROR` stack traces.
 
+### Filament Panel Cluster Discovery Ordering Fix (2026-08-13)
+- **Problem:** `Route [filament.app.account-projects-billing.pages.asset-billing-reference] not defined` occurred when views or helper services called `AssetBillingReference::getUrl()`.
+- **Root Cause:** In `AppPanelProvider.php`, `discoverClusters` was called AFTER `discoverPages`. When pages were discovered, Filament's `registerToCluster()` method could not find registered clusters because cluster discovery had not run yet, leaving cluster page routes unregistered or improperly bound.
+- **Fix:** In `AppPanelProvider.php`, reordered panel component discovery so `discoverClusters` executes before `discoverResources` and `discoverPages`.
+
+### Telemetry Page Empty State & Icon Bounds Fix (2026-08-13)
+- **Problem:** On un-deployed projects, the Telemetry (`DataSync`) page displayed an unconstrained screen-filling SVG heroicon, pushing page content down off-screen.
+- **Fix:**
+  - Added explicit check for `!filament()->getTenant()->hasBeenDeployed()` in [data-sync.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/app/pages/data-sync.blade.php).
+  - Created a dedicated, centered empty state card ("Project Not Deployed Yet") with bounded icon badge (`w-16 h-16 rounded-full bg-amber-50`), helpful messaging, and a CTA button linking directly to `DataSources` page.
+  - Constrained all fallback empty state heroicons with `shrink-0` and explicit `style="width: 2rem; height: 2rem;"` to prevent unconstrained SVG expansion.
+
+
 
 ### Derived Metrics Feature (2026-07-25)
 - **Status:** Core implementation complete (Steps 1-13, 17, 20-24 done)
@@ -538,3 +551,13 @@
 - public/css/filament-extras.css: `@media (max-width: 1023.98px)` flex-order rules - `.fi-topbar nav > .fi-topbar-open/close-sidebar-btn { order: -2 }` and `.fi-topbar nav > .fi-topbar-hook-start { order: -1 }`. Default topbar DOM is [hook(widgets)] [hamburger] [end slot]; order moves hamburger first, then widgets, end-slot stays last (ms-auto). Desktop untouched (buttons lg:hidden, order resets).
 - Verified headless (topbar-mobile-test.js, 8/8 PASS) with the REAL filament app.css + filament-extras.css at 375px and 1280px: mobile logo display:none, order -2/-1, x-positions hamburger < widgets < usermenu; desktop logo flex, open-btn none, order 0, normal sequence.
 - Applies consistently across panels sharing the topbar-logo hook (App/Admin/Account). view:cache OK.
+### Topbar widgets desktop visibility fix (2026-08-13)
+- **Root cause:** Filament's bundled stylesheet (`public/css/filament/filament/app.css`) has `.hidden { display: none }` but does not compile Tailwind responsive display variants like `.sm:inline`, `.sm:block`, `.lg:flex`. As a result, elements marked `hidden sm:inline` or `hidden sm:block` remained hidden across all screen sizes including desktop.
+- **Fix:**
+  - Added responsive display utilities (`.sm:inline`, `.sm:block`, `.sm:flex`, `.sm:hidden`, `.md:*`, `.lg:*`) and dark mode utilities (`:is(.dark *) .dark:hidden`, `.dark:flex`, etc.) to [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
+  - Added dedicated semantic classes and media queries (`@media (max-width: 1023.98px)`) for `.topbar-status-text`, `.topbar-sync-progress`, `.topbar-clock-icon`, and `.topbar-clock-tz` in [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
+  - Added `.topbar-logo-anchor` with desktop `display: flex` / mobile `@media (max-width: 1023.98px) { display: none !important; }` in [topbar-logo.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/hooks/topbar-logo.blade.php).
+- **Important rule:** Utility classes (`.lg:flex`, `.sm:inline`, etc.) must NEVER use `!important` — Alpine's `x-show` relies on applying inline `style="display: none;"` which would otherwise be overridden by an `!important` CSS rule (e.g. the main menu sidebar collapse button `<x-filament::icon-button class="ms-auto hidden lg:flex" x-show="$store.sidebar.isOpen" />`).
+
+
+

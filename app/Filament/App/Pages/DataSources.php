@@ -50,6 +50,23 @@
         public ?array $data = [];
         public bool $apiHubUnreachable = false;
 
+        public function getAssetBillingReferenceUrl(?string $sectionTitle = null): string
+        {
+            try {
+                $url = \App\Filament\App\Pages\AssetBillingReference::getUrl();
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Failed to resolve AssetBillingReference URL: " . $e->getMessage());
+                $url = '#';
+            }
+
+            if ($sectionTitle) {
+                $anchor = \Illuminate\Support\Str::slug($sectionTitle);
+                return "{$url}#{$anchor}";
+            }
+
+            return $url;
+        }
+
         public function getLockedAssets(): array
         {
             $tenant = Filament::getTenant();

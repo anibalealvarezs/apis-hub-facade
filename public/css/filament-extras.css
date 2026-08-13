@@ -327,8 +327,7 @@
 .dark\:text-warning-500:is(.dark *) { color: #f59e0b; }
 
 /* ================================================================
-   Mobile top bar: logo is removed (hidden via `hidden lg:flex` on
-   the logo anchor in topbar-logo.blade.php) and the sidebar hamburger
+   Mobile top bar: logo is removed and the sidebar hamburger
    buttons move to the left of the top bar widgets. The default top bar
    renders TOPBAR_START (`.fi-topbar-hook-start`, logo + widgets) before
    the hamburger buttons; on mobile flex `order` reorders them so the
@@ -345,4 +344,63 @@
     .fi-topbar nav > .fi-topbar-hook-start {
         order: -1;
     }
+
+    .topbar-logo-anchor {
+        display: none !important;
+    }
+
+    .topbar-status-text,
+    .topbar-sync-progress,
+    .topbar-clock-icon,
+    .topbar-clock-tz {
+        display: none !important;
+    }
 }
+
+@media (min-width: 1024px) {
+    .topbar-logo-anchor {
+        display: flex;
+    }
+}
+
+
+/* Responsive display utilities for Filament Blade templates */
+@media (min-width: 640px) {
+    .sm\:inline { display: inline; }
+    .sm\:block { display: block; }
+    .sm\:flex { display: flex; }
+    .sm\:hidden { display: none; }
+}
+
+@media (min-width: 768px) {
+    .md\:inline { display: inline; }
+    .md\:block { display: block; }
+    .md\:flex { display: flex; }
+    .md\:hidden { display: none; }
+}
+
+@media (min-width: 1024px) {
+    .lg\:inline { display: inline; }
+    .lg\:block { display: block; }
+    .lg\:flex { display: flex; }
+    .lg\:hidden { display: none; }
+}
+
+/* Dark mode display utilities */
+:is(.dark *) .dark\:hidden {
+    display: none;
+}
+
+:is(.dark *) .dark\:flex {
+    display: flex;
+}
+
+:is(.dark *) .dark\:inline {
+    display: inline;
+}
+
+:is(.dark *) .dark\:block {
+    display: block;
+}
+
+
