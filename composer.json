@@ -11,7 +11,7 @@
     "require": {
         "php": ">=8.3",
         "anibalealvarezs/apis-hub-api": "^0.1.1",
-        "anibalealvarezs/facebook-graph-api": "1.0.0",
+        "anibalealvarezs/facebook-graph-api": "1.1.0",
         "anibalealvarezs/google-api": "1.0.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-language-switch": "^3.1",
@@ -91,16 +91,9 @@
             "@php artisan migrate --graceful --ansi"
         ]
     },
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://satis.anibalalvarez.com"
-        }
-    ],
     "extra": {
         "laravel": {
-            "dont-discover": [
-            ]
+            "dont-discover": []
         }
     },
     "config": {
@@ -116,5 +109,11 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://satis.anibalalvarez.com"
+        }
+    ]
 }
