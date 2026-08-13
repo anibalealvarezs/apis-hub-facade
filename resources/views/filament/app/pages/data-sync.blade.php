@@ -14,10 +14,31 @@
             <div class="flex items-center justify-center p-12">
                 <x-filament::loading-indicator class="h-12 w-12 text-primary-500"/>
             </div>
+        @elseif(!filament()->getTenant()->hasBeenDeployed())
+            <div class="flex flex-col items-center justify-center py-12 px-6 text-center max-w-xl mx-auto my-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-500 mb-4 ring-8 ring-amber-50/50 dark:ring-amber-500/5 shrink-0">
+                    <x-heroicon-o-cloud-arrow-up class="w-8 h-8 shrink-0" style="width: 2rem; height: 2rem;" />
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    {{ __('Project Not Deployed Yet') }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed max-w-md">
+                    {{ __('This project has not been deployed to the synchronization engine yet. Configure your data sources and deploy the project to enable real-time telemetry monitoring.') }}
+                </p>
+                <a href="{{ App\Filament\App\Pages\DataSources::getUrl() }}"
+                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-xl shadow-sm transition-all duration-150 active:scale-95">
+                    <x-heroicon-m-server-stack class="w-4 h-4 shrink-0" style="width: 1rem; height: 1rem;" />
+                    {{ __('Configure & Deploy Project') }}
+                </a>
+            </div>
         @elseif(empty($syncData) || !isset($syncData['completion_percentage']))
-            <div class="p-12 text-center text-gray-500 dark:text-gray-400">
-                <x-heroicon-o-exclamation-triangle class="h-12 w-12 mx-auto mb-4"/>
-                <p class="text-lg">{{ __('Establishing connection to Sync Engine or data is unavailable...') }}</p>
+            <div class="flex flex-col items-center justify-center py-12 px-6 text-center max-w-xl mx-auto my-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
+                <div class="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 mb-4 shrink-0">
+                    <x-heroicon-o-exclamation-triangle class="w-8 h-8 shrink-0" style="width: 2rem; height: 2rem;" />
+                </div>
+                <p class="text-base font-medium text-gray-700 dark:text-gray-300">
+                    {{ __('Establishing connection to Sync Engine or data is unavailable...') }}
+                </p>
             </div>
         @else
             @php

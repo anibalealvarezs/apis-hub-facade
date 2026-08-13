@@ -23,6 +23,13 @@
 - **Root Cause:** In `AppPanelProvider.php`, `discoverClusters` was called AFTER `discoverPages`. When pages were discovered, Filament's `registerToCluster()` method could not find registered clusters because cluster discovery had not run yet, leaving cluster page routes unregistered or improperly bound.
 - **Fix:** In `AppPanelProvider.php`, reordered panel component discovery so `discoverClusters` executes before `discoverResources` and `discoverPages`.
 
+### Telemetry Page Empty State & Icon Bounds Fix (2026-08-13)
+- **Problem:** On un-deployed projects, the Telemetry (`DataSync`) page displayed an unconstrained screen-filling SVG heroicon, pushing page content down off-screen.
+- **Fix:**
+  - Added explicit check for `!filament()->getTenant()->hasBeenDeployed()` in [data-sync.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/app/pages/data-sync.blade.php).
+  - Created a dedicated, centered empty state card ("Project Not Deployed Yet") with bounded icon badge (`w-16 h-16 rounded-full bg-amber-50`), helpful messaging, and a CTA button linking directly to `DataSources` page.
+  - Constrained all fallback empty state heroicons with `shrink-0` and explicit `style="width: 2rem; height: 2rem;"` to prevent unconstrained SVG expansion.
+
 
 
 ### Derived Metrics Feature (2026-07-25)
