@@ -348,6 +348,13 @@
     .topbar-logo-anchor {
         display: none !important;
     }
+
+    .topbar-status-text,
+    .topbar-sync-progress,
+    .topbar-clock-icon,
+    .topbar-clock-tz {
+        display: none !important;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -356,23 +363,6 @@
     }
 }
 
-/* ================================================================
-   Top bar widgets mobile responsive rules:
-   On mobile (< 640px), collapse widgets to essentials:
-   - Semaphore: dot only (status text hidden)
-   - Telemetry/sync: percentage number only (progress bar hidden)
-   - Clock: time only (clock icon and timezone abbreviation hidden)
-   On desktop (>= 640px), all elements are fully visible.
-   ================================================================ */
-
-@media (max-width: 639.98px) {
-    .topbar-status-text,
-    .topbar-sync-progress,
-    .topbar-clock-icon,
-    .topbar-clock-tz {
-        display: none !important;
-    }
-}
 
 /* Responsive display utilities for Filament Blade templates */
 @media (min-width: 640px) {

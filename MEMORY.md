@@ -551,3 +551,12 @@
 - public/css/filament-extras.css: `@media (max-width: 1023.98px)` flex-order rules - `.fi-topbar nav > .fi-topbar-open/close-sidebar-btn { order: -2 }` and `.fi-topbar nav > .fi-topbar-hook-start { order: -1 }`. Default topbar DOM is [hook(widgets)] [hamburger] [end slot]; order moves hamburger first, then widgets, end-slot stays last (ms-auto). Desktop untouched (buttons lg:hidden, order resets).
 - Verified headless (topbar-mobile-test.js, 8/8 PASS) with the REAL filament app.css + filament-extras.css at 375px and 1280px: mobile logo display:none, order -2/-1, x-positions hamburger < widgets < usermenu; desktop logo flex, open-btn none, order 0, normal sequence.
 - Applies consistently across panels sharing the topbar-logo hook (App/Admin/Account). view:cache OK.
+### Topbar widgets desktop visibility fix (2026-08-13)
+- **Root cause:** Filament's bundled stylesheet (`public/css/filament/filament/app.css`) has `.hidden { display: none }` but does not compile Tailwind responsive display variants like `.sm:inline`, `.sm:block`, `.lg:flex`. As a result, elements marked `hidden sm:inline` or `hidden sm:block` remained hidden across all screen sizes including desktop.
+- **Fix:**
+  - Added responsive display utilities (`.sm:inline`, `.sm:block`, `.sm:flex`, `.sm:hidden`, `.md:*`, `.lg:*`) and dark mode utilities (`:is(.dark *) .dark:hidden`, `.dark:flex`, etc.) to [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
+  - Added dedicated semantic classes and media queries (`@media (max-width: 1023.98px)`) for `.topbar-status-text`, `.topbar-sync-progress`, `.topbar-clock-icon`, and `.topbar-clock-tz` in [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
+  - Added `.topbar-logo-anchor` with desktop `display: flex` / mobile `@media (max-width: 1023.98px) { display: none !important; }` in [topbar-logo.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/hooks/topbar-logo.blade.php).
+- **Result:** Semaphore text, telemetry progress bar, clock icon, and timezone abbreviation are now properly displayed on desktop (`>= 1024px`) and hidden on mobile / compact viewports (`< 1024px`).
+
+
