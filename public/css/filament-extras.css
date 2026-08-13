@@ -325,3 +325,24 @@
 .dark\:text-warning-300:is(.dark *) { color: #fcd34d; }
 .dark\:text-warning-400:is(.dark *) { color: #fbbf24; }
 .dark\:text-warning-500:is(.dark *) { color: #f59e0b; }
+
+/* ================================================================
+   Mobile top bar: logo is removed (hidden via `hidden lg:flex` on
+   the logo anchor in topbar-logo.blade.php) and the sidebar hamburger
+   buttons move to the left of the top bar widgets. The default top bar
+   renders TOPBAR_START (`.fi-topbar-hook-start`, logo + widgets) before
+   the hamburger buttons; on mobile flex `order` reorders them so the
+   hamburger comes first, then the widgets, then the end slot (search,
+   notifications, user menu). Desktop (lg+) is untouched.
+   ================================================================ */
+
+@media (max-width: 1023.98px) {
+    .fi-topbar nav > .fi-topbar-open-sidebar-btn,
+    .fi-topbar nav > .fi-topbar-close-sidebar-btn {
+        order: -2;
+    }
+
+    .fi-topbar nav > .fi-topbar-hook-start {
+        order: -1;
+    }
+}

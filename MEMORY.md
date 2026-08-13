@@ -525,3 +525,8 @@
   - Sync/telemetry: percentage number only (`hidden sm:block` on the progress bar wrapper).
   - Clock: time only (`hidden sm:block` on the clock icon svg, `hidden sm:inline` on the tz abbr).
 - Breakpoint follows the app convention (sm: = compact/mobile boundary, same file already used `w-20 sm:w-28`). view:cache OK.
+### Mobile top bar: remove logo, hamburger left of widgets (2026-08-12)
+- resources/views/filament/hooks/topbar-logo.blade.php: logo anchor now `hidden lg:flex` (removed on mobile, still shows on desktop when sidebar closed via x-show). Wrapper got class `fi-topbar-hook-start` (the TOPBAR_START hook output).
+- public/css/filament-extras.css: `@media (max-width: 1023.98px)` flex-order rules - `.fi-topbar nav > .fi-topbar-open/close-sidebar-btn { order: -2 }` and `.fi-topbar nav > .fi-topbar-hook-start { order: -1 }`. Default topbar DOM is [hook(widgets)] [hamburger] [end slot]; order moves hamburger first, then widgets, end-slot stays last (ms-auto). Desktop untouched (buttons lg:hidden, order resets).
+- Verified headless (topbar-mobile-test.js, 8/8 PASS) with the REAL filament app.css + filament-extras.css at 375px and 1280px: mobile logo display:none, order -2/-1, x-positions hamburger < widgets < usermenu; desktop logo flex, open-btn none, order 0, normal sequence.
+- Applies consistently across panels sharing the topbar-logo hook (App/Admin/Account). view:cache OK.
