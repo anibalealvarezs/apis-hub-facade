@@ -77,14 +77,29 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('widgetHeaderPv', widgetHeaderPv);
 };
 
+const registerSubNavStore = (Alpine) => {
+    if (!Alpine || Alpine.store('subnav')) return;
+    if (typeof Alpine.$persist !== 'function') return;
+
+    Alpine.store('subnav', {
+        isOpen: Alpine.$persist(true).as('subnavOpen'),
+
+        toggle() {
+            this.isOpen = ! this.isOpen;
+        },
+    });
+};
+
 document.addEventListener('alpine:init', () => {
     if (window.Alpine) {
         registerAlpineComponents(window.Alpine);
+        registerSubNavStore(window.Alpine);
     }
 });
 
 if (window.Alpine) {
     registerAlpineComponents(window.Alpine);
+    registerSubNavStore(window.Alpine);
 } else {
     import('alpinejs').then((AlpineModule) => {
         const Alpine = AlpineModule.default;
