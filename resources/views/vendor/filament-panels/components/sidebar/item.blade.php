@@ -22,6 +22,8 @@
 
     $collapseStore = $subNavigation ? 'subnav' : 'sidebar';
 
+    $tooltipGatedByOpen = ! $subNavigation;
+
     $tooltipAnchors = $subNavigation ? \App\Support\KnowledgeBaseSections::anchorsFor($url ?? '') : [];
 
     $tooltipContent = $slot->toHtml();
@@ -56,7 +58,7 @@
         @if ($sidebarCollapsible)
             x-data="{ tooltip: false }"
             x-effect="
-                tooltip = $store.{{ $collapseStore }}.isOpen
+                tooltip = {{ $tooltipGatedByOpen ? '$store.' . $collapseStore . '.isOpen' : 'false' }}
                     ? false
                     : {
                           content: @js($tooltipContent),
