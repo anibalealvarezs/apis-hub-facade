@@ -24,12 +24,12 @@
             <div class="flex items-center gap-4 text-sm transition-colors"
                  :class="selectedCount >= (maxAssets * 0.8) ? 'text-danger-600 dark:text-danger-500' : (selectedCount < (maxAssets * 0.5) ? 'text-success-600 dark:text-success-500' : 'text-gray-700 dark:text-gray-300')">
                 <span class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-white/5 shadow-sm">
-                    <a href="{{ App\Filament\App\Pages\AssetBillingReference::getUrl() }}#{{ \Illuminate\Support\Str::slug(__('Annual vs. Monthly Subscriptions')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how billing cycles work.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
+                    <a href="{{ $this->getAssetBillingReferenceUrl(__('Annual vs. Monthly Subscriptions')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how billing cycles work.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
                         <span x-text="cycleLabel + ':'"></span>
                     </a>
                     <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="`${cycleBounds.starts_at} - ${cycleBounds.ends_at}`"></span>
                     <span class="text-gray-300 dark:text-gray-600 px-3">|</span>
-                    <a href="{{ App\Filament\App\Pages\AssetBillingReference::getUrl() }}#{{ \Illuminate\Support\Str::slug(__('Releasing Quota & Billing Rollover')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how the quota is released and rolled over.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
+                    <a href="{{ $this->getAssetBillingReferenceUrl(__('Releasing Quota & Billing Rollover')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how the quota is released and rolled over.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
                         {{ __('Quota Resets:') }}
                     </a>
                     <span class="text-gray-800 dark:text-gray-200 tracking-wide font-semibold" x-text="cycleBounds.next_quota_reset"></span>
