@@ -18,6 +18,12 @@
   - In `RemoteEngineService::execute()`, check `$project->hasBeenDeployed()`. If `false`, skip HTTP request and return `['status' => 'error', 'message' => 'Project ... has not been deployed yet.']` while logging at `debug` level.
   - In `RemoteEngineService::execute()` exception handler, use case-insensitive regex pattern matching (`/500|502|503|Connection refused|Could not resolve host|cURL error/i`) to log server-unreachable/offline errors as `Log::warning` instead of dumping full `production.ERROR` stack traces.
 
+### Filament Panel Cluster Discovery Ordering Fix (2026-08-13)
+- **Problem:** `Route [filament.app.account-projects-billing.pages.asset-billing-reference] not defined` occurred when views or helper services called `AssetBillingReference::getUrl()`.
+- **Root Cause:** In `AppPanelProvider.php`, `discoverClusters` was called AFTER `discoverPages`. When pages were discovered, Filament's `registerToCluster()` method could not find registered clusters because cluster discovery had not run yet, leaving cluster page routes unregistered or improperly bound.
+- **Fix:** In `AppPanelProvider.php`, reordered panel component discovery so `discoverClusters` executes before `discoverResources` and `discoverPages`.
+
+
 
 ### Derived Metrics Feature (2026-07-25)
 - **Status:** Core implementation complete (Steps 1-13, 17, 20-24 done)
