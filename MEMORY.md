@@ -557,6 +557,7 @@
   - Added responsive display utilities (`.sm:inline`, `.sm:block`, `.sm:flex`, `.sm:hidden`, `.md:*`, `.lg:*`) and dark mode utilities (`:is(.dark *) .dark:hidden`, `.dark:flex`, etc.) to [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
   - Added dedicated semantic classes and media queries (`@media (max-width: 1023.98px)`) for `.topbar-status-text`, `.topbar-sync-progress`, `.topbar-clock-icon`, and `.topbar-clock-tz` in [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
   - Added `.topbar-logo-anchor` with desktop `display: flex` / mobile `@media (max-width: 1023.98px) { display: none !important; }` in [topbar-logo.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/hooks/topbar-logo.blade.php).
-- **Result:** Semaphore text, telemetry progress bar, clock icon, and timezone abbreviation are now properly displayed on desktop (`>= 1024px`) and hidden on mobile / compact viewports (`< 1024px`).
+- **Important rule:** Utility classes (`.lg:flex`, `.sm:inline`, etc.) must NEVER use `!important` — Alpine's `x-show` relies on applying inline `style="display: none;"` which would otherwise be overridden by an `!important` CSS rule (e.g. the main menu sidebar collapse button `<x-filament::icon-button class="ms-auto hidden lg:flex" x-show="$store.sidebar.isOpen" />`).
+
 
 

@@ -366,40 +366,41 @@
 
 /* Responsive display utilities for Filament Blade templates */
 @media (min-width: 640px) {
-    .sm\:inline { display: inline !important; }
-    .sm\:block { display: block !important; }
-    .sm\:flex { display: flex !important; }
-    .sm\:hidden { display: none !important; }
+    .sm\:inline { display: inline; }
+    .sm\:block { display: block; }
+    .sm\:flex { display: flex; }
+    .sm\:hidden { display: none; }
 }
 
 @media (min-width: 768px) {
-    .md\:inline { display: inline !important; }
-    .md\:block { display: block !important; }
-    .md\:flex { display: flex !important; }
-    .md\:hidden { display: none !important; }
+    .md\:inline { display: inline; }
+    .md\:block { display: block; }
+    .md\:flex { display: flex; }
+    .md\:hidden { display: none; }
 }
 
 @media (min-width: 1024px) {
-    .lg\:inline { display: inline !important; }
-    .lg\:block { display: block !important; }
-    .lg\:flex { display: flex !important; }
-    .lg\:hidden { display: none !important; }
+    .lg\:inline { display: inline; }
+    .lg\:block { display: block; }
+    .lg\:flex { display: flex; }
+    .lg\:hidden { display: none; }
 }
 
 /* Dark mode display utilities */
 :is(.dark *) .dark\:hidden {
-    display: none !important;
+    display: none;
 }
 
 :is(.dark *) .dark\:flex {
-    display: flex !important;
+    display: flex;
 }
 
 :is(.dark *) .dark\:inline {
-    display: inline !important;
+    display: inline;
 }
 
 :is(.dark *) .dark\:block {
-    display: block !important;
+    display: block;
 }
+
 
