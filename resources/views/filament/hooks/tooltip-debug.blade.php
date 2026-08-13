@@ -195,6 +195,11 @@
                             var first = anchors[0];
                             var cs = getComputedStyle(inner);
                             var color = first ? getComputedStyle(first).color : 'no-anchor-el';
+                            var r = inner.getBoundingClientRect();
+                            var onScreen = r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight;
+                            var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                            var topEl = document.elementFromPoint(cx, cy);
+                            var topIsBox = topEl && topEl.closest('.tippy-box') === inner;
                             dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50)
                                 + ' theme=' + (inner.getAttribute('data-theme') || 'none')
                                 + ' state=' + (inner.getAttribute('data-state') || 'none')
@@ -203,7 +208,23 @@
                                 + ' bg=' + cs.backgroundColor
                                 + ' opacity=' + cs.opacity
                                 + ' rendered=' + (inner.offsetParent !== null)
-                                + ' boxWxH=' + inner.offsetWidth + 'x' + inner.offsetHeight);
+                                + ' rect=' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)
+                                + ' onScreen=' + onScreen
+                                + ' topIsBox=' + topIsBox);
+                            setTimeout(function () {
+                                try {
+                                    var b2 = document.querySelector('.tippy-box');
+                                    if (!b2) return;
+                                    var cs3 = getComputedStyle(b2);
+                                    var r3 = b2.getBoundingClientRect();
+                                    dbg.mark('SETTLED state=' + (b2.getAttribute('data-state') || 'none')
+                                        + ' opacity=' + cs3.opacity
+                                        + ' rect=' + Math.round(r3.left) + ',' + Math.round(r3.top) + ' ' + Math.round(r3.width) + 'x' + Math.round(r3.height)
+                                        + ' onScreen=' + (r3.left >= 0 && r3.top >= 0 && r3.right <= window.innerWidth && r3.bottom <= window.innerHeight));
+                                } catch (e) {
+                                    dbg.mark('SETTLED ERR ' + e.message);
+                                }
+                            }, 600);
                             window.__tooltipDump();
                         } catch (e) {
                             dbg.mark('HOVER ERR ' + e.message);
