@@ -64,6 +64,7 @@
                           theme: $store.theme,
                           delay: [0, 150],
                           hideOnClick: false,
+                          appendTo: document.body,
                           @if (filled($tooltipAnchors))
                           interactive: true,
                           interactiveBorder: 12,
