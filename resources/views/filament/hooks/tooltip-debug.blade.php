@@ -66,33 +66,82 @@
                 logs: dbg.logs,
                 errors: dbg.errors,
             };
-            try {
-                var els = Array.prototype.slice.call(document.querySelectorAll('.fi-sidebar-item-button'));
-                var withTooltip = els.filter(function (a) {
+            var safe = function (fn) {
+                try {
+                    return fn();
+                } catch (e) {
+                    return 'ERR ' + e.message;
+                }
+            };
+
+            var els = safe(function () {
+                return Array.prototype.slice.call(document.querySelectorAll('.fi-sidebar-item-button'));
+            });
+            data.items = Array.isArray(els) ? els.length : els;
+
+            var withTooltip = safe(function () {
+                return els.filter(function (a) {
                     return a.hasAttribute('x-tooltip') || a.hasAttribute('x-tooltip.html') || a.__x_tippy;
                 });
+            });
+            data.tooltipEls = Array.isArray(withTooltip) ? withTooltip.length : withTooltip;
+
+            data.subnav = safe(function () {
                 var subnav = window.Alpine ? window.Alpine.store('subnav') : null;
-                data.subnav = subnav ? 'EXISTS isOpen=' + subnav.isOpen : 'MISSING';
-                data.items = els.length;
-                data.tooltipEls = withTooltip.length;
-                data.allXTooltipEls = document.querySelectorAll('[x-tooltip], [x-tooltip.html]').length;
-                data.tippyBoxes = document.querySelectorAll('.tippy-box').length;
-                data.tippyCssLoaded = (function () {
-                    try {
-                        for (var i = 0; i < document.styleSheets.length; i++) {
-                            var rules;
-                            try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
-                            if (!rules) continue;
-                            for (var j = 0; j < rules.length; j++) {
-                                if ((rules[j].selectorText || '').indexOf('.tippy-box') !== -1) return true;
-                            }
+                return subnav ? 'EXISTS isOpen=' + subnav.isOpen : 'MISSING';
+            });
+            data.sidebar = safe(function () {
+                var sidebar = window.Alpine ? window.Alpine.store('sidebar') : null;
+                return sidebar ? 'EXISTS isOpen=' + sidebar.isOpen : 'MISSING';
+            });
+            data.persistedSubnavOpen = safe(function () {
+                return window.Alpine && typeof window.Alpine.$persist === 'function'
+                    ? JSON.parse(localStorage.getItem('subnavOpen') ?? 'null')
+                    : 'noPersist';
+            });
+
+            data.allXTooltipEls = safe(function () {
+                return document.querySelectorAll('[x-tooltip], [x-tooltip\\.html]').length;
+            });
+            data.tippyBoxes = safe(function () {
+                return document.querySelectorAll('.tippy-box').length;
+            });
+            data.anchorBoxes = safe(function () {
+                return document.querySelectorAll('.tippy-box .fi-subnav-tooltip-anchors').length;
+            });
+            data.tippyCssLoaded = (function () {
+                try {
+                    for (var i = 0; i < document.styleSheets.length; i++) {
+                        var rules;
+                        try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
+                        if (!rules) continue;
+                        for (var j = 0; j < rules.length; j++) {
+                            if ((rules[j].selectorText || '').indexOf('.tippy-box') !== -1) return true;
                         }
-                        return false;
-                    } catch (e) {
-                        return 'ERR ' + e.message;
                     }
-                })();
-                data.details = withTooltip.map(function (a) {
+                    return false;
+                } catch (e) {
+                    return 'ERR ' + e.message;
+                }
+            })();
+            data.anchorCssLoaded = (function () {
+                try {
+                    for (var i = 0; i < document.styleSheets.length; i++) {
+                        var rules;
+                        try { rules = document.styleSheets[i].cssRules; } catch (e) { continue; }
+                        if (!rules) continue;
+                        for (var j = 0; j < rules.length; j++) {
+                            var sel = rules[j].selectorText || '';
+                            if (sel.indexOf('fi-subnav-tooltip-anchors a') !== -1) return sel;
+                        }
+                    }
+                    return false;
+                } catch (e) {
+                    return 'ERR ' + e.message;
+                }
+            })();
+            data.details = safe(function () {
+                return withTooltip.map(function (a) {
                     var tooltipVal = 'n/a';
                     try {
                         tooltipVal = window.Alpine && window.Alpine.$data
@@ -104,19 +153,58 @@
                     var tippy = a.__x_tippy;
                     return {
                         href: (a.getAttribute('href') || '').slice(0, 70),
-                        xEffect: (a.getAttribute('x-effect') || '').slice(0, 160),
-                        tooltipVal: (tooltipVal || '').slice(0, 160),
+                        hasAnchorAttr: a.hasAttribute('x-tooltip.html'),
+                        tooltipVal: (tooltipVal || '').slice(0, 200),
                         tippy: tippy
-                            ? 'visible=' + tippy.state.isVisible + ' destroyed=' + tippy.state.isDestroyed
+                            ? 'enabled=' + tippy.state.isEnabled + ' visible=' + tippy.state.isVisible + ' destroyed=' + tippy.state.isDestroyed
                             : 'NO_TIPPY',
                     };
                 });
-            } catch (err) {
-                data.inspectError = err.message;
-            }
+            });
+
             console.log('[TOOLTIP-DEBUG] DUMP', JSON.stringify(data, null, 2));
             return data;
         };
+
+        // Hover capture: when an item is hovered, inspect the live tippy box.
+        function bindHoverCapture() {
+            var els = document.querySelectorAll('.fi-sidebar-item-button');
+            Array.prototype.forEach.call(els, function (a) {
+                if (a.__tdHoverBound) return;
+                a.__tdHoverBound = true;
+                a.addEventListener('mouseenter', function () {
+                    setTimeout(function () {
+                        try {
+                            var tippy = a.__x_tippy;
+                            var box = a._tippy
+                                ? a._tippy.popper
+                                : (tippy && tippy.popper) || (document.querySelector('.tippy-box:not([style*="display: none"])'));
+                            if (!box) {
+                                dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50) + ' -> NO tippy box in DOM');
+                                return;
+                            }
+                            var anchors = box.querySelectorAll('.fi-subnav-tooltip-anchors a');
+                            var first = anchors[0];
+                            var color = first ? getComputedStyle(first).color : 'no-anchor-el';
+                            dbg.mark('HOVER ' + (a.getAttribute('href') || '').slice(0, 50)
+                                + ' theme=' + (box.getAttribute('data-theme') || 'none')
+                                + ' anchors=' + anchors.length
+                                + ' anchorColor=' + color
+                                + ' display=' + getComputedStyle(box).display);
+                            window.__tooltipDump();
+                        } catch (e) {
+                            dbg.mark('HOVER ERR ' + e.message);
+                        }
+                    }, 120);
+                });
+            });
+        }
+        if (document.readyState !== 'loading') {
+            bindHoverCapture();
+        } else {
+            document.addEventListener('DOMContentLoaded', bindHoverCapture);
+        }
+        window.addEventListener('livewire:navigated', bindHoverCapture);
 
         function autoDump(label) {
             try {

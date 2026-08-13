@@ -75,7 +75,11 @@ class AppPanelProvider extends PanelProvider
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/filament-extras.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/modals.css\') }}">')
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=' . filemtime(public_path('css/branding.css')) . '">
+                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=' . filemtime(public_path('css/filament-extras.css')) . '">
+                    <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=' . filemtime(public_path('css/modals.css')) . '">
+                ')
             )
             ->renderHook(
                 'panels::scripts.after',
