@@ -22,11 +22,9 @@
 
     $collapseStore = $subNavigation ? 'subnav' : 'sidebar';
 
-    $tooltipGatedByOpen = ! $subNavigation;
-
     $tooltipAnchors = $subNavigation ? \App\Support\KnowledgeBaseSections::anchorsFor($url ?? '') : [];
 
-    $tooltipContent = $slot->toHtml();
+    $tooltipTitle = $slot->toHtml();
 
     if (filled($tooltipAnchors)) {
         $anchorItems = '';
@@ -35,10 +33,17 @@
             $anchorItems .= '<li><a href="' . e($url . '#' . $anchor['id']) . '">' . e($anchor['title']) . '</a></li>';
         }
 
-        $tooltipContent = '<div class="fi-subnav-tooltip">'
-            . '<div class="fi-subnav-tooltip-title">' . $tooltipContent . '</div>'
+        $tooltipContentCollapsed = '<div class="fi-subnav-tooltip">'
+            . '<div class="fi-subnav-tooltip-title">' . $tooltipTitle . '</div>'
             . '<ul class="fi-subnav-tooltip-anchors">' . $anchorItems . '</ul>'
             . '</div>';
+
+        $tooltipContentExpanded = '<div class="fi-subnav-tooltip">'
+            . '<ul class="fi-subnav-tooltip-anchors">' . $anchorItems . '</ul>'
+            . '</div>';
+    } else {
+        $tooltipContentCollapsed = $tooltipTitle;
+        $tooltipContentExpanded = null;
     }
 @endphp
 
@@ -58,10 +63,24 @@
         @if ($sidebarCollapsible)
             x-data="{ tooltip: false }"
             x-effect="
-                tooltip = {{ $tooltipGatedByOpen ? '$store.' . $collapseStore . '.isOpen' : 'false' }}
-                    ? false
+                tooltip = $store.{{ $collapseStore }}.isOpen
+                    ? @if (filled($tooltipAnchors))
+                          {
+                              content: @js($tooltipContentExpanded),
+                              placement: document.dir === 'rtl' ? 'left' : 'right',
+                              theme: $store.theme,
+                              delay: [0, 150],
+                              hideOnClick: false,
+                              appendTo: document.body,
+                              interactive: true,
+                              interactiveBorder: 12,
+                              maxWidth: 320,
+                          }
+                      @else
+                          false
+                      @endif
                     : {
-                          content: @js($tooltipContent),
+                          content: @js($tooltipContentCollapsed),
                           placement: document.dir === 'rtl' ? 'left' : 'right',
                           theme: $store.theme,
                           delay: [0, 150],
