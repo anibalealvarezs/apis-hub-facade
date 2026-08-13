@@ -1,7 +1,10 @@
+import { dropdownFlipBehavior } from './dropdown-position';
+
 export function uiAssetSelector() {
     return {
         open: false,
         searchAssetGroup: '',
+        ...dropdownFlipBehavior(),
         stripHtml(html) {
             if (!html) return '';
             if (typeof html !== 'string') return String(html);

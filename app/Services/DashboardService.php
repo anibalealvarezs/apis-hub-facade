@@ -126,8 +126,8 @@ class DashboardService
     {
         $clone = $widget->replicate();
         $clone->name = $widget->name . ' (Copy)';
-        $clone->grid_x = $widget->grid_x + 1;
-        $clone->grid_y = $widget->grid_y + 1;
+        $clone->grid_x = $widget->grid_x;
+        $clone->grid_y = $widget->grid_y + ($widget->grid_h ?? 3);
         $clone->push();
         return $clone;
     }

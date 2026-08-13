@@ -14,7 +14,8 @@
         sourceTypes: @js($this->getAvailableSourceTypes()),
         kpis: @js($this->getKpisForWidgetPicker()),
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
-        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day')))
+        defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
+        availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
     })" class="space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
@@ -39,16 +40,14 @@
                 @endcan
 
                 {{-- Version Unsaved Changes Indicator --}}
-                <div x-show="$wire.unsavedChanges" x-cloak
-                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 text-xs font-semibold text-danger-700 dark:text-danger-400">
-                    <span class="w-2 h-2 rounded-full bg-danger-500 animate-pulse"></span>
+                <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge">
+                    <span class="bd-unsaved-dot"></span>
                     <span>{{ __('Unsaved version') }}</span>
                 </div>
 
                 {{-- Layout Dirty Status Badge --}}
-                <div x-show="isDirty" x-cloak
-                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20 text-xs font-semibold text-warning-700 dark:text-warning-400">
-                    <span class="w-2 h-2 rounded-full bg-warning-500 animate-pulse"></span>
+                <div x-show="isDirty" x-cloak class="bd-unsaved-badge">
+                    <span class="bd-unsaved-dot"></span>
                     <span>{{ __('Unsaved layout changes') }}</span>
                 </div>
                 <div x-show="!isDirty"
@@ -66,6 +65,8 @@
                 </x-filament::button>
             </div>
         </div>
+
+
 
         <div class="grid grid-cols-12 gap-4">
             {{-- Widget Palette (sidebar) --}}
@@ -108,29 +109,22 @@
                     <div id="grid-stack" class="grid-stack">
                         <template x-for="(widget, index) in widgets" :key="widget.id">
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
-                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50 z-50 transform scale-[1.02]': widget._isNew }"
-                                 x-init="
-                                    $el.setAttribute('gs-id', widget.id);
-                                    $el.setAttribute('gs-w', widget.grid_w || 4);
-                                    $el.setAttribute('gs-h', widget.grid_h || 3);
-                                    $el.setAttribute('gs-min-w', 2);
-                                    $el.setAttribute('gs-min-h', 2);
-                                    if (widget.grid_x !== undefined && widget.grid_x !== null) $el.setAttribute('gs-x', widget.grid_x);
-                                    if (widget.grid_y !== undefined && widget.grid_y !== null) $el.setAttribute('gs-y', widget.grid_y);
-                                    else $el.setAttribute('gs-auto-position', 'true');
-
-                                    if (grid) grid.makeWidget($el);
-
-                                    if (widget._isNew) {
-                                        setTimeout(() => { widget._isNew = false; }, 2500);
-                                    }
-                                 ">
+                                 :data-id="widget.id"
+                                 :gs-id="widget.id"
+                                 :id="widget.id"
+                                 :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50': widget._isNew }">
                                 <div
-                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden">
+                                    class="grid-stack-item-content rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col overflow-hidden transition-all"
+                                    :class="{ 'ring-2 ring-primary-500 border-primary-500 dark:border-primary-500 shadow-lg shadow-primary-500/20': isWidgetSelected(widget.id) }">
                                     {{-- Widget Header --}}
                                     <div
-                                        class="widget-header rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
+                                        class="widget-header cursor-grab active:cursor-grabbing rounded-t-lg flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-4 flex-shrink-0">
                                         <div class="flex items-center gap-2 min-w-0">
+                                            <input type="checkbox"
+                                                   :checked="isWidgetSelected(widget.id)"
+                                                   x-on:click.stop="toggleWidgetSelection(widget.id)"
+                                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 cursor-pointer h-4 w-4 flex-shrink-0"
+                                                   :title="'{{ __('Select for multi-widget drag/actions') }}'"/>
                                             <span x-show="widgetHasCustomControls(widget)"
                                                   class="inline-block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"
                                                   :title="'{{ __('Has custom controls') }}'"></span>
@@ -163,7 +157,7 @@
                                             </template>
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                x-on:click="openWidgetControls(widget)"
+                                                x-on:click.stop="openWidgetControls(widget)"
                                                 :title="'{{ __('Configure') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -175,7 +169,7 @@
                                             </button>
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                x-on:click="duplicateWidget(widget.id)"
+                                                x-on:click.stop="duplicateWidget(widget.id)"
                                                 :title="'{{ __('Duplicate') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -185,7 +179,7 @@
                                             </button>
                                             <button
                                                 class="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                                                x-on:click="deleteWidget(widget.id)"
+                                                x-on:click.stop="confirmDeleteWidget(widget.id)"
                                                 :title="'{{ __('Remove') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -197,10 +191,17 @@
                                     </div>
                                     {{-- Widget Content (placeholder) --}}
                                     <div
-                                        class="flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
+                                        class="widget-body-drag cursor-grab active:cursor-grabbing select-none flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
                                         <div
-                                            class="w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center opacity-70"
-                                            x-html="getWidgetSvg(widget.widget_type)"></div>
+                                            class="widget-drag-handle group/grab cursor-grab active:cursor-grabbing w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-700/60 flex flex-col items-center justify-center opacity-80 hover:opacity-100 transition-all shadow-sm relative"
+                                            :title="'{{ __('Click and drag to move widget') }}'">
+                                            <div class="absolute top-1 text-gray-400 dark:text-gray-500 group-hover/grab:text-primary-500 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
+                                                    <path d="M4.5 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0Z" />
+                                                </svg>
+                                            </div>
+                                            <div class="mt-1" x-html="getWidgetSvg(widget.widget_type)"></div>
+                                        </div>
                                         <div class="flex flex-wrap items-center justify-center gap-2">
                                             <span
                                                 class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
@@ -346,22 +347,6 @@
                             <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
                         </x-ui.select-input>
                     </div>
-                {{-- Dashboard Content Languages --}}
-                @php
-                    $projectLangs = \Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog();
-                @endphp
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Dashboard Content Languages') }}</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Target languages enabled for editing and viewing this specific dashboard&rsquo;s reports and widget texts. Separate from the app interface language.') }}</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-                        @foreach($projectLangs as $code => $label)
-                            <label class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                <input type="checkbox" value="{{ $code }}" x-model="dashboardControls.supported_locales"
-                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                <span>{{ $label }} ({{ strtoupper($code) }})</span>
-                            </label>
-                        @endforeach
-                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -380,13 +365,12 @@
         {{-- WIDGET-LEVEL CONTROLS MODAL                                 --}}
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls"
-             class="bd-modal-root fixed inset-0 flex items-start justify-center pt-10 sm:pt-16"
-             x-trap.noscroll="showWidgetControls" x-cloak>
+             class="bd-modal-root fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-16"
+             x-trap.noscroll="showWidgetControls">
             <div @click="showWidgetControls = false"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
-                @click.away="showWidgetControls = false">
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel">
                 <div
                     class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
                     <div class="flex flex-col gap-1.5">
@@ -400,16 +384,16 @@
                                 x-text="widgetControlsTarget.source_type === 'kpi' ? '{{ __('Custom KPI') }}' : widgetControlsTarget.source_type === 'derived_metric' ? '{{ __('Derived Metric') }}' : '{{ __('Metric') }}'"></span>
 
                             <template
-                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.custom_kpi_id">
+                                x-if="widgetControlsTarget.source_type === 'kpi' && widgetControlsTarget.source_config?.custom_kpi_id">
                                 <span
                                     class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
-                                    x-text="kpis[widgetControlsTarget.source_config.custom_kpi_id] ? kpis[widgetControlsTarget.source_config.custom_kpi_id].name : ('{{ __('KPI ID:') }} ' + widgetControlsTarget.source_config.custom_kpi_id)"></span>
+                                    x-text="kpis[widgetControlsTarget.source_config?.custom_kpi_id] ? kpis[widgetControlsTarget.source_config?.custom_kpi_id].name : ('{{ __('KPI ID:') }} ' + (widgetControlsTarget.source_config?.custom_kpi_id || ''))"></span>
                             </template>
                             <template
-                                x-if="widgetControlsTarget.source_type === 'derived_metric' && widgetControlsTarget.source_config && widgetControlsTarget.source_config.derived_metric_id">
+                                x-if="widgetControlsTarget.source_type === 'derived_metric' && widgetControlsTarget.source_config?.derived_metric_id">
                                 <span
                                     class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:text-gray-200 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-400/20"
-                                    x-text="derivedMetrics[widgetControlsTarget.source_config.derived_metric_id] ? derivedMetrics[widgetControlsTarget.source_config.derived_metric_id].name : ('{{ __('DM ID:') }} ' + widgetControlsTarget.source_config.derived_metric_id)"></span>
+                                    x-text="derivedMetrics[widgetControlsTarget.source_config?.derived_metric_id] ? derivedMetrics[widgetControlsTarget.source_config?.derived_metric_id].name : ('{{ __('DM ID:') }} ' + (widgetControlsTarget.source_config?.derived_metric_id || ''))"></span>
                             </template>
                         </div>
 
@@ -455,7 +439,7 @@
                     <div class="modal-body-absolute-wrapper flex flex-col md:flex-row gap-6 flex-1 min-h-0">
                         {{-- Left Column: Global Configuration --}}
                         <div
-                            class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 min-h-0 bd-config-col"
+                            class="flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-2 h-full max-h-full min-h-0 bd-config-col"
                             :class="{ 'hidden md:flex': activeMobileTab !== 'config' }">
 
                             {{-- Card: Identity --}}
@@ -473,59 +457,39 @@
                                         <span
                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Identity') }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none">
-                                        <button type="button" @click="activeIdentityLang = 'en'"
-                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
-                                                :class="activeIdentityLang === 'en' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-                                            EN
-                                        </button>
-                                        <button type="button" @click="activeIdentityLang = 'es'"
-                                                class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider"
-                                                :class="activeIdentityLang === 'es' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-                                            ES
-                                        </button>
+                                    <div class="flex items-center gap-1 p-0.5 bg-gray-200 dark:bg-gray-800 rounded-lg text-xs font-bold select-none overflow-x-auto">
+                                        <template x-for="(label, code) in availableLanguages" :key="code">
+                                            <button type="button" @click="activeIdentityLang = code"
+                                                    class="px-2.5 py-1 rounded-md transition-all uppercase tracking-wider whitespace-nowrap"
+                                                    :class="activeIdentityLang === code ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                                                    x-text="code">
+                                            </button>
+                                        </template>
                                     </div>
                                 </div>
                                 <div class="p-6 space-y-4">
-                                    <div x-show="activeIdentityLang === 'en'" class="space-y-4">
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (EN)
-                                                <span class="text-red-500">*</span></label>
-                                            <input type="text" x-model="widgetControlsForm.titles.en"
-                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                   :placeholder="'{{ __('Enter widget title in English') }}'">
+                                    <template x-for="(label, code) in availableLanguages" :key="code">
+                                        <div x-show="activeIdentityLang === code" class="space-y-4">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                    {{ __('Widget Title') }} (<span x-text="code.toUpperCase()"></span>)
+                                                    <span class="text-red-500">*</span>
+                                                </label>
+                                                <input type="text" x-model="(widgetControlsForm.titles = widgetControlsForm.titles || {})[code]"
+                                                       class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
+                                                       :placeholder="'{{ __('Enter widget title') }} (' + label + ')'">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                    {{ __('Description') }} (<span x-text="code.toUpperCase()"></span>)
+                                                    <span class="text-gray-400 font-normal">{{ __('(Optional)') }}</span>
+                                                </label>
+                                                <textarea x-model="(widgetControlsForm.descriptions = widgetControlsForm.descriptions || {})[code]" rows="2"
+                                                          class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
+                                                          :placeholder="'{{ __('Enter description') }} (' + label + ')...'"></textarea>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (EN)
-                                                <span
-                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
-                                            <textarea x-model="widgetControlsForm.descriptions.en" rows="2"
-                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                      :placeholder="'{{ __('Enter a brief description in English...') }}'"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div x-show="activeIdentityLang === 'es'" class="space-y-4" style="display: none;">
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Title') }} (ES)
-                                                <span class="text-red-500">*</span></label>
-                                            <input type="text" x-model="widgetControlsForm.titles.es"
-                                                   class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500"
-                                                   :placeholder="'{{ __('Enter widget title in Spanish') }}'">
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Description') }} (ES)
-                                                <span
-                                                    class="text-gray-400 font-normal">{{ __('(Optional)') }}</span></label>
-                                            <textarea x-model="widgetControlsForm.descriptions.es" rows="2"
-                                                      class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-4 focus:ring-primary-500 focus:border-primary-500 resize-none custom-scrollbar"
-                                                      :placeholder="'{{ __('Enter a brief description in Spanish...') }}'"></textarea>
-                                        </div>
-                                    </div>
+                                    </template>
                                 </div>
                             </div>
 
@@ -545,16 +509,16 @@
                                 </div>
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        <template x-for="(label, type) in availableChartTypesForControls" :key="type">
-                                            <button @click="widgetControlsForm.widget_type = type"
+                                        <template x-for="option in availableChartTypesForControls" :key="option.type">
+                                            <button @click="widgetControlsForm.widget_type = option.type"
                                                     class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-center"
-                                                    :class="widgetControlsForm.widget_type === type
+                                                    :class="widgetControlsForm.widget_type === option.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'">
-                                                <div class="w-10 h-7" x-html="getWidgetSvg(type)"></div>
+                                                <div class="w-10 h-7" x-html="getWidgetSvg(option.type)"></div>
                                                 <span
                                                     class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight"
-                                                    x-text="label"></span>
+                                                    x-text="option.label"></span>
                                             </button>
                                         </template>
                                     </div>
@@ -930,7 +894,7 @@
                                                     </div>
                                                     <button class="text-red-500 hover:text-red-700"
                                                             x-show="widgetControlsForm.raw_series.length > 1"
-                                                            x-on:click="widgetControlsForm.raw_series.splice(index, 1)">
+                                                            x-on:click="removeSeriesCard(index)">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                              viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -1068,7 +1032,7 @@
                                     <div
                                         class="flex-none w-full sm:w-[calc(50%-0.75rem)] min-w-[280px] h-full min-h-0 flex flex-col snap-start">
                                         <button
-                                            x-on:click="widgetControlsForm.raw_series.push({channel: dashboardControls.channel || '', metrics: [], assets: []}); if (dashboardControls.channel) onWidgetRawChannelChange(widgetControlsForm.raw_series.length - 1);"
+                                            x-on:click="addSeriesCard()"
                                             class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
                                             <div
                                                 class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
@@ -1936,45 +1900,142 @@
         {{-- ============================================================ --}}
         {{-- UNSAVED LAYOUT CONFIRMATION MODAL                             --}}
         {{-- ============================================================ --}}
-        <div x-show="showUnsavedNavModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/50" x-on:click="showUnsavedNavModal = false"></div>
-            <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 p-6 space-y-5 border border-gray-200 dark:border-gray-800">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                        <x-filament::icon name="heroicon-o-exclamation-triangle" class="w-6 h-6"/>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white leading-6">
-                            {{ __('Unsaved Layout Changes') }}
-                        </h2>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {{ __('You have made changes to the layout of this dashboard. Would you like to save them before leaving?') }}
-                        </p>
-                    </div>
-                </div>
+        <x-confirm-modal
+            open="showUnsavedNavModal"
+            title="{{ __('Unsaved Layout Changes') }}"
+            icon="heroicon-o-exclamation-triangle"
+            color="warning"
+            confirm-label="{{ __('Save and Leave') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            on-confirm="confirmSaveAndLeave()"
+            :close-on-confirm="false"
+            secondary-label="{{ __('Discard and Leave') }}"
+            secondary-color="danger"
+            on-secondary="confirmDiscardAndLeave()"
+            :close-on-secondary="false"
+            cancel-label="{{ __('Keep Editing') }}"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ __('You have made changes to the layout of this dashboard. Would you like to save them before leaving?') }}
+            </p>
+        </x-confirm-modal>
 
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-                    <button type="button"
-                            class="px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                            x-on:click="showUnsavedNavModal = false">
-                        {{ __('Keep Editing') }}
-                    </button>
-                    <button type="button"
-                            class="px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                            x-on:click="confirmDiscardAndLeave()">
-                        {{ __('Discard & Leave') }}
-                    </button>
-                    <button type="button"
-                            class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition-colors"
-                            x-on:click="confirmSaveAndLeave()">
-                        {{ __('Save & Leave') }}
-                    </button>
+        {{-- ============================================================ --}}
+        {{-- WIDGET REMOVE CONFIRMATION MODAL                             --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="deleteConfirmOpen"
+            title="{{ __('Remove widget') }}"
+            icon="heroicon-o-trash"
+            color="danger"
+            confirm-label="{{ __('Remove') }}"
+            confirm-color="danger"
+            confirm-icon="heroicon-o-trash"
+            on-confirm="proceedDelete()"
+            :close-on-confirm="false"
+            on-cancel="cancelDeleteConfirm()"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400"
+               x-show="deleteConfirmTargets.length === 1">{{ __('Remove this widget from the dashboard?') }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400"
+               x-show="deleteConfirmTargets.length > 1">{{ __('Remove') }} <strong class="text-gray-900 dark:text-white" x-text="deleteConfirmTargets.length"></strong> {{ __('selected widgets from the dashboard?') }}</p>
+        </x-confirm-modal>
+
+        {{-- Floating Vertical Multi-Select Action Bar --}}
+        <div x-show="selectedWidgetIds.length > 0 && !deleteConfirmOpen" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-x-6 scale-95"
+             x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-x-6 scale-95"
+             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+
+            {{-- Selected Badge Counter --}}
+            <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
+                <span class="text-xs font-bold leading-none" x-text="selectedWidgetIds.length"></span>
+                <span class="text-[9px] font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
+                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                        {{ __('Selected widgets') }}
+                    </div>
                 </div>
             </div>
+
+            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+
+            {{-- Select All Button --}}
+            <div class="group relative flex items-center justify-center">
+                <button x-on:click="selectAllWidgets()"
+                        type="button"
+                        class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        :title="'{{ __('Select All') }}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                        {{ __('Select All') }}
+                    </div>
+                </div>
+            </div>
+
+            {{-- Clear Selection Button --}}
+            <div class="group relative flex items-center justify-center">
+                <button x-on:click="clearWidgetSelection()"
+                        type="button"
+                        class="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        :title="'{{ __('Clear Selection') }}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                        {{ __('Clear Selection') }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+
+            {{-- Duplicate Selected Button --}}
+            <div class="group relative flex items-center justify-center">
+                <button x-on:click="duplicateSelectedWidgets()"
+                        type="button"
+                        class="p-2 rounded-xl text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                        :title="'{{ __('Duplicate Selected') }}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                    </svg>
+                </button>
+                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                        {{ __('Duplicate Selected') }}
+                    </div>
+                </div>
+            </div>
+
+            {{-- Delete Selected Button --}}
+            <div class="group relative flex items-center justify-center">
+                <button x-on:click="confirmDeleteSelectedWidgets()"
+                        type="button"
+                        class="p-2 rounded-xl text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        :title="'{{ __('Delete Selected') }}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </button>
+                <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                        {{ __('Delete Selected') }}
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>

@@ -163,7 +163,7 @@ class Project extends Model
      */
     public function pendingInvitations(): HasMany
     {
-        return $this->hasMany(Invitation::class)->where('status', 'pending');
+        return $this->hasMany(ProjectInvitation::class);
     }
 
     /**
@@ -264,6 +264,19 @@ class Project extends Model
 
     public static function getSupportedLanguageCatalog(): array
     {
+        $configuredCatalog = config('languages.catalog');
+        if (is_array($configuredCatalog) && !empty($configuredCatalog)) {
+            return $configuredCatalog;
+        }
+
+        if (class_exists(\Symfony\Component\Intl\Languages::class)) {
+            try {
+                $names = \Symfony\Component\Intl\Languages::getNames(app()->getLocale());
+                asort($names);
+                return $names;
+            } catch (\Throwable $e) {}
+        }
+
         return [
             'en' => 'English',
             'es' => 'Español',
@@ -549,4 +562,13 @@ class Project extends Model
         }
         return $count;
     }
+
+    /**
+     * Determine if the project has ever been deployed.
+     */
+    public function hasBeenDeployed(): bool
+    {
+        return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
+    }
 }
+

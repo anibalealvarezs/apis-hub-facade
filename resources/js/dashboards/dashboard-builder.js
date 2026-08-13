@@ -6,11 +6,80 @@ export function dashboardBuilder(config = {}) {
         _isInitializingGrid: true,
         showUnsavedNavModal: false,
         pendingNavUrl: null,
+        pendingNavReload: false,
+
+        // ─── Delete Confirmation Modal State ───
+        deleteConfirmOpen: false,
+        deleteConfirmTargets: [],
+
+        // ─── Multi-Widget Selection State ───
+        selectedWidgetIds: [],
+
+        toggleWidgetSelection(id) {
+            const strId = String(id);
+            const idx = this.selectedWidgetIds.findIndex(item => String(item) === strId);
+            if (idx > -1) {
+                this.selectedWidgetIds.splice(idx, 1);
+            } else {
+                this.selectedWidgetIds.push(isNaN(id) ? id : parseInt(id, 10));
+            }
+            this.selectedWidgetIds = [...this.selectedWidgetIds];
+            console.log('[DB][toggle]', { id: strId, after: this.selectedWidgetIds.map(String) });
+        },
+
+        isWidgetSelected(id) {
+            const strId = String(id);
+            return this.selectedWidgetIds.some(item => String(item) === strId);
+        },
+
+        selectAllWidgets() {
+            this.selectedWidgetIds = (this.widgets || []).map(w => w.id);
+        },
+
+        clearWidgetSelection() {
+            this.selectedWidgetIds = [];
+        },
+
+        confirmDeleteWidget(id) {
+            this.deleteConfirmTargets = [id];
+            this.deleteConfirmOpen = true;
+        },
+
+        confirmDeleteSelectedWidgets() {
+            if (this.selectedWidgetIds.length === 0) return;
+            this.deleteConfirmTargets = [...this.selectedWidgetIds];
+            this.deleteConfirmOpen = true;
+        },
+
+        cancelDeleteConfirm() {
+            this.deleteConfirmOpen = false;
+            this.deleteConfirmTargets = [];
+        },
+
+        proceedDelete() {
+            const targets = [...this.deleteConfirmTargets];
+            this.deleteConfirmOpen = false;
+            this.deleteConfirmTargets = [];
+            targets.forEach(id => {
+                this.deleteWidget(id, true);
+            });
+            this.clearWidgetSelection();
+        },
+
+        duplicateSelectedWidgets() {
+            if (this.selectedWidgetIds.length === 0) return;
+            const idsToDuplicate = [...this.selectedWidgetIds];
+            idsToDuplicate.forEach(id => {
+                this.duplicateWidget(id);
+            });
+        },
 
         confirmDiscardAndLeave() {
             this.isDirty = false;
             this.showUnsavedNavModal = false;
-            if (this.pendingNavUrl) {
+            if (this.pendingNavReload) {
+                window.location.reload();
+            } else if (this.pendingNavUrl) {
                 window.location.assign(this.pendingNavUrl);
             }
         },
@@ -21,7 +90,9 @@ export function dashboardBuilder(config = {}) {
                 this.$wire.saveLayout(currentLayout).then(() => {
                     this.isDirty = false;
                     this.showUnsavedNavModal = false;
-                    if (this.pendingNavUrl) {
+                    if (this.pendingNavReload) {
+                        window.location.reload();
+                    } else if (this.pendingNavUrl) {
                         window.location.assign(this.pendingNavUrl);
                     }
                 });
@@ -45,6 +116,7 @@ export function dashboardBuilder(config = {}) {
         dashboardMetrics: {},
         availableDependencies: {},
         availableGranularities: {},
+        availableLanguages: config.availableLanguages || {},
 
         // ─── Dashboard Controls ──
         showDashboardControls: false,
@@ -68,7 +140,8 @@ export function dashboardBuilder(config = {}) {
             asset: '',
             assets: [],
             granularity: dashboardControls.granularity || 'daily',
-            dependency: null,
+            titles: {},
+            descriptions: {},
             metrics: [],
             series_assets: {},
             series_asset_groups: {},
@@ -149,50 +222,49 @@ export function dashboardBuilder(config = {}) {
         },
 
         get availableChartTypesForControls() {
-            const target = this.widgetControlsTarget;
-            if (!target || !target.source_type) return {};
-
             const allTypes = this.widgetLabels || {};
-            let filtered = {};
+            const target = this.widgetControlsTarget;
 
-            if (target.source_type === 'metric') {
+            let typeMap = {};
+            if (!target || !target.source_type) {
+                typeMap = allTypes;
+            } else if (target.source_type === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
-                return filtered;
-            }
-
-            if (target.source_type === 'kpi') {
-                const kpiId = target.source_config?.custom_kpi_id;
-                if (!kpiId) return allTypes;
-
-                const kpiData = this.kpis[kpiId];
+            } else if (target.source_type === 'kpi') {
+                const kpiId = target.source_config?.custom_kpi_id || target.custom_kpi_id;
+                const kpiData = kpiId ? this.kpis[kpiId] : null;
                 const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
-
-                if (allowed.length === 0) return allTypes;
-
-                for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                if (allowed.length > 0) {
+                    for (const t of allowed) {
+                        if (allTypes[t]) typeMap[t] = allTypes[t];
+                    }
+                } else {
+                    typeMap = allTypes;
                 }
-                if (target.widget_type && !filtered[target.widget_type]) {
-                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
-                }
-                return filtered;
-            }
-
-            if (target.source_type === 'derived_metric') {
+            } else if (target.source_type === 'derived_metric') {
                 const allowed = config.derivedMetricWidgetTypes || [];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
-                if (target.widget_type && !filtered[target.widget_type]) {
-                    filtered[target.widget_type] = allTypes[target.widget_type] || target.widget_type;
-                }
-                return filtered;
+            } else {
+                typeMap = allTypes;
             }
 
-            return allTypes;
+            if (Object.keys(typeMap).length === 0) {
+                typeMap = {
+                    tile: 'Tile',
+                    line_chart: 'Line Chart',
+                    bar_chart: 'Bar Chart',
+                    sparkline: 'Sparkline',
+                    table: 'Table',
+                    gauge: 'Gauge'
+                };
+            }
+
+            return Object.entries(typeMap).map(([type, label]) => ({ type, label }));
         },
 
         // ─── UI Helpers ───
@@ -206,8 +278,15 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Initialization ──
         init() {
+            console.log('[DB][init] version=observer-2026-08-09', {
+                widgetCount: (this.widgets || []).length,
+                gridEl: !!document.getElementById('grid-stack'),
+                gridReady: !!this.grid
+            });
+
             this.$nextTick(() => {
                 const container = document.getElementById('grid-stack');
+                console.log('[DB][init] $nextTick', { container: !!container, gridReady: !!this.grid });
                 if (container && !this.grid) {
                     this.initGrid();
                 }
@@ -222,6 +301,21 @@ export function dashboardBuilder(config = {}) {
                 }
             });
 
+            window.addEventListener('keydown', (e) => {
+                if (!this.isDirty) return;
+                const key = e.key.toLowerCase();
+                const isReloadKey = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && key === 'r');
+                if (isReloadKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    this.pendingNavUrl = null;
+                    this.pendingNavReload = true;
+                    this.showUnsavedNavModal = true;
+                    return false;
+                }
+            }, true);
+
             const preventLivewireNav = (e) => {
                 if (!this.isDirty) return;
                 const el = e.target.closest('a[href], button[url], [wire\\:navigate]');
@@ -234,6 +328,7 @@ export function dashboardBuilder(config = {}) {
                     e.stopImmediatePropagation();
 
                     if (e.type === 'click' || e.type === 'pointerdown') {
+                        this.pendingNavReload = false;
                         this.pendingNavUrl = href;
                         this.showUnsavedNavModal = true;
                     }
@@ -257,6 +352,7 @@ export function dashboardBuilder(config = {}) {
             const origPushState = window.history.pushState;
             window.history.pushState = (state, title, url) => {
                 if (this.isDirty) {
+                    this.pendingNavReload = false;
                     this.pendingNavUrl = url;
                     this.showUnsavedNavModal = true;
                     return;
@@ -380,6 +476,118 @@ export function dashboardBuilder(config = {}) {
             });
         },
 
+        initGridItem(el, widget) {
+            console.log('[DB][initGridItem] CALL', {
+                id: widget.id,
+                grid: !!this.grid,
+                elConnected: el ? el.isConnected : false,
+                elId: el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : null,
+                hasNode: el ? !!el.gridstackNode : false,
+                parent: el ? (el.parentElement ? el.parentElement.id : null) : null,
+                isNew: !!widget._isNew,
+                gx: widget.grid_x, gy: widget.grid_y, gw: widget.grid_w, gh: widget.grid_h
+            });
+            const w = parseInt(widget.grid_w || 4, 10);
+            const h = parseInt(widget.grid_h || 3, 10);
+            const minW = 2;
+            const minH = 2;
+            const hasX = widget.grid_x !== undefined && widget.grid_x !== null;
+            const hasY = widget.grid_y !== undefined && widget.grid_y !== null;
+
+            const widgetOpts = {
+                id: widget.id,
+                w: w,
+                h: h,
+                minW: minW,
+                minH: minH,
+                ...(hasX && hasY ? { x: parseInt(widget.grid_x, 10), y: parseInt(widget.grid_y, 10), autoPosition: false } : { autoPosition: true })
+            };
+
+            el.setAttribute('gs-id', widget.id);
+            el.setAttribute('data-id', widget.id);
+
+            if (hasX && hasY) {
+                el.setAttribute('gs-x', widget.grid_x);
+                el.setAttribute('gs-y', widget.grid_y);
+                el.removeAttribute('gs-auto-position');
+            } else {
+                el.setAttribute('gs-auto-position', 'true');
+                el.removeAttribute('gs-x');
+                el.removeAttribute('gs-y');
+            }
+
+            let attempts = 0;
+            const registerNode = () => {
+                if (!el.isConnected) {
+                    console.log('[DB][initGridItem] retry-abandon el disconnected', { id: widget.id, attempts });
+                    return;
+                }
+                if (!this.grid) {
+                    console.log('[DB][initGridItem] retry grid missing', { id: widget.id, attempts });
+                    if (++attempts > 600) return;
+                    requestAnimationFrame(registerNode);
+                    return;
+                }
+                const header = el.querySelector('.widget-header');
+                if (!header) {
+                    console.log('[DB][initGridItem] retry header missing', { id: widget.id, attempts });
+                    if (++attempts > 600) return;
+                    requestAnimationFrame(registerNode);
+                    return;
+                }
+
+                if (el.gridstackNode) {
+                    el.gridstackNode.id = widget.id;
+                    console.log('[DB][initGridItem] updating existing node', { id: widget.id });
+                    this.grid.update(el, widgetOpts);
+                } else {
+                    const node = this.grid.makeWidget(el, widgetOpts);
+                    console.log('[DB][initGridItem] makeWidget result', {
+                        id: widget.id,
+                        node: !!node,
+                        elHasNode: !!el.gridstackNode,
+                        parent: el.parentElement ? el.parentElement.id : null,
+                        style: el.getAttribute('style'),
+                        classList: el.className
+                    });
+                    if (node && typeof node === 'object') {
+                        node.id = widget.id;
+                    }
+                }
+
+                if (typeof this.grid.movable === 'function') {
+                    this.grid.movable(el, true);
+                }
+                if (typeof this.grid.resizable === 'function') {
+                    this.grid.resizable(el, true);
+                }
+            };
+
+            registerNode();
+
+            if (widget._isNew) {
+                setTimeout(() => { widget._isNew = false; }, 2500);
+            }
+        },
+
+        addSeriesCard() {
+            this.widgetControlsForm.raw_series = this.widgetControlsForm.raw_series || [];
+            this.widgetControlsForm.raw_series.push({
+                channel: this.dashboardControls.channel || '',
+                metrics: [],
+                assets: []
+            });
+            if (this.dashboardControls.channel) {
+                this.onWidgetRawChannelChange(this.widgetControlsForm.raw_series.length - 1);
+            }
+        },
+
+        removeSeriesCard(index) {
+            if (this.widgetControlsForm.raw_series && index >= 0) {
+                this.widgetControlsForm.raw_series.splice(index, 1);
+            }
+        },
+
         // ─── Grid ──
         initGrid() {
             if (typeof GridStack === 'undefined') {
@@ -389,6 +597,11 @@ export function dashboardBuilder(config = {}) {
 
             const container = document.getElementById('grid-stack');
             if (!container) return;
+
+            console.log('[DB][initGrid] initializing', {
+                childCount: container.children.length,
+                directItems: container.querySelectorAll(':scope > .grid-stack-item').length
+            });
 
             this.grid = GridStack.init({
                 column: 12,
@@ -400,34 +613,90 @@ export function dashboardBuilder(config = {}) {
                 removable: false,
                 resizable: { handles: 'se' },
                 draggable: {
-                    handle: '.widget-header',
-                    scroll: true
+                    handle: '.widget-header, .widget-drag-handle, .widget-body-drag',
+                    scroll: false
                 },
             });
 
             let autoScrollTimer = null;
+            let multiDragStartPositions = null;
+
             this.grid.on('dragstart', (event, el) => {
                 let lastEvt = null;
                 const onPointerMove = (e) => { lastEvt = e; };
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('pointermove', onPointerMove, { passive: true });
+                window.addEventListener('mousemove', onPointerMove, { passive: true });
+
+                const primaryNode = el.gridstackNode;
+                const rawId = primaryNode ? (primaryNode.id || el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0;
+                const primaryStrId = String(rawId);
+
+                if (primaryStrId && this.selectedWidgetIds.some(id => String(id) === primaryStrId) && this.selectedWidgetIds.length > 1) {
+                    multiDragStartPositions = {};
+                    this.selectedWidgetIds.forEach(id => {
+                        const strId = String(id);
+                        const nodeEl = document.querySelector(`[gs-id="${strId}"], [data-id="${strId}"]`);
+                        if (nodeEl && nodeEl.gridstackNode) {
+                            multiDragStartPositions[strId] = {
+                                x: parseInt(nodeEl.gridstackNode.x, 10) || 0,
+                                y: parseInt(nodeEl.gridstackNode.y, 10) || 0,
+                                el: nodeEl
+                            };
+                        }
+                    });
+                    if (this.grid) this.grid.batchUpdate(true);
+                } else {
+                    multiDragStartPositions = null;
+                }
 
                 autoScrollTimer = setInterval(() => {
                     if (!lastEvt) return;
                     const clientY = lastEvt.clientY;
-                    const threshold = 100;
+                    const topThreshold = 40;
+                    const bottomThreshold = 40;
                     const viewportHeight = window.innerHeight;
 
-                    if (clientY < threshold) {
-                        const speed = Math.max(5, Math.round((threshold - clientY) / 2));
+                    if (clientY < topThreshold && window.scrollY > 0) {
+                        const speed = Math.max(4, Math.round((topThreshold - clientY) / 2));
                         window.scrollBy({ top: -speed, behavior: 'instant' });
-                    } else if (clientY > viewportHeight - threshold) {
-                        const speed = Math.max(5, Math.round((clientY - (viewportHeight - threshold)) / 2));
+                    } else if (clientY > viewportHeight - bottomThreshold) {
+                        const speed = Math.max(4, Math.round((clientY - (viewportHeight - bottomThreshold)) / 2));
                         window.scrollBy({ top: speed, behavior: 'instant' });
                     }
                 }, 16);
 
+                const syncGroupMove = () => {
+                    if (!multiDragStartPositions) return;
+                    const node = el.gridstackNode;
+                    if (!node) return;
+                    const pStrId = String(node.id || el.getAttribute('gs-id') || el.getAttribute('data-id'));
+                    const pStart = multiDragStartPositions[pStrId];
+                    if (!pStart) return;
+
+                    const dx = (parseInt(node.x, 10) || 0) - pStart.x;
+                    const dy = (parseInt(node.y, 10) || 0) - pStart.y;
+
+                    Object.keys(multiDragStartPositions).forEach(idKey => {
+                        const otherId = String(idKey);
+                        if (otherId !== pStrId) {
+                            const start = multiDragStartPositions[idKey];
+                            if (start && start.el && this.grid) {
+                                const targetX = Math.max(0, start.x + dx);
+                                const targetY = Math.max(0, start.y + dy);
+                                this.grid.update(start.el, { x: targetX, y: targetY, autoPosition: false });
+                            }
+                        }
+                    });
+                };
+
+                this.grid.on('drag', syncGroupMove);
+
                 const cleanup = () => {
+                    syncGroupMove();
+                    if (multiDragStartPositions && this.grid) {
+                        this.grid.batchUpdate(false);
+                    }
+                    multiDragStartPositions = null;
                     if (autoScrollTimer) {
                         clearInterval(autoScrollTimer);
                         autoScrollTimer = null;
@@ -435,6 +704,7 @@ export function dashboardBuilder(config = {}) {
                     window.removeEventListener('pointermove', onPointerMove);
                     window.removeEventListener('mousemove', onPointerMove);
                     if (this.grid) {
+                        this.grid.off('drag', syncGroupMove);
                         this.grid.off('dragstop', cleanup);
                     }
                 };
@@ -453,10 +723,76 @@ export function dashboardBuilder(config = {}) {
                 this.isDirty = (currentSignature !== this._initialLayoutSignature);
             });
 
+            this.registerGridItemsObserver();
+            this.syncExistingGridItems();
+
+            console.log('[DB][initGrid] initialized', {
+                grid: !!this.grid,
+                items: container.querySelectorAll(':scope > .grid-stack-item').length,
+                nodes: Array.from(container.querySelectorAll(':scope > .grid-stack-item')).map(el => ({
+                    id: el.getAttribute('gs-id') || el.getAttribute('data-id'),
+                    node: !!el.gridstackNode
+                })),
+                observerRegistered: !!this._gridItemsObserver
+            });
+
             setTimeout(() => {
                 this._initialLayoutSignature = JSON.stringify(this.getLayout());
                 this.isDirty = false;
             }, 500);
+        },
+
+        syncExistingGridItems() {
+            if (!this.grid) return;
+            const container = document.getElementById('grid-stack');
+            if (!container) return;
+            const items = container.querySelectorAll(':scope > .grid-stack-item');
+            console.log('[DB][syncExistingGridItems] found', items.length, 'direct items');
+            items.forEach(el => {
+                const rawId = el.getAttribute('gs-id') || el.getAttribute('data-id');
+                if (rawId === null || rawId === undefined) return;
+                const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                if (widget) {
+                    this.initGridItem(el, widget);
+                } else {
+                    console.log('[DB][syncExistingGridItems] NO widget match for el', { rawId });
+                }
+            });
+        },
+
+        registerGridItemsObserver() {
+            if (this._gridItemsObserver || !this.grid) return;
+            const container = document.getElementById('grid-stack');
+            if (!container) return;
+
+            this._gridItemsObserver = new MutationObserver((mutations) => {
+                if (!this.grid) return;
+                mutations.forEach((mutation) => {
+                    if (mutation.type !== 'childList') return;
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType !== 1 || !node.classList || !node.classList.contains('grid-stack-item')) return;
+                        if (node.gridstackNode) return;
+                        const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
+                        if (rawId === null || rawId === undefined) return;
+                        const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                        console.log('[DB][observer] added grid-stack-item', {
+                            rawId,
+                            widgetFound: !!widget,
+                            widgetId: widget ? widget.id : null,
+                            elHasNode: !!node.gridstackNode,
+                            parent: node.parentElement ? node.parentElement.id : null,
+                            connected: node.isConnected,
+                            isNew: widget ? !!widget._isNew : false
+                        });
+                        if (widget) {
+                            this.initGridItem(node, widget);
+                        }
+                    });
+                });
+            });
+
+            this._gridItemsObserver.observe(container, { childList: true });
+            console.log('[DB][observer] registered on #grid-stack');
         },
 
         saveLayout() {
@@ -497,17 +833,29 @@ export function dashboardBuilder(config = {}) {
 
         getLayout() {
             if (!this.grid) return [];
-            const nodes = (this.grid.engine && this.grid.engine.nodes) ? this.grid.engine.nodes : (this.grid.save(false) || []);
-            return nodes.map(node => ({
-                id: node.id || (node.el ? parseInt(node.el.getAttribute('gs-id')) : 0),
-                x: node.x,
-                y: node.y,
-                w: node.w,
-                h: node.h,
-            })).filter(node => node.id !== 0);
+            const nodes = (this.grid.engine && this.grid.engine.nodes && this.grid.engine.nodes.length > 0)
+                ? this.grid.engine.nodes
+                : (this.grid.save(false) || []);
+
+            return nodes.map(node => {
+                const el = node.el;
+                const rawId = node.id || (el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0);
+                return {
+                    id: parseInt(rawId, 10) || 0,
+                    x: parseInt(node.x, 10) || 0,
+                    y: parseInt(node.y, 10) || 0,
+                    w: parseInt(node.w, 10) || 4,
+                    h: parseInt(node.h, 10) || 3,
+                };
+            }).filter(node => node.id !== 0)
+              .sort((a, b) => a.id - b.id);
         },
 
         reloadGrid() {
+            if (this._gridItemsObserver) {
+                this._gridItemsObserver.disconnect();
+                this._gridItemsObserver = null;
+            }
             if (this.grid) {
                 this.grid.destroy(false);
                 this.grid = null;
@@ -592,16 +940,27 @@ export function dashboardBuilder(config = {}) {
 
         parseLocalizedValue(val, locale = (document.documentElement.lang || 'en')) {
             if (!val) return '';
+            if (Array.isArray(val)) return '';
             if (typeof val === 'object') {
                 return val[locale] || val['en'] || Object.values(val)[0] || '';
             }
-            if (typeof val === 'string' && val.trim().startsWith('{') && val.trim().endsWith('}')) {
-                try {
-                    const parsed = JSON.parse(val);
-                    if (typeof parsed === 'object' && parsed !== null) {
-                        return parsed[locale] || parsed['en'] || Object.values(parsed)[0] || val;
-                    }
-                } catch (e) {}
+            if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if (trimmed === '[]' || trimmed === '{}') return '';
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (typeof parsed === 'object' && parsed !== null) {
+                            return parsed[locale] || parsed['en'] || Object.values(parsed)[0] || '';
+                        }
+                    } catch (e) {}
+                }
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) return '';
+                    } catch (e) {}
+                }
             }
             return String(val);
         },
@@ -610,6 +969,7 @@ export function dashboardBuilder(config = {}) {
         widgetControlsError: '',
         activeIdentityLang: 'en',
         openWidgetControls(widget) {
+            console.log('[dashboard-builder] openWidgetControls called with widget:', widget);
             this.widgetControlsError = '';
             this.activeIdentityLang = document.documentElement.lang || 'en';
             const wc = widget.controls || {};
@@ -628,28 +988,42 @@ export function dashboardBuilder(config = {}) {
             let titles = { en: '', es: '' };
             let descriptions = { en: '', es: '' };
 
-            if (widget.titles && typeof widget.titles === 'object') {
+            if (widget.titles && typeof widget.titles === 'object' && !Array.isArray(widget.titles)) {
                 titles = { ...widget.titles };
             } else if (widget.title) {
-                if (typeof widget.title === 'object') {
+                if (typeof widget.title === 'object' && !Array.isArray(widget.title)) {
                     titles = { ...widget.title };
                 } else if (typeof widget.title === 'string' && widget.title.trim().startsWith('{')) {
-                    try { titles = JSON.parse(widget.title); } catch (e) {}
+                    try { 
+                        const parsed = JSON.parse(widget.title);
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) titles = parsed;
+                    } catch (e) {}
                 }
             }
 
-            if (widget.descriptions && typeof widget.descriptions === 'object') {
+            if (widget.descriptions && typeof widget.descriptions === 'object' && !Array.isArray(widget.descriptions)) {
                 descriptions = { ...widget.descriptions };
             } else if (widget.description) {
-                if (typeof widget.description === 'object') {
+                if (typeof widget.description === 'object' && !Array.isArray(widget.description)) {
                     descriptions = { ...widget.description };
                 } else if (typeof widget.description === 'string' && widget.description.trim().startsWith('{')) {
-                    try { descriptions = JSON.parse(widget.description); } catch (e) {}
+                    try { 
+                        const parsed = JSON.parse(widget.description);
+                        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) descriptions = parsed;
+                    } catch (e) {}
                 }
             }
 
-            const baseTitle = this.parseLocalizedValue(widget.title || widget.name || '');
-            const baseDesc = this.parseLocalizedValue(widget.description || '');
+            const cleanStr = (s) => (s && s !== '[]' && s !== '{}' && !s.startsWith('[')) ? String(s) : '';
+
+            Object.keys(titles).forEach(k => { titles[k] = cleanStr(titles[k]); });
+            Object.keys(descriptions).forEach(k => { descriptions[k] = cleanStr(descriptions[k]); });
+
+            const validTitle = (widget.title && widget.title !== '[]' && widget.title !== '{}') ? widget.title : (widget.name || '');
+            const validDesc = (widget.description && widget.description !== '[]' && widget.description !== '{}') ? widget.description : '';
+
+            const baseTitle = this.parseLocalizedValue(validTitle);
+            const baseDesc = this.parseLocalizedValue(validDesc);
 
             if (!titles.en && !titles.es) {
                 titles.en = baseTitle;
@@ -697,7 +1071,23 @@ export function dashboardBuilder(config = {}) {
             };
 
             if (widget.source_type !== 'kpi') {
-                if (wc.metrics && wc.metrics.length > 0) {
+                if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
+                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
+                        channel: s.channel || '',
+                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                        assets: Array.isArray(s.assets) ? [...s.assets] : []
+                    }));
+                } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
+                    const seriesKeys = Object.keys(wc.series_channels);
+                    const groupedSeries = [];
+                    seriesKeys.forEach((key) => {
+                        const channel = wc.series_channels[key] || wc.channel || '';
+                        const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
+                        const metrics = (wc.metrics && Array.isArray(wc.metrics)) ? (wc.metrics[key] ? [wc.metrics[key]] : wc.metrics) : [];
+                        groupedSeries.push({ channel, metrics, assets });
+                    });
+                    this.widgetControlsForm.raw_series = groupedSeries;
+                } else if (wc.metrics && wc.metrics.length > 0) {
                     const groupedSeries = [];
                     wc.metrics.forEach((m, i) => {
                         const channel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
@@ -705,7 +1095,7 @@ export function dashboardBuilder(config = {}) {
 
                         const existing = groupedSeries.find(s => s.channel === channel && JSON.stringify(s.assets) === JSON.stringify(assets));
                         if (existing) {
-                            if (m) existing.metrics.push(m);
+                            if (m && !existing.metrics.includes(m)) existing.metrics.push(m);
                         } else {
                             groupedSeries.push({ channel, metrics: m ? [m] : [], assets });
                         }
@@ -742,11 +1132,28 @@ export function dashboardBuilder(config = {}) {
 
             const savedMetrics = wc.metrics || [];
 
-            this.widgetKpiConfig = {};
+            if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id && this.$wire) {
+                const dm = (this.derivedMetrics || {})[widget.source_config.derived_metric_id];
+                if (dm) {
+                    widget.dmSourceSeries = dm.source_series || [];
+                    widget.dmSourceSeries.forEach((series) => {
+                        const ch = series.channel;
+                        if (ch && !this.allChannelAssets[ch]) {
+                            this.$wire.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                            });
+                        }
+                        if (ch && !this.allChannelAssetGroups[ch]) {
+                            this.$wire.getAssetGroupsForChannel(ch).then(groups => {
+                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
+                            });
+                        }
+                    });
+                }
+            }
+
             if (widget.source_type === 'kpi' && widget.source_config && widget.source_config.custom_kpi_id && this.$wire) {
                 this.$wire.getKpiConfiguration(widget.source_config.custom_kpi_id).then(config => {
-                    console.log('DEBUG BUILDER getKpiConfiguration result:', config);
-                    // Extract the actual UI state from the KPI filters
                     const uiState = config?.filters?._ui_state || config;
                     this.widgetKpiConfig = {
                         dependent_channel: uiState.dependent_channel,
@@ -756,8 +1163,6 @@ export function dashboardBuilder(config = {}) {
                         dependent_asset_filter: uiState.dependent_asset_filter,
                         independent_variables: uiState.independent_variables || {},
                     };
-                    console.log('DEBUG BUILDER widgetKpiConfig:', this.widgetKpiConfig);
-                    console.log('DEBUG BUILDER dependentDm:', this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id], 'allDMs:', Object.keys(this.derivedMetrics || {}));
                     if (this.widgetControlsForm.date_inherit) {
                         this.widgetControlsForm.date_start = config?.start_date || this.dashboardControls.date_start || '';
                         this.widgetControlsForm.date_end = config?.end_date || this.dashboardControls.date_end || '';
@@ -802,7 +1207,6 @@ export function dashboardBuilder(config = {}) {
                     };
                     if (this.widgetKpiConfig.dependent_dm_id) {
                         initDmKpiAssets('dep', this.widgetKpiConfig.dependent_dm_id);
-                        // Populate dependent_channel from DM's source_series if not already set
                         const depDm = this.derivedMetrics?.[this.widgetKpiConfig.dependent_dm_id];
                         if (depDm && depDm.source_series && depDm.source_series.length > 0 && !this.widgetKpiConfig.dependent_channel) {
                             this.widgetKpiConfig.dependent_channel = depDm.source_series[0].channel;
@@ -857,12 +1261,10 @@ export function dashboardBuilder(config = {}) {
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                                // Auto-select first metric for KPI dependent series if dynamic and none selected
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
                                     const firstMetric = Object.keys(metrics)[0];
                                     this.widgetControlsForm.metrics[0] = firstMetric;
                                 }
-                                // Auto-select for independent variables
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
@@ -892,33 +1294,19 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     this.loadWidgetMetrics(savedMetrics);
+                    this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                    this.showWidgetControls = true;
+                }).catch(err => {
+                    console.error('[dashboard-builder] getKpiConfiguration failed:', err);
+                    this.loadWidgetMetrics(savedMetrics);
+                    this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                    this.showWidgetControls = true;
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
+                this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
+                this.showWidgetControls = true;
             }
-
-            if (widget.source_type === 'derived_metric' && widget.source_config?.derived_metric_id && this.$wire) {
-                const dm = this.derivedMetrics[widget.source_config.derived_metric_id];
-                if (dm) {
-                    widget.dmSourceSeries = dm.source_series || [];
-                    widget.dmSourceSeries.forEach((series, idx) => {
-                        const ch = series.channel;
-                        if (ch && !this.allChannelAssets[ch]) {
-                            this.$wire.getAssetsForChannel(ch).then(assets => {
-                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
-                            });
-                        }
-                        if (ch && !this.allChannelAssetGroups[ch]) {
-                            this.$wire.getAssetGroupsForChannel(ch).then(groups => {
-                                this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
-                            });
-                        }
-                    });
-                }
-            }
-
-            this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
-            this.showWidgetControls = true;
         },
 
         loadWidgetMetrics(savedMetrics) {
@@ -1239,8 +1627,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_assets = {};
                 payload.series_channels = {};
 
-                let validIdx = 0;
-                c.raw_series.forEach((s) => {
+                c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0) ? s.metrics : [''];
 
                     metricsToSave.forEach(m => {
@@ -1248,13 +1635,13 @@ export function dashboardBuilder(config = {}) {
                     });
 
                     let channelAssets = this.allChannelAssets[s.channel] || {};
-                    let validAssets = [...(s.assets || [])].filter(id => {
-                        return channelAssets[id] !== undefined;
-                    });
+                    let validAssets = [...(s.assets || [])];
+                    if (Object.keys(channelAssets).length > 0) {
+                        validAssets = validAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
+                    }
 
-                    payload.series_assets[validIdx] = validAssets;
-                    payload.series_channels[validIdx] = s.channel || '';
-                    validIdx++;
+                    payload.series_assets[sIdx] = validAssets;
+                    payload.series_channels[sIdx] = s.channel || '';
                 });
                 if (payload.series_channels['0']) {
                     payload.channel = payload.series_channels['0'];
@@ -1403,39 +1790,70 @@ export function dashboardBuilder(config = {}) {
         },
 
         configureWidget(id) {
-            const widget = this.widgets.find(w => w.id === id);
-            if (widget) this.openWidgetControls(widget);
+            console.log('[dashboard-builder] configureWidget called for id:', id, 'type:', typeof id);
+            const widget = this.widgets.find(w => String(w.id) === String(id));
+            console.log('[dashboard-builder] configureWidget found widget:', widget);
+            if (widget) {
+                this.openWidgetControls(widget);
+            } else {
+                console.error('[dashboard-builder] configureWidget failed to find widget with id:', id, 'among available widgets:', this.widgets.map(w => w.id));
+            }
         },
 
-        deleteWidget(id) {
-            if (confirm('Remove this widget?')) {
-                if (this.$wire) {
-                    this.$wire.deleteWidget(id).then(() => {
-                        const el = document.querySelector(`[gs-id="${id}"]`);
-                        if (el && this.grid) this.grid.removeWidget(el, false);
-                        this.widgets = this.widgets.filter(w => w.id !== id);
-                    });
-                }
+        deleteWidget(id, skipConfirm = false) {
+            console.log('[dashboard-builder] deleteWidget requested for id:', id);
+            if (!skipConfirm) {
+                this.confirmDeleteWidget(id);
+                return;
+            }
+            if (this.$wire) {
+                this.$wire.deleteWidget(id).then(() => {
+                    console.log('[dashboard-builder] deleteWidget backend confirmed for id:', id);
+                    const el = document.querySelector(`[gs-id="${id}"]`) || document.querySelector(`[data-id="${id}"]`);
+                    console.log('[dashboard-builder] deleteWidget DOM element found:', el);
+                    if (el && this.grid) {
+                        this.grid.removeWidget(el, true);
+                    }
+                    this.widgets = this.widgets.filter(w => String(w.id) !== String(id));
+                    console.log('[dashboard-builder] deleteWidget remaining widgets:', this.widgets.map(w => w.id));
+                }).catch(err => {
+                    console.error('[dashboard-builder] deleteWidget wire call error:', err);
+                });
             }
         },
 
         duplicateWidget(id) {
-            if (!this.$wire) return;
-            this.$wire.duplicateWidget(id).then(widget => {
+            console.log('[DB][duplicateWidget] CALL', { id, source: (this.widgets || []).find(w => String(w.id) === String(id)) });
+            if (!this.$wire) {
+                console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
+                return;
+            }
+            this.$wire.duplicateWidget(id).then(rawWidget => {
+                const widget = { ...rawWidget };
                 widget._isNew = true;
-                widget.grid_x = null;
-                widget.grid_y = null;
                 this.widgets.push(widget);
-
-                this.$nextTick(() => {
-                    setTimeout(() => {
-                        if (this.$wire) this.$wire.saveLayout(this.getLayout());
-                        const el = document.querySelector(`[gs-id="${widget.id}"]`);
-                        if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    }, 500);
+                this.widgets = [...this.widgets];
+                console.log('[DB][duplicateWidget] pushed, widgets now', {
+                    newId: widget.id,
+                    count: this.widgets.length,
+                    gx: widget.grid_x, gy: widget.grid_y, gw: widget.grid_w, gh: widget.grid_h
                 });
+                this.$nextTick(() => {
+                    const strId = String(widget.id);
+                    const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
+                    console.log('[DB][duplicateWidget] $nextTick lookup', {
+                        id: strId,
+                        el: el ? el.outerHTML.slice(0, 300) : null,
+                        hasNode: el ? !!el.gridstackNode : null,
+                        parent: el && el.parentElement ? el.parentElement.id : null,
+                        widgetsIncludes: (this.widgets || []).some(w => String(w.id) === strId)
+                    });
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }).catch(err => {
+                console.error('[dashboard-builder] duplicateWidget wire call error:', err);
             });
         },
 

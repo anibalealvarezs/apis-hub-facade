@@ -13,13 +13,15 @@ export function dashboardView(config = {}) {
         channelAssetGroupMap: config.channelAssetGroupMap || {},
         selectedAssetGroup: config.selectedAssetGroup || '',
         _dashboardConfiguredGroup: config.selectedAssetGroup || '',
+        _applyGroupOnInitialRender: false,
         init() {
             const groupKeys = Object.keys(this.assetGroups || {});
             if (!this.selectedAssetGroup && groupKeys.length > 0) {
                 this.selectedAssetGroup = groupKeys[0];
             }
+            this._applyGroupOnInitialRender = Boolean(this.selectedAssetGroup) && !this._dashboardConfiguredGroup;
             this.$nextTick(() => {
-                if (this.selectedAssetGroup && !this._dashboardConfiguredGroup) {
+                if (this._applyGroupOnInitialRender) {
                     this._applyAssetGroupAfterInitialRender();
                 }
                 const tryInit = () => {
@@ -130,55 +132,68 @@ export function dashboardView(config = {}) {
 
                 try {
                     const controls = JSON.parse(rawControls);
-                    const headerEl = el.closest('.grid-stack-item-content')?.querySelector('[data-variables]');
-                    let variables = {};
-                    if (headerEl) {
-                        try {
-                            variables = JSON.parse(headerEl.getAttribute('data-variables') || '{}');
-                        } catch (e) {}
-                    }
-
-                    let changed = false;
-
-                    for (const vKey in controls.series_assets || {}) {
-                        const channel = variables[vKey]?.channel;
-                        if (!channel) continue;
-                        const currentAssets = controls.series_assets[vKey] || [];
-                        if (currentAssets.length === 0) continue;
-
-                        const groupId = this.selectedAssetGroup;
-                        const allowedAssets = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
-                            ? this.channelAssetGroupMap[channel][groupId].map(String)
-                            : [];
-
-                        const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
-
-                        let newAssets;
-                        if (validAssets.length > 0) {
-                            newAssets = validAssets;
-                        } else if (allowedAssets.length > 0) {
-                            newAssets = [allowedAssets[0]];
-                        } else {
-                            newAssets = ['___EMPTY_GROUP___'];
-                        }
-
-                        if (JSON.stringify(newAssets) !== JSON.stringify(currentAssets)) {
-                            controls.series_assets[vKey] = newAssets;
-                            changed = true;
-                        }
-                    }
-
-                    if (changed) {
-                        el.setAttribute('data-raw-controls', JSON.stringify(controls));
-                        this.reloadWidget(parseInt(widgetId), controls);
+                    const next = this._applyGroupToWidgetControls(controls, el);
+                    if (next !== controls) {
+                        el.setAttribute('data-raw-controls', JSON.stringify(next));
+                        this.reloadWidget(parseInt(widgetId), next);
                     }
                 } catch (e) {}
             });
         },
 
+        _applyGroupToWidgetControls(controls, el) {
+            const headerEl = el.closest('.grid-stack-item-content')?.querySelector('[data-variables]');
+            let variables = {};
+            if (headerEl) {
+                try {
+                    variables = JSON.parse(headerEl.getAttribute('data-variables') || '{}');
+                } catch (e) {}
+            }
+
+            const nextControls = { ...controls, series_assets: { ...(controls.series_assets || {}) } };
+            let changed = false;
+
+            for (const vKey in nextControls.series_assets) {
+                const channel = variables[vKey]?.channel;
+                if (!channel) continue;
+                const currentAssets = nextControls.series_assets[vKey] || [];
+                if (currentAssets.length === 0) continue;
+
+                const groupId = this.selectedAssetGroup;
+                const allowedAssets = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
+                    ? this.channelAssetGroupMap[channel][groupId].map(String)
+                    : [];
+
+                const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+
+                let newAssets;
+                if (validAssets.length > 0) {
+                    newAssets = validAssets;
+                } else if (allowedAssets.length > 0) {
+                    newAssets = [allowedAssets[0]];
+                } else {
+                    newAssets = ['___EMPTY_GROUP___'];
+                }
+
+                if (JSON.stringify(newAssets) !== JSON.stringify(currentAssets)) {
+                    nextControls.series_assets[vKey] = newAssets;
+                    changed = true;
+                }
+            }
+
+            return changed ? nextControls : controls;
+        },
+
         renderWidget(widgetId, el, controls) {
-            el.setAttribute('data-raw-controls', JSON.stringify(controls));
-            let effectiveControls = { ...controls };
+            let rawControls = controls;
+            if (this._applyGroupOnInitialRender && this.selectedAssetGroup) {
+                const filtered = this._applyGroupToWidgetControls(controls, el);
+                if (filtered !== controls) {
+                    rawControls = filtered;
+                }
+            }
+            el.setAttribute('data-raw-controls', JSON.stringify(rawControls));
+            let effectiveControls = { ...rawControls };
 
             if (window.pvToken) {
                 effectiveControls.pv_token = window.pvToken;

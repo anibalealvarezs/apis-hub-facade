@@ -104,25 +104,28 @@ class TokenAuthorityController extends Controller
                         'refresh_token' => null,
                     ]);
 
-                    // Notify the true owner
-                    $owner = $project->trueOwner;
-                    if ($owner) {
-                        $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
+                    $dedupeKey = "integration_disconnected_notified_{$project->id}_{$profile->provider}";
+                    if (\Illuminate\Support\Facades\Cache::add($dedupeKey, true, now()->addMinutes(60))) {
+                        // Notify the true owner
+                        $owner = $project->trueOwner;
+                        if ($owner) {
+                            $owner->notify(new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider));
+                        }
+
+                        // Also notify project editors (those with project_editor role)
+                        $editorIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->where('roles.name', 'project_editor')
+                            ->where('model_has_roles.project_id', $project->id)
+                            ->pluck('model_has_roles.model_id');
+
+                        $project->users()
+                            ->where('users.id', '!=', $project->user_id)
+                            ->whereIn('users.id', $editorIds)
+                            ->each(fn ($user) => $user->notify(
+                                new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider)
+                            ));
                     }
-
-                    // Also notify project editors (those with project_editor role)
-                    $editorIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
-                        ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                        ->where('roles.name', 'project_editor')
-                        ->where('model_has_roles.project_id', $project->id)
-                        ->pluck('model_has_roles.model_id');
-
-                    $project->users()
-                        ->where('users.id', '!=', $project->user_id)
-                        ->whereIn('users.id', $editorIds)
-                        ->each(fn ($user) => $user->notify(
-                            new \App\Notifications\IntegrationDisconnectedNotification($project, $profile->provider)
-                        ));
 
                     // Force a configuration deployment to the tenant so it receives the is_disconnected=true flag immediately
                     \App\Jobs\HydrateProjectConfigJob::dispatch($project);

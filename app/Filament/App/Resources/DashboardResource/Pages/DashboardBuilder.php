@@ -44,13 +44,28 @@ class DashboardBuilder extends Page
             ->orderBy('grid_x')
             ->get();
 
+        $this->widgets = $rawWidgets->map(fn (DashboardWidget $w) => $this->formatWidgetToArray($w))->toArray();
+
+        $this->gridState = array_map(fn ($w) => [
+            'id' => $w['id'],
+            'x' => $w['grid_x'],
+            'y' => $w['grid_y'],
+            'w' => $w['grid_w'],
+            'h' => $w['grid_h'],
+        ], $this->widgets ?? []);
+
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets DONE", ['count' => count($this->widgets)]);
+    }
+
+    public function formatWidgetToArray(DashboardWidget $widget): array
+    {
         $locale = app()->getLocale();
-        $resolveField = function (DashboardWidget $widget, string $field) use ($locale) {
-            $trans = $widget->getTranslation($field, $locale);
+        $resolveField = function (DashboardWidget $w, string $field) use ($locale) {
+            $trans = $w->getTranslation($field, $locale);
             if (! empty($trans)) {
                 return $trans;
             }
-            $val = $widget->getAttributes()[$field] ?? null;
+            $val = $w->getAttributes()[$field] ?? null;
             if (is_string($val)) {
                 return $val;
             }
@@ -61,33 +76,25 @@ class DashboardBuilder extends Page
             return '';
         };
 
-        $this->widgets = $rawWidgets->map(function ($widget) use ($resolveField) {
-            $arr = $widget->toArray();
-            $arr['title'] = $resolveField($widget, 'title');
-            $arr['name'] = $resolveField($widget, 'name');
-            $arr['description'] = $resolveField($widget, 'description');
-            $arr['titles'] = $widget->getTranslations('title');
-            $arr['descriptions'] = $widget->getTranslations('description');
-            return $arr;
-        })->toArray();
-
-        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder loadWidgets DONE", ['count' => count($this->widgets)]);
-
-        $this->gridState = array_map(fn ($w) => [
-            'id' => $w['id'],
-            'x' => $w['grid_x'],
-            'y' => $w['grid_y'],
-            'w' => $w['grid_w'],
-            'h' => $w['grid_h'],
-        ], $this->widgets ?? []);
+        $arr = $widget->toArray();
+        $arr['title'] = $resolveField($widget, 'title');
+        $arr['name'] = $resolveField($widget, 'name');
+        $arr['description'] = $resolveField($widget, 'description');
+        $arr['titles'] = $widget->getTranslations('title');
+        $arr['descriptions'] = $widget->getTranslations('description');
+        return $arr;
     }
 
     public function saveLayout(array $gridItems): void
     {
         $service = app(\App\Services\DashboardService::class);
         $service->saveLayout($this->dashboard, $gridItems);
-        $this->gridState = $gridItems;
-        $this->unsavedChanges = true;
+        // NOTE: Do NOT call $this->loadWidgets() or rewrite $this->gridState here.
+        // Both are serialized into the x-data attribute; changing them makes Livewire
+        // re-initialize the dashboard-builder Alpine component and destroys Alpine scope
+        // on <template> x-for/x-if elements (ReferenceError: ... is not defined; series
+        // templates stop rendering). The client grid already holds the saved layout.
+        $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
 
         Notification::make()
             ->title(__('Layout saved'))
@@ -159,7 +166,11 @@ class DashboardBuilder extends Page
         }
         $widget->save();
 
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here.
+        // The JS (confirmWidgetControls) already updates Alpine state locally.
+        // Calling loadWidgets() triggers a Livewire re-render/morph that destroys
+        // Alpine scope on <template> elements, causing ReferenceErrors for
+        // widgetKpiConfig, channels, etc.
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -386,7 +397,11 @@ class DashboardBuilder extends Page
         $service = app(\App\Services\DashboardService::class);
         $widget = $service->addWidget($this->dashboard, $data);
 
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here.
+        // The JS (confirmAddWidget) already updates Alpine state locally.
+        // Calling loadWidgets() rewrites the x-data widgets JSON, forcing Alpine
+        // to re-initialize the whole dashboard-builder component (grid, selection,
+        // isDirty) on every add/duplicate/delete.
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -394,7 +409,7 @@ class DashboardBuilder extends Page
             ->success()
             ->send();
 
-        return $widget->toArray();
+        return $this->formatWidgetToArray($widget);
     }
 
     public function deleteWidget(int $widgetId): void
@@ -407,7 +422,7 @@ class DashboardBuilder extends Page
         }
 
         $service->removeWidget($widget);
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -426,7 +441,7 @@ class DashboardBuilder extends Page
         }
 
         $newWidget = $service->duplicateWidget($widget);
-        $this->loadWidgets();
+        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
         $this->unsavedChanges = true;
 
         Notification::make()
@@ -434,7 +449,7 @@ class DashboardBuilder extends Page
             ->success()
             ->send();
 
-        return $newWidget->toArray();
+        return $this->formatWidgetToArray($newWidget);
     }
 
     // ─── Sharing ───

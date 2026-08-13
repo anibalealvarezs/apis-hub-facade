@@ -8,8 +8,16 @@ use Illuminate\Support\Carbon;
 
 class FacebookOrganicDashboard extends Page
 {
+    use \App\Filament\App\Pages\Concerns\RedirectsWhenChannelDisabled;
+
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
+
+    public static function getNavigationIcon(): string | \Illuminate\Contracts\Support\Htmlable | null
+    {
+        return \App\Support\BrandIcon::facebook();
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Facebook Organic');
@@ -36,12 +44,15 @@ class FacebookOrganicDashboard extends Page
     protected static string $view = 'filament.app.pages.facebook-organic-dashboard';
     protected static ?string $slug = 'facebook-organic';
 
+    protected static function getChannelConfigKey(): string
+    {
+        return 'facebook_organic';
+    }
+
     public static function canAccess(): bool
     {
         if (!auth()->user()->can('view_data')) return false;
-        $tenant = Filament::getTenant();
-        $config = $tenant->sync_config ?? [];
-        return !empty($config['facebook_organic']['enabled']);
+        return static::isChannelEnabled();
     }
 
     public array $selectedAccounts = [];

@@ -21,19 +21,21 @@
                                              x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isAnySectionLoading }"/>
                     <span>{{ __('Update') }}</span>
                 </button>
-                <div class="relative" x-data="{ open: false, searchAccount: '' }" @click.outside="open = false">
-                    <button @click="open = !open" type="button"
+                <div class="relative" x-data="uiDropdown()" @click.outside="open = false"
+                     @scroll.document.capture="recompute()" @resize.window="recompute()">
+                    <button @click="toggle()" type="button" x-ref="trigger"
 class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px] dash-select-wide">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                               x-text="!selectedAccount ? '{{ __('Select Property...') }}' : (accountNames[selectedAccount] || selectedAccount)"></span>
                         <x-heroicon-m-chevron-down class="w-4 h-4 ml-2 flex-shrink-0 text-gray-500 dark:text-gray-400"/>
                     </button>
 
-                    <div x-show="open" x-transition x-cloak
-                         class="dash-dropdown absolute z-50 w-full sm:w-72 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col">
+                    <div x-show="open" x-transition x-cloak x-ref="panel"
+                         class="dash-dropdown absolute z-50 w-full sm:w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl right-0 md:left-0 md:right-auto flex flex-col"
+                         :class="dropUp ? 'dropdown-open-above' : ''">
 
                         <!-- Search Header -->
-                        <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+                        <div class="ui-asset-search-header p-3 border-b border-gray-200 dark:border-gray-700">
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
                                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>

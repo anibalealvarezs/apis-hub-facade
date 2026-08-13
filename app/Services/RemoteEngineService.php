@@ -79,6 +79,15 @@ class RemoteEngineService
      */
     public function execute(Project $project, callable $callback, int $timeout = 15)
     {
+        if (! $project->hasBeenDeployed()) {
+            Log::debug("Remote Engine Action skipped: Project '{$project->name}' has not been deployed yet.");
+
+            return [
+                'status' => 'error',
+                'message' => "Project '{$project->name}' has not been deployed yet.",
+            ];
+        }
+
         $t0 = microtime(true);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] execute ENTER", ['project_id' => $project->id, 'timeout' => $timeout]);
         try {
@@ -90,14 +99,19 @@ class RemoteEngineService
 
             return $result;
         } catch (Exception $e) {
-            Log::error("Remote Engine Action Failed: {$project->name}", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            $message = $e->getMessage();
+            if (preg_match('/500|502|503|Connection refused|Could not resolve host|cURL error/i', $message)) {
+                Log::warning("Remote Engine unreachable for project '{$project->name}': {$message}");
+            } else {
+                Log::error("Remote Engine Action Failed: {$project->name}", [
+                    'error' => $message,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
 
             return [
                 'status' => 'error',
-                'message' => $e->getMessage(),
+                'message' => $message,
             ];
         }
     }

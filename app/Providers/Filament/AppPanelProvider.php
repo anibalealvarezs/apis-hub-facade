@@ -21,6 +21,14 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        $this->app['view']->getFinder()->prependNamespace(
+            'filament-panels',
+            resource_path('views/vendor/filament-panels'),
+        );
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -67,7 +75,11 @@ class AppPanelProvider extends PanelProvider
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/filament-extras.css\') }}"><link rel="stylesheet" href="{{ asset(\'css/modals.css\') }}">')
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=' . filemtime(public_path('css/branding.css')) . '">
+                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=' . filemtime(public_path('css/filament-extras.css')) . '">
+                    <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=' . filemtime(public_path('css/modals.css')) . '">
+                ')
             )
             ->renderHook(
                 'panels::scripts.after',
@@ -92,7 +104,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::head.start',
-                fn () => \Illuminate\Support\Facades\Blade::render('
+                fn () => \Illuminate\Support\Facades\Blade::render('@include(\'filament.hooks.tooltip-debug\')') . \Illuminate\Support\Facades\Blade::render('
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -191,10 +203,6 @@ class AppPanelProvider extends PanelProvider
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Knowledge Base')),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Google')),
-                \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Meta')),
             ])
             ->pages([
                 \App\Filament\App\Pages\Dashboard::class,

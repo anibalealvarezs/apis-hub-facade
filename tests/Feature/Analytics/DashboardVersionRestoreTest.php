@@ -259,6 +259,6 @@ it('duplicates a single widget with a (Copy) suffix', function () {
     expect($dup->id)->not->toBe($w1->id);
     expect($dup->name)->toBe('W1 (Copy)');
     expect($dup->dashboard_id)->toBe($dashboard->id);
-    expect($dup->grid_x)->toBe(1);
-    expect($dup->grid_y)->toBe(1);
+    expect($dup->grid_x)->toBe(0);
+    expect($dup->grid_y)->toBe(2);
 });
