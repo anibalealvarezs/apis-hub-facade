@@ -519,3 +519,9 @@
 - PHP block now builds `$tooltipContentCollapsed` (title [+ anchors]) and `$tooltipContentExpanded` (anchors only, or null).
 - **IMPORTANT discovery:** `php artisan view:cache` does NOT compile `resources/views/vendor/**` overrides - Laravel's ViewCacheCommand uses `Finder::create()->exclude('vendor')`. Vendor overrides compile on-demand at runtime (this is why the appendTo fix worked in prod without cache issues). To verify an override's syntax: `app('view')->getEngineResolver()->resolve('blade')->getCompiler()->compile('<abs path>')` or render the component with a `slot` + relative `url` (anchors map needs a tenant session, so it returns [] in local tinker w/o DB).
 - Verified: direct compile OK; rendered HTML for the no-anchors branch correct; compiled source confirms anchors branch emits expanded/collapsed objects. Active-anchor highlight (app.js) unaffected - still targets .fi-subnav-tooltip-anchors.
+### Topbar widgets mobile simplification (2026-08-12)
+- resources/views/livewire/global-infrastructure-status.blade.php: below sm breakpoint (<640px) the topbar widgets collapse to essentials:
+  - Status: semaphore dot only (`hidden sm:inline` on the text span; title attr still gives the text).
+  - Sync/telemetry: percentage number only (`hidden sm:block` on the progress bar wrapper).
+  - Clock: time only (`hidden sm:block` on the clock icon svg, `hidden sm:inline` on the tz abbr).
+- Breakpoint follows the app convention (sm: = compact/mobile boundary, same file already used `w-20 sm:w-28`). view:cache OK.
