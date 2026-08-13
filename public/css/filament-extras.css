@@ -327,8 +327,7 @@
 .dark\:text-warning-500:is(.dark *) { color: #f59e0b; }
 
 /* ================================================================
-   Mobile top bar: logo is removed (hidden via `hidden lg:flex` on
-   the logo anchor in topbar-logo.blade.php) and the sidebar hamburger
+   Mobile top bar: logo is removed and the sidebar hamburger
    buttons move to the left of the top bar widgets. The default top bar
    renders TOPBAR_START (`.fi-topbar-hook-start`, logo + widgets) before
    the hamburger buttons; on mobile flex `order` reorders them so the
@@ -345,4 +344,72 @@
     .fi-topbar nav > .fi-topbar-hook-start {
         order: -1;
     }
+
+    .topbar-logo-anchor {
+        display: none !important;
+    }
 }
+
+@media (min-width: 1024px) {
+    .topbar-logo-anchor {
+        display: flex;
+    }
+}
+
+/* ================================================================
+   Top bar widgets mobile responsive rules:
+   On mobile (< 640px), collapse widgets to essentials:
+   - Semaphore: dot only (status text hidden)
+   - Telemetry/sync: percentage number only (progress bar hidden)
+   - Clock: time only (clock icon and timezone abbreviation hidden)
+   On desktop (>= 640px), all elements are fully visible.
+   ================================================================ */
+
+@media (max-width: 639.98px) {
+    .topbar-status-text,
+    .topbar-sync-progress,
+    .topbar-clock-icon,
+    .topbar-clock-tz {
+        display: none !important;
+    }
+}
+
+/* Responsive display utilities for Filament Blade templates */
+@media (min-width: 640px) {
+    .sm\:inline { display: inline !important; }
+    .sm\:block { display: block !important; }
+    .sm\:flex { display: flex !important; }
+    .sm\:hidden { display: none !important; }
+}
+
+@media (min-width: 768px) {
+    .md\:inline { display: inline !important; }
+    .md\:block { display: block !important; }
+    .md\:flex { display: flex !important; }
+    .md\:hidden { display: none !important; }
+}
+
+@media (min-width: 1024px) {
+    .lg\:inline { display: inline !important; }
+    .lg\:block { display: block !important; }
+    .lg\:flex { display: flex !important; }
+    .lg\:hidden { display: none !important; }
+}
+
+/* Dark mode display utilities */
+:is(.dark *) .dark\:hidden {
+    display: none !important;
+}
+
+:is(.dark *) .dark\:flex {
+    display: flex !important;
+}
+
+:is(.dark *) .dark\:inline {
+    display: inline !important;
+}
+
+:is(.dark *) .dark\:block {
+    display: block !important;
+}
+
