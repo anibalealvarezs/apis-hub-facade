@@ -206,6 +206,26 @@ class AppPanelProvider extends PanelProvider
             ])
             ->pages([
                 \App\Filament\App\Pages\Dashboard::class,
+                // Knowledge Base: Analytics
+                \App\Filament\App\Pages\Kb\AnalyticsOverview::class,
+                \App\Filament\App\Pages\KpiReference::class,
+                \App\Filament\App\Pages\DashboardsReference::class,
+                \App\Filament\App\Pages\DerivedMetricsReference::class,
+                // Knowledge Base: Data
+                \App\Filament\App\Pages\Kb\DataOverview::class,
+                \App\Filament\App\Pages\DataExplorerReference::class,
+                // Knowledge Base: Integrations
+                \App\Filament\App\Pages\Kb\IntegrationsOverview::class,
+                \App\Filament\App\Pages\ChannelsIntegrationsReference::class,
+                \App\Filament\App\Pages\SyncingProcessReference::class,
+                // Knowledge Base: Administration
+                \App\Filament\App\Pages\Kb\AdministrationOverview::class,
+                \App\Filament\App\Pages\ProjectRoles::class,
+                // Knowledge Base: Account, Projects & Billing
+                \App\Filament\App\Pages\Kb\AccountProjectsBillingOverview::class,
+                \App\Filament\App\Pages\AccountStructureReference::class,
+                \App\Filament\App\Pages\SubscriptionFeatures::class,
+                \App\Filament\App\Pages\AssetBillingReference::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
