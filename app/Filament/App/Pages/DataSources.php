@@ -253,15 +253,7 @@
 
             $this->hydrateFormFromDb($config);
 
-            $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-                ->where('status', 'locked')
-                ->whereNull('disabled_at')
-                ->where(function ($query) use ($tenant) {
-                    if ($tenant->last_deployed_at) {
-                        $query->where('locked_at', '>', $tenant->last_deployed_at);
-                    }
-                })
-                ->count();
+            $pendingAssets = $tenant->getPendingConfirmedAssetsCount();
 
             if ($pendingAssets > 0) {
                 Notification::make()
@@ -629,6 +621,7 @@
                     $tenant->update([
                         'health_status' => 'redeploying',
                         'deploy_started_at' => now(),
+                        'last_sync_started_at' => now(),
                     ]);
 
                     \App\Jobs\DeployProjectJob::dispatch($tenant);

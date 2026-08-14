@@ -123,15 +123,7 @@ class SyncSettings extends Page
             'google_user_id' => $tenant->google_user_id,
         ]);
 
-        $pendingAssets = \App\Models\AssetBillingLock::where('project_id', $tenant->id)
-            ->where('status', 'locked')
-            ->whereNull('disabled_at')
-            ->where(function ($query) use ($tenant) {
-                if ($tenant->last_deployed_at) {
-                    $query->where('locked_at', '>', $tenant->last_deployed_at);
-                }
-            })
-            ->count();
+        $pendingAssets = $tenant->getPendingConfirmedAssetsCount();
 
         if ($pendingAssets > 0) {
             Notification::make()

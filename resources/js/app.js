@@ -208,3 +208,60 @@ const initSubnavTooltipHighlight = () => {
 };
 
 initSubnavTooltipHighlight();
+
+// Scroll active main menu item into view on page load & collapse/uncollapse
+const initSidebarScrollToActive = () => {
+    const scrollToActive = () => {
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const sidebarNav = document.querySelector('.fi-sidebar nav, aside.fi-sidebar nav, .fi-sidebar-nav');
+                if (!sidebarNav) return;
+
+                const activeItem = sidebarNav.querySelector('.fi-sidebar-item-active, .fi-sidebar-item.fi-active, .fi-sidebar-group.fi-active');
+                if (!activeItem) return;
+
+                const navRect = sidebarNav.getBoundingClientRect();
+                const itemRect = activeItem.getBoundingClientRect();
+
+                const isVisible = (
+                    itemRect.top >= navRect.top &&
+                    itemRect.bottom <= navRect.bottom
+                );
+
+                if (!isVisible) {
+                    const targetScrollTop = sidebarNav.scrollTop + (itemRect.top - navRect.top) - (navRect.height / 2) + (itemRect.height / 2);
+                    sidebarNav.scrollTo({
+                        top: Math.max(0, targetScrollTop),
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100);
+        });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scrollToActive);
+    } else {
+        scrollToActive();
+    }
+
+    document.addEventListener('livewire:navigated', scrollToActive);
+
+    const attachSidebarWatcher = () => {
+        if (window.Alpine && window.Alpine.store('sidebar')) {
+            window.Alpine.effect(() => {
+                const isOpen = window.Alpine.store('sidebar').isOpen;
+                scrollToActive();
+            });
+        }
+    };
+
+    if (window.Alpine) {
+        attachSidebarWatcher();
+    } else {
+        document.addEventListener('alpine:initialized', attachSidebarWatcher);
+    }
+};
+
+initSidebarScrollToActive();
+
