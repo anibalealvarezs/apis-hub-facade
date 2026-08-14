@@ -473,6 +473,31 @@ class Project extends Model
     }
 
     /**
+     * Count newly confirmed assets that became locked after the project's last deployment or sync sequence.
+     */
+    public function getPendingConfirmedAssetsCount(): int
+    {
+        $latestDeployment = null;
+        if ($this->last_sync_started_at && $this->last_deployed_at) {
+            $latestDeployment = $this->last_sync_started_at->gt($this->last_deployed_at)
+                ? $this->last_sync_started_at
+                : $this->last_deployed_at;
+        } else {
+            $latestDeployment = $this->last_sync_started_at ?? $this->last_deployed_at;
+        }
+
+        if (!$latestDeployment) {
+            return 0;
+        }
+
+        return AssetBillingLock::where('project_id', $this->id)
+            ->where('status', 'locked')
+            ->whereNull('disabled_at')
+            ->where('locked_at', '>', $latestDeployment)
+            ->count();
+    }
+
+    /**
      * Count the number of enabled channels.
      */
     public function countEnabledChannels(bool $checkConnection = false): int
