@@ -211,23 +211,59 @@ initSubnavTooltipHighlight();
 
 // Scroll active main menu item into view on page load & collapse/uncollapse
 const initSidebarScrollToActive = () => {
+    const findActiveSidebarItem = (sidebarNav) => {
+        // 1. Direct class match for active sidebar items
+        let item = sidebarNav.querySelector('.fi-sidebar-item.fi-active') ||
+                   sidebarNav.querySelector('.fi-sidebar-item-active') ||
+                   sidebarNav.querySelector('a.fi-sidebar-item-button.bg-gray-100') ||
+                   sidebarNav.querySelector('.fi-sidebar-group.fi-active .fi-sidebar-item-button');
+                   
+        if (item) return item;
+
+        // 2. URL path & cluster prefix matching
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const links = Array.from(sidebarNav.querySelectorAll('a.fi-sidebar-item-button, a[href]'));
+
+        // 2a. Exact URL path match
+        for (const link of links) {
+            try {
+                const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+                if (linkPath && linkPath !== '/app' && linkPath === currentPath) {
+                    return link.closest('.fi-sidebar-item') || link;
+                }
+            } catch (e) {}
+        }
+
+        // 2b. Cluster prefix match (e.g. currentPath = /app/tenant/administration/overview matches linkPath = /app/tenant/administration)
+        for (const link of links) {
+            try {
+                const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+                if (linkPath && linkPath !== '/app' && linkPath.length > 5 && currentPath.startsWith(linkPath + '/')) {
+                    return link.closest('.fi-sidebar-item') || link;
+                }
+            } catch (e) {}
+        }
+
+        // 3. Fallback: active group wrapper
+        return sidebarNav.querySelector('.fi-sidebar-group.fi-active');
+    };
+
     const scrollToActive = () => {
         const performScroll = () => {
             const sidebarNav = document.querySelector('.fi-sidebar nav, aside.fi-sidebar nav, .fi-sidebar-nav');
             if (!sidebarNav) return;
 
-            // Prioritize exact active sidebar item over group wrapper
-            const activeItem = 
-                sidebarNav.querySelector('.fi-sidebar-item.fi-active') ||
-                sidebarNav.querySelector('.fi-sidebar-item-active') ||
-                sidebarNav.querySelector('a.fi-sidebar-item-button.bg-gray-100') ||
-                sidebarNav.querySelector('.fi-sidebar-group.fi-active .fi-sidebar-item-button') ||
-                sidebarNav.querySelector('.fi-sidebar-group.fi-active');
-
+            let activeItem = findActiveSidebarItem(sidebarNav);
             if (!activeItem) return;
 
+            // If active item is inside a collapsed group (hidden), target the group container
+            let targetElem = activeItem;
+            if (targetElem.getBoundingClientRect().height === 0 && targetElem.closest('.fi-sidebar-group')) {
+                targetElem = targetElem.closest('.fi-sidebar-group');
+            }
+
             const navRect = sidebarNav.getBoundingClientRect();
-            const itemRect = activeItem.getBoundingClientRect();
+            const itemRect = targetElem.getBoundingClientRect();
 
             if (navRect.height === 0 || itemRect.height === 0) return;
 
@@ -279,5 +315,6 @@ const initSidebarScrollToActive = () => {
 };
 
 initSidebarScrollToActive();
+
 
 
