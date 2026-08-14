@@ -212,30 +212,44 @@ initSubnavTooltipHighlight();
 // Scroll active main menu item into view on page load & collapse/uncollapse
 const initSidebarScrollToActive = () => {
     const scrollToActive = () => {
+        const performScroll = () => {
+            const sidebarNav = document.querySelector('.fi-sidebar nav, aside.fi-sidebar nav, .fi-sidebar-nav');
+            if (!sidebarNav) return;
+
+            // Prioritize exact active sidebar item over group wrapper
+            const activeItem = 
+                sidebarNav.querySelector('.fi-sidebar-item.fi-active') ||
+                sidebarNav.querySelector('.fi-sidebar-item-active') ||
+                sidebarNav.querySelector('a.fi-sidebar-item-button.bg-gray-100') ||
+                sidebarNav.querySelector('.fi-sidebar-group.fi-active .fi-sidebar-item-button') ||
+                sidebarNav.querySelector('.fi-sidebar-group.fi-active');
+
+            if (!activeItem) return;
+
+            const navRect = sidebarNav.getBoundingClientRect();
+            const itemRect = activeItem.getBoundingClientRect();
+
+            if (navRect.height === 0 || itemRect.height === 0) return;
+
+            const isVisible = (
+                itemRect.top >= navRect.top + 20 &&
+                itemRect.bottom <= navRect.bottom - 20
+            );
+
+            if (!isVisible) {
+                const targetScrollTop = sidebarNav.scrollTop + (itemRect.top - navRect.top) - (navRect.height / 2) + (itemRect.height / 2);
+                sidebarNav.scrollTo({
+                    top: Math.max(0, targetScrollTop),
+                    behavior: 'smooth'
+                });
+            }
+        };
+
+        // Stagger executions to handle Alpine x-collapse and layout transitions
         requestAnimationFrame(() => {
-            setTimeout(() => {
-                const sidebarNav = document.querySelector('.fi-sidebar nav, aside.fi-sidebar nav, .fi-sidebar-nav');
-                if (!sidebarNav) return;
-
-                const activeItem = sidebarNav.querySelector('.fi-sidebar-item-active, .fi-sidebar-item.fi-active, .fi-sidebar-group.fi-active');
-                if (!activeItem) return;
-
-                const navRect = sidebarNav.getBoundingClientRect();
-                const itemRect = activeItem.getBoundingClientRect();
-
-                const isVisible = (
-                    itemRect.top >= navRect.top &&
-                    itemRect.bottom <= navRect.bottom
-                );
-
-                if (!isVisible) {
-                    const targetScrollTop = sidebarNav.scrollTop + (itemRect.top - navRect.top) - (navRect.height / 2) + (itemRect.height / 2);
-                    sidebarNav.scrollTo({
-                        top: Math.max(0, targetScrollTop),
-                        behavior: 'smooth'
-                    });
-                }
-            }, 100);
+            performScroll();
+            setTimeout(performScroll, 100);
+            setTimeout(performScroll, 350);
         });
     };
 
@@ -245,6 +259,7 @@ const initSidebarScrollToActive = () => {
         scrollToActive();
     }
 
+    window.addEventListener('load', scrollToActive);
     document.addEventListener('livewire:navigated', scrollToActive);
 
     const attachSidebarWatcher = () => {
@@ -264,4 +279,5 @@ const initSidebarScrollToActive = () => {
 };
 
 initSidebarScrollToActive();
+
 
