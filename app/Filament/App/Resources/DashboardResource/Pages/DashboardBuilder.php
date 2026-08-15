@@ -443,6 +443,11 @@ class DashboardBuilder extends Page
     public function duplicateWidget(int $widgetId, ?array $currentLayout = null): array
     {
         $service = app(\App\Services\DashboardService::class);
+
+        if ($currentLayout && is_array($currentLayout) && count($currentLayout) > 0) {
+            $service->saveLayout($this->dashboard, $currentLayout);
+        }
+
         $widget = DashboardWidget::findOrFail($widgetId);
 
         if ($widget->dashboard_id !== $this->dashboard->id) {

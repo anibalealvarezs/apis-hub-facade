@@ -127,11 +127,13 @@ class DashboardService
         $clone = $widget->replicate();
         $clone->name = $widget->name . ' (Copy)';
 
+        $widget->dashboard->load('widgets');
+        $allWidgets = $widget->dashboard->widgets;
+
         $sourceW = $widget->grid_w ?? 4;
         $sourceH = $widget->grid_h ?? 3;
 
         $maxY = 0;
-        $allWidgets = $widget->dashboard->widgets;
         foreach ($allWidgets as $w) {
             $bottom = ($w->grid_y ?? 0) + ($w->grid_h ?? 3);
             if ($bottom > $maxY) {
@@ -144,10 +146,6 @@ class DashboardService
                 if (isset($item['id']) && (int)$item['id'] === (int)$widget->id) {
                     $sourceW = $item['w'] ?? $sourceW;
                     $sourceH = $item['h'] ?? $sourceH;
-                }
-                $bottom = ($item['y'] ?? 0) + ($item['h'] ?? 3);
-                if ($bottom > $maxY) {
-                    $maxY = $bottom;
                 }
             }
         }
