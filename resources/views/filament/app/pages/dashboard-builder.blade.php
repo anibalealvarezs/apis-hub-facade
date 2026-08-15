@@ -1713,7 +1713,7 @@
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
-                            <input type="text" x-model="addWidgetForm.name"
+                            <input type="text" x-model="widgetName"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                    :placeholder="'{{ __('My Widget') }}'"/>
                         </div>
@@ -1725,7 +1725,7 @@
                             <div class="grid grid-cols-1 gap-3">
                                 <template x-for="item in sourceTypesList" :key="item.type">
                                     <button type="button" class="p-3 rounded-lg border text-center text-sm transition-colors"
-                                            :class="addWidgetForm.source_type === item.type
+                                            :class="selectedSourceType === item.type
                                                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
                                             x-on:click="setSourceType(item.type)">
@@ -1736,11 +1736,11 @@
                         </div>
 
                         {{-- KPI (if kpi source) --}}
-                        <template x-if="addWidgetForm.source_type === 'kpi'">
+                        <template x-if="selectedSourceType === 'kpi'">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Select KPI') }}</label>
-                                <x-ui.select-input x-model="addWidgetForm.custom_kpi_id" class="w-full">
+                                <x-ui.select-input x-model="customKpiId" class="w-full">
                                     <x-ui.select-option value="">{{ __('Choose a KPI...') }}</x-ui.select-option>
                                     <template x-for="(kpi, id) in kpis" :key="id">
                                         <x-ui.select-option x-bind:value="id" x-text="kpi.name"></x-ui.select-option>
@@ -1750,11 +1750,11 @@
                         </template>
 
                         {{-- Derived Metric (if derived_metric source) --}}
-                        <template x-if="addWidgetForm.source_type === 'derived_metric'">
+                        <template x-if="selectedSourceType === 'derived_metric'">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Select Derived Metric') }}</label>
-                                <x-ui.select-input x-model="addWidgetForm.derived_metric_id" class="w-full">
+                                <x-ui.select-input x-model="derivedMetricId" class="w-full">
                                     <x-ui.select-option
                                         value="">{{ __('Choose a Derived Metric...') }}</x-ui.select-option>
                                     <template x-for="(dm, id) in derivedMetrics" :key="id">
@@ -1768,18 +1768,19 @@
                     {{-- Column 2 (Widget Types) --}}
                     <div class="space-y-6 md:col-span-2">
                         {{-- Widget Type --}}
-                        <template x-if="addWidgetForm.source_type">
+                        <template x-if="selectedSourceType">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Type') }}</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <template x-for="item in availableWidgetTypesList" :key="item.type">
                                         <button
+                                            type="button"
                                             class="p-3 rounded-xl border text-left transition-colors flex items-center gap-3"
-                                            :class="addWidgetForm.widget_type === item.type
+                                            :class="selectedWidgetType === item.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm'"
-                                            x-on:click="addWidgetForm.widget_type = item.type">
+                                            x-on:click="selectedWidgetType = item.type">
                                             <div
                                                 class="w-12 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center"
                                                 x-html="item.svg">

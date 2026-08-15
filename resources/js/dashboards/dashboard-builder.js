@@ -164,34 +164,37 @@ export function dashboardBuilder(config = {}) {
         sourceTypes: config.sourceTypes || {},
         kpis: config.kpis || {},
         derivedMetrics: config.derivedMetrics || {},
-        addWidgetForm: {
-            source_type: '',
-            custom_kpi_id: '',
-            derived_metric_id: '',
-            widget_type: '',
-            name: '',
+        selectedSourceType: '',
+        selectedWidgetType: '',
+        customKpiId: '',
+        derivedMetricId: '',
+        widgetName: '',
+
+        get addWidgetForm() {
+            return {
+                source_type: this.selectedSourceType,
+                widget_type: this.selectedWidgetType,
+                custom_kpi_id: this.customKpiId,
+                derived_metric_id: this.derivedMetricId,
+                name: this.widgetName,
+            };
         },
 
         openAddWidgetModal() {
             console.log('[DB][openAddWidgetModal] ENTER');
-            this.addWidgetForm = {
-                source_type: '',
-                custom_kpi_id: '',
-                derived_metric_id: '',
-                widget_type: '',
-                name: '',
-            };
+            this.selectedSourceType = '';
+            this.selectedWidgetType = '';
+            this.customKpiId = '';
+            this.derivedMetricId = '';
+            this.widgetName = '';
             this.showAddWidgetModal = true;
         },
 
         setSourceType(type) {
             console.log('[DB][setSourceType] CLICKED type:', type);
-            this.addWidgetForm = {
-                ...this.addWidgetForm,
-                source_type: type,
-                widget_type: ''
-            };
-            console.log('[DB][setSourceType] AFTER set addWidgetForm:', JSON.parse(JSON.stringify(this.addWidgetForm)));
+            this.selectedSourceType = type;
+            this.selectedWidgetType = '';
+            console.log('[DB][setSourceType] AFTER set selectedSourceType:', this.selectedSourceType);
         },
 
         get sourceTypesList() {
@@ -209,22 +212,24 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Computed ──
         get optimalWidgetTypes() {
-            if (this.addWidgetForm.source_type === 'kpi' && this.addWidgetForm.custom_kpi_id) {
-                const kpiData = this.kpis[this.addWidgetForm.custom_kpi_id];
+            if (this.selectedSourceType === 'kpi' && this.customKpiId) {
+                const kpiData = this.kpis ? this.kpis[this.customKpiId] : null;
                 return kpiData ? (kpiData.optimal_widgets || []) : [];
             }
             return [];
         },
 
         get availableWidgetTypes() {
+            const sourceType = this.selectedSourceType;
+            const kpiId = this.customKpiId;
             console.log('[DB][availableWidgetTypes] ENTER', {
-                sourceType: this.addWidgetForm ? this.addWidgetForm.source_type : null,
-                kpiId: this.addWidgetForm ? this.addWidgetForm.custom_kpi_id : null,
+                sourceType,
+                kpiId,
                 hasWidgetLabels: !!this.widgetLabels,
                 widgetLabelsKeys: this.widgetLabels ? Object.keys(this.widgetLabels) : []
             });
 
-            if (!this.addWidgetForm || !this.addWidgetForm.source_type) return {};
+            if (!sourceType) return {};
 
             const defaultLabels = {
                 tile: 'Number Tile',
@@ -244,13 +249,12 @@ export function dashboardBuilder(config = {}) {
 
             let filtered = {};
 
-            if (this.addWidgetForm.source_type === 'metric') {
+            if (sourceType === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
-            } else if (this.addWidgetForm.source_type === 'kpi') {
-                const kpiId = this.addWidgetForm.custom_kpi_id;
+            } else if (sourceType === 'kpi') {
                 if (!kpiId) {
                     const allowed = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
                     for (const t of allowed) {
@@ -270,7 +274,7 @@ export function dashboardBuilder(config = {}) {
                         }
                     }
                 }
-            } else if (this.addWidgetForm.source_type === 'derived_metric') {
+            } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
                     : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
