@@ -1045,7 +1045,11 @@ export function dashboardBuilder(config = {}) {
                 asset_group: c.asset_group || '',
                 show_asset_group_selector: c.show_asset_group_selector === true,
             };
-            if (this.$wire) this.$wire.saveDashboardControls(payload);
+            if (this.$wire) {
+                this.$wire.saveDashboardControls(payload).then(() => {
+                    this.dashboardControls = { ...payload };
+                });
+            }
             this.showDashboardControls = false;
         },
 
