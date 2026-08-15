@@ -184,28 +184,54 @@ export function dashboardBuilder(config = {}) {
         get availableWidgetTypes() {
             if (!this.addWidgetForm.source_type) return {};
 
-            const allTypes = this.widgetLabels || {};
+            const defaultLabels = {
+                tile: 'Number Tile',
+                line_chart: 'Line Chart',
+                bar_chart: 'Bar Chart',
+                scatter_plot: 'Scatter Plot',
+                combo_chart: 'Combo Chart',
+                table: 'Table',
+                gauge: 'Gauge',
+                sparkline: 'Sparkline',
+                anomaly_chart: 'Anomaly Chart'
+            };
+
+            const allTypes = (this.widgetLabels && Object.keys(this.widgetLabels).length > 0)
+                ? this.widgetLabels
+                : defaultLabels;
+
             let filtered = {};
 
             if (this.addWidgetForm.source_type === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
                 return filtered;
             }
 
             if (this.addWidgetForm.source_type === 'kpi') {
                 const kpiId = this.addWidgetForm.custom_kpi_id;
-                if (!kpiId) return allTypes;
+                if (!kpiId) {
+                    const allowed = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
+                    for (const t of allowed) {
+                        filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                    }
+                    return filtered;
+                }
 
-                const kpiData = this.kpis[kpiId];
+                const kpiData = (this.kpis && this.kpis[kpiId]) ? this.kpis[kpiId] : null;
                 const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
 
-                if (allowed.length === 0) return allTypes;
+                if (allowed.length === 0) {
+                    for (const t of Object.keys(defaultLabels)) {
+                        filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                    }
+                    return filtered;
+                }
 
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
                 return filtered;
             }
@@ -215,7 +241,7 @@ export function dashboardBuilder(config = {}) {
                     ? config.derivedMetricWidgetTypes
                     : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
                 return filtered;
             }
