@@ -13,6 +13,11 @@ class ManageInfoWidgetSettings extends SettingsPage
 
     protected static string $settings = InfoWidgetSettings::class;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('view_settings') ?? true;
+    }
+
     public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
     {
         return __('Configure Info Widgets');
