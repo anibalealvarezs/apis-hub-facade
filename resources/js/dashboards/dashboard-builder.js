@@ -186,8 +186,11 @@ export function dashboardBuilder(config = {}) {
 
         setSourceType(type) {
             console.log('[DB][setSourceType] CLICKED type:', type);
-            this.addWidgetForm.source_type = type;
-            this.addWidgetForm.widget_type = '';
+            this.addWidgetForm = {
+                ...this.addWidgetForm,
+                source_type: type,
+                widget_type: ''
+            };
             console.log('[DB][setSourceType] AFTER set addWidgetForm:', JSON.parse(JSON.stringify(this.addWidgetForm)));
         },
 
