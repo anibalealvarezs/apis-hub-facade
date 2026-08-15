@@ -75,3 +75,44 @@ test('triggering sync updates last_sync_started_at and clears pending assets cou
 
     expect($this->project->fresh()->getPendingConfirmedAssetsCount())->toBe(0);
 });
+
+test('hasBeenDeployed strictly requires last_deployed_at or alpha subdomain to protect asset grace periods', function () {
+    // Project with only light sync deployment is NOT considered server-deployed
+    $this->project->update([
+        'last_deployed_at' => null,
+        'last_sync_started_at' => now(),
+    ]);
+
+    expect($this->project->hasBeenDeployed())->toBeFalse();
+
+    // Hard container deployment makes it true
+    $this->project->update([
+        'last_deployed_at' => now(),
+    ]);
+
+    expect($this->project->hasBeenDeployed())->toBeTrue();
+});
+
+test('getLastConfigPushTime returns the latest timestamp between light sync push and hard deployment', function () {
+    $hardDeployTime = now()->subDays(2);
+    $lightDeployTime = now()->subHour();
+
+    $this->project->update([
+        'last_deployed_at' => $hardDeployTime,
+        'last_sync_started_at' => $lightDeployTime,
+    ]);
+
+    expect($this->project->getLastConfigPushTime()->toDateTimeString())
+        ->toBe($lightDeployTime->toDateTimeString());
+
+    // If hard deployment happens afterwards
+    $newerHardDeploy = now();
+    $this->project->update([
+        'last_deployed_at' => $newerHardDeploy,
+    ]);
+
+    expect($this->project->getLastConfigPushTime()->toDateTimeString())
+        ->toBe($newerHardDeploy->toDateTimeString());
+});
+
+

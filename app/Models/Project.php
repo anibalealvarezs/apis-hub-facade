@@ -473,27 +473,41 @@ class Project extends Model
     }
 
     /**
-     * Count newly confirmed assets that became locked after the project's last deployment or sync sequence.
+     * Get the latest timestamp when channel configuration or infrastructure updates were pushed
+     * (either via a light sync sequence or a hard container deployment).
+     * Used specifically for tracking whether newly locked assets have had their config pushed.
+     */
+    public function getLastConfigPushTime(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->last_sync_started_at && $this->last_deployed_at) {
+            return $this->last_sync_started_at->gt($this->last_deployed_at)
+                ? $this->last_sync_started_at
+                : $this->last_deployed_at;
+        }
+
+        return $this->last_sync_started_at ?? $this->last_deployed_at;
+    }
+
+    /**
+     * Count newly confirmed assets that became locked after the project's last config push or deployment.
+     * Will return 0 if the project has never been deployed.
      */
     public function getPendingConfirmedAssetsCount(): int
     {
-        $latestDeployment = null;
-        if ($this->last_sync_started_at && $this->last_deployed_at) {
-            $latestDeployment = $this->last_sync_started_at->gt($this->last_deployed_at)
-                ? $this->last_sync_started_at
-                : $this->last_deployed_at;
-        } else {
-            $latestDeployment = $this->last_sync_started_at ?? $this->last_deployed_at;
+        if (!$this->hasBeenDeployed()) {
+            return 0;
         }
 
-        if (!$latestDeployment) {
+        $lastPush = $this->getLastConfigPushTime();
+
+        if (!$lastPush) {
             return 0;
         }
 
         return AssetBillingLock::where('project_id', $this->id)
             ->where('status', 'locked')
             ->whereNull('disabled_at')
-            ->where('locked_at', '>', $latestDeployment)
+            ->where('locked_at', '>', $lastPush)
             ->count();
     }
 
@@ -589,7 +603,9 @@ class Project extends Model
     }
 
     /**
-     * Determine if the project has ever been deployed.
+     * Determine if the project server infrastructure has ever been deployed.
+     * Must strictly check hard container deployment (last_deployed_at) to avoid
+     * prematurely starting asset billing grace period countdowns on un-provisioned servers.
      */
     public function hasBeenDeployed(): bool
     {

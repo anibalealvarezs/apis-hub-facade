@@ -25,13 +25,14 @@ class ProjectResource extends Resource
     protected static ?string $model = Project::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-server-stack';
+
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationLabel(): string
     {
         return __('Projects');
     }
 
-
-    
     public static function getNavigationGroup(): ?string
     {
         return __('Infrastructure');
@@ -42,12 +43,12 @@ class ProjectResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Projects';
+        return __('Projects');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Project';
+        return __('Project');
     }
 
     public static function form(Form $form): Form

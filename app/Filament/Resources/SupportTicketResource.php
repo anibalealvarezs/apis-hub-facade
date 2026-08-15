@@ -21,6 +21,23 @@ class SupportTicketResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
 
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Support Tickets');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Support Ticket');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Support Tickets');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Support');

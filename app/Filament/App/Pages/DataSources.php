@@ -160,6 +160,14 @@
             return $tenant->last_deployed_at ? $tenant->last_deployed_at->toIso8601String() : null;
         }
 
+        public function getLastConfigPushTime(): ?string
+        {
+            $tenant = Filament::getTenant();
+            $lastPush = $tenant->getLastConfigPushTime();
+
+            return $lastPush ? $lastPush->toIso8601String() : null;
+        }
+
         public function getGlobalLedgerCount(): int
         {
             $tenant = Filament::getTenant();
@@ -958,11 +966,7 @@
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('granularity_note')
                             ->label('')
-                            ->content(new \Illuminate\Support\HtmlString('
-                                <div class="text-sm text-gray-600 dark:text-gray-400">
-                                    ' . __('To ensure maximum data fidelity and flexibility, we unconditionally cache your historical data at the Ad level (Level 4). Metrics for upper levels (Adset, Campaign, Account) are built dynamically via aggregations.') . '
-                                </div>
-                            ')),
+                            ->content(view('filament.app.components.data-sources.fb-marketing-granularity-note')),
                     ])->columns(1);
 
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Asset Name Filters'))
@@ -1023,182 +1027,52 @@
                     ])->columns(1);
             }
 
+            try {
+                $widgetSettings = app(\App\Settings\InfoWidgetSettings::class);
+                $showGscEnrichment = $widgetSettings->show_gsc_data_enrichment;
+                $showFbHistoric = $widgetSettings->show_fb_organic_historic_limitation;
+                $showFbRateLimits = $widgetSettings->show_fb_organic_rate_limits;
+            } catch (\Throwable $e) {
+                $showGscEnrichment = true;
+                $showFbHistoric = true;
+                $showFbRateLimits = true;
+            }
+
             if ($this->activeChannel === 'google_search_console') {
+                $gscSchema = [
+                    \Filament\Forms\Components\Toggle::make($this->activeChannel.'.calculate_synthetics')
+                        ->label(__('Enable Synthetic Calculations (Möbius Reconciliation)'))
+                        ->default(true),
+                ];
+
+                if ($showGscEnrichment) {
+                    $gscSchema[] = \Filament\Forms\Components\Placeholder::make('synthetic_explanation')
+                        ->hiddenLabel()
+                        ->content(view('filament.app.components.data-sources.gsc-synthetic-explanation'));
+                }
+
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Data Enrichment'))
                     ->description(__('Advanced data recovery and attribution inference.'))
-                    ->schema([
-                        \Filament\Forms\Components\Toggle::make($this->activeChannel.'.calculate_synthetics')
-                            ->label(__('Enable Synthetic Calculations (Möbius Reconciliation)'))
-                            ->default(true),
-                        \Filament\Forms\Components\Placeholder::make('synthetic_explanation')
-                            ->hiddenLabel()
-                            ->content(new \Illuminate\Support\HtmlString('
-                            <div class="space-y-3 mt-2" style="font-size: 0.875rem; opacity: 0.85;">
-                                <p><strong>'.__('What is this?').'</strong> '.__('Synthetic calculations use an algorithmic method to infer attribution data that Google Search Console actively removes from your reports to protect user privacy.').'</p>
-
-                                <p><strong>'.__('The Problem:').'</strong> '.__('When you look at GSC data by a single dimension (like Page), Google gives you close to 100% of the actual events. However, when you break data down by multiple dimensions simultaneously (like Page + Query + Country + Device), Google hides almost 50% of the records because those specific combinations might identify users.').'</p>
-
-                                <p><strong>'.__('Our Solution:').'</strong> '.__('We query every possible subset of Google\'s data and run a reconciliation algorithm to deduce the missing pieces. This provides an almost complete picture of your traffic at the most granular level possible.').'</p>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-3" style="border-top: 1px solid rgba(128, 128, 128, 0.2);">
-                                    <div>
-                                        <h4 class="font-medium flex items-center gap-1" style="color: #10b981;">✨ '.__('The Benefits').'</h4>
-                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">'.__('Unlike Google, your totals will remain highly consistent no matter how deeply you filter or group the data. You get deep, granular attribution that is normally impossible to see.').'</p>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-medium flex items-center gap-1" style="color: #f59e0b;">⚠️ '.__('The Trade-offs').'</h4>
-                                        <p class="mt-1" style="font-size: 0.75rem; opacity: 0.8;">'.__('Because this is an inference engine, expect a slight margin of error (~2% on average) compared to Google\'s top-level totals. Additionally, <strong>syncing will take roughly 10x longer</strong> to process all the required subsets. Finally, API usage will be significantly more intense, which increases the chances of facing rate limit issues or token invalidations.').'</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ')),
-                    ])->columns(1);
+                    ->schema($gscSchema)->columns(1);
             }
 
             if ($this->activeChannel === 'facebook_organic') {
-                // First time modal
-                $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_first_time_modal')
-                    ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <div
-                        x-data="{ showWarningModal: false }"
-                        x-init="
-                            setTimeout(() => {
-                                if (!localStorage.getItem(\'fb_organic_warnings_seen_v1\')) {
-                                    showWarningModal = true;
-                                }
-                            }, 500);
-                        "
-                    >
-                        <style>
-                            .fb-modal-warning-box { background-color: #fffbeb; border-color: #f59e0b; padding: 1.25rem; }
-                            .dark .fb-modal-warning-box { background-color: rgba(245, 158, 11, 0.1); border-color: #f59e0b; }
-                            .fb-modal-warning-text { color: #92400e; }
-                            .dark .fb-modal-warning-text { color: #fcd34d; }
-                            .fb-modal-warning-subtext { color: #b45309; }
-                            .dark .fb-modal-warning-subtext { color: #fde68a; }
-                            .fb-modal-warning-icon { color: #d97706; }
-                            .dark .fb-modal-warning-icon { color: #fbbf24; }
+                if ($showFbHistoric) {
+                    // First time modal
+                    $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_first_time_modal')
+                        ->hiddenLabel()
+                        ->content(view('filament.app.components.data-sources.fb-organic-first-time-modal'));
 
-                            .fb-modal-rl-warning-box { background-color: #eff6ff; border-color: #3b82f6; padding: 1.25rem; }
-                            .dark .fb-modal-rl-warning-box { background-color: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-                            .fb-modal-rl-warning-text { color: #1e40af; }
-                            .dark .fb-modal-rl-warning-text { color: #93c5fd; }
-                            .fb-modal-rl-warning-subtext { color: #1d4ed8; }
-                            .dark .fb-modal-rl-warning-subtext { color: #bfdbfe; }
-                            .fb-modal-rl-warning-icon { color: #2563eb; }
-                            .dark .fb-modal-rl-warning-icon { color: #60a5fa; }
-                        </style>
-                        <div x-show="showWarningModal" style="display: none;" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 transition-opacity" x-transition.opacity>
-                            <div @click.away="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full m-4 relative" style="padding: 2rem;" x-transition.scale.origin.bottom>
-                                <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                    $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_warning')
+                        ->hiddenLabel()
+                        ->content(view('filament.app.components.data-sources.fb-organic-historic-warning'));
+                }
 
-                                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                                    <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                      <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                                    </svg>
-                                    '.__('Important: Facebook Organic').'
-                                </h2>
-
-                                <div class="space-y-6">
-                                    <div class="rounded-r-xl border-l-4 fb-modal-warning-box shadow-sm">
-                                        <div class="flex items-start gap-4">
-                                            <svg class="w-6 h-6 shrink-0 mt-0.5 fb-modal-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                            </svg>
-                                            <div>
-                                                <h3 class="text-base font-bold tracking-tight fb-modal-warning-text">'.__('Historic Metrics Limitation').'</h3>
-                                                <p class="text-sm mt-1 leading-relaxed fb-modal-warning-subtext">
-                                                    '.__('Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today.').' <strong class="font-semibold fb-modal-warning-text">'.__('To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.').'</strong>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="rounded-r-xl border-l-4 fb-modal-rl-warning-box shadow-sm mt-4">
-                                        <div class="flex items-start gap-4">
-                                            <svg class="w-6 h-6 shrink-0 mt-0.5 fb-modal-rl-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                            </svg>
-                                            <div>
-                                                <h3 class="text-base font-bold tracking-tight fb-modal-rl-warning-text">'.__('Rate Limits & Inactive Assets').'</h3>
-                                                <p class="text-sm mt-1 leading-relaxed fb-modal-rl-warning-subtext">
-                                                    '.__('Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions.').' <strong class="font-semibold fb-modal-rl-warning-text">'.__('We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.').'</strong>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-8 flex justify-end">
-                                    <button @click="localStorage.setItem(\'fb_organic_warnings_seen_v1\', \'true\'); showWarningModal = false" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg shadow-sm transition-colors">
-                                        '.__('I understand').'
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                '));
-
-                $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_warning')
-                    ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <style>
-                        .fb-warning-box { background-color: #fffbeb; border-color: #f59e0b; padding: 1.25rem; }
-                        .dark .fb-warning-box { background-color: rgba(245, 158, 11, 0.1); border-color: #f59e0b; }
-                        .fb-warning-text { color: #92400e; }
-                        .dark .fb-warning-text { color: #fcd34d; }
-                        .fb-warning-subtext { color: #b45309; }
-                        .dark .fb-warning-subtext { color: #fde68a; }
-                        .fb-warning-icon { color: #d97706; }
-                        .dark .fb-warning-icon { color: #fbbf24; }
-                    </style>
-                    <div class="rounded-r-xl border-l-4 fb-warning-box shadow-sm">
-                        <div class="flex items-start gap-4">
-                            <svg class="w-6 h-6 shrink-0 mt-0.5 fb-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <div>
-                                <h3 class="text-base font-bold tracking-tight fb-warning-text">'.__('Historic Metrics Limitation').'</h3>
-                                <p class="text-sm mt-1 leading-relaxed fb-warning-subtext">
-                                    '.__('Facebook does not provide historic metrics for posts and media; it only provides daily snapshots. Therefore, we will build the history for your assets by caching the daily data to provide time series starting from today.').' <strong class="font-semibold fb-warning-text">'.__('To successfully build these time series without gaps, you must keep the channel and the asset enabled continuously.').'</strong>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                '));
-
-                $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_rate_limit_warning')
-                    ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <style>
-                        .fb-rl-warning-box { background-color: #eff6ff; border-color: #3b82f6; padding: 1.25rem; }
-                        .dark .fb-rl-warning-box { background-color: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-                        .fb-rl-warning-text { color: #1e40af; }
-                        .dark .fb-rl-warning-text { color: #93c5fd; }
-                        .fb-rl-warning-subtext { color: #1d4ed8; }
-                        .dark .fb-rl-warning-subtext { color: #bfdbfe; }
-                        .fb-rl-warning-icon { color: #2563eb; }
-                        .dark .fb-rl-warning-icon { color: #60a5fa; }
-                    </style>
-                    <div class="rounded-r-xl border-l-4 fb-rl-warning-box shadow-sm mt-4">
-                        <div class="flex items-start gap-4">
-                            <svg class="w-6 h-6 shrink-0 mt-0.5 fb-rl-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <div>
-                                <h3 class="text-base font-bold tracking-tight fb-rl-warning-text">'.__('Rate Limits & Inactive Assets').'</h3>
-                                <p class="text-sm mt-1 leading-relaxed fb-rl-warning-subtext">
-                                    '.__('Facebook\'s API rate limits are heavily influenced by the recent engagement your Pages and IG Accounts receive. Pages with a large volume of content but very low interaction face much stricter rate limits, increasing the risk of synchronization interruptions.').' <strong class="font-semibold fb-rl-warning-text">'.__('We strongly recommend disabling inactive assets (those with minimal analytic value) to prevent rate limit bottlenecks and preserve your subscription quota.').'</strong>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                '));
+                if ($showFbRateLimits) {
+                    $secondarySections[] = \Filament\Forms\Components\Placeholder::make('fb_organic_rate_limit_warning')
+                        ->hiddenLabel()
+                        ->content(view('filament.app.components.data-sources.fb-organic-rate-limit-warning'));
+                }
             }
 
             $mainContent = array_merge($parts['main'], $parts['repeaters']);
@@ -1982,7 +1856,10 @@
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             }
-            $tenant->update(['sync_config' => $dbState]);
+            $tenant->update([
+                'sync_config' => $dbState,
+                'last_sync_started_at' => now(),
+            ]);
 
             // Process locks for the new configuration
             app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);

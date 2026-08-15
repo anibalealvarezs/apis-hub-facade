@@ -21,6 +21,28 @@ class SubscriptionPlanResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Subscription Plans');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Subscription Plan');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Subscription Plans');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Billing & Financials');
+    }
+
     public static function form(Form $form): Form
     {
         return $form

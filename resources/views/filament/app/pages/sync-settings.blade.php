@@ -2,16 +2,16 @@
     @php
         $tenant = filament()->getTenant()->fresh();
         $isRedeploying  = $tenant->health_status === 'redeploying';
-        $isSyncStarted  = !is_null($tenant->last_sync_started_at);
-        $syncElapsedSec = $tenant->last_sync_started_at
-            ? $tenant->last_sync_started_at->diffInSeconds(now())
+        $isSyncStarted  = $tenant->health_status === 'syncing';
+        $syncElapsedSec = ($isSyncStarted && $tenant->deploy_started_at)
+            ? $tenant->deploy_started_at->diffInSeconds(now())
             : 0;
         $syncIsStale    = $syncElapsedSec > 1800; // warn after 30 minutes
         $elapsedRedeploy = $tenant->deploy_started_at
             ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
             : null;
-        $elapsedSync = $tenant->last_sync_started_at
-            ? now()->diffForHumans($tenant->last_sync_started_at, ['parts' => 1, 'short' => true])
+        $elapsedSync = $tenant->deploy_started_at
+            ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
             : null;
     @endphp
 
@@ -72,9 +72,14 @@
                 </p>
             </div>
         </div>
-    @elseif($tenant->last_deployed_at)
-        <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30" role="alert">
-          <span class="font-bold">{{ __('Last deployment') }}:</span> {{ $tenant->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}
+    @elseif($tenant->last_deployed_at || $tenant->last_sync_started_at)
+        <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30 flex flex-wrap gap-x-4 gap-y-1" role="alert">
+            @if($tenant->last_sync_started_at)
+                <div><span class="font-bold">{{ __('Last sync push') }}:</span> {{ $tenant->last_sync_started_at->translatedFormat(__('M j, Y H:i')) }}</div>
+            @endif
+            @if($tenant->last_deployed_at)
+                <div><span class="font-bold">{{ __('Last server deployment') }}:</span> {{ $tenant->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}</div>
+            @endif
         </div>
     @endif
 
