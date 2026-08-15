@@ -512,6 +512,97 @@ class Project extends Model
     }
 
     /**
+     * Count the number of enabled channels.
+     */
+    public function countEnabledChannels(bool $checkConnection = false): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channel => $channelConfig) {
+            if (is_array($channelConfig) && !empty($channelConfig['enabled'])) {
+                if ($checkConnection && !$this->isChannelConnected((string) $channel)) {
+                    continue;
+                }
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Count the number of enabled assets.
+     * @param bool $onlyInEnabledChannels If true, ignores assets in disabled channels.
+     */
+    public function countEnabledAssets(bool $onlyInEnabledChannels = false): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['enabled']) && empty($asset['lost_access']);
+        }, $onlyInEnabledChannels);
+    }
+
+    /**
+     * Count the number of locked assets.
+     */
+    public function countLockedAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['locked']);
+        }, false);
+    }
+
+    /**
+     * Count the number of assets in grace period.
+     */
+    public function countGracePeriodAssets(): int
+    {
+        return $this->countAssetsByCondition(function ($asset) {
+            return !empty($asset['in_grace_period']);
+        }, false);
+    }
+
+    /**
+     * Helper to count assets based on a condition closure.
+     */
+    protected function countAssetsByCondition(\Closure $condition, bool $onlyInEnabledChannels = false): int
+    {
+        $count = 0;
+        foreach ($this->sync_config ?? [] as $channelConfig) {
+            if (!is_array($channelConfig)) {
+                continue;
+            }
+            if ($onlyInEnabledChannels && empty($channelConfig['enabled'])) {
+                continue;
+            }
+
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
+
+            // 1. Check direct asset lists
+            foreach ($assetKeys as $assetKey) {
+                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
+                    foreach ($channelConfig[$assetKey] as $asset) {
+                        if (is_array($asset) && $condition($asset)) {
+                            $count++;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check nested asset lists
+            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
+                foreach ($assetKeys as $assetKey) {
+                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
+                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
+                            if (is_array($asset) && $condition($asset)) {
+                                $count++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $count;
+    }
+
+    /**
      * Determine if the project server infrastructure has ever been deployed.
      * Must strictly check hard container deployment (last_deployed_at) to avoid
      * prematurely starting asset billing grace period countdowns on un-provisioned servers.
