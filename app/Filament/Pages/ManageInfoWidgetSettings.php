@@ -27,7 +27,7 @@ class ManageInfoWidgetSettings extends SettingsPage
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Content & UI');
+        return __('Content & Interface');
     }
 
     public function form(Form $form): Form

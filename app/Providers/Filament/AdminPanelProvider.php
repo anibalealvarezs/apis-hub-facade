@@ -102,6 +102,14 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\ManagePaymentSettings::class,
                 \App\Filament\Pages\ManageInfoWidgetSettings::class,
             ])
+            ->navigationGroups([
+                __('SaaS Management'),
+                __('Support'),
+                __('Infrastructure'),
+                __('Content & Interface'),
+                __('Billing & Financials'),
+                __('Filament Shield'),
+            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([])
             ->middleware([
