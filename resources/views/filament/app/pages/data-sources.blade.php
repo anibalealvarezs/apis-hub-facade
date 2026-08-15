@@ -143,9 +143,9 @@
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}
-                        @if(filament()->getTenant()->last_deployed_at)
+                        @if($lastDeploy = filament()->getTenant()->getLastDeploymentAt())
                             <span class="mx-2">|</span>
-                            {{ __('Last deployment') }}: {{ filament()->getTenant()->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}
+                            {{ __('Last deployment') }}: {{ $lastDeploy->translatedFormat(__('M j, Y H:i')) }}
                         @endif
                     </p>
                 </div>

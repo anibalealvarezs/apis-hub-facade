@@ -473,18 +473,25 @@ class Project extends Model
     }
 
     /**
+     * Get the latest timestamp of any deployment (light sync deployment or hard container deployment).
+     */
+    public function getLastDeploymentAt(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->last_sync_started_at && $this->last_deployed_at) {
+            return $this->last_sync_started_at->gt($this->last_deployed_at)
+                ? $this->last_sync_started_at
+                : $this->last_deployed_at;
+        }
+
+        return $this->last_sync_started_at ?? $this->last_deployed_at;
+    }
+
+    /**
      * Count newly confirmed assets that became locked after the project's last deployment or sync sequence.
      */
     public function getPendingConfirmedAssetsCount(): int
     {
-        $latestDeployment = null;
-        if ($this->last_sync_started_at && $this->last_deployed_at) {
-            $latestDeployment = $this->last_sync_started_at->gt($this->last_deployed_at)
-                ? $this->last_sync_started_at
-                : $this->last_deployed_at;
-        } else {
-            $latestDeployment = $this->last_sync_started_at ?? $this->last_deployed_at;
-        }
+        $latestDeployment = $this->getLastDeploymentAt();
 
         if (!$latestDeployment) {
             return 0;
@@ -593,7 +600,7 @@ class Project extends Model
      */
     public function hasBeenDeployed(): bool
     {
-        return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
+        return $this->getLastDeploymentAt() !== null || $this->subdomain === 'alpha';
     }
 }
 

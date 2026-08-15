@@ -75,3 +75,26 @@ test('triggering sync updates last_sync_started_at and clears pending assets cou
 
     expect($this->project->fresh()->getPendingConfirmedAssetsCount())->toBe(0);
 });
+
+test('getLastDeploymentAt returns the latest timestamp between light deployment and hard deployment', function () {
+    $hardDeployTime = now()->subDays(2);
+    $lightDeployTime = now()->subHour();
+
+    $this->project->update([
+        'last_deployed_at' => $hardDeployTime,
+        'last_sync_started_at' => $lightDeployTime,
+    ]);
+
+    expect($this->project->getLastDeploymentAt()->toDateTimeString())
+        ->toBe($lightDeployTime->toDateTimeString());
+
+    // If hard deployment happens afterwards
+    $newerHardDeploy = now();
+    $this->project->update([
+        'last_deployed_at' => $newerHardDeploy,
+    ]);
+
+    expect($this->project->getLastDeploymentAt()->toDateTimeString())
+        ->toBe($newerHardDeploy->toDateTimeString());
+});
+
