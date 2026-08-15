@@ -180,6 +180,15 @@ export function dashboardBuilder(config = {}) {
             };
         },
 
+        set addWidgetForm(val) {
+            if (!val) return;
+            this.selectedSourceType = val.source_type || '';
+            this.selectedWidgetType = val.widget_type || '';
+            this.customKpiId = val.custom_kpi_id || '';
+            this.derivedMetricId = val.derived_metric_id || '';
+            this.widgetName = val.name || '';
+        },
+
         openAddWidgetModal() {
             console.log('[DB][openAddWidgetModal] ENTER');
             this.selectedSourceType = '';
