@@ -156,9 +156,16 @@
         public function getProjectDeploymentTime(): ?string
         {
             $tenant = Filament::getTenant();
-            $lastDeploy = $tenant->getLastDeploymentAt();
 
-            return $lastDeploy ? $lastDeploy->toIso8601String() : null;
+            return $tenant->last_deployed_at ? $tenant->last_deployed_at->toIso8601String() : null;
+        }
+
+        public function getLastConfigPushTime(): ?string
+        {
+            $tenant = Filament::getTenant();
+            $lastPush = $tenant->getLastConfigPushTime();
+
+            return $lastPush ? $lastPush->toIso8601String() : null;
         }
 
         public function getGlobalLedgerCount(): int

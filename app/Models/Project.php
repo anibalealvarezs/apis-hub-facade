@@ -473,9 +473,11 @@ class Project extends Model
     }
 
     /**
-     * Get the latest timestamp of any deployment (light sync deployment or hard container deployment).
+     * Get the latest timestamp when channel configuration or infrastructure updates were pushed
+     * (either via a light sync sequence or a hard container deployment).
+     * Used specifically for tracking whether newly locked assets have had their config pushed.
      */
-    public function getLastDeploymentAt(): ?\Illuminate\Support\Carbon
+    public function getLastConfigPushTime(): ?\Illuminate\Support\Carbon
     {
         if ($this->last_sync_started_at && $this->last_deployed_at) {
             return $this->last_sync_started_at->gt($this->last_deployed_at)
@@ -487,120 +489,36 @@ class Project extends Model
     }
 
     /**
-     * Count newly confirmed assets that became locked after the project's last deployment or sync sequence.
+     * Count newly confirmed assets that became locked after the project's last config push or deployment.
+     * Will return 0 if the project has never been deployed.
      */
     public function getPendingConfirmedAssetsCount(): int
     {
-        $latestDeployment = $this->getLastDeploymentAt();
+        if (!$this->hasBeenDeployed()) {
+            return 0;
+        }
 
-        if (!$latestDeployment) {
+        $lastPush = $this->getLastConfigPushTime();
+
+        if (!$lastPush) {
             return 0;
         }
 
         return AssetBillingLock::where('project_id', $this->id)
             ->where('status', 'locked')
             ->whereNull('disabled_at')
-            ->where('locked_at', '>', $latestDeployment)
+            ->where('locked_at', '>', $lastPush)
             ->count();
     }
 
     /**
-     * Count the number of enabled channels.
-     */
-    public function countEnabledChannels(bool $checkConnection = false): int
-    {
-        $count = 0;
-        foreach ($this->sync_config ?? [] as $channel => $channelConfig) {
-            if (is_array($channelConfig) && !empty($channelConfig['enabled'])) {
-                if ($checkConnection && !$this->isChannelConnected((string) $channel)) {
-                    continue;
-                }
-                $count++;
-            }
-        }
-        return $count;
-    }
-
-    /**
-     * Count the number of enabled assets.
-     * @param bool $onlyInEnabledChannels If true, ignores assets in disabled channels.
-     */
-    public function countEnabledAssets(bool $onlyInEnabledChannels = false): int
-    {
-        return $this->countAssetsByCondition(function ($asset) {
-            return !empty($asset['enabled']) && empty($asset['lost_access']);
-        }, $onlyInEnabledChannels);
-    }
-
-    /**
-     * Count the number of locked assets.
-     */
-    public function countLockedAssets(): int
-    {
-        return $this->countAssetsByCondition(function ($asset) {
-            return !empty($asset['locked']);
-        }, false);
-    }
-
-    /**
-     * Count the number of assets in grace period.
-     */
-    public function countGracePeriodAssets(): int
-    {
-        return $this->countAssetsByCondition(function ($asset) {
-            return !empty($asset['in_grace_period']);
-        }, false);
-    }
-
-    /**
-     * Helper to count assets based on a condition closure.
-     */
-    protected function countAssetsByCondition(\Closure $condition, bool $onlyInEnabledChannels = false): int
-    {
-        $count = 0;
-        foreach ($this->sync_config ?? [] as $channelConfig) {
-            if (!is_array($channelConfig)) {
-                continue;
-            }
-            if ($onlyInEnabledChannels && empty($channelConfig['enabled'])) {
-                continue;
-            }
-
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
-
-            // 1. Check direct asset lists
-            foreach ($assetKeys as $assetKey) {
-                if (!empty($channelConfig[$assetKey]) && is_array($channelConfig[$assetKey])) {
-                    foreach ($channelConfig[$assetKey] as $asset) {
-                        if (is_array($asset) && $condition($asset)) {
-                            $count++;
-                        }
-                    }
-                }
-            }
-
-            // 2. Check nested asset lists
-            if (!empty($channelConfig['assets']) && is_array($channelConfig['assets'])) {
-                foreach ($assetKeys as $assetKey) {
-                    if (!empty($channelConfig['assets'][$assetKey]) && is_array($channelConfig['assets'][$assetKey])) {
-                        foreach ($channelConfig['assets'][$assetKey] as $asset) {
-                            if (is_array($asset) && $condition($asset)) {
-                                $count++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return $count;
-    }
-
-    /**
-     * Determine if the project has ever been deployed.
+     * Determine if the project server infrastructure has ever been deployed.
+     * Must strictly check hard container deployment (last_deployed_at) to avoid
+     * prematurely starting asset billing grace period countdowns on un-provisioned servers.
      */
     public function hasBeenDeployed(): bool
     {
-        return $this->getLastDeploymentAt() !== null || $this->subdomain === 'alpha';
+        return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
     }
 }
 
