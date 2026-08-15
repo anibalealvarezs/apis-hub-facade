@@ -16,9 +16,11 @@ class BillingLogResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
 
+    protected static ?int $navigationSort = 6;
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Billing');
+        return __('Billing & Financials');
     }
 
     public static function canCreate(): bool

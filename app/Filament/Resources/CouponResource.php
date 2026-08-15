@@ -16,9 +16,11 @@ class CouponResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
+    protected static ?int $navigationSort = 2;
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Billing');
+        return __('Billing & Financials');
     }
 
     public static function form(Form $form): Form

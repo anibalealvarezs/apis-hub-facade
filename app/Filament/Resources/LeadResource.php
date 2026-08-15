@@ -15,13 +15,15 @@ class LeadResource extends Resource
     protected static ?string $model = Lead::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?int $navigationSort = 2;
     
     protected static ?string $modelLabel = 'Subscription';
     protected static ?string $pluralModelLabel = 'Subscriptions';
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Marketing');
+        return __('Support');
     }
 
     public static function form(Form $form): Form

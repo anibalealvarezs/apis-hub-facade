@@ -18,6 +18,8 @@ class ManagePaymentSettings extends SettingsPage
         return __('Configure Payment Methods');
     }
 
+    protected static ?int $navigationSort = 3;
+
     public static function getNavigationLabel(): string
     {
         return __('Payment Methods');
@@ -25,7 +27,7 @@ class ManagePaymentSettings extends SettingsPage
 
     public static function getNavigationGroup(): ?string
     {
-        return __('System Configuration');
+        return __('Billing & Financials');
     }
 
     public function form(Form $form): Form

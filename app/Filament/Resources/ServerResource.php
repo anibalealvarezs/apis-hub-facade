@@ -18,6 +18,8 @@ class ServerResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-server';
 
+    protected static ?int $navigationSort = 2;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Infrastructure');

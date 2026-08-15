@@ -18,6 +18,8 @@ class ManageInfoWidgetSettings extends SettingsPage
         return __('Configure Info Widgets');
     }
 
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationLabel(): string
     {
         return __('Info Widgets');
@@ -25,7 +27,7 @@ class ManageInfoWidgetSettings extends SettingsPage
 
     public static function getNavigationGroup(): ?string
     {
-        return __('System Configuration');
+        return __('Content & UI');
     }
 
     public function form(Form $form): Form
