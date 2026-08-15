@@ -21,6 +21,11 @@ class Dashboard extends Model
 
     public array $translatable = ['name', 'description'];
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withTrashed()->where($field ?? 'id', $value)->first();
+    }
+
     protected $fillable = [
         'project_id',
         'user_id',
