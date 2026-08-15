@@ -15,7 +15,7 @@ class ManageInfoWidgetSettings extends SettingsPage
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->can('view_settings') ?? true;
+        return true;
     }
 
     public function getTitle(): string | \Illuminate\Contracts\Support\Htmlable
