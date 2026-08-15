@@ -27,8 +27,17 @@ class DashboardBuilder extends Page
 
     public bool $unsavedChanges = false;
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return Dashboard::withTrashed()->where($field ?? 'id', $value)->first();
+    }
+
     public function mount(Dashboard $record): void
     {
+        if (!$record || $record->trashed()) {
+            redirect()->to(DashboardResource::getUrl('index'));
+            return;
+        }
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount ENTER", ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
         $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
