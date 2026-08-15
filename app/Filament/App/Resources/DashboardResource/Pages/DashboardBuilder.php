@@ -440,7 +440,7 @@ class DashboardBuilder extends Page
             ->send();
     }
 
-    public function duplicateWidget(int $widgetId): array
+    public function duplicateWidget(int $widgetId, ?array $currentLayout = null): array
     {
         $service = app(\App\Services\DashboardService::class);
         $widget = DashboardWidget::findOrFail($widgetId);
@@ -449,8 +449,7 @@ class DashboardBuilder extends Page
             abort(403);
         }
 
-        $newWidget = $service->duplicateWidget($widget);
-        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
+        $newWidget = $service->duplicateWidget($widget, $currentLayout);
         $this->unsavedChanges = true;
 
         Notification::make()

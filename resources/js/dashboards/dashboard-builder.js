@@ -2022,7 +2022,8 @@ export function dashboardBuilder(config = {}) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
             }
-            this.$wire.duplicateWidget(id).then(rawWidget => {
+            const currentLayout = this.getLayout();
+            this.$wire.duplicateWidget(id, currentLayout).then(rawWidget => {
                 const widget = { ...rawWidget };
                 widget._isNew = true;
                 this.widgets.push(widget);
@@ -2035,16 +2036,10 @@ export function dashboardBuilder(config = {}) {
                 this.$nextTick(() => {
                     const strId = String(widget.id);
                     const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
-                    console.log('[DB][duplicateWidget] $nextTick lookup', {
-                        id: strId,
-                        el: el ? el.outerHTML.slice(0, 300) : null,
-                        hasNode: el ? !!el.gridstackNode : null,
-                        parent: el && el.parentElement ? el.parentElement.id : null,
-                        widgetsIncludes: (this.widgets || []).some(w => String(w.id) === strId)
-                    });
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
+                    this.saveLayout();
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
