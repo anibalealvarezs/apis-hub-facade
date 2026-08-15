@@ -136,11 +136,11 @@
                                                   class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
                                                   :title="'{{ __('Inheriting dashboard controls') }}'"></span>
                                             <span class="text-sm font-medium text-gray-900 dark:text-white truncate"
-                                                  :title="widget.title || widget.name"
-                                                  x-text="widget.title || widget.name"></span>
+                                                  :title="getWidgetTitleText(widget)"
+                                                  x-text="getWidgetTitleText(widget)"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
-                                            <template x-if="widget.description">
+                                            <template x-if="getWidgetDescriptionText(widget)">
                                                 <div class="group relative flex items-center justify-center p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                          viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
@@ -152,7 +152,7 @@
                                                         class="pointer-events-none absolute bottom-full mb-2 w-64 opacity-0 transition-opacity group-hover:opacity-100 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
                                                         <div
                                                             class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left">
-                                                            <span x-text="widget.description"></span>
+                                                            <span x-text="getWidgetDescriptionText(widget)"></span>
                                                             <div
                                                                 class="absolute -bottom-1 right-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                                                         </div>

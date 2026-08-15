@@ -372,6 +372,51 @@ export function dashboardBuilder(config = {}) {
             return (this.widgetDescriptions && this.widgetDescriptions[type]) || defaultDescriptions[type] || 'Standard widget';
         },
 
+        getWidgetTitleText(widget) {
+            if (!widget) return 'Widget';
+            let title = widget.title;
+            if (Array.isArray(title)) {
+                title = title.length > 0 ? title[0] : '';
+            }
+            if (typeof title === 'object' && title !== null) {
+                const lang = document.documentElement.lang || 'en';
+                title = title[lang] || title['en'] || Object.values(title)[0] || '';
+            }
+            if (typeof title === 'string') {
+                const trimmed = title.trim();
+                if (trimmed === '[]' || trimmed === '{}') title = '';
+            }
+            if (!title && widget.name) {
+                let name = widget.name;
+                if (Array.isArray(name)) name = name.length > 0 ? name[0] : '';
+                if (typeof name === 'object' && name !== null) {
+                    const lang = document.documentElement.lang || 'en';
+                    name = name[lang] || name['en'] || Object.values(name)[0] || '';
+                }
+                if (typeof name === 'string') {
+                    const trimmed = name.trim();
+                    if (trimmed === '[]' || trimmed === '{}') name = '';
+                }
+                title = name;
+            }
+            return (typeof title === 'string' && title.trim() !== '') ? title.trim() : 'Widget';
+        },
+
+        getWidgetDescriptionText(widget) {
+            if (!widget) return '';
+            let desc = widget.description;
+            if (Array.isArray(desc)) desc = desc.length > 0 ? desc[0] : '';
+            if (typeof desc === 'object' && desc !== null) {
+                const lang = document.documentElement.lang || 'en';
+                desc = desc[lang] || desc['en'] || Object.values(desc)[0] || '';
+            }
+            if (typeof desc === 'string') {
+                const trimmed = desc.trim();
+                if (trimmed === '[]' || trimmed === '{}') desc = '';
+            }
+            return (typeof desc === 'string' && desc.trim() !== '') ? desc.trim() : '';
+        },
+
         getWidgetSvg(type) {
             const defaultSvgs = {
                 tile: '<svg viewBox="0 0 40 24" class="w-full h-full"><text x="20" y="16" text-anchor="middle" font-weight="bold" font-size="14" class="fill-gray-800 dark:fill-gray-200">12K</text><path d="M 28 8 L 32 4 L 36 8 M 32 4 L 32 16" class="stroke-green-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
