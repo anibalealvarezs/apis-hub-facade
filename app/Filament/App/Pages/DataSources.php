@@ -1990,7 +1990,10 @@
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             }
-            $tenant->update(['sync_config' => $dbState]);
+            $tenant->update([
+                'sync_config' => $dbState,
+                'last_sync_started_at' => now(),
+            ]);
 
             // Process locks for the new configuration
             app(\App\Services\AssetQuotaService::class)->processGracePeriodLocks($tenant);

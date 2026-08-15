@@ -88,7 +88,7 @@ class SyncSettings extends Page
                 ->color('success')
                 ->disabled(fn () => ! Filament::getTenant()->fresh()->is_active
                     || Filament::getTenant()->fresh()->billing_status === 'suspended'
-                    || Filament::getTenant()->fresh()->health_status !== 'online'
+                    || in_array(Filament::getTenant()->fresh()->health_status, ['provisioning', 'redeploying'])
                     || ! \Illuminate\Support\Facades\Auth::user()->can('deploy_project'))
                 ->requiresConfirmation()
                 ->action(function (RemoteEngineService $service) {
@@ -280,6 +280,7 @@ class SyncSettings extends Page
 
         $tenant->update(array_merge($modelAttributes, [
             'sync_config' => array_merge($existingSyncConfig, $syncConfig),
+            'last_sync_started_at' => now(),
         ]));
 
         // 1.5 Push global application logic configurations to the APIs Hub (Node)
