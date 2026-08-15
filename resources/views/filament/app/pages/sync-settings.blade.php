@@ -2,16 +2,16 @@
     @php
         $tenant = filament()->getTenant()->fresh();
         $isRedeploying  = $tenant->health_status === 'redeploying';
-        $isSyncStarted  = !is_null($tenant->last_sync_started_at);
-        $syncElapsedSec = $tenant->last_sync_started_at
-            ? $tenant->last_sync_started_at->diffInSeconds(now())
+        $isSyncStarted  = $tenant->health_status === 'syncing';
+        $syncElapsedSec = ($isSyncStarted && $tenant->deploy_started_at)
+            ? $tenant->deploy_started_at->diffInSeconds(now())
             : 0;
         $syncIsStale    = $syncElapsedSec > 1800; // warn after 30 minutes
         $elapsedRedeploy = $tenant->deploy_started_at
             ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
             : null;
-        $elapsedSync = $tenant->last_sync_started_at
-            ? now()->diffForHumans($tenant->last_sync_started_at, ['parts' => 1, 'short' => true])
+        $elapsedSync = $tenant->deploy_started_at
+            ? now()->diffForHumans($tenant->deploy_started_at, ['parts' => 1, 'short' => true])
             : null;
     @endphp
 
