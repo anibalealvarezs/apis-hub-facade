@@ -103,12 +103,18 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\ManageInfoWidgetSettings::class,
             ])
             ->navigationGroups([
-                __('SaaS Management'),
-                __('Support'),
-                __('Infrastructure'),
-                __('Content & Interface'),
-                __('Billing & Financials'),
-                __('Filament Shield'),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('SaaS Management')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Support')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Infrastructure')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Content & Interface')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Billing & Financials')),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Filament Shield')),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([])
@@ -123,6 +129,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 VerifyReCaptcha::class,
+                \App\Http\Middleware\SetLocale::class,
             ])
             ->plugin(
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
