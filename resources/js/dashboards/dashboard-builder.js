@@ -182,7 +182,14 @@ export function dashboardBuilder(config = {}) {
         },
 
         get availableWidgetTypes() {
-            if (!this.addWidgetForm.source_type) return {};
+            console.log('[DB][availableWidgetTypes] ENTER', {
+                sourceType: this.addWidgetForm ? this.addWidgetForm.source_type : null,
+                kpiId: this.addWidgetForm ? this.addWidgetForm.custom_kpi_id : null,
+                hasWidgetLabels: !!this.widgetLabels,
+                widgetLabelsKeys: this.widgetLabels ? Object.keys(this.widgetLabels) : []
+            });
+
+            if (!this.addWidgetForm || !this.addWidgetForm.source_type) return {};
 
             const defaultLabels = {
                 tile: 'Number Tile',
@@ -207,46 +214,52 @@ export function dashboardBuilder(config = {}) {
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
-                return filtered;
-            }
-
-            if (this.addWidgetForm.source_type === 'kpi') {
+            } else if (this.addWidgetForm.source_type === 'kpi') {
                 const kpiId = this.addWidgetForm.custom_kpi_id;
                 if (!kpiId) {
                     const allowed = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
                     for (const t of allowed) {
                         filtered[t] = allTypes[t] || defaultLabels[t] || t;
                     }
-                    return filtered;
-                }
+                } else {
+                    const kpiData = (this.kpis && this.kpis[kpiId]) ? this.kpis[kpiId] : null;
+                    const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
 
-                const kpiData = (this.kpis && this.kpis[kpiId]) ? this.kpis[kpiId] : null;
-                const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
-
-                if (allowed.length === 0) {
-                    for (const t of Object.keys(defaultLabels)) {
-                        filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                    if (allowed.length === 0) {
+                        for (const t of Object.keys(defaultLabels)) {
+                            filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                        }
+                    } else {
+                        for (const t of allowed) {
+                            filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                        }
                     }
-                    return filtered;
                 }
-
-                for (const t of allowed) {
-                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
-                }
-                return filtered;
-            }
-
-            if (this.addWidgetForm.source_type === 'derived_metric') {
+            } else if (this.addWidgetForm.source_type === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
                     : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
-                return filtered;
+            } else {
+                filtered = { ...allTypes };
             }
 
-            return allTypes;
+            console.log('[DB][availableWidgetTypes] RETURN', filtered);
+            return filtered;
+        },
+
+        get availableWidgetTypesList() {
+            const typesObj = this.availableWidgetTypes;
+            const list = Object.entries(typesObj).map(([type, label]) => ({
+                type,
+                label,
+                description: this.getWidgetDescription(type),
+                svg: this.getWidgetSvg(type)
+            }));
+            console.log('[DB][availableWidgetTypesList] RETURN count:', list.length, list);
+            return list;
         },
 
         get availableChartTypesForControls() {

@@ -1773,30 +1773,30 @@
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Type') }}</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <template x-for="(label, type) in availableWidgetTypes" :key="type">
+                                    <template x-for="item in availableWidgetTypesList" :key="item.type">
                                         <button
                                             class="p-3 rounded-xl border text-left transition-colors flex items-center gap-3"
-                                            :class="addWidgetForm.widget_type === type
+                                            :class="addWidgetForm.widget_type === item.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm'"
-                                            x-on:click="addWidgetForm.widget_type = type">
+                                            x-on:click="addWidgetForm.widget_type = item.type">
                                             <div
                                                 class="w-12 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center"
-                                                x-html="getWidgetSvg(type)">
+                                                x-html="item.svg">
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-2">
                                                     <span
                                                         class="block text-sm font-semibold text-gray-900 dark:text-white truncate"
-                                                        x-text="label"></span>
-                                                    <template x-if="optimalWidgetTypes.includes(type)">
+                                                        x-text="item.label"></span>
+                                                    <template x-if="optimalWidgetTypes.includes(item.type)">
                                                         <span
                                                             class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">{{ __('Recommended') }}</span>
                                                     </template>
                                                 </div>
                                                 <span
                                                     class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5 bd-line-clamp-2"
-                                                    x-text="getWidgetDescription(type)"></span>
+                                                    x-text="item.description"></span>
                                             </div>
                                         </button>
                                     </template>
