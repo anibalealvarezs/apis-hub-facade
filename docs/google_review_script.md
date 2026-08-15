@@ -62,19 +62,8 @@ This document defines the step-by-step recording script for the **Google OAuth A
     - Select a verified GA4 property from the property dropdown.
     - Point to widgets displaying **Sessions**, **Active Users**, **Pageviews**, and **Engagement Rate**.
 - **Audio Cues / Voiceover (or On-Screen Captions):**
-  > "Upon successful authentication, the user is redirected back to APIs Hub. In our Search Console dashboard, we select a verified property to render read-only performance metrics: search queries, total impressions, clicks, CTR, and position. Next, in our Google Analytics dashboard, we select a GA4 property to view sessions, active users, pageviews, and engagement metrics. All data is processed strictly in a read-only capacity for dashboard reporting."
+  > "Upon successful authentication, the user is redirected back to APIs Hub. In our Search Console dashboard, we select a verified property to render read-only performance metrics: search queries, total impressions, clicks, CTR, and position. Next, in our Google Analytics dashboard, we select a GA4 property to view sessions, active users, pageviews, and engagement metrics. All data is processed strictly in a read-only capacity for dashboard reporting. Thank you for reviewing APIs Hub."
 - **Reviewer Verification Point:** Demonstrates exact UI usage of `analytics.readonly` and `webmasters.readonly` data; read-only scope justification verified.
-
----
-
-### **Scene 4: Consent Management & Disconnect**
-- **Duration:** 10–15 seconds
-- **Visual Cues:**
-  - Navigate back to **Integrations** > **Data Sources** or **Synchronization Settings**.
-  - Hover over / demonstrate the account disconnect button or explain how users can revoke Google access at any time.
-- **Audio Cues / Voiceover (or On-Screen Captions):**
-  > "Users retain complete control over their data access. Inside our settings panel, users can disconnect their Google account at any time, which immediately stops data synchronization and removes stored access tokens. Thank you for reviewing APIs Hub."
-- **Reviewer Verification Point:** Clear data revocation/disconnection mechanism shown.
 
 ---
 
@@ -82,7 +71,7 @@ This document defines the step-by-step recording script for the **Google OAuth A
 
 | Parameter | Specification |
 | :--- | :--- |
-| **Total Duration** | ~75 to 105 seconds (Target: 1 min 30 sec) |
+| **Total Duration** | ~60 to 90 seconds (Target: 1 min 15 sec) |
 | **Language** | English (UI & Voiceover/Captions) |
 | **Client ID** | Visible in browser address bar during OAuth redirect |
 | **Target Scopes** | `analytics.readonly`, `webmasters.readonly` |
