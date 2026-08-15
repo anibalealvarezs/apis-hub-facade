@@ -8,25 +8,6 @@
         }, 500);
     "
 >
-    <style>
-        .fb-modal-warning-box { background-color: #fffbeb; border-color: #f59e0b; padding: 1.25rem; }
-        .dark .fb-modal-warning-box { background-color: rgba(245, 158, 11, 0.1); border-color: #f59e0b; }
-        .fb-modal-warning-text { color: #92400e; }
-        .dark .fb-modal-warning-text { color: #fcd34d; }
-        .fb-modal-warning-subtext { color: #b45309; }
-        .dark .fb-modal-warning-subtext { color: #fde68a; }
-        .fb-modal-warning-icon { color: #d97706; }
-        .dark .fb-modal-warning-icon { color: #fbbf24; }
-
-        .fb-modal-rl-warning-box { background-color: #eff6ff; border-color: #3b82f6; padding: 1.25rem; }
-        .dark .fb-modal-rl-warning-box { background-color: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-        .fb-modal-rl-warning-text { color: #1e40af; }
-        .dark .fb-modal-rl-warning-text { color: #93c5fd; }
-        .fb-modal-rl-warning-subtext { color: #1d4ed8; }
-        .dark .fb-modal-rl-warning-subtext { color: #bfdbfe; }
-        .fb-modal-rl-warning-icon { color: #2563eb; }
-        .dark .fb-modal-rl-warning-icon { color: #60a5fa; }
-    </style>
     <div x-show="showWarningModal" style="display: none;" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/75 transition-opacity" x-transition.opacity>
         <div @click.away="localStorage.setItem('fb_organic_warnings_seen_v1', 'true'); showWarningModal = false" class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full m-4 relative p-8" x-transition.scale.origin.bottom>
             <button @click="localStorage.setItem('fb_organic_warnings_seen_v1', 'true'); showWarningModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">

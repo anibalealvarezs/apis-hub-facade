@@ -1,13 +1,3 @@
-<style>
-    .fb-rl-warning-box { background-color: #eff6ff; border-color: #3b82f6; padding: 1.25rem; }
-    .dark .fb-rl-warning-box { background-color: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-    .fb-rl-warning-text { color: #1e40af; }
-    .dark .fb-rl-warning-text { color: #93c5fd; }
-    .fb-rl-warning-subtext { color: #1d4ed8; }
-    .dark .fb-rl-warning-subtext { color: #bfdbfe; }
-    .fb-rl-warning-icon { color: #2563eb; }
-    .dark .fb-rl-warning-icon { color: #60a5fa; }
-</style>
 <div class="rounded-r-xl border-l-4 fb-rl-warning-box shadow-sm mt-4">
     <div class="flex items-start gap-4">
         <svg class="w-6 h-6 shrink-0 mt-0.5 fb-rl-warning-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

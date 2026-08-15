@@ -403,4 +403,78 @@
     display: block;
 }
 
+/* ---------- Facebook Organic Info Widgets & Modals ---------- */
+.fb-warning-box,
+.fb-modal-warning-box {
+    background-color: #fffbeb;
+    border-color: #f59e0b;
+    padding: 1.25rem;
+}
+.dark .fb-warning-box,
+.dark .fb-modal-warning-box {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+.fb-warning-text,
+.fb-modal-warning-text {
+    color: #92400e;
+}
+.dark .fb-warning-text,
+.dark .fb-modal-warning-text {
+    color: #fcd34d;
+}
+.fb-warning-subtext,
+.fb-modal-warning-subtext {
+    color: #b45309;
+}
+.dark .fb-warning-subtext,
+.dark .fb-modal-warning-subtext {
+    color: #fde68a;
+}
+.fb-warning-icon,
+.fb-modal-warning-icon {
+    color: #d97706;
+}
+.dark .fb-warning-icon,
+.dark .fb-modal-warning-icon {
+    color: #fbbf24;
+}
+
+.fb-rl-warning-box,
+.fb-modal-rl-warning-box {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    padding: 1.25rem;
+}
+.dark .fb-rl-warning-box,
+.dark .fb-modal-rl-warning-box {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+}
+.fb-rl-warning-text,
+.fb-modal-rl-warning-text {
+    color: #1e40af;
+}
+.dark .fb-rl-warning-text,
+.dark .fb-modal-rl-warning-text {
+    color: #93c5fd;
+}
+.fb-rl-warning-subtext,
+.fb-modal-rl-warning-subtext {
+    color: #1d4ed8;
+}
+.dark .fb-rl-warning-subtext,
+.dark .fb-modal-rl-warning-subtext {
+    color: #bfdbfe;
+}
+.fb-rl-warning-icon,
+.fb-modal-rl-warning-icon {
+    color: #2563eb;
+}
+.dark .fb-rl-warning-icon,
+.dark .fb-modal-rl-warning-icon {
+    color: #60a5fa;
+}
+
+
 
