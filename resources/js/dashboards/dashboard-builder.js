@@ -616,6 +616,8 @@ export function dashboardBuilder(config = {}) {
 
             el.setAttribute('gs-id', widget.id);
             el.setAttribute('data-id', widget.id);
+            el.setAttribute('gs-w', w);
+            el.setAttribute('gs-h', h);
 
             if (hasX && hasY) {
                 el.setAttribute('gs-x', widget.grid_x);

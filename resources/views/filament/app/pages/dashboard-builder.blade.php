@@ -111,6 +111,10 @@
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :data-id="widget.id"
                                  :gs-id="widget.id"
+                                 :gs-x="widget.grid_x"
+                                 :gs-y="widget.grid_y"
+                                 :gs-w="widget.grid_w || 4"
+                                 :gs-h="widget.grid_h || 3"
                                  :id="widget.id"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50': widget._isNew }">
                                 <div
