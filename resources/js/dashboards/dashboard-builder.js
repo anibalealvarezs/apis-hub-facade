@@ -826,6 +826,19 @@ export function dashboardBuilder(config = {}) {
             this._initialLayoutSignature = JSON.stringify(this.getLayout());
 
             this.grid.on('change', (event, items) => {
+                if (items && Array.isArray(items)) {
+                    items.forEach(item => {
+                        const rawId = item.id || (item.el ? (item.el.getAttribute('gs-id') || item.el.getAttribute('data-id')) : null);
+                        if (!rawId) return;
+                        const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                        if (widget) {
+                            widget.grid_x = parseInt(item.x, 10) || 0;
+                            widget.grid_y = parseInt(item.y, 10) || 0;
+                            widget.grid_w = parseInt(item.w, 10) || 4;
+                            widget.grid_h = parseInt(item.h, 10) || 3;
+                        }
+                    });
+                }
                 const currentSignature = JSON.stringify(this.getLayout());
                 if (!this._initialLayoutSignature) {
                     this._initialLayoutSignature = currentSignature;
@@ -951,13 +964,21 @@ export function dashboardBuilder(config = {}) {
             return nodes.map(node => {
                 const el = node.el;
                 const rawId = node.id || (el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0);
-                return {
-                    id: parseInt(rawId, 10) || 0,
-                    x: parseInt(node.x, 10) || 0,
-                    y: parseInt(node.y, 10) || 0,
-                    w: parseInt(node.w, 10) || 4,
-                    h: parseInt(node.h, 10) || 3,
-                };
+                const id = parseInt(rawId, 10) || 0;
+                const x = parseInt(node.x, 10) || 0;
+                const y = parseInt(node.y, 10) || 0;
+                const w = parseInt(node.w, 10) || 4;
+                const h = parseInt(node.h, 10) || 3;
+
+                const widget = (this.widgets || []).find(w => String(w.id) === String(id));
+                if (widget) {
+                    widget.grid_x = x;
+                    widget.grid_y = y;
+                    widget.grid_w = w;
+                    widget.grid_h = h;
+                }
+
+                return { id, x, y, w, h };
             }).filter(node => node.id !== 0)
               .sort((a, b) => a.id - b.id);
         },
