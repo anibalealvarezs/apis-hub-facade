@@ -1257,7 +1257,7 @@ export function dashboardBuilder(config = {}) {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
                     this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
                         channel: s.channel || '',
-                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
                         assets: Array.isArray(s.assets) ? [...s.assets] : []
                     }));
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
@@ -1266,25 +1266,31 @@ export function dashboardBuilder(config = {}) {
                     seriesKeys.forEach((key) => {
                         const channel = wc.series_channels[key] || wc.channel || '';
                         const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
-                        const metrics = (wc.metrics && Array.isArray(wc.metrics)) ? (wc.metrics[key] ? [wc.metrics[key]] : wc.metrics) : [];
+                        let metrics = [];
+                        if (Array.isArray(wc.metrics)) {
+                            if (seriesKeys.length === 1) {
+                                metrics = [...wc.metrics];
+                            } else if (Array.isArray(wc.metrics[key])) {
+                                metrics = [...wc.metrics[key]];
+                            } else if (wc.metrics[key]) {
+                                metrics = [wc.metrics[key]];
+                            } else {
+                                metrics = [...wc.metrics];
+                            }
+                        } else if (wc.metrics && typeof wc.metrics === 'object') {
+                            metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
+                        }
                         groupedSeries.push({ channel, metrics, assets });
                     });
                     this.widgetControlsForm.raw_series = groupedSeries;
-                } else if (wc.metrics && wc.metrics.length > 0) {
-                    const groupedSeries = [];
-                    wc.metrics.forEach((m, i) => {
-                        const channel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
-                        const assets = (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : []);
-
-                        const existing = groupedSeries.find(s => s.channel === channel && JSON.stringify(s.assets) === JSON.stringify(assets));
-                        if (existing) {
-                            if (m && !existing.metrics.includes(m)) existing.metrics.push(m);
-                        } else {
-                            groupedSeries.push({ channel, metrics: m ? [m] : [], assets });
-                        }
-                    });
-                    this.widgetControlsForm.raw_series = groupedSeries;
+                } else if (wc.metrics && Array.isArray(wc.metrics) && wc.metrics.length > 0) {
+                    this.widgetControlsForm.raw_series = [{
+                        channel: wc.channel || '',
+                        metrics: [...wc.metrics],
+                        assets: wc.assets ? [...wc.assets] : []
+                    }];
                 }
+
                 if (this.widgetControlsForm.raw_series.length === 0) {
                     this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', metrics: [], assets: wc.assets || [] });
                 }
@@ -1826,6 +1832,11 @@ export function dashboardBuilder(config = {}) {
                     payload.series_assets[sIdx] = validAssets;
                     payload.series_channels[sIdx] = s.channel || '';
                 });
+                payload.raw_series = c.raw_series.map(s => ({
+                    channel: s.channel || '',
+                    metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                    assets: Array.isArray(s.assets) ? [...s.assets] : []
+                }));
                 if (payload.series_channels['0']) {
                     payload.channel = payload.series_channels['0'];
                 }
