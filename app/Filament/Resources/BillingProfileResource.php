@@ -25,6 +25,16 @@ class BillingProfileResource extends Resource
         return __('Billing Profiles');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('Billing Profile');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Billing Profiles');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('SaaS Management');

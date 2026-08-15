@@ -21,6 +21,21 @@ class ExchangeRateResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Exchange Rates');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Exchange Rate');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Exchange Rates');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing & Financials');

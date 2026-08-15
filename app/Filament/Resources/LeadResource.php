@@ -17,9 +17,21 @@ class LeadResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?int $navigationSort = 2;
-    
-    protected static ?string $modelLabel = 'Subscription';
-    protected static ?string $pluralModelLabel = 'Subscriptions';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Subscriptions / Leads');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Subscription');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Subscriptions');
+    }
 
     public static function getNavigationGroup(): ?string
     {

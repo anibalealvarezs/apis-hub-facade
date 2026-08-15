@@ -20,6 +20,21 @@ class ServerResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Servers');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Server');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Servers');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Infrastructure');

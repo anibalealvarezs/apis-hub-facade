@@ -43,12 +43,12 @@ class ProjectResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Projects';
+        return __('Projects');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Project';
+        return __('Project');
     }
 
     public static function form(Form $form): Form

@@ -18,6 +18,21 @@ class BillingLogResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Billing Logs');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Billing Log');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Billing Logs');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing & Financials');

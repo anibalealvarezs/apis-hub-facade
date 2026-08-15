@@ -23,6 +23,21 @@ class SubscriptionPlanResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Subscription Plans');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Subscription Plan');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Subscription Plans');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Billing & Financials');

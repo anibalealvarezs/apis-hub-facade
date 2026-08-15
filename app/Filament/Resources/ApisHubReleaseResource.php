@@ -25,9 +25,15 @@ class ApisHubReleaseResource extends Resource
         return __('APIs Hub Releases');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('APIs Hub Release');
+    }
 
-    
-
+    public static function getPluralModelLabel(): string
+    {
+        return __('APIs Hub Releases');
+    }
     
     public static function getNavigationGroup(): ?string
     {
