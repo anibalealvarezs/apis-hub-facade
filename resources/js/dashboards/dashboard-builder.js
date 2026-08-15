@@ -197,7 +197,7 @@ export function dashboardBuilder(config = {}) {
 
             if (this.addWidgetForm.source_type === 'kpi') {
                 const kpiId = this.addWidgetForm.custom_kpi_id;
-                if (!kpiId) return {};
+                if (!kpiId) return allTypes;
 
                 const kpiData = this.kpis[kpiId];
                 const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
@@ -211,7 +211,9 @@ export function dashboardBuilder(config = {}) {
             }
 
             if (this.addWidgetForm.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || [];
+                const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
+                    ? config.derivedMetricWidgetTypes
+                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
                 for (const t of allowed) {
                     if (allTypes[t]) filtered[t] = allTypes[t];
                 }
