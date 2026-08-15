@@ -1723,13 +1723,13 @@
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Source') }}</label>
                             <div class="grid grid-cols-1 gap-3">
-                                <template x-for="(label, type) in sourceTypes" :key="type">
-                                    <button class="p-3 rounded-lg border text-center text-sm transition-colors"
-                                            :class="addWidgetForm.source_type === type
+                                <template x-for="item in sourceTypesList" :key="item.type">
+                                    <button type="button" class="p-3 rounded-lg border text-center text-sm transition-colors"
+                                            :class="addWidgetForm.source_type === item.type
                                                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                            x-on:click="addWidgetForm.source_type = type; addWidgetForm.widget_type = ''">
-                                        <span x-text="label"></span>
+                                            x-on:click="setSourceType(item.type)">
+                                        <span x-text="item.label"></span>
                                     </button>
                                 </template>
                             </div>

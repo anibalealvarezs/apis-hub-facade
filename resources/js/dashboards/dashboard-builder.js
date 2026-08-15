@@ -172,6 +172,38 @@ export function dashboardBuilder(config = {}) {
             name: '',
         },
 
+        openAddWidgetModal() {
+            console.log('[DB][openAddWidgetModal] ENTER');
+            this.addWidgetForm = {
+                source_type: '',
+                custom_kpi_id: '',
+                derived_metric_id: '',
+                widget_type: '',
+                name: '',
+            };
+            this.showAddWidgetModal = true;
+        },
+
+        setSourceType(type) {
+            console.log('[DB][setSourceType] CLICKED type:', type);
+            this.addWidgetForm.source_type = type;
+            this.addWidgetForm.widget_type = '';
+            console.log('[DB][setSourceType] AFTER set addWidgetForm:', JSON.parse(JSON.stringify(this.addWidgetForm)));
+        },
+
+        get sourceTypesList() {
+            const defaultSourceLabels = {
+                kpi: 'Custom KPI (Analytics Engine)',
+                metric: 'Metric (Raw Aggregation)',
+                derived_metric: 'Derived Metric (Computed Series)'
+            };
+            const sources = (this.sourceTypes && Object.keys(this.sourceTypes).length > 0)
+                ? this.sourceTypes
+                : defaultSourceLabels;
+
+            return Object.entries(sources).map(([type, label]) => ({ type, label }));
+        },
+
         // ─── Computed ──
         get optimalWidgetTypes() {
             if (this.addWidgetForm.source_type === 'kpi' && this.addWidgetForm.custom_kpi_id) {
