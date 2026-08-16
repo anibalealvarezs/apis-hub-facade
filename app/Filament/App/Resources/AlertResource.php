@@ -200,36 +200,59 @@ class AlertResource extends Resource
                             Forms\Components\Repeater::make('calculationLines')
                                 ->relationship('calculationLines')
                                 ->schema([
-                                    Forms\Components\Select::make('target_asset_platform_id')
-                                        ->label(__('Target Asset'))
-                                        ->options(function (Forms\Get $get) {
-                                            $channel = $get('../../source_config.channel');
-                                            $options = ['all' => __('All Assets Combined')];
-                                            if ($channel) {
-                                                $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
-                                                foreach ($assets as $id => $info) {
-                                                    $options[$id] = $info['name'] ?? $id;
-                                                }
-                                            }
-                                            return $options;
-                                        })
-                                        ->default('all')
-                                        ->searchable()
-                                        ->preload()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                            $channel = $get('../../source_config.channel');
-                                            if ($state === 'all' || empty($state)) {
-                                                $set('label', __('All Assets Combined'));
-                                                $set('asset_filter', ['asset_platform_id' => 'all']);
-                                            } else {
-                                                $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
-                                                $assetName = $assets[$state]['name'] ?? $state;
-                                                $set('label', $assetName);
-                                                $set('asset_filter', ['asset_platform_id' => $state]);
-                                            }
-                                        }),
+                                     Forms\Components\Select::make('target_asset_platform_id')
+                                         ->label(__('Target Asset'))
+                                         ->options(function (Forms\Get $get) {
+                                             $channel = $get('../../source_config.channel');
+                                             $options = ['all' => __('All Assets Combined')];
+                                             if ($channel) {
+                                                 $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
+                                                 foreach ($assets as $id => $info) {
+                                                     $options[$id] = $info['name'] ?? $id;
+                                                 }
+                                             } else {
+                                                 $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                                                 foreach (array_keys($activeChannels) as $ch) {
+                                                     $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
+                                                     foreach ($assets as $id => $info) {
+                                                         $options[$id] = ($info['name'] ?? $id) . ' (' . \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch) . ')';
+                                                     }
+                                                 }
+                                             }
+                                             return $options;
+                                         })
+                                         ->default('all')
+                                         ->afterStateHydrated(function (Forms\Components\Select $component, Forms\Get $get, ?\App\Models\AlertCalculationLine $record) {
+                                             $filter = $record?->asset_filter ?? $get('asset_filter') ?? [];
+                                             $component->state($filter['asset_platform_id'] ?? 'all');
+                                         })
+                                         ->dehydrated(false)
+                                         ->searchable()
+                                         ->preload()
+                                         ->required()
+                                         ->reactive()
+                                         ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                             $channel = $get('../../source_config.channel');
+                                             if ($state === 'all' || empty($state)) {
+                                                 $set('label', __('All Assets Combined'));
+                                                 $set('asset_filter', ['asset_platform_id' => 'all']);
+                                             } else {
+                                                 $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
+                                                 if (empty($assets)) {
+                                                     $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                                                     foreach (array_keys($activeChannels) as $ch) {
+                                                         $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
+                                                         if (isset($chAssets[$state])) {
+                                                             $assets = $chAssets;
+                                                             break;
+                                                         }
+                                                     }
+                                                 }
+                                                 $assetName = $assets[$state]['name'] ?? $state;
+                                                 $set('label', $assetName);
+                                                 $set('asset_filter', ['asset_platform_id' => $state]);
+                                             }
+                                         }),
 
                                     Forms\Components\TextInput::make('label')
                                         ->label(__('Line Label'))
