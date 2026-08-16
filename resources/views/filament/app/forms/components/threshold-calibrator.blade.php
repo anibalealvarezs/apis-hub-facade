@@ -22,17 +22,19 @@
         </div>
 
         <!-- Baseline Stat Chips -->
-        <div class="flex items-center gap-2 text-xs">
-            <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                {{ __('Current:') }} <strong class="text-gray-900 dark:text-white" x-text="formatVal(currentVal)"></strong>
-            </span>
-            <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                {{ __('30d Avg:') }} <span x-text="formatVal(avgVal)"></span>
-            </span>
-            <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                {{ __('Range:') }} <span x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></span>
-            </span>
-        </div>
+        <template x-if="currentVal !== null">
+            <div class="flex items-center gap-2 text-xs">
+                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                    {{ __('Current:') }} <strong class="text-gray-900 dark:text-white" x-text="formatVal(currentVal)"></strong>
+                </span>
+                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                    {{ __('30d Avg:') }} <span x-text="formatVal(avgVal)"></span>
+                </span>
+                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                    {{ __('Range:') }} <span x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></span>
+                </span>
+            </div>
+        </template>
     </div>
 
     <!-- Quick Preset Buttons -->
@@ -47,7 +49,7 @@
         <button type="button" @click="applyPreset('std_dev_2')" class="rounded-lg border border-primary-300 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-900/40 dark:text-primary-300 transition">
             ⚖️ {{ __('Balanced (±2σ Deviation)') }}
         </button>
-        <template x-if="sourceConfig?.target_attribute === 'r_squared' || unit === 'percentage'">
+        <template x-if="sourceConfig?.target_attribute === 'r_squared'">
             <button type="button" @click="applyPreset('r2_fit')" class="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 transition">
                 🎯 {{ __('Model Fit (R² < 0.60)') }}
             </button>

@@ -9,26 +9,49 @@ document.addEventListener('alpine:init', () => {
         calcLines: config.calcLines,
         sourceType: config.sourceType,
         sourceConfig: config.sourceConfig,
-        points: [12.4, 14.1, 13.8, 15.2, 16.0, 15.5, 17.2, 16.8, 18.0, 17.5, 19.1, 18.4, 20.2, 19.8, 21.0, 20.5, 22.4, 21.8, 23.0, 22.5, 24.1, 23.5, 25.0, 24.2, 26.1, 25.4, 27.0, 26.5, 28.2, 27.8],
+        points: config.points || [],
 
         get currentVal() {
-            return this.points[this.points.length - 1] ?? 0;
+            if (this.points && this.points.length > 0) {
+                return this.points[this.points.length - 1];
+            }
+            let up = parseFloat(this.upper);
+            let low = parseFloat(this.lower);
+            if (!isNaN(up) && !isNaN(low)) return (up + low) / 2;
+            if (!isNaN(up)) return up * 0.85;
+            if (!isNaN(low)) return low * 1.15;
+            return null;
         },
         get minVal() {
-            return Math.min(...this.points);
+            if (this.points && this.points.length > 0) {
+                return Math.min(...this.points);
+            }
+            let cur = this.currentVal;
+            return cur !== null ? parseFloat((cur * 0.75).toFixed(2)) : null;
         },
         get maxVal() {
-            return Math.max(...this.points);
+            if (this.points && this.points.length > 0) {
+                return Math.max(...this.points);
+            }
+            let cur = this.currentVal;
+            return cur !== null ? parseFloat((cur * 1.25).toFixed(2)) : null;
         },
         get avgVal() {
-            let sum = this.points.reduce((a, b) => a + b, 0);
-            return (sum / (this.points.length || 1));
+            if (this.points && this.points.length > 0) {
+                let sum = this.points.reduce((a, b) => a + b, 0);
+                return (sum / (this.points.length || 1));
+            }
+            return this.currentVal;
         },
         get stdDev() {
             let avg = this.avgVal;
-            let squareDiffs = this.points.map(v => Math.pow(v - avg, 2));
-            let avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / (squareDiffs.length || 1);
-            return Math.sqrt(avgSquareDiff);
+            if (avg === null) return 0;
+            if (this.points && this.points.length > 0) {
+                let squareDiffs = this.points.map(v => Math.pow(v - avg, 2));
+                let avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / (squareDiffs.length || 1);
+                return Math.sqrt(avgSquareDiff);
+            }
+            return Math.abs(avg * 0.10);
         },
         get triggerSimulation() {
             let up = parseFloat(this.upper);
