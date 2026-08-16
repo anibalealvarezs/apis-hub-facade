@@ -291,6 +291,48 @@ class AlertTest extends TestCase
         $this->assertEquals('https://marcelacrodriguez.com', $line->asset_filter['asset_platform_id'] ?? null);
         $this->assertEquals('marcelacrodriguez.com', $line->label);
     }
+
+    public function test_relation_manager_resolves_dot_notation_asset_platform_id_data()
+    {
+        $alert = Alert::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Dot Notation Test Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'google_api', 'metric' => 'clicks'],
+            'ast' => ['type' => 'metric', 'metric' => 'google_api.clicks'],
+            'aggregation_method' => 'latest',
+            'upper_limit' => 500,
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+            'is_active' => true,
+        ]);
+
+        $line = AlertCalculationLine::create([
+            'alert_id' => $alert->id,
+            'label' => 'initial.com',
+            'asset_filter' => ['asset_platform_id' => 'https://initial.com'],
+        ]);
+
+        $this->actingAs($this->user);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('app'));
+        \Filament\Facades\Filament::setTenant($this->project);
+
+        \Livewire\Livewire::test(\App\Filament\App\Resources\AlertResource\RelationManagers\CalculationLinesRelationManager::class, [
+            'ownerRecord' => $alert,
+            'pageClass' => \App\Filament\App\Resources\AlertResource\Pages\EditAlert::class,
+        ])
+            ->callTableAction('edit', $line, [
+                'asset_filter.asset_platform_id' => 'https://marcelacrodriguez.com',
+                'label' => 'marcelacrodriguez.com',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $line->refresh();
+        $this->assertEquals('https://marcelacrodriguez.com', $line->asset_filter['asset_platform_id'] ?? null);
+        $this->assertEquals('marcelacrodriguez.com', $line->label);
+    }
 }
+
 
 

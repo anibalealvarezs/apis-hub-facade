@@ -22,9 +22,8 @@ class CalculationLinesRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('asset_filter.asset_platform_id')
                     ->label(__('Target Asset'))
-                    ->options(function (Forms\Get $get, ?\App\Models\AlertCalculationLine $record) use ($channel) {
+                    ->options(function () use ($channel) {
                         $options = ['all' => __('All Assets Combined')];
-
                         if ($channel) {
                             $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
                             foreach ($assets as $id => $info) {
@@ -39,27 +38,13 @@ class CalculationLinesRelationManager extends RelationManager
                                 }
                             }
                         }
-
-                        // Ensure current saved asset ID is always present in options so Filament never resets it to 'all'
-                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
-                            $currentId = (string) $record->asset_filter['asset_platform_id'];
-                            if ($currentId !== 'all' && !isset($options[$currentId])) {
-                                $options[$currentId] = $record->label ?? $currentId;
-                            }
-                        }
-
                         return $options;
                     })
                     ->default('all')
-                    ->afterStateHydrated(function (Forms\Components\Select $component, ?\App\Models\AlertCalculationLine $record) {
-                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
-                            $component->state((string) $record->asset_filter['asset_platform_id']);
-                        }
-                    })
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->reactive()
+                    ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set) use ($channel) {
                         if ($state === 'all' || empty($state)) {
                             $set('label', __('All Assets Combined'));
@@ -105,37 +90,6 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
-                        $alert = $livewire->getOwnerRecord();
-                        $channel = $alert?->source_config['channel'] ?? null;
-                        $assetId = $data['asset_filter']['asset_platform_id'] ?? $data['target_asset_platform_id'] ?? 'all';
-
-                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
-
-                        if ($assetId === 'all' || empty($assetId)) {
-                            if (empty($data['label'])) {
-                                $data['label'] = __('All Assets Combined');
-                            }
-                        } else {
-                            $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
-                            if (empty($assets)) {
-                                $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
-                                foreach (array_keys($activeChannels) as $ch) {
-                                    $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
-                                    if (isset($chAssets[$assetId])) {
-                                        $assets = $chAssets;
-                                        break;
-                                    }
-                                }
-                            }
-                            $assetName = $assets[$assetId]['name'] ?? $assetId;
-                            if (empty($data['label']) || $data['label'] === __('All Assets Combined')) {
-                                $data['label'] = $assetName;
-                            }
-                        }
-
-                        return $data;
-                    })
                     ->after(function (RelationManager $livewire) {
                         $alert = $livewire->getOwnerRecord();
                         if ($alert?->project) {
@@ -145,37 +99,6 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
-                        $alert = $livewire->getOwnerRecord();
-                        $channel = $alert?->source_config['channel'] ?? null;
-                        $assetId = $data['asset_filter']['asset_platform_id'] ?? $data['target_asset_platform_id'] ?? 'all';
-
-                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
-
-                        if ($assetId === 'all' || empty($assetId)) {
-                            if (empty($data['label'])) {
-                                $data['label'] = __('All Assets Combined');
-                            }
-                        } else {
-                            $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
-                            if (empty($assets)) {
-                                $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
-                                foreach (array_keys($activeChannels) as $ch) {
-                                    $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
-                                    if (isset($chAssets[$assetId])) {
-                                        $assets = $chAssets;
-                                        break;
-                                    }
-                                }
-                            }
-                            $assetName = $assets[$assetId]['name'] ?? $assetId;
-                            if (empty($data['label']) || $data['label'] === __('All Assets Combined')) {
-                                $data['label'] = $assetName;
-                            }
-                        }
-
-                        return $data;
-                    })
                     ->after(function (RelationManager $livewire) {
                         $alert = $livewire->getOwnerRecord();
                         if ($alert?->project) {
