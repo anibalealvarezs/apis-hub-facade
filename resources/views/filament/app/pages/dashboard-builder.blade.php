@@ -16,7 +16,7 @@
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
         availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
-    })" class="space-y-4">
+    })" wire:ignore.self class="space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
             <div class="flex items-center gap-2">
@@ -111,6 +111,10 @@
                             <div class="grid-stack-item transition-all duration-700 ease-in-out"
                                  :data-id="widget.id"
                                  :gs-id="widget.id"
+                                 :gs-x="widget.grid_x"
+                                 :gs-y="widget.grid_y"
+                                 :gs-w="widget.grid_w || 4"
+                                 :gs-h="widget.grid_h || 3"
                                  :id="widget.id"
                                  :class="{ 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/50': widget._isNew }">
                                 <div
@@ -132,11 +136,11 @@
                                                   class="inline-block w-2 h-2 rounded-full bg-green-400 flex-shrink-0"
                                                   :title="'{{ __('Inheriting dashboard controls') }}'"></span>
                                             <span class="text-sm font-medium text-gray-900 dark:text-white truncate"
-                                                  :title="widget.title || widget.name"
-                                                  x-text="widget.title || widget.name"></span>
+                                                  :title="getWidgetTitleText(widget)"
+                                                  x-text="getWidgetTitleText(widget)"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
-                                            <template x-if="widget.description">
+                                            <template x-if="getWidgetDescriptionText(widget)">
                                                 <div class="group relative flex items-center justify-center p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                          viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
@@ -148,7 +152,7 @@
                                                         class="pointer-events-none absolute bottom-full mb-2 w-64 opacity-0 transition-opacity group-hover:opacity-100 z-50 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2">
                                                         <div
                                                             class="rounded-lg bg-gray-900 dark:bg-gray-700 px-3 py-2 text-xs text-white shadow-lg whitespace-normal text-left">
-                                                            <span x-text="widget.description"></span>
+                                                            <span x-text="getWidgetDescriptionText(widget)"></span>
                                                             <div
                                                                 class="absolute -bottom-1 right-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900 dark:bg-gray-700"></div>
                                                         </div>
@@ -1713,7 +1717,7 @@
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Name') }}</label>
-                            <input type="text" x-model="addWidgetForm.name"
+                            <input type="text" x-model="widgetName"
                                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                    :placeholder="'{{ __('My Widget') }}'"/>
                         </div>
@@ -1723,24 +1727,24 @@
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Source') }}</label>
                             <div class="grid grid-cols-1 gap-3">
-                                <template x-for="(label, type) in sourceTypes" :key="type">
-                                    <button class="p-3 rounded-lg border text-center text-sm transition-colors"
-                                            :class="addWidgetForm.source_type === type
+                                <template x-for="item in sourceTypesList" :key="item.type">
+                                    <button type="button" class="p-3 rounded-lg border text-center text-sm transition-colors"
+                                            :class="selectedSourceType === item.type
                                                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                                                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                                            x-on:click="addWidgetForm.source_type = type; addWidgetForm.widget_type = ''">
-                                        <span x-text="label"></span>
+                                            x-on:click="setSourceType(item.type)">
+                                        <span x-text="item.label"></span>
                                     </button>
                                 </template>
                             </div>
                         </div>
 
                         {{-- KPI (if kpi source) --}}
-                        <template x-if="addWidgetForm.source_type === 'kpi'">
+                        <template x-if="selectedSourceType === 'kpi'">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Select KPI') }}</label>
-                                <x-ui.select-input x-model="addWidgetForm.custom_kpi_id" class="w-full">
+                                <x-ui.select-input x-model="customKpiId" class="w-full">
                                     <x-ui.select-option value="">{{ __('Choose a KPI...') }}</x-ui.select-option>
                                     <template x-for="(kpi, id) in kpis" :key="id">
                                         <x-ui.select-option x-bind:value="id" x-text="kpi.name"></x-ui.select-option>
@@ -1750,11 +1754,11 @@
                         </template>
 
                         {{-- Derived Metric (if derived_metric source) --}}
-                        <template x-if="addWidgetForm.source_type === 'derived_metric'">
+                        <template x-if="selectedSourceType === 'derived_metric'">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Select Derived Metric') }}</label>
-                                <x-ui.select-input x-model="addWidgetForm.derived_metric_id" class="w-full">
+                                <x-ui.select-input x-model="derivedMetricId" class="w-full">
                                     <x-ui.select-option
                                         value="">{{ __('Choose a Derived Metric...') }}</x-ui.select-option>
                                     <template x-for="(dm, id) in derivedMetrics" :key="id">
@@ -1768,35 +1772,36 @@
                     {{-- Column 2 (Widget Types) --}}
                     <div class="space-y-6 md:col-span-2">
                         {{-- Widget Type --}}
-                        <template x-if="addWidgetForm.source_type">
+                        <template x-if="selectedSourceType">
                             <div>
                                 <label
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Widget Type') }}</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <template x-for="(label, type) in availableWidgetTypes" :key="type">
+                                    <template x-for="item in availableWidgetTypesList" :key="item.type">
                                         <button
+                                            type="button"
                                             class="p-3 rounded-xl border text-left transition-colors flex items-center gap-3"
-                                            :class="addWidgetForm.widget_type === type
+                                            :class="selectedWidgetType === item.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
                                                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm'"
-                                            x-on:click="addWidgetForm.widget_type = type">
+                                            x-on:click="selectedWidgetType = item.type">
                                             <div
                                                 class="w-12 h-10 flex-shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-center"
-                                                x-html="getWidgetSvg(type)">
+                                                x-html="item.svg">
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-2">
                                                     <span
                                                         class="block text-sm font-semibold text-gray-900 dark:text-white truncate"
-                                                        x-text="label"></span>
-                                                    <template x-if="optimalWidgetTypes.includes(type)">
+                                                        x-text="item.label"></span>
+                                                    <template x-if="optimalWidgetTypes.includes(item.type)">
                                                         <span
                                                             class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">{{ __('Recommended') }}</span>
                                                     </template>
                                                 </div>
                                                 <span
                                                     class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5 bd-line-clamp-2"
-                                                    x-text="getWidgetDescription(type)"></span>
+                                                    x-text="item.description"></span>
                                             </div>
                                         </button>
                                     </template>
@@ -2040,6 +2045,5 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-extra.min.css"/>
     @endpush
 </x-filament-panels::page>

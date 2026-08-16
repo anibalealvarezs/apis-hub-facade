@@ -15,8 +15,17 @@ class DashboardView extends Page
 
     use \App\Filament\App\Resources\DashboardResource\Traits\LoadsDashboardViewData;
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return Dashboard::withTrashed()->where($field ?? 'id', $value)->first();
+    }
+
     public function mount(Dashboard $record): void
     {
+        if (!$record || $record->trashed()) {
+            redirect()->to(DashboardResource::getUrl('index'));
+            return;
+        }
         $this->loadDashboardViewData($record);
     }
 

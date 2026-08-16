@@ -164,61 +164,150 @@ export function dashboardBuilder(config = {}) {
         sourceTypes: config.sourceTypes || {},
         kpis: config.kpis || {},
         derivedMetrics: config.derivedMetrics || {},
-        addWidgetForm: {
-            source_type: '',
-            custom_kpi_id: '',
-            derived_metric_id: '',
-            widget_type: '',
-            name: '',
+        selectedSourceType: '',
+        selectedWidgetType: '',
+        customKpiId: '',
+        derivedMetricId: '',
+        widgetName: '',
+
+        get addWidgetForm() {
+            return {
+                source_type: this.selectedSourceType,
+                widget_type: this.selectedWidgetType,
+                custom_kpi_id: this.customKpiId,
+                derived_metric_id: this.derivedMetricId,
+                name: this.widgetName,
+            };
+        },
+
+        set addWidgetForm(val) {
+            if (!val) return;
+            this.selectedSourceType = val.source_type || '';
+            this.selectedWidgetType = val.widget_type || '';
+            this.customKpiId = val.custom_kpi_id || '';
+            this.derivedMetricId = val.derived_metric_id || '';
+            this.widgetName = val.name || '';
+        },
+
+        openAddWidgetModal() {
+            console.log('[DB][openAddWidgetModal] ENTER');
+            this.selectedSourceType = '';
+            this.selectedWidgetType = '';
+            this.customKpiId = '';
+            this.derivedMetricId = '';
+            this.widgetName = '';
+            this.showAddWidgetModal = true;
+        },
+
+        setSourceType(type) {
+            console.log('[DB][setSourceType] CLICKED type:', type);
+            this.selectedSourceType = type;
+            this.selectedWidgetType = '';
+            console.log('[DB][setSourceType] AFTER set selectedSourceType:', this.selectedSourceType);
+        },
+
+        get sourceTypesList() {
+            const defaultSourceLabels = {
+                kpi: 'Custom KPI (Analytics Engine)',
+                metric: 'Metric (Raw Aggregation)',
+                derived_metric: 'Derived Metric (Computed Series)'
+            };
+            const sources = (this.sourceTypes && Object.keys(this.sourceTypes).length > 0)
+                ? this.sourceTypes
+                : defaultSourceLabels;
+
+            return Object.entries(sources).map(([type, label]) => ({ type, label }));
         },
 
         // ─── Computed ──
         get optimalWidgetTypes() {
-            if (this.addWidgetForm.source_type === 'kpi' && this.addWidgetForm.custom_kpi_id) {
-                const kpiData = this.kpis[this.addWidgetForm.custom_kpi_id];
+            if (this.selectedSourceType === 'kpi' && this.customKpiId) {
+                const kpiData = this.kpis ? this.kpis[this.customKpiId] : null;
                 return kpiData ? (kpiData.optimal_widgets || []) : [];
             }
             return [];
         },
 
         get availableWidgetTypes() {
-            if (!this.addWidgetForm.source_type) return {};
+            const sourceType = this.selectedSourceType;
+            const kpiId = this.customKpiId;
+            console.log('[DB][availableWidgetTypes] ENTER', {
+                sourceType,
+                kpiId,
+                hasWidgetLabels: !!this.widgetLabels,
+                widgetLabelsKeys: this.widgetLabels ? Object.keys(this.widgetLabels) : []
+            });
 
-            const allTypes = this.widgetLabels || {};
+            if (!sourceType) return {};
+
+            const defaultLabels = {
+                tile: 'Number Tile',
+                line_chart: 'Line Chart',
+                bar_chart: 'Bar Chart',
+                scatter_plot: 'Scatter Plot',
+                combo_chart: 'Combo Chart',
+                table: 'Table',
+                gauge: 'Gauge',
+                sparkline: 'Sparkline',
+                anomaly_chart: 'Anomaly Chart'
+            };
+
+            const allTypes = (this.widgetLabels && Object.keys(this.widgetLabels).length > 0)
+                ? this.widgetLabels
+                : defaultLabels;
+
             let filtered = {};
 
-            if (this.addWidgetForm.source_type === 'metric') {
+            if (sourceType === 'metric') {
                 const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
-                return filtered;
-            }
+            } else if (sourceType === 'kpi') {
+                if (!kpiId) {
+                    const allowed = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
+                    for (const t of allowed) {
+                        filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                    }
+                } else {
+                    const kpiData = (this.kpis && this.kpis[kpiId]) ? this.kpis[kpiId] : null;
+                    const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
 
-            if (this.addWidgetForm.source_type === 'kpi') {
-                const kpiId = this.addWidgetForm.custom_kpi_id;
-                if (!kpiId) return {};
-
-                const kpiData = this.kpis[kpiId];
-                const allowed = kpiData ? (kpiData.compatible_widgets || []) : [];
-
-                if (allowed.length === 0) return allTypes;
-
+                    if (allowed.length === 0) {
+                        for (const t of Object.keys(defaultLabels)) {
+                            filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                        }
+                    } else {
+                        for (const t of allowed) {
+                            filtered[t] = allTypes[t] || defaultLabels[t] || t;
+                        }
+                    }
+                }
+            } else if (sourceType === 'derived_metric') {
+                const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
+                    ? config.derivedMetricWidgetTypes
+                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
                 for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
+                    filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
-                return filtered;
+            } else {
+                filtered = { ...allTypes };
             }
 
-            if (this.addWidgetForm.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || [];
-                for (const t of allowed) {
-                    if (allTypes[t]) filtered[t] = allTypes[t];
-                }
-                return filtered;
-            }
+            console.log('[DB][availableWidgetTypes] RETURN', filtered);
+            return filtered;
+        },
 
-            return allTypes;
+        get availableWidgetTypesList() {
+            const typesObj = this.availableWidgetTypes;
+            const list = Object.entries(typesObj).map(([type, label]) => ({
+                type,
+                label,
+                description: this.getWidgetDescription(type),
+                svg: this.getWidgetSvg(type)
+            }));
+            console.log('[DB][availableWidgetTypesList] RETURN count:', list.length, list);
+            return list;
         },
 
         get availableChartTypesForControls() {
@@ -269,11 +358,78 @@ export function dashboardBuilder(config = {}) {
 
         // ─── UI Helpers ───
         getWidgetDescription(type) {
-            return this.widgetDescriptions[type] || 'Standard widget';
+            const defaultDescriptions = {
+                tile: 'Single large number for totals',
+                line_chart: 'Track continuous trends over time',
+                bar_chart: 'Compare discrete volumes side-by-side',
+                scatter_plot: 'Find correlations and trendlines',
+                combo_chart: 'Dual-axis bars and lines (e.g. MACD)',
+                table: 'Detailed row-by-row data view',
+                gauge: 'Percentage or progress to a target',
+                sparkline: 'Minimalist trendline without axes',
+                anomaly_chart: 'Highlights statistical outliers in red'
+            };
+            return (this.widgetDescriptions && this.widgetDescriptions[type]) || defaultDescriptions[type] || 'Standard widget';
+        },
+
+        getWidgetTitleText(widget) {
+            if (!widget) return 'Widget';
+            let title = widget.title;
+            if (Array.isArray(title)) {
+                title = title.length > 0 ? title[0] : '';
+            }
+            if (typeof title === 'object' && title !== null) {
+                const lang = document.documentElement.lang || 'en';
+                title = title[lang] || title['en'] || Object.values(title)[0] || '';
+            }
+            if (typeof title === 'string') {
+                const trimmed = title.trim();
+                if (trimmed === '[]' || trimmed === '{}') title = '';
+            }
+            if (!title && widget.name) {
+                let name = widget.name;
+                if (Array.isArray(name)) name = name.length > 0 ? name[0] : '';
+                if (typeof name === 'object' && name !== null) {
+                    const lang = document.documentElement.lang || 'en';
+                    name = name[lang] || name['en'] || Object.values(name)[0] || '';
+                }
+                if (typeof name === 'string') {
+                    const trimmed = name.trim();
+                    if (trimmed === '[]' || trimmed === '{}') name = '';
+                }
+                title = name;
+            }
+            return (typeof title === 'string' && title.trim() !== '') ? title.trim() : 'Widget';
+        },
+
+        getWidgetDescriptionText(widget) {
+            if (!widget) return '';
+            let desc = widget.description;
+            if (Array.isArray(desc)) desc = desc.length > 0 ? desc[0] : '';
+            if (typeof desc === 'object' && desc !== null) {
+                const lang = document.documentElement.lang || 'en';
+                desc = desc[lang] || desc['en'] || Object.values(desc)[0] || '';
+            }
+            if (typeof desc === 'string') {
+                const trimmed = desc.trim();
+                if (trimmed === '[]' || trimmed === '{}') desc = '';
+            }
+            return (typeof desc === 'string' && desc.trim() !== '') ? desc.trim() : '';
         },
 
         getWidgetSvg(type) {
-            return this.widgetSvgs[type] || this.widgetSvgs['tile'];
+            const defaultSvgs = {
+                tile: '<svg viewBox="0 0 40 24" class="w-full h-full"><text x="20" y="16" text-anchor="middle" font-weight="bold" font-size="14" class="fill-gray-800 dark:fill-gray-200">12K</text><path d="M 28 8 L 32 4 L 36 8 M 32 4 L 32 16" class="stroke-green-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+                line_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 18 L 12 11 L 20 15 L 28 6 L 36 8" class="stroke-primary-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="4" cy="18" r="1.5" class="fill-primary-500"/><circle cx="12" cy="11" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="28" cy="6" r="1.5" class="fill-primary-500"/><circle cx="36" cy="8" r="1.5" class="fill-primary-500"/></svg>',
+                bar_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="10" width="6" height="10" rx="1" class="fill-primary-400"/><rect x="17" y="6" width="6" height="14" rx="1" class="fill-primary-600"/><rect x="28" y="14" width="6" height="6" rx="1" class="fill-primary-300"/></svg>',
+                scatter_plot: '<svg viewBox="0 0 40 24" class="w-full h-full"><line x1="4" y1="20" x2="36" y2="4" class="stroke-gray-300 dark:stroke-gray-600" stroke-width="1" stroke-dasharray="2 2"/><circle cx="8" cy="17" r="1.5" class="fill-primary-500"/><circle cx="14" cy="13" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="26" cy="8" r="1.5" class="fill-primary-500"/><circle cx="32" cy="6" r="1.5" class="fill-primary-500"/></svg>',
+                combo_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="12" width="4" height="8" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="15" y="8" width="4" height="12" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="24" y="14" width="4" height="6" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="33" y="6" width="4" height="14" rx="0.5" class="fill-primary-400 opacity-60"/><path d="M 4 16 L 14 7 L 24 12 L 36 4" class="stroke-amber-500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+                table: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="4" y="3" width="32" height="18" rx="2" class="stroke-primary-500 fill-none" stroke-width="1.5"/><path d="M 4 8 L 36 8" class="stroke-primary-500" stroke-width="1.5"/><path d="M 4 14 L 36 14" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1" stroke-dasharray="1 1"/><path d="M 16 8 L 16 21" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1"/></svg>',
+                gauge: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 7 19 A 13 13 0 0 1 33 19" class="stroke-gray-300 dark:stroke-gray-600 fill-none" stroke-width="4" stroke-linecap="round"/><path d="M 7 19 A 13 13 0 0 1 27 8" class="stroke-primary-500 fill-none" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="19" r="2" class="fill-gray-800 dark:fill-gray-100"/><line x1="20" y1="19" x2="25" y2="9" class="stroke-gray-800 dark:stroke-gray-100" stroke-width="1.8" stroke-linecap="round"/></svg>',
+                sparkline: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 C 10 17, 12 6, 18 10 C 24 14, 28 4, 36 8" class="stroke-primary-500 fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                anomaly_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 L 12 15 L 20 7 L 28 14 L 36 12" class="stroke-gray-400 dark:stroke-gray-500 fill-none" stroke-width="1.5" stroke-dasharray="2 2"/><circle cx="20" cy="7" r="3.5" class="fill-red-500/20 stroke-red-500" stroke-width="1.2"/><circle cx="20" cy="7" r="1.5" class="fill-red-600"/></svg>'
+            };
+            return (this.widgetSvgs && this.widgetSvgs[type]) || defaultSvgs[type] || defaultSvgs['tile'];
         },
 
         // ─── Initialization ──
@@ -505,6 +661,8 @@ export function dashboardBuilder(config = {}) {
 
             el.setAttribute('gs-id', widget.id);
             el.setAttribute('data-id', widget.id);
+            el.setAttribute('gs-w', w);
+            el.setAttribute('gs-h', h);
 
             if (hasX && hasY) {
                 el.setAttribute('gs-x', widget.grid_x);
@@ -715,6 +873,19 @@ export function dashboardBuilder(config = {}) {
             this._initialLayoutSignature = JSON.stringify(this.getLayout());
 
             this.grid.on('change', (event, items) => {
+                if (items && Array.isArray(items)) {
+                    items.forEach(item => {
+                        const rawId = item.id || (item.el ? (item.el.getAttribute('gs-id') || item.el.getAttribute('data-id')) : null);
+                        if (!rawId) return;
+                        const widget = (this.widgets || []).find(w => String(w.id) === String(rawId));
+                        if (widget) {
+                            widget.grid_x = parseInt(item.x, 10) || 0;
+                            widget.grid_y = parseInt(item.y, 10) || 0;
+                            widget.grid_w = parseInt(item.w, 10) || 4;
+                            widget.grid_h = parseInt(item.h, 10) || 3;
+                        }
+                    });
+                }
                 const currentSignature = JSON.stringify(this.getLayout());
                 if (!this._initialLayoutSignature) {
                     this._initialLayoutSignature = currentSignature;
@@ -840,13 +1011,21 @@ export function dashboardBuilder(config = {}) {
             return nodes.map(node => {
                 const el = node.el;
                 const rawId = node.id || (el ? (el.getAttribute('gs-id') || el.getAttribute('data-id')) : 0);
-                return {
-                    id: parseInt(rawId, 10) || 0,
-                    x: parseInt(node.x, 10) || 0,
-                    y: parseInt(node.y, 10) || 0,
-                    w: parseInt(node.w, 10) || 4,
-                    h: parseInt(node.h, 10) || 3,
-                };
+                const id = parseInt(rawId, 10) || 0;
+                const x = parseInt(node.x, 10) || 0;
+                const y = parseInt(node.y, 10) || 0;
+                const w = parseInt(node.w, 10) || 4;
+                const h = parseInt(node.h, 10) || 3;
+
+                const widget = (this.widgets || []).find(w => String(w.id) === String(id));
+                if (widget) {
+                    widget.grid_x = x;
+                    widget.grid_y = y;
+                    widget.grid_w = w;
+                    widget.grid_h = h;
+                }
+
+                return { id, x, y, w, h };
             }).filter(node => node.id !== 0)
               .sort((a, b) => a.id - b.id);
         },
@@ -934,7 +1113,11 @@ export function dashboardBuilder(config = {}) {
                 asset_group: c.asset_group || '',
                 show_asset_group_selector: c.show_asset_group_selector === true,
             };
-            if (this.$wire) this.$wire.saveDashboardControls(payload);
+            if (this.$wire) {
+                this.$wire.saveDashboardControls(payload).then(() => {
+                    this.dashboardControls = { ...payload };
+                });
+            }
             this.showDashboardControls = false;
         },
 
@@ -1074,7 +1257,7 @@ export function dashboardBuilder(config = {}) {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
                     this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
                         channel: s.channel || '',
-                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
                         assets: Array.isArray(s.assets) ? [...s.assets] : []
                     }));
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
@@ -1083,25 +1266,31 @@ export function dashboardBuilder(config = {}) {
                     seriesKeys.forEach((key) => {
                         const channel = wc.series_channels[key] || wc.channel || '';
                         const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
-                        const metrics = (wc.metrics && Array.isArray(wc.metrics)) ? (wc.metrics[key] ? [wc.metrics[key]] : wc.metrics) : [];
+                        let metrics = [];
+                        if (Array.isArray(wc.metrics)) {
+                            if (seriesKeys.length === 1) {
+                                metrics = [...wc.metrics];
+                            } else if (Array.isArray(wc.metrics[key])) {
+                                metrics = [...wc.metrics[key]];
+                            } else if (wc.metrics[key]) {
+                                metrics = [wc.metrics[key]];
+                            } else {
+                                metrics = [...wc.metrics];
+                            }
+                        } else if (wc.metrics && typeof wc.metrics === 'object') {
+                            metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
+                        }
                         groupedSeries.push({ channel, metrics, assets });
                     });
                     this.widgetControlsForm.raw_series = groupedSeries;
-                } else if (wc.metrics && wc.metrics.length > 0) {
-                    const groupedSeries = [];
-                    wc.metrics.forEach((m, i) => {
-                        const channel = (wc.series_channels && wc.series_channels[i]) ? wc.series_channels[i] : (wc.channel || '');
-                        const assets = (wc.series_assets && wc.series_assets[i]) ? [...wc.series_assets[i]] : (wc.assets ? [...wc.assets] : []);
-
-                        const existing = groupedSeries.find(s => s.channel === channel && JSON.stringify(s.assets) === JSON.stringify(assets));
-                        if (existing) {
-                            if (m && !existing.metrics.includes(m)) existing.metrics.push(m);
-                        } else {
-                            groupedSeries.push({ channel, metrics: m ? [m] : [], assets });
-                        }
-                    });
-                    this.widgetControlsForm.raw_series = groupedSeries;
+                } else if (wc.metrics && Array.isArray(wc.metrics) && wc.metrics.length > 0) {
+                    this.widgetControlsForm.raw_series = [{
+                        channel: wc.channel || '',
+                        metrics: [...wc.metrics],
+                        assets: wc.assets ? [...wc.assets] : []
+                    }];
                 }
+
                 if (this.widgetControlsForm.raw_series.length === 0) {
                     this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', metrics: [], assets: wc.assets || [] });
                 }
@@ -1643,6 +1832,11 @@ export function dashboardBuilder(config = {}) {
                     payload.series_assets[sIdx] = validAssets;
                     payload.series_channels[sIdx] = s.channel || '';
                 });
+                payload.raw_series = c.raw_series.map(s => ({
+                    channel: s.channel || '',
+                    metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                    assets: Array.isArray(s.assets) ? [...s.assets] : []
+                }));
                 if (payload.series_channels['0']) {
                     payload.channel = payload.series_channels['0'];
                 }
@@ -1828,7 +2022,8 @@ export function dashboardBuilder(config = {}) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
             }
-            this.$wire.duplicateWidget(id).then(rawWidget => {
+            const currentLayout = this.getLayout();
+            this.$wire.duplicateWidget(id, currentLayout).then(rawWidget => {
                 const widget = { ...rawWidget };
                 widget._isNew = true;
                 this.widgets.push(widget);
@@ -1841,16 +2036,10 @@ export function dashboardBuilder(config = {}) {
                 this.$nextTick(() => {
                     const strId = String(widget.id);
                     const el = document.querySelector(`[data-id="${strId}"]`) || document.querySelector(`[gs-id="${strId}"]`) || document.getElementById(strId);
-                    console.log('[DB][duplicateWidget] $nextTick lookup', {
-                        id: strId,
-                        el: el ? el.outerHTML.slice(0, 300) : null,
-                        hasNode: el ? !!el.gridstackNode : null,
-                        parent: el && el.parentElement ? el.parentElement.id : null,
-                        widgetsIncludes: (this.widgets || []).some(w => String(w.id) === strId)
-                    });
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
+                    this.saveLayout();
                 });
             }).catch(err => {
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);

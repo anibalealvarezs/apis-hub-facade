@@ -22,6 +22,11 @@ class DashboardResource extends Resource
 
     protected static ?string $cluster = \App\Filament\App\Clusters\Dashboards::class;
 
+    public static function resolveRecordRouteBinding(int | string $key): ?\Illuminate\Database\Eloquent\Model
+    {
+        return static::getEloquentQuery()->withTrashed()->find($key);
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
@@ -175,7 +180,7 @@ class DashboardResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_default'),
                 Tables\Filters\TrashedFilter::make(),
             ])
-            ->recordUrl(fn (Dashboard $record): string => DashboardResource::getUrl('edit', ['record' => $record]))
+            ->recordUrl(fn (Dashboard $record): ?string => $record->trashed() ? null : DashboardResource::getUrl('edit', ['record' => $record]))
             ->actions([
                 Tables\Actions\Action::make('open_builder')
                     ->label(__('Open Builder'))
@@ -198,11 +203,23 @@ class DashboardResource extends Resource
                     ->action(fn (Dashboard $record) => app(\App\Services\DashboardService::class)->cloneDashboard($record))
                     ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences'))
+                    ->after(function ($livewire) {
+                        $livewire->mountedTableActionRecord = null;
+                        $livewire->mountedTableAction = null;
+                    }),
                 Tables\Actions\RestoreAction::make()
-                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences'))
+                    ->after(function ($livewire) {
+                        $livewire->mountedTableActionRecord = null;
+                        $livewire->mountedTableAction = null;
+                    }),
                 Tables\Actions\ForceDeleteAction::make()
-                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences')),
+                    ->visible(fn (Dashboard $record) => $record->trashed() && auth()->user()->can('edit_preferences'))
+                    ->after(function ($livewire) {
+                        $livewire->mountedTableActionRecord = null;
+                        $livewire->mountedTableAction = null;
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

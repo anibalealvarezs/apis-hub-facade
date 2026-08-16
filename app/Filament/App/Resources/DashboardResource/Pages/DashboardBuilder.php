@@ -27,8 +27,17 @@ class DashboardBuilder extends Page
 
     public bool $unsavedChanges = false;
 
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return Dashboard::withTrashed()->where($field ?? 'id', $value)->first();
+    }
+
     public function mount(Dashboard $record): void
     {
+        if (!$record || $record->trashed()) {
+            redirect()->to(DashboardResource::getUrl('index'));
+            return;
+        }
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] DashboardBuilder mount ENTER", ['dashboard_id' => $record->id]);
         $this->dashboard = $record;
         $this->unsavedChanges = $this->dashboard->hasUnsavedChanges();
@@ -431,17 +440,21 @@ class DashboardBuilder extends Page
             ->send();
     }
 
-    public function duplicateWidget(int $widgetId): array
+    public function duplicateWidget(int $widgetId, ?array $currentLayout = null): array
     {
         $service = app(\App\Services\DashboardService::class);
+
+        if ($currentLayout && is_array($currentLayout) && count($currentLayout) > 0) {
+            $service->saveLayout($this->dashboard, $currentLayout);
+        }
+
         $widget = DashboardWidget::findOrFail($widgetId);
 
         if ($widget->dashboard_id !== $this->dashboard->id) {
             abort(403);
         }
 
-        $newWidget = $service->duplicateWidget($widget);
-        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
+        $newWidget = $service->duplicateWidget($widget, $currentLayout);
         $this->unsavedChanges = true;
 
         Notification::make()

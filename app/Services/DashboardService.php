@@ -122,13 +122,40 @@ class DashboardService
         $widget->delete();
     }
 
-    public function duplicateWidget(DashboardWidget $widget): DashboardWidget
+    public function duplicateWidget(DashboardWidget $widget, ?array $currentLayout = null): DashboardWidget
     {
         $clone = $widget->replicate();
         $clone->name = $widget->name . ' (Copy)';
-        $clone->grid_x = $widget->grid_x;
-        $clone->grid_y = $widget->grid_y + ($widget->grid_h ?? 3);
-        $clone->push();
+
+        $widget->dashboard->load('widgets');
+        $allWidgets = $widget->dashboard->widgets;
+
+        $sourceW = $widget->grid_w ?? 4;
+        $sourceH = $widget->grid_h ?? 3;
+
+        $maxY = 0;
+        foreach ($allWidgets as $w) {
+            $bottom = ($w->grid_y ?? 0) + ($w->grid_h ?? 3);
+            if ($bottom > $maxY) {
+                $maxY = $bottom;
+            }
+        }
+
+        if ($currentLayout && is_array($currentLayout)) {
+            foreach ($currentLayout as $item) {
+                if (isset($item['id']) && (int)$item['id'] === (int)$widget->id) {
+                    $sourceW = $item['w'] ?? $sourceW;
+                    $sourceH = $item['h'] ?? $sourceH;
+                }
+            }
+        }
+
+        $clone->grid_x = 0;
+        $clone->grid_y = $maxY;
+        $clone->grid_w = $sourceW;
+        $clone->grid_h = $sourceH;
+        $clone->save();
+
         return $clone;
     }
 
