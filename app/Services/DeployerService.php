@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Alert;
 use App\Models\Project;
 use App\Models\Server;
 use Illuminate\Support\Facades\Log;
