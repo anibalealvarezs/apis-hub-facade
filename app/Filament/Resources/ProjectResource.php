@@ -521,6 +521,11 @@ class ProjectResource extends Resource
                                 ->send();
                             return;
                         }
+                        $record->update([
+                            'health_status' => 'online',
+                            'deploy_started_at' => null,
+                        ]);
+
                         $results = $validation['results'] ?? [];
                         $validCount = 0;
                         $warningCount = 0;
@@ -673,6 +678,13 @@ class ProjectResource extends Resource
                     ->action(function (Project $record, RemoteEngineService $service) {
                         $response = $service->getStatus($record);
                         $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
+
+                        if ($isOnline) {
+                            $record->update([
+                                'health_status' => 'online',
+                                'deploy_started_at' => null,
+                            ]);
+                        }
 
                         Notification::make()
                             ->title($isOnline ? "{$record->name} is Online" : "{$record->name} Offline")
