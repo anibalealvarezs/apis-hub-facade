@@ -372,9 +372,13 @@ class AlertResource extends Resource
                     ->dateTime()
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('Active'))
-                    ->boolean()
+                    ->afterStateUpdated(function ($record, $state) {
+                        if ($record->project) {
+                            app(\App\Services\DeployerService::class)->syncAlertConfig($record->project);
+                        }
+                    })
                     ->sortable(),
             ])
             ->actions([

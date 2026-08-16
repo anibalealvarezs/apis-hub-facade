@@ -197,12 +197,12 @@ EOT;
         }
 
         $alerts = $project->alerts()
-            ->active()
             ->with('calculationLines')
             ->get()
             ->map(fn ($alert) => [
                 'id' => $alert->id,
                 'name' => $alert->name,
+                'is_active' => (bool) $alert->is_active,
                 'source_type' => $alert->source_type,
                 'source_config' => $alert->source_config,
                 'ast' => $alert->ast,
