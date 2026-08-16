@@ -90,7 +90,7 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->mutateFormDataBeforeCreate(function (array $data, RelationManager $livewire): array {
+                    ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
                         $alert = $livewire->getOwnerRecord();
                         $channel = $alert?->source_config['channel'] ?? null;
                         $assetId = $data['asset_filter']['asset_platform_id'] ?? 'all';
@@ -130,7 +130,7 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->mutateFormDataBeforeSave(function (array $data, RelationManager $livewire): array {
+                    ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
                         $alert = $livewire->getOwnerRecord();
                         $channel = $alert?->source_config['channel'] ?? null;
                         $assetId = $data['asset_filter']['asset_platform_id'] ?? 'all';
