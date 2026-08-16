@@ -110,14 +110,38 @@ class AlertResource extends Resource
                                 ->reactive(),
 
                             Forms\Components\Group::make([
-                                Forms\Components\TextInput::make('source_config.channel')
-                                    ->label(__('Channel Name (e.g. meta, google, ga4)'))
+                                Forms\Components\Select::make('source_config.channel')
+                                    ->label(__('Channel'))
+                                    ->options(function () {
+                                        $active = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                                        if (empty($active)) {
+                                            $allTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+                                            foreach (array_keys($allTags) as $ch) {
+                                                $active[$ch] = \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch);
+                                            }
+                                        }
+                                        return $active;
+                                    })
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn (Forms\Set $set) => $set('source_config.metric', null))
                                     ->visible(fn (Forms\Get $get) => $get('source_type') === 'metric'),
 
-                                Forms\Components\TextInput::make('source_config.metric')
-                                    ->label(__('Metric Key (e.g. spend, impressions, clicks)'))
+                                Forms\Components\Select::make('source_config.metric')
+                                    ->label(__('Metric'))
+                                    ->options(function (Forms\Get $get) {
+                                        $channel = $get('source_config.channel');
+                                        if (empty($channel)) {
+                                            return [];
+                                        }
+                                        return \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($channel);
+                                    })
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
+                                    ->reactive()
                                     ->visible(fn (Forms\Get $get) => $get('source_type') === 'metric'),
 
                                 Forms\Components\Select::make('source_config.kpi_id')
