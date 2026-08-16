@@ -550,7 +550,83 @@ class AlertTest extends TestCase
         $this->assertEquals('▼', $spendLower['arrow']);
         $this->assertEquals('#10b981', $spendLower['color']);
     }
+
+    public function test_alert_service_baseline_stats_and_threshold_dry_run_simulation()
+    {
+        $service = app(\App\Services\AlertService::class);
+
+        $points = [10.0, 12.0, 14.0, 16.0, 18.0, 20.0];
+        $stats = $service->computeBaselineStats($points);
+
+        $this->assertEquals(6, $stats['count']);
+        $this->assertEquals(10.0, $stats['min']);
+        $this->assertEquals(20.0, $stats['max']);
+        $this->assertEquals(15.0, $stats['avg']);
+        $this->assertEquals(20.0, $stats['current']);
+        $this->assertGreaterThan(0, $stats['std_dev']);
+
+        // Simulation with upper limit 17 and lower limit 11
+        $simulation = $service->simulateThresholdTriggers($points, 17.0, 11.0);
+        $this->assertEquals(6, $simulation['total_evaluated']);
+        $this->assertEquals(3, $simulation['total_triggers']); // 18, 20 (>17) and 10 (<11)
+        $this->assertEquals(2, $simulation['triggers_upper']);
+        $this->assertEquals(1, $simulation['triggers_lower']);
+        $this->assertEquals('very_high', $simulation['sensitivity']); // 3/6 = 50%
+        $this->assertNotNull($simulation['warning']);
+
+        // Simulation with balanced limits
+        $balancedSim = $service->simulateThresholdTriggers($points, 19.5, 9.5);
+        $this->assertEquals(1, $balancedSim['total_triggers']); // only 20
+        $this->assertEquals('balanced', $balancedSim['sensitivity']); // 1/6 = 16.7% (within 0-20% balanced)
+    }
+
+    public function test_create_alert_from_widget_prefills_assets_and_unit()
+    {
+        $dashboard = Dashboard::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Marketing Overview',
+            'is_public' => false,
+            'is_default' => false,
+        ]);
+
+        $widget = DashboardWidget::create([
+            'dashboard_id' => $dashboard->id,
+            'name' => 'Meta ROAS Campaign Widget',
+            'title' => 'Meta ROAS Campaign Widget',
+            'source_type' => 'metric',
+            'source_config' => [
+                'channel' => 'meta',
+                'metric' => 'roas',
+                'asset_platform_id' => 'act_999888',
+            ],
+            'controls' => [
+                'asset_platform_id' => 'act_999888',
+            ],
+            'widget_type' => 'kpi_card',
+            'grid_x' => 0,
+            'grid_y' => 0,
+            'grid_w' => 6,
+            'grid_h' => 4,
+        ]);
+
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'edit_preferences', 'guard_name' => 'web']);
+        $this->user->givePermissionTo('edit_preferences');
+
+        $this->actingAs($this->user);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('app'));
+        \Filament\Facades\Filament::setTenant($this->project);
+
+        \Livewire\Livewire::withQueryParams(['widget_id' => $widget->id])
+            ->test(\App\Filament\App\Resources\AlertResource\Pages\CreateAlert::class)
+            ->assertFormFieldExists('name')
+            ->assertFormSet([
+                'name' => 'Alert: Meta ROAS Campaign Widget',
+                'source_type' => 'metric',
+            ]);
+    }
 }
+
 
 
 

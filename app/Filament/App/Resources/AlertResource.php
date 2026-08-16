@@ -150,7 +150,48 @@ class AlertResource extends Resource
                                     ->options(fn () => CustomKpi::where('project_id', $project?->id)->pluck('name', 'id'))
                                     ->required()
                                     ->searchable()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $kpi = CustomKpi::find($state);
+                                            if ($kpi && !empty($kpi->unit)) {
+                                                $set('unit', $kpi->unit);
+                                            }
+                                            if ($kpi && !empty($kpi->filters['calculation_type']) && $kpi->filters['calculation_type'] === 'calculate_regression') {
+                                                $set('source_config.target_attribute', 'r_squared');
+                                                $set('unit', 'percentage');
+                                            }
+                                        }
+                                    })
                                     ->visible(fn (Forms\Get $get) => $get('source_type') === 'kpi'),
+
+                                Forms\Components\Select::make('source_config.target_attribute')
+                                    ->label(__('Statistical Target Metric'))
+                                    ->options([
+                                        'r_squared' => __('Model Fit Quality (R² / Predictability)'),
+                                        'slope' => __('Regression Slope (Efficiency / Coefficient β)'),
+                                        'intercept' => __('Baseline Intercept (α)'),
+                                    ])
+                                    ->default('r_squared')
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state === 'r_squared') {
+                                            $set('unit', 'percentage');
+                                        } else {
+                                            $set('unit', 'number');
+                                        }
+                                    })
+                                    ->visible(function (Forms\Get $get) {
+                                        if ($get('source_type') !== 'kpi') {
+                                            return false;
+                                        }
+                                        $kpiId = $get('source_config.kpi_id');
+                                        if (!$kpiId) {
+                                            return false;
+                                        }
+                                        $kpi = CustomKpi::find($kpiId);
+                                        return $kpi && !empty($kpi->filters['calculation_type']) && $kpi->filters['calculation_type'] === 'calculate_regression';
+                                    }),
 
                                 Forms\Components\Select::make('source_config.dm_id')
                                     ->label(__('Derived Metric'))
@@ -161,8 +202,90 @@ class AlertResource extends Resource
                             ]),
                         ]),
 
-                    Wizard\Step::make(__('Thresholds & Aggregation'))
+                    Wizard\Step::make(__('Calculation Lines'))
                         ->schema([
+                            Forms\Components\Placeholder::make('calculation_lines_explanation')
+                                ->label('')
+                                ->content(new \Illuminate\Support\HtmlString(
+                                    '<div class="text-sm text-gray-500 dark:text-gray-400 mb-2">' .
+                                    e(__('Define which accounts or assets will be evaluated under this alert rule. Each line represents 1 calculation.')) .
+                                    '</div>'
+                                )),
+
+                            Forms\Components\Repeater::make('calculationLines')
+                                ->relationship('calculationLines')
+                                ->schema([
+                                    Forms\Components\Select::make('target_asset_platform_id')
+                                        ->label(__('Target Asset'))
+                                        ->options(function (Forms\Get $get) {
+                                            $channel = $get('../../source_config.channel');
+                                            $options = ['all' => __('All Assets Combined')];
+                                            if ($channel) {
+                                                $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
+                                                foreach ($assets as $id => $info) {
+                                                    $options[(string) $id] = $info['name'] ?? $id;
+                                                }
+                                            } else {
+                                                $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                                                foreach (array_keys($activeChannels) as $ch) {
+                                                    $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
+                                                    foreach ($assets as $id => $info) {
+                                                        $options[(string) $id] = ($info['name'] ?? $id) . ' (' . \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch) . ')';
+                                                    }
+                                                }
+                                            }
+                                            return $options;
+                                        })
+                                        ->afterStateHydrated(function (Forms\Components\Select $component, ?\App\Models\AlertCalculationLine $record, $state) {
+                                            if ($record && isset($record->asset_filter['asset_platform_id'])) {
+                                                $component->state((string) $record->asset_filter['asset_platform_id']);
+                                            } elseif (!empty($state)) {
+                                                $component->state((string) $state);
+                                            }
+                                        })
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                            $channel = $get('../../source_config.channel');
+                                            if ($state === 'all' || empty($state)) {
+                                                $set('label', __('All Assets Combined'));
+                                            } else {
+                                                $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
+                                                if (empty($assets)) {
+                                                    $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                                                    foreach (array_keys($activeChannels) as $ch) {
+                                                        $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
+                                                        if (isset($chAssets[$state])) {
+                                                            $assets = $chAssets;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                $assetName = $assets[$state]['name'] ?? $state;
+                                                $set('label', $assetName);
+                                            }
+                                        }),
+
+                                    Forms\Components\TextInput::make('label')
+                                        ->label(__('Line Label'))
+                                        ->default(__('All Assets Combined'))
+                                        ->required(),
+                                ])
+                                ->itemLabel(fn (array $state): ?string => $state['label'] ?? __('Calculation Line'))
+                                ->minItems(1)
+                                ->columns(2)
+                                ->default([
+                                    ['label' => __('All Assets Combined'), 'target_asset_platform_id' => 'all'],
+                                ]),
+                        ]),
+
+                    Wizard\Step::make(__('Thresholds & Calibration'))
+                        ->schema([
+                            Forms\Components\View::make('filament.app.forms.components.threshold-calibrator')
+                                ->columnSpanFull(),
+
                             Forms\Components\Select::make('aggregation_method')
                                 ->label(__('Measurement Aggregation Method'))
                                 ->options([
@@ -207,84 +330,6 @@ class AlertResource extends Resource
                                     default => __('Units'),
                                 })
                                 ->prefix(fn (Forms\Get $get) => $get('unit') === 'currency' ? '$' : null),
-                        ]),
-
-                    Wizard\Step::make(__('Calculation Lines'))
-                        ->schema([
-                            Forms\Components\Placeholder::make('calculation_lines_explanation')
-                                ->label('')
-                                ->content(new \Illuminate\Support\HtmlString(
-                                    '<div class="text-sm text-gray-500 dark:text-gray-400 mb-2">' .
-                                    e(__('Define which accounts or assets will be evaluated under this alert rule. Each line represents 1 calculation.')) .
-                                    '</div>'
-                                )),
-
-                            Forms\Components\Repeater::make('calculationLines')
-                                ->relationship('calculationLines')
-                                ->schema([
-                                    Forms\Components\Select::make('target_asset_platform_id')
-                                        ->label(__('Target Asset'))
-                                        ->options(function (Forms\Get $get) {
-                                            $channel = $get('../../source_config.channel');
-                                            $options = ['all' => __('All Assets Combined')];
-                                            if ($channel) {
-                                                $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
-                                                foreach ($assets as $id => $info) {
-                                                    $options[(string) $id] = $info['name'] ?? $id;
-                                                }
-                                            } else {
-                                                $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
-                                                foreach (array_keys($activeChannels) as $ch) {
-                                                    $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
-                                                    foreach ($assets as $id => $info) {
-                                                        $options[(string) $id] = ($info['name'] ?? $id) . ' (' . \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch) . ')';
-                                                    }
-                                                }
-                                            }
-                                            return $options;
-                                        })
-                                        ->default('all')
-                                        ->afterStateHydrated(function (Forms\Components\Select $component, ?\App\Models\AlertCalculationLine $record) {
-                                            if ($record && isset($record->asset_filter['asset_platform_id'])) {
-                                                $component->state((string) $record->asset_filter['asset_platform_id']);
-                                            }
-                                        })
-                                        ->searchable()
-                                        ->preload()
-                                        ->required()
-                                        ->live()
-                                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                            $channel = $get('../../source_config.channel');
-                                            if ($state === 'all' || empty($state)) {
-                                                $set('label', __('All Assets Combined'));
-                                            } else {
-                                                $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
-                                                if (empty($assets)) {
-                                                    $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
-                                                    foreach (array_keys($activeChannels) as $ch) {
-                                                        $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
-                                                        if (isset($chAssets[$state])) {
-                                                            $assets = $chAssets;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                $assetName = $assets[$state]['name'] ?? $state;
-                                                $set('label', $assetName);
-                                            }
-                                        }),
-
-                                    Forms\Components\TextInput::make('label')
-                                        ->label(__('Line Label'))
-                                        ->default(__('All Assets Combined'))
-                                        ->required(),
-                                ])
-                                ->itemLabel(fn (array $state): ?string => $state['label'] ?? __('Calculation Line'))
-                                ->minItems(1)
-                                ->columns(2)
-                                ->default([
-                                    ['label' => __('All Assets Combined'), 'target_asset_platform_id' => 'all'],
-                                ]),
                         ]),
 
                     Wizard\Step::make(__('Schedule'))

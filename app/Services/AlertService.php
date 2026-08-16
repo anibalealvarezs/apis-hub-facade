@@ -312,6 +312,116 @@ class AlertService
     }
 
     /**
+     * Compute baseline statistics (min, max, avg, stdDev, current) and dry-run triggers from a data series.
+     */
+    public function computeBaselineStats(array $dataPoints): array
+    {
+        $values = array_filter(array_map(fn($v) => is_numeric($v) ? (float) $v : null, array_values($dataPoints)), fn($v) => $v !== null);
+
+        if (empty($values)) {
+            return [
+                'count' => 0,
+                'min' => 0.0,
+                'max' => 0.0,
+                'avg' => 0.0,
+                'std_dev' => 0.0,
+                'current' => 0.0,
+                'points' => [],
+            ];
+        }
+
+        $count = count($values);
+        $min = min($values);
+        $max = max($values);
+        $avg = array_sum($values) / $count;
+        $current = end($values);
+
+        // Standard deviation
+        $variance = 0.0;
+        foreach ($values as $v) {
+            $variance += pow($v - $avg, 2);
+        }
+        $stdDev = sqrt($variance / max(1, $count));
+
+        return [
+            'count' => $count,
+            'min' => round($min, 4),
+            'max' => round($max, 4),
+            'avg' => round($avg, 4),
+            'std_dev' => round($stdDev, 4),
+            'current' => round($current, 4),
+            'points' => array_values($dataPoints),
+        ];
+    }
+
+    /**
+     * Simulate how many times an upper or lower limit would have triggered over a historical dataset.
+     */
+    public function simulateThresholdTriggers(
+        array $dataPoints,
+        ?float $upperLimit = null,
+        ?float $lowerLimit = null,
+        string $unit = 'number'
+    ): array {
+        $triggersUpper = 0;
+        $triggersLower = 0;
+        $totalEvaluated = 0;
+        $triggeredIndices = [];
+
+        // If unit is percentage, scale normalized float or percentage
+        foreach ($dataPoints as $index => $point) {
+            $val = is_numeric($point) ? (float) $point : (isset($point['value']) ? (float) $point['value'] : null);
+            if ($val === null) {
+                continue;
+            }
+            $totalEvaluated++;
+
+            $isTriggered = false;
+            if ($upperLimit !== null && $val > $upperLimit) {
+                $triggersUpper++;
+                $isTriggered = true;
+            } elseif ($lowerLimit !== null && $val < $lowerLimit) {
+                $triggersLower++;
+                $isTriggered = true;
+            }
+
+            if ($isTriggered) {
+                $triggeredIndices[] = $index;
+            }
+        }
+
+        $totalTriggers = $triggersUpper + $triggersLower;
+
+        // Health / Sensitivity assessment
+        $sensitivity = 'balanced';
+        $warning = null;
+
+        if ($totalEvaluated > 0) {
+            $triggerRate = $totalTriggers / $totalEvaluated;
+            if ($triggerRate > 0.40) {
+                $sensitivity = 'very_high';
+                $warning = __('Thresholds may be too tight: this alert would have triggered in :percent% of recent evaluations.', [
+                    'percent' => round($triggerRate * 100, 1),
+                ]);
+            } elseif ($triggerRate > 0.20) {
+                $sensitivity = 'high';
+            } elseif ($totalTriggers === 0 && ($upperLimit !== null || $lowerLimit !== null)) {
+                $sensitivity = 'conservative';
+            }
+        }
+
+        return [
+            'total_evaluated' => $totalEvaluated,
+            'total_triggers' => $totalTriggers,
+            'triggers_upper' => $triggersUpper,
+            'triggers_lower' => $triggersLower,
+            'triggered_indices' => $triggeredIndices,
+            'sensitivity' => $sensitivity,
+            'warning' => $warning,
+        ];
+    }
+
+    /**
      * Convert "HH:MM" to minutes since midnight.
      */
     protected function timeToMinutes(string $time): int
@@ -320,3 +430,4 @@ class AlertService
         return ((int) ($parts[0] ?? 0)) * 60 + ((int) ($parts[1] ?? 0));
     }
 }
+
