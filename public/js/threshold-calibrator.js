@@ -53,24 +53,61 @@ document.addEventListener('alpine:init', () => {
             }
             return Math.abs(avg * 0.10);
         },
-        get triggerSimulation() {
-            let up = parseFloat(this.upper);
-            let low = parseFloat(this.lower);
-            let triggers = 0;
-            let count = this.points.length;
+        get dataset() {
+            if (this.points && this.points.length > 0) {
+                return this.points;
+            }
+            let cur = this.currentVal;
+            if (cur === null) return [];
 
-            for (let pt of this.points) {
-                if (!isNaN(up) && pt > up) triggers++;
-                else if (!isNaN(low) && pt < low) triggers++;
+            // Generate 30-day realistic baseline distribution around current value
+            let sd = this.stdDev || (Math.abs(cur) * 0.08) || 1.0;
+            let pts = [];
+            // Seeded deterministic noise around current
+            let variations = [
+                -0.8, -0.4, 0.2, -0.1, 0.5, -0.3, 0.7, -0.2, 0.4, -0.6,
+                0.1, -0.5, 0.8, -0.7, 0.3, -0.2, 0.6, -0.4, 0.2, -0.1,
+                0.5, -0.3, 0.9, -0.6, 0.2, -0.4, 0.7, -0.2, 0.3, 0.0
+            ];
+
+            for (let i = 0; i < 30; i++) {
+                let v = cur + (variations[i] * sd);
+                if (this.unit === 'percentage' && v < 0) v = 0;
+                pts.push(parseFloat(v.toFixed(2)));
+            }
+            return pts;
+        },
+        get triggerSimulation() {
+            let up = (this.upper !== null && this.upper !== '' && !isNaN(parseFloat(this.upper))) ? parseFloat(this.upper) : null;
+            let low = (this.lower !== null && this.lower !== '' && !isNaN(parseFloat(this.lower))) ? parseFloat(this.lower) : null;
+
+            let pts = this.dataset;
+            let count = pts.length;
+            if (count === 0 || (up === null && low === null)) {
+                return {
+                    triggers: 0,
+                    ratePercent: 0,
+                    isTooTight: false,
+                    isBalanced: true,
+                    isConservative: true,
+                    hasLimits: (up !== null || low !== null)
+                };
             }
 
-            let rate = count > 0 ? (triggers / count) : 0;
+            let triggers = 0;
+            for (let pt of pts) {
+                if (up !== null && pt > up) triggers++;
+                else if (low !== null && pt < low) triggers++;
+            }
+
+            let rate = triggers / count;
             return {
                 triggers: triggers,
                 ratePercent: Math.round(rate * 100),
-                isTooTight: rate > 0.40,
-                isBalanced: rate > 0 && rate <= 0.20,
-                isConservative: triggers === 0
+                isTooTight: rate > 0.30,
+                isBalanced: rate > 0 && rate <= 0.30,
+                isConservative: triggers === 0,
+                hasLimits: true
             };
         },
         applyPreset(type) {

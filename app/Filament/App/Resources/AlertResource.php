@@ -312,6 +312,7 @@ class AlertResource extends Resource
                             Forms\Components\TextInput::make('upper_limit')
                                 ->label(__('Upper Limit (Trigger if value > limit)'))
                                 ->numeric()
+                                ->live(onBlur: true)
                                 ->nullable()
                                 ->suffix(fn (Forms\Get $get) => match ($get('unit')) {
                                     'percentage' => '%',
@@ -323,6 +324,7 @@ class AlertResource extends Resource
                             Forms\Components\TextInput::make('lower_limit')
                                 ->label(__('Lower Limit (Trigger if value < limit)'))
                                 ->numeric()
+                                ->live(onBlur: true)
                                 ->nullable()
                                 ->suffix(fn (Forms\Get $get) => match ($get('unit')) {
                                     'percentage' => '%',
