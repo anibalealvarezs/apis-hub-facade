@@ -14,6 +14,25 @@ class EditAlert extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ReplicateAction::make()
+                ->label(__('Duplicate Alert'))
+                ->icon('heroicon-o-square-2-stack')
+                ->beforeReplicaSaved(function (\App\Models\Alert $replica): void {
+                    $replica->is_active = false;
+                    $replica->name = $replica->name . ' (' . __('Copy') . ')';
+                })
+                ->after(function (\App\Models\Alert $replica, \App\Models\Alert $record): void {
+                    foreach ($record->calculationLines as $line) {
+                        $replica->calculationLines()->create([
+                            'label' => $line->label,
+                            'asset_filter' => $line->asset_filter,
+                            'sort_order' => $line->sort_order,
+                        ]);
+                    }
+                    if ($replica->project) {
+                        app(DeployerService::class)->syncAlertConfig($replica->project);
+                    }
+                }),
             Actions\DeleteAction::make(),
         ];
     }

@@ -377,7 +377,49 @@ class AlertTest extends TestCase
         $this->assertEquals('act_999999', $line->asset_filter['asset_platform_id'] ?? null);
         $this->assertEquals('Account #999999', $line->label);
     }
+
+    public function test_alert_can_be_duplicated_with_disabled_status()
+    {
+        $originalAlert = Alert::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Original Active Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'meta', 'metric' => 'spend'],
+            'ast' => ['type' => 'metric', 'metric' => 'meta.spend'],
+            'aggregation_method' => 'latest',
+            'upper_limit' => 500,
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+            'is_active' => true,
+        ]);
+
+        AlertCalculationLine::create([
+            'alert_id' => $originalAlert->id,
+            'label' => 'Line 1',
+            'asset_filter' => ['asset_platform_id' => 'act_111'],
+        ]);
+
+        $replica = $originalAlert->replicate();
+        $replica->is_active = false;
+        $replica->name = $originalAlert->name . ' (Copy)';
+        $replica->save();
+
+        foreach ($originalAlert->calculationLines as $line) {
+            $replica->calculationLines()->create([
+                'label' => $line->label,
+                'asset_filter' => $line->asset_filter,
+                'sort_order' => $line->sort_order,
+            ]);
+        }
+
+        $this->assertFalse($replica->is_active);
+        $this->assertEquals('Original Active Alert (Copy)', $replica->name);
+        $this->assertCount(1, $replica->calculationLines);
+        $this->assertEquals('act_111', $replica->calculationLines->first()->asset_filter['asset_platform_id'] ?? null);
+    }
 }
+
 
 
 

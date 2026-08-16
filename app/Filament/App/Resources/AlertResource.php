@@ -378,6 +378,25 @@ class AlertResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ReplicateAction::make()
+                    ->label(__('Duplicate'))
+                    ->icon('heroicon-o-square-2-stack')
+                    ->beforeReplicaSaved(function (Alert $replica): void {
+                        $replica->is_active = false;
+                        $replica->name = $replica->name . ' (' . __('Copy') . ')';
+                    })
+                    ->after(function (Alert $replica, Alert $record): void {
+                        foreach ($record->calculationLines as $line) {
+                            $replica->calculationLines()->create([
+                                'label' => $line->label,
+                                'asset_filter' => $line->asset_filter,
+                                'sort_order' => $line->sort_order,
+                            ]);
+                        }
+                        if ($replica->project) {
+                            app(DeployerService::class)->syncAlertConfig($replica->project);
+                        }
+                    }),
                 Tables\Actions\Action::make('sync')
                     ->label(__('Sync Now'))
                     ->icon('heroicon-o-arrow-path')
