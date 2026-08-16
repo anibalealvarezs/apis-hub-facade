@@ -413,9 +413,27 @@ class AlertResource extends Resource
                     ->action(function (Alert $record) {
                         $result = app(DeployerService::class)->evaluateAlert($record);
                         if ($result['success']) {
+                            $output = $result['output'] ?? '';
+                            $alertService = app(AlertService::class);
+                            $upper = $record->upper_limit !== null ? (float)$record->upper_limit : null;
+                            $lower = $record->lower_limit !== null ? (float)$record->lower_limit : null;
+
+                            // Highlight colored arrows in CLI output
+                            $colorGreen = '#10b981';
+                            $colorRed = '#ef4444';
+
+                            $isHigherGood = $alertService->isHigherBetter($record);
+                            $upColor = $isHigherGood ? $colorGreen : $colorRed;
+                            $downColor = $isHigherGood ? $colorRed : $colorGreen;
+
+                            $formattedHtml = nl2br(e($output));
+                            $formattedHtml = str_replace('⚠️ TRIGGERED: Upper limit', "<strong style='color: {$upColor};'>▲ TRIGGERED: Upper limit</strong>", $formattedHtml);
+                            $formattedHtml = str_replace('⚠️ TRIGGERED: Lower limit', "<strong style='color: {$downColor};'>▼ TRIGGERED: Lower limit</strong>", $formattedHtml);
+                            $formattedHtml = str_replace('✅ Status: OK', "<strong style='color: {$colorGreen};'>✅ Status: OK</strong>", $formattedHtml);
+
                             Notification::make()
-                                ->title(__('Alert Evaluation Complete'))
-                                ->body($result['output'] ?? __('Calculations executed successfully.'))
+                                ->title(new \Illuminate\Support\HtmlString("<span style='font-weight: 700;'>" . __('Alert Evaluation Complete') . "</span>"))
+                                ->body(new \Illuminate\Support\HtmlString($formattedHtml))
                                 ->success()
                                 ->persistent()
                                 ->send();

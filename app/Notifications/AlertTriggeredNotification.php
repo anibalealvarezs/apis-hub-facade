@@ -45,11 +45,10 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
             $this->alertLog->threshold_value
         );
 
-        $thresholdType = $this->alertLog->threshold_type === 'upper' ? 'exceeded upper limit' : 'dropped below lower limit';
-        $subjectPrefix = $indicators['title_prefix'];
+        $arrow = $indicators['arrow'];
 
         return (new MailMessage)
-            ->subject("[{$subjectPrefix}] Alert Triggered: {$this->alert->name} [{$projectName}]")
+            ->subject("{$arrow} Alert Triggered: {$this->alert->name} [{$projectName}]")
             ->markdown('emails.alert-triggered', [
                 'user' => $notifiable,
                 'alert' => $this->alert,
@@ -58,7 +57,7 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
                 'indicators' => $indicators,
                 'evaluatedVal' => $indicators['formatted_evaluated'],
                 'thresholdVal' => $indicators['formatted_threshold'],
-                'thresholdType' => $thresholdType,
+                'thresholdType' => $this->alertLog->threshold_type,
                 'alertUrl' => url("/app/{$subdomain}/alerts/{$this->alert->id}"),
             ]);
     }
@@ -76,10 +75,12 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
         );
 
         $thresholdLabel = $this->alertLog->threshold_type === 'upper' ? 'Upper Limit Exceeded' : 'Lower Limit Breached';
-        $titlePrefix = $indicators['title_prefix'];
+        $color = $indicators['color'];
+        $arrow = $indicators['arrow'];
+        $titleHtml = new \Illuminate\Support\HtmlString("<span style='color: {$color}; font-weight: 800; font-size: 1.1em; margin-right: 4px;'>{$arrow}</span> " . e("Alert Triggered: {$this->alert->name}"));
 
         $notification = FilamentNotification::make()
-            ->title("[{$titlePrefix}] Alert Triggered: {$this->alert->name}")
+            ->title($titleHtml)
             ->body("Value **{$indicators['formatted_evaluated']}** {$thresholdLabel} (threshold: {$indicators['formatted_threshold']}) for {$this->alertLog->asset_summary}.");
 
         if ($indicators['is_good']) {
