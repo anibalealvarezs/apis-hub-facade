@@ -64,7 +64,7 @@ class CreateAlert extends CreateRecord
         return $data;
     }
 
-    protected function afterCreate(): void
+    protected function afterSave(): void
     {
         /** @var \App\Models\Alert $alert */
         $alert = $this->record;
