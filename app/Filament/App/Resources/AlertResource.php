@@ -188,26 +188,55 @@ class AlertResource extends Resource
                         ]),
 
                     Wizard\Step::make(__('Calculation Lines'))
+                        ->description(__('Define which accounts or assets will be evaluated under this alert rule. Each line represents 1 calculation.'))
                         ->schema([
                             Forms\Components\Repeater::make('calculationLines')
                                 ->relationship('calculationLines')
                                 ->schema([
+                                    Forms\Components\Select::make('target_asset_platform_id')
+                                        ->label(__('Target Asset'))
+                                        ->options(function (Forms\Get $get) {
+                                            $channel = $get('../../source_config.channel');
+                                            $options = ['all' => __('All Assets Combined')];
+                                            if ($channel) {
+                                                $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
+                                                foreach ($assets as $id => $info) {
+                                                    $options[$id] = $info['name'] ?? $id;
+                                                }
+                                            }
+                                            return $options;
+                                        })
+                                        ->default('all')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                            $channel = $get('../../source_config.channel');
+                                            if ($state === 'all' || empty($state)) {
+                                                $set('label', __('All Assets Combined'));
+                                                $set('asset_filter', ['asset_platform_id' => 'all']);
+                                            } else {
+                                                $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
+                                                $assetName = $assets[$state]['name'] ?? $state;
+                                                $set('label', $assetName);
+                                                $set('asset_filter', ['asset_platform_id' => $state]);
+                                            }
+                                        }),
+
                                     Forms\Components\TextInput::make('label')
-                                        ->label(__('Line Label / Asset Name'))
-                                        ->placeholder(__('e.g. Meta Ads Account #1'))
+                                        ->label(__('Line Label'))
+                                        ->default(__('All Assets Combined'))
                                         ->required(),
 
-                                    Forms\Components\KeyValue::make('asset_filter')
-                                        ->label(__('Asset Filters (JSON key-value mapping)'))
-                                        ->keyLabel(__('Filter Key'))
-                                        ->valueLabel(__('Filter Value'))
+                                    Forms\Components\Hidden::make('asset_filter')
                                         ->default(['asset_platform_id' => 'all']),
                                 ])
                                 ->itemLabel(fn (array $state): ?string => $state['label'] ?? __('Calculation Line'))
                                 ->minItems(1)
-                                ->columns(1)
+                                ->columns(2)
                                 ->default([
-                                    ['label' => __('Default Calculation Line'), 'asset_filter' => ['asset_platform_id' => 'all']],
+                                    ['label' => __('All Assets Combined'), 'asset_filter' => ['asset_platform_id' => 'all']],
                                 ]),
                         ]),
 
