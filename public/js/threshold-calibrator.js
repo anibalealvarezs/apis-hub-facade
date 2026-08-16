@@ -60,17 +60,17 @@ document.addEventListener('alpine:init', () => {
             let cur = this.currentVal;
             if (cur === null) return [];
 
-            // Generate 30-day realistic baseline distribution around current value
-            let sd = this.stdDev || (Math.abs(cur) * 0.08) || 1.0;
+            // Generate a realistic standard Gaussian distribution (30 data points) around current value
+            // with realistic fluctuation factors (-2.5σ to +2.5σ)
+            let sd = this.stdDev || (Math.abs(cur) * 0.15) || 1.0;
             let pts = [];
-            // Seeded deterministic noise around current
             let variations = [
-                -0.8, -0.4, 0.2, -0.1, 0.5, -0.3, 0.7, -0.2, 0.4, -0.6,
-                0.1, -0.5, 0.8, -0.7, 0.3, -0.2, 0.6, -0.4, 0.2, -0.1,
-                0.5, -0.3, 0.9, -0.6, 0.2, -0.4, 0.7, -0.2, 0.3, 0.0
+                -2.1, -1.5, -0.8, -0.4, -1.2, 0.2, -0.1, 0.5, -1.8, 0.7,
+                -0.2, 0.4, -0.6, 1.4, -0.5, 0.8, -2.4, 0.3, -0.2, 1.6,
+                -0.4, 0.2, -1.1, 0.5, -0.3, 1.9, -0.6, 0.2, -1.4, 0.1
             ];
 
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < variations.length; i++) {
                 let v = cur + (variations[i] * sd);
                 if (this.unit === 'percentage' && v < 0) v = 0;
                 pts.push(parseFloat(v.toFixed(2)));
@@ -104,8 +104,8 @@ document.addEventListener('alpine:init', () => {
             return {
                 triggers: triggers,
                 ratePercent: Math.round(rate * 100),
-                isTooTight: rate > 0.30,
-                isBalanced: rate > 0 && rate <= 0.30,
+                isTooTight: rate > 0.25,
+                isBalanced: rate > 0 && rate <= 0.25,
                 isConservative: triggers === 0,
                 hasLimits: true
             };

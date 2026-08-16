@@ -24,14 +24,14 @@
         <!-- Baseline Stat Chips -->
         <template x-if="currentVal !== null">
             <div class="flex items-center gap-2 text-xs">
-                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                    {{ __('Current:') }} <strong class="text-gray-900 dark:text-white" x-text="formatVal(currentVal)"></strong>
+                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
+                    {{ __('Current:') }} <strong class="text-gray-900 dark:text-amber-400 font-bold ml-1" x-text="formatVal(currentVal)"></strong>
                 </span>
-                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                    {{ __('30d Avg:') }} <span x-text="formatVal(avgVal)"></span>
+                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
+                    {{ __('30d Avg:') }} <span class="font-semibold dark:text-gray-100 ml-1" x-text="formatVal(avgVal)"></span>
                 </span>
-                <span class="rounded-md bg-gray-100 px-2 py-1 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                    {{ __('Range:') }} <span x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></span>
+                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
+                    {{ __('Range:') }} <span class="font-semibold dark:text-gray-100 ml-1" x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></span>
                 </span>
             </div>
         </template>
