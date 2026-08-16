@@ -188,8 +188,15 @@ class AlertResource extends Resource
                         ]),
 
                     Wizard\Step::make(__('Calculation Lines'))
-                        ->description(__('Define which accounts or assets will be evaluated under this alert rule. Each line represents 1 calculation.'))
                         ->schema([
+                            Forms\Components\Placeholder::make('calculation_lines_explanation')
+                                ->label('')
+                                ->content(new \Illuminate\Support\HtmlString(
+                                    '<div class="text-sm text-gray-500 dark:text-gray-400 mb-2">' .
+                                    e(__('Define which accounts or assets will be evaluated under this alert rule. Each line represents 1 calculation.')) .
+                                    '</div>'
+                                )),
+
                             Forms\Components\Repeater::make('calculationLines')
                                 ->relationship('calculationLines')
                                 ->schema([
