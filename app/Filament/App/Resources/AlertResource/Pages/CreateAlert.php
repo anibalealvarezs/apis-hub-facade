@@ -62,7 +62,6 @@ class CreateAlert extends CreateRecord
         }
 
         if (!empty($data['calculationLines']) && is_array($data['calculationLines'])) {
-            \Illuminate\Support\Facades\Log::info('[AlertDebug] CreateAlert mutateFormDataBeforeCreate input calculationLines=' . json_encode($data['calculationLines']));
             foreach ($data['calculationLines'] as &$line) {
                 $assetId = $line['target_asset_platform_id']
                     ?? $line['asset_filter']['asset_platform_id']
@@ -71,7 +70,6 @@ class CreateAlert extends CreateRecord
                 $line['asset_filter'] = ['asset_platform_id' => (string) $assetId];
                 unset($line['target_asset_platform_id'], $line['asset_filter.asset_platform_id']);
             }
-            \Illuminate\Support\Facades\Log::info('[AlertDebug] CreateAlert mutateFormDataBeforeCreate output calculationLines=' . json_encode($data['calculationLines']));
         }
 
         return $data;
