@@ -14,6 +14,29 @@ class EditAlert extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('evaluate')
+                ->label(__('Evaluate Calculation'))
+                ->icon('heroicon-o-calculator')
+                ->color('warning')
+                ->action(function () {
+                    /** @var \App\Models\Alert $record */
+                    $record = $this->record;
+                    $result = app(DeployerService::class)->evaluateAlert($record);
+                    if ($result['success']) {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Alert Evaluation Complete'))
+                            ->body($result['output'] ?? __('Calculations executed successfully.'))
+                            ->success()
+                            ->persistent()
+                            ->send();
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Evaluation Failed'))
+                            ->body($result['message'] ?? __('Failed to execute alert evaluation.'))
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Actions\ReplicateAction::make()
                 ->label(__('Duplicate Alert'))
                 ->icon('heroicon-o-square-2-stack')

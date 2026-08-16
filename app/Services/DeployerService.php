@@ -239,6 +239,30 @@ EOT;
     }
 
     /**
+     * Manually trigger alert calculation on remote tenant worker over SSH.
+     */
+    public function evaluateAlert(Alert $alert): array
+    {
+        $project = $alert->project;
+        if (!$project || !$project->server) {
+            return ['success' => false, 'message' => 'Project or server configuration missing.'];
+        }
+
+        $this->syncAlertConfig($project);
+
+        $subdomain = $project->subdomain;
+        $command = "cd /var/www/apis-hub && (docker compose exec -T master php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id} || php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id}) 2>&1";
+
+        try {
+            $output = $this->runSshCommands($project->server, [$command]);
+            $textOutput = is_array($output) ? implode("\n", $output) : (string) $output;
+            return ['success' => true, 'output' => $textOutput];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Execute a single command over SSH on the remote server using the provided identity.
      */
     public function executeCommand(Project $project, Server $server, string $command)

@@ -379,6 +379,27 @@ class AlertResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('evaluate')
+                    ->label(__('Evaluate Now'))
+                    ->icon('heroicon-o-calculator')
+                    ->color('warning')
+                    ->action(function (Alert $record) {
+                        $result = app(DeployerService::class)->evaluateAlert($record);
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title(__('Alert Evaluation Complete'))
+                                ->body($result['output'] ?? __('Calculations executed successfully.'))
+                                ->success()
+                                ->persistent()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title(__('Evaluation Failed'))
+                                ->body($result['message'] ?? __('Failed to execute alert evaluation.'))
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\ReplicateAction::make()
                     ->label(__('Duplicate'))
                     ->icon('heroicon-o-square-2-stack')
