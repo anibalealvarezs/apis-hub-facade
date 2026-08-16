@@ -22,25 +22,40 @@ class CalculationLinesRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('asset_filter.asset_platform_id')
                     ->label(__('Target Asset'))
-                    ->options(function () use ($channel) {
+                    ->options(function (Forms\Get $get, ?\App\Models\AlertCalculationLine $record) use ($channel) {
                         $options = ['all' => __('All Assets Combined')];
+
                         if ($channel) {
                             $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
                             foreach ($assets as $id => $info) {
-                                $options[$id] = $info['name'] ?? $id;
+                                $options[(string) $id] = $info['name'] ?? $id;
                             }
                         } else {
                             $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
                             foreach (array_keys($activeChannels) as $ch) {
                                 $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
                                 foreach ($assets as $id => $info) {
-                                    $options[$id] = ($info['name'] ?? $id) . ' (' . \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch) . ')';
+                                    $options[(string) $id] = ($info['name'] ?? $id) . ' (' . \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($ch) . ')';
                                 }
                             }
                         }
+
+                        // Ensure current saved asset ID is always present in options so Filament never resets it to 'all'
+                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
+                            $currentId = (string) $record->asset_filter['asset_platform_id'];
+                            if ($currentId !== 'all' && !isset($options[$currentId])) {
+                                $options[$currentId] = $record->label ?? $currentId;
+                            }
+                        }
+
                         return $options;
                     })
                     ->default('all')
+                    ->afterStateHydrated(function (Forms\Components\Select $component, ?\App\Models\AlertCalculationLine $record) {
+                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
+                            $component->state((string) $record->asset_filter['asset_platform_id']);
+                        }
+                    })
                     ->searchable()
                     ->preload()
                     ->required()
@@ -93,9 +108,9 @@ class CalculationLinesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
                         $alert = $livewire->getOwnerRecord();
                         $channel = $alert?->source_config['channel'] ?? null;
-                        $assetId = $data['asset_filter']['asset_platform_id'] ?? 'all';
+                        $assetId = $data['asset_filter']['asset_platform_id'] ?? $data['target_asset_platform_id'] ?? 'all';
 
-                        $data['asset_filter'] = ['asset_platform_id' => $assetId];
+                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
 
                         if ($assetId === 'all' || empty($assetId)) {
                             if (empty($data['label'])) {
@@ -133,9 +148,9 @@ class CalculationLinesRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data, RelationManager $livewire): array {
                         $alert = $livewire->getOwnerRecord();
                         $channel = $alert?->source_config['channel'] ?? null;
-                        $assetId = $data['asset_filter']['asset_platform_id'] ?? 'all';
+                        $assetId = $data['asset_filter']['asset_platform_id'] ?? $data['target_asset_platform_id'] ?? 'all';
 
-                        $data['asset_filter'] = ['asset_platform_id' => $assetId];
+                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
 
                         if ($assetId === 'all' || empty($assetId)) {
                             if (empty($data['label'])) {

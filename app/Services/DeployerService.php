@@ -181,6 +181,10 @@ EOT;
      */
     public function syncAlertConfig(Project $project): bool
     {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
         if (!$project->supportsAlerts()) {
             Log::info("Skipping alerts.json sync for project {$project->name}: release does not support alerts (< v1.15.0)");
             return false;

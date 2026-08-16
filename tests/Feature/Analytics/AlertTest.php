@@ -248,4 +248,49 @@ class AlertTest extends TestCase
         $this->assertCount(1, $dashboardAlerts);
         $this->assertEquals($alert->id, $dashboardAlerts->first()->id);
     }
+
+    public function test_alert_calculation_line_saves_and_edits_specific_asset_platform_id()
+    {
+        $alert = Alert::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Specific Asset Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'google_api', 'metric' => 'clicks'],
+            'ast' => ['type' => 'metric', 'metric' => 'google_api.clicks'],
+            'aggregation_method' => 'latest',
+            'upper_limit' => 500,
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+            'is_active' => true,
+        ]);
+
+        $line = AlertCalculationLine::create([
+            'alert_id' => $alert->id,
+            'label' => 'marcelacrodriguez.com',
+            'asset_filter' => ['asset_platform_id' => 'https://marcelacrodriguez.com'],
+        ]);
+
+        $this->assertEquals('https://marcelacrodriguez.com', $line->asset_filter['asset_platform_id'] ?? null);
+
+        $this->actingAs($this->user);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('app'));
+        \Filament\Facades\Filament::setTenant($this->project);
+
+        \Livewire\Livewire::test(\App\Filament\App\Resources\AlertResource\RelationManagers\CalculationLinesRelationManager::class, [
+            'ownerRecord' => $alert,
+            'pageClass' => \App\Filament\App\Resources\AlertResource\Pages\EditAlert::class,
+        ])
+            ->callTableAction('edit', $line, [
+                'asset_filter' => ['asset_platform_id' => 'https://marcelacrodriguez.com'],
+                'label' => 'marcelacrodriguez.com',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $line->refresh();
+        $this->assertEquals('https://marcelacrodriguez.com', $line->asset_filter['asset_platform_id'] ?? null);
+        $this->assertEquals('marcelacrodriguez.com', $line->label);
+    }
 }
+
+
