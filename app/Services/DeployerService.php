@@ -252,7 +252,8 @@ EOT;
         $this->syncAlertConfig($project);
 
         $subdomain = $project->subdomain;
-        $command = "cd /var/www/apis-hub && (docker compose exec -T master php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id} || php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id}) 2>&1";
+        $tenantPath = "/var/www/apis-hub/tenants/{$subdomain}";
+        $command = "cd {$tenantPath} && docker compose exec -T master php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id} 2>&1";
 
         try {
             $output = $this->runSshCommands($project->server, [$command]);
