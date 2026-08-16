@@ -27,6 +27,7 @@ class Alert extends Model
         'aggregation_method',
         'upper_limit',
         'lower_limit',
+        'unit',
         'notify_ui',
         'notify_email',
         'schedule_type',

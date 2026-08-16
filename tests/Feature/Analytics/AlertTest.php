@@ -418,6 +418,142 @@ class AlertTest extends TestCase
         $this->assertCount(1, $replica->calculationLines);
         $this->assertEquals('act_111', $replica->calculationLines->first()->asset_filter['asset_platform_id'] ?? null);
     }
+
+    public function test_alert_percentage_unit_converts_to_float_on_create_and_fill()
+    {
+        $rawFormData = [
+            'name' => 'CTR Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'meta', 'metric' => 'ctr'],
+            'unit' => 'percentage',
+            'upper_limit' => 1.2, // 1.2%
+            'lower_limit' => 0.5, // 0.5%
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+            'aggregation_method' => 'latest',
+        ];
+
+        // Simulate CreateAlert normalization
+        if ($rawFormData['unit'] === 'percentage') {
+            $rawFormData['upper_limit'] = (float) $rawFormData['upper_limit'] / 100;
+            $rawFormData['lower_limit'] = (float) $rawFormData['lower_limit'] / 100;
+        }
+
+        $rawFormData['project_id'] = $this->project->id;
+        $rawFormData['user_id'] = $this->user->id;
+        $rawFormData['ast'] = ['type' => 'metric', 'metric' => 'meta.ctr'];
+
+        $alert = Alert::create($rawFormData);
+
+        $this->assertEquals('percentage', $alert->unit);
+        $this->assertEquals(0.012, (float) $alert->upper_limit);
+        $this->assertEquals(0.005, (float) $alert->lower_limit);
+
+        // Simulate EditAlert fill conversion for form display
+        $filledData = $alert->toArray();
+        if ($filledData['unit'] === 'percentage') {
+            $filledData['upper_limit'] = (float) $filledData['upper_limit'] * 100;
+            $filledData['lower_limit'] = (float) $filledData['lower_limit'] * 100;
+        }
+
+        $this->assertEquals(1.2, (float) $filledData['upper_limit']);
+        $this->assertEquals(0.5, (float) $filledData['lower_limit']);
+    }
+
+    public function test_alert_service_formatting_retains_min_significant_decimals_up_to_four()
+    {
+        $service = app(\App\Services\AlertService::class);
+
+        // Standard numbers
+        $this->assertEquals('1.1', $service->formatMetricValue(1.1000, 'number'));
+        $this->assertEquals('1.1001', $service->formatMetricValue(1.1001, 'number'));
+        $this->assertEquals('5', $service->formatMetricValue(5.0000, 'number'));
+        $this->assertEquals('1,250.5', $service->formatMetricValue(1250.5000, 'number'));
+
+        // Percentage
+        $this->assertEquals('1.2%', $service->formatMetricValue(0.012, 'percentage'));
+        $this->assertEquals('2.2222%', $service->formatMetricValue(0.022222222, 'percentage'));
+        $this->assertEquals('0.5%', $service->formatMetricValue(0.005, 'percentage'));
+        $this->assertEquals('100%', $service->formatMetricValue(1.0, 'percentage'));
+
+        // Currency
+        $this->assertEquals('$1,250', $service->formatMetricValue(1250.00, 'currency'));
+        $this->assertEquals('$1,250.5', $service->formatMetricValue(1250.50, 'currency'));
+        $this->assertEquals('$1,250.5555', $service->formatMetricValue(1250.5555, 'currency'));
+    }
+
+    public function test_alert_service_indicator_sentiment_and_arrow_direction()
+    {
+        $service = app(\App\Services\AlertService::class);
+
+        // 1. CTR (Higher is better)
+        $ctrAlert = Alert::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'CTR Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'meta', 'metric' => 'ctr'],
+            'ast' => ['type' => 'metric', 'metric' => 'meta.ctr'],
+            'unit' => 'percentage',
+            'upper_limit' => 0.012,
+            'lower_limit' => 0.005,
+            'aggregation_method' => 'latest',
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+        ]);
+
+        // CTR exceeded upper limit -> ⬆️ Up, 🟢 Green (Good!)
+        $ctrUpper = $service->getAlertVisualIndicators($ctrAlert, 'upper', 'percentage', 0.022222, 0.012);
+        $this->assertTrue($ctrUpper['is_good']);
+        $this->assertEquals('up', $ctrUpper['direction']);
+        $this->assertEquals('⬆️', $ctrUpper['arrow']);
+        $this->assertEquals('🟢', $ctrUpper['badge_emoji']);
+        $this->assertEquals('#10b981', $ctrUpper['color']);
+        $this->assertEquals('2.2222%', $ctrUpper['formatted_evaluated']);
+        $this->assertEquals('1.2%', $ctrUpper['formatted_threshold']);
+
+        // CTR breached lower limit -> ⬇️ Down, 🔴 Red (Bad!)
+        $ctrLower = $service->getAlertVisualIndicators($ctrAlert, 'lower', 'percentage', 0.002, 0.005);
+        $this->assertFalse($ctrLower['is_good']);
+        $this->assertEquals('down', $ctrLower['direction']);
+        $this->assertEquals('⬇️', $ctrLower['arrow']);
+        $this->assertEquals('🔴', $ctrLower['badge_emoji']);
+        $this->assertEquals('#ef4444', $ctrLower['color']);
+
+        // 2. Spend / Cost (Lower is better)
+        $spendAlert = Alert::create([
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Spend Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'meta', 'metric' => 'spend'],
+            'ast' => ['type' => 'metric', 'metric' => 'meta.spend'],
+            'unit' => 'currency',
+            'upper_limit' => 1000,
+            'lower_limit' => 200,
+            'aggregation_method' => 'latest',
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+        ]);
+
+        // Spend exceeded upper limit -> ⬆️ Up, 🔴 Red (Bad / High Spend Warning!)
+        $spendUpper = $service->getAlertVisualIndicators($spendAlert, 'upper', 'currency', 1250.5, 1000);
+        $this->assertFalse($spendUpper['is_good']);
+        $this->assertEquals('up', $spendUpper['direction']);
+        $this->assertEquals('⬆️', $spendUpper['arrow']);
+        $this->assertEquals('🔴', $spendUpper['badge_emoji']);
+        $this->assertEquals('#ef4444', $spendUpper['color']);
+        $this->assertEquals('$1,250.5', $spendUpper['formatted_evaluated']);
+        $this->assertEquals('$1,000', $spendUpper['formatted_threshold']);
+
+        // Spend dropped below lower limit -> ⬇️ Down, 🟢 Green (Good / Cost Savings!)
+        $spendLower = $service->getAlertVisualIndicators($spendAlert, 'lower', 'currency', 150, 200);
+        $this->assertTrue($spendLower['is_good']);
+        $this->assertEquals('down', $spendLower['direction']);
+        $this->assertEquals('⬇️', $spendLower['arrow']);
+        $this->assertEquals('🟢', $spendLower['badge_emoji']);
+        $this->assertEquals('#10b981', $spendLower['color']);
+    }
 }
 
 

@@ -60,6 +60,20 @@ class EditAlert extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if (($data['unit'] ?? 'number') === 'percentage') {
+            if (isset($data['upper_limit']) && $data['upper_limit'] !== null && $data['upper_limit'] !== '') {
+                $data['upper_limit'] = (float) $data['upper_limit'] * 100;
+            }
+            if (isset($data['lower_limit']) && $data['lower_limit'] !== null && $data['lower_limit'] !== '') {
+                $data['lower_limit'] = (float) $data['lower_limit'] * 100;
+            }
+        }
+
+        return $data;
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if ($data['source_type'] === 'kpi' && !empty($data['source_config']['kpi_id'])) {
@@ -78,6 +92,15 @@ class EditAlert extends EditRecord
         } elseif ($data['source_type'] === 'metric') {
             $metricAlias = ($data['source_config']['channel'] ?? 'global') . '.' . ($data['source_config']['metric'] ?? 'metric');
             $data['ast'] = ['type' => 'metric', 'metric' => $metricAlias];
+        }
+
+        if (($data['unit'] ?? 'number') === 'percentage') {
+            if (isset($data['upper_limit']) && $data['upper_limit'] !== null && $data['upper_limit'] !== '') {
+                $data['upper_limit'] = (float) $data['upper_limit'] / 100;
+            }
+            if (isset($data['lower_limit']) && $data['lower_limit'] !== null && $data['lower_limit'] !== '') {
+                $data['lower_limit'] = (float) $data['lower_limit'] / 100;
+            }
         }
 
         if (!empty($data['calculationLines']) && is_array($data['calculationLines'])) {

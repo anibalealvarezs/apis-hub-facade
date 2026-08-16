@@ -36,19 +36,28 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
     {
         $projectName = $this->alert->project?->name ?? 'APIs Hub';
         $subdomain = $this->alert->project?->subdomain ?? '';
-        $evaluatedVal = number_format((float) $this->alertLog->evaluated_value, 2);
-        $thresholdVal = number_format((float) $this->alertLog->threshold_value, 2);
+
+        $indicators = app(\App\Services\AlertService::class)->getAlertVisualIndicators(
+            $this->alert,
+            $this->alertLog->threshold_type,
+            $this->alertLog->unit,
+            $this->alertLog->evaluated_value,
+            $this->alertLog->threshold_value
+        );
+
         $thresholdType = $this->alertLog->threshold_type === 'upper' ? 'exceeded upper limit' : 'dropped below lower limit';
+        $subjectPrefix = $indicators['title_prefix'];
 
         return (new MailMessage)
-            ->subject("Alert Triggered: {$this->alert->name} [{$projectName}]")
+            ->subject("[{$subjectPrefix}] Alert Triggered: {$this->alert->name} [{$projectName}]")
             ->markdown('emails.alert-triggered', [
                 'user' => $notifiable,
                 'alert' => $this->alert,
                 'alertLog' => $this->alertLog,
                 'projectName' => $projectName,
-                'evaluatedVal' => $evaluatedVal,
-                'thresholdVal' => $thresholdVal,
+                'indicators' => $indicators,
+                'evaluatedVal' => $indicators['formatted_evaluated'],
+                'thresholdVal' => $indicators['formatted_threshold'],
                 'thresholdType' => $thresholdType,
                 'alertUrl' => url("/app/{$subdomain}/alerts/{$this->alert->id}"),
             ]);
@@ -57,14 +66,29 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         $subdomain = $this->alert->project?->subdomain ?? '';
-        $evaluatedVal = number_format((float) $this->alertLog->evaluated_value, 2);
-        $thresholdVal = number_format((float) $this->alertLog->threshold_value, 2);
-        $thresholdLabel = $this->alertLog->threshold_type === 'upper' ? 'Upper Limit Exceeded' : 'Lower Limit Breached';
 
-        return FilamentNotification::make()
-            ->title("Alert Triggered: {$this->alert->name}")
-            ->body("Value **{$evaluatedVal}** {$thresholdLabel} (threshold: {$thresholdVal}) for {$this->alertLog->asset_summary}.")
-            ->danger()
+        $indicators = app(\App\Services\AlertService::class)->getAlertVisualIndicators(
+            $this->alert,
+            $this->alertLog->threshold_type,
+            $this->alertLog->unit,
+            $this->alertLog->evaluated_value,
+            $this->alertLog->threshold_value
+        );
+
+        $thresholdLabel = $this->alertLog->threshold_type === 'upper' ? 'Upper Limit Exceeded' : 'Lower Limit Breached';
+        $titlePrefix = $indicators['title_prefix'];
+
+        $notification = FilamentNotification::make()
+            ->title("[{$titlePrefix}] Alert Triggered: {$this->alert->name}")
+            ->body("Value **{$indicators['formatted_evaluated']}** {$thresholdLabel} (threshold: {$indicators['formatted_threshold']}) for {$this->alertLog->asset_summary}.");
+
+        if ($indicators['is_good']) {
+            $notification->success();
+        } else {
+            $notification->danger();
+        }
+
+        return $notification
             ->actions([
                 Action::make('view')
                     ->button()

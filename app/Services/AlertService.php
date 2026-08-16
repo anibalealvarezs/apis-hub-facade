@@ -26,6 +26,8 @@ class AlertService
         $alert = $alertId ? Alert::where('id', $alertId)->where('project_id', $project->id)->first() : null;
         $line = $lineId ? AlertCalculationLine::find($lineId) : null;
 
+        $unit = $alert?->unit ?? ($payload['unit'] ?? 'number');
+
         // Build self-contained snapshot
         $log = AlertLog::create([
             'project_id' => $project->id,
@@ -41,6 +43,7 @@ class AlertService
             'evaluated_value' => $payload['evaluated_value'] ?? null,
             'threshold_type' => $payload['threshold_type'] ?? null,
             'threshold_value' => $payload['threshold_value'] ?? null,
+            'unit' => $unit,
             'aggregation_method' => $alert?->aggregation_method ?? ($payload['aggregation_method'] ?? 'latest'),
             'evaluation_window' => $payload['evaluation_window'] ?? [],
             'status' => $status,
@@ -179,6 +182,133 @@ class AlertService
         }
 
         return null;
+    }
+
+    /**
+     * Format a metric value according to the configured unit (number, percentage, currency).
+     * For floats with non-zero decimals, retains up to 4 decimal places trimming trailing zeroes
+     * (e.g. 1.1000 -> 1.1, 1.1001 -> 1.1001).
+     */
+    public function formatMetricValue(float|int|string|null $value, ?string $unit = 'number'): string
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+
+        $numericVal = (float) $value;
+
+        switch ($unit) {
+            case 'percentage':
+            case '%':
+                $pct = $numericVal * 100;
+                $formatted = sprintf('%.4f', $pct);
+                if (str_contains($formatted, '.')) {
+                    $formatted = rtrim(rtrim($formatted, '0'), '.');
+                }
+                return $formatted . '%';
+
+            case 'currency':
+            case '$':
+                $formatted = sprintf('%.4f', $numericVal);
+                if (str_contains($formatted, '.')) {
+                    $formatted = rtrim(rtrim($formatted, '0'), '.');
+                }
+                $parts = explode('.', $formatted);
+                $parts[0] = number_format((float) $parts[0]);
+                return '$' . implode('.', $parts);
+
+            default:
+                $formatted = sprintf('%.4f', $numericVal);
+                if (str_contains($formatted, '.')) {
+                    $formatted = rtrim(rtrim($formatted, '0'), '.');
+                }
+                $parts = explode('.', $formatted);
+                $parts[0] = number_format((float) $parts[0]);
+                return implode('.', $parts);
+        }
+    }
+
+    /**
+     * Determine if a metric is "higher is better" (e.g. CTR, ROAS, Revenue)
+     * versus "lower is better" (e.g. Spend, Cost, CPC, CPA, Bounce Rate).
+     */
+    public function isHigherBetter(?Alert $alert, ?string $metricName = null): bool
+    {
+        $target = $metricName;
+        if (!$target && $alert) {
+            $sourceConfig = $alert->source_config ?? [];
+            $target = ($sourceConfig['metric'] ?? '') . ' ' . ($alert->name ?? '') . ' ' . ($alert->source_summary ?? '');
+        }
+
+        $lowerTarget = strtolower($target ?? '');
+
+        $lowerIsBetterKeywords = [
+            'cost', 'spend', 'cpc', 'cpa', 'cpm', 'cpp', 'cost_per',
+            'bounce', 'unsub', 'spam', 'refund', 'return',
+            'cancel', 'error', 'churn', 'dispute', 'drop', 'failure', 'complaint',
+        ];
+
+        foreach ($lowerIsBetterKeywords as $keyword) {
+            if (str_contains($lowerTarget, $keyword)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Compute visual styling indicators (arrow direction, badge emoji, color, status).
+     *
+     * Rules:
+     * - Higher is better (e.g. CTR):
+     *   - Upper limit exceeded -> ⬆️ Up, 🟢 Green (Good / Positive Surge)
+     *   - Lower limit breached -> ⬇️ Down, 🔴 Red (Bad / Critical Drop)
+     * - Lower is better (e.g. Spend / Cost):
+     *   - Upper limit exceeded -> ⬆️ Up, 🔴 Red (Bad / High Spend Warning)
+     *   - Lower limit breached -> ⬇️ Down, 🟢 Green (Good / Cost Savings)
+     */
+    public function getAlertVisualIndicators(
+        ?Alert $alert,
+        ?string $thresholdType,
+        ?string $unit,
+        float|int|string|null $evaluatedValue,
+        float|int|string|null $thresholdValue = null
+    ): array {
+        $higherIsBetter = $this->isHigherBetter($alert);
+        $isUpper = ($thresholdType === 'upper');
+
+        $direction = $isUpper ? 'up' : 'down';
+        $arrow = $isUpper ? '⬆️' : '⬇️';
+
+        $isGood = $isUpper ? $higherIsBetter : !$higherIsBetter;
+        $color = $isGood ? '#10b981' : '#ef4444'; // Emerald green vs Red
+        $colorName = $isGood ? 'green' : 'red';
+        $badgeEmoji = $isGood ? '🟢' : '🔴';
+        $filamentStatus = $isGood ? 'success' : 'danger';
+
+        $resolvedUnit = $unit ?? $alert?->unit ?? 'number';
+
+        $formattedEvaluated = $this->formatMetricValue($evaluatedValue, $resolvedUnit);
+        $formattedThreshold = $thresholdValue !== null ? $this->formatMetricValue($thresholdValue, $resolvedUnit) : null;
+
+        $arrowBadge = "{$badgeEmoji} {$arrow}";
+
+        return [
+            'is_good' => $isGood,
+            'higher_is_better' => $higherIsBetter,
+            'direction' => $direction,
+            'arrow' => $arrow,
+            'badge_emoji' => $badgeEmoji,
+            'arrow_badge' => $arrowBadge,
+            'color' => $color,
+            'color_name' => $colorName,
+            'filament_status' => $filamentStatus,
+            'unit' => $resolvedUnit,
+            'formatted_evaluated' => $formattedEvaluated,
+            'formatted_threshold' => $formattedThreshold,
+            'title_prefix' => $arrowBadge,
+        ];
     }
 
     /**

@@ -32,6 +32,7 @@ class AlertLog extends Model
         'evaluated_value',
         'threshold_type',
         'threshold_value',
+        'unit',
         'aggregation_method',
         'evaluation_window',
         'status',

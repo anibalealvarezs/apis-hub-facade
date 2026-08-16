@@ -175,17 +175,38 @@ class AlertResource extends Resource
                                 ->default('latest')
                                 ->required(),
 
+                            Forms\Components\Select::make('unit')
+                                ->label(__('Threshold Unit'))
+                                ->options([
+                                    'number' => __('Numeric (Standard)'),
+                                    'percentage' => __('Percentage (%)'),
+                                    'currency' => __('Currency ($)'),
+                                ])
+                                ->default('number')
+                                ->live()
+                                ->required(),
+
                             Forms\Components\TextInput::make('upper_limit')
                                 ->label(__('Upper Limit (Trigger if value > limit)'))
                                 ->numeric()
                                 ->nullable()
-                                ->suffix(__('Units')),
+                                ->suffix(fn (Forms\Get $get) => match ($get('unit')) {
+                                    'percentage' => '%',
+                                    'currency' => '$',
+                                    default => __('Units'),
+                                })
+                                ->prefix(fn (Forms\Get $get) => $get('unit') === 'currency' ? '$' : null),
 
                             Forms\Components\TextInput::make('lower_limit')
                                 ->label(__('Lower Limit (Trigger if value < limit)'))
                                 ->numeric()
                                 ->nullable()
-                                ->suffix(__('Units')),
+                                ->suffix(fn (Forms\Get $get) => match ($get('unit')) {
+                                    'percentage' => '%',
+                                    'currency' => '$',
+                                    default => __('Units'),
+                                })
+                                ->prefix(fn (Forms\Get $get) => $get('unit') === 'currency' ? '$' : null),
                         ]),
 
                     Wizard\Step::make(__('Calculation Lines'))
@@ -356,10 +377,12 @@ class AlertResource extends Resource
 
                 Tables\Columns\TextColumn::make('limits')
                     ->label(__('Thresholds'))
-                    ->getStateUsing(fn (Alert $record) => implode(' | ', array_filter([
-                        $record->upper_limit !== null ? "> {$record->upper_limit}" : null,
-                        $record->lower_limit !== null ? "< {$record->lower_limit}" : null,
-                    ])))
+                    ->getStateUsing(function (Alert $record) {
+                        $alertService = app(AlertService::class);
+                        $upper = $record->upper_limit !== null ? ('> ' . $alertService->formatMetricValue($record->upper_limit, $record->unit)) : null;
+                        $lower = $record->lower_limit !== null ? ('< ' . $alertService->formatMetricValue($record->lower_limit, $record->unit)) : null;
+                        return implode(' | ', array_filter([$upper, $lower]));
+                    })
                     ->placeholder(__('None')),
 
                 Tables\Columns\TextColumn::make('schedule_type')

@@ -61,6 +61,15 @@ class CreateAlert extends CreateRecord
             $data['ast'] = ['type' => 'metric', 'metric' => $metricAlias];
         }
 
+        if (($data['unit'] ?? 'number') === 'percentage') {
+            if (isset($data['upper_limit']) && $data['upper_limit'] !== null && $data['upper_limit'] !== '') {
+                $data['upper_limit'] = (float) $data['upper_limit'] / 100;
+            }
+            if (isset($data['lower_limit']) && $data['lower_limit'] !== null && $data['lower_limit'] !== '') {
+                $data['lower_limit'] = (float) $data['lower_limit'] / 100;
+            }
+        }
+
         if (!empty($data['calculationLines']) && is_array($data['calculationLines'])) {
             foreach ($data['calculationLines'] as &$line) {
                 $assetId = $line['target_asset_platform_id']

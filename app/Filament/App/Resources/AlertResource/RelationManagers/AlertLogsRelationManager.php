@@ -28,11 +28,11 @@ class AlertLogsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('evaluated_value')
                     ->label(__('Evaluated Value'))
-                    ->numeric(2),
+                    ->formatStateUsing(fn ($record) => app(\App\Services\AlertService::class)->formatMetricValue($record->evaluated_value, $record->unit)),
 
                 Tables\Columns\TextColumn::make('threshold_value')
                     ->label(__('Threshold'))
-                    ->numeric(2)
+                    ->formatStateUsing(fn ($record) => $record->threshold_value !== null ? app(\App\Services\AlertService::class)->formatMetricValue($record->threshold_value, $record->unit) : '-')
                     ->placeholder('-'),
 
                 Tables\Columns\BadgeColumn::make('status')
