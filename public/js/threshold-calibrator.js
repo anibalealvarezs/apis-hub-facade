@@ -15,43 +15,35 @@ document.addEventListener('alpine:init', () => {
             if (this.points && this.points.length > 0) {
                 return this.points[this.points.length - 1];
             }
-            let up = parseFloat(this.upper);
-            let low = parseFloat(this.lower);
-            if (!isNaN(up) && !isNaN(low)) return (up + low) / 2;
-            if (!isNaN(up)) return up * 0.85;
-            if (!isNaN(low)) return low * 1.15;
             return null;
         },
         get minVal() {
             if (this.points && this.points.length > 0) {
                 return Math.min(...this.points);
             }
-            let cur = this.currentVal;
-            return cur !== null ? parseFloat((cur * 0.75).toFixed(2)) : null;
+            return null;
         },
         get maxVal() {
             if (this.points && this.points.length > 0) {
                 return Math.max(...this.points);
             }
-            let cur = this.currentVal;
-            return cur !== null ? parseFloat((cur * 1.25).toFixed(2)) : null;
+            return null;
         },
         get avgVal() {
             if (this.points && this.points.length > 0) {
                 let sum = this.points.reduce((a, b) => a + b, 0);
                 return (sum / (this.points.length || 1));
             }
-            return this.currentVal;
+            return null;
         },
         get stdDev() {
-            let avg = this.avgVal;
-            if (avg === null) return 0;
             if (this.points && this.points.length > 0) {
+                let avg = this.avgVal;
                 let squareDiffs = this.points.map(v => Math.pow(v - avg, 2));
                 let avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / (squareDiffs.length || 1);
                 return Math.sqrt(avgSquareDiff);
             }
-            return Math.abs(avg * 0.10);
+            return 0;
         },
         get dataset() {
             if (this.points && this.points.length > 0) {
