@@ -94,29 +94,56 @@
                                 4 => __('4. Summary & Save'),
                             ];
 
-                            $html = '<nav aria-label="Progress" class="w-full mb-6"><ol role="list" class="w-full flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-white/10 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">';
+                            $html = '<div class="fi-fo-wizard fi-contained rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mb-6 overflow-hidden">';
+                            $html .= '<ol role="list" class="fi-fo-wizard-header grid divide-y divide-gray-200 dark:divide-white/5 md:grid-flow-col md:divide-y-0 md:overflow-x-auto border-b border-gray-200 dark:border-white/10">';
 
+                            $stepsCount = count($steps);
+                            $i = 0;
                             foreach ($steps as $num => $title) {
+                                $i++;
                                 $isActive = $num === $currentStepNum;
                                 $isPast = $num < $currentStepNum;
+                                $isLast = $i === $stepsCount;
 
-                                $badgeClasses = $isActive
-                                    ? 'bg-primary-600 text-white font-bold ring-2 ring-primary-600/30 dark:bg-primary-500'
-                                    : ($isPast ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 font-bold' : 'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500 font-semibold');
+                                $stepNumStr = str_pad($num, 2, '0', STR_PAD_LEFT);
 
-                                $titleClasses = $isActive
-                                    ? 'text-primary-600 dark:text-primary-400 font-bold'
-                                    : ($isPast ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-500 font-normal');
+                                $iconCtnClasses = $isPast
+                                    ? 'bg-primary-600 dark:bg-primary-500'
+                                    : ($isActive ? 'border-2 border-primary-600 dark:border-primary-500' : 'border-2 border-gray-300 dark:border-gray-600');
 
-                                $html .= '<li class="flex-1 flex items-center px-4 py-3.5 text-sm transition-colors">';
-                                $html .= '<div class="flex items-center gap-3 w-full">';
-                                $html .= '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs transition-colors ' . $badgeClasses . '">' . $num . '</span>';
-                                $html .= '<span class="text-xs md:text-sm font-semibold transition-colors ' . $titleClasses . '">' . e($title) . '</span>';
+                                $indicatorClasses = $isActive
+                                    ? 'text-primary-600 dark:text-primary-500 font-bold'
+                                    : 'text-gray-500 dark:text-gray-400 font-medium';
+
+                                $labelClasses = $isActive
+                                    ? 'text-primary-600 dark:text-primary-400 font-medium'
+                                    : ($isPast ? 'text-gray-950 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400 font-medium');
+
+                                $html .= '<li class="fi-fo-wizard-header-step relative flex ' . ($isActive ? 'fi-active' : ($isPast ? 'fi-completed' : '')) . '">';
+                                $html .= '<div class="fi-fo-wizard-header-step-button flex h-full items-center gap-x-4 px-6 py-4 text-start w-full">';
+                                
+                                $html .= '<div class="fi-fo-wizard-header-step-icon-ctn flex h-10 w-10 shrink-0 items-center justify-center rounded-full ' . $iconCtnClasses . '">';
+                                if ($isPast) {
+                                    $html .= '<svg class="fi-fo-wizard-header-step-icon h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>';
+                                } else {
+                                    $html .= '<span class="fi-fo-wizard-header-step-indicator text-sm ' . $indicatorClasses . '">' . $stepNumStr . '</span>';
+                                }
                                 $html .= '</div>';
+
+                                $html .= '<div class="grid justify-items-start md:w-max md:max-w-60">';
+                                $html .= '<span class="fi-fo-wizard-header-step-label text-sm ' . $labelClasses . '">' . e($title) . '</span>';
+                                $html .= '</div>';
+
+                                $html .= '</div>';
+
+                                if (! $isLast) {
+                                    $html .= '<div aria-hidden="true" class="fi-fo-wizard-header-step-separator absolute end-0 hidden h-full w-5 md:block"><svg fill="none" preserveAspectRatio="none" viewBox="0 0 22 80" class="h-full w-full text-gray-200 dark:text-white/5 rtl:rotate-180"><path d="M0 -2L20 40L0 82" stroke-linejoin="round" stroke="currentcolor" vector-effect="non-scaling-stroke" /></svg></div>';
+                                }
+
                                 $html .= '</li>';
                             }
 
-                            $html .= '</ol></nav>';
+                            $html .= '</ol></div>';
 
                             return new \Illuminate\Support\HtmlString($html);
                         }),
