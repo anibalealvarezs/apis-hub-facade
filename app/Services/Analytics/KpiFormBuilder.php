@@ -644,7 +644,8 @@ class KpiFormBuilder
             Hidden::make('_step_history')->default('[]'),
 
             Placeholder::make('_wizard_header')
-                ->label('')
+                ->hiddenLabel()
+                ->columnSpanFull()
                 ->content(function (Get $get) {
                     $step = $get('_builder_step') ?? '1_intent';
 

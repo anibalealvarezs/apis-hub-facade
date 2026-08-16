@@ -75,7 +75,8 @@
                     Forms\Components\Hidden::make('_step_history')->default('[]'),
 
                     Forms\Components\Placeholder::make('_wizard_header')
-                        ->label('')
+                        ->hiddenLabel()
+                        ->columnSpanFull()
                         ->content(function (Forms\Get $get) {
                             $step = $get('_builder_step') ?? '0_intent';
 
