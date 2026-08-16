@@ -502,22 +502,20 @@ class AlertTest extends TestCase
             'schedule_config' => ['time' => '08:00'],
         ]);
 
-        // CTR exceeded upper limit -> ⬆️ Up, 🟢 Green (Good!)
+        // CTR exceeded upper limit -> ▲ Up, Green (Good!)
         $ctrUpper = $service->getAlertVisualIndicators($ctrAlert, 'upper', 'percentage', 0.022222, 0.012);
         $this->assertTrue($ctrUpper['is_good']);
         $this->assertEquals('up', $ctrUpper['direction']);
-        $this->assertEquals('⬆️', $ctrUpper['arrow']);
-        $this->assertEquals('🟢', $ctrUpper['badge_emoji']);
+        $this->assertEquals('▲', $ctrUpper['arrow']);
         $this->assertEquals('#10b981', $ctrUpper['color']);
         $this->assertEquals('2.2222%', $ctrUpper['formatted_evaluated']);
         $this->assertEquals('1.2%', $ctrUpper['formatted_threshold']);
 
-        // CTR breached lower limit -> ⬇️ Down, 🔴 Red (Bad!)
+        // CTR breached lower limit -> ▼ Down, Red (Bad!)
         $ctrLower = $service->getAlertVisualIndicators($ctrAlert, 'lower', 'percentage', 0.002, 0.005);
         $this->assertFalse($ctrLower['is_good']);
         $this->assertEquals('down', $ctrLower['direction']);
-        $this->assertEquals('⬇️', $ctrLower['arrow']);
-        $this->assertEquals('🔴', $ctrLower['badge_emoji']);
+        $this->assertEquals('▼', $ctrLower['arrow']);
         $this->assertEquals('#ef4444', $ctrLower['color']);
 
         // 2. Spend / Cost (Lower is better)
@@ -536,22 +534,20 @@ class AlertTest extends TestCase
             'schedule_config' => ['time' => '08:00'],
         ]);
 
-        // Spend exceeded upper limit -> ⬆️ Up, 🔴 Red (Bad / High Spend Warning!)
+        // Spend exceeded upper limit -> ▲ Up, Red (Bad / High Spend Warning!)
         $spendUpper = $service->getAlertVisualIndicators($spendAlert, 'upper', 'currency', 1250.5, 1000);
         $this->assertFalse($spendUpper['is_good']);
         $this->assertEquals('up', $spendUpper['direction']);
-        $this->assertEquals('⬆️', $spendUpper['arrow']);
-        $this->assertEquals('🔴', $spendUpper['badge_emoji']);
+        $this->assertEquals('▲', $spendUpper['arrow']);
         $this->assertEquals('#ef4444', $spendUpper['color']);
         $this->assertEquals('$1,250.5', $spendUpper['formatted_evaluated']);
         $this->assertEquals('$1,000', $spendUpper['formatted_threshold']);
 
-        // Spend dropped below lower limit -> ⬇️ Down, 🟢 Green (Good / Cost Savings!)
+        // Spend dropped below lower limit -> ▼ Down, Green (Good / Cost Savings!)
         $spendLower = $service->getAlertVisualIndicators($spendAlert, 'lower', 'currency', 150, 200);
         $this->assertTrue($spendLower['is_good']);
         $this->assertEquals('down', $spendLower['direction']);
-        $this->assertEquals('⬇️', $spendLower['arrow']);
-        $this->assertEquals('🟢', $spendLower['badge_emoji']);
+        $this->assertEquals('▼', $spendLower['arrow']);
         $this->assertEquals('#10b981', $spendLower['color']);
     }
 }

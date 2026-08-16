@@ -1,5 +1,5 @@
 @component('mail::message')
-# {{ $indicators['badge_emoji'] ?? '🔔' }} {{ $indicators['arrow'] ?? '' }} Alert Triggered: {{ $alert->name }}
+# <span style="color: {{ $indicators['color'] ?? '#ef4444' }};">{{ $indicators['arrow'] ?? '▲' }}</span> Alert Triggered: {{ $alert->name }}
 
 Hello {{ $user->name }},
 

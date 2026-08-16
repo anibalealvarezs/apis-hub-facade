@@ -279,12 +279,11 @@ class AlertService
         $isUpper = ($thresholdType === 'upper');
 
         $direction = $isUpper ? 'up' : 'down';
-        $arrow = $isUpper ? '⬆️' : '⬇️';
+        $arrow = $isUpper ? '▲' : '▼';
 
         $isGood = $isUpper ? $higherIsBetter : !$higherIsBetter;
         $color = $isGood ? '#10b981' : '#ef4444'; // Emerald green vs Red
         $colorName = $isGood ? 'green' : 'red';
-        $badgeEmoji = $isGood ? '🟢' : '🔴';
         $filamentStatus = $isGood ? 'success' : 'danger';
 
         $resolvedUnit = $unit ?? $alert?->unit ?? 'number';
@@ -292,14 +291,14 @@ class AlertService
         $formattedEvaluated = $this->formatMetricValue($evaluatedValue, $resolvedUnit);
         $formattedThreshold = $thresholdValue !== null ? $this->formatMetricValue($thresholdValue, $resolvedUnit) : null;
 
-        $arrowBadge = "{$badgeEmoji} {$arrow}";
+        $arrowBadge = $arrow;
+        $iconHtml = "<span style='color: {$color}; font-weight: bold;'>{$arrow}</span>";
 
         return [
             'is_good' => $isGood,
             'higher_is_better' => $higherIsBetter,
             'direction' => $direction,
             'arrow' => $arrow,
-            'badge_emoji' => $badgeEmoji,
             'arrow_badge' => $arrowBadge,
             'color' => $color,
             'color_name' => $colorName,
@@ -307,6 +306,7 @@ class AlertService
             'unit' => $resolvedUnit,
             'formatted_evaluated' => $formattedEvaluated,
             'formatted_threshold' => $formattedThreshold,
+            'icon_html' => $iconHtml,
             'title_prefix' => $arrowBadge,
         ];
     }
