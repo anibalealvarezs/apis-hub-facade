@@ -643,6 +643,53 @@ class KpiFormBuilder
             Hidden::make('_builder_step')->default('1_intent'),
             Hidden::make('_step_history')->default('[]'),
 
+            Placeholder::make('_wizard_header')
+                ->label('')
+                ->content(function (Get $get) {
+                    $step = $get('_builder_step') ?? '1_intent';
+
+                    $currentStepNum = match (true) {
+                        in_array($step, ['1_intent', '1a1_asset_group', '1a2_template', '21_calculation']) => 1,
+                        $step === '22_series' => 2,
+                        $step === '23_scope' => 3,
+                        in_array($step, ['3_summary', '4_save']) => 4,
+                        default => 1,
+                    };
+
+                    $steps = [
+                        1 => __('1. Method & Template'),
+                        2 => __('2. Configure Series'),
+                        3 => __('3. Scope & Filters'),
+                        4 => __('4. Summary & Save'),
+                    ];
+
+                    $html = '<nav aria-label="Progress" class="mb-6"><ol role="list" class="divide-y divide-gray-200 dark:divide-white/10 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm md:flex md:divide-y-0">';
+
+                    foreach ($steps as $num => $title) {
+                        $isActive = $num === $currentStepNum;
+                        $isPast = $num < $currentStepNum;
+
+                        $badgeClasses = $isActive
+                            ? 'bg-primary-600 text-white font-bold ring-2 ring-primary-600/30 dark:bg-primary-500'
+                            : ($isPast ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 font-bold' : 'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500 font-semibold');
+
+                        $titleClasses = $isActive
+                            ? 'text-primary-600 dark:text-primary-400 font-bold'
+                            : ($isPast ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-500 font-normal');
+
+                        $html .= '<li class="relative md:flex-1 md:flex items-center">';
+                        $html .= '<div class="flex items-center px-4 py-3 text-sm w-full gap-3">';
+                        $html .= '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs transition-colors ' . $badgeClasses . '">' . $num . '</span>';
+                        $html .= '<span class="text-xs md:text-sm whitespace-nowrap transition-colors ' . $titleClasses . '">' . e($title) . '</span>';
+                        $html .= '</div>';
+                        $html .= '</li>';
+                    }
+
+                    $html .= '</ol></nav>';
+
+                    return new \Illuminate\Support\HtmlString($html);
+                }),
+
             Section::make(__('KPI Configuration'))
                 ->schema([
                     // Step 1: Intent
