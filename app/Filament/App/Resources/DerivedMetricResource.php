@@ -94,7 +94,7 @@
                                 4 => __('4. Summary & Save'),
                             ];
 
-                            $html = '<nav aria-label="Progress" class="mb-6"><ol role="list" class="divide-y divide-gray-200 dark:divide-white/10 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm md:flex md:divide-y-0">';
+                            $html = '<nav aria-label="Progress" class="w-full mb-6"><ol role="list" class="w-full flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-white/10 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">';
 
                             foreach ($steps as $num => $title) {
                                 $isActive = $num === $currentStepNum;
@@ -108,10 +108,10 @@
                                     ? 'text-primary-600 dark:text-primary-400 font-bold'
                                     : ($isPast ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-500 font-normal');
 
-                                $html .= '<li class="relative md:flex-1 md:flex items-center">';
-                                $html .= '<div class="flex items-center px-4 py-3 text-sm w-full gap-3">';
-                                $html .= '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs transition-colors ' . $badgeClasses . '">' . $num . '</span>';
-                                $html .= '<span class="text-xs md:text-sm whitespace-nowrap transition-colors ' . $titleClasses . '">' . e($title) . '</span>';
+                                $html .= '<li class="flex-1 flex items-center px-4 py-3.5 text-sm transition-colors">';
+                                $html .= '<div class="flex items-center gap-3 w-full">';
+                                $html .= '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs transition-colors ' . $badgeClasses . '">' . $num . '</span>';
+                                $html .= '<span class="text-xs md:text-sm font-semibold transition-colors ' . $titleClasses . '">' . e($title) . '</span>';
                                 $html .= '</div>';
                                 $html .= '</li>';
                             }
