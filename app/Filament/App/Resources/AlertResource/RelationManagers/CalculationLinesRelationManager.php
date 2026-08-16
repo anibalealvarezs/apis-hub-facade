@@ -20,10 +20,11 @@ class CalculationLinesRelationManager extends RelationManager
 
         return $form
             ->schema([
-                Forms\Components\Select::make('asset_filter.asset_platform_id')
+                Forms\Components\Select::make('target_asset_platform_id')
                     ->label(__('Target Asset'))
-                    ->options(function () use ($channel) {
+                    ->options(function (Forms\Get $get, ?\App\Models\AlertCalculationLine $record) use ($channel) {
                         $options = ['all' => __('All Assets Combined')];
+
                         if ($channel) {
                             $assets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel);
                             foreach ($assets as $id => $info) {
@@ -38,9 +39,22 @@ class CalculationLinesRelationManager extends RelationManager
                                 }
                             }
                         }
+
+                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
+                            $currentId = (string) $record->asset_filter['asset_platform_id'];
+                            if ($currentId !== 'all' && !isset($options[$currentId])) {
+                                $options[$currentId] = $record->label ?? $currentId;
+                            }
+                        }
+
                         return $options;
                     })
                     ->default('all')
+                    ->afterStateHydrated(function (Forms\Components\Select $component, ?\App\Models\AlertCalculationLine $record) {
+                        if ($record && isset($record->asset_filter['asset_platform_id'])) {
+                            $component->state((string) $record->asset_filter['asset_platform_id']);
+                        }
+                    })
                     ->searchable()
                     ->preload()
                     ->required()
@@ -109,6 +123,17 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $assetId = $data['target_asset_platform_id']
+                            ?? $data['asset_filter']['asset_platform_id']
+                            ?? $data['asset_filter.asset_platform_id']
+                            ?? 'all';
+
+                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
+                        unset($data['target_asset_platform_id'], $data['asset_filter.asset_platform_id']);
+
+                        return $data;
+                    })
                     ->after(function (RelationManager $livewire) {
                         $alert = $livewire->getOwnerRecord();
                         if ($alert?->project) {
@@ -118,6 +143,17 @@ class CalculationLinesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $assetId = $data['target_asset_platform_id']
+                            ?? $data['asset_filter']['asset_platform_id']
+                            ?? $data['asset_filter.asset_platform_id']
+                            ?? 'all';
+
+                        $data['asset_filter'] = ['asset_platform_id' => (string) $assetId];
+                        unset($data['target_asset_platform_id'], $data['asset_filter.asset_platform_id']);
+
+                        return $data;
+                    })
                     ->after(function (RelationManager $livewire) {
                         $alert = $livewire->getOwnerRecord();
                         if ($alert?->project) {

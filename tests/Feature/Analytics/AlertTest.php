@@ -323,7 +323,7 @@ class AlertTest extends TestCase
             'pageClass' => \App\Filament\App\Resources\AlertResource\Pages\EditAlert::class,
         ])
             ->callTableAction('edit', $line, [
-                'asset_filter.asset_platform_id' => 'https://marcelacrodriguez.com',
+                'target_asset_platform_id' => 'https://marcelacrodriguez.com',
                 'label' => 'marcelacrodriguez.com',
             ])
             ->assertHasNoTableActionErrors();
@@ -332,7 +332,54 @@ class AlertTest extends TestCase
         $this->assertEquals('https://marcelacrodriguez.com', $line->asset_filter['asset_platform_id'] ?? null);
         $this->assertEquals('marcelacrodriguez.com', $line->label);
     }
+
+    public function test_create_alert_page_saves_specific_target_asset_platform_id()
+    {
+        $data = [
+            'project_id' => $this->project->id,
+            'user_id' => $this->user->id,
+            'name' => 'Main Form Asset Alert',
+            'source_type' => 'metric',
+            'source_config' => ['channel' => 'meta', 'metric' => 'spend'],
+            'aggregation_method' => 'latest',
+            'upper_limit' => 1000,
+            'schedule_type' => 'daily',
+            'schedule_config' => ['time' => '08:00'],
+            'calculationLines' => [
+                [
+                    'target_asset_platform_id' => 'act_999999',
+                    'label' => 'Account #999999',
+                ],
+            ],
+        ];
+
+        $createAlertPage = new \App\Filament\App\Resources\AlertResource\Pages\CreateAlert();
+        $reflector = new \ReflectionClass($createAlertPage);
+        $method = $reflector->getMethod('mutateFormDataBeforeCreate');
+        $method->setAccessible(true);
+
+        $this->actingAs($this->user);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('app'));
+        \Filament\Facades\Filament::setTenant($this->project);
+
+        $mutatedData = $method->invoke($createAlertPage, $data);
+
+        $calculationLinesData = $mutatedData['calculationLines'] ?? [];
+        unset($mutatedData['calculationLines']);
+
+        $alert = Alert::create($mutatedData);
+        foreach ($calculationLinesData as $lineData) {
+            $alert->calculationLines()->create($lineData);
+        }
+
+        $line = $alert->calculationLines->first();
+        $this->assertNotNull($line);
+        $this->assertEquals('act_999999', $line->asset_filter['asset_platform_id'] ?? null);
+        $this->assertEquals('Account #999999', $line->label);
+    }
 }
+
+
 
 
 

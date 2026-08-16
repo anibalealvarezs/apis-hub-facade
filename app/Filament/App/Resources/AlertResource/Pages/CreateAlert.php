@@ -61,6 +61,17 @@ class CreateAlert extends CreateRecord
             $data['ast'] = ['type' => 'metric', 'metric' => $metricAlias];
         }
 
+        if (!empty($data['calculationLines']) && is_array($data['calculationLines'])) {
+            foreach ($data['calculationLines'] as &$line) {
+                $assetId = $line['target_asset_platform_id']
+                    ?? $line['asset_filter']['asset_platform_id']
+                    ?? $line['asset_filter.asset_platform_id']
+                    ?? 'all';
+                $line['asset_filter'] = ['asset_platform_id' => (string) $assetId];
+                unset($line['target_asset_platform_id'], $line['asset_filter.asset_platform_id']);
+            }
+        }
+
         return $data;
     }
 
