@@ -200,7 +200,7 @@ class AlertResource extends Resource
                             Forms\Components\Repeater::make('calculationLines')
                                 ->relationship('calculationLines')
                                 ->schema([
-                                     Forms\Components\Select::make('target_asset_platform_id')
+                                     Forms\Components\Select::make('asset_filter.asset_platform_id')
                                          ->label(__('Target Asset'))
                                          ->options(function (Forms\Get $get) {
                                              $channel = $get('../../source_config.channel');
@@ -222,11 +222,6 @@ class AlertResource extends Resource
                                              return $options;
                                          })
                                          ->default('all')
-                                         ->afterStateHydrated(function (Forms\Components\Select $component, Forms\Get $get, ?\App\Models\AlertCalculationLine $record) {
-                                             $filter = $record?->asset_filter ?? $get('asset_filter') ?? [];
-                                             $component->state($filter['asset_platform_id'] ?? 'all');
-                                         })
-                                         ->dehydrated(false)
                                          ->searchable()
                                          ->preload()
                                          ->required()
@@ -235,7 +230,6 @@ class AlertResource extends Resource
                                              $channel = $get('../../source_config.channel');
                                              if ($state === 'all' || empty($state)) {
                                                  $set('label', __('All Assets Combined'));
-                                                 $set('asset_filter', ['asset_platform_id' => 'all']);
                                              } else {
                                                  $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
                                                  if (empty($assets)) {
@@ -250,7 +244,6 @@ class AlertResource extends Resource
                                                  }
                                                  $assetName = $assets[$state]['name'] ?? $state;
                                                  $set('label', $assetName);
-                                                 $set('asset_filter', ['asset_platform_id' => $state]);
                                              }
                                          }),
 
@@ -258,9 +251,6 @@ class AlertResource extends Resource
                                         ->label(__('Line Label'))
                                         ->default(__('All Assets Combined'))
                                         ->required(),
-
-                                    Forms\Components\Hidden::make('asset_filter')
-                                        ->default(['asset_platform_id' => 'all']),
                                 ])
                                 ->itemLabel(fn (array $state): ?string => $state['label'] ?? __('Calculation Line'))
                                 ->minItems(1)
