@@ -95,6 +95,7 @@ class DeployerService
         $googleClientId = config('services.google.client_id');
         $googleClientSecret = config('services.google.client_secret');
         $facadeUrl = config('app.url') . '/api/heartbeat';
+        $alertFacadeUrl = config('app.url') . '/api/alerts/triggered';
 
         $dbName = $project->db_name ?: "apis_hub_{$project->subdomain}";
         $dbUser = $project->db_user ?: "postgres";
@@ -171,7 +172,7 @@ AGGREGATION_TELEMETRY_PATH=storage/logs/aggregation-telemetry.jsonl
 
 # Monitoring Link (Report back to Facade)
 MONITOR_FACADE_URL={$facadeUrl}
-ALERT_FACADE_URL={$facadeUrl}/api/alerts/triggered
+ALERT_FACADE_URL={$alertFacadeUrl}
 MONITOR_TOKEN={$project->monitoring_token}
 MONITOR_ENABLED=true
 EOT;
@@ -253,7 +254,8 @@ EOT;
 
         $subdomain = $project->subdomain;
         $tenantPath = "/var/www/apis-hub/tenants/{$subdomain}";
-        $command = "cd {$tenantPath} && (docker compose exec -T master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force --alert-id={$alert->id} 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --force 2>&1)";
+        $alertWebhookUrl = escapeshellarg(config('app.url') . '/api/alerts/triggered');
+        $command = "cd {$tenantPath} && (docker compose exec -T -e ALERT_FACADE_URL={$alertWebhookUrl} master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force --alert-id={$alert->id} 2>&1 || docker compose exec -T -e ALERT_FACADE_URL={$alertWebhookUrl} master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --force 2>&1)";
 
         try {
             $output = $this->runSshCommands($project->server, [$command]);
