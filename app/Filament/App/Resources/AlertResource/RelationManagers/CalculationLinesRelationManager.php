@@ -83,9 +83,28 @@ class CalculationLinesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('asset_filter')
                     ->label(__('Target Asset Filter'))
-                    ->formatStateUsing(function ($state) {
+                    ->formatStateUsing(function ($state, \App\Models\AlertCalculationLine $record, RelationManager $livewire) {
                         $assetId = is_array($state) ? ($state['asset_platform_id'] ?? 'all') : 'all';
-                        return $assetId === 'all' ? __('All Assets Combined') : $assetId;
+                        if ($assetId === 'all' || empty($assetId)) {
+                            return __('All Assets Combined');
+                        }
+
+                        $alert = $livewire->getOwnerRecord();
+                        $channel = $alert?->source_config['channel'] ?? null;
+                        $assets = $channel ? \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($channel) : [];
+
+                        if (empty($assets)) {
+                            $activeChannels = \App\Services\Analytics\KpiFormBuilder::getActiveChannels();
+                            foreach (array_keys($activeChannels) as $ch) {
+                                $chAssets = \App\Services\Analytics\KpiFormBuilder::getAllAssetsForChannel($ch);
+                                if (isset($chAssets[$assetId])) {
+                                    $assets = $chAssets;
+                                    break;
+                                }
+                            }
+                        }
+
+                        return $assets[$assetId]['name'] ?? $record->label ?? $assetId;
                     }),
             ])
             ->headerActions([
