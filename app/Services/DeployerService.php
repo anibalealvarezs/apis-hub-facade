@@ -224,14 +224,14 @@ EOT;
             ->toArray();
 
         $jsonPayload = json_encode($alerts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        $escapedJson = escapeshellarg($jsonPayload);
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/alerts.json";
 
-        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && printf %s {$escapedJson} > {$path}";
+        $b64 = base64_encode($jsonPayload);
+        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
 
         try {
             $this->runSshCommands($server, [$command]);
-            Log::info("Successfully synchronized alerts.json for project {$project->name}");
+            Log::info("Successfully synchronized alerts.json for project {$project->name} (" . count($alerts) . " alerts)");
             return true;
         } catch (\Exception $e) {
             Log::error("Failed to synchronize alerts.json for project {$project->name}: " . $e->getMessage());
@@ -253,7 +253,7 @@ EOT;
 
         $subdomain = $project->subdomain;
         $tenantPath = "/var/www/apis-hub/tenants/{$subdomain}";
-        $command = "cd {$tenantPath} && (docker compose exec -T master php bin/cli.php app:evaluate-alerts --force --alert-id={$alert->id} 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --force 2>&1)";
+        $command = "cd {$tenantPath} && (docker compose exec -T master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force --alert-id={$alert->id} 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --config=/app/config/alerts.json --force 2>&1 || docker compose exec -T master php bin/cli.php app:evaluate-alerts --force 2>&1)";
 
         try {
             $output = $this->runSshCommands($project->server, [$command]);
