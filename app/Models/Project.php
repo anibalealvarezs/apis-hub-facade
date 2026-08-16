@@ -116,6 +116,16 @@ class Project extends Model
         return $this->hasMany(ProjectStatusLog::class);
     }
 
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
+    }
+
+    public function alertLogs(): HasMany
+    {
+        return $this->hasMany(AlertLog::class);
+    }
+
     /**
      * Relationship: Dynamic provider-based credentials.
      */
@@ -204,6 +214,19 @@ class Project extends Model
     public function apisHubRelease(): BelongsTo
     {
         return $this->belongsTo(ApisHubRelease::class);
+    }
+
+    /**
+     * Check if the project release version supports threshold-based alert evaluation (v1.15.0+).
+     */
+    public function supportsAlerts(): bool
+    {
+        if (!$this->apisHubRelease) {
+            return true;
+        }
+
+        $version = ltrim($this->apisHubRelease->version_tag, 'v');
+        return version_compare($version, '1.15.0', '>=');
     }
 
     /**

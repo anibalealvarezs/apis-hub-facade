@@ -38,9 +38,6 @@ class ProjectResource extends Resource
         return __('Infrastructure');
     }
 
-
-    
-
     public static function getPluralModelLabel(): string
     {
         return __('Projects');

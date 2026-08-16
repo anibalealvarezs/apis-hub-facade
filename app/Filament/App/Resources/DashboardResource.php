@@ -204,6 +204,31 @@ class DashboardResource extends Resource
                     ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences')),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn (Dashboard $record) => !$record->trashed() && auth()->user()->can('edit_preferences'))
+                    ->form(function (Dashboard $record) {
+                        $alerts = $record->getAssociatedAlerts();
+                        if ($alerts->isEmpty()) {
+                            return [];
+                        }
+                        return [
+                            Forms\Components\Placeholder::make('alerts_warning')
+                                ->label(__('Associated Alerts'))
+                                ->content(new \Illuminate\Support\HtmlString("<div class='p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-600 dark:text-amber-400 text-xs font-medium'>⚠️ This dashboard has <strong>{$alerts->count()}</strong> associated alert(s). Select whether to also remove these alerts.</div>")),
+                            Forms\Components\Checkbox::make('delete_associated_alerts')
+                                ->label(__('Delete associated alert rules as well'))
+                                ->default(true),
+                        ];
+                    })
+                    ->before(function (Dashboard $record, array $data) {
+                        if (!empty($data['delete_associated_alerts'])) {
+                            $alerts = $record->getAssociatedAlerts();
+                            foreach ($alerts as $alert) {
+                                $alert->delete();
+                            }
+                            if ($record->project) {
+                                app(\App\Services\DeployerService::class)->syncAlertConfig($record->project);
+                            }
+                        }
+                    })
                     ->after(function ($livewire) {
                         $livewire->mountedTableActionRecord = null;
                         $livewire->mountedTableAction = null;

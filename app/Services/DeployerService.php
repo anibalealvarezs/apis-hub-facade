@@ -170,9 +170,68 @@ AGGREGATION_TELEMETRY_PATH=storage/logs/aggregation-telemetry.jsonl
 
 # Monitoring Link (Report back to Facade)
 MONITOR_FACADE_URL={$facadeUrl}
+ALERT_FACADE_URL={$facadeUrl}/api/alerts/triggered
 MONITOR_TOKEN={$project->monitoring_token}
 MONITOR_ENABLED=true
 EOT;
+    }
+
+    /**
+     * Synchronize alert configurations (alerts.json) to remote apis-hub node.
+     */
+    public function syncAlertConfig(Project $project): bool
+    {
+        if (!$project->supportsAlerts()) {
+            Log::info("Skipping alerts.json sync for project {$project->name}: release does not support alerts (< v1.15.0)");
+            return false;
+        }
+
+        $server = $project->server;
+        if (!$server) {
+            return false;
+        }
+
+        $alerts = $project->alerts()
+            ->active()
+            ->with('calculationLines')
+            ->get()
+            ->map(fn ($alert) => [
+                'id' => $alert->id,
+                'name' => $alert->name,
+                'source_type' => $alert->source_type,
+                'source_config' => $alert->source_config,
+                'ast' => $alert->ast,
+                'filters' => $alert->filters,
+                'aggregation_method' => $alert->aggregation_method,
+                'upper_limit' => $alert->upper_limit !== null ? (float) $alert->upper_limit : null,
+                'lower_limit' => $alert->lower_limit !== null ? (float) $alert->lower_limit : null,
+                'schedule_type' => $alert->schedule_type,
+                'schedule_config' => $alert->schedule_config,
+                'next_evaluation_at' => $alert->next_evaluation_at?->toIso8601String(),
+                'notify_ui' => $alert->notify_ui,
+                'notify_email' => $alert->notify_email,
+                'calculation_lines' => $alert->calculationLines->map(fn ($line) => [
+                    'id' => $line->id,
+                    'label' => $line->label,
+                    'asset_filter' => $line->asset_filter,
+                ])->toArray(),
+            ])
+            ->toArray();
+
+        $jsonPayload = json_encode($alerts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $escapedJson = escapeshellarg($jsonPayload);
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/alerts.json";
+
+        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && printf %s {$escapedJson} > {$path}";
+
+        try {
+            $this->runSshCommands($server, [$command]);
+            Log::info("Successfully synchronized alerts.json for project {$project->name}");
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to synchronize alerts.json for project {$project->name}: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

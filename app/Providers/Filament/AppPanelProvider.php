@@ -51,7 +51,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
-                fn () => view('filament.hooks.beta-badge'),
+                fn () => view('filament.hooks.beta-badge') . view('filament.hooks.project-clock'),
             )
 
             ->sidebarCollapsibleOnDesktop()

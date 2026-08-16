@@ -72,4 +72,32 @@ class MonitoringController extends Controller
             'timestamp' => now()->toIso8601String(),
         ]);
     }
+
+    /**
+     * Alert Triggered Receiver: Receive threshold evaluation results from tenant node.
+     */
+    public function alertTriggered(Request $request): Response
+    {
+        $token = $request->header('X-Monitoring-Token');
+
+        if (!$token) {
+            return response('No monitoring token provided', 400);
+        }
+
+        $project = Project::where('monitoring_token', $token)->first();
+
+        if (!$project) {
+            return response('Invalid monitoring token', 403);
+        }
+
+        $payload = $request->all();
+
+        app(\App\Services\AlertService::class)->handleTriggeredAlert($project, $payload);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Alert result logged for ' . $project->name,
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    }
 }
