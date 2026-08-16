@@ -24,14 +24,17 @@
         <!-- Baseline Stat Chips -->
         <template x-if="currentVal !== null">
             <div class="flex items-center gap-2 text-xs">
-                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
-                    {{ __('Current:') }} <strong class="text-gray-900 dark:text-amber-400 font-bold ml-1" x-text="formatVal(currentVal)"></strong>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-gray-600 dark:text-gray-300 shadow-sm">
+                    <span>{{ __('Current:') }}</span>
+                    <strong class="font-bold text-gray-900 dark:text-white" x-text="formatVal(currentVal)"></strong>
                 </span>
-                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
-                    {{ __('30d Avg:') }} <span class="font-semibold dark:text-gray-100 ml-1" x-text="formatVal(avgVal)"></span>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-gray-600 dark:text-gray-300 shadow-sm">
+                    <span>{{ __('30d Avg:') }}</span>
+                    <strong class="font-bold text-gray-900 dark:text-white" x-text="formatVal(avgVal)"></strong>
                 </span>
-                <span class="rounded-md bg-gray-100 border border-gray-200 px-2.5 py-1 font-medium text-gray-700 dark:bg-gray-900/80 dark:border-gray-600 dark:text-gray-200 shadow-sm">
-                    {{ __('Range:') }} <span class="font-semibold dark:text-gray-100 ml-1" x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></span>
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-gray-600 dark:text-gray-300 shadow-sm">
+                    <span>{{ __('Range:') }}</span>
+                    <strong class="font-bold text-gray-900 dark:text-white" x-text="formatVal(minVal) + ' - ' + formatVal(maxVal)"></strong>
                 </span>
             </div>
         </template>
