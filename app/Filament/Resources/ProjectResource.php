@@ -521,10 +521,13 @@ class ProjectResource extends Resource
                                 ->send();
                             return;
                         }
-                        $record->update([
-                            'health_status' => 'online',
-                            'deploy_started_at' => null,
-                        ]);
+                        $isJobStaleOrIdle = is_null($record->deploy_started_at) || $record->deploy_started_at->lt(now()->subMinutes(3));
+                        if ($isJobStaleOrIdle) {
+                            $record->update([
+                                'health_status' => 'online',
+                                'deploy_started_at' => null,
+                            ]);
+                        }
 
                         $results = $validation['results'] ?? [];
                         $validCount = 0;
@@ -679,7 +682,10 @@ class ProjectResource extends Resource
                         $response = $service->getStatus($record);
                         $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
 
-                        if ($isOnline) {
+                        // Only clear syncing/redeploying if deploy_started_at is null or older than 3 minutes (stale job)
+                        $isJobStaleOrIdle = is_null($record->deploy_started_at) || $record->deploy_started_at->lt(now()->subMinutes(3));
+
+                        if ($isOnline && $isJobStaleOrIdle) {
                             $record->update([
                                 'health_status' => 'online',
                                 'deploy_started_at' => null,
