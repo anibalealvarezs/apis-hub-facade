@@ -92,10 +92,11 @@ class MonitoringController extends Controller
 
         $payload = $request->all();
 
-        app(\App\Services\AlertService::class)->handleTriggeredAlert($project, $payload);
+        $res = app(\App\Services\AlertService::class)->handleTriggeredAlert($project, $payload);
 
         return response()->json([
             'status' => 'success',
+            'next_evaluation_at' => $res['next_evaluation_at'] ?? null,
             'message' => 'Alert result logged for ' . $project->name,
             'timestamp' => now()->toIso8601String(),
         ]);

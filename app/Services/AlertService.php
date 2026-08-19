@@ -16,7 +16,7 @@ class AlertService
      * Handle a triggered alert callback from the tenant.
      * Creates an AlertLog with full snapshot and dispatches notifications.
      */
-    public function handleTriggeredAlert(Project $project, array $payload): void
+    public function handleTriggeredAlert(Project $project, array $payload): array
     {
         $alertId = $payload['alert_id'] ?? null;
         $lineId = $payload['calculation_line_id'] ?? null;
@@ -87,6 +87,12 @@ class AlertService
                 'notified_email' => $notifiedEmail,
             ]);
         }
+
+        return [
+            'log' => $log,
+            'alert' => $alert,
+            'next_evaluation_at' => $alert?->next_evaluation_at?->toIso8601String(),
+        ];
     }
 
     /**
