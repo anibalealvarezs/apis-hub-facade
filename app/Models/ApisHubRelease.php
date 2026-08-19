@@ -30,6 +30,51 @@ class ApisHubRelease extends Model
     ];
 
     /**
+     * Get the release configuration schemas with a graceful fallback to ChannelProfileRegistry
+     * if the release's database record has missing or incomplete channel schemas.
+     */
+    public function getConfigSchemasAttribute($value): array
+    {
+        $schemas = is_string($value) ? json_decode($value, true) : $value;
+        if (!is_array($schemas)) {
+            $schemas = [];
+        }
+
+        try {
+            $registry = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class);
+            foreach ($registry->all() as $profile) {
+                $key = $profile->getChannelKey();
+                if (empty($schemas[$key]['fields'])) {
+                    $schemas[$key] = $profile->getSchemaDefinition();
+                }
+            }
+        } catch (\Throwable $e) {
+            // Safe fallback: keep raw schemas if registry is not bootable
+        }
+
+        return $schemas;
+    }
+
+    /**
+     * Get the release supported channels with a graceful fallback to ChannelProfileRegistry
+     * if the release's database record has no channels explicitly listed.
+     */
+    public function getSupportedChannelsAttribute($value): array
+    {
+        $channels = is_string($value) ? json_decode($value, true) : $value;
+        if (is_array($channels) && !empty($channels)) {
+            return $channels;
+        }
+
+        try {
+            $registry = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class);
+            return array_keys($registry->all());
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
      * Get the projects using this release.
      */
     public function projects(): HasMany
