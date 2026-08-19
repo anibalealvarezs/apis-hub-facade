@@ -90,13 +90,8 @@ class AppPanelProvider extends PanelProvider
                 function () {
                     $path = resource_path('js/formula-editor.js');
                     $jsContent = file_exists($path) ? file_get_contents($path) : '/* FILE NOT FOUND: ' . $path . ' */';
-                    $jsLen = strlen($jsContent);
                     $seoHtml = view('filament.hooks.seo-auth')->render();
-                    $seoLen = strlen($seoHtml);
-                    $route = request()->route()?->getName() ?? 'NO_ROUTE';
-                    \Illuminate\Support\Facades\Log::debug('[FE] head.end hook: route=' . $route . ' jsLen=' . $jsLen . ' seoLen=' . $seoLen);
                     return \Illuminate\Support\Facades\Blade::render('
-                        <script>console.log("[FE] formula-editor loaded, len=' . $jsLen . '")</script>
                         <script>' . $jsContent . '</script>
                         @verbatim' . $seoHtml . '@endverbatim
                     ');
@@ -104,7 +99,18 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::head.start',
-                fn () => \Illuminate\Support\Facades\Blade::render('@include(\'filament.hooks.tooltip-debug\')') . \Illuminate\Support\Facades\Blade::render('
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    @if(app()->isProduction() && !config(\'app.debug\'))
+                    <script>
+                        (function() {
+                            if (typeof window !== \'undefined\' && window.console) {
+                                window.console.log = function() {};
+                                window.console.debug = function() {};
+                                window.console.info = function() {};
+                            }
+                        })();
+                    </script>
+                    @endif
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link rel="preconnect" href="https://www.googletagmanager.com">
