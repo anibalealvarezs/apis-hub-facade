@@ -126,7 +126,7 @@
           data-gtm-id="{{ $gtmId }}">
         
         <!-- Header / Navigation & Theme Controls -->
-        <header class="theme-toggle flex items-center gap-4 !top-4 !right-4 sm:!top-8 sm:!right-8" x-cloak>
+        <header class="w-full flex justify-end items-center gap-4 px-6 pt-6 sm:fixed sm:top-8 sm:right-8 sm:w-auto sm:p-0 z-50" x-cloak>
             <nav aria-label="{{ __('Language switcher') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
                 <a href="{{ route('landing.index') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
                 <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" aria-hidden="true"></span>
@@ -146,21 +146,21 @@
             </button>
         </header>
 
-        <main class="relative flex-grow flex flex-col items-center justify-center w-full px-6 pt-20 pb-8 sm:py-16 text-center lg:px-8">
+        <main class="relative flex-grow flex flex-col items-center justify-center w-full px-6 pt-4 pb-8 sm:py-16 text-center lg:px-8">
             
             <!-- Branding Header -->
-            <div class="mb-8 md:mb-10 w-full max-w-[280px] xs:max-w-xs sm:max-w-md md:max-w-lg lg:max-w-[620px] mx-auto px-4">
+            <div class="mb-8 md:mb-10 w-full px-4 sm:px-0">
                 <!-- Light Mode Logo: Standard Colored -->
                 <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
                      :class="darkMode ? 'hidden' : 'block'"
-                     class="w-full h-auto object-contain mx-auto dark:hidden" 
+                     class="w-full h-auto max-w-[280px] xs:max-w-[320px] sm:max-w-[400px] md:max-w-none md:w-auto md:h-32 mx-auto dark:hidden" 
                      fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly -->
                 <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
                      :class="darkMode ? 'block' : 'hidden'"
-                     class="w-full h-auto object-contain mx-auto hidden dark:block" 
+                     class="w-full h-auto max-w-[280px] xs:max-w-[320px] sm:max-w-[400px] md:max-w-none md:w-auto md:h-32 mx-auto hidden dark:block" 
                      fetchpriority="high" decoding="async">
             </div>
 
