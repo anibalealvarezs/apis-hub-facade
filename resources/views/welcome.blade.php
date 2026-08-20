@@ -121,7 +121,7 @@
         <!-- Google Fonts: Outfit -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     </head>
-    <body class="antialiased min-h-screen flex flex-col justify-between text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
+    <body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
           x-data="themeControl" 
           data-gtm-id="{{ $gtmId }}">
         
