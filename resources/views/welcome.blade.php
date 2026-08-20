@@ -120,13 +120,51 @@
 
         <!-- Google Fonts: Outfit -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
+        <style>
+            body {
+                background-color: #f8fafc;
+            }
+            html.dark body {
+                background-color: #0f172a;
+            }
+            .hero-mesh {
+                position: fixed;
+                inset: 0;
+                z-index: -10;
+                background-color: #f8fafc;
+                background-repeat: no-repeat;
+                background-image: 
+                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.12) 0, transparent 50%), 
+                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.12) 0, transparent 50%);
+            }
+            html.dark .hero-mesh {
+                background-color: #0f172a;
+                background-image: 
+                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
+                    radial-gradient(at 70% 30%, rgba(139, 92, 246, 0.05) 0, transparent 40%), 
+                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
+            }
+            .theme-toggle {
+                position: fixed;
+                top: 1.5rem;
+                right: 1.5rem;
+                z-index: 50;
+            }
+            @media (min-width: 640px) {
+                .theme-toggle {
+                    top: 2rem;
+                    right: 2rem;
+                }
+            }
+        </style>
     </head>
     <body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
           x-data="themeControl" 
           data-gtm-id="{{ $gtmId }}">
         
         <!-- Header / Navigation & Theme Controls -->
-        <header class="w-full flex justify-end items-center gap-4 px-6 pt-6 sm:fixed sm:top-8 sm:right-8 sm:w-auto sm:p-0 z-50" x-cloak>
+        <header class="theme-toggle flex items-center gap-3 sm:gap-4" x-cloak>
             <nav aria-label="{{ __('Language switcher') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
                 <a href="{{ route('landing.index') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
                 <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" aria-hidden="true"></span>
@@ -146,7 +184,7 @@
             </button>
         </header>
 
-        <main class="relative flex-grow flex flex-col items-center justify-center w-full px-6 pt-4 pb-8 sm:py-16 text-center lg:px-8">
+        <main class="relative flex-grow flex flex-col items-center justify-center w-full px-6 pt-24 pb-8 sm:py-16 text-center lg:px-8">
             
             <!-- Branding Header -->
             <div class="mb-8 md:mb-10 w-full px-4 sm:px-0">
