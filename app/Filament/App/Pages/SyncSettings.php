@@ -299,6 +299,7 @@ class SyncSettings extends Page
             'GOOGLE_CLIENT_SECRET' => config('services.google.client_secret'),
             'MONITOR_TOKEN' => $tenant->monitoring_token,
             'MONITOR_FACADE_URL' => config('app.url') . '/api/heartbeat',
+            'ALERT_FACADE_URL' => config('app.url') . '/api/alerts/triggered',
             'APP_API_KEY' => $tenant->public_api_key,
             'TOKEN_AUTHORITY_ENABLED' => 'true',
             'TOKEN_AUTHORITY_URL' => config('app.url') . '/api/token-authority/refresh',

@@ -126,6 +126,21 @@ class Dashboard extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Get all active alerts associated with this dashboard or any of its widgets.
+     */
+    public function getAssociatedAlerts(): \Illuminate\Database\Eloquent\Collection
+    {
+        $widgetIds = $this->widgets()->pluck('id')->toArray();
+        if (empty($widgetIds)) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return Alert::where('project_id', $this->project_id)
+            ->whereIn('source_config->widget_id', $widgetIds)
+            ->get();
+    }
+
     protected function getVersionModelClass(): string
     {
         return \App\Models\DashboardVersion::class;

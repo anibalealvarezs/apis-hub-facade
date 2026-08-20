@@ -26,7 +26,16 @@ class ConfigSyncService
 
         // 2. Obtener el esquema para el canal
         $schemas = $project->apisHubRelease->config_schemas ?? [];
-        if (!isset($schemas[$channel])) {
+        if (!isset($schemas[$channel]['fields'])) {
+            try {
+                $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($channel);
+                if ($profile) {
+                    $schemas[$channel] = $profile->getSchemaDefinition();
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if (!isset($schemas[$channel]['fields'])) {
             throw new \Exception("The channel '{$channel}' is not supported in the pinned APIs Hub release.");
         }
 

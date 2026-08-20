@@ -78,6 +78,35 @@ class DashboardWidget extends Model
         return $this->belongsTo(DerivedMetric::class);
     }
 
+    /**
+     * Get all active alerts associated with this widget or its underlying KPI/Derived Metric.
+     */
+    public function getAssociatedAlerts(): \Illuminate\Database\Eloquent\Collection
+    {
+        $projectId = $this->dashboard?->project_id;
+        if (!$projectId) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return Alert::where('project_id', $projectId)
+            ->where(function ($q) {
+                $q->where('source_config->widget_id', $this->id);
+                if ($this->custom_kpi_id) {
+                    $q->orWhere(function ($sub) {
+                        $sub->where('source_type', 'kpi')
+                            ->where('source_config->kpi_id', $this->custom_kpi_id);
+                    });
+                }
+                if ($this->derived_metric_id) {
+                    $q->orWhere(function ($sub) {
+                        $sub->where('source_type', 'derived_metric')
+                            ->where('source_config->dm_id', $this->derived_metric_id);
+                    });
+                }
+            })
+            ->get();
+    }
+
     protected function getVersionModelClass(): string
     {
         return \App\Models\WidgetVersion::class;

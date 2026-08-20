@@ -69,6 +69,7 @@ Route::post('social/{provider}/delete-data', [App\Http\Controllers\OAuthControll
 Route::get('/caddy/check', [\App\Http\Controllers\CaddyController::class, 'check']);
 
 Route::post('/api/heartbeat', [\App\Http\Controllers\MonitoringController::class, 'heartbeat']);
+Route::post('/api/alerts/triggered', [\App\Http\Controllers\MonitoringController::class, 'alertTriggered']);
 Route::post('/api/channels/auth-failed', [\App\Http\Controllers\MonitoringController::class, 'authFailed']);
 Route::post('/api/token-authority/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']);
 Route::post('/api/v1/tokens/refresh', [\App\Http\Controllers\TokenAuthorityController::class, 'refresh']); // Backwards compatibility for older worker deployments

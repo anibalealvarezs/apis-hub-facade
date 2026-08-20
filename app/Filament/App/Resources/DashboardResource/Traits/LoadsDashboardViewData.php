@@ -90,6 +90,8 @@ trait LoadsDashboardViewData
             $tw = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] loadDashboardViewData processing widget {$wi}", ['id' => $widgetArray['id'] ?? '?', 'source_type' => $widgetArray['source_type'] ?? '?']);
             $widgetModel = (new DashboardWidget())->forceFill($widgetArray);
+            $widgetModel->dashboard = $this->dashboard;
+            $widgetArray['associated_alerts_count'] = $widgetModel->getAssociatedAlerts()->count();
             $widgetArray['titles'] = $widgetModel->getTranslations('title');
             $widgetArray['descriptions'] = $widgetModel->getTranslations('description');
             $resolved = $service->resolveControls($this->dashboard, $widgetModel);

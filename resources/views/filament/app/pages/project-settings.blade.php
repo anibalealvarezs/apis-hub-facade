@@ -106,6 +106,23 @@
                     </p>
                 </div>
                 <div>
+                    <p class="text-sm text-gray-500">{{ __('Release Version') }}</p>
+                    <p class="font-medium">
+                        @if($tenant->apisHubRelease)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3.193c.51-.225 1.086-.225 1.596 0l7.653 3.376c.72.317 1.183.996 1.183 1.76v7.342c0 .764-.463 1.443-1.183 1.76l-7.653 3.376c-.51.225-1.086.225-1.596 0L2.148 17.43c-.72-.317-1.183-.996-1.183-1.76V8.329c0-.764.463-1.443 1.183-1.76l7.653-3.376z" />
+                                </svg>
+                                {{ $tenant->apisHubRelease->version_tag }}
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20">
+                                {{ __('Unassigned (Latest)') }}
+                            </span>
+                        @endif
+                    </p>
+                </div>
+                <div>
                     <p class="text-sm text-gray-500">{{ __('Creation Date') }}</p>
                     <p class="font-medium">{{ $tenant->created_at->format('d M, Y') }}</p>
                 </div>
@@ -141,7 +158,9 @@
                     <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-white/5">
                         <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400">
                             <tr>
-                                <th scope="col" class="px-4 py-3 font-medium whitespace-nowrap">{{ __('Date') }}</th>
+                                <th scope="col" class="px-4 py-3 font-medium whitespace-nowrap">
+                                    {{ __('Date') }} <span class="text-xs font-normal opacity-75">({{ $tenant->timezone ?? 'UTC' }})</span>
+                                </th>
                                 <th scope="col" class="px-4 py-3 font-medium">{{ __('Status') }}</th>
                                 <th scope="col" class="px-4 py-3 font-medium w-full">{{ __('Summary') }}</th>
                             </tr>
@@ -150,10 +169,11 @@
                             @foreach($logs as $log)
                                 @php
                                     $summary = $log->getSummaryMessage();
+                                    $logTime = $log->created_at->copy()->setTimezone($tenant->timezone ?? 'UTC');
                                 @endphp
                                 <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                     <td class="px-4 py-3 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                        {{ $log->created_at->format('Y-m-d H:i:s') }}
+                                        {{ $logTime->format('Y-m-d H:i:s') }}
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span @class([

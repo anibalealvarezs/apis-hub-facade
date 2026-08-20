@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*', headers: \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT | \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO);
         $middleware->validateCsrfTokens(except: [
             'api/heartbeat',
+            'api/alerts/triggered',
             'api/channels/auth-failed',
             'api/token-authority/refresh',
             'api/v1/tokens/refresh',

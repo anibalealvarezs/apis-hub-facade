@@ -792,12 +792,21 @@
         protected function mergeDiscoveredAssets(array $liveAssets): void
         {
             $tenant = Filament::getTenant();
-            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->first();
-            if (!$release) {
-                return;
+            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
+
+            $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
+
+            // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
+            if (empty($fields)) {
+                try {
+                    $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
+                    $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
+                } catch (\Throwable $e) {}
             }
 
-            $fields = $release->config_schemas[$this->activeChannel]['fields'] ?? [];
+            if (empty($fields)) {
+                return;
+            }
             $assetListKey = null;
 
             // Find which field is the array of assets (e.g., 'ad_accounts', 'pages')
@@ -921,17 +930,25 @@
         protected function getDynamicSchema(): array
         {
             $tenant = Filament::getTenant();
-            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->first();
+            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
 
-            if (!$release || empty($release->config_schemas[$this->activeChannel]['fields'])) {
+            $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
+
+            // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
+            if (empty($fields)) {
+                try {
+                    $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
+                    $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
+                } catch (\Throwable $e) {}
+            }
+
+            if (empty($fields)) {
                 return [
                     Toggle::make($this->activeChannel.'_enabled')
                         ->label(__('Enable Channel'))
                         ->default(true),
                 ];
             }
-
-            $fields = $release->config_schemas[$this->activeChannel]['fields'];
 
             // Remove fields rendered manually in secondary sections (not from schema)
             if ($this->activeChannel === 'google_search_console') {

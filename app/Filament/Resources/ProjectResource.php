@@ -38,9 +38,6 @@ class ProjectResource extends Resource
         return __('Infrastructure');
     }
 
-
-    
-
     public static function getPluralModelLabel(): string
     {
         return __('Projects');
@@ -503,7 +500,7 @@ class ProjectResource extends Resource
                     ->label(__('Check Auth'))
                     ->icon('heroicon-o-shield-check')
                     ->color('info')
-                    ->visible(fn (Project $record) => $record->health_status === 'online')
+                    ->visible(fn (Project $record) => in_array($record->health_status, ['online', 'healthy', 'syncing']))
                     ->requiresConfirmation()
                     ->modalHeading(__('Validate Channel Tokens'))
                     ->modalDescription(__('This will query the remote node to validate the tokens for all configured channels. This might take a few seconds.'))
@@ -524,6 +521,14 @@ class ProjectResource extends Resource
                                 ->send();
                             return;
                         }
+                        $isJobStaleOrIdle = is_null($record->deploy_started_at) || $record->deploy_started_at->lt(now()->subMinutes(3));
+                        if ($isJobStaleOrIdle) {
+                            $record->update([
+                                'health_status' => 'online',
+                                'deploy_started_at' => null,
+                            ]);
+                        }
+
                         $results = $validation['results'] ?? [];
                         $validCount = 0;
                         $warningCount = 0;
@@ -676,6 +681,16 @@ class ProjectResource extends Resource
                     ->action(function (Project $record, RemoteEngineService $service) {
                         $response = $service->getStatus($record);
                         $isOnline = ($response['success'] ?? false) || ($response['status'] ?? '') === 'success';
+
+                        // Only clear syncing/redeploying if deploy_started_at is null or older than 3 minutes (stale job)
+                        $isJobStaleOrIdle = is_null($record->deploy_started_at) || $record->deploy_started_at->lt(now()->subMinutes(3));
+
+                        if ($isOnline && $isJobStaleOrIdle) {
+                            $record->update([
+                                'health_status' => 'online',
+                                'deploy_started_at' => null,
+                            ]);
+                        }
 
                         Notification::make()
                             ->title($isOnline ? "{$record->name} is Online" : "{$record->name} Offline")
