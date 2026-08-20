@@ -152,7 +152,7 @@
           data-gtm-id="{{ $gtmId }}">
         
         <!-- Header / Navigation & Theme Controls -->
-        <header class="w-full flex justify-end items-center gap-3 px-6 pt-7 pb-2 sm:fixed sm:top-8 sm:right-8 sm:w-auto sm:p-0 z-50" x-cloak>
+        <header class="w-full flex justify-end items-center gap-3 px-6 pt-4 pb-2 sm:fixed sm:top-8 sm:right-8 sm:w-auto sm:p-0 z-50" x-cloak>
             <nav aria-label="{{ __('Language switcher') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
                 <a href="{{ route('landing.index') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
                 <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" aria-hidden="true"></span>
