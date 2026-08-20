@@ -396,7 +396,7 @@ class AlertResource extends Resource
                     Wizard\Step::make(__('Notifications'))
                         ->schema([
                             Forms\Components\Toggle::make('notify_ui')
-                                ->label(__('In-App Notifications (Filament Panel)'))
+                                ->label(__('In-App Notifications'))
                                 ->default(true),
 
                             Forms\Components\Toggle::make('notify_email')
