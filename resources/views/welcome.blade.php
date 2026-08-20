@@ -121,12 +121,12 @@
         <!-- Google Fonts: Outfit -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     </head>
-    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" 
+    <body class="antialiased min-h-screen flex flex-col justify-between text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
           x-data="themeControl" 
           data-gtm-id="{{ $gtmId }}">
         
         <!-- Header / Navigation & Theme Controls -->
-        <header class="theme-toggle flex items-center gap-4" x-cloak>
+        <header class="theme-toggle flex items-center gap-4 !top-4 !right-4 sm:!top-8 sm:!right-8" x-cloak>
             <nav aria-label="{{ __('Language switcher') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
                 <a href="{{ route('landing.index') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
                 <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" aria-hidden="true"></span>
@@ -146,21 +146,21 @@
             </button>
         </header>
 
-        <main class="relative flex flex-col items-center justify-center min-h-screen px-6 py-12 pb-32 text-center lg:px-8">
+        <main class="relative flex-grow flex flex-col items-center justify-center w-full px-6 pt-20 pb-8 sm:py-16 text-center lg:px-8">
             
             <!-- Branding Header -->
-            <div class="mb-10">
+            <div class="mb-8 md:mb-10 w-full max-w-[280px] xs:max-w-xs sm:max-w-md md:max-w-lg lg:max-w-[620px] mx-auto px-4">
                 <!-- Light Mode Logo: Standard Colored -->
                 <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
                      :class="darkMode ? 'hidden' : 'block'"
-                     class="h-24 md:h-32 w-auto mx-auto dark:hidden" 
+                     class="w-full h-auto object-contain mx-auto dark:hidden" 
                      fetchpriority="high" decoding="async">
                 <!-- Dark Mode Logo: White/Waitlist Friendly -->
                 <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
                      alt="APIs Hub" width="620" height="135" 
                      :class="darkMode ? 'block' : 'hidden'"
-                     class="h-24 md:h-32 w-auto mx-auto hidden dark:block" 
+                     class="w-full h-auto object-contain mx-auto hidden dark:block" 
                      fetchpriority="high" decoding="async">
             </div>
 
@@ -178,7 +178,7 @@
             </section>
 
             <!-- Waitlist Form Section (Lead Intake) -->
-            <section class="w-full max-w-md mx-auto mb-12" aria-label="{{ __('Subscribe to updates') }}">
+            <section class="w-full max-w-md mx-auto mb-8 sm:mb-12" aria-label="{{ __('Subscribe to updates') }}">
                 @if(session('success'))
                     <div id="success-alert" class="p-4 mb-6 text-emerald-700 bg-emerald-100/80 backdrop-blur-md rounded-xl border border-emerald-200 animate-pulse" role="alert">
                         {{ session('success') }}
@@ -250,16 +250,16 @@
         </main>
 
         <!-- Semantic Footer / Micro Branding -->
-        <footer class="absolute bottom-8 w-full flex flex-col items-center gap-4 px-8 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none pointer-events-none">
+        <footer class="relative w-full z-10 py-6 sm:py-8 px-6 sm:px-8 mt-auto flex flex-col items-center gap-4 text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none">
             <nav aria-label="{{ __('Legal Links') }}" class="flex items-center justify-center opacity-70 flex-wrap gap-y-2">
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-4 mx-2 sm:mx-4 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
+                <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
                 <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-4 mx-2 sm:mx-4 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
+                <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
                 <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-4 mx-2 sm:mx-4 pointer-events-auto hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
+                <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
             </nav>
-            <div class="opacity-80 flex items-center justify-center gap-2">
-                <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" rel="noopener noreferrer" class="pointer-events-auto hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
+            <div class="opacity-80 flex items-center justify-center gap-2 flex-wrap text-center">
+                <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" rel="noopener noreferrer" class="hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
                 <span class="px-1.5 py-0.5 text-[8px] font-black text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded uppercase tracking-widest">Beta</span>
             </div>
         </footer>
