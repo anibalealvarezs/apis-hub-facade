@@ -1,5 +1,4 @@
 @php
-    \Illuminate\Support\Facades\Log::debug('[FE] formula-editor.blade.php RENDERED');
     $astStatePath = $astStatePath ?? 'data.ast';
 
     $operators = [
@@ -29,7 +28,7 @@
         wire: @this,
         operators: @js($operators),
     })"
-    x-init="console.log('[FE] x-init running, has hydrateFromServer:', typeof hydrateFromServer); $nextTick(() => hydrateFromServer())"
+    x-init="$nextTick(() => hydrateFromServer())"
     class="space-y-3"
 >
     <div class="flex items-center justify-between">

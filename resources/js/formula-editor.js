@@ -1,12 +1,8 @@
-console.log('[FE] formula-editor.js evaluated');
 if (!window.__formulaEditorRegistered) {
     window.__formulaEditorRegistered = true;
-    console.log('[FE] Registered guard passed, adding alpine:init listener');
 
     document.addEventListener('alpine:init', () => {
-        console.log('[FE] alpine:init fired — registering formulaEditor component');
         Alpine.data('formulaEditor', (config) => {
-        console.log('[FE] formulaEditor component factory called');
         return {
         astStatePath: config.astStatePath,
         initialSeriesKeys: config.initialSeriesKeys || [],

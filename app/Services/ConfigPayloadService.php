@@ -27,6 +27,12 @@ class ConfigPayloadService
         ];
 
         $fields = $release->config_schemas[$channel]['fields'] ?? [];
+        if (empty($fields)) {
+            try {
+                $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($channel);
+                $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
+            } catch (\Throwable $e) {}
+        }
         $assetListKey = null;
 
         // Dynamically find which field is the array of assets (e.g., 'ad_accounts', 'assets.sites')

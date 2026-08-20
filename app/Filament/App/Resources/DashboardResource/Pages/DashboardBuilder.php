@@ -91,6 +91,7 @@ class DashboardBuilder extends Page
         $arr['description'] = $resolveField($widget, 'description');
         $arr['titles'] = $widget->getTranslations('title');
         $arr['descriptions'] = $widget->getTranslations('description');
+        $arr['associated_alerts_count'] = $widget->getAssociatedAlerts()->count();
         return $arr;
     }
 
@@ -421,7 +422,7 @@ class DashboardBuilder extends Page
         return $this->formatWidgetToArray($widget);
     }
 
-    public function deleteWidget(int $widgetId): void
+    public function deleteWidget(int $widgetId, bool $deleteAssociatedAlerts = false): void
     {
         $service = app(\App\Services\DashboardService::class);
         $widget = DashboardWidget::findOrFail($widgetId);
@@ -430,8 +431,17 @@ class DashboardBuilder extends Page
             abort(403);
         }
 
+        $alerts = $widget->getAssociatedAlerts();
+        if ($alerts->isNotEmpty() && $deleteAssociatedAlerts) {
+            foreach ($alerts as $alert) {
+                $alert->delete();
+            }
+            if ($this->dashboard->project) {
+                app(\App\Services\DeployerService::class)->syncAlertConfig($this->dashboard->project);
+            }
+        }
+
         $service->removeWidget($widget);
-        // NOTE: Do NOT call $this->loadWidgets() here (see addWidget note).
         $this->unsavedChanges = true;
 
         Notification::make()
