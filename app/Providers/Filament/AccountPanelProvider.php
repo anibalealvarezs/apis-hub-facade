@@ -35,7 +35,14 @@ class AccountPanelProvider extends PanelProvider
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
-                fn () => \Illuminate\Support\Facades\Blade::render('<link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}">')
+                fn () => \Illuminate\Support\Facades\Blade::render('
+                    @vite([\'resources/css/driver-theme.css\'])
+                    <link rel="stylesheet" href="{{ asset(\'css/branding.css\') }}">
+                ')
+            )
+            ->renderHook(
+                'panels::scripts.after',
+                fn () => \Illuminate\Support\Facades\Blade::render('@vite([\'resources/js/app.js\'])')
             )
             ->renderHook(
                 'panels::head.start',

@@ -11,14 +11,14 @@ class TourManager {
     /**
      * Register a new tour configuration
      * @param {string} tourId
-     * @param {object} config - { steps: Array, routePattern: RegExp|string }
+     * @param {object} config - { steps: Array, routePattern?: RegExp|string }
      */
     register(tourId, config) {
         this.tours.set(tourId, config);
     }
 
     /**
-     * Get completed tours from localStorage
+     * Get completed tours from localStorage (User-wide)
      * @returns {string[]}
      */
     getCompletedTours() {
@@ -67,11 +67,44 @@ class TourManager {
     }
 
     /**
+     * Check if current route is inside a tenant project workspace
+     * (e.g. /app/my-tenant/... and NOT /app/new-project or /app/register-project)
+     * @param {string} path
+     * @returns {boolean}
+     */
+    isTenantRoute(path = window.location.pathname) {
+        if (!path.startsWith('/app')) {
+            return false;
+        }
+
+        // Exclude project creation / registration forms
+        const nonTenantPaths = [
+            '/app/new-project',
+            '/app/register-project',
+            '/app/create-project',
+            '/app/login',
+            '/app/register',
+            '/app/password-reset'
+        ];
+
+        for (const nonTenant of nonTenantPaths) {
+            if (path.startsWith(nonTenant)) {
+                return false;
+            }
+        }
+
+        // Must match /app/{tenantSlug}
+        const segments = path.split('/').filter(Boolean);
+        return segments.length >= 2;
+    }
+
+    /**
      * Start a specific tour by ID
      * @param {string} tourId
      * @param {boolean} force - Start even if already completed
+     * @param {Function} onFinish - Optional callback when tour concludes
      */
-    start(tourId, force = false) {
+    start(tourId, force = false, onFinish = null) {
         if (!force && this.isCompleted(tourId)) {
             return;
         }
@@ -110,6 +143,9 @@ class TourManager {
             onDestroyed: () => {
                 this.markCompleted(tourId);
                 this.activeDriver = null;
+                if (typeof onFinish === 'function') {
+                    onFinish();
+                }
             },
             steps: validSteps
         });
@@ -118,25 +154,55 @@ class TourManager {
     }
 
     /**
-     * Auto-detect and run the appropriate tour for the current URL pathname
+     * Find the matching page-specific tour for the current route
+     * @param {string} path
+     * @returns {string|null}
      */
-    autoRun() {
-        const path = window.location.pathname;
-
+    getPageTourForRoute(path = window.location.pathname) {
         for (const [tourId, config] of this.tours.entries()) {
+            if (tourId === 'global-ui') continue;
+
             if (config.routePattern) {
                 const matches = typeof config.routePattern === 'string'
                     ? path.includes(config.routePattern)
                     : config.routePattern.test(path);
 
-                if (matches && !this.isCompleted(tourId)) {
-                    // Slight delay to ensure Livewire/Filament DOM is fully initialized
-                    setTimeout(() => {
-                        this.start(tourId, false);
-                    }, 500);
-                    break;
+                if (matches) {
+                    return tourId;
                 }
             }
+        }
+        return null;
+    }
+
+    /**
+     * Auto-detect and run the appropriate tour for the current URL pathname
+     */
+    autoRun() {
+        const path = window.location.pathname;
+
+        // 1. Check if Global UI Tour needs to run on first project visit
+        if (this.isTenantRoute(path) && !this.isCompleted('global-ui') && this.tours.has('global-ui')) {
+            setTimeout(() => {
+                this.start('global-ui', false, () => {
+                    // Once global tour completes, trigger the page-specific tour if applicable
+                    const pageTourId = this.getPageTourForRoute(path);
+                    if (pageTourId && !this.isCompleted(pageTourId)) {
+                        setTimeout(() => {
+                            this.start(pageTourId, false);
+                        }, 500);
+                    }
+                });
+            }, 600);
+            return;
+        }
+
+        // 2. Check for Page-specific tour
+        const pageTourId = this.getPageTourForRoute(path);
+        if (pageTourId && !this.isCompleted(pageTourId)) {
+            setTimeout(() => {
+                this.start(pageTourId, false);
+            }, 500);
         }
     }
 
@@ -150,19 +216,10 @@ class TourManager {
             if (tourId) {
                 this.start(tourId, force);
             } else {
-                // Find tour for current route and force start
                 const path = window.location.pathname;
-                for (const [id, config] of this.tours.entries()) {
-                    if (config.routePattern) {
-                        const matches = typeof config.routePattern === 'string'
-                            ? path.includes(config.routePattern)
-                            : config.routePattern.test(path);
-
-                        if (matches) {
-                            this.start(id, true);
-                            break;
-                        }
-                    }
+                const activeTourId = this.getPageTourForRoute(path) || (this.isTenantRoute(path) ? 'global-ui' : null);
+                if (activeTourId) {
+                    this.start(activeTourId, true);
                 }
             }
         });
