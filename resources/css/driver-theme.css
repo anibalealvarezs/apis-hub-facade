@@ -1,219 +1,52 @@
 /* ==========================================================================
-   Driver.js Core Base Styles (Self-contained)
-   ========================================================================== */
-.driver-popover {
-    all: unset;
-    box-sizing: border-box;
-    z-index: 1000000000;
-    position: fixed;
-    top: 0;
-    right: 0;
-}
-
-.driver-popover-title {
-    zoom: 1;
-    margin: 0;
-    display: block;
-    position: relative;
-}
-
-.driver-popover-close-btn {
-    all: unset;
-    cursor: pointer;
-    z-index: 1;
-    text-align: center;
-    width: 32px;
-    height: 28px;
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-
-.driver-popover-title[style*="block"] + .driver-popover-description {
-    margin-top: 5px;
-}
-
-.driver-popover-description {
-    zoom: 1;
-    margin-bottom: 0;
-}
-
-.driver-popover-footer {
-    text-align: right;
-    zoom: 1;
-    justify-content: space-between;
-    align-items: center;
-    display: flex;
-}
-
-.driver-popover-progress-text {
-    zoom: 1;
-}
-
-.driver-popover-footer-btn,
-.driver-popover-btn {
-    all: unset;
-    box-sizing: border-box;
-    cursor: pointer;
-    zoom: 1;
-    outline: 0;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.driver-popover-footer .driver-popover-btn-disabled {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-.driver-popover-navigation-btns {
-    flex-grow: 1;
-    justify-content: flex-end;
-    display: flex;
-}
-
-.driver-popover-navigation-btns button + button {
-    margin-left: 6px;
-}
-
-.driver-popover-arrow {
-    content: "";
-    border: 6px solid #fff;
-    position: absolute;
-}
-
-.driver-popover-arrow-side-over {
-    display: none;
-}
-
-.driver-popover-arrow-side-left {
-    border-top-color: transparent !important;
-    border-bottom-color: transparent !important;
-    border-right-color: transparent !important;
-    left: 100%;
-}
-
-.driver-popover-arrow-side-right {
-    border-top-color: transparent !important;
-    border-bottom-color: transparent !important;
-    border-left-color: transparent !important;
-    right: 100%;
-}
-
-.driver-popover-arrow-side-top {
-    border-bottom-color: transparent !important;
-    border-left-color: transparent !important;
-    border-right-color: transparent !important;
-    top: 100%;
-}
-
-.driver-popover-arrow-side-bottom {
-    border-top-color: transparent !important;
-    border-left-color: transparent !important;
-    border-right-color: transparent !important;
-    bottom: 100%;
-}
-
-.driver-popover-arrow-side-center,
-.driver-popover-arrow-none {
-    display: none;
-}
-
-.driver-active .driver-overlay {
-    pointer-events: none;
-}
-
-.driver-active.driver-no-scroll {
-    overflow: hidden;
-}
-
-.driver-active * {
-    pointer-events: none;
-}
-
-.driver-active .driver-active-element,
-.driver-active .driver-active-element *,
-.driver-popover,
-.driver-popover * {
-    pointer-events: auto;
-}
-
-@keyframes driver-fade-in {
-    0% { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.driver-fade .driver-overlay {
-    animation: driver-fade-in var(--driver-animation-duration, 0.4s) ease-in-out;
-}
-
-.driver-fade .driver-popover {
-    animation: driver-fade-in var(--driver-animation-duration, 0.4s);
-}
-
-.driver-active-element-parent-no-scroll {
-    overflow: hidden !important;
-}
-
-.driver-no-interaction,
-.driver-no-interaction * {
-    pointer-events: none !important;
-}
-
-/* ==========================================================================
-   APIs Hub Custom Theme (Adaptive Light & Dark Mode)
+   APIs Hub Custom Driver.js Theme (Adaptive Light & Dark Mode)
    ========================================================================== */
 
-/* Base Popover Container */
 .driver-popover {
     font-family: 'Outfit', sans-serif !important;
     background: rgba(255, 255, 255, 0.98) !important;
     color: #0f172a !important;
     border: 1px solid rgba(226, 232, 240, 0.9) !important;
     border-radius: 1rem !important;
-    padding: 1.25rem 1.25rem 1rem 1.25rem !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-    max-width: 360px !important;
-    min-width: 280px !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    z-index: 100001 !important;
-    transition: background 0.2s ease, border-color 0.2s ease !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    max-width: 380px !important;
+    min-width: 290px !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    z-index: 1000000002 !important;
 }
 
-/* Popover Title */
 .driver-popover-title {
     font-family: 'Outfit', sans-serif !important;
-    font-size: 1rem !important;
+    font-size: 1.0625rem !important;
     font-weight: 700 !important;
     color: #0f172a !important;
     line-height: 1.35 !important;
     margin-bottom: 0.5rem !important;
+    padding-right: 1.5rem !important;
     letter-spacing: -0.01em !important;
 }
 
-/* Popover Description */
 .driver-popover-description {
     font-family: 'Outfit', sans-serif !important;
-    font-size: 0.8125rem !important;
+    font-size: 0.84375rem !important;
     font-weight: 400 !important;
     color: #475569 !important;
     line-height: 1.55 !important;
     margin-bottom: 1rem !important;
 }
 
-/* Popover Footer */
 .driver-popover-footer {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     gap: 0.75rem !important;
-    margin-top: 0.5rem !important;
+    margin-top: 0.75rem !important;
     padding-top: 0.75rem !important;
     border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
-/* Step Progress Indicator (e.g. "1 of 4") */
 .driver-popover-progress-text {
     font-family: 'Outfit', sans-serif !important;
     font-size: 0.6875rem !important;
@@ -223,12 +56,18 @@
     letter-spacing: 0.05em !important;
 }
 
-/* Buttons Base Styling */
-.driver-popover-btn {
+.driver-popover-navigation-btns {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+.driver-popover-btn,
+.driver-popover-footer-btn {
     font-family: 'Outfit', sans-serif !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
-    padding: 0.4rem 0.85rem !important;
+    padding: 0.45rem 0.9rem !important;
     border-radius: 0.625rem !important;
     cursor: pointer !important;
     outline: none !important;
@@ -269,39 +108,51 @@
 /* Close (X) Button */
 .driver-popover-close-btn {
     color: #94a3b8 !important;
-    font-size: 1.125rem !important;
+    font-size: 1.25rem !important;
     line-height: 1 !important;
     transition: color 0.15s ease !important;
-    top: 0.875rem !important;
-    right: 0.875rem !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    cursor: pointer !important;
 }
 
 .driver-popover-close-btn:hover {
     color: #0f172a !important;
 }
 
-/* Arrow Styling */
+/* Arrow Styling (Light Mode) */
 .driver-popover-arrow {
-    border-color: rgba(255, 255, 255, 0.98) !important;
+    border: 6px solid rgba(255, 255, 255, 0.98) !important;
 }
-
 .driver-popover-arrow-side-top {
     border-top-color: rgba(255, 255, 255, 0.98) !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
 }
 .driver-popover-arrow-side-bottom {
     border-bottom-color: rgba(255, 255, 255, 0.98) !important;
+    border-top-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
 }
 .driver-popover-arrow-side-left {
     border-left-color: rgba(255, 255, 255, 0.98) !important;
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-right-color: transparent !important;
 }
 .driver-popover-arrow-side-right {
     border-right-color: rgba(255, 255, 255, 0.98) !important;
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
 }
 
-/* Light Mode SVG Overlay Backdrop */
+/* Overlay Backdrop */
 .driver-overlay {
     fill: #0f172a !important;
-    opacity: 0.45 !important;
+    opacity: 0.55 !important;
 }
 
 
@@ -314,7 +165,7 @@ html.dark .driver-popover,
     background: rgba(15, 23, 42, 0.95) !important;
     color: #f8fafc !important;
     border: 1px solid rgba(51, 65, 85, 0.8) !important;
-    box-shadow: 0 25px 35px -10px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(0, 167, 249, 0.18) !important;
+    box-shadow: 0 25px 35px -10px rgba(0, 0, 0, 0.7), 0 0 25px -5px rgba(0, 167, 249, 0.2) !important;
 }
 
 html.dark .driver-popover-title,
@@ -365,25 +216,36 @@ html.dark .driver-popover-arrow,
 .dark .driver-popover-arrow {
     border-color: rgba(15, 23, 42, 0.95) !important;
 }
-
 html.dark .driver-popover-arrow-side-top,
 .dark .driver-popover-arrow-side-top {
     border-top-color: rgba(15, 23, 42, 0.95) !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
 }
 html.dark .driver-popover-arrow-side-bottom,
 .dark .driver-popover-arrow-side-bottom {
     border-bottom-color: rgba(15, 23, 42, 0.95) !important;
+    border-top-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
 }
 html.dark .driver-popover-arrow-side-left,
 .dark .driver-popover-arrow-side-left {
     border-left-color: rgba(15, 23, 42, 0.95) !important;
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-right-color: transparent !important;
 }
 html.dark .driver-popover-arrow-side-right,
 .dark .driver-popover-arrow-side-right {
     border-right-color: rgba(15, 23, 42, 0.95) !important;
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
 }
 
-/* Dark Mode SVG Overlay Backdrop */
+/* Dark Mode Overlay Backdrop */
 html.dark .driver-overlay,
 .dark .driver-overlay {
     fill: #020617 !important;
