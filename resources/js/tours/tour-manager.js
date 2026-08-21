@@ -109,14 +109,17 @@ class TourManager {
             return;
         }
 
-        const config = this.tours.get(tourId);
-        if (!config || !config.steps || config.steps.length === 0) {
+        const rawSteps = typeof config.steps === 'function' ? config.steps() : config.steps;
+        if (!rawSteps || rawSteps.length === 0) {
             console.warn(`[TourManager] No steps found for tour: ${tourId}`);
             return;
         }
 
-        // Filter steps to only those with existing elements in the DOM
-        const validSteps = config.steps.filter(step => {
+        // Filter steps based on showIf conditions and DOM element presence
+        const validSteps = rawSteps.filter(step => {
+            if (typeof step.showIf === 'function' && !step.showIf()) {
+                return false;
+            }
             if (!step.element) return true;
             return document.querySelector(step.element) !== null;
         });

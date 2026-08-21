@@ -19,17 +19,32 @@ export const dataSourcesTour = {
                 align: 'start'
             }
         },
+        // Step 3A: When channel is NOT connected
         {
-            element: '#ds-connect-block button, #ds-connect-block, #ds-auth-actions, button[wire\\:click*="connect"], button[wire\\:click*="updateCredentials"]',
+            element: '#ds-connect-block button, #ds-connect-block',
+            showIf: () => document.querySelector('#ds-connect-block') !== null,
             popover: {
-                title: 'Channel Authorization',
-                description: 'Authorize access to your provider account via OAuth, update permissions, or discover new ad accounts.',
+                title: 'Connect Provider Account',
+                description: 'Click "Connect Account" to authorize access via OAuth. Once connected, your ad accounts, properties, or stores will be discovered automatically.',
                 side: 'bottom',
                 align: 'center'
             }
         },
+        // Step 3B: When channel IS already connected
+        {
+            element: '#ds-auth-actions',
+            showIf: () => document.querySelector('#ds-assets-form') !== null,
+            popover: {
+                title: 'Channel Authorization & Asset Discovery',
+                description: 'Update OAuth credentials or click "Refresh / Discover" at any time to sync newly created properties or ad accounts.',
+                side: 'bottom',
+                align: 'end'
+            }
+        },
+        // Step 4: Asset selection (only when connected)
         {
             element: '#ds-assets-form .grid > div:first-child, #ds-assets-form table, #ds-assets-form .fi-fo-repeater, #ds-assets-form',
+            showIf: () => document.querySelector('#ds-assets-form') !== null,
             popover: {
                 title: 'Tracked Assets Selection',
                 description: 'Toggle and select the individual properties, ad accounts, pages, or stores you want to synchronize.',
@@ -37,8 +52,10 @@ export const dataSourcesTour = {
                 align: 'center'
             }
         },
+        // Step 5: Channel sync settings (only when connected)
         {
             element: '#ds-assets-form .grid > div:last-child, #ds-assets-form .fi-fo-section:has([wire\\:model*="cron_time"]), #ds-assets-form .fi-fo-section:has(input[type="time"]), .fi-fo-section:has(select)',
+            showIf: () => document.querySelector('#ds-assets-form') !== null,
             popover: {
                 title: 'Channel Sync Settings',
                 description: 'Configure automated sync schedules, execution times, historic cache depth, and custom calculation settings for this channel.',
@@ -46,8 +63,10 @@ export const dataSourcesTour = {
                 align: 'start'
             }
         },
+        // Step 6: Save changes (only when connected)
         {
             element: '#ds-save-container, button[type="submit"][wire\\:target="save"]',
+            showIf: () => document.querySelector('#ds-assets-form') !== null,
             popover: {
                 title: 'Save & Apply Configuration',
                 description: 'Save your asset selections to sync them with your tenant worker container.',
