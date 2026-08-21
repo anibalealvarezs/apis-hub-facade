@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import './driver-theme.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
