@@ -2075,5 +2075,7 @@
     "Connect Provider Account": "Conectar Cuenta de Proveedor",
     "Click \"Connect Account\" to authorize access via OAuth. Once connected, your ad accounts, properties, or stores will be discovered automatically.": "Haga clic en \"Conectar Cuenta\" para autorizar el acceso mediante OAuth. Una vez conectado, sus cuentas publicitarias, propiedades o tiendas se detectarán automáticamente.",
     "Channel Authorization & Asset Discovery": "Autorización del Canal y Detección de Recursos",
-    "Update OAuth credentials or click \"Refresh / Discover\" at any time to sync newly created properties or ad accounts.": "Actualice las credenciales OAuth o haga clic en \"Actualizar / Descubrir\" en cualquier momento para sincronizar propiedades o cuentas publicitarias recién creadas."
+    "Update OAuth credentials or click \"Refresh / Discover\" at any time to sync newly created properties or ad accounts.": "Actualice las credenciales OAuth o haga clic en \"Actualizar / Descubrir\" en cualquier momento para sincronizar propiedades o cuentas publicitarias recién creadas.",
+    "Enable Channel Ingestion": "Habilitar Ingesta del Canal",
+    "Toggle whether data synchronization for this channel is active or temporarily paused.": "Active o pause temporalmente la sincronización de datos para este canal."
 }

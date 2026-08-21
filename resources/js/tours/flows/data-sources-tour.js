@@ -41,10 +41,21 @@ export const dataSourcesTour = {
                 align: 'end'
             }
         },
-        // Step 4: Asset selection (only when connected)
+        // Step 4: Enable channel switch (when connected and switch exists)
         {
-            element: '#ds-assets-form .grid > div:first-child, #ds-assets-form table, #ds-assets-form .fi-fo-repeater, #ds-assets-form',
-            showIf: () => document.querySelector('#ds-assets-form') !== null,
+            element: '[wire\\:key*="enabled.Filament\\\\Forms\\\\Components\\\\Toggle"], [wire\\:key*="enabled"][class*="Toggle"], [wire\\:key*="enabled"]',
+            showIf: () => document.querySelector('[wire\\:key*="enabled.Filament\\\\Forms\\\\Components\\\\Toggle"], [wire\\:key*="enabled"]') !== null,
+            popover: {
+                title: 'Enable Channel Ingestion',
+                description: 'Toggle whether data synchronization for this channel is active or temporarily paused.',
+                side: 'bottom',
+                align: 'start'
+            }
+        },
+        // Step 5: List of assets to select from
+        {
+            element: '[wire\\:key*="Repeater"], [wire\\:key*="assets."], .fi-fo-repeater, #ds-assets-form table',
+            showIf: () => document.querySelector('[wire\\:key*="Repeater"], [wire\\:key*="assets."], .fi-fo-repeater, #ds-assets-form table') !== null,
             popover: {
                 title: 'Tracked Assets Selection',
                 description: 'Toggle and select the individual properties, ad accounts, pages, or stores you want to synchronize.',
@@ -52,10 +63,10 @@ export const dataSourcesTour = {
                 align: 'center'
             }
         },
-        // Step 5: Channel sync settings (only when connected)
+        // Step 6: Internal sidebar section with config cards
         {
-            element: '#ds-assets-form .grid > div:last-child, #ds-assets-form .fi-fo-section:has([wire\\:model*="cron_time"]), #ds-assets-form .fi-fo-section:has(input[type="time"]), .fi-fo-section:has(select)',
-            showIf: () => document.querySelector('#ds-assets-form') !== null,
+            element: '#ds-assets-form div.sticky.top-4.self-start, #ds-assets-form div.sticky, #ds-assets-form .sticky.top-4',
+            showIf: () => document.querySelector('#ds-assets-form div.sticky.top-4.self-start, #ds-assets-form div.sticky, #ds-assets-form .sticky.top-4') !== null,
             popover: {
                 title: 'Channel Sync Settings',
                 description: 'Configure automated sync schedules, execution times, historic cache depth, and custom calculation settings for this channel.',
@@ -63,7 +74,7 @@ export const dataSourcesTour = {
                 align: 'start'
             }
         },
-        // Step 6: Save changes (only when connected)
+        // Step 7: Save & apply configuration
         {
             element: '#ds-save-container, button[type="submit"][wire\\:target="save"]',
             showIf: () => document.querySelector('#ds-assets-form') !== null,
