@@ -99,7 +99,7 @@
                                 $starts = $profile->current_cycle_starts_at ?? $profile->created_at ?? now()->startOfMonth();
                                 $ends = $profile->current_cycle_ends_at ?? $starts->copy()->addMonth();
                             @endphp
-                            {{ $ends->format('d M, Y') }}
+                            {{ $ends->setTimezone($tenant->timezone ?? config('app.timezone', 'UTC'))->translatedFormat(__('M j, Y')) }}
                         @else
                             N/A
                         @endif

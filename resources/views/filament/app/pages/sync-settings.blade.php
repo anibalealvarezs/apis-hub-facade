@@ -73,12 +73,15 @@
             </div>
         </div>
     @elseif($tenant->last_deployed_at || $tenant->last_sync_started_at)
+        @php
+            $tz = $tenant->timezone ?? config('app.timezone', 'UTC');
+        @endphp
         <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30 flex flex-wrap gap-x-4 gap-y-1" role="alert">
             @if($tenant->last_sync_started_at)
-                <div><span class="font-bold">{{ __('Last sync push') }}:</span> {{ $tenant->last_sync_started_at->translatedFormat(__('M j, Y H:i')) }}</div>
+                <div><span class="font-bold">{{ __('Last sync push') }}:</span> {{ $tenant->last_sync_started_at->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</div>
             @endif
             @if($tenant->last_deployed_at)
-                <div><span class="font-bold">{{ __('Last server deployment') }}:</span> {{ $tenant->last_deployed_at->translatedFormat(__('M j, Y H:i')) }}</div>
+                <div><span class="font-bold">{{ __('Last server deployment') }}:</span> {{ $tenant->last_deployed_at->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</div>
             @endif
         </div>
     @endif

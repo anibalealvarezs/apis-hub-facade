@@ -143,13 +143,16 @@
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
                         <span>{{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}</span>
+                        @php
+                            $tz = filament()->getTenant()->timezone ?? config('app.timezone', 'UTC');
+                        @endphp
                         @if($lastPush = filament()->getTenant()->getLastConfigPushTime())
                             <span class="text-gray-300 dark:text-gray-600">|</span>
-                            <span>{{ __('Last sync push') }}: {{ $lastPush->translatedFormat(__('M j, Y H:i')) }}</span>
+                            <span>{{ __('Last sync push') }}: {{ $lastPush->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</span>
                         @endif
                         @if($lastDeploy = filament()->getTenant()->last_deployed_at)
                             <span class="text-gray-300 dark:text-gray-600">|</span>
-                            <span>{{ __('Last server deployment') }}: {{ $lastDeploy->translatedFormat(__('M j, Y H:i')) }}</span>
+                            <span>{{ __('Last server deployment') }}: {{ $lastDeploy->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</span>
                         @endif
                     </p>
                 </div>

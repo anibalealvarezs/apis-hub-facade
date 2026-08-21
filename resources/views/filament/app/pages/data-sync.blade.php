@@ -122,7 +122,7 @@
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Last Historical Resync') }}</span>
                                 <div class="flex items-end gap-2">
                                     <span
-                                        class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->translatedFormat('M j, Y') }}</span>
+                                        class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->setTimezone(filament()->getTenant()->timezone ?? config('app.timezone', 'UTC'))->translatedFormat('M j, Y') }}</span>
                                 </div>
                             </div>
                         @endif
