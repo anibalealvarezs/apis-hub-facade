@@ -20,12 +20,12 @@ export const dataSourcesTour = {
             }
         },
         {
-            element: '#ds-auth-actions, #ds-connect-block, button[wire\\:click*="updateCredentials"], button[wire\\:click*="connect"]',
+            element: '#ds-connect-block button, #ds-connect-block, #ds-auth-actions, button[wire\\:click*="connect"], button[wire\\:click*="updateCredentials"]',
             popover: {
                 title: 'Channel Authorization',
                 description: 'Authorize access to your provider account via OAuth, update permissions, or discover new ad accounts.',
                 side: 'bottom',
-                align: 'end'
+                align: 'center'
             }
         },
         {
