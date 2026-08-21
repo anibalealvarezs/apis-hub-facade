@@ -4,13 +4,13 @@
     $isCurrent = $profile && !empty($profileTier) && $profileTier === $planTier;
     $isFounder = $planTier === 'founder';
 @endphp
-<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isCurrent ? 'ring-2 ring-emerald-500/30 border border-emerald-500/40 shadow-md' : ($isFounder ? 'shadow-lg relative pc-founder-card' : 'border border-gray-200 dark:border-gray-800') }}">
+<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between shadow-sm">
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
             @if($isCurrent)
-                <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider" style="background-color: rgba(16, 185, 129, 0.18); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.45);">
+                    <span style="width: 6px; height: 6px; border-radius: 9999px; background-color: #10b981; display: inline-block;"></span>
                     {{ __('Current') }}
                 </span>
             @endif
@@ -27,7 +27,7 @@
 
     <div>
         @if($isCurrent)
-            <button disabled class="w-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-bold py-2.5 px-4 rounded-lg border border-emerald-200 dark:border-emerald-900/50 text-center text-sm cursor-not-allowed">
+            <button disabled class="w-full font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35);">
                 {{ __('✓ Currently Active Plan') }}
             </button>
         @elseif($profile && $profileTier === 'enterprise')

@@ -64,11 +64,6 @@
 }
 
 /* ---------- Plan card ---------- */
-.pc-founder-card {
-    border-style: solid;
-    border-color: #00a7f9;
-    border-width: 6px 2px 2px 2px;
-}
 .pc-paypal-btn {
     background-color: #ffc439;
     color: #003087;
