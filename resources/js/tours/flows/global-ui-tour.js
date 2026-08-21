@@ -1,7 +1,7 @@
 export const globalUiTour = {
     steps: [
         {
-            element: '.fi-tenant-menu, [data-tenant-menu], .fi-sidebar-header .fi-dropdown, .fi-sidebar-header',
+            element: '.fi-tenant-menu, .fi-tenant-menu-trigger, .fi-sidebar-header .fi-dropdown, .fi-sidebar-header button[aria-haspopup="menu"], .fi-sidebar-header > div:nth-child(2)',
             popover: {
                 title: 'Project & Workspace Selector',
                 description: 'Switch between client workspaces and view the attached billing tier for your active project.',
@@ -19,7 +19,7 @@ export const globalUiTour = {
             }
         },
         {
-            element: '.fi-topbar-end, div:has(.fi-user-menu), .fi-user-menu, .fi-topbar nav',
+            element: '.fi-topbar-actions, header.fi-topbar .flex.items-center:last-child, .fi-topbar-end, .fi-user-menu, .fi-user-menu-trigger, .fi-theme-switcher, header.fi-topbar .fi-dropdown:last-child',
             popover: {
                 title: 'Account & Personalization Controls',
                 description: 'Access your personal account & billing panel, switch language (EN | ES), toggle dark/light mode, and inspect notifications.',
@@ -28,7 +28,7 @@ export const globalUiTour = {
             }
         },
         {
-            element: '.fi-sidebar-nav, aside.fi-sidebar nav, .fi-sidebar',
+            element: '.fi-sidebar-nav, aside.fi-sidebar nav.fi-sidebar-nav, .fi-sidebar-nav-groups',
             popover: {
                 title: 'Main Navigation & Platform Layers',
                 description: 'Explore the core platform layers: Administration (Settings & Team), Integrations (Data Sources & Telemetry), Data (Asset Groups & Explorer), Analytics (Dashboards & Alerts), and Knowledge Base.',
