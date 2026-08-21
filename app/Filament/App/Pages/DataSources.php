@@ -1274,42 +1274,7 @@
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
                     ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="relative w-full max-w-sm">
-                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
-                        </div>
-                        <div class="w-40">
-                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
-                                <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-                ')),
+                    ->content(view('filament.app.components.data-sources.asset-filter-bar')),
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
@@ -1477,42 +1442,7 @@
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
                     ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="relative w-full max-w-sm">
-                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
-                        </div>
-                        <div class="w-40">
-                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
-                                <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-                ')),
+                    ->content(view('filament.app.components.data-sources.asset-filter-bar')),
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
