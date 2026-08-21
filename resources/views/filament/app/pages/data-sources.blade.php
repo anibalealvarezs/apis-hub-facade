@@ -45,7 +45,7 @@
 
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
+        <div id="ds-channels-sidebar" class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
@@ -155,7 +155,7 @@
                 </div>
 
                 <div class="flex flex-col items-end gap-3">
-                    <div class="flex items-center gap-3">
+                    <div id="ds-auth-actions" class="flex items-center gap-3">
                         {{ $this->getAction('updateCredentials') }}
                         {{ $this->getAction('discoverAssets') }}
                     </div>
@@ -183,7 +183,7 @@
             @endif
 
             @if(!$this->isConnected($activeChannel))
-                <div class="flex flex-col items-center justify-center py-12 text-center">
+                <div id="ds-connect-block" class="flex flex-col items-center justify-center py-12 text-center">
                     <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                         <x-heroicon-o-link class="w-8 h-8 text-gray-400" />
                     </div>
@@ -202,10 +202,10 @@
 
 
 
-                <form wire:submit="save">
+                <form id="ds-assets-form" wire:submit="save">
                     {{ $this->form }}
                     <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 flex justify-end pointer-events-none">
-                        <div class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+                        <div id="ds-save-container" class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
                             {{ $this->getAction('redeployInfrastructure') }}
                             
                             <x-filament::button type="submit" color="primary" size="lg"

@@ -2,48 +2,48 @@ export const dataSourcesTour = {
     routePattern: '/data-sources',
     steps: [
         {
-            element: '.fi-page-header, .fi-header',
+            element: '.fi-header-heading, .fi-page-header, .fi-header',
             popover: {
-                title: 'Data Sources & Channels',
+                title: 'Data Sources Configuration',
                 description: 'Manage all your external integrations (Meta Ads, Google Analytics, Shopify, Klaviyo, Amazon, etc.) from this central hub.',
                 side: 'bottom',
                 align: 'start'
             }
         },
         {
-            element: '[wire\\:click*="activeChannel"], [wire\\:key*="channel-tab"], .fi-tabs, nav.flex',
+            element: '#ds-channels-sidebar, .ds-sidebar',
             popover: {
                 title: 'Channel Selection',
-                description: 'Switch between integrated marketing, social, and ecommerce channels to configure authorization and assets.',
-                side: 'bottom',
-                align: 'center'
+                description: 'Select the marketing, social, or ecommerce channel you want to configure from the left panel.',
+                side: 'right',
+                align: 'start'
             }
         },
         {
-            element: 'button[wire\\:click*="connectAction"], button[wire\\:click*="updateCredentialsAction"], .fi-btn-primary',
+            element: '#ds-auth-actions, #ds-connect-block, button[wire\\:click*="updateCredentials"], button[wire\\:click*="connect"]',
             popover: {
-                title: 'Channel Authorization (OAuth)',
-                description: 'Click to securely connect or update your account permissions via OAuth in seconds.',
-                side: 'top',
-                align: 'center'
+                title: 'Channel Authorization',
+                description: 'Authorize access to your provider account via OAuth, update permissions, or discover new ad accounts.',
+                side: 'bottom',
+                align: 'end'
             }
         },
         {
-            element: '.fi-ta, table, [wire\\:key*="assets-table"], .fi-section',
+            element: '#ds-assets-form, form[wire\\:submit="save"]',
             popover: {
                 title: 'Discovered Assets Selection',
-                description: 'Select the specific ad accounts, Google properties, or stores you want the ingestion engine to monitor and synchronize.',
+                description: 'Enable or disable the specific ad accounts, Google Analytics properties, or stores you want the ingestion engine to synchronize.',
                 side: 'top',
                 align: 'center'
             }
         },
         {
-            element: 'button[type="submit"], button[wire\\:click*="save"], .fi-form-actions button',
+            element: '#ds-save-container, button[type="submit"][wire\\:target="save"]',
             popover: {
                 title: 'Save & Apply Configuration',
                 description: 'Save your asset selections to sync them with your tenant worker container.',
-                side: 'left',
-                align: 'center'
+                side: 'top',
+                align: 'end'
             }
         }
     ]
