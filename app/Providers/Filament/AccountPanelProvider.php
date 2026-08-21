@@ -93,7 +93,6 @@ class AccountPanelProvider extends PanelProvider
                         navigationGroup: 'Profile & Security',
                     )
                     ->myProfileComponents([
-                        \App\Livewire\OnboardingPreferences::class,
                         \App\Livewire\ArchivedProjectsTable::class,
                     ])
                     ->enableTwoFactorAuthentication(
