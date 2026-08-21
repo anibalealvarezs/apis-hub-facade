@@ -10,6 +10,15 @@ export const globalUiTour = {
             }
         },
         {
+            element: '.fi-sidebar-nav > ul, ul.fi-sidebar-nav-groups, .fi-sidebar-nav-groups, nav.fi-sidebar-nav ul, .fi-sidebar-nav',
+            popover: {
+                title: 'Main Navigation & Platform Layers',
+                description: 'Explore the core platform layers: Administration (Settings & Team), Integrations (Data Sources & Telemetry), Data (Asset Groups & Explorer), Analytics (Dashboards & Alerts), and Knowledge Base.',
+                side: 'right',
+                align: 'start'
+            }
+        },
+        {
             element: '.fi-topbar .flex-1, .topbar-status-text, .topbar-sync-progress, .fi-topbar [wire\\:poll]',
             popover: {
                 title: 'Tenant Status & Timezone Clock',
@@ -25,15 +34,6 @@ export const globalUiTour = {
                 description: 'Access your personal account & billing panel, switch language (EN | ES), toggle dark/light mode, and inspect notifications.',
                 side: 'bottom',
                 align: 'end'
-            }
-        },
-        {
-            element: '.fi-sidebar-nav, aside.fi-sidebar nav.fi-sidebar-nav, .fi-sidebar-nav-groups',
-            popover: {
-                title: 'Main Navigation & Platform Layers',
-                description: 'Explore the core platform layers: Administration (Settings & Team), Integrations (Data Sources & Telemetry), Data (Asset Groups & Explorer), Analytics (Dashboards & Alerts), and Knowledge Base.',
-                side: 'right',
-                align: 'start'
             }
         }
     ]
