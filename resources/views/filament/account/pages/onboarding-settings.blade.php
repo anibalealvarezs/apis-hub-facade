@@ -1,5 +1,7 @@
 <x-filament-panels::page>
     @php
+        $tenantPrefix = !empty($tenantSubdomain) ? "/app/{$tenantSubdomain}" : "/app";
+
         $sections = [
             'Workspace & Navigation' => [
                 'icon' => 'heroicon-o-computer-desktop',
@@ -9,6 +11,7 @@
                         'name' => __('Global Workspace & Main Menu'),
                         'description' => __('Project switcher, top-bar telemetry & timezone clock, account controls, and main menu overview.'),
                         'badge' => __('Essential'),
+                        'url' => $tenantPrefix,
                     ],
                 ],
             ],
@@ -20,18 +23,21 @@
                         'name' => __('Data Sources & Channels'),
                         'description' => __('OAuth authentication, provider channel switching, and tracked properties/ad accounts selection.'),
                         'badge' => __('Integration'),
+                        'url' => "{$tenantPrefix}/data-sources",
                     ],
                     [
                         'id' => 'project-settings',
                         'name' => __('Project Settings & Deployment'),
                         'description' => __('Timezone configuration, dedicated worker provisioning, and live deployment activity logs.'),
                         'badge' => __('Core'),
+                        'url' => "{$tenantPrefix}/project-settings",
                     ],
                     [
                         'id' => 'telemetry',
                         'name' => __('Sync Telemetry & Worker Health'),
                         'description' => __('Remote worker queue status, global backfill progress, and per-channel sync drill-downs.'),
                         'badge' => __('Monitoring'),
+                        'url' => "{$tenantPrefix}/data-sync",
                     ],
                 ],
             ],
@@ -43,36 +49,42 @@
                         'name' => __('Data Explorer'),
                         'description' => __('Raw normalized records inspection, dimension breakdowns, and currency conversions.'),
                         'badge' => __('Analytics'),
+                        'url' => "{$tenantPrefix}/data-explorer",
                     ],
                     [
                         'id' => 'asset-groups',
                         'name' => __('Asset Groups'),
                         'description' => __('Cross-channel asset clustering for global dashboard filtering.'),
                         'badge' => __('Structure'),
+                        'url' => "{$tenantPrefix}/asset-groups",
                     ],
                     [
                         'id' => 'dashboards',
                         'name' => __('Dashboards & Visual Builder'),
                         'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
                         'badge' => __('Analytics'),
+                        'url' => "{$tenantPrefix}/dashboards",
                     ],
                     [
                         'id' => 'alerts',
                         'name' => __('Automated Alerts & Anomalies'),
                         'description' => __('AST calculation lines, threshold bounds, and background cron schedules.'),
                         'badge' => __('Proactive'),
+                        'url' => "{$tenantPrefix}/alerts",
                     ],
                     [
                         'id' => 'custom-kpis',
                         'name' => __('Custom KPIs (Blended AST)'),
                         'description' => __('Cross-channel blended mathematical formulas and AST validation.'),
                         'badge' => __('Advanced'),
+                        'url' => "{$tenantPrefix}/custom-kpis",
                     ],
                     [
                         'id' => 'derived-metrics',
                         'name' => __('Derived Metrics'),
                         'description' => __('Channel-specific calculated metric transformations.'),
                         'badge' => __('Advanced'),
+                        'url' => "{$tenantPrefix}/derived-metrics",
                     ],
                 ],
             ],
@@ -84,12 +96,14 @@
                         'name' => __('Team & Collaborators'),
                         'description' => __('User invitations, role assignments, and granular asset group restrictions.'),
                         'badge' => __('Team'),
+                        'url' => "{$tenantPrefix}/collaborators",
                     ],
                     [
                         'id' => 'billing',
                         'name' => __('Billing & Subscriptions'),
                         'description' => __('Billing profile management, subscription tiers, and payment checkouts.'),
                         'badge' => __('Account'),
+                        'url' => '/account/manage-subscription',
                     ],
                 ],
             ],
@@ -105,7 +119,7 @@
 
     <div x-data="onboardingSettings(@js($allTourIds))" class="space-y-6">
         <!-- Header Card with Master Controls -->
-        <div class="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="p-6 onboarding-header-card rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white">
                     {{ __('Interactive Walkthroughs & Onboarding Guides') }}
@@ -156,7 +170,7 @@
 
                                 <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
                                     <button type="button"
-                                            @click="playTour('{{ $tour['id'] }}')"
+                                            @click="playTour('{{ $tour['id'] }}', '{{ $tour['url'] ?? '' }}')"
                                             class="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors">
                                         <x-heroicon-m-play class="w-4 h-4 text-primary-500" />
                                         <span>{{ __('Play Tour') }}</span>

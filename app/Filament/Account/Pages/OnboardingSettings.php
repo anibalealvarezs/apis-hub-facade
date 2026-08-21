@@ -26,4 +26,14 @@ class OnboardingSettings extends Page
     {
         return __('Onboarding & Tours');
     }
+
+    public function getViewData(): array
+    {
+        $user = auth()->user();
+        $primaryProject = $user?->projects()->first();
+
+        return [
+            'tenantSubdomain' => $primaryProject?->subdomain,
+        ];
+    }
 }

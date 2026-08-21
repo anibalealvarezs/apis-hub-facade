@@ -46,8 +46,11 @@ export function onboardingSettings(allTourIds = []) {
             window.dispatchEvent(new CustomEvent('tour-status-changed', { detail: { all: false } }));
         },
 
-        playTour(tourId) {
-            if (window.apisHubTours) {
+        playTour(tourId, targetUrl = null) {
+            if (targetUrl && window.location.pathname !== targetUrl) {
+                sessionStorage.setItem('force_play_tour', tourId);
+                window.location.href = targetUrl;
+            } else if (window.apisHubTours) {
                 window.apisHubTours.start(tourId, true);
             } else {
                 window.dispatchEvent(new CustomEvent('start-page-tour', { detail: { tourId, force: true } }));

@@ -181,6 +181,16 @@ class TourManager {
     autoRun() {
         const path = window.location.pathname;
 
+        // 0. Check for explicitly forced tour from cross-page navigation
+        const forcedTour = sessionStorage.getItem('force_play_tour');
+        if (forcedTour) {
+            sessionStorage.removeItem('force_play_tour');
+            setTimeout(() => {
+                this.start(forcedTour, true);
+            }, 600);
+            return;
+        }
+
         // 1. Check if Global UI Tour needs to run on first project visit
         if (this.isTenantRoute(path) && !this.isCompleted('global-ui') && this.tours.has('global-ui')) {
             setTimeout(() => {
