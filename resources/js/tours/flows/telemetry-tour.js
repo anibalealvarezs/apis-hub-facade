@@ -2,7 +2,7 @@ export const telemetryTour = {
     routePattern: '/telemetry',
     steps: [
         {
-            element: '.fi-page-header, .fi-header',
+            element: '#telemetry-workers-status, .fi-header-heading, .fi-header',
             popover: {
                 title: 'Sync Telemetry & Worker Health',
                 description: 'Monitor data sync queues, pipeline latencies, and ingestion heartbeats before performing deep analytics.',
@@ -11,10 +11,19 @@ export const telemetryTour = {
             }
         },
         {
-            element: '.fi-ta, table, .fi-section, [wire\\:key*="telemetry"]',
+            element: '#telemetry-overall-progress',
             popover: {
-                title: 'Channel Sync Status',
-                description: 'Verify that all connected channels have finished their initial historical data backfills and daily syncs.',
+                title: 'Overall Sync Progress',
+                description: 'Track global ingestion progress, total synced assets, and historical backfill completion across all providers.',
+                side: 'bottom',
+                align: 'center'
+            }
+        },
+        {
+            element: '#telemetry-channel-breakdown',
+            popover: {
+                title: 'Channel Breakdown & Drill-down',
+                description: 'Inspect status per channel. Click any channel card to expand and view individual ad account sync progress and job states.',
                 side: 'top',
                 align: 'center'
             }
