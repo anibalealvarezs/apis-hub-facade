@@ -10,7 +10,7 @@ export const globalUiTour = {
             }
         },
         {
-            element: '.fi-sidebar-nav > ul, ul.fi-sidebar-nav-groups, .fi-sidebar-nav-groups, nav.fi-sidebar-nav ul, .fi-sidebar-nav',
+            element: 'nav.fi-sidebar-nav > ul, .fi-sidebar-nav ul.fi-sidebar-nav-groups, .fi-sidebar-nav > ul, ul.fi-sidebar-nav-groups',
             popover: {
                 title: 'Main Navigation & Platform Layers',
                 description: 'Explore the core platform layers: Administration (Settings & Team), Integrations (Data Sources & Telemetry), Data (Asset Groups & Explorer), Analytics (Dashboards & Alerts), and Knowledge Base.',
@@ -28,7 +28,7 @@ export const globalUiTour = {
             }
         },
         {
-            element: '.fi-topbar-actions, header.fi-topbar .flex.items-center:last-child, .fi-topbar-end, .fi-user-menu, .fi-user-menu-trigger, .fi-theme-switcher, header.fi-topbar .fi-dropdown:last-child',
+            element: '[x-persist*="topbar.end"], .fi-topbar-end, header.fi-topbar .flex.items-center:last-child, .fi-topbar-actions',
             popover: {
                 title: 'Account & Personalization Controls',
                 description: 'Access your personal account & billing panel, switch language (EN | ES), toggle dark/light mode, and inspect notifications.',
