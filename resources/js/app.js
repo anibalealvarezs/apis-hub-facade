@@ -18,6 +18,7 @@ import { publicViewBar } from './public-view/public-view-bar';
 import { sharedView, widgetHeaderPv } from './public-view/public-dashboard';
 import { initPublicViewEmbed } from './public-view/embed';
 import { tenantClock } from './components/tenant-clock';
+import { initOnboardingTours } from './tours';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
@@ -110,6 +111,7 @@ if (window.Alpine) {
 }
 
 initPublicViewEmbed();
+initOnboardingTours();
 
 // Portal Link Global Handler
 document.addEventListener('click', (e) => {

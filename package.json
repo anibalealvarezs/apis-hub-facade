@@ -21,6 +21,7 @@
   "dependencies": {
     "alpinejs": "^3.15.11",
     "chart.js": "^4.5.1",
-    "dayjs": "^1.11.21"
+    "dayjs": "^1.11.21",
+    "driver.js": "^1.8.0"
   }
 }
