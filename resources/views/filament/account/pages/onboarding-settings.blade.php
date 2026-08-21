@@ -1,156 +1,109 @@
 <x-filament-panels::page>
-    <div x-data="{
-        storageKey: 'apis_hub_completed_tours',
-        completedTours: [],
-        init() {
-            this.load();
-            window.addEventListener('tour-status-changed', () => this.load());
-        },
-        load() {
-            try {
-                const raw = localStorage.getItem(this.storageKey);
-                this.completedTours = raw ? JSON.parse(raw) : [];
-            } catch {
-                this.completedTours = [];
-            }
-        },
-        isEnabled(tourId) {
-            return !this.completedTours.includes(tourId);
-        },
-        toggle(tourId) {
-            if (this.isEnabled(tourId)) {
-                if (!this.completedTours.includes(tourId)) {
-                    this.completedTours.push(tourId);
-                }
-            } else {
-                this.completedTours = this.completedTours.filter(id => id !== tourId);
-            }
-            localStorage.setItem(this.storageKey, JSON.stringify(this.completedTours));
-            window.dispatchEvent(new CustomEvent('tour-status-changed', { detail: { tourId } }));
-        },
-        enableAll() {
-            this.completedTours = [];
-            localStorage.setItem(this.storageKey, JSON.stringify([]));
-            window.dispatchEvent(new CustomEvent('tour-status-changed', { detail: { all: true } }));
-        },
-        disableAll(allIds) {
-            this.completedTours = [...allIds];
-            localStorage.setItem(this.storageKey, JSON.stringify(this.completedTours));
-            window.dispatchEvent(new CustomEvent('tour-status-changed', { detail: { all: false } }));
-        },
-        playTour(tourId) {
-            if (window.apisHubTours) {
-                window.apisHubTours.start(tourId, true);
-            } else {
-                window.dispatchEvent(new CustomEvent('start-page-tour', { detail: { tourId, force: true } }));
+    @php
+        $sections = [
+            'Workspace & Navigation' => [
+                'icon' => 'heroicon-o-computer-desktop',
+                'tours' => [
+                    [
+                        'id' => 'global-ui',
+                        'name' => __('Global Workspace & Main Menu'),
+                        'description' => __('Project switcher, top-bar telemetry & timezone clock, account controls, and main menu overview.'),
+                        'badge' => __('Essential'),
+                    ],
+                ],
+            ],
+            'Setup & Ingestion' => [
+                'icon' => 'heroicon-o-server-stack',
+                'tours' => [
+                    [
+                        'id' => 'data-sources',
+                        'name' => __('Data Sources & Channels'),
+                        'description' => __('OAuth authentication, provider channel switching, and tracked properties/ad accounts selection.'),
+                        'badge' => __('Integration'),
+                    ],
+                    [
+                        'id' => 'project-settings',
+                        'name' => __('Project Settings & Deployment'),
+                        'description' => __('Timezone configuration, dedicated worker provisioning, and live deployment activity logs.'),
+                        'badge' => __('Core'),
+                    ],
+                    [
+                        'id' => 'telemetry',
+                        'name' => __('Sync Telemetry & Worker Health'),
+                        'description' => __('Remote worker queue status, global backfill progress, and per-channel sync drill-downs.'),
+                        'badge' => __('Monitoring'),
+                    ],
+                ],
+            ],
+            'Analytics & Insights' => [
+                'icon' => 'heroicon-o-chart-bar',
+                'tours' => [
+                    [
+                        'id' => 'data-explorer',
+                        'name' => __('Data Explorer'),
+                        'description' => __('Raw normalized records inspection, dimension breakdowns, and currency conversions.'),
+                        'badge' => __('Analytics'),
+                    ],
+                    [
+                        'id' => 'asset-groups',
+                        'name' => __('Asset Groups'),
+                        'description' => __('Cross-channel asset clustering for global dashboard filtering.'),
+                        'badge' => __('Structure'),
+                    ],
+                    [
+                        'id' => 'dashboards',
+                        'name' => __('Dashboards & Visual Builder'),
+                        'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
+                        'badge' => __('Analytics'),
+                    ],
+                    [
+                        'id' => 'alerts',
+                        'name' => __('Automated Alerts & Anomalies'),
+                        'description' => __('AST calculation lines, threshold bounds, and background cron schedules.'),
+                        'badge' => __('Proactive'),
+                    ],
+                    [
+                        'id' => 'custom-kpis',
+                        'name' => __('Custom KPIs (Blended AST)'),
+                        'description' => __('Cross-channel blended mathematical formulas and AST validation.'),
+                        'badge' => __('Advanced'),
+                    ],
+                    [
+                        'id' => 'derived-metrics',
+                        'name' => __('Derived Metrics'),
+                        'description' => __('Channel-specific calculated metric transformations.'),
+                        'badge' => __('Advanced'),
+                    ],
+                ],
+            ],
+            'Administration & Account' => [
+                'icon' => 'heroicon-o-user-group',
+                'tours' => [
+                    [
+                        'id' => 'collaborators',
+                        'name' => __('Team & Collaborators'),
+                        'description' => __('User invitations, role assignments, and granular asset group restrictions.'),
+                        'badge' => __('Team'),
+                    ],
+                    [
+                        'id' => 'billing',
+                        'name' => __('Billing & Subscriptions'),
+                        'description' => __('Billing profile management, subscription tiers, and payment checkouts.'),
+                        'badge' => __('Account'),
+                    ],
+                ],
+            ],
+        ];
+
+        $allTourIds = [];
+        foreach ($sections as $sec) {
+            foreach ($sec['tours'] as $t) {
+                $allTourIds[] = $t['id'];
             }
         }
-    }" class="space-y-6">
+    @endphp
 
-        @php
-            $sections = [
-                'Workspace & Navigation' => [
-                    'icon' => 'heroicon-o-computer-desktop',
-                    'tours' => [
-                        [
-                            'id' => 'global-ui',
-                            'name' => __('Global Workspace & Main Menu'),
-                            'description' => __('Project switcher, top-bar telemetry & timezone clock, account controls, and main menu overview.'),
-                            'badge' => __('Essential'),
-                        ],
-                    ],
-                ],
-                'Setup & Ingestion' => [
-                    'icon' => 'heroicon-o-server-stack',
-                    'tours' => [
-                        [
-                            'id' => 'data-sources',
-                            'name' => __('Data Sources & Channels'),
-                            'description' => __('OAuth authentication, provider channel switching, and tracked properties/ad accounts selection.'),
-                            'badge' => __('Integration'),
-                        ],
-                        [
-                            'id' => 'project-settings',
-                            'name' => __('Project Settings & Deployment'),
-                            'description' => __('Timezone configuration, dedicated worker provisioning, and live deployment activity logs.'),
-                            'badge' => __('Core'),
-                        ],
-                        [
-                            'id' => 'telemetry',
-                            'name' => __('Sync Telemetry & Worker Health'),
-                            'description' => __('Remote worker queue status, global backfill progress, and per-channel sync drill-downs.'),
-                            'badge' => __('Monitoring'),
-                        ],
-                    ],
-                ],
-                'Analytics & Insights' => [
-                    'icon' => 'heroicon-o-chart-bar',
-                    'tours' => [
-                        [
-                            'id' => 'data-explorer',
-                            'name' => __('Data Explorer'),
-                            'description' => __('Raw normalized records inspection, dimension breakdowns, and currency conversions.'),
-                            'badge' => __('Analytics'),
-                        ],
-                        [
-                            'id' => 'asset-groups',
-                            'name' => __('Asset Groups'),
-                            'description' => __('Cross-channel asset clustering for global dashboard filtering.'),
-                            'badge' => __('Structure'),
-                        ],
-                        [
-                            'id' => 'dashboards',
-                            'name' => __('Dashboards & Visual Builder'),
-                            'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
-                            'badge' => __('Analytics'),
-                        ],
-                        [
-                            'id' => 'alerts',
-                            'name' => __('Automated Alerts & Anomalies'),
-                            'description' => __('AST calculation lines, threshold bounds, and background cron schedules.'),
-                            'badge' => __('Proactive'),
-                        ],
-                        [
-                            'id' => 'custom-kpis',
-                            'name' => __('Custom KPIs (Blended AST)'),
-                            'description' => __('Cross-channel blended mathematical formulas and AST validation.'),
-                            'badge' => __('Advanced'),
-                        ],
-                        [
-                            'id' => 'derived-metrics',
-                            'name' => __('Derived Metrics'),
-                            'description' => __('Channel-specific calculated metric transformations.'),
-                            'badge' => __('Advanced'),
-                        ],
-                    ],
-                ],
-                'Administration & Account' => [
-                    'icon' => 'heroicon-o-user-group',
-                    'tours' => [
-                        [
-                            'id' => 'collaborators',
-                            'name' => __('Team & Collaborators'),
-                            'description' => __('User invitations, role assignments, and granular asset group restrictions.'),
-                            'badge' => __('Team'),
-                        ],
-                        [
-                            'id' => 'billing',
-                            'name' => __('Billing & Subscriptions'),
-                            'description' => __('Billing profile management, subscription tiers, and payment checkouts.'),
-                            'badge' => __('Account'),
-                        ],
-                    ],
-                ],
-            ];
-
-            $allTourIds = [];
-            foreach ($sections as $sec) {
-                foreach ($sec['tours'] as $t) {
-                    $allTourIds[] = $t['id'];
-                }
-            }
-        @endphp
-
+    <div x-data="onboardingSettings(@js($allTourIds))" class="space-y-6">
         <!-- Header Card with Master Controls -->
         <div class="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -168,7 +121,7 @@
                     {{ __('Enable All Guides') }}
                 </button>
                 <button type="button"
-                        @click="disableAll(@js($allTourIds))"
+                        @click="disableAll()"
                         class="px-3.5 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-all">
                     {{ __('Disable All Guides') }}
                 </button>

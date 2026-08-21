@@ -9,8 +9,8 @@
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
             @if($isCurrent)
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider" style="background-color: rgba(16, 185, 129, 0.18); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.45);">
-                    <span style="width: 6px; height: 6px; border-radius: 9999px; background-color: #10b981; display: inline-block;"></span>
+                <span class="pc-current-badge">
+                    <span class="pc-current-dot"></span>
                     {{ __('Current') }}
                 </span>
             @endif
@@ -27,7 +27,7 @@
 
     <div>
         @if($isCurrent)
-            <button disabled class="w-full font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35);">
+            <button disabled class="pc-current-btn">
                 {{ __('✓ Currently Active Plan') }}
             </button>
         @elseif($profile && $profileTier === 'enterprise')
