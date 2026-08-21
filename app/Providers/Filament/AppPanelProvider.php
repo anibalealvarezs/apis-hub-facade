@@ -71,6 +71,11 @@ class AppPanelProvider extends PanelProvider
                 'primary' => '#00a7f9',
             ])
             ->spa()
+            ->spaUrlExceptions([
+                '*/connect/*',
+                '*/oauth/*',
+                '*/auth/*',
+            ])
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->font('Outfit')
             ->renderHook(
