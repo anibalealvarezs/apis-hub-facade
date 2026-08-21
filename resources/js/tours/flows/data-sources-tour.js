@@ -29,12 +29,21 @@ export const dataSourcesTour = {
             }
         },
         {
-            element: '#ds-assets-form, form[wire\\:submit="save"]',
+            element: '#ds-assets-form .grid > div:first-child, #ds-assets-form table, #ds-assets-form .fi-fo-repeater, #ds-assets-form',
             popover: {
-                title: 'Discovered Assets Selection',
-                description: 'Enable or disable the specific ad accounts, Google Analytics properties, or stores you want the ingestion engine to synchronize.',
+                title: 'Tracked Assets Selection',
+                description: 'Toggle and select the individual properties, ad accounts, pages, or stores you want to synchronize.',
                 side: 'top',
                 align: 'center'
+            }
+        },
+        {
+            element: '#ds-assets-form .grid > div:last-child, #ds-assets-form .fi-fo-section:has([wire\\:model*="cron_time"]), #ds-assets-form .fi-fo-section:has(input[type="time"]), .fi-fo-section:has(select)',
+            popover: {
+                title: 'Channel Sync Settings',
+                description: 'Configure automated sync schedules, execution times, historic cache depth, and custom calculation settings for this channel.',
+                side: 'left',
+                align: 'start'
             }
         },
         {

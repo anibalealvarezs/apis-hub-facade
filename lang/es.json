@@ -2067,5 +2067,9 @@
     "Monthly vs. Annual Billing": "Facturación Mensual vs. Anual",
     "Toggle between Monthly billing and Annual billing to save with 2 months free.": "Alterne entre facturación mensual y anual para ahorrar con 2 meses gratis.",
     "Subscription Tiers & Upgrades": "Planes de Suscripción y Mejoras",
-    "Compare plan capacities (Pro, Founder, Enterprise), view your currently active plan, or checkout with Stripe / PayPal.": "Compare capacidades de planes (Pro, Founder, Enterprise), consulte su plan actualmente activo o pague mediante Stripe / PayPal."
+    "Compare plan capacities (Pro, Founder, Enterprise), view your currently active plan, or checkout with Stripe / PayPal.": "Compare capacidades de planes (Pro, Founder, Enterprise), consulte su plan actualmente activo o pague mediante Stripe / PayPal.",
+    "Tracked Assets Selection": "Selección de Recursos Monitorizados",
+    "Toggle and select the individual properties, ad accounts, pages, or stores you want to synchronize.": "Active y seleccione las propiedades, cuentas publicitarias, páginas o tiendas individuales que desea sincronizar.",
+    "Channel Sync Settings": "Configuración de Sincronización del Canal",
+    "Configure automated sync schedules, execution times, historic cache depth, and custom calculation settings for this channel.": "Configure horarios de sincronización automatizada, horas de ejecución, profundidad de caché histórica y cálculos personalizados para este canal."
 }
