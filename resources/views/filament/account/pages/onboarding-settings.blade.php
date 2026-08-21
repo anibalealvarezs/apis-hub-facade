@@ -139,7 +139,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($group['tours'] as $tour)
-                            <div class="p-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-gray-300 dark:hover:border-white/20">
+                            <div class="p-6 onboarding-card rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-gray-300 dark:hover:border-white/20">
                                 <div>
                                     <div class="flex items-start justify-between gap-2">
                                         <h4 class="text-sm font-bold text-gray-900 dark:text-white leading-snug">

@@ -102,6 +102,16 @@
     color: #003087;
 }
 
+/* ---------- Onboarding Settings Cards ---------- */
+.onboarding-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+}
+.onboarding-header-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+}
+
 /* ---------- Collaborator asset list modal ---------- */
 .collab-asset-list {
     max-height: 55vh;
