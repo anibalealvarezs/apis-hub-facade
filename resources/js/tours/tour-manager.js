@@ -109,6 +109,12 @@ class TourManager {
             return;
         }
 
+        const config = this.tours.get(tourId);
+        if (!config) {
+            console.warn(`[TourManager] No configuration registered for tour: ${tourId}`);
+            return;
+        }
+
         const rawSteps = typeof config.steps === 'function' ? config.steps() : config.steps;
         if (!rawSteps || rawSteps.length === 0) {
             console.warn(`[TourManager] No steps found for tour: ${tourId}`);
