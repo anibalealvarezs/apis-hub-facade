@@ -1,7 +1,167 @@
-@import "driver.js/dist/driver.css";
+/* ==========================================================================
+   Driver.js Core Base Styles (Self-contained)
+   ========================================================================== */
+.driver-popover {
+    all: unset;
+    box-sizing: border-box;
+    z-index: 1000000000;
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+
+.driver-popover-title {
+    zoom: 1;
+    margin: 0;
+    display: block;
+    position: relative;
+}
+
+.driver-popover-close-btn {
+    all: unset;
+    cursor: pointer;
+    z-index: 1;
+    text-align: center;
+    width: 32px;
+    height: 28px;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.driver-popover-title[style*="block"] + .driver-popover-description {
+    margin-top: 5px;
+}
+
+.driver-popover-description {
+    zoom: 1;
+    margin-bottom: 0;
+}
+
+.driver-popover-footer {
+    text-align: right;
+    zoom: 1;
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+}
+
+.driver-popover-progress-text {
+    zoom: 1;
+}
+
+.driver-popover-footer-btn,
+.driver-popover-btn {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    zoom: 1;
+    outline: 0;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.driver-popover-footer .driver-popover-btn-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.driver-popover-navigation-btns {
+    flex-grow: 1;
+    justify-content: flex-end;
+    display: flex;
+}
+
+.driver-popover-navigation-btns button + button {
+    margin-left: 6px;
+}
+
+.driver-popover-arrow {
+    content: "";
+    border: 6px solid #fff;
+    position: absolute;
+}
+
+.driver-popover-arrow-side-over {
+    display: none;
+}
+
+.driver-popover-arrow-side-left {
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-right-color: transparent !important;
+    left: 100%;
+}
+
+.driver-popover-arrow-side-right {
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
+    right: 100%;
+}
+
+.driver-popover-arrow-side-top {
+    border-bottom-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
+    top: 100%;
+}
+
+.driver-popover-arrow-side-bottom {
+    border-top-color: transparent !important;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
+    bottom: 100%;
+}
+
+.driver-popover-arrow-side-center,
+.driver-popover-arrow-none {
+    display: none;
+}
+
+.driver-active .driver-overlay {
+    pointer-events: none;
+}
+
+.driver-active.driver-no-scroll {
+    overflow: hidden;
+}
+
+.driver-active * {
+    pointer-events: none;
+}
+
+.driver-active .driver-active-element,
+.driver-active .driver-active-element *,
+.driver-popover,
+.driver-popover * {
+    pointer-events: auto;
+}
+
+@keyframes driver-fade-in {
+    0% { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.driver-fade .driver-overlay {
+    animation: driver-fade-in var(--driver-animation-duration, 0.4s) ease-in-out;
+}
+
+.driver-fade .driver-popover {
+    animation: driver-fade-in var(--driver-animation-duration, 0.4s);
+}
+
+.driver-active-element-parent-no-scroll {
+    overflow: hidden !important;
+}
+
+.driver-no-interaction,
+.driver-no-interaction * {
+    pointer-events: none !important;
+}
 
 /* ==========================================================================
-   APIs Hub Custom Driver.js Theme (Adaptive Light & Dark Mode)
+   APIs Hub Custom Theme (Adaptive Light & Dark Mode)
    ========================================================================== */
 
 /* Base Popover Container */
@@ -14,6 +174,7 @@
     padding: 1.25rem 1.25rem 1rem 1.25rem !important;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
     max-width: 360px !important;
+    min-width: 280px !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     z-index: 100001 !important;
@@ -60,13 +221,6 @@
     color: #64748b !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
-}
-
-/* Navigation Buttons Container */
-.driver-popover-navigation-btns {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
 }
 
 /* Buttons Base Styling */
