@@ -2077,5 +2077,6 @@
     "Channel Authorization & Asset Discovery": "Autorización del Canal y Detección de Recursos",
     "Update OAuth credentials or click \"Refresh / Discover\" at any time to sync newly created properties or ad accounts.": "Actualice las credenciales OAuth o haga clic en \"Actualizar / Descubrir\" en cualquier momento para sincronizar propiedades o cuentas publicitarias recién creadas.",
     "Enable Channel Ingestion": "Habilitar Ingesta del Canal",
-    "Toggle whether data synchronization for this channel is active or temporarily paused.": "Active o pause temporalmente la sincronización de datos para este canal."
+    "Toggle whether data synchronization for this channel is active or temporarily paused.": "Active o pause temporalmente la sincronización de datos para este canal.",
+    "No Grace Period": "Sin periodo de gracia"
 }

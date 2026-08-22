@@ -15,23 +15,12 @@
         >
     </div>
 
-    {{-- Status Filter (w-40) --}}
-    <div class="w-40 flex-shrink-0">
+    {{-- Unified Status Filter (w-52) --}}
+    <div class="w-52 flex-shrink-0">
         <x-ui.asset-selector
             model="assetStatusFilter"
             options="statusOptions"
             placeholder="{{ __('All Statuses') }}"
-            class="w-full !min-w-0"
-            size="sm"
-        />
-    </div>
-
-    {{-- Billing Grace / Lock Status Filter (w-48) --}}
-    <div class="w-48 flex-shrink-0">
-        <x-ui.asset-selector
-            model="assetGraceFilter"
-            options="graceOptions"
-            placeholder="{{ __('Asset Billing Status') }}"
             class="w-full !min-w-0"
             size="sm"
         />
