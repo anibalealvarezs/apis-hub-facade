@@ -112,6 +112,7 @@ export function dashboardBuilder(config = {}) {
         allChannelAssets: {},
         allChannelAssetGroups: {},
         allChannelMetrics: {},
+        allChannelDependencies: {},
         dashboardAssets: {},
         dashboardMetrics: {},
         availableDependencies: {},
@@ -618,29 +619,41 @@ export function dashboardBuilder(config = {}) {
         updateSeriesMetrics() {
             if (!this.$wire) return;
             const gran = this.widgetControlsForm.granularity;
-            const dep = this.widgetControlsForm.dependency;
-            const mainCh = (this.widgetControlsTarget?.source_type === 'kpi')
-                ? (this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel)
-                : (this.widgetControlsForm.raw_series?.[0]?.channel || this.widgetControlsForm.channel);
+            const targetType = this.widgetControlsTarget?.source_type;
 
-            if (mainCh) {
-                this.$wire.getMetricsForChannel(mainCh, gran, dep).then(metrics => {
-                    const metricsCopy = { ...this.allChannelMetrics };
-                    metricsCopy[mainCh] = metrics;
-                    this.allChannelMetrics = metricsCopy;
-                });
-            }
-
-            (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
-                const ch = series.channel;
-                if (ch && ch !== mainCh) {
-                    this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
-                        const metricsCopy = { ...this.allChannelMetrics };
-                        metricsCopy[ch] = metrics;
-                        this.allChannelMetrics = metricsCopy;
+            if (targetType === 'kpi') {
+                const mainCh = this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel;
+                const dep = this.widgetControlsForm.dependency;
+                if (mainCh) {
+                    this.$wire.getMetricsForChannel(mainCh, gran, dep).then(metrics => {
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [mainCh]: metrics };
                     });
                 }
-            });
+            } else {
+                (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
+                    const ch = series.channel;
+                    const dep = series.dependency || null;
+                    if (ch) {
+                        this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        });
+                    }
+                });
+            }
+        },
+
+        onWidgetRawSeriesDependencyChange(index) {
+            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index] || !this.$wire) return;
+            const series = this.widgetControlsForm.raw_series[index];
+            const ch = series.channel;
+            const dep = series.dependency || null;
+            const gran = this.widgetControlsForm.granularity;
+
+            if (ch) {
+                this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
+                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                });
+            }
         },
 
         initGridItem(el, widget) {
@@ -1411,6 +1424,7 @@ export function dashboardBuilder(config = {}) {
                         dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
                         label: s.label || '',
                         channel: s.channel || '',
+                        dependency: s.dependency || wc.dependency || '',
                         metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
                         assets: Array.isArray(s.assets) ? [...s.assets] : []
                     }));
@@ -1434,19 +1448,25 @@ export function dashboardBuilder(config = {}) {
                         } else if (wc.metrics && typeof wc.metrics === 'object') {
                             metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
                         }
-                        groupedSeries.push({ channel, metrics, assets });
+                        groupedSeries.push({
+                            channel,
+                            dependency: wc.dependency || '',
+                            metrics,
+                            assets
+                        });
                     });
                     this.widgetControlsForm.raw_series = groupedSeries;
                 } else if (wc.metrics && Array.isArray(wc.metrics) && wc.metrics.length > 0) {
                     this.widgetControlsForm.raw_series = [{
                         channel: wc.channel || '',
+                        dependency: wc.dependency || '',
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', metrics: [], assets: wc.assets || [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', metrics: [], assets: wc.assets || [] });
                 }
 
                 if (this.$wire) {
@@ -1458,8 +1478,11 @@ export function dashboardBuilder(config = {}) {
                         if (ch && !this.allChannelAssetGroups[ch]) {
                             this.$wire.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
                         }
+                        if (ch && !this.allChannelDependencies[ch]) {
+                            this.$wire.getDependenciesForChannel(ch).then(deps => { this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps }; });
+                        }
                         if (ch && !this.allChannelMetrics[ch]) {
-                            this.$wire.getMetricsForChannel(ch).then(metrics => {
+                            this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                             });
                         }
@@ -1728,13 +1751,13 @@ export function dashboardBuilder(config = {}) {
             const series = this.widgetControlsForm.raw_series[index];
             const ch = series.channel;
 
-            // Reset selected metrics and assets because channel changed
+            // Reset selected metrics, dependency, and assets because channel changed
             series.metrics = [];
+            series.dependency = '';
             series.assets = [];
 
             if (index === 0) {
                 this.widgetControlsForm.channel = ch;
-                this.updateDependenciesAndGranularities();
             }
 
             if (ch && !this.allChannelAssets[ch] && this.$wire) {
@@ -1747,8 +1770,13 @@ export function dashboardBuilder(config = {}) {
                     this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                 });
             }
-            if (ch && !this.allChannelMetrics[ch] && this.$wire) {
-                this.$wire.getMetricsForChannel(ch).then(metrics => {
+            if (ch && !this.allChannelDependencies[ch] && this.$wire) {
+                this.$wire.getDependenciesForChannel(ch).then(deps => {
+                    this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
+                });
+            }
+            if (ch && this.$wire) {
+                this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                 });
             }
@@ -1990,6 +2018,7 @@ export function dashboardBuilder(config = {}) {
                 payload.metrics = [];
                 payload.series_assets = {};
                 payload.series_channels = {};
+                payload.series_dependencies = {};
 
                 c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
@@ -2008,6 +2037,7 @@ export function dashboardBuilder(config = {}) {
 
                     payload.series_assets[sIdx] = validAssets;
                     payload.series_channels[sIdx] = s.channel || '';
+                    payload.series_dependencies[sIdx] = s.dependency || '';
                 });
                 payload.raw_series = c.raw_series.map(s => ({
                     type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
@@ -2016,6 +2046,7 @@ export function dashboardBuilder(config = {}) {
                     dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
                     label: s.label || '',
                     channel: s.channel || '',
+                    dependency: s.dependency || '',
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     assets: Array.isArray(s.assets) ? [...s.assets] : []
                 }));

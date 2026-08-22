@@ -2090,8 +2090,9 @@ class DashboardWidgetDataController extends Controller
                     'metrics' => $metrics,
                 ];
 
-                if (! empty($controls['dependency'])) {
-                    $payload['dependency'] = $controls['dependency'];
+                $seriesDependency = $series['dependency'] ?? $controls['series_dependencies'][$sIdx] ?? $controls['dependency'] ?? null;
+                if (! empty($seriesDependency)) {
+                    $payload['dependency'] = $seriesDependency;
                 }
 
                 $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);

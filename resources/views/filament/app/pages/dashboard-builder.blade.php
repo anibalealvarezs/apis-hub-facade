@@ -691,9 +691,9 @@
                                     </template>
                                     <template x-if="!widgetControlsForm.granularity_inherit">
                                         <div class="space-y-4">
-                                            <!-- Dependency/Matrix Selector -->
+                                            <!-- Dependency/Matrix Selector (KPI only) -->
                                             <template
-                                                x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
+                                                x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'kpi' && Object.keys(availableDependencies).length > 0">
                                                 <div>
                                                     <label
                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
@@ -710,46 +710,25 @@
 
                                             <!-- Granularity Selector -->
                                             <div>
-                                                <template
-                                                    x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric' && Object.keys(availableDependencies).length > 0">
-                                                    <label
-                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
-                                                </template>
-                                                <template
-                                                    x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'metric'">
-                                                    <x-ui.select-input x-model="widgetControlsForm.granularity"
-                                                                       @change="updateSeriesMetrics()" class="w-full">
-                                                        <template x-for="(label, key) in availableGranularities"
-                                                                  :key="key">
-                                                            <x-ui.select-option x-bind:value="key"
-                                                                                x-text="label"></x-ui.select-option>
-                                                        </template>
-                                                    </x-ui.select-input>
-                                                </template>
-
-                                                <!-- Fallback for KPIs -->
-                                                <template
-                                                    x-if="widgetControlsTarget && widgetControlsTarget.source_type !== 'metric'">
-                                                    <x-ui.select-input x-model="widgetControlsForm.granularity"
-                                                                       class="w-full">
-                                                        <x-ui.select-option
-                                                            value="daily">{{ __('Daily') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="weekly">{{ __('Weekly') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="monthly">{{ __('Monthly') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="query">{{ __('Query') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="dimensions.page">{{ __('Page') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="country">{{ __('Country') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="device">{{ __('Device') }}</x-ui.select-option>
-                                                        <x-ui.select-option
-                                                            value="post">{{ __('Post') }}</x-ui.select-option>
-                                                    </x-ui.select-input>
-                                                </template>
+                                                <label
+                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
+                                                <x-ui.select-input x-model="widgetControlsForm.granularity"
+                                                                   @change="updateSeriesMetrics()" class="w-full">
+                                                    <x-ui.select-option
+                                                        value="daily">{{ __('Daily') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="annually">{{ __('Annually') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
+                                                </x-ui.select-input>
                                             </div>
                                         </div>
                                     </template>
@@ -984,6 +963,22 @@
                                                                     </template>
                                                                 </x-ui.select-input>
                                                             </div>
+
+                                                            {{-- Data Scope / Matrix (Per-Series) --}}
+                                                            <template x-if="series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0">
+                                                                <div>
+                                                                    <label
+                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
+                                                                    <x-ui.select-input x-model="series.dependency"
+                                                                                       x-on:change="onWidgetRawSeriesDependencyChange(index)"
+                                                                                       class="w-full">
+                                                                        <x-ui.select-option value="">{{ __('Default / All') }}</x-ui.select-option>
+                                                                        <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
+                                                                            <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
+                                                                        </template>
+                                                                    </x-ui.select-input>
+                                                                </div>
+                                                            </template>
 
                                                             <div class="my-1">
                                                                 <label
