@@ -21,7 +21,7 @@
      @scroll.document.capture="recompute()" @resize.window="recompute()">
     <button @click="toggle()" type="button" x-ref="trigger"
             {{ $attributes->merge([
-                'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-gray-600 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between cursor-pointer"
+                'class' => "bg-white dark:bg-white/5 border border-gray-300 dark:border-gray-600 text-gray-950 dark:text-white {$sizeClasses} rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between gap-2 cursor-pointer"
             ]) }}>
         @if($multiple)
             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
