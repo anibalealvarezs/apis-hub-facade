@@ -1784,95 +1784,93 @@
                         x-on:click="confirmWidgetControls()">{{ __('Save Controls') }}
                     </button>
                 </div>
-            </div>
-        </div>
 
-        {{-- ============================================================ --}}
-        {{-- ADD SERIES TYPE MODAL (Raw Metric vs Derived Metric)        --}}
-        {{-- ============================================================ --}}
-        <div x-show="showAddSeriesTypeModal" x-cloak class="fixed inset-0 z-[150] flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-xs" x-on:click="showAddSeriesTypeModal = false"></div>
-            <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 flex flex-col gap-5 border border-gray-200 dark:border-gray-800">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Add Series') }}</h3>
-                    <button @click="showAddSeriesTypeModal = false"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ __('Choose whether you want to add a standard raw metric series or import series from a configured Derived Metric.') }}
-                </p>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Series Type') }}</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                @click="addSeriesSourceType = 'metric'"
-                                class="p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5"
-                                :class="addSeriesSourceType === 'metric'
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-semibold ring-1 ring-primary-500'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                {{-- ADD SERIES TYPE SUB-MODAL (Inside Widget Controls) --}}
+                <div x-show="showAddSeriesTypeModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-black/60" x-on:click="showAddSeriesTypeModal = false"></div>
+                    <div
+                        class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 flex flex-col gap-5 border border-gray-200 dark:border-gray-800">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Add Series') }}</h3>
+                            <button @click="showAddSeriesTypeModal = false"
+                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
-                                <span class="text-xs">{{ __('Raw Metric') }}</span>
                             </button>
+                        </div>
 
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ __('Choose whether you want to add a standard raw metric series or import series from a configured Derived Metric.') }}
+                        </p>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Series Type') }}</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        @click="addSeriesSourceType = 'metric'"
+                                        class="p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5"
+                                        :class="addSeriesSourceType === 'metric'
+                                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-semibold ring-1 ring-primary-500'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                        </svg>
+                                        <span class="text-xs">{{ __('Raw Metric') }}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="addSeriesSourceType = 'derived_metric'"
+                                        class="p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5"
+                                        :class="addSeriesSourceType === 'derived_metric'
+                                            ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-semibold ring-1 ring-teal-500'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+                                        </svg>
+                                        <span class="text-xs">{{ __('Derived Metric') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Derived Metric Selector (Visible when derived_metric selected) --}}
+                            <template x-if="addSeriesSourceType === 'derived_metric'">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Select Derived Metric') }}</label>
+                                    <select
+                                        x-model="addSeriesDerivedMetricId"
+                                        class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                        <option value="">{{ __('Choose a Derived Metric...') }}</option>
+                                        <template x-for="(dm, id) in derivedMetrics" :key="id">
+                                            <option :value="id" x-text="dm.name"></option>
+                                        </template>
+                                    </select>
+                                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
+                                        {{ __('All source series defined in the selected Derived Metric will be added with channels and metrics fixed.') }}
+                                    </p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                             <button
                                 type="button"
-                                @click="addSeriesSourceType = 'derived_metric'"
-                                class="p-3.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5"
-                                :class="addSeriesSourceType === 'derived_metric'
-                                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-semibold ring-1 ring-teal-500'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
-                                </svg>
-                                <span class="text-xs">{{ __('Derived Metric') }}</span>
+                                class="text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                x-on:click="showAddSeriesTypeModal = false">{{ __('Cancel') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 px-5 py-2 rounded-lg shadow-sm transition-colors"
+                                :disabled="addSeriesSourceType === 'derived_metric' && !addSeriesDerivedMetricId"
+                                :class="(addSeriesSourceType === 'derived_metric' && !addSeriesDerivedMetricId) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                                x-on:click="confirmAddSeriesType()">{{ __('Add') }}
                             </button>
                         </div>
                     </div>
-
-                    {{-- Derived Metric Selector (Visible when derived_metric selected) --}}
-                    <template x-if="addSeriesSourceType === 'derived_metric'">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Select Derived Metric') }}</label>
-                            <select
-                                x-model="addSeriesDerivedMetricId"
-                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option value="">{{ __('Choose a Derived Metric...') }}</option>
-                                <template x-for="(dm, id) in derivedMetrics" :key="id">
-                                    <option :value="id" x-text="dm.name"></option>
-                                </template>
-                            </select>
-                            <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
-                                {{ __('All source series defined in the selected Derived Metric will be added with channels and metrics fixed.') }}
-                            </p>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-                    <button
-                        type="button"
-                        class="text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        x-on:click="showAddSeriesTypeModal = false">{{ __('Cancel') }}
-                    </button>
-                    <button
-                        type="button"
-                        class="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 px-5 py-2 rounded-lg shadow-sm transition-colors"
-                        :disabled="addSeriesSourceType === 'derived_metric' && !addSeriesDerivedMetricId"
-                        :class="(addSeriesSourceType === 'derived_metric' && !addSeriesDerivedMetricId) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
-                        x-on:click="confirmAddSeriesType()">{{ __('Add') }}
-                    </button>
                 </div>
             </div>
         </div>
