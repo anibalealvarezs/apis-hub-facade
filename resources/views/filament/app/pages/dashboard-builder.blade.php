@@ -914,11 +914,8 @@
                                 <div style="display: contents">
                                     <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                         <div
-                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
-                                            :class="{
-                                         'md:w-full': widgetControlsForm.raw_series.length === 1,
-                                         'sm:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
-                                     }">
+                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start"
+                                            style="width: calc(50% - 0.75rem); min-width: calc(50% - 0.75rem); max-width: calc(50% - 0.75rem);">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
