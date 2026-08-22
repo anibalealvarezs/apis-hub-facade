@@ -68,7 +68,7 @@
             @endphp
 
             {{-- 🟢 Layer 0: Worker Status --}}
-            <div
+            <div id="telemetry-workers-status"
                 class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-4 md:p-6">
                 <div>
                     <h2 class="text-sm uppercase tracking-wider font-bold text-gray-500 dark:text-gray-400 mb-2">{{ __('Remote Workers Status') }}</h2>
@@ -85,7 +85,7 @@
             </div>
 
             {{-- 🟢 Layer 1: Global Health Overview --}}
-            <div
+            <div id="telemetry-overall-progress"
                 class="mt-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div class="w-full md:w-1/2">
@@ -122,7 +122,7 @@
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Last Historical Resync') }}</span>
                                 <div class="flex items-end gap-2">
                                     <span
-                                        class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->translatedFormat('M j, Y') }}</span>
+                                        class="text-3xl font-semibold text-gray-900 dark:text-white">{{ filament()->getTenant()->last_historical_resync_at->setTimezone(filament()->getTenant()->timezone ?? config('app.timezone', 'UTC'))->translatedFormat('M j, Y') }}</span>
                                 </div>
                             </div>
                         @endif
@@ -142,7 +142,7 @@
             </div>
 
             {{-- 🔵 Layer 2 & 3: Channel Breakdown & Asset Drill-down --}}
-            <div class="space-y-6 mt-6">
+            <div id="telemetry-channel-breakdown" class="space-y-6 mt-6">
                 @foreach(($syncData['channels'] ?? []) as $channelKey => $channelData)
                     @php
                         $chComp = number_format((float)($channelData['completion_percentage'] ?? 0), 2);

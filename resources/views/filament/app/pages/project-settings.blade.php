@@ -99,7 +99,7 @@
                                 $starts = $profile->current_cycle_starts_at ?? $profile->created_at ?? now()->startOfMonth();
                                 $ends = $profile->current_cycle_ends_at ?? $starts->copy()->addMonth();
                             @endphp
-                            {{ $ends->format('d M, Y') }}
+                            {{ $ends->setTimezone($tenant->timezone ?? config('app.timezone', 'UTC'))->translatedFormat(__('M j, Y')) }}
                         @else
                             N/A
                         @endif
@@ -145,13 +145,14 @@
         @endif
  
         @if(auth()->user()->can('deploy_project') && $logs && $logs->count() > 0)
-        <x-filament::section>
-            <x-slot name="heading">
-                {{ __('Activity Logs') }}
-            </x-slot>
-            <x-slot name="description">
-                {{ __('Recent deployment and synchronization history.') }}
-            </x-slot>
+        <div id="project-activity-logs">
+            <x-filament::section>
+                <x-slot name="heading">
+                    {{ __('Activity Logs') }}
+                </x-slot>
+                <x-slot name="description">
+                    {{ __('Recent deployment and synchronization history.') }}
+                </x-slot>
  
             <div wire:poll.10s>
                 <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg">
@@ -198,6 +199,7 @@
                 </div>
             </div>
         </x-filament::section>
+        </div>
         @endif
     </div>
     @endif

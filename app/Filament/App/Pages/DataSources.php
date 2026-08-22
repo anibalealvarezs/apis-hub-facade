@@ -1003,15 +1003,11 @@
                                             \Filament\Forms\Components\TextInput::make('string')->required()
                                         )
                                         ->defaultItems(2),
-                                    \Filament\Forms\Components\Select::make('target')
+                                    \Filament\Forms\Components\ViewField::make('target')
                                         ->label(__('Target Filter'))
-                                        ->options([
-                                            'CAMPAIGN' => __('Campaign Filter'),
-                                            'ADSET'    => __('Adset Filter'),
-                                            'AD'       => __('Ad Filter'),
-                                        ])
                                         ->required()
-                                        ->default('CAMPAIGN'),
+                                        ->default('CAMPAIGN')
+                                        ->view('filament.app.components.data-sources.regex-target-selector'),
                                 ])
                                 ->action(function (array $data, \Filament\Forms\Set $set) {
                                     $strings = $data['strings'] ?? [];
@@ -1274,42 +1270,7 @@
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
                     ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="relative w-full max-w-sm">
-                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
-                        </div>
-                        <div class="w-40">
-                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
-                                <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-                ')),
+                    ->content(view('filament.app.components.data-sources.asset-filter-bar')),
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
@@ -1368,7 +1329,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { if (assetStatusFilter === 'enabled' || assetStatusFilter === 'disabled') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); let isChecked = false; if (toggle) { isChecked = toggle.getAttribute('aria-checked') === 'true'; } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) isChecked = cb.checked; } matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let lock = lockStates[assetId]; let isStaged = lock && (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } let inGrace = (isStaged && !isExpiredStaged); let isLocked = lock && (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); if (assetStatusFilter === 'grace') { matchesStatus = inGrace; } else if (assetStatusFilter === 'locked') { matchesStatus = isLocked; } else if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = !inGrace && !isLocked; } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? $get('platformId') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1379,7 +1340,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGroupFilter: 'all', statusOptions: { 'all': '".__('All Statuses')."', 'enabled': '".__('Enabled Only')."', 'disabled': '".__('Disabled Only')."', 'grace': '".__('In Grace Period')."', 'locked': '".__('Asset Locked')."', 'unlocked': '".__('No Grace Period')."' }, get groupOptions() { const opts = { 'all': '".__('All Groups')."' }; if (typeof assetGroupsData !== 'undefined' && assetGroupsData && assetGroupsData.groups) { assetGroupsData.groups.forEach(g => { opts[g.name] = g.name; }); } return opts; }, sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         protected function buildFacebookOrganicRepeater(string $fieldKey, string $label): \Filament\Forms\Components\Component
@@ -1477,42 +1438,7 @@
             return \Filament\Forms\Components\Group::make([
                 \Filament\Forms\Components\Placeholder::make('filter_'.$fieldKey)
                     ->hiddenLabel()
-                    ->content(new \Illuminate\Support\HtmlString('
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="relative w-full max-w-sm">
-                            <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <input type="text" x-model="assetFilter" class="block w-full pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:bg-white/5 dark:border-white/10 dark:text-white" style="padding-left: 2.75rem;" placeholder="'.__('Live filter assets by name or ID...').'">
-                        </div>
-                        <div class="w-40">
-                            <select x-model="assetStatusFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Statuses').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="enabled">'.__('Enabled Only').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="disabled">'.__('Disabled Only').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGraceFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="" disabled selected>'.__('Asset Billing Status').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All States').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="grace">'.__('In Grace Period').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="locked">'.__('Asset Locked').'</option>
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="none">'.__('No Grace Period status').'</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <select x-model="assetGroupFilter" class="block w-full py-2 pl-3 pr-10 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg dark:bg-white/5 dark:border-white/10 dark:text-white transition duration-150 ease-in-out">
-                                <option class="dark:bg-gray-800 dark:text-gray-200" value="all">'.__('All Groups').'</option>
-                                <template x-for="group in assetGroupsData.groups" :key="group.id">
-                                    <option class="dark:bg-gray-800 dark:text-gray-200" :value="group.name" x-text="group.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </div>
-                ')),
+                    ->content(view('filament.app.components.data-sources.asset-filter-bar')),
                 Repeater::make($fieldKey)
                     ->label(Str::headline($label))
                     ->hintActions([
@@ -1607,7 +1533,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) { matchesStatus = (assetStatusFilter === 'enabled' && cb.checked) || (assetStatusFilter === 'disabled' && !cb.checked); } } } let matchesGrace = true; if (assetGraceFilter !== '' && assetGraceFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetGraceFilter === 'none') { matchesGrace = true; } else { matchesGrace = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } if (assetGraceFilter === 'grace') { matchesGrace = (isStaged && !isExpiredStaged); } else if (assetGraceFilter === 'locked') { matchesGrace = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } else if (assetGraceFilter === 'none') { matchesGrace = !(isStaged && !isExpiredStaged) && !(lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGrace && matchesGroup) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { if (assetStatusFilter === 'enabled' || assetStatusFilter === 'disabled') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) isChecked = cb.checked; } matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = true; } else { matchesStatus = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } let inGrace = (isStaged && !isExpiredStaged); let isLocked = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); if (assetStatusFilter === 'grace') { matchesStatus = inGrace; } else if (assetStatusFilter === 'locked') { matchesStatus = isLocked; } else if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = !inGrace && !isLocked; } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -1618,7 +1544,7 @@
                     ->reorderable(false)
                     ->columnSpanFull()
                     ->extraAttributes(['class' => 'compact-repeater']),
-            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGraceFilter: '', assetGroupFilter: 'all', sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGraceFilter = ''; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
+            ])->extraAttributes(['x-data' => "{ assetFilter: '', assetStatusFilter: 'all', assetGroupFilter: 'all', statusOptions: { 'all': '".__('All Statuses')."', 'enabled': '".__('Enabled Only')."', 'disabled': '".__('Disabled Only')."', 'grace': '".__('In Grace Period')."', 'locked': '".__('Asset Locked')."', 'unlocked': '".__('No Grace Period')."' }, get groupOptions() { const opts = { 'all': '".__('All Groups')."' }; if (typeof assetGroupsData !== 'undefined' && assetGroupsData && assetGroupsData.groups) { assetGroupsData.groups.forEach(g => { opts[g.name] = g.name; }); } return opts; }, sortAssets() { let ul = this.\$root.querySelector('ul'); if (ul) { let items = Array.from(ul.children); items.sort((a, b) => { let textA = a.innerText.trim().split('\\n')[0]; let textB = b.innerText.trim().split('\\n')[0]; return textA.localeCompare(textB, undefined, {sensitivity: 'base'}); }); items.forEach(li => ul.appendChild(li)); } }, init() { this.\$watch('activeTab', value => { this.assetFilter = ''; this.assetStatusFilter = 'all'; this.assetGroupFilter = 'all'; }); } }", 'class' => 'w-full']);
         }
 
         public function save(): void

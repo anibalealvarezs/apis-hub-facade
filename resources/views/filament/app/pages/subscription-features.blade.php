@@ -147,6 +147,10 @@
                         <span class="text-sm font-medium text-purple-400">{{ __('Public dashboards') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 5)</span></span>
                     </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('Export dashboards & reports to PDF') }}</span>
+                    </li>
                 </ul>
             </x-filament::section>
 
@@ -161,7 +165,7 @@
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           copy('{{ $id }}');
+                            copy('{{ $id }}');
                        ">
                         <span>Ultra / Founder</span>
                         <x-filament::icon 
@@ -225,6 +229,10 @@
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium text-purple-400">{{ __('API access') }}</span>
                     </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('Export dashboards & reports to PDF') }}</span>
+                    </li>
                 </ul>
             </x-filament::section>
 
@@ -239,7 +247,7 @@
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="
-                           copy('{{ $id }}');
+                            copy('{{ $id }}');
                        ">
                         <span>Enterprise</span>
                         <x-filament::icon 
@@ -303,6 +311,10 @@
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-gray-500 shrink-0"/>
                         <span class="text-sm font-medium text-gray-500">{{ __('API access') }} <span
                                 class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('higher rate limits') }})</span></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('Export dashboards & reports to PDF') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>

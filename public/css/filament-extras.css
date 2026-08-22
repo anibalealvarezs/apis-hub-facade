@@ -64,14 +64,52 @@
 }
 
 /* ---------- Plan card ---------- */
-.pc-founder-card {
-    border-style: solid;
-    border-color: #00a7f9;
-    border-width: 6px 2px 2px 2px;
+.pc-current-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: rgba(16, 185, 129, 0.18);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.45);
+}
+.pc-current-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background-color: #10b981;
+    display: inline-block;
+}
+.pc-current-btn {
+    width: 100%;
+    font-weight: 700;
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    cursor: not-allowed;
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
 }
 .pc-paypal-btn {
     background-color: #ffc439;
     color: #003087;
+}
+
+/* ---------- Onboarding Settings Cards ---------- */
+.onboarding-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+}
+.onboarding-header-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
 }
 
 /* ---------- Collaborator asset list modal ---------- */
@@ -440,6 +478,90 @@
     color: #fbbf24;
 }
 
+/* ---------- FB Organic First Time Warning Modal ---------- */
+.fb-warning-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 1rem;
+}
+
+.fb-warning-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 42rem;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(229, 231, 235, 1);
+}
+
+.dark .fb-warning-modal-dialog {
+    background-color: #1f2937;
+    border-color: rgba(55, 65, 81, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.fb-warning-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.fb-warning-modal-close:hover {
+    color: #4b5563;
+    background-color: #f3f4f6;
+}
+
+.dark .fb-warning-modal-close:hover {
+    color: #e5e7eb;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.fb-warning-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+}
+
+.fb-warning-modal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    color: #ffffff;
+    background-color: #0284c7;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: background-color 0.15s ease-in-out;
+}
+
+.fb-warning-modal-btn:hover {
+    background-color: #0369a1;
+}
+
 .fb-rl-warning-box,
 .fb-modal-rl-warning-box {
     background-color: #eff6ff;
@@ -467,13 +589,225 @@
 .dark .fb-modal-rl-warning-subtext {
     color: #bfdbfe;
 }
-.fb-rl-warning-icon,
-.fb-modal-rl-warning-icon {
-    color: #2563eb;
+/* ---------- Time/Date input clock & calendar cursor pointer ---------- */
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit,
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"] {
+    cursor: pointer !important;
 }
-.dark .fb-rl-warning-icon,
-.dark .fb-modal-rl-warning-icon {
-    color: #60a5fa;
+
+/* ---------- Universal Table Rows Per Page Select Styling ---------- */
+.data-table-pagination-select,
+.fb-pagination-select,
+.ga4-pagination-select,
+.gsc-pagination-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    border-radius: 8px;
+    padding: 6px 32px 6px 12px !important;
+    min-width: 4.5rem;
+    outline: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.5rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.25rem 1.25rem !important;
+    color-scheme: light;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.dark .data-table-pagination-select,
+.dark .fb-pagination-select,
+.dark .ga4-pagination-select,
+.dark .gsc-pagination-select,
+.dark .fb-marketing-page .fb-pagination-select,
+.dark .fb-organic-page .fb-pagination-select {
+    background-color: var(--fb-bg-card, var(--ga4-bg-card, var(--gsc-bg-card, rgba(255, 255, 255, 0.05)))) !important;
+    border: 1px solid var(--fb-border, var(--ga4-border, var(--gsc-border, rgba(255, 255, 255, 0.1)))) !important;
+    color: var(--fb-text-main, var(--ga4-text-main, var(--gsc-text-main, #ffffff))) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    color-scheme: dark !important;
+}
+
+.data-table-pagination-select:focus,
+.fb-pagination-select:focus,
+.ga4-pagination-select:focus,
+.gsc-pagination-select:focus {
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 1px #0284c7 !important;
+}
+
+/* Pagination select options styling */
+.data-table-pagination-select option,
+.fb-pagination-select option,
+.ga4-pagination-select option,
+.gsc-pagination-select option {
+    background-color: #ffffff;
+    color: #111827;
+    padding: 6px 12px;
+}
+
+.dark .data-table-pagination-select option,
+.dark .fb-pagination-select option,
+.dark .ga4-pagination-select option,
+.dark .gsc-pagination-select option,
+.dark .fb-marketing-page .fb-pagination-select option,
+.dark .fb-organic-page .fb-pagination-select option,
+.dark select.data-table-pagination-select option {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+    padding: 6px 12px;
+}
+
+/* ================================================================
+   Joint Correlation Dashboard & Print Export Optimization
+   ================================================================ */
+.joint-playbook-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+@media (max-width: 640px) {
+    .joint-playbook-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media print {
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-header,
+    .fi-page-header,
+    .fi-breadcrumbs,
+    .fi-user-menu,
+    .fi-tenant-menu,
+    .fi-topbar-end,
+    .fi-topbar-item,
+    .fi-notifications,
+    .joint-header-row,
+    .joint-header-controls,
+    .gsc-header-row,
+    .gsc-header-controls,
+    .ga4-header-row,
+    .ga4-header-controls,
+    .fb-header-row,
+    .fb-header-controls,
+    .sticky-header-section,
+    .export-btn {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    html,
+    body,
+    .fi-layout,
+    .fi-main,
+    .fi-main-content,
+    .fi-page,
+    .fi-page-content,
+    #joint-dashboard-container,
+    .joint-page,
+    .gsc-page,
+    .ga4-page,
+    .fb-page {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+.joint-print-page-break {
+    display: none;
+}
+
+@media print {
+    .joint-print-page-break {
+        display: block !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        clear: both !important;
+    }
+
+    .joint-card {
+        display: block !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+    }
+
+    .joint-page > .joint-card:first-of-type {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+    }
+
+    .joint-charts-card {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    .joint-playbook-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .joint-playbook-grid button {
+        display: block !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .chart-container-joint,
+    .joint-form-grid,
+    .joint-results-grid {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
 }
 
 

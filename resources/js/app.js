@@ -18,6 +18,8 @@ import { publicViewBar } from './public-view/public-view-bar';
 import { sharedView, widgetHeaderPv } from './public-view/public-dashboard';
 import { initPublicViewEmbed } from './public-view/embed';
 import { tenantClock } from './components/tenant-clock';
+import { onboardingSettings } from './components/onboarding-settings';
+import { initOnboardingTours } from './tours';
 
 // Export functions to window
 window.uiAssetSelector = uiAssetSelector;
@@ -27,6 +29,7 @@ window.copyLink = copyLink;
 window.embedCodeConfig = embedCodeConfig;
 window.floatingTooltip = floatingTooltip;
 window.tenantClock = tenantClock;
+window.onboardingSettings = onboardingSettings;
 window.dataSources = dataSources;
 window.jointDashboard = jointDashboard;
 window.gscDashboard = gscDashboard;
@@ -75,6 +78,7 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('publicViewBar', publicViewBar);
     Alpine.data('sharedView', sharedView);
     Alpine.data('widgetHeaderPv', widgetHeaderPv);
+    Alpine.data('onboardingSettings', onboardingSettings);
 };
 
 const registerSubNavStore = (Alpine) => {
@@ -110,6 +114,7 @@ if (window.Alpine) {
 }
 
 initPublicViewEmbed();
+initOnboardingTours();
 
 // Portal Link Global Handler
 document.addEventListener('click', (e) => {

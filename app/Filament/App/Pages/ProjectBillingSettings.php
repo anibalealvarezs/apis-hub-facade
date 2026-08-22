@@ -54,12 +54,14 @@ class ProjectBillingSettings extends Page
             ->icon('heroicon-o-pencil')
             ->color('warning')
             ->form([
-                Forms\Components\Select::make('billing_profile_id')
+                Forms\Components\ViewField::make('billing_profile_id')
                     ->label(__('Available Billing Profiles (Owned & Shared)'))
-                    ->options(function () {
-                        return auth()->user()->getAvailableBillingProfiles()->pluck('display_name', 'id');
-                    })
-                    ->required(),
+                    ->required()
+                    ->view('filament.app.components.ui.form-asset-selector')
+                    ->viewData(fn () => [
+                        'options' => auth()->user()->getAvailableBillingProfiles()->pluck('display_name', 'id')->toArray(),
+                        'placeholder' => __('Select a billing profile...'),
+                    ]),
             ])
             ->action(function (array $data) {
                 $profile = BillingProfile::find($data['billing_profile_id']);

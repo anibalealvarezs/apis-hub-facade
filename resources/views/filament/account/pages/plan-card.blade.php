@@ -1,12 +1,18 @@
 @php
-    $isFounder = $plan->tier === 'founder';
+    $planTier = strtolower($plan->tier instanceof \UnitEnum ? $plan->tier->value : (string)$plan->tier);
+    $profileTier = strtolower($profile?->tier instanceof \UnitEnum ? $profile->tier->value : (string)($profile?->tier ?? ''));
+    $isCurrent = $profile && !empty($profileTier) && $profileTier === $planTier;
+    $isFounder = $planTier === 'founder';
 @endphp
-<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between {{ $isFounder ? 'shadow-lg relative pc-founder-card' : 'border border-gray-200 dark:border-gray-800' }}">
+<div class="bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col justify-between shadow-sm">
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $plan->name }}</h3>
-            @if($profile && $profile->tier?->value === $plan->tier)
-                <span class="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-green-200 dark:border-green-800">{{ __('Current') }}</span>
+            @if($isCurrent)
+                <span class="pc-current-badge">
+                    <span class="pc-current-dot"></span>
+                    {{ __('Current') }}
+                </span>
             @endif
         </div>
         <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm leading-relaxed">{{ $plan->description }}</p>
@@ -20,15 +26,15 @@
     </div>
 
     <div>
-        @if($profile && $profile->tier?->value === $plan->tier)
-            <button disabled class="w-full bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 font-bold py-2.5 px-4 rounded-lg border border-green-200 dark:border-green-900/50 text-center text-sm cursor-not-allowed">
+        @if($isCurrent)
+            <button disabled class="pc-current-btn">
                 {{ __('✓ Currently Active Plan') }}
             </button>
-        @elseif($profile && $profile->tier?->value === 'enterprise')
+        @elseif($profile && $profileTier === 'enterprise')
             <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Locked (Enterprise Protected)') }}
             </button>
-        @elseif($profile && $profile->tier?->value === 'founder')
+        @elseif($profile && $profileTier === 'founder')
             <button disabled class="w-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold py-2.5 px-4 rounded-lg text-center text-sm cursor-not-allowed">
                 {{ __('Founder Exclusive Tier') }}
             </button>

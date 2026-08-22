@@ -60,5 +60,43 @@ export function dataTable(config = {}) {
         prevPage() {
             if (this.currentPage > 1) this.currentPage--;
         },
+
+        exportCsv(filename = 'table_export') {
+            const data = this.sortedRows;
+            if (!data || data.length === 0) return;
+
+            const firstRow = data[0];
+            const keys = Object.keys(firstRow).filter(k => typeof firstRow[k] !== 'function' && !k.startsWith('_'));
+            if (keys.length === 0) return;
+
+            const csvLines = [];
+            csvLines.push(keys.map(k => `"${String(k).replace(/"/g, '""')}"`).join(','));
+
+            for (const row of data) {
+                const rowValues = keys.map(k => {
+                    let val = row[k];
+                    if (val === null || val === undefined) {
+                        return '""';
+                    }
+                    if (typeof val === 'object') {
+                        val = JSON.stringify(val);
+                    }
+                    return `"${String(val).replace(/"/g, '""')}"`;
+                });
+                csvLines.push(rowValues.join(','));
+            }
+
+            const csvString = '\uFEFF' + csvLines.join('\r\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeName = (filename || 'export').replace(/[^a-zA-Z0-9_-]/g, '_');
+            a.download = safeName.endsWith('.csv') ? safeName : `${safeName}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
     };
 }

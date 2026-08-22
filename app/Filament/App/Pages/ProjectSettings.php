@@ -158,12 +158,16 @@ class ProjectSettings extends Page
                 'supported_locales' => $project->supported_locales ?? ['en', 'es'],
             ])
             ->form([
-                Select::make('timezone')
+                \Filament\Forms\Components\ViewField::make('timezone')
                     ->label(__('Timezone'))
-                    ->options(array_combine(timezone_identifiers_list(), timezone_identifiers_list()))
-                    ->searchable()
                     ->required()
-                    ->helperText(__('The timezone used by your virtual APIs Hub server to schedule tasks and log events.')),
+                    ->default($project->timezone ?? 'UTC')
+                    ->helperText(__('The timezone used by your virtual APIs Hub server to schedule tasks and log events.'))
+                    ->view('filament.app.components.ui.form-asset-selector')
+                    ->viewData([
+                        'options' => array_combine(timezone_identifiers_list(), timezone_identifiers_list()),
+                        'placeholder' => __('Select Timezone...'),
+                    ]),
                 \Filament\Forms\Components\CheckboxList::make('supported_locales')
                     ->label(__('Project Content Languages'))
                     ->options(\App\Models\Project::getSupportedLanguageCatalog())

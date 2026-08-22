@@ -176,7 +176,7 @@
 .ga4-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--ga4-border); background: var(--ga4-bg-active); }
 .ga4-pagination-text { font-size: 0.875rem; color: var(--ga4-text-dim); }
 .ga4-pagination-text strong { color: var(--ga4-text-main); font-weight: 700; }
-.ga4-pagination-select { background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); color: var(--ga4-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; }
+.ga4-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); color: var(--ga4-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 .ga4-pagination-btn { padding: 8px 16px; background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--ga4-text-main); cursor: pointer; transition: background 0.2s; }
 .ga4-pagination-btn:hover:not(:disabled) { background: var(--ga4-bg-hover); }
 .ga4-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -321,7 +321,7 @@
 
 .gsc-pagination-text strong { color: var(--gsc-text-main); font-weight: 700; }
 
-.gsc-pagination-select { background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.gsc-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .gsc-pagination-btn { padding: 8px 16px; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gsc-text-main); cursor: pointer; transition: background 0.2s; }
 
@@ -473,7 +473,7 @@
 
 .fb-marketing-page .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
 
-.fb-marketing-page .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.fb-marketing-page .fb-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .fb-marketing-page .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
 
@@ -625,7 +625,7 @@
 
 .fb-organic-page .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
 
-.fb-organic-page .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.fb-organic-page .fb-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .fb-organic-page .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
 
@@ -836,26 +836,139 @@
 .joint-page select option { background-color: #ffffff; color: #111827; }
 .dark .joint-page select option { background-color: #1f2937; color: #f9fafb; }
 
-@media print {
-    .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
-        display: none !important;
+.joint-playbook-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+@media (max-width: 640px) {
+    .joint-playbook-grid {
+        grid-template-columns: 1fr !important;
     }
-    html, body, .fi-layout, .fi-main, .fi-main-content {
+}
+
+@media print {
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-header,
+    .fi-page-header,
+    .fi-breadcrumbs,
+    .fi-user-menu,
+    .fi-tenant-menu,
+    .fi-topbar-end,
+    .fi-topbar-item,
+    .fi-notifications,
+    .joint-header-row,
+    .joint-header-controls,
+    .gsc-header-row,
+    .gsc-header-controls,
+    .ga4-header-row,
+    .ga4-header-controls,
+    .fb-header-row,
+    .fb-header-controls,
+    .sticky-header-section,
+    .export-btn {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    html,
+    body,
+    .fi-layout,
+    .fi-main,
+    .fi-main-content,
+    .fi-page,
+    .fi-page-content,
+    #joint-dashboard-container,
+    .joint-page,
+    .gsc-page,
+    .ga4-page,
+    .fb-page {
+        display: block !important;
         height: auto !important;
-        min-height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         overflow: visible !important;
         position: static !important;
         padding: 0 !important;
         margin: 0 !important;
-    }
-    .fi-main {
         width: 100% !important;
         max-width: 100% !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        border: none !important;
     }
-    .joint-card, .chart-container-joint, .mt-16 {
-        page-break-inside: avoid;
+
+.joint-print-page-break {
+    display: none;
+}
+
+@media print {
+    .joint-print-page-break {
+        display: block !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        clear: both !important;
     }
-    body { background: white !important; }
+
+    .joint-card {
+        display: block !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+    }
+
+    .joint-page > .joint-card:first-of-type {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+    }
+
+    .joint-charts-card {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    .joint-playbook-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .joint-playbook-grid button {
+        display: block !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .chart-container-joint,
+    .joint-form-grid,
+    .joint-results-grid {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
 }
 
 /* FB Organic Post Modal — sticky-bar overlap + dimming fixes (2026-08-06) */
@@ -875,4 +988,26 @@
     position: relative;
     z-index: 1;
     margin: auto;
+}
+
+/* Pagination select options styling */
+.data-table-pagination-select option,
+.fb-pagination-select option,
+.ga4-pagination-select option,
+.gsc-pagination-select option {
+    background-color: #ffffff;
+    color: #111827;
+    padding: 6px 12px;
+}
+
+.dark .data-table-pagination-select option,
+.dark .fb-pagination-select option,
+.dark .ga4-pagination-select option,
+.dark .gsc-pagination-select option,
+.dark .fb-marketing-page .fb-pagination-select option,
+.dark .fb-organic-page .fb-pagination-select option,
+.dark select.data-table-pagination-select option {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+    padding: 6px 12px;
 }

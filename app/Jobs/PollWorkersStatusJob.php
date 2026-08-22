@@ -80,6 +80,9 @@ class PollWorkersStatusJob implements ShouldQueue
                                     'provider' => $this->provider,
                                     'types' => $this->types ?: (str_contains($this->provider, 'facebook') ? 'facebook_marketing' : 'google_search_console')
                                 ]))
+                                ->extraAttributes([
+                                    'data-navigate-ignore' => 'true',
+                                ])
                                 ->button()
                         ])
                         ->sendToDatabase($user);

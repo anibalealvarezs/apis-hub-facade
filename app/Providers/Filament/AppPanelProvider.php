@@ -55,6 +55,7 @@ class AppPanelProvider extends PanelProvider
             )
 
             ->sidebarCollapsibleOnDesktop()
+            ->brandName('APIs Hub')
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
                 <div class="w-full flex items-center justify-center">
                     <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
@@ -71,11 +72,17 @@ class AppPanelProvider extends PanelProvider
                 'primary' => '#00a7f9',
             ])
             ->spa()
+            ->spaUrlExceptions([
+                '*/connect/*',
+                '*/oauth/*',
+                '*/auth/*',
+            ])
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->font('Outfit')
             ->renderHook(
                 'panels::styles.after',
                 fn () => \Illuminate\Support\Facades\Blade::render('
+                    @vite([\'resources/css/driver-theme.css\'])
                     <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=' . filemtime(public_path('css/branding.css')) . '">
                     <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=' . filemtime(public_path('css/filament-extras.css')) . '">
                     <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=' . filemtime(public_path('css/modals.css')) . '">

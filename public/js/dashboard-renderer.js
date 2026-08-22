@@ -1471,26 +1471,58 @@ window.dashboardRenderer = {
         }
     },
 
+    _chartJsPromise: null,
+    _ensureChartJs(callback) {
+        if (typeof window.Chart !== 'undefined') {
+            callback();
+            return;
+        }
+        if (!this._chartJsPromise) {
+            this._chartJsPromise = new Promise((resolve) => {
+                const existing = document.querySelector('script[src*="chart.umd.min.js"]');
+                if (existing) {
+                    existing.addEventListener('load', () => resolve(), {once: true});
+                    existing.addEventListener('error', () => resolve(), {once: true});
+                } else {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+                    script.onload = () => resolve();
+                    script.onerror = () => resolve();
+                    document.head.appendChild(script);
+                }
+            });
+        }
+        this._chartJsPromise.then(() => callback());
+    },
+
+    _zoomPluginPromise: null,
     _ensureZoomPlugin(callback) {
-        if (typeof Chart === 'undefined') {
-            callback();
-            return;
-        }
-        if (Chart.registry.plugins.get('zoom')) {
-            callback();
-            return;
-        }
-        const existing = document.querySelector('script[src*="chartjs-plugin-zoom"]');
-        if (existing) {
-            existing.addEventListener('load', callback, {once: true});
-            existing.addEventListener('error', callback, {once: true});
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js';
-        script.onload = callback;
-        script.onerror = callback;
-        document.head.appendChild(script);
+        this._ensureChartJs(() => {
+            if (typeof window.Chart === 'undefined') {
+                callback();
+                return;
+            }
+            if (window.Chart.registry && window.Chart.registry.plugins && window.Chart.registry.plugins.get('zoom')) {
+                callback();
+                return;
+            }
+            if (!this._zoomPluginPromise) {
+                this._zoomPluginPromise = new Promise((resolve) => {
+                    const existing = document.querySelector('script[src*="chartjs-plugin-zoom"]');
+                    if (existing) {
+                        existing.addEventListener('load', () => resolve(), {once: true});
+                        existing.addEventListener('error', () => resolve(), {once: true});
+                    } else {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js';
+                        script.onload = () => resolve();
+                        script.onerror = () => resolve();
+                        document.head.appendChild(script);
+                    }
+                });
+            }
+            this._zoomPluginPromise.then(() => callback());
+        });
     },
 
     renderChart(containerEl, config) {
@@ -1542,16 +1574,7 @@ window.dashboardRenderer = {
             });
         };
 
-        if (typeof Chart === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
-            script.onload = () => {
-                this._ensureZoomPlugin(createChart);
-            };
-            document.head.appendChild(script);
-        } else {
-            this._ensureZoomPlugin(createChart);
-        }
+        this._ensureZoomPlugin(createChart);
     },
 
     _attachTooltipPin(chart, canvas, containerEl) {

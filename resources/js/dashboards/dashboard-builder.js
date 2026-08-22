@@ -149,8 +149,14 @@ export function dashboardBuilder(config = {}) {
         },
         widgetKpiConfig: {},
         widgetAssets: {},
-        widgetMetrics: {},
         searchQueries: {},
+        canScrollSeriesLeft: false,
+        canScrollSeriesRight: false,
+
+        // ─── Add Series Type Modal (Raw Metric vs Derived Metric) ──
+        showAddSeriesTypeModal: false,
+        addSeriesSourceType: 'metric',
+        addSeriesDerivedMetricId: '',
 
         // ─── Share ──
         showShareDialog: false,
@@ -728,22 +734,120 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
+        promptAddSeriesType() {
+            this.addSeriesSourceType = 'metric';
+            this.addSeriesDerivedMetricId = '';
+            this.showAddSeriesTypeModal = true;
+        },
+
+        confirmAddSeriesType() {
+            if (this.addSeriesSourceType === 'metric') {
+                this.addSeriesCard();
+                this.showAddSeriesTypeModal = false;
+            } else if (this.addSeriesSourceType === 'derived_metric') {
+                if (!this.addSeriesDerivedMetricId) return;
+                this.addDerivedMetricSeriesCards(this.addSeriesDerivedMetricId);
+                this.showAddSeriesTypeModal = false;
+            }
+        },
+
+        addDerivedMetricSeriesCards(dmId) {
+            const dm = (this.derivedMetrics || {})[dmId] || (this.derivedMetrics || {})[String(dmId)];
+            if (!dm) return;
+
+            const dmName = dm.name || ('DM #' + dmId);
+            const sourceSeries = Array.isArray(dm.source_series) ? dm.source_series : [];
+            const list = [...(this.widgetControlsForm.raw_series || [])];
+
+            if (sourceSeries.length === 0) {
+                list.push({
+                    type: 'derived_metric',
+                    dm_id: String(dmId),
+                    dm_name: dmName,
+                    channel: '',
+                    metrics: [],
+                    assets: []
+                });
+            } else {
+                sourceSeries.forEach((ss, idx) => {
+                    const ch = ss.channel || '';
+                    const metric = ss.metric || ss.metric_key || '';
+                    const seriesObj = {
+                        type: 'derived_metric',
+                        dm_id: String(dmId),
+                        dm_name: dmName,
+                        dm_series_index: idx,
+                        channel: ch,
+                        metrics: metric ? [metric] : [],
+                        assets: Array.isArray(ss.assets) ? [...ss.assets] : []
+                    };
+                    list.push(seriesObj);
+
+                    if (ch && !this.allChannelAssets[ch] && this.$wire) {
+                        this.$wire.getAssetsForChannel(ch).then(assets => {
+                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                        });
+                    }
+                    if (ch && !this.allChannelMetrics[ch] && this.$wire) {
+                        this.$wire.getMetricsForChannel(ch).then(metrics => {
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        });
+                    }
+                });
+            }
+
+            this.widgetControlsForm.raw_series = list;
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+                this.scrollSeriesByStep(1);
+            });
+        },
+
         addSeriesCard() {
-            this.widgetControlsForm.raw_series = this.widgetControlsForm.raw_series || [];
-            this.widgetControlsForm.raw_series.push({
+            const list = [...(this.widgetControlsForm.raw_series || [])];
+            list.push({
+                type: 'metric',
                 channel: this.dashboardControls.channel || '',
                 metrics: [],
                 assets: []
             });
+            this.widgetControlsForm.raw_series = list;
             if (this.dashboardControls.channel) {
                 this.onWidgetRawChannelChange(this.widgetControlsForm.raw_series.length - 1);
             }
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+                this.scrollSeriesByStep(1);
+            });
         },
 
         removeSeriesCard(index) {
             if (this.widgetControlsForm.raw_series && index >= 0) {
-                this.widgetControlsForm.raw_series.splice(index, 1);
+                const list = [...this.widgetControlsForm.raw_series];
+                list.splice(index, 1);
+                this.widgetControlsForm.raw_series = list;
+                this.$nextTick(() => {
+                    this.updateSeriesScrollState();
+                });
             }
+        },
+
+        updateSeriesScrollState() {
+            const el = this.$refs.seriesScrollContainer;
+            if (!el) return;
+            this.canScrollSeriesLeft = el.scrollLeft > 5;
+            this.canScrollSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
+        },
+
+        scrollSeriesByStep(direction = 1) {
+            const el = this.$refs.seriesScrollContainer;
+            if (!el) return;
+            const firstCard = el.querySelector('.snap-start');
+            const step = firstCard ? (firstCard.offsetWidth + 24) : ((el.clientWidth / 2) + 12);
+            el.scrollBy({ left: direction * step, behavior: 'smooth' });
+            setTimeout(() => {
+                this.updateSeriesScrollState();
+            }, 350);
         },
 
         // ─── Grid ──
@@ -1485,16 +1589,31 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.seriesScrollContainer;
+                        if (el) el.scrollLeft = 0;
+                        this.updateSeriesScrollState();
+                    });
                 }).catch(err => {
                     console.error('[dashboard-builder] getKpiConfiguration failed:', err);
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.seriesScrollContainer;
+                        if (el) el.scrollLeft = 0;
+                        this.updateSeriesScrollState();
+                    });
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
+                this.$nextTick(() => {
+                    const el = this.$refs.seriesScrollContainer;
+                    if (el) el.scrollLeft = 0;
+                    this.updateSeriesScrollState();
+                });
             }
         },
 

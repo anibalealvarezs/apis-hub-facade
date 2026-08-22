@@ -10,5 +10,10 @@
   "test",
   "demo",
   "gbs",
-  "analytics-dev"
+  "analytics-dev",
+  "connect",
+  "oauth",
+  "auth",
+  "login",
+  "logout"
 ]

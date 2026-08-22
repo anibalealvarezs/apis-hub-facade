@@ -316,12 +316,17 @@ class ManageCollaborators extends Page implements HasTable
                             ->email()
                             ->required()
                             ->label(__('Collaborator Email')),
-                        Select::make('role')
+                        \Filament\Forms\Components\ViewField::make('role')
                             ->label(__('Project Role'))
-                            ->options(
-                                Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])->pluck('name', 'name')
-                            )
-                            ->required(),
+                            ->required()
+                            ->default('project_user')
+                            ->view('filament.app.components.ui.form-asset-selector')
+                            ->viewData([
+                                'options' => Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])
+                                    ->pluck('name', 'name')
+                                    ->toArray(),
+                                'placeholder' => __('Select an option'),
+                            ]),
                     ])
                     ->action(function (array $data) use ($project) {
                         // 1. Verificar si ya es miembro

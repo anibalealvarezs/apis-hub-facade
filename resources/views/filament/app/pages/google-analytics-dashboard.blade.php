@@ -13,16 +13,9 @@
     })" x-init="initDashboard()">
         <div class="ga4-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="ga4-header-controls">
-                <button type="button" @click="forceRefresh()"
-                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
-                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isAnySectionLoading }"
-                        :disabled="isSummaryLoading || isChartLoading || isAnySectionLoading">
-                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
-                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isAnySectionLoading }"/>
-                    <span>{{ __('Update') }}</span>
-                </button>
+                <x-ui.export-pdf-button />
                 <div class="relative" x-data="uiDropdown()" @click.outside="open = false"
-                     @scroll.document.capture="recompute()" @resize.window="recompute()">
+                     @scroll.document.capture="onScroll($event)" @resize.window="recompute()">
                     <button @click="toggle()" type="button" x-ref="trigger"
 class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px] dash-select-wide">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
@@ -78,6 +71,14 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
                 <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
+                <button type="button" @click="forceRefresh()"
+                        class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
+                        :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isAnySectionLoading }"
+                        :disabled="isSummaryLoading || isChartLoading || isAnySectionLoading">
+                    <x-heroicon-o-arrow-path class="w-5 h-5 mr-2"
+                                             x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isAnySectionLoading }"/>
+                    <span>{{ __('Update') }}</span>
+                </button>
             </div>
         </div>
 

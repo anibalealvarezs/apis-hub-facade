@@ -14,6 +14,7 @@
         <div class="sticky-header-section py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="fb-header-row mb-3">
                 <div class="fb-header-controls">
+                    <x-ui.export-pdf-button />
                     <div class="flex items-center mr-4 gap-2">
                         <button type="button" 
                                 class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
@@ -26,6 +27,9 @@
                         </button>
                         <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" @click="showTrends = !showTrends; handleTrendToggle()">{{ __('Show Trends') }}</span>
                     </div>
+                    <x-ui.asset-selector model="accounts[0]" options="accountNames" placeholder="{{ __('Select Page...') }}" change-event="handleAccountChange()" size="sm" />
+                    <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
+                    <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
                     <button type="button" @click="forceRefresh()"
                             class="flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg px-4 py-2.5 transition duration-75 shadow-sm"
                             :class="{ 'opacity-50 cursor-not-allowed': isSummaryLoading || isChartLoading || isTableLoading }"
@@ -34,9 +38,6 @@
                                                  x-bind:class="{ 'animate-spin': isSummaryLoading || isChartLoading || isTableLoading }"/>
                         <span>{{ __('Update') }}</span>
                     </button>
-                    <x-ui.asset-selector model="accounts[0]" options="accountNames" placeholder="{{ __('Select Page...') }}" change-event="handleAccountChange()" size="sm" />
-                    <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
-                    <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
                 </div>
             </div>
 
