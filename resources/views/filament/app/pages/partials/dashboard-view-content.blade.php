@@ -524,7 +524,7 @@
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig && shouldShowSeries(vKey)">
                                     <div
-                                        class="flex-none w-full min-w-[280px] h-full min-h-0 flex flex-col snap-start"
+                                        class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
                                         :class="{
                                             'md:w-full': Object.keys(settingsVariables || {}).length === 1,
                                             'sm:w-[calc(50%-0.75rem)]': Object.keys(settingsVariables || {}).length >= 2
