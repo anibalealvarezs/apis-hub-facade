@@ -872,12 +872,14 @@
                             {{-- Series: Raw Metric --}}
                             <template
                                 x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                <template x-for="(series, index) in (widgetControlsForm.raw_series || [])" :key="index">
-                                    <div
-                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
-                                        :class="(widgetControlsForm.raw_series || []).length === 1
-                                            ? 'w-full min-w-full max-w-full'
-                                            : 'w-[calc(50%-0.75rem)] min-w-[calc(50%-0.75rem)] max-w-[calc(50%-0.75rem)]'">
+                                <div style="display: contents">
+                                    <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                        <div
+                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
+                                            :class="{
+                                         'md:w-full': widgetControlsForm.raw_series.length === 1,
+                                         'sm:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
+                                     }">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
@@ -1030,8 +1032,29 @@
                                                 </div>
                                             </div>
                                         </div>
+                                    </template>
+
+                                    {{-- Add Series Button Card --}}
+                                    <div
+                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] h-full min-h-0 flex flex-col snap-start">
+                                        <button
+                                            x-on:click="addSeriesCard()"
+                                            class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
+                                            <div
+                                                class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
+                                                <svg
+                                                    class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M12 4v16m8-8H4"></path>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
+                                        </button>
                                     </div>
-                                </template>
+                                </div>
                             </template>
 
                             {{-- Variables: Assets per variable (KPI) --}}
@@ -1287,16 +1310,19 @@
                             <template x-if="widgetControlsTarget.source_type === 'kpi'">
                                 <template x-if="widgetKpiConfig.independent_variables">
                                     <template x-for="(varCfg, idx) in widgetKpiConfig.independent_variables" :key="idx">
-                                        <template x-if="varCfg.independent_dm_id || varCfg.independent_channel">
-                                            <template x-if="varCfg.independent_dm_id">
-                                                <template
-                                                    x-for="(series, sIdx) in ((derivedMetrics[varCfg.independent_dm_id] && derivedMetrics[varCfg.independent_dm_id].source_series) || [])"
-                                                    :key="sIdx">
-                                                    <div
-                                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
-                                                        :class="Object.keys(widgetKpiConfig.independent_variables || {}).length === 1
-                                                            ? 'w-full min-w-full max-w-full'
-                                                            : 'w-[calc(50%-0.75rem)] min-w-[calc(50%-0.75rem)] max-w-[calc(50%-0.75rem)]'">
+                                        <template
+                                            x-if="varCfg.independent_dm_id || varCfg.independent_channel">
+                                            <div style="display: contents">
+                                                <template x-if="varCfg.independent_dm_id">
+                                                    <template
+                                                        x-for="(series, sIdx) in ((derivedMetrics[varCfg.independent_dm_id] && derivedMetrics[varCfg.independent_dm_id].source_series) || [])"
+                                                        :key="sIdx">
+                                                        <div
+                                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
+                                                            :class="{
+                                                         'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
+                                                         'sm:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
+                                                     }">
                                                             <div
                                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                                 <div
@@ -1403,10 +1429,11 @@
                                                 <template
                                                     x-if="varCfg.independent_channel && !varCfg.independent_dm_id && (!varCfg.independent_source_type || varCfg.independent_source_type !== 'derived_metric')">
                                                     <div
-                                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
-                                                        :class="Object.keys(widgetKpiConfig.independent_variables || {}).length === 1
-                                                            ? 'w-full min-w-full max-w-full'
-                                                            : 'w-[calc(50%-0.75rem)] min-w-[calc(50%-0.75rem)] max-w-[calc(50%-0.75rem)]'">
+                                                        class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
+                                                        :class="{
+                                                     'md:w-full': Object.keys(widgetKpiConfig.independent_variables || {}).length === 1,
+                                                     'sm:w-[calc(50%-0.75rem)]': Object.keys(widgetKpiConfig.independent_variables || {}).length >= 2
+                                                 }">
                                                         <div
                                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                             <div
@@ -1555,10 +1582,12 @@
                                                                             </div>
                                                                         </div>
                                                                     </div>
+                                                                </template>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </template>
+                                            </div>
                                         </template>
                                     </template>
                                 </template>
@@ -1569,10 +1598,11 @@
                                 <template x-for="(series, index) in (widgetControlsTarget.dmSourceSeries || [])"
                                           :key="index">
                                     <div
-                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
-                                        :class="(widgetControlsTarget.dmSourceSeries || []).length === 1
-                                            ? 'w-full min-w-full max-w-full'
-                                            : 'w-[calc(50%-0.75rem)] min-w-[calc(50%-0.75rem)] max-w-[calc(50%-0.75rem)]'">
+                                        class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
+                                        :class="{
+                                            'md:w-full': (widgetControlsTarget.dmSourceSeries || []).length === 1,
+                                            'sm:w-[calc(50%-0.75rem)]': (widgetControlsTarget.dmSourceSeries || []).length >= 2
+                                        }">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
@@ -1676,23 +1706,6 @@
                                         </div>
                                     </div>
                                 </template>
-                            </template>
-                            {{-- Fixed Vertical Add Series Bar (Raw Metric widgets only) --}}
-                            <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                <div class="flex-none sticky right-0 z-10 flex flex-col justify-center items-center py-1 self-stretch bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-xs pl-2">
-                                    <button
-                                        type="button"
-                                        x-on:click="addSeriesCard()"
-                                        :title="'{{ __('Add Series') }}'"
-                                        class="group h-full w-12 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all shadow-sm">
-                                        <div class="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 group-hover:text-white text-gray-500 dark:text-gray-400 flex items-center justify-center transition-all shadow-xs">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                                            </svg>
-                                        </div>
-                                        <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 [writing-mode:vertical-rl] tracking-widest uppercase select-none">{{ __('Add Series') }}</span>
-                                    </button>
-                                </div>
                             </template>
                         </div>
                     </div>
