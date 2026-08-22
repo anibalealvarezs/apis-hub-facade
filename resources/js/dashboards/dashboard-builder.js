@@ -1992,7 +1992,9 @@ export function dashboardBuilder(config = {}) {
                 payload.series_channels = {};
 
                 c.raw_series.forEach((s, sIdx) => {
-                    const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0) ? s.metrics : [''];
+                    const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
+                        ? s.metrics.filter(m => m !== '')
+                        : [];
 
                     metricsToSave.forEach(m => {
                         payload.metrics.push(m);

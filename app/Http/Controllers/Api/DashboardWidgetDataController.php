@@ -2403,8 +2403,22 @@ class DashboardWidgetDataController extends Controller
             return $constrain($asset);
         }
 
+        if ($seriesAssetFilter !== null) {
+            if (! empty($seriesAssetFilter)) {
+                $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
+                $filtered = array_values($filtered);
+
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+            }
+            // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel"
+        }
+
         $seriesAssets = $controls['series_assets'] ?? null;
-        if (is_array($seriesAssets) && ! empty($seriesAssets)) {
+        if ($seriesAssetFilter === null && is_array($seriesAssets) && ! empty($seriesAssets)) {
             $flat = [];
             array_walk_recursive($seriesAssets, function ($v) use (&$flat) {
                 if ($v !== null && $v !== '') {
@@ -2415,20 +2429,10 @@ class DashboardWidgetDataController extends Controller
             if (! empty($flat)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
                 $filtered = array_intersect($flat, $validForChannel);
-                if (empty($filtered)) {
-                    return '___EMPTY_GROUP___';
-                }
-                $filtered = array_values($filtered);
-
-                if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
-                    $filtered = array_intersect($filtered, $seriesAssetFilter);
-                    if (empty($filtered)) {
-                        return '___EMPTY_GROUP___';
-                    }
+                if (! empty($filtered)) {
                     $filtered = array_values($filtered);
+                    return $constrain($allowsMultiple ? $filtered : $filtered[0]);
                 }
-
-                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
             }
         }
 
