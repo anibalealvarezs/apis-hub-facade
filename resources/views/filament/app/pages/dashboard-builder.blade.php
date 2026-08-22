@@ -1845,12 +1845,14 @@
                     <template x-if="addSeriesSourceType === 'derived_metric'">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Select Derived Metric') }}</label>
-                            <x-ui.select-input x-model="addSeriesDerivedMetricId" class="w-full">
-                                <x-ui.select-option value="">{{ __('Choose a Derived Metric...') }}</x-ui.select-option>
+                            <select
+                                x-model="addSeriesDerivedMetricId"
+                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                <option value="">{{ __('Choose a Derived Metric...') }}</option>
                                 <template x-for="(dm, id) in derivedMetrics" :key="id">
-                                    <x-ui.select-option x-bind:value="id" x-text="dm.name"></x-ui.select-option>
+                                    <option :value="id" x-text="dm.name"></option>
                                 </template>
-                            </x-ui.select-input>
+                            </select>
                             <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">
                                 {{ __('All source series defined in the selected Derived Metric will be added with channels and metrics fixed.') }}
                             </p>
