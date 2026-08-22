@@ -176,7 +176,7 @@
 .ga4-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--ga4-border); background: var(--ga4-bg-active); }
 .ga4-pagination-text { font-size: 0.875rem; color: var(--ga4-text-dim); }
 .ga4-pagination-text strong { color: var(--ga4-text-main); font-weight: 700; }
-.ga4-pagination-select { background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); color: var(--ga4-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; }
+.ga4-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); color: var(--ga4-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 .ga4-pagination-btn { padding: 8px 16px; background: var(--ga4-bg-card); border: 1px solid var(--ga4-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--ga4-text-main); cursor: pointer; transition: background 0.2s; }
 .ga4-pagination-btn:hover:not(:disabled) { background: var(--ga4-bg-hover); }
 .ga4-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -321,7 +321,7 @@
 
 .gsc-pagination-text strong { color: var(--gsc-text-main); font-weight: 700; }
 
-.gsc-pagination-select { background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.gsc-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); color: var(--gsc-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .gsc-pagination-btn { padding: 8px 16px; background: var(--gsc-bg-card); border: 1px solid var(--gsc-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gsc-text-main); cursor: pointer; transition: background 0.2s; }
 
@@ -473,7 +473,7 @@
 
 .fb-marketing-page .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
 
-.fb-marketing-page .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.fb-marketing-page .fb-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .fb-marketing-page .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
 
@@ -625,7 +625,7 @@
 
 .fb-organic-page .fb-pagination-text strong { color: var(--fb-text-main); font-weight: 700; }
 
-.fb-organic-page .fb-pagination-select { background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; border-radius: 8px; padding: 8px 30px 8px 12px; outline: none; background-repeat: no-repeat; background-position: right; background-size: 32px; }
+.fb-organic-page .fb-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--fb-bg-card); border: 1px solid var(--fb-border); color: var(--fb-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
 
 .fb-organic-page .fb-pagination-btn { padding: 8px 16px; background: var(--fb-bg-card); border: 1px solid var(--fb-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--fb-text-main); cursor: pointer; transition: background 0.2s; }
 
