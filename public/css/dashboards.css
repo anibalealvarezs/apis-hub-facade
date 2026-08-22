@@ -837,41 +837,87 @@
 .dark .joint-page select option { background-color: #1f2937; color: #f9fafb; }
 
 @media print {
-    .fi-sidebar, .fi-topbar, .fi-header, .fi-page-header, .export-btn, .joint-header-row, .joint-header-controls {
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-header,
+    .fi-page-header,
+    .fi-breadcrumbs,
+    .fi-user-menu,
+    .fi-tenant-menu,
+    .fi-topbar-end,
+    .fi-topbar-item,
+    .fi-notifications,
+    .joint-header-row,
+    .export-btn,
+    .joint-header-controls {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }
-    html, body, .fi-layout, .fi-main, .fi-main-content, .fi-page {
+
+    html,
+    body,
+    .fi-layout,
+    .fi-main,
+    .fi-main-content,
+    .fi-page,
+    .fi-page-content,
+    #joint-dashboard-container,
+    .joint-page {
+        display: block !important;
         height: auto !important;
-        min-height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
         overflow: visible !important;
         position: static !important;
         padding: 0 !important;
         margin: 0 !important;
-    }
-    .fi-main {
         width: 100% !important;
         max-width: 100% !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        border: none !important;
     }
+
     .joint-card {
+        display: block !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
         page-break-inside: auto !important;
         break-inside: auto !important;
-        page-break-before: auto !important;
-        break-before: auto !important;
         box-shadow: none !important;
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        background: transparent !important;
     }
+
     .joint-playbook-grid {
         display: grid !important;
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 0.75rem !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
     }
-    .chart-container-joint, .mt-16, .joint-form-grid {
-        page-break-inside: avoid;
-        break-inside: avoid;
+
+    .joint-playbook-grid button {
+        display: block !important;
+        width: 100% !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
-    body { background: white !important; }
+
+    .chart-container-joint,
+    .joint-form-grid,
+    .joint-results-grid {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
 }
 
 /* FB Organic Post Modal — sticky-bar overlap + dimming fixes (2026-08-06) */

@@ -39,7 +39,7 @@
                     {{ __('Select a predefined marketing theory scenario to auto-configure the dashboard. You will only need to select your specific assets.') }}
                 </p>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 joint-playbook-grid">
+                <div class="grid grid-cols-2 gap-4 joint-playbook-grid">
                     <template x-for="play in getAvailablePlays()" :key="play.id">
                         <button type="button" @click="applyPlay(play)"
                                 class="text-left px-4 py-3 rounded-xl border transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
