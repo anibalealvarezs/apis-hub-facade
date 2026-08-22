@@ -756,10 +756,12 @@ export function dashboardBuilder(config = {}) {
             if (!dm) return;
 
             const dmName = dm.name || ('DM #' + dmId);
-            const sourceSeries = Array.isArray(dm.source_series) ? dm.source_series : [];
+            const rawSourceSeries = Array.isArray(dm.source_series)
+                ? dm.source_series
+                : (typeof dm.source_series === 'object' && dm.source_series !== null ? Object.values(dm.source_series) : []);
             const list = [...(this.widgetControlsForm.raw_series || [])];
 
-            if (sourceSeries.length === 0) {
+            if (rawSourceSeries.length === 0) {
                 list.push({
                     type: 'derived_metric',
                     dm_id: String(dmId),
@@ -769,14 +771,15 @@ export function dashboardBuilder(config = {}) {
                     assets: []
                 });
             } else {
-                sourceSeries.forEach((ss, idx) => {
+                rawSourceSeries.forEach((ss, idx) => {
                     const ch = ss.channel || '';
-                    const metric = ss.metric || ss.metric_key || '';
+                    const metric = ss.metric || ss.metric_key || ss.metric_name || '';
                     const seriesObj = {
                         type: 'derived_metric',
                         dm_id: String(dmId),
                         dm_name: dmName,
                         dm_series_index: idx,
+                        label: ss.label || '',
                         channel: ch,
                         metrics: metric ? [metric] : [],
                         assets: Array.isArray(ss.assets) ? [...ss.assets] : []
