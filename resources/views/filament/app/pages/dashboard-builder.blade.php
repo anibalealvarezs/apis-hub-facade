@@ -1726,18 +1726,18 @@
 
                         {{-- Fixed Vertical Add Series Bar (Raw Metric widgets only, outside scrollable container) --}}
                         <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                            <div class="flex-none flex flex-col justify-center items-center py-1 self-stretch">
+                            <div class="flex-none flex flex-col justify-center items-center py-2 self-stretch pl-1">
                                 <button
                                     type="button"
                                     x-on:click="addSeriesCard()"
                                     :title="'{{ __('Add Series') }}'"
-                                    class="group h-full w-12 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all shadow-sm">
-                                    <div class="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 group-hover:text-white text-gray-500 dark:text-gray-400 flex items-center justify-center transition-all shadow-xs">
+                                    class="group h-full w-14 flex flex-col items-center justify-center gap-4 py-6 px-2 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-white/60 dark:bg-gray-800/40 hover:bg-primary-50/70 dark:hover:bg-primary-950/40 transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer">
+                                    <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 text-gray-500 dark:text-gray-400 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs group-hover:scale-110">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                         </svg>
                                     </div>
-                                    <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 [writing-mode:vertical-rl] tracking-widest uppercase select-none">{{ __('Add Series') }}</span>
+                                    <span class="text-[11px] font-bold text-gray-400 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 tracking-wider uppercase select-none transition-colors duration-200 [writing-mode:vertical-rl] rotate-180">{{ __('Add Series') }}</span>
                                 </button>
                             </div>
                         </template>
