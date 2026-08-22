@@ -837,10 +837,10 @@
 .dark .joint-page select option { background-color: #1f2937; color: #f9fafb; }
 
 @media print {
-    .fi-sidebar, .fi-topbar, .fi-header, .export-btn, .joint-header-controls {
+    .fi-sidebar, .fi-topbar, .fi-header, .fi-page-header, .export-btn, .joint-header-row, .joint-header-controls {
         display: none !important;
     }
-    html, body, .fi-layout, .fi-main, .fi-main-content {
+    html, body, .fi-layout, .fi-main, .fi-main-content, .fi-page {
         height: auto !important;
         min-height: auto !important;
         overflow: visible !important;
@@ -852,8 +852,24 @@
         width: 100% !important;
         max-width: 100% !important;
     }
-    .joint-card, .chart-container-joint, .mt-16 {
+    .joint-card {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .joint-playbook-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+    }
+    .chart-container-joint, .mt-16, .joint-form-grid {
         page-break-inside: avoid;
+        break-inside: avoid;
     }
     body { background: white !important; }
 }
