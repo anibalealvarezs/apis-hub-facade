@@ -1003,15 +1003,11 @@
                                             \Filament\Forms\Components\TextInput::make('string')->required()
                                         )
                                         ->defaultItems(2),
-                                    \Filament\Forms\Components\Select::make('target')
+                                    \Filament\Forms\Components\ViewField::make('target')
                                         ->label(__('Target Filter'))
-                                        ->options([
-                                            'CAMPAIGN' => __('Campaign Filter'),
-                                            'ADSET'    => __('Adset Filter'),
-                                            'AD'       => __('Ad Filter'),
-                                        ])
                                         ->required()
-                                        ->default('CAMPAIGN'),
+                                        ->default('CAMPAIGN')
+                                        ->view('filament.app.components.data-sources.regex-target-selector'),
                                 ])
                                 ->action(function (array $data, \Filament\Forms\Set $set) {
                                     $strings = $data['strings'] ?? [];
