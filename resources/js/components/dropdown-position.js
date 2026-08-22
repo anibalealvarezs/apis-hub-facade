@@ -1,4 +1,8 @@
 export function measurePanel(panel) {
+    if (!panel) return 320;
+    if (panel.offsetHeight > 0) {
+        return panel.offsetHeight;
+    }
     const style = panel.style;
     const prev = {
         display: style.display,
@@ -38,6 +42,13 @@ export function dropdownFlipBehavior() {
             if (!trigger || trigger.disabled || trigger.hasAttribute('disabled')) return;
             this.open = !this.open;
             if (this.open) this.recompute(true);
+        },
+        onScroll(event) {
+            if (!this.open) return;
+            if (event && this.$refs.panel && (this.$refs.panel === event.target || this.$refs.panel.contains(event.target))) {
+                return;
+            }
+            this.recompute();
         },
         recompute(immediate = false) {
             if (!this.open) return;

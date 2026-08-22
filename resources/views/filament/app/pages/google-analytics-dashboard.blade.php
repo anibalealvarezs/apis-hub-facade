@@ -22,7 +22,7 @@
                     <span>{{ __('Update') }}</span>
                 </button>
                 <div class="relative" x-data="uiDropdown()" @click.outside="open = false"
-                     @scroll.document.capture="recompute()" @resize.window="recompute()">
+                     @scroll.document.capture="onScroll($event)" @resize.window="recompute()">
                     <button @click="toggle()" type="button" x-ref="trigger"
 class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between w-full px-4 py-2.5 h-[42px] dash-select-wide">
                         <span class="truncate font-medium text-gray-700 dark:text-gray-200"
