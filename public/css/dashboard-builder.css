@@ -580,12 +580,19 @@ body.pv-page .dvc-controls-bar {
     margin-right: 0.75rem !important;
 }
 
+/* Series Card Sizing (2 columns desktop / horizontal scroll) */
+.bd-series-card {
+    width: calc(50% - 0.75rem) !important;
+    min-width: calc(50% - 0.75rem) !important;
+    max-width: calc(50% - 0.75rem) !important;
+}
+
 /* Add Series Vertical Button */
 .bd-add-series-btn {
     width: 3.5rem !important;
     padding: 1rem 0.5rem !important;
     background-color: rgba(255, 255, 255, 0.7) !important;
-    border: 2px dashed #D1D5DB !important;
+    border: 2px dashed #9CA3AF !important;
     border-radius: 0.75rem !important;
     display: flex !important;
     flex-direction: column !important;
@@ -599,21 +606,20 @@ body.pv-page .dvc-controls-bar {
 .bd-add-series-btn:hover {
     border-color: #3B82F6 !important;
     background-color: #EFF6FF !important;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15), 0 2px 4px -2px rgba(59, 130, 246, 0.1) !important;
-    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25) !important;
 }
 
 .bd-add-series-btn .bd-add-icon-circle {
     width: 2.25rem !important;
     height: 2.25rem !important;
     border-radius: 9999px !important;
-    background-color: #F3F4F6 !important;
-    border: 1px solid #E5E7EB !important;
-    color: #6B7280 !important;
+    background-color: #E5E7EB !important;
+    border: 1px solid #D1D5DB !important;
+    color: #4B5563 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .bd-add-series-btn:hover .bd-add-icon-circle {
@@ -625,13 +631,13 @@ body.pv-page .dvc-controls-bar {
 
 .dark .bd-add-series-btn {
     background-color: rgba(31, 41, 55, 0.6) !important;
-    border-color: #374151 !important;
+    border-color: #4B5563 !important;
 }
 
 .dark .bd-add-series-btn:hover {
     border-color: #60A5FA !important;
-    background-color: rgba(30, 58, 138, 0.35) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(30, 58, 138, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2) !important;
 }
 
 .dark .bd-add-series-btn .bd-add-icon-circle {

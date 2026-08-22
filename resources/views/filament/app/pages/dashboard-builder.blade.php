@@ -1,64 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
-
-    <style>
-        .bd-add-series-btn {
-            width: 3.5rem !important;
-            padding: 1rem 0.5rem !important;
-            border-radius: 0.75rem !important;
-            border: 2px dashed #9CA3AF !important;
-            background-color: rgba(255, 255, 255, 0.7) !important;
-            cursor: pointer !important;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .bd-add-series-btn:hover {
-            border-color: #3B82F6 !important;
-            background-color: #EFF6FF !important;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25) !important;
-        }
-        .bd-add-series-btn .bd-add-icon-circle {
-            width: 2.25rem !important;
-            height: 2.25rem !important;
-            border-radius: 9999px !important;
-            background-color: #E5E7EB !important;
-            border: 1px solid #D1D5DB !important;
-            color: #4B5563 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        .bd-add-series-btn:hover .bd-add-icon-circle {
-            background-color: #3B82F6 !important;
-            border-color: #3B82F6 !important;
-            color: #FFFFFF !important;
-            transform: scale(1.15) !important;
-        }
-        .dark .bd-add-series-btn {
-            border-color: #4B5563 !important;
-            background-color: rgba(31, 41, 55, 0.6) !important;
-        }
-        .dark .bd-add-series-btn:hover {
-            border-color: #60A5FA !important;
-            background-color: rgba(30, 58, 138, 0.4) !important;
-            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2) !important;
-        }
-        .dark .bd-add-series-btn .bd-add-icon-circle {
-            background-color: #374151 !important;
-            border-color: #4B5563 !important;
-            color: #9CA3AF !important;
-        }
-        .dark .bd-add-series-btn:hover .bd-add-icon-circle {
-            background-color: #3B82F6 !important;
-            border-color: #3B82F6 !important;
-            color: #FFFFFF !important;
-            transform: scale(1.15) !important;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}"/>
 
     <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
@@ -973,8 +914,7 @@
                                 <div style="display: contents">
                                     <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                         <div
-                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start"
-                                            style="width: calc(50% - 0.75rem); min-width: calc(50% - 0.75rem); max-width: calc(50% - 0.75rem);">
+                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start bd-series-card">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
