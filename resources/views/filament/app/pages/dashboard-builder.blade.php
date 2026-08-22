@@ -866,7 +866,7 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
-                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
+                            class="flex-1 min-w-0 min-h-0 flex flex-row overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
 
                             {{-- Series: Raw Metric --}}
@@ -875,7 +875,8 @@
                                 <div style="display: contents">
                                     <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                         <div
-                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start w-full sm:w-[calc(50%-0.75rem)] sm:min-w-[calc(50%-0.75rem)] sm:max-w-[calc(50%-0.75rem)]">
+                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start w-full sm:w-[calc(50%-0.75rem)]"
+                                            style="min-width: calc(50% - 0.75rem); max-width: calc(50% - 0.75rem);">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
