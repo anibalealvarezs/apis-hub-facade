@@ -1790,7 +1790,7 @@
         {{-- ============================================================ --}}
         {{-- ADD SERIES TYPE MODAL (Raw Metric vs Derived Metric)        --}}
         {{-- ============================================================ --}}
-        <div x-show="showAddSeriesTypeModal" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center">
+        <div x-show="showAddSeriesTypeModal" x-cloak class="fixed inset-0 z-[150] flex items-center justify-center">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-xs" x-on:click="showAddSeriesTypeModal = false"></div>
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 flex flex-col gap-5 border border-gray-200 dark:border-gray-800">
