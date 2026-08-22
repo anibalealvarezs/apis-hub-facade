@@ -478,6 +478,64 @@
     color: #fbbf24;
 }
 
+/* ---------- FB Organic First Time Warning Modal ---------- */
+.fb-warning-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 1rem;
+}
+
+.fb-warning-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 42rem;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(229, 231, 235, 1);
+}
+
+.dark .fb-warning-modal-dialog {
+    background-color: #1f2937;
+    border-color: rgba(55, 65, 81, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.fb-warning-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.fb-warning-modal-close:hover {
+    color: #4b5563;
+    background-color: #f3f4f6;
+}
+
+.dark .fb-warning-modal-close:hover {
+    color: #e5e7eb;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
 .fb-rl-warning-box,
 .fb-modal-rl-warning-box {
     background-color: #eff6ff;
