@@ -153,6 +153,11 @@ export function dashboardBuilder(config = {}) {
         canScrollSeriesLeft: false,
         canScrollSeriesRight: false,
 
+        // ─── Add Series Type Modal (Raw Metric vs Derived Metric) ──
+        showAddSeriesTypeModal: false,
+        addSeriesSourceType: 'metric',
+        addSeriesDerivedMetricId: '',
+
         // ─── Share ──
         showShareDialog: false,
         isPublic: config.isPublic || false,
@@ -729,9 +734,79 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
+        promptAddSeriesType() {
+            this.addSeriesSourceType = 'metric';
+            this.addSeriesDerivedMetricId = '';
+            this.showAddSeriesTypeModal = true;
+        },
+
+        confirmAddSeriesType() {
+            if (this.addSeriesSourceType === 'metric') {
+                this.addSeriesCard();
+                this.showAddSeriesTypeModal = false;
+            } else if (this.addSeriesSourceType === 'derived_metric') {
+                if (!this.addSeriesDerivedMetricId) return;
+                this.addDerivedMetricSeriesCards(this.addSeriesDerivedMetricId);
+                this.showAddSeriesTypeModal = false;
+            }
+        },
+
+        addDerivedMetricSeriesCards(dmId) {
+            const dm = (this.derivedMetrics || {})[dmId] || (this.derivedMetrics || {})[String(dmId)];
+            if (!dm) return;
+
+            const dmName = dm.name || ('DM #' + dmId);
+            const sourceSeries = Array.isArray(dm.source_series) ? dm.source_series : [];
+            const list = [...(this.widgetControlsForm.raw_series || [])];
+
+            if (sourceSeries.length === 0) {
+                list.push({
+                    type: 'derived_metric',
+                    dm_id: String(dmId),
+                    dm_name: dmName,
+                    channel: '',
+                    metrics: [],
+                    assets: []
+                });
+            } else {
+                sourceSeries.forEach((ss, idx) => {
+                    const ch = ss.channel || '';
+                    const metric = ss.metric || ss.metric_key || '';
+                    const seriesObj = {
+                        type: 'derived_metric',
+                        dm_id: String(dmId),
+                        dm_name: dmName,
+                        dm_series_index: idx,
+                        channel: ch,
+                        metrics: metric ? [metric] : [],
+                        assets: Array.isArray(ss.assets) ? [...ss.assets] : []
+                    };
+                    list.push(seriesObj);
+
+                    if (ch && !this.allChannelAssets[ch] && this.$wire) {
+                        this.$wire.getAssetsForChannel(ch).then(assets => {
+                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                        });
+                    }
+                    if (ch && !this.allChannelMetrics[ch] && this.$wire) {
+                        this.$wire.getMetricsForChannel(ch).then(metrics => {
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        });
+                    }
+                });
+            }
+
+            this.widgetControlsForm.raw_series = list;
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+                this.scrollSeriesByStep(1);
+            });
+        },
+
         addSeriesCard() {
             const list = [...(this.widgetControlsForm.raw_series || [])];
             list.push({
+                type: 'metric',
                 channel: this.dashboardControls.channel || '',
                 metrics: [],
                 assets: []
