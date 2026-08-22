@@ -43,12 +43,7 @@ class JointDashboard extends Page
     public array $curveA = ['channel' => '', 'asset' => '', 'metric' => ''];
     public array $curveB = ['channel' => '', 'asset' => '', 'metric' => ''];
 
-    public array $channels = [
-        'facebook_marketing' => 'Meta Ads',
-        'facebook_organic' => 'FB & IG Organic',
-        'google_search_console' => 'Google Search Console',
-        'google_analytics' => 'Google Analytics',
-    ];
+    public array $channels = [];
 
     public array $metricsDict = [
         'facebook_marketing' => [
@@ -130,10 +125,23 @@ class JointDashboard extends Page
         $this->dateEnd = Carbon::now()->subDays(1)->format('Y-m-d');
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
 
-        $this->availableAccounts['facebook_marketing'] = $this->fetchAccounts('facebook_marketing');
-        $this->availableAccounts['facebook_organic'] = $this->fetchAccounts('facebook_organic');
-        $this->availableAccounts['google_search_console'] = $this->fetchAccounts('google_search_console');
-        $this->availableAccounts['google_analytics'] = $this->fetchAccounts('google_analytics');
+        $tenant = Filament::getTenant();
+        $syncConfig = $tenant?->sync_config ?? [];
+
+        $allChannels = [
+            'facebook_marketing' => 'Meta Ads',
+            'facebook_organic' => 'FB & IG Organic',
+            'google_search_console' => 'Google Search Console',
+            'google_analytics' => 'Google Analytics',
+        ];
+
+        $this->channels = [];
+        foreach ($allChannels as $channelKey => $channelLabel) {
+            if (!empty($syncConfig[$channelKey]['enabled'])) {
+                $this->channels[$channelKey] = $channelLabel;
+                $this->availableAccounts[$channelKey] = $this->fetchAccounts($channelKey);
+            }
+        }
     }
 
     public function fetchAccounts(string $channel)
