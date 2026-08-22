@@ -699,8 +699,15 @@ input[type="datetime-local"] {
     .fi-topbar-item,
     .fi-notifications,
     .joint-header-row,
-    .export-btn,
-    .joint-header-controls {
+    .joint-header-controls,
+    .gsc-header-row,
+    .gsc-header-controls,
+    .ga4-header-row,
+    .ga4-header-controls,
+    .fb-header-row,
+    .fb-header-controls,
+    .sticky-header-section,
+    .export-btn {
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
@@ -718,7 +725,10 @@ input[type="datetime-local"] {
     .fi-page,
     .fi-page-content,
     #joint-dashboard-container,
-    .joint-page {
+    .joint-page,
+    .gsc-page,
+    .ga4-page,
+    .fb-page {
         display: block !important;
         height: auto !important;
         min-height: 0 !important;
