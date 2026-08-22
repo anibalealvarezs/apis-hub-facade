@@ -1731,9 +1731,9 @@
                                     type="button"
                                     x-on:click="addSeriesCard()"
                                     :title="'{{ __('Add Series') }}'"
-                                    class="group h-full w-14 flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 bg-white/70 dark:bg-gray-800/60 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
+                                    class="group h-full w-14 flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white/70 dark:bg-gray-800/60 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer select-none"
                                     style="width: 3.5rem; min-height: 100px;">
-                                    <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 text-gray-500 dark:text-gray-300 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs group-hover:scale-110">
+                                    <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-blue-600 group-hover:border-blue-600 text-gray-500 dark:text-gray-300 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs group-hover:scale-110">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                         </svg>
