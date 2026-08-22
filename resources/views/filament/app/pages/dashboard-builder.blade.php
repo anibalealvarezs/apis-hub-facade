@@ -876,9 +876,9 @@
                                     <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                         <div
                                             class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
-                                            :class="widgetControlsForm.raw_series.length === 1
+                                            :class="(widgetControlsForm.raw_series || []).length === 1
                                                 ? 'w-full'
-                                                : 'w-full sm:w-[calc(50%-0.75rem)]'">
+                                                : 'w-full sm:w-[calc(50%-0.75rem)] sm:min-w-[calc(50%-0.75rem)] sm:max-w-[calc(50%-0.75rem)]'">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div

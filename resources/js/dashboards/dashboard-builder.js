@@ -729,12 +729,13 @@ export function dashboardBuilder(config = {}) {
         },
 
         addSeriesCard() {
-            this.widgetControlsForm.raw_series = this.widgetControlsForm.raw_series || [];
-            this.widgetControlsForm.raw_series.push({
+            const list = [...(this.widgetControlsForm.raw_series || [])];
+            list.push({
                 channel: this.dashboardControls.channel || '',
                 metrics: [],
                 assets: []
             });
+            this.widgetControlsForm.raw_series = list;
             if (this.dashboardControls.channel) {
                 this.onWidgetRawChannelChange(this.widgetControlsForm.raw_series.length - 1);
             }
@@ -742,7 +743,9 @@ export function dashboardBuilder(config = {}) {
 
         removeSeriesCard(index) {
             if (this.widgetControlsForm.raw_series && index >= 0) {
-                this.widgetControlsForm.raw_series.splice(index, 1);
+                const list = [...this.widgetControlsForm.raw_series];
+                list.splice(index, 1);
+                this.widgetControlsForm.raw_series = list;
             }
         },
 
