@@ -505,13 +505,17 @@
 .dark .fb-modal-rl-warning-subtext {
     color: #bfdbfe;
 }
-.fb-rl-warning-icon,
-.fb-modal-rl-warning-icon {
-    color: #2563eb;
-}
-.dark .fb-rl-warning-icon,
-.dark .fb-modal-rl-warning-icon {
-    color: #60a5fa;
+/* ---------- Time/Date input clock & calendar cursor pointer ---------- */
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit,
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"] {
+    cursor: pointer !important;
 }
 
 
