@@ -577,6 +577,69 @@ body.pv-page .dvc-controls-bar {
     left: auto !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    margin-right: 0.75rem !important;
+/* Add Series Vertical Button */
+.bd-add-series-btn {
+    width: 3.5rem !important;
+    padding: 1rem 0.5rem !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    border: 2px dashed #D1D5DB !important;
+    border-radius: 0.75rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
+.bd-add-series-btn:hover {
+    border-color: #3B82F6 !important;
+    background-color: #EFF6FF !important;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15), 0 2px 4px -2px rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+.bd-add-series-btn .bd-add-icon-circle {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 9999px !important;
+    background-color: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+    color: #6B7280 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.bd-add-series-btn:hover .bd-add-icon-circle {
+    background-color: #3B82F6 !important;
+    border-color: #3B82F6 !important;
+    color: #FFFFFF !important;
+    transform: scale(1.15) !important;
+}
+
+.dark .bd-add-series-btn {
+    background-color: rgba(31, 41, 55, 0.6) !important;
+    border-color: #374151 !important;
+}
+
+.dark .bd-add-series-btn:hover {
+    border-color: #60A5FA !important;
+    background-color: rgba(30, 58, 138, 0.35) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .bd-add-series-btn .bd-add-icon-circle {
+    background-color: #374151 !important;
+    border-color: #4B5563 !important;
+    color: #9CA3AF !important;
+}
+
+.dark .bd-add-series-btn:hover .bd-add-icon-circle {
+    background-color: #3B82F6 !important;
+    border-color: #3B82F6 !important;
+    color: #FFFFFF !important;
+    transform: scale(1.15) !important;
+}

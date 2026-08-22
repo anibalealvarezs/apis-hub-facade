@@ -1726,13 +1726,13 @@
 
                         {{-- Fixed Vertical Add Series Bar (Raw Metric widgets only, outside scrollable container) --}}
                         <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                            <div class="flex-none flex flex-col justify-center items-center py-1 self-stretch pl-1">
+                            <div class="flex-none flex flex-col justify-center items-center py-2 self-stretch pl-2">
                                 <button
                                     type="button"
                                     x-on:click="addSeriesCard()"
                                     :title="'{{ __('Add Series') }}'"
-                                    class="group h-full w-12 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 bg-white/70 dark:bg-gray-800/50 hover:bg-primary-50 dark:hover:bg-primary-950/50 transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer">
-                                    <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 text-gray-500 dark:text-gray-300 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-xs group-hover:scale-115">
+                                    class="group h-full bd-add-series-btn">
+                                    <div class="bd-add-icon-circle">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                         </svg>
