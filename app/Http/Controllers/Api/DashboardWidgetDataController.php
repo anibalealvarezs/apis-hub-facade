@@ -2068,7 +2068,7 @@ class DashboardWidgetDataController extends Controller
                 ];
             } else {
                 $channel = $series['channel'] ?? '';
-                $metrics = $series['metrics'] ?? [];
+                $metrics = $controls['series_metrics'][$sIdx] ?? $series['metrics'] ?? [];
                 if (empty($channel) || empty($metrics)) {
                     continue;
                 }

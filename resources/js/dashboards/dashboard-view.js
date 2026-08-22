@@ -334,6 +334,18 @@ export function dashboardView(config = {}) {
                     };
                 }
             }
+            if (!this.settingsControls.series_metrics) {
+                this.settingsControls.series_metrics = {};
+            }
+            if (this.settingsControls.raw_series && Array.isArray(this.settingsControls.raw_series)) {
+                this.settingsControls.raw_series.forEach((s, idx) => {
+                    const k = String(idx);
+                    if (!this.settingsControls.series_metrics[k]) {
+                        this.settingsControls.series_metrics[k] = Array.isArray(s.metrics) ? [...s.metrics] : [];
+                    }
+                });
+            }
+
             this.settingsGranularityOnTheGo = granularityOnTheGo;
             this.settingsSourceType = sourceType || '';
             this.openSettings = true;
@@ -369,6 +381,7 @@ export function dashboardView(config = {}) {
                 date_end: '',
                 granularity: '',
                 metrics: [],
+                series_metrics: {},
                 series_assets: {}
             };
             this.settingsControls = {
@@ -378,6 +391,7 @@ export function dashboardView(config = {}) {
                 date_end: '',
                 granularity: '',
                 metrics: [],
+                series_metrics: {},
                 series_assets: {}
             };
             this.settingsVariables = {};
@@ -387,6 +401,21 @@ export function dashboardView(config = {}) {
         saveSettings() {
             const widgetId = this.settingsWidgetId;
             const controls = this.settingsControls;
+
+            // Sync flat metrics list and raw_series from series_metrics if present
+            if (controls.series_metrics && typeof controls.series_metrics === 'object') {
+                const flat = [];
+                for (const sKey in controls.series_metrics) {
+                    const sm = controls.series_metrics[sKey];
+                    if (Array.isArray(sm)) {
+                        flat.push(...sm);
+                        if (controls.raw_series && controls.raw_series[parseInt(sKey)]) {
+                            controls.raw_series[parseInt(sKey)].metrics = [...sm];
+                        }
+                    }
+                }
+                controls.metrics = Array.from(new Set(flat));
+            }
 
             let dateAdjusted = false;
             let minStart = this.settingsBuilderControls.date_start || this.dashboardDefaults.date_start || '';
@@ -430,6 +459,29 @@ export function dashboardView(config = {}) {
                 });
             }
             this.closeSettings();
+        },
+
+        settingsIsMetricSelected(seriesKey, metricKey) {
+            if (!this.settingsControls.series_metrics) return false;
+            const current = this.settingsControls.series_metrics[seriesKey] || [];
+            return current.includes(metricKey);
+        },
+
+        settingsToggleMetric(seriesKey, metricKey) {
+            if (!this.settingsControls.series_metrics) {
+                this.settingsControls.series_metrics = {};
+            }
+            const current = this.settingsControls.series_metrics[seriesKey] || [];
+            let next;
+            if (current.includes(metricKey)) {
+                next = current.filter(m => m !== metricKey);
+            } else {
+                next = [...current, metricKey];
+            }
+            this.settingsControls.series_metrics = {
+                ...this.settingsControls.series_metrics,
+                [seriesKey]: next
+            };
         },
 
         settingsToggleAsset(seriesKey, assetId) {
@@ -688,6 +740,15 @@ export function widgetHeader() {
                 this.controls.metrics = Object.values(this.controls.metrics);
             }
             if (!this.controls.series_assets) this.controls.series_assets = {};
+            if (!this.controls.series_metrics) this.controls.series_metrics = {};
+            if (this.controls.raw_series && Array.isArray(this.controls.raw_series)) {
+                this.controls.raw_series.forEach((s, idx) => {
+                    const k = String(idx);
+                    if (!this.controls.series_metrics[k]) {
+                        this.controls.series_metrics[k] = Array.isArray(s.metrics) ? [...s.metrics] : [];
+                    }
+                });
+            }
             if (this.sourceType === 'kpi') {
                 const varCount = Object.keys(this.variables).length;
                 while (this.controls.metrics.length < varCount) {

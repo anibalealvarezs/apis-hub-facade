@@ -661,26 +661,61 @@ trait LoadsDashboardViewData
                 }
             }
 
-            if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
-                $resolved['metrics'] = [];
+            if (!isset($resolved['series_metrics']) || !is_array($resolved['series_metrics'])) {
+                $resolved['series_metrics'] = [];
             }
 
             if ($widgetArray['source_type'] !== 'kpi' && $widgetArray['source_type'] !== 'derived_metric') {
-                // For raw metric widgets, ensure metrics are valid for the active series channel(s)
-                $allValidMetrics = [];
-                foreach ($variables as $vKey => $vConfig) {
-                    if (!empty($vConfig['metrics']) && is_array($vConfig['metrics'])) {
-                        $allValidMetrics = array_merge($allValidMetrics, array_keys($vConfig['metrics']));
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    // Populate series_metrics from raw_series or resolved series_metrics
+                    foreach ($resolved['raw_series'] as $sIdx => &$s) {
+                        $sKey = (string)$sIdx;
+                        $varMetrics = $variables[$sKey]['metrics'] ?? [];
+                        $validKeys = !empty($varMetrics) ? array_keys($varMetrics) : [];
+
+                        $sMetrics = $resolved['series_metrics'][$sKey] ?? $s['metrics'] ?? [];
+                        if (!is_array($sMetrics)) {
+                            $sMetrics = !empty($sMetrics) ? [$sMetrics] : [];
+                        }
+
+                        if (!empty($validKeys)) {
+                            $sMetrics = array_values(array_intersect($sMetrics, $validKeys));
+                            if (empty($sMetrics)) {
+                                $sMetrics = [reset($validKeys)];
+                            }
+                        }
+
+                        $resolved['series_metrics'][$sKey] = $sMetrics;
+                        $s['metrics'] = $sMetrics;
                     }
-                }
-                if (!empty($allValidMetrics)) {
-                    $resolved['metrics'] = array_values(array_intersect($resolved['metrics'], $allValidMetrics));
-                }
-                if (empty($resolved['metrics']) && !empty($variables)) {
-                    $firstVar = reset($variables);
-                    if (!empty($firstVar['metrics'])) {
-                        $resolved['metrics'] = [array_key_first($firstVar['metrics'])];
+                    unset($s);
+
+                    // Sync flat metrics list from all series
+                    $flatMetrics = [];
+                    foreach ($resolved['series_metrics'] as $sm) {
+                        if (is_array($sm)) {
+                            $flatMetrics = array_merge($flatMetrics, $sm);
+                        }
                     }
+                    $resolved['metrics'] = array_values(array_unique($flatMetrics));
+                } else {
+                    // Single series fallback
+                    $allValidMetrics = [];
+                    foreach ($variables as $vKey => $vConfig) {
+                        if (!empty($vConfig['metrics']) && is_array($vConfig['metrics'])) {
+                            $allValidMetrics = array_merge($allValidMetrics, array_keys($vConfig['metrics']));
+                        }
+                    }
+                    if (!empty($allValidMetrics)) {
+                        $resolved['metrics'] = array_values(array_intersect($resolved['metrics'] ?? [], $allValidMetrics));
+                    }
+                    if (empty($resolved['metrics']) && !empty($variables)) {
+                        $firstVar = reset($variables);
+                        if (!empty($firstVar['metrics'])) {
+                            $resolved['metrics'] = [array_key_first($firstVar['metrics'])];
+                        }
+                    }
+                    $resolved['series_metrics']['0'] = $resolved['metrics'];
                 }
             } else {
                 \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
