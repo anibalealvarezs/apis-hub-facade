@@ -836,6 +836,18 @@
 .joint-page select option { background-color: #ffffff; color: #111827; }
 .dark .joint-page select option { background-color: #1f2937; color: #f9fafb; }
 
+.joint-playbook-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+@media (max-width: 640px) {
+    .joint-playbook-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 @media print {
     .fi-sidebar,
     .fi-topbar,
