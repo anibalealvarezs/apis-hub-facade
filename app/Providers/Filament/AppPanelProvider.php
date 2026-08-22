@@ -55,6 +55,7 @@ class AppPanelProvider extends PanelProvider
             )
 
             ->sidebarCollapsibleOnDesktop()
+            ->brandName('APIs Hub')
             ->brandLogo(fn () => new \Illuminate\Support\HtmlString('
                 <div class="w-full flex items-center justify-center">
                     <img src="' . asset('images/branding/apishub-trans-620.webp') . '" class="h-10 w-auto" />
