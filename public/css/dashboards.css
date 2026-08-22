@@ -896,10 +896,25 @@
         border: none !important;
     }
 
+.joint-print-page-break {
+    display: none;
+}
+
+@media print {
+    .joint-print-page-break {
+        display: block !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        clear: both !important;
+    }
+
     .joint-card {
         display: block !important;
-        page-break-before: avoid !important;
-        break-before: avoid !important;
         page-break-inside: auto !important;
         break-inside: auto !important;
         box-shadow: none !important;
@@ -909,9 +924,18 @@
         background: transparent !important;
     }
 
+    .joint-page > .joint-card:first-of-type {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+    }
+
     .joint-charts-card {
         page-break-before: always !important;
         break-before: page !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
     }
 
     .joint-playbook-grid {
