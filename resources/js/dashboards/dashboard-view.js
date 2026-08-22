@@ -688,9 +688,11 @@ export function widgetHeader() {
                 this.controls.metrics = Object.values(this.controls.metrics);
             }
             if (!this.controls.series_assets) this.controls.series_assets = {};
-            const varCount = Object.keys(this.variables).length;
-            while (this.controls.metrics.length < varCount) {
-                this.controls.metrics.push('');
+            if (this.sourceType === 'kpi') {
+                const varCount = Object.keys(this.variables).length;
+                while (this.controls.metrics.length < varCount) {
+                    this.controls.metrics.push('');
+                }
             }
             if (this.controls.assets && this.controls.assets.length > 0) {
                 const firstKey = this.sourceType === 'kpi' ? 'dependent' : '0';

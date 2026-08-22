@@ -973,7 +973,7 @@
                                                                 <label
                                                                     class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
                                                                 <x-ui.select-input x-model="series.channel"
-                                                                                   x-on:change="updateSeriesMetrics()"
+                                                                                   x-on:change="onWidgetRawChannelChange(index); updateSeriesMetrics();"
                                                                                    x-init="$nextTick(() => { $el.value = series.channel })"
                                                                                    class="w-full">
                                                                     <x-ui.select-option

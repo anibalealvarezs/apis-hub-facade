@@ -1724,7 +1724,13 @@ export function dashboardBuilder(config = {}) {
         },
 
         onWidgetRawChannelChange(index) {
-            const ch = this.widgetControlsForm.raw_series[index].channel;
+            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index]) return;
+            const series = this.widgetControlsForm.raw_series[index];
+            const ch = series.channel;
+
+            // Reset selected metrics and assets because channel changed
+            series.metrics = [];
+            series.assets = [];
 
             if (index === 0) {
                 this.widgetControlsForm.channel = ch;

@@ -605,51 +605,105 @@ trait LoadsDashboardViewData
                     }
                 }
             } else {
-                // Raw metrics variables mapping - enforce single series for non-KPI widgets
-                $primaryChannel = $resolved['channel'] ?? null;
-                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
-                    $primaryChannel = reset($resolved['series_channels']);
+                // Raw metrics variables mapping - support multi-series cards
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    foreach ($resolved['raw_series'] as $sIdx => $s) {
+                        $sChannel = $s['channel'] ?? $resolved['series_channels'][$sIdx] ?? $resolved['channel'] ?? null;
+                        if (!empty($sChannel)) {
+                            $granularity = $resolved['granularity'] ?? null;
+                            $dependency  = $resolved['dependency'] ?? null;
+                            $metrics     = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
+                            $variables[(string)$sIdx] = [
+                                'index' => $sIdx,
+                                'channel' => $sChannel,
+                                'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'metrics' => $metrics,
+                                'type' => $s['type'] ?? 'metric',
+                                'dm_name' => $s['dm_name'] ?? null,
+                            ];
+                        }
+                    }
+                } elseif (!empty($resolved['series_channels']) && is_array($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $sIdx => $sChannel) {
+                        if (!empty($sChannel)) {
+                            $granularity = $resolved['granularity'] ?? null;
+                            $dependency  = $resolved['dependency'] ?? null;
+                            $metrics     = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
+                            $variables[(string)$sIdx] = [
+                                'index' => (int)$sIdx,
+                                'channel' => $sChannel,
+                                'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'metrics' => $metrics,
+                            ];
+                        }
+                    }
                 }
-                
-                if (!empty($primaryChannel)) {
-                    $granularity = $resolved['granularity'] ?? null;
-                    $dependency  = $resolved['dependency'] ?? null;
-                    $metrics     = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity, $dependency);
-                    $variables['0'] = [
-                        'index' => $varIndex++,
-                        'channel' => $primaryChannel,
-                        'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
-                        'metrics' => $metrics,
-                    ];
+
+                if (empty($variables)) {
+                    $primaryChannel = $resolved['channel'] ?? null;
+                    if (empty($primaryChannel) && !empty($this->allChannels)) {
+                        $primaryChannel = array_key_first($this->allChannels);
+                    }
+                    
+                    if (!empty($primaryChannel)) {
+                        $granularity = $resolved['granularity'] ?? null;
+                        $dependency  = $resolved['dependency'] ?? null;
+                        $metrics     = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity, $dependency);
+                        $variables['0'] = [
+                            'index' => 0,
+                            'channel' => $primaryChannel,
+                            'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
+                            'metrics' => $metrics,
+                        ];
+                    }
                 }
             }
 
             if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
                 $resolved['metrics'] = [];
             }
-            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
-            // First pad the array with empty strings up to the number of variables
-            for ($i = 0; $i < count($variables); $i++) {
-                if (!isset($resolved['metrics'][$i])) {
-                    $resolved['metrics'][$i] = '';
-                }
-            }
-            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] AFTER padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | resolved metrics: ' . json_encode($resolved['metrics']));
-            foreach ($variables as $vConfig) {
-                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] Variable loop | Widget: ' . ($widgetArray['id'] ?? '?') . ' | index: ' . ($vConfig['index'] ?? '?') . ' | selected_metric: ' . ($vConfig['selected_metric'] ?? '__NONE__') . ' | metrics keys: ' . json_encode(array_keys($vConfig['metrics'] ?? [])));
-            }
-            foreach ($variables as $vConfig) {
-                $idx = $vConfig['index'];
-                $hasMetricInControl = !empty($resolved['metrics'][$idx]);
-                $hasMetricInKpi = !empty($vConfig['selected_metric']) && $widgetArray['source_type'] === 'kpi';
-                
-                if (!$hasMetricInControl && !$hasMetricInKpi) {
-                    if (!empty($vConfig['metrics'])) {
-                        $resolved['metrics'][$idx] = array_key_first($vConfig['metrics']);
+
+            if ($widgetArray['source_type'] !== 'kpi' && $widgetArray['source_type'] !== 'derived_metric') {
+                // For raw metric widgets, ensure metrics are valid for the active series channel(s)
+                $allValidMetrics = [];
+                foreach ($variables as $vKey => $vConfig) {
+                    if (!empty($vConfig['metrics']) && is_array($vConfig['metrics'])) {
+                        $allValidMetrics = array_merge($allValidMetrics, array_keys($vConfig['metrics']));
                     }
                 }
+                if (!empty($allValidMetrics)) {
+                    $resolved['metrics'] = array_values(array_intersect($resolved['metrics'], $allValidMetrics));
+                }
+                if (empty($resolved['metrics']) && !empty($variables)) {
+                    $firstVar = reset($variables);
+                    if (!empty($firstVar['metrics'])) {
+                        $resolved['metrics'] = [array_key_first($firstVar['metrics'])];
+                    }
+                }
+            } else {
+                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
+                // First pad the array with empty strings up to the number of variables
+                for ($i = 0; $i < count($variables); $i++) {
+                    if (!isset($resolved['metrics'][$i])) {
+                        $resolved['metrics'][$i] = '';
+                    }
+                }
+                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] AFTER padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | resolved metrics: ' . json_encode($resolved['metrics']));
+                foreach ($variables as $vConfig) {
+                    $idx = $vConfig['index'];
+                    $hasMetricInControl = !empty($resolved['metrics'][$idx]);
+                    $hasMetricInKpi = !empty($vConfig['selected_metric']) && $widgetArray['source_type'] === 'kpi';
+                    
+                    if (!$hasMetricInControl && !$hasMetricInKpi) {
+                        if (!empty($vConfig['metrics'])) {
+                            $resolved['metrics'][$idx] = array_key_first($vConfig['metrics']);
+                        }
+                    }
+                }
+                ksort($resolved['metrics']);
             }
-            ksort($resolved['metrics']);
 
             $widgetArray['variables'] = (object) $variables;
             // Keep flat metric_options for backward compatibility
