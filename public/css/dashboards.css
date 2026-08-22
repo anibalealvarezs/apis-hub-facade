@@ -876,3 +876,25 @@
     z-index: 1;
     margin: auto;
 }
+
+/* Pagination select options styling */
+.data-table-pagination-select option,
+.fb-pagination-select option,
+.ga4-pagination-select option,
+.gsc-pagination-select option {
+    background-color: #ffffff;
+    color: #111827;
+    padding: 6px 12px;
+}
+
+.dark .data-table-pagination-select option,
+.dark .fb-pagination-select option,
+.dark .ga4-pagination-select option,
+.dark .gsc-pagination-select option,
+.dark .fb-marketing-page .fb-pagination-select option,
+.dark .fb-organic-page .fb-pagination-select option,
+.dark select.data-table-pagination-select option {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+    padding: 6px 12px;
+}
