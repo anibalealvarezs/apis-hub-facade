@@ -414,13 +414,50 @@
                                     x-on:click="resetWidgetControls()">{{ __('Reset all to inherit') }}</button>
                         </div>
                     </div>
-                    <button @click="showWidgetControls = false"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                             stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        {{-- Series Stepped Navigation Arrows (Visible when > 2 series) --}}
+                        <div
+                            x-show="(widgetControlsForm.raw_series || []).length > 2 && widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'"
+                            class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                                <span x-text="(widgetControlsForm.raw_series || []).length"></span> {{ __('Series') }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="scrollSeriesByStep(-1)"
+                                :disabled="!canScrollSeriesLeft"
+                                :title="'{{ __('Scroll left') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canScrollSeriesLeft
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                @click="scrollSeriesByStep(1)"
+                                :disabled="!canScrollSeriesRight"
+                                :title="'{{ __('Scroll right') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canScrollSeriesRight
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <button @click="showWidgetControls = false"
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                 stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div
@@ -865,213 +902,195 @@
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
-                        <div class="flex-1 min-w-0 min-h-0 flex flex-col relative" :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
-                            {{-- Step Scroll Controls (Visible when more than 2 series exist) --}}
-                            <div
-                                x-show="(widgetControlsForm.raw_series || []).length > 2 && widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'"
-                                class="flex items-center justify-between pb-2 px-1 text-xs text-gray-500 dark:text-gray-400 select-none">
-                                <span class="font-medium text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                    <span x-text="(widgetControlsForm.raw_series || []).length"></span> {{ __('Series configured') }}
-                                </span>
-                                <div class="flex items-center gap-1.5">
-                                    <button
-                                        type="button"
-                                        @click="scrollSeriesByStep(-1)"
-                                        :disabled="!canScrollSeriesLeft"
-                                        :title="'{{ __('Scroll left') }}'"
-                                        class="p-1 rounded-md border transition-all"
-                                        :class="canScrollSeriesLeft
-                                            ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-xs cursor-pointer'
-                                            : 'border-transparent text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
-                                        </svg>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        @click="scrollSeriesByStep(1)"
-                                        :disabled="!canScrollSeriesRight"
-                                        :title="'{{ __('Scroll right') }}'"
-                                        class="p-1 rounded-md border transition-all"
-                                        :class="canScrollSeriesRight
-                                            ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-xs cursor-pointer'
-                                            : 'border-transparent text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50'">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                        <div
+                            x-ref="seriesScrollContainer"
+                            @scroll.passive="updateSeriesScrollState()"
+                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
+                            :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
 
-                            <div class="flex-1 min-w-0 min-h-0 flex flex-row items-stretch gap-3">
-                                <div
-                                    x-ref="seriesScrollContainer"
-                                    @scroll.passive="updateSeriesScrollState()"
-                                    class="flex-1 min-w-0 min-h-0 flex flex-row overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col">
-
-                                    {{-- Series: Raw Metric --}}
-                                    <template
-                                        x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                        <div style="display: contents">
-                                            <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                            {{-- Series: Raw Metric --}}
+                            <template
+                                x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
+                                <div style="display: contents">
+                                    <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                        <div
+                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
+                                            :class="{
+                                         'md:w-full': widgetControlsForm.raw_series.length === 1,
+                                         'sm:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
+                                     }">
+                                            <div
+                                                class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
-                                                    class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start w-full sm:w-[calc(50%-0.75rem)]"
-                                                    style="min-width: calc(50% - 0.75rem); max-width: calc(50% - 0.75rem);">
-                                                    <div
-                                                        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
+                                                    class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                                    <div class="flex items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                             viewBox="0 0 24 24" stroke-width="1.5"
+                                                             stroke="currentColor"
+                                                             class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
+                                                        </svg>
+                                                        <span
+                                                            class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                            x-text="'{{ __('Series') }} ' + (index + 1)"></span>
+                                                        <span
+                                                            class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">{{ __('Metric') }}</span>
+                                                    </div>
+                                                    <button class="text-red-500 hover:text-red-700"
+                                                            x-show="widgetControlsForm.raw_series.length > 1"
+                                                            x-on:click="removeSeriesCard(index)">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                             viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                        <x-ui.select-input x-model="series.channel"
+                                                                           x-on:change="updateSeriesMetrics()"
+                                                                           x-init="$nextTick(() => { $el.value = series.channel })"
+                                                                           class="w-full">
+                                                            <x-ui.select-option
+                                                                value="">{{ __('Select a channel...') }}</x-ui.select-option>
+                                                            <template x-for="(label, key) in channels" :key="key">
+                                                                <x-ui.select-option x-bind:value="key"
+                                                                                    x-text="label"></x-ui.select-option>
+                                                            </template>
+                                                        </x-ui.select-input>
+                                                    </div>
+
+                                                    <div class="my-2">
+                                                        <label
+                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
                                                         <div
-                                                            class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                                                            <div class="flex items-center gap-2">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                     viewBox="0 0 24 24" stroke-width="1.5"
-                                                                     stroke="currentColor"
-                                                                     class="w-4 h-4 text-gray-500 dark:text-gray-400">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
-                                                                </svg>
-                                                                <span
-                                                                    class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                                    x-text="'{{ __('Series') }} ' + (index + 1)"></span>
-                                                                <span
-                                                                    class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">{{ __('Metric') }}</span>
-                                                            </div>
-                                                            <button class="text-red-500 hover:text-red-700"
-                                                                    x-show="widgetControlsForm.raw_series.length > 1"
-                                                                    x-on:click="removeSeriesCard(index)">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                                     viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                </svg>
-                                                            </button>
-                                                        </div>
-                                                        <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
-                                                            <div>
-                                                                <label
-                                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
-                                                                <x-ui.select-input x-model="series.channel"
-                                                                                   x-on:change="updateSeriesMetrics()"
-                                                                                   x-init="$nextTick(() => { $el.value = series.channel })"
-                                                                                   class="w-full">
-                                                                    <x-ui.select-option
-                                                                        value="">{{ __('Select a channel...') }}</x-ui.select-option>
-                                                                    <template x-for="(label, key) in channels" :key="key">
-                                                                        <x-ui.select-option x-bind:value="key"
-                                                                                            x-text="label"></x-ui.select-option>
-                                                                    </template>
-                                                                </x-ui.select-input>
-                                                            </div>
-
-                                                            <div class="my-2">
-                                                                <label
-                                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
-                                                                <div
-                                                                    class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                            class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                            <div
+                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
+                                                                <template
+                                                                    x-for="(label, key) in allChannelMetrics[series.channel] || {}"
+                                                                    :key="key">
                                                                     <div
-                                                                        class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
-                                                                        <template
-                                                                            x-for="(label, key) in allChannelMetrics[series.channel] || {}"
-                                                                            :key="key">
-                                                                            <div
-                                                                                @click="if ((series.metrics || []).includes(key)) { series.metrics = series.metrics.filter(m => m !== key); } else { series.metrics = [...(series.metrics || []), key]; }"
-                                                                                class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
-                                                                                :class="(series.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                                <div
-                                                                                    class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                    :class="(series.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                    <svg
-                                                                                        x-show="(series.metrics || []).includes(key)"
-                                                                                        class="w-3 h-3 text-white" fill="none"
-                                                                                        viewBox="0 0 24 24" stroke-width="3"
-                                                                                        stroke="currentColor">
-                                                                                        <path stroke-linecap="round"
-                                                                                              stroke-linejoin="round"
-                                                                                              d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                    </svg>
-                                                                                </div>
-                                                                                <span class="truncate font-medium"
-                                                                                      :class="(series.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                      x-text="label"></span>
-                                                                            </div>
-                                                                        </template>
-                                                                        <template
-                                                                            x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
-                                                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
-                                                                        </template>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
-                                                                <div class="flex items-center justify-between">
-                                                                    <label
-                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
-                                                                    <template x-if="series.channel">
-                                                                        <div class="flex gap-3">
-                                                                            <button @click="selectAllRawAssets(index)"
-                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                            <button @click="clearAllRawAssets(index)"
-                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                        @click="if ((series.metrics || []).includes(key)) { series.metrics = series.metrics.filter(m => m !== key); } else { series.metrics = [...(series.metrics || []), key]; }"
+                                                                        class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
+                                                                        :class="(series.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div
+                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                            :class="(series.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg
+                                                                                x-show="(series.metrics || []).includes(key)"
+                                                                                class="w-3 h-3 text-white" fill="none"
+                                                                                viewBox="0 0 24 24" stroke-width="3"
+                                                                                stroke="currentColor">
+                                                                                <path stroke-linecap="round"
+                                                                                      stroke-linejoin="round"
+                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
                                                                         </div>
-                                                                    </template>
-                                                                </div>
-                                                                <div class="relative">
-                                                                    <div
-                                                                        class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                             viewBox="0 0 24 24" stroke-width="2"
-                                                                             stroke="currentColor"
-                                                                             class="w-4 h-4 text-gray-400">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                                        </svg>
+                                                                        <span class="truncate font-medium"
+                                                                              :class="(series.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                              x-text="label"></span>
                                                                     </div>
-                                                                    <input type="text" x-model="searchQueries['raw_' + index]"
-                                                                           :placeholder="'{{ __('Search assets...') }}'"
-                                                                           class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                                </template>
+                                                                <template
+                                                                    x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
+                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                        <div class="flex items-center justify-between">
+                                                            <label
+                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
+                                                            <template x-if="series.channel">
+                                                                <div class="flex gap-3">
+                                                                    <button @click="selectAllRawAssets(index)"
+                                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                    <button @click="clearAllRawAssets(index)"
+                                                                            class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                 </div>
-                                                                <div class="flex-1 relative min-h-0">
+                                                            </template>
+                                                        </div>
+                                                        <div class="relative">
+                                                            <div
+                                                                class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                     viewBox="0 0 24 24" stroke-width="2"
+                                                                     stroke="currentColor"
+                                                                     class="w-4 h-4 text-gray-400">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                                </svg>
+                                                            </div>
+                                                            <input type="text" x-model="searchQueries['raw_' + index]"
+                                                                   :placeholder="'{{ __('Search assets...') }}'"
+                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                        </div>
+                                                        <div class="flex-1 relative min-h-0">
+                                                            <div
+                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                                <template
+                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                    :key="id">
                                                                     <div
-                                                                        class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                                        <template
-                                                                            x-for="(name, id) in allChannelAssets[series.channel] || {}"
-                                                                            :key="id">
-                                                                            <div
-                                                                                x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
-                                                                                @click="toggleRawAsset(index, id)"
-                                                                                class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                                :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                                <div
-                                                                                    class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                    :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                    <svg
-                                                                                        x-show="(series.assets || []).includes(String(id))"
-                                                                                        class="w-3 h-3 text-white" fill="none"
-                                                                                        viewBox="0 0 24 24" stroke-width="3"
-                                                                                        stroke="currentColor">
-                                                                                        <path stroke-linecap="round"
-                                                                                              stroke-linejoin="round"
-                                                                                              d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                    </svg>
-                                                                                </div>
-                                                                                <span class="truncate font-medium"
-                                                                                      :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                      x-text="name"></span>
-                                                                            </div>
-                                                                        </template>
-                                                                        <template
-                                                                            x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
-                                                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Select a channel first.') }}</p>
-                                                                        </template>
+                                                                        x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
+                                                                        @click="toggleRawAsset(index, id)"
+                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                        :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div
+                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                            :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg
+                                                                                x-show="(series.assets || []).includes(String(id))"
+                                                                                class="w-3 h-3 text-white" fill="none"
+                                                                                viewBox="0 0 24 24" stroke-width="3"
+                                                                                stroke="currentColor">
+                                                                                <path stroke-linecap="round"
+                                                                                      stroke-linejoin="round"
+                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium"
+                                                                              :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
+                                                                              x-text="name"></span>
                                                                     </div>
-                                                                </div>
+                                                                </template>
+                                                                <template
+                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Select a channel first.') }}</p>
+                                                                </template>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </template>
+                                            </div>
                                         </div>
                                     </template>
+
+                                    {{-- Add Series Slim Vertical Button --}}
+                                    <div
+                                        class="flex-none flex flex-col justify-center items-center h-full min-h-0 snap-start">
+                                        <button
+                                            type="button"
+                                            x-on:click="addSeriesCard()"
+                                            :title="'{{ __('Add Series') }}'"
+                                            class="group h-full w-12 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all shadow-sm">
+                                            <div class="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 group-hover:text-white text-gray-500 dark:text-gray-400 flex items-center justify-center transition-all shadow-xs">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                                                </svg>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 [writing-mode:vertical-rl] tracking-widest uppercase select-none">{{ __('Add Series') }}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
 
                             {{-- Variables: Assets per variable (KPI) --}}
                             <template
@@ -1720,28 +1739,10 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Fixed Vertical Add Series Bar (Raw Metric widgets only, outside the scrollable series container) --}}
-                        <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                            <div class="flex-none flex flex-col justify-center items-center py-1 self-stretch">
-                                <button
-                                    type="button"
-                                    x-on:click="addSeriesCard()"
-                                    :title="'{{ __('Add Series') }}'"
-                                    class="group h-full w-12 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all shadow-sm">
-                                    <div class="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 group-hover:text-white text-gray-500 dark:text-gray-400 flex items-center justify-center transition-all shadow-xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                                        </svg>
                                     </div>
-                                    <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 [writing-mode:vertical-rl] tracking-widest uppercase select-none">{{ __('Add Series') }}</span>
-                                </button>
-                            </div>
-                        </template>
+                                </template>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
