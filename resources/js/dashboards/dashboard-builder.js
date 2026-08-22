@@ -149,8 +149,9 @@ export function dashboardBuilder(config = {}) {
         },
         widgetKpiConfig: {},
         widgetAssets: {},
-        widgetMetrics: {},
         searchQueries: {},
+        canScrollSeriesLeft: false,
+        canScrollSeriesRight: false,
 
         // ─── Share ──
         showShareDialog: false,
@@ -739,6 +740,10 @@ export function dashboardBuilder(config = {}) {
             if (this.dashboardControls.channel) {
                 this.onWidgetRawChannelChange(this.widgetControlsForm.raw_series.length - 1);
             }
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+                this.scrollSeriesByStep(1);
+            });
         },
 
         removeSeriesCard(index) {
@@ -746,7 +751,28 @@ export function dashboardBuilder(config = {}) {
                 const list = [...this.widgetControlsForm.raw_series];
                 list.splice(index, 1);
                 this.widgetControlsForm.raw_series = list;
+                this.$nextTick(() => {
+                    this.updateSeriesScrollState();
+                });
             }
+        },
+
+        updateSeriesScrollState() {
+            const el = this.$refs.seriesScrollContainer;
+            if (!el) return;
+            this.canScrollSeriesLeft = el.scrollLeft > 4;
+            this.canScrollSeriesRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+        },
+
+        scrollSeriesByStep(direction = 1) {
+            const el = this.$refs.seriesScrollContainer;
+            if (!el) return;
+            // Width of 1 card = roughly half the container width + gap
+            const step = (el.clientWidth / 2) + 12;
+            el.scrollBy({ left: direction * step, behavior: 'smooth' });
+            setTimeout(() => {
+                this.updateSeriesScrollState();
+            }, 300);
         },
 
         // ─── Grid ──
@@ -1488,16 +1514,31 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.seriesScrollContainer;
+                        if (el) el.scrollLeft = 0;
+                        this.updateSeriesScrollState();
+                    });
                 }).catch(err => {
                     console.error('[dashboard-builder] getKpiConfiguration failed:', err);
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.seriesScrollContainer;
+                        if (el) el.scrollLeft = 0;
+                        this.updateSeriesScrollState();
+                    });
                 });
             } else {
                 this.loadWidgetMetrics(savedMetrics);
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
+                this.$nextTick(() => {
+                    const el = this.$refs.seriesScrollContainer;
+                    if (el) el.scrollLeft = 0;
+                    this.updateSeriesScrollState();
+                });
             }
         },
 
