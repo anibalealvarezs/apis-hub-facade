@@ -895,6 +895,8 @@
                                                         <span
                                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                             x-text="'{{ __('Series') }} ' + (index + 1)"></span>
+                                                        <span
+                                                            class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full">{{ __('Metric') }}</span>
                                                     </div>
                                                     <button class="text-red-500 hover:text-red-700"
                                                             x-show="widgetControlsForm.raw_series.length > 1"
@@ -1065,8 +1067,10 @@
                                         <div
                                             class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                             <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
+                                                <span
+                                                    class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
+                                                <span
+                                                    class="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
                                             </div>
                                             <div class="flex flex-col items-end gap-1">
                                                     <span
@@ -1213,7 +1217,12 @@
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
                                                     <span
-                                                        class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
+                                                        class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                    <template x-if="derivedMetrics[widgetKpiConfig.dependent_dm_id]">
+                                                        <span
+                                                            class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
+                                                            x-text="derivedMetrics[widgetKpiConfig.dependent_dm_id].name"></span>
+                                                    </template>
                                                 </div>
                                                 <span
                                                     class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
@@ -1323,7 +1332,12 @@
                                                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                                             x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
                                                                         <span
-                                                                            class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full">DM</span>
+                                                                            class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                                        <template x-if="derivedMetrics[varCfg.independent_dm_id]">
+                                                                            <span
+                                                                                class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
+                                                                                x-text="derivedMetrics[varCfg.independent_dm_id].name"></span>
+                                                                        </template>
                                                                     </div>
                                                                     <span
                                                                         class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
@@ -1425,9 +1439,11 @@
                                                             <div
                                                                 class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                                                                 <div class="flex items-center gap-2">
-                                                                <span
-                                                                    class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                                    x-text="'{{ __('Independent') }} ' + idx"></span>
+                                                                    <span
+                                                                        class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                                        x-text="'{{ __('Independent') }} ' + idx"></span>
+                                                                    <span
+                                                                        class="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
                                                                 </div>
                                                                 <div class="flex flex-col items-end gap-1">
                                                                 <span
@@ -1599,6 +1615,13 @@
                                                     <span
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + index))"></span>
+                                                    <span
+                                                        class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                    <template x-if="widgetControlsTarget.source_config && widgetControlsTarget.source_config.derived_metric_id && derivedMetrics[widgetControlsTarget.source_config.derived_metric_id]">
+                                                        <span
+                                                            class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[140px]"
+                                                            x-text="derivedMetrics[widgetControlsTarget.source_config.derived_metric_id].name"></span>
+                                                    </template>
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
