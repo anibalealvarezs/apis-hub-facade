@@ -62,11 +62,11 @@
             </div>
 
             {{-- Action Button --}}
-            <div class="mt-4 flex justify-end">
+            <div class="fb-warning-modal-footer">
                 <button
                     type="button"
                     @click="localStorage.setItem('fb_organic_warnings_seen_v1', 'true'); showWarningModal = false"
-                    class="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer"
+                    class="fb-warning-modal-btn"
                 >
                     {{ __('I understand') }}
                 </button>
