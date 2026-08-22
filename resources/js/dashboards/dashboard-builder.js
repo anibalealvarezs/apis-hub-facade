@@ -760,19 +760,19 @@ export function dashboardBuilder(config = {}) {
         updateSeriesScrollState() {
             const el = this.$refs.seriesScrollContainer;
             if (!el) return;
-            this.canScrollSeriesLeft = el.scrollLeft > 4;
-            this.canScrollSeriesRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+            this.canScrollSeriesLeft = el.scrollLeft > 5;
+            this.canScrollSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
         },
 
         scrollSeriesByStep(direction = 1) {
             const el = this.$refs.seriesScrollContainer;
             if (!el) return;
-            // Width of 1 card = roughly half the container width + gap
-            const step = (el.clientWidth / 2) + 12;
+            const firstCard = el.querySelector('.snap-start');
+            const step = firstCard ? (firstCard.offsetWidth + 24) : ((el.clientWidth / 2) + 12);
             el.scrollBy({ left: direction * step, behavior: 'smooth' });
             setTimeout(() => {
                 this.updateSeriesScrollState();
-            }, 300);
+            }, 350);
         },
 
         // ─── Grid ──

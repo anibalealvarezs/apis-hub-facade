@@ -862,7 +862,9 @@
                                     </div>
                                 </div>
                             </template>
-                                                {{-- Right Column: Variables Configuration --}}
+                        </div>
+
+                        {{-- Right Column: Variables Configuration --}}
                         <div class="flex-1 min-w-0 min-h-0 flex flex-col relative" :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
                             {{-- Step Scroll Controls (Visible when more than 2 series exist) --}}
                             <div
