@@ -875,11 +875,10 @@
                                 <div style="display: contents">
                                     <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
                                         <div
-                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
-                                            :class="{
-                                         'md:w-full': widgetControlsForm.raw_series.length === 1,
-                                         'sm:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
-                                     }">
+                                            class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
+                                            :class="widgetControlsForm.raw_series.length === 1
+                                                ? 'w-full'
+                                                : 'w-full sm:w-[calc(50%-0.75rem)]'">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
@@ -1034,24 +1033,20 @@
                                         </div>
                                     </template>
 
-                                    {{-- Add Series Button Card --}}
+                                    {{-- Add Series Slim Vertical Button --}}
                                     <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] h-full min-h-0 flex flex-col snap-start">
+                                        class="flex-none flex flex-col justify-center items-center h-full min-h-0 snap-start">
                                         <button
+                                            type="button"
                                             x-on:click="addSeriesCard()"
-                                            class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
-                                            <div
-                                                class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 flex items-center justify-center mb-3 transition-colors">
-                                                <svg
-                                                    class="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2"
-                                                          d="M12 4v16m8-8H4"></path>
+                                            :title="'{{ __('Add Series') }}'"
+                                            class="group h-full w-12 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-all shadow-sm">
+                                            <div class="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 group-hover:bg-primary-600 group-hover:border-primary-600 group-hover:text-white text-gray-500 dark:text-gray-400 flex items-center justify-center transition-all shadow-xs">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                                                 </svg>
                                             </div>
-                                            <span
-                                                class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
+                                            <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 [writing-mode:vertical-rl] tracking-widest uppercase select-none">{{ __('Add Series') }}</span>
                                         </button>
                                     </div>
                                 </div>
