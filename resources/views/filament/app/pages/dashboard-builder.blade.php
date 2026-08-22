@@ -1030,7 +1030,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </template>
+                                    </div>
+                                </template>
                             </template>
 
                             {{-- Variables: Assets per variable (KPI) --}}
