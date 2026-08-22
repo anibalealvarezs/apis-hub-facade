@@ -402,26 +402,44 @@ trait LoadsDashboardViewData
                 }
             }
 
-            // Fallback for non-KPI widgets with a channel
+            // Fallback for non-KPI widgets with a channel / multiple series
             if (empty($widgetArray['series_assets_options'])) {
-                $primaryChannel = $resolved['channel'] ?? null;
-                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
-                    $primaryChannel = reset($resolved['series_channels']);
-                }
-                if (empty($primaryChannel) && !empty($this->allChannels)) {
-                    $primaryChannel = array_key_first($this->allChannels);
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    foreach ($resolved['raw_series'] as $sIdx => $s) {
+                        $sChannel = $s['channel'] ?? $resolved['series_channels'][$sIdx] ?? $resolved['channel'] ?? null;
+                        if (!empty($sChannel)) {
+                            $rawAssetIds = $resolved['series_assets'][$sIdx] ?? $s['assets'] ?? null;
+                            $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds);
+                        }
+                    }
+                } elseif (!empty($resolved['series_channels']) && is_array($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $sIdx => $sChannel) {
+                        if (!empty($sChannel)) {
+                            $rawAssetIds = $resolved['series_assets'][$sIdx] ?? null;
+                            $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds);
+                        }
+                    }
                 }
 
-                if (!empty($primaryChannel)) {
-                    $rawAssetIds = null;
-                    if (!empty($resolved['assets'])) {
-                        $rawAssetIds = $resolved['assets'];
-                    } elseif (!empty($resolved['series_assets']['0'])) {
-                        $rawAssetIds = $resolved['series_assets']['0'];
-                    } elseif (!empty($resolved['raw_series'][0]['assets'])) {
-                        $rawAssetIds = $resolved['raw_series'][0]['assets'];
+                if (empty($widgetArray['series_assets_options'])) {
+                    $primaryChannel = $resolved['channel'] ?? null;
+                    if (empty($primaryChannel) && !empty($this->allChannels)) {
+                        $primaryChannel = array_key_first($this->allChannels);
                     }
-                    $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds);
+
+                    if (!empty($primaryChannel)) {
+                        $rawAssetIds = null;
+                        if (!empty($resolved['assets'])) {
+                            $rawAssetIds = $resolved['assets'];
+                        } elseif (!empty($resolved['series_assets']['0'])) {
+                            $rawAssetIds = $resolved['series_assets']['0'];
+                        } elseif (!empty($resolved['raw_series'][0]['assets'])) {
+                            $rawAssetIds = $resolved['raw_series'][0]['assets'];
+                        }
+                        $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds);
+                    }
                 }
             }
 

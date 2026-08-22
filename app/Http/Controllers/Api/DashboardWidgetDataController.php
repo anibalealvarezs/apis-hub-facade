@@ -1949,6 +1949,19 @@ class DashboardWidgetDataController extends Controller
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
         $config = $widget->source_config ?? [];
+
+        // Check if widget has multiple series configured via raw_series
+        $rawSeries = $controls['raw_series'] ?? $config['raw_series'] ?? null;
+        $hasMultiSeries = false;
+        if (is_array($rawSeries) && count($rawSeries) > 0) {
+            // It's multi-series if there is more than 1 series, or any series is a derived_metric, or raw_series is explicitly defined
+            $hasMultiSeries = count($rawSeries) > 1 || (! empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric');
+        }
+
+        if ($hasMultiSeries) {
+            return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
+        }
+
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
         $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
 
@@ -2028,6 +2041,274 @@ class DashboardWidgetDataController extends Controller
         }
 
         return $this->forwardToChannelEndpoint($channel, $action, $payload);
+    }
+
+    protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
+    {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
+        $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
+        $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
+        $granularity = $controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily';
+        $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+        $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
+
+        $seriesCurves = [];
+        $dmGroups = [];
+
+        // 1. Separate Raw Metric series and group Derived Metric series
+        foreach ($rawSeries as $sIdx => $series) {
+            $type = $series['type'] ?? 'metric';
+            $dmId = $series['dm_id'] ?? null;
+
+            if ($type === 'derived_metric' && ! empty($dmId)) {
+                $dmGroups[$dmId][] = [
+                    'series_index' => $sIdx,
+                    'series' => $series,
+                ];
+            } else {
+                $channel = $series['channel'] ?? '';
+                $metrics = $series['metrics'] ?? [];
+                if (empty($channel) || empty($metrics)) {
+                    continue;
+                }
+
+                // Check per-series asset override
+                $seriesAssetOverride = $controls['series_assets'][$sIdx] ?? $series['assets'] ?? null;
+                $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetOverride);
+                if ($assetFilter === '___EMPTY_GROUP___') {
+                    continue;
+                }
+                $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+                $payload = [
+                    'tenant' => $project->id,
+                    'account' => $assetFilter,
+                    'dateStart' => $dateStart,
+                    'dateEnd' => $dateEnd,
+                    'granularity' => $granularity,
+                    'metrics' => $metrics,
+                ];
+
+                if (! empty($controls['dependency'])) {
+                    $payload['dependency'] = $controls['dependency'];
+                }
+
+                $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
+
+                foreach ($metrics as $metric) {
+                    $timeSeries = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
+                    $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
+                    $isRatio = in_array($cleanMetric, $ratioMetrics);
+                    $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
+                    $cLabel = \Illuminate\Support\Str::headline($channel);
+                    $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
+
+                    if ($isRatio) {
+                        $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
+                    }
+
+                    $seriesCurves[] = [
+                        'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
+                        'key' => 'series_' . $sIdx . '_' . $metric,
+                        'axis_key' => $cleanMetric,
+                        'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
+                        'data' => $timeSeries,
+                    ];
+                }
+            }
+        }
+
+        // 2. Process Derived Metric Groups
+        foreach ($dmGroups as $dmId => $items) {
+            $derivedMetric = \App\Models\DerivedMetric::find($dmId);
+            if (! $derivedMetric) {
+                continue;
+            }
+
+            $sourceSeries = $derivedMetric->source_series ?? [];
+            $ast = $derivedMetric->ast ?? [];
+            if (empty($sourceSeries) || empty($ast)) {
+                continue;
+            }
+
+            $effectiveGranularity = $controls['granularity'] ?? $derivedMetric->output_granularity ?? 'daily';
+            $fetchedSeries = [];
+
+            // Map each source series in DM to its corresponding card's asset filter
+            foreach ($sourceSeries as $ssIdx => $ss) {
+                $ssKey = $ss['key'];
+                $ssChannel = $ss['channel'] ?? '';
+                $ssMetric = $ss['metric'] ?? '';
+
+                if (! $ssChannel || ! $ssMetric) {
+                    $fetchedSeries[$ssKey] = [];
+                    continue;
+                }
+
+                // Find matching item in $items by dm_series_index or $ssIdx
+                $matchingItem = null;
+                foreach ($items as $item) {
+                    if (isset($item['series']['dm_series_index']) && (int) $item['series']['dm_series_index'] === $ssIdx) {
+                        $matchingItem = $item;
+                        break;
+                    }
+                }
+                if (! $matchingItem && isset($items[$ssIdx])) {
+                    $matchingItem = $items[$ssIdx];
+                }
+
+                $seriesAssetFilter = $ss['asset_filter'] ?? null;
+                $cardAssetOverride = null;
+                if ($matchingItem) {
+                    $cardIdx = $matchingItem['series_index'];
+                    $cardAssetOverride = $controls['series_assets'][$cardIdx] ?? $matchingItem['series']['assets'] ?? null;
+                }
+                if (! empty($cardAssetOverride)) {
+                    $mergedFilter = is_array($seriesAssetFilter)
+                        ? array_values(array_intersect($seriesAssetFilter, $cardAssetOverride))
+                        : $cardAssetOverride;
+                    $seriesAssetFilter = $mergedFilter;
+                }
+
+                $assetFilter = $this->extractAssetFilter($controls, $project, $ssChannel, $seriesAssetFilter);
+                if ($assetFilter === '___EMPTY_GROUP___') {
+                    $fetchedSeries[$ssKey] = [];
+                    continue;
+                }
+
+                $assetFilter = $this->resolveChanneledAccountId($project, $ssChannel, $assetFilter);
+
+                $payload = [
+                    'tenant' => $project->id,
+                    'account' => $assetFilter,
+                    'dateStart' => $dateStart,
+                    'dateEnd' => $dateEnd,
+                    'granularity' => 'daily',
+                    'metrics' => [$ssMetric],
+                ];
+
+                $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
+                $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
+
+                if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
+                    $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                    $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
+                }
+
+                $fetchedSeries[$ssKey] = $seriesData;
+            }
+
+            $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
+            $computePayload = [
+                'ast' => $ast,
+                'filters' => [
+                    'startDate' => $dateStart,
+                    'endDate' => $dateEnd,
+                    'period' => $effectiveGranularity,
+                    'groupBy' => [$effectiveGranularity],
+                ],
+                'series_data' => $fetchedSeries,
+                'derived_metrics' => $derivedResults,
+            ];
+
+            $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+            $data = $result['data'] ?? $result;
+
+            $dmTimeSeries = [];
+            if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
+                foreach ($data['dates'] as $i => $d) {
+                    $dmTimeSeries[$d] = (float) ($data['values'][$i] ?? 0);
+                }
+            } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+                foreach ($data as $d => $v) {
+                    $dmTimeSeries[$d] = (float) $v;
+                }
+            } elseif (is_array($data) && isset($data['chart'])) {
+                foreach ($data['chart'] as $point) {
+                    $d = $point['date'] ?? $point['label'] ?? null;
+                    $v = $point['value'] ?? $point['y'] ?? reset($point);
+                    if ($d !== null && is_numeric($v)) {
+                        $dmTimeSeries[$d] = (float) $v;
+                    }
+                }
+            }
+
+            if ($derivedMetric->format === 'percentage') {
+                $dmTimeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $dmTimeSeries);
+            }
+
+            $dmLabel = $derivedMetric->name;
+            if ($derivedMetric->format === 'percentage') {
+                $dmLabel .= ' (%)';
+            } elseif ($derivedMetric->format === 'currency') {
+                $dmLabel = '$ ' . $dmLabel;
+            }
+
+            $seriesCurves[] = [
+                'label' => $dmLabel,
+                'key' => 'dm_' . $dmId,
+                'axis_key' => 'dm_' . $dmId,
+                'axis_title' => $dmLabel,
+                'data' => $dmTimeSeries,
+            ];
+        }
+
+        // 3. Align all series across unified sorted dates
+        $allDates = [];
+        foreach ($seriesCurves as $curve) {
+            $allDates = array_merge($allDates, array_keys($curve['data']));
+        }
+        $allDates = array_values(array_unique($allDates));
+        sort($allDates);
+
+        $datasets = [];
+        $scales = [];
+
+        foreach ($seriesCurves as $idx => $curve) {
+            $color = $palette[$idx % count($palette)];
+            $alignedValues = array_map(fn ($d) => (float) ($curve['data'][$d] ?? 0), $allDates);
+
+            $dataset = [
+                'label' => $curve['label'],
+                'data' => $alignedValues,
+                'borderColor' => $color,
+                'backgroundColor' => $color . '1a',
+                'tension' => 0.3,
+                'pointRadius' => 2,
+                'yAxisID' => 'y-' . $curve['axis_key'],
+                'fill' => false,
+            ];
+
+            if ($widget->widget_type === 'bar_chart') {
+                $dataset['type'] = 'bar';
+                $dataset['backgroundColor'] = $color . '80';
+            }
+
+            $datasets[] = $dataset;
+
+            $axisId = 'y-' . $curve['axis_key'];
+            if (! isset($scales[$axisId])) {
+                $scales[$axisId] = [
+                    'type' => 'linear',
+                    'display' => true,
+                    'position' => count($scales) % 2 === 0 ? 'left' : 'right',
+                    'title' => [
+                        'display' => true,
+                        'text' => $curve['axis_title'],
+                    ],
+                    'grid' => [
+                        'drawOnChartArea' => count($scales) === 0,
+                    ],
+                ];
+            }
+        }
+
+        return [
+            'labels' => $allDates,
+            'datasets' => $datasets,
+            'scales' => $scales,
+        ];
     }
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array

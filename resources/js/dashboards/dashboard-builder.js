@@ -1405,6 +1405,11 @@ export function dashboardBuilder(config = {}) {
             if (widget.source_type !== 'kpi') {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
                     this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
+                        type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                        dm_id: s.dm_id ? String(s.dm_id) : undefined,
+                        dm_name: s.dm_name || undefined,
+                        dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
+                        label: s.label || '',
                         channel: s.channel || '',
                         metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
                         assets: Array.isArray(s.assets) ? [...s.assets] : []
@@ -1997,6 +2002,11 @@ export function dashboardBuilder(config = {}) {
                     payload.series_channels[sIdx] = s.channel || '';
                 });
                 payload.raw_series = c.raw_series.map(s => ({
+                    type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                    dm_id: s.dm_id ? String(s.dm_id) : undefined,
+                    dm_name: s.dm_name || undefined,
+                    dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
+                    label: s.label || '',
                     channel: s.channel || '',
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     assets: Array.isArray(s.assets) ? [...s.assets] : []
