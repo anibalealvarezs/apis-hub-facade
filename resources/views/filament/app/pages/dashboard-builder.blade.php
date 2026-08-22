@@ -866,15 +866,13 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
-                            class="flex-1 min-w-0 min-h-0 flex flex-row gap-3 items-stretch bd-canvas-col"
+                            class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeMobileTab !== 'series' }">
-
-                            <div class="flex-1 min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory">
 
                             {{-- Series: Raw Metric --}}
                             <template
                                 x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                <template x-for="(series, index) in (widgetControlsForm.raw_series || [])" :key="index">
                                     <div
                                         class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start transition-all duration-200"
                                         :class="(widgetControlsForm.raw_series || []).length === 1
@@ -1678,11 +1676,9 @@
                                     </div>
                                 </template>
                             </template>
-                            </div>
-
                             {{-- Fixed Vertical Add Series Bar (Raw Metric widgets only) --}}
                             <template x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                <div class="flex-none flex flex-col justify-center items-center py-1 self-stretch">
+                                <div class="flex-none sticky right-0 z-10 flex flex-col justify-center items-center py-1 self-stretch bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-xs pl-2">
                                     <button
                                         type="button"
                                         x-on:click="addSeriesCard()"
