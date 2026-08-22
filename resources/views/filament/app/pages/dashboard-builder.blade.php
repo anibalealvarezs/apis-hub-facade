@@ -872,14 +872,13 @@
                             {{-- Series: Raw Metric --}}
                             <template
                                 x-if="widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'">
-                                <div style="display: contents">
-                                    <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
-                                        <div
-                                            class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
-                                            :class="{
-                                         'md:w-full': widgetControlsForm.raw_series.length === 1,
-                                         'sm:w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
-                                     }">
+                                <template x-for="(series, index) in widgetControlsForm.raw_series" :key="index">
+                                    <div
+                                        class="flex-none shrink-0 w-full h-full min-h-0 flex flex-col snap-start"
+                                        :class="{
+                                            'md:w-full': widgetControlsForm.raw_series.length === 1,
+                                            'sm:w-[calc(50%-0.75rem)] sm:min-w-[calc(50%-0.75rem)] sm:max-w-[calc(50%-0.75rem)]': widgetControlsForm.raw_series.length >= 2
+                                        }">
                                             <div
                                                 class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                                 <div
@@ -1036,7 +1035,7 @@
 
                                     {{-- Add Series Button Card --}}
                                     <div
-                                        class="flex-none w-full sm:w-[calc(50%-0.75rem)] h-full min-h-0 flex flex-col snap-start">
+                                        class="flex-none shrink-0 w-full sm:w-[calc(50%-0.75rem)] sm:min-w-[calc(50%-0.75rem)] sm:max-w-[calc(50%-0.75rem)] h-full min-h-0 flex flex-col snap-start">
                                         <button
                                             x-on:click="addSeriesCard()"
                                             class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500 bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/10 flex flex-col items-center justify-center h-full min-h-[300px] transition-colors group">
@@ -1054,7 +1053,6 @@
                                                 class="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ __('Add Series') }}</span>
                                         </button>
                                     </div>
-                                </div>
                             </template>
 
                             {{-- Variables: Assets per variable (KPI) --}}
