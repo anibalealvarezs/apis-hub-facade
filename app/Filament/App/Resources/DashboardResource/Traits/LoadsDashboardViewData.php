@@ -661,6 +661,10 @@ trait LoadsDashboardViewData
                 }
             }
 
+            if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
+                $resolved['metrics'] = [];
+            }
+
             if (!isset($resolved['series_metrics']) || !is_array($resolved['series_metrics'])) {
                 $resolved['series_metrics'] = [];
             }
