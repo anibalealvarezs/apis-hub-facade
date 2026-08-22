@@ -64,7 +64,7 @@
     @endphp
 
     {{-- Real-Time Tenant Clock & Timezone Widget --}}
-    <div x-data="tenantClock({ timezone: '{{ $tenantTimezone }}' })" 
+    <div x-data="typeof tenantClock === 'function' ? tenantClock({ timezone: '{{ $tenantTimezone }}' }) : { timeStr: '', tzStr: '{{ $tenantTimezone }}', init() { if (typeof tenantClock === 'function') { Object.assign(this, tenantClock({ timezone: '{{ $tenantTimezone }}' })); if (this.updateClock) this.init(); } } }" 
        class="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200/50 dark:border-white/10 text-xs font-mono text-gray-700 dark:text-gray-200 select-none shrink-0" 
        title="{{ __('Current Tenant Local Time') }}">
         <svg xmlns="http://www.w3.org/2000/svg" class="topbar-clock-icon hidden lg:block w-3.5 h-3.5 text-primary-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
