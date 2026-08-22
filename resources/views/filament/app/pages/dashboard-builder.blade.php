@@ -1856,6 +1856,27 @@
         </x-confirm-modal>
 
         {{-- ============================================================ --}}
+        {{-- REMOVE DM SERIES GROUP CONFIRMATION MODAL                    --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="showRemoveDmSeriesModal"
+            title="{{ __('Remove Derived Metric Series') }}"
+            icon="heroicon-o-trash"
+            color="danger"
+            confirm-label="{{ __('Remove All') }}"
+            confirm-color="danger"
+            confirm-icon="heroicon-o-trash"
+            on-confirm="confirmRemoveDmSeriesGroup()"
+            :close-on-confirm="false"
+            cancel-label="{{ __('Cancel') }}"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ __('This series is part of the Derived Metric') }} <strong class="text-gray-900 dark:text-white" x-text="pendingRemoveDmName"></strong>.
+                {{ __('Removing it will remove all series associated with this Derived Metric from the widget.') }}
+            </p>
+        </x-confirm-modal>
+
+        {{-- ============================================================ --}}
         {{-- ADD WIDGET MODAL                                            --}}
         {{-- ============================================================ --}}
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">

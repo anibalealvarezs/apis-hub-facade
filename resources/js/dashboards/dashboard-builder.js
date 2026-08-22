@@ -158,6 +158,11 @@ export function dashboardBuilder(config = {}) {
         addSeriesSourceType: 'metric',
         addSeriesDerivedMetricId: '',
 
+        // ─── Remove DM Series Group Confirmation Modal ──
+        showRemoveDmSeriesModal: false,
+        pendingRemoveDmId: '',
+        pendingRemoveDmName: '',
+
         // ─── Share ──
         showShareDialog: false,
         isPublic: config.isPublic || false,
@@ -825,14 +830,51 @@ export function dashboardBuilder(config = {}) {
         },
 
         removeSeriesCard(index) {
-            if (this.widgetControlsForm.raw_series && index >= 0) {
-                const list = [...this.widgetControlsForm.raw_series];
-                list.splice(index, 1);
-                this.widgetControlsForm.raw_series = list;
-                this.$nextTick(() => {
-                    this.updateSeriesScrollState();
+            if (!this.widgetControlsForm.raw_series || index < 0 || !this.widgetControlsForm.raw_series[index]) return;
+
+            const targetSeries = this.widgetControlsForm.raw_series[index];
+            if (targetSeries.type === 'derived_metric' && targetSeries.dm_id) {
+                this.pendingRemoveDmId = String(targetSeries.dm_id);
+                this.pendingRemoveDmName = targetSeries.dm_name || ('DM #' + targetSeries.dm_id);
+                this.showRemoveDmSeriesModal = true;
+                return;
+            }
+
+            const list = [...this.widgetControlsForm.raw_series];
+            list.splice(index, 1);
+            this.widgetControlsForm.raw_series = list;
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+            });
+        },
+
+        confirmRemoveDmSeriesGroup() {
+            if (!this.pendingRemoveDmId) {
+                this.showRemoveDmSeriesModal = false;
+                return;
+            }
+
+            const targetDmId = String(this.pendingRemoveDmId);
+            const currentList = this.widgetControlsForm.raw_series || [];
+            const filteredList = currentList.filter(s => !(s.type === 'derived_metric' && String(s.dm_id) === targetDmId));
+
+            if (filteredList.length === 0) {
+                filteredList.push({
+                    type: 'metric',
+                    channel: this.dashboardControls.channel || '',
+                    metrics: [],
+                    assets: []
                 });
             }
+
+            this.widgetControlsForm.raw_series = filteredList;
+            this.pendingRemoveDmId = '';
+            this.pendingRemoveDmName = '';
+            this.showRemoveDmSeriesModal = false;
+
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+            });
         },
 
         updateSeriesScrollState() {
