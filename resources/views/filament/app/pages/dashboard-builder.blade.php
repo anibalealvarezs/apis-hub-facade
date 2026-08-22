@@ -950,17 +950,17 @@
                                                 <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
                                                     {{-- Channel & Metric (Locked representation for DM Series) --}}
                                                     <template x-if="series.type === 'derived_metric'">
-                                                        <div class="flex flex-col gap-3">
+                                                        <div class="flex flex-col gap-4">
                                                             <div>
-                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Channel') }}</label>
-                                                                <div class="flex items-center px-3.5 py-2.5 bg-gray-100 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xs">
-                                                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="channels[series.channel] || series.channel || '—'"></span>
+                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                                <div class="bd-dm-fixed-field">
+                                                                    <span x-text="channels[series.channel] || series.channel || '—'"></span>
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Metric') }}</label>
-                                                                <div class="flex items-center px-3.5 py-2.5 bg-gray-100 dark:bg-gray-800/80 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xs">
-                                                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="(allChannelMetrics[series.channel] || {})[series.metrics?.[0]] || series.metrics?.[0] || series.label || '—'"></span>
+                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
+                                                                <div class="bd-dm-fixed-field">
+                                                                    <span x-text="(allChannelMetrics[series.channel] || {})[series.metrics?.[0]] || series.metrics?.[0] || series.label || '—'"></span>
                                                                 </div>
                                                             </div>
                                                         </div>

@@ -652,3 +652,23 @@ body.pv-page .dvc-controls-bar {
     color: #FFFFFF !important;
     transform: scale(1.15) !important;
 }
+
+/* ─── Derived Metric Fixed Fields ─── */
+.bd-dm-fixed-field {
+    background-color: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+    color: #111827 !important;
+    padding: 0.625rem 0.875rem !important;
+    border-radius: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    min-height: 2.625rem !important;
+}
+
+.dark .bd-dm-fixed-field {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #F9FAFB !important;
+}
