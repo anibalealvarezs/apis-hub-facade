@@ -667,6 +667,8 @@
     "Enterprise tier Billing Profiles can be shared with other users. This allows agencies and large organizations to centralize billing while distributing projects.": "Los Perfiles de Facturación de nivel Enterprise se pueden compartir con otros usuarios. Esto permite a agencias y grandes organizaciones centralizar la facturación mientras distribuyen proyectos.",
     "Entity": "Entidad",
     "Entity Depth": "Profundidad de Entidad",
+    "Export CSV": "Exportar CSV",
+    "Export all rows of this table to CSV": "Exportar todas las filas de esta tabla a CSV",
     "Export PDF": "Exportar PDF",
     "Export dashboards & reports to PDF": "Exportar paneles e informes a PDF",
     "PDF Export is available on Pro, Ultra, and Enterprise plans. Click to upgrade.": "La exportación a PDF está disponible en los planes Pro, Ultra y Enterprise. Haz clic para mejorar tu plan.",

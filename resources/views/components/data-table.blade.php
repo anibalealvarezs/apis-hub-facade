@@ -59,7 +59,7 @@
     @endif
 
     @if ($search)
-        <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent">
+        <div class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex items-center justify-between gap-4 flex-wrap">
             <div class="relative w-full max-w-md">
                 <div class="absolute inset-y-0 left-0 rtl:right-0 rtl:left-auto w-10 flex items-center justify-center pointer-events-none">
                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
@@ -68,6 +68,12 @@
 class="bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2 dash-search-input"
                        placeholder="{{ $searchPlaceholder }}">
             </div>
+            <button type="button" @click="{{ $prefix }}exportCsv('{{ $variant }}_data_' + (typeof activeTab !== 'undefined' ? activeTab : 'export') + '_' + (typeof dateStart !== 'undefined' ? dateStart : '') + '_' + (typeof dateEnd !== 'undefined' ? dateEnd : ''))"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition shadow-sm cursor-pointer"
+                    title="{{ __('Export all rows of this table to CSV') }}">
+                <x-heroicon-m-arrow-down-tray class="w-4 h-4 text-primary-500" />
+                <span>{{ __('Export CSV') }}</span>
+            </button>
         </div>
     @endif
 
