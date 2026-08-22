@@ -201,7 +201,7 @@
             </div>
         </div>
 
-        <div class="joint-card" x-show="chartRendered" x-cloak>
+        <div class="joint-card joint-charts-card" x-show="chartRendered" x-cloak>
             <div x-show="isLoading"
                  class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-xl">
                 <div class="flex flex-col items-center">
