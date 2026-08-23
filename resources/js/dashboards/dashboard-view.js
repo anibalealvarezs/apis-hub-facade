@@ -793,10 +793,21 @@ export function widgetHeader() {
                     }
                 });
             }
+            if (!this.controls.series_dependencies) {
+                this.controls.series_dependencies = {};
+            }
             if (this.sourceType === 'kpi') {
                 const varCount = Object.keys(this.variables).length;
                 while (this.controls.metrics.length < varCount) {
                     this.controls.metrics.push('');
+                }
+                for (const vKey in this.variables) {
+                    const vConfig = this.variables[vKey];
+                    if (vConfig && vConfig.dependency) {
+                        if (!this.controls.series_dependencies[vKey]) {
+                            this.controls.series_dependencies[vKey] = vConfig.dependency;
+                        }
+                    }
                 }
             }
             if (this.controls.assets && this.controls.assets.length > 0) {
