@@ -1526,6 +1526,7 @@ window.dashboardRenderer = {
                 borderWidth: chartType === 'line' ? (ds.borderWidth || 2.5) : (ds.borderWidth || 1),
                 pointRadius: chartType === 'line' ? (ds.pointRadius ?? 4) : undefined,
                 pointHoverRadius: chartType === 'line' ? (ds.pointHoverRadius ?? 6) : undefined,
+                pointStyle: chartType === 'line' ? 'line' : 'rectRounded',
                 fill: ds.fill !== undefined ? ds.fill : false,
             };
         });
@@ -1589,7 +1590,28 @@ window.dashboardRenderer = {
                     legend: {
                         display: true,
                         position: 'bottom',
-                        labels: { boxWidth: 12, font: { size: 11 }, padding: 12 }
+                        labels: {
+                            usePointStyle: true,
+                            pointStyleWidth: 18,
+                            font: { size: 11 },
+                            padding: 12,
+                            generateLabels: (chart) => {
+                                return (chart.data.datasets || []).map((ds, i) => {
+                                    const isHidden = !chart.isDatasetVisible(i);
+                                    const isLine = ds.type === 'line';
+                                    return {
+                                        text: ds.label,
+                                        fillStyle: isLine ? ds.borderColor : (ds.backgroundColor || ds.borderColor),
+                                        strokeStyle: ds.borderColor,
+                                        lineWidth: isLine ? 2.5 : 1,
+                                        hidden: isHidden,
+                                        datasetIndex: i,
+                                        pointStyle: isLine ? 'line' : 'rectRounded',
+                                        pointStyleWidth: isLine ? 20 : 12,
+                                    };
+                                });
+                            }
+                        }
                     },
                     tooltip: {
                         callbacks: {
