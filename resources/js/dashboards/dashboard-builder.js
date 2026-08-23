@@ -146,6 +146,7 @@ export function dashboardBuilder(config = {}) {
             metrics: [],
             series_assets: {},
             series_asset_groups: {},
+            series_dependencies: {},
             dm_assets: {},
         },
         widgetKpiConfig: {},
@@ -1419,6 +1420,7 @@ export function dashboardBuilder(config = {}) {
                 metrics: wc.metrics || [],
                 series_assets: wc.series_assets || {},
                 series_asset_groups: wc.series_asset_groups || {},
+                series_dependencies: wc.series_dependencies ? { ...wc.series_dependencies } : {},
                 edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
                 edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : (this.dashboardControls.edge_case_weighted ?? true),
                 edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
@@ -1599,6 +1601,10 @@ export function dashboardBuilder(config = {}) {
 
                     if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
                     if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = '';
+                    if (!this.widgetControlsForm.series_dependencies) this.widgetControlsForm.series_dependencies = {};
+                    if (!this.widgetControlsForm.series_dependencies.dependent && uiState.dependent_dependency) {
+                        this.widgetControlsForm.series_dependencies.dependent = uiState.dependent_dependency;
+                    }
                     if (this.widgetKpiConfig.independent_variables) {
                         for (let key in this.widgetKpiConfig.independent_variables) {
                             if (!this.widgetControlsForm.series_assets['independent_' + key]) {
@@ -1606,6 +1612,9 @@ export function dashboardBuilder(config = {}) {
                             }
                             if (!this.widgetControlsForm.series_asset_groups['independent_' + key]) {
                                 this.widgetControlsForm.series_asset_groups['independent_' + key] = '';
+                            }
+                            if (!this.widgetControlsForm.series_dependencies['independent_' + key] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
+                                this.widgetControlsForm.series_dependencies['independent_' + key] = this.widgetKpiConfig.independent_variables[key].independent_dependency;
                             }
                         }
                     }
