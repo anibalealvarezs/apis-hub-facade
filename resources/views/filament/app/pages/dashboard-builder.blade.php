@@ -162,17 +162,16 @@
                                             </template>
                                             <button
                                                 type="button"
-                                                class="p-1 rounded transition-colors"
-                                                :class="previewWidgets[widget.id] ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
-                                                x-on:click.stop="toggleWidgetPreview(widget.id)"
-                                                :title="previewWidgets[widget.id] ? '{{ __('Switch to builder mode') }}' : '{{ __('Preview chart') }}'">
+                                                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 relative transition-colors"
+                                                :class="hasSandboxOverrides(widget.id) ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40' : ''"
+                                                x-on:click.stop="openSandboxModal(widget)"
+                                                :title="'{{ __('Test filters (ephemeral preview)') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
-                                                          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                          d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                                                 </svg>
+                                                <span x-show="hasSandboxOverrides(widget.id)" class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-primary-500 rounded-full"></span>
                                             </button>
                                             <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -208,62 +207,10 @@
                                             </button>
                                         </div>
                                     </div>
-                                    {{-- Widget Content (Live Preview vs Builder Placeholder) --}}
-                                    <div x-show="previewWidgets[widget.id]"
-                                         class="flex-1 w-full h-full min-h-0 overflow-hidden relative flex flex-col p-2">
+                                    {{-- Widget Content (Live Visualizer WYSIWYG) --}}
+                                    <div class="flex-1 w-full h-full min-h-0 overflow-hidden relative flex flex-col p-2">
                                         <div :id="'builder-widget-preview-' + widget.id"
                                              class="widget-content flex-1 w-full h-full min-h-0 overflow-hidden relative"></div>
-                                    </div>
-
-                                    <div x-show="!previewWidgets[widget.id]"
-                                        class="widget-body-drag cursor-grab active:cursor-grabbing select-none flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
-                                        <div
-                                            class="widget-drag-handle group/grab cursor-grab active:cursor-grabbing w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-700/60 flex flex-col items-center justify-center opacity-80 hover:opacity-100 transition-all shadow-sm relative"
-                                            :title="'{{ __('Click and drag to move widget') }}'">
-                                            <div class="absolute top-1 text-gray-400 dark:text-gray-500 group-hover/grab:text-primary-500 transition-colors">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-                                                    <path d="M4.5 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 4a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 8a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM4.5 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0ZM9 12a1.25 1.25 0 1 1 2.5 0 1.25 1.25 0 0 1-2.5 0Z" />
-                                                </svg>
-                                            </div>
-                                            <div class="mt-1" x-html="getWidgetSvg(widget.widget_type)"></div>
-                                        </div>
-                                        <div class="flex flex-wrap items-center justify-center gap-2">
-                                            <span
-                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                                                x-text="widgetLabels[widget.widget_type] || widget.widget_type"></span>
-                                            <template x-if="widget.source_type === 'kpi'">
-                                                <div class="flex flex-wrap items-center justify-center gap-2">
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">KPI</span>
-                                                    <template
-                                                        x-if="widget.source_config && widget.source_config.custom_kpi_id && kpis[widget.source_config.custom_kpi_id]">
-                                                        <span
-                                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700"
-                                                            x-text="kpis[widget.source_config.custom_kpi_id].name"></span>
-                                                    </template>
-                                                </div>
-                                            </template>
-                                            <template x-if="widget.source_type === 'metric'">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">{{ __('Metric') }}</span>
-                                            </template>
-                                            <template x-if="widget.source_type === 'entity'">
-                                                <span
-                                                    class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">{{ __('Entity') }}</span>
-                                            </template>
-                                            <template x-if="widget.source_type === 'derived_metric'">
-                                                <div class="flex flex-wrap items-center justify-center gap-2">
-                                                    <span
-                                                        class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">DM</span>
-                                                    <template
-                                                        x-if="widget.source_config && widget.source_config.derived_metric_id && derivedMetrics[widget.source_config.derived_metric_id]">
-                                                        <span
-                                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700"
-                                                            x-text="derivedMetrics[widget.source_config.derived_metric_id].name"></span>
-                                                    </template>
-                                                </div>
-                                            </template>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2199,6 +2146,103 @@
                 {{ __('You have made changes to the layout of this dashboard. Would you like to save them before leaving?') }}
             </p>
         </x-confirm-modal>
+
+        {{-- ============================================================ --}}
+        {{-- EPHEMERAL SANDBOX TESTING MODAL                              --}}
+        {{-- ============================================================ --}}
+        <div x-show="showSandboxModal"
+             class="bd-modal-root fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-16"
+             x-trap.noscroll="showSandboxModal"
+             @keydown.escape.window="showSandboxModal = false">
+            <div @click="showSandboxModal = false"
+                 class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 w-full max-w-lg">
+                <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+                    <div class="flex flex-col gap-0.5">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-primary-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                            </svg>
+                            {{ __('Test Filters (Sandbox)') }}
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ __('Simulate viewer controls in memory. These changes do NOT modify the saved dashboard.') }}
+                        </p>
+                    </div>
+                    <button type="button" @click="showSandboxModal = false" class="bd-modal-header-close">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4 text-sm">
+                    {{-- Date Range --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Start Date') }}</label>
+                            <input type="date" x-model="sandboxForm.date_start" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('End Date') }}</label>
+                            <input type="date" x-model="sandboxForm.date_end" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+
+                    {{-- Granularity --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Granularity') }}</label>
+                        <select x-model="sandboxForm.granularity" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
+                            <option value="daily">{{ __('Daily') }}</option>
+                            <option value="weekly">{{ __('Weekly') }}</option>
+                            <option value="monthly">{{ __('Monthly') }}</option>
+                            <option value="quarterly">{{ __('Quarterly') }}</option>
+                            <option value="annually">{{ __('Annually') }}</option>
+                        </select>
+                    </div>
+
+                    {{-- Zero Handling & Edge Case Grouping --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Zero Handling') }}</label>
+                            <select x-model="sandboxForm.zero_handling" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
+                                <option value="keep">{{ __('Keep Zeros') }}</option>
+                                <option value="remove">{{ __('Remove Zeros') }}</option>
+                                <option value="trim">{{ __('Trim Zeros') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Grouping') }}</label>
+                            <select x-model="sandboxForm.edge_case_grouping" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
+                                <option value="none">{{ __('None') }}</option>
+                                <option value="histogram">{{ __('Histogram') }}</option>
+                                <option value="iqr">{{ __('IQR') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 rounded-b-xl">
+                    <button type="button"
+                            x-on:click="resetSandboxControls()"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                        {{ __('Reset to Default') }}
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                x-on:click="showSandboxModal = false"
+                                class="bd-modal-header-btn-cancel text-xs py-1.5 px-3">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button"
+                                x-on:click="applySandboxControls()"
+                                class="bd-modal-header-btn-save text-xs py-1.5 px-3">
+                            {{ __('Apply Test') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {{-- ============================================================ --}}
         {{-- UNSAVED WIDGET CONTROLS CONFIRMATION MODAL                   --}}

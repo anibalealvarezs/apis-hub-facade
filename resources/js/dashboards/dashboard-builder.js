@@ -14,8 +14,76 @@ export function dashboardBuilder(config = {}) {
         showUnsavedWidgetControlsModal: false,
         widgetControlsSnapshot: null,
 
-        // ─── Widget Preview Mode State ───
-        previewWidgets: {},
+        // ─── Ephemeral Sandbox Testing State ───
+        showSandboxModal: false,
+        sandboxTargetWidget: null,
+        sandboxForm: {
+            date_start: '',
+            date_end: '',
+            granularity: '',
+            zero_handling: '',
+            edge_case_grouping: ''
+        },
+        ephemeralOverrides: {},
+
+        openSandboxModal(widget) {
+            this.sandboxTargetWidget = widget;
+            const current = {
+                ...this.resolveWidgetControls(widget),
+                ...(this.ephemeralOverrides[widget.id] || {})
+            };
+            this.sandboxForm = {
+                date_start: current.date_start || '',
+                date_end: current.date_end || '',
+                granularity: current.granularity || 'daily',
+                zero_handling: current.zero_handling || 'keep',
+                edge_case_grouping: current.edge_case_grouping || 'none',
+            };
+            this.showSandboxModal = true;
+        },
+
+        applySandboxControls() {
+            if (!this.sandboxTargetWidget) return;
+            const id = this.sandboxTargetWidget.id;
+            this.ephemeralOverrides[id] = { ...this.sandboxForm };
+            this.showSandboxModal = false;
+            this.$nextTick(() => {
+                this.renderWidget(id);
+            });
+        },
+
+        resetSandboxControls() {
+            if (!this.sandboxTargetWidget) return;
+            const id = this.sandboxTargetWidget.id;
+            delete this.ephemeralOverrides[id];
+            this.showSandboxModal = false;
+            this.$nextTick(() => {
+                this.renderWidget(id);
+            });
+        },
+
+        hasSandboxOverrides(widgetId) {
+            return !!(this.ephemeralOverrides[widgetId] && Object.keys(this.ephemeralOverrides[widgetId]).length > 0);
+        },
+
+        renderWidget(widgetId, el) {
+            const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
+            if (!widget) return;
+            const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
+            if (!targetEl) return;
+            targetEl.innerHTML = '';
+            const effectiveControls = {
+                ...this.resolveWidgetControls(widget),
+                ...(this.ephemeralOverrides[widget.id] || {})
+            };
+            if (window.dashboardRenderer) {
+                window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
+            }
+        },
+
+        renderWidgetPreview(widgetId, el) {
+            this.renderWidget(widgetId, el);
+        },
 
         isWidgetControlsDirty() {
             if (!this.widgetControlsSnapshot || !this.widgetControlsForm) return false;
@@ -44,35 +112,6 @@ export function dashboardBuilder(config = {}) {
 
         cancelUnsavedWidgetControlsModal() {
             this.showUnsavedWidgetControlsModal = false;
-        },
-
-        toggleWidgetPreview(widgetId) {
-            const id = typeof widgetId === 'object' ? widgetId.id : widgetId;
-            const nextState = !this.previewWidgets[id];
-            this.previewWidgets = {
-                ...this.previewWidgets,
-                [id]: nextState
-            };
-            if (nextState) {
-                this.$nextTick(() => {
-                    const el = document.getElementById('builder-widget-preview-' + id);
-                    if (el) {
-                        this.renderWidgetPreview(id, el);
-                    }
-                });
-            }
-        },
-
-        renderWidgetPreview(widgetId, el) {
-            const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
-            if (!widget) return;
-            const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
-            if (!targetEl) return;
-            targetEl.innerHTML = '';
-            const effectiveControls = this.resolveWidgetControls(widget);
-            if (window.dashboardRenderer) {
-                window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
-            }
         },
 
         resolveWidgetControls(widget) {
@@ -843,6 +882,10 @@ export function dashboardBuilder(config = {}) {
                 if (typeof this.grid.resizable === 'function') {
                     this.grid.resizable(el, true);
                 }
+
+                this.$nextTick(() => {
+                    this.renderWidget(widget.id);
+                });
             };
 
             registerNode();
@@ -1158,14 +1201,11 @@ export function dashboardBuilder(config = {}) {
 
             this.grid.on('resizestop', (event, el) => {
                 if (!el) return;
-                const widgetId = el.getAttribute('gs-id') || el.getAttribute('data-id');
-                if (widgetId && this.previewWidgets[widgetId]) {
-                    const contentEl = el.querySelector('.widget-content');
-                    if (contentEl && window.dashboardRenderer?._chartInstances?.has(contentEl)) {
-                        const chart = window.dashboardRenderer._chartInstances.get(contentEl);
-                        if (chart && typeof chart.resize === 'function') {
-                            chart.resize();
-                        }
+                const contentEl = el.querySelector('.widget-content');
+                if (contentEl && window.dashboardRenderer?._chartInstances?.has(contentEl)) {
+                    const chart = window.dashboardRenderer._chartInstances.get(contentEl);
+                    if (chart && typeof chart.resize === 'function') {
+                        chart.resize();
                     }
                 }
                 window.dispatchEvent(new Event('resize'));
@@ -2394,11 +2434,9 @@ export function dashboardBuilder(config = {}) {
                 this.widgets[idx].widget_type = c.widget_type;
             }
 
-            if (this.previewWidgets[this.widgetControlsTarget.id]) {
-                this.$nextTick(() => {
-                    this.renderWidgetPreview(this.widgetControlsTarget.id);
-                });
-            }
+            this.$nextTick(() => {
+                this.renderWidget(this.widgetControlsTarget.id);
+            });
         },
 
         // ─── Add Widget ──
