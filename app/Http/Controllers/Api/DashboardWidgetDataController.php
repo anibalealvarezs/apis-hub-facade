@@ -1093,6 +1093,9 @@ class DashboardWidgetDataController extends Controller
                             $dataset = [
                                 'label' => $isRatio ? $label . ' (%)' : $label,
                                 'key' => $key,
+                                'series_index' => 0,
+                                'metric' => $cleanKey,
+                                'metric_key' => $key,
                                 'data' => $values,
                                 'borderColor' => $color,
                                 'backgroundColor' => $color . '1a',
@@ -2157,6 +2160,9 @@ class DashboardWidgetDataController extends Controller
                     $seriesCurves[] = [
                         'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
                         'key' => 'series_' . $sIdx . '_' . $metric,
+                        'series_index' => $sIdx,
+                        'metric' => $cleanMetric,
+                        'raw_metric' => $metric,
                         'axis_key' => $cleanMetric,
                         'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
                         'currency' => $isCurrency,
@@ -2293,9 +2299,13 @@ class DashboardWidgetDataController extends Controller
                 $dmLabel = '$ ' . $dmLabel;
             }
 
+            $firstItemIndex = ! empty($items) ? ($items[0]['series_index'] ?? 0) : 0;
             $seriesCurves[] = [
                 'label' => $dmLabel,
                 'key' => 'dm_' . $dmId,
+                'series_index' => $firstItemIndex,
+                'metric' => 'dm',
+                'raw_metric' => 'dm',
                 'axis_key' => 'dm_' . $dmId,
                 'axis_title' => $dmLabel,
                 'currency' => $derivedMetric->format === 'currency',
@@ -2322,6 +2332,9 @@ class DashboardWidgetDataController extends Controller
             $dataset = [
                 'label' => $curve['label'],
                 'key' => $curve['key'],
+                'series_index' => $curve['series_index'] ?? null,
+                'metric' => $curve['metric'] ?? null,
+                'metric_key' => $curve['raw_metric'] ?? $curve['metric'] ?? null,
                 'data' => $alignedValues,
                 'borderColor' => $color,
                 'backgroundColor' => $color . '1a',

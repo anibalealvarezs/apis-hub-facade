@@ -115,7 +115,7 @@ window.dashboardRenderer = {
         try {
             const body = {tenant};
             if (controls) {
-                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'asset_group', 'series_assets', 'series_metrics', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown'];
+                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'asset_group', 'series_assets', 'series_metrics', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown', 'combo_chart_config', 'combo_series_config'];
                 const overrides = {};
                 for (const key of overrideKeys) {
                     if (controls[key] !== undefined) overrides[key] = controls[key];
@@ -1410,8 +1410,23 @@ window.dashboardRenderer = {
 
         const mappedDatasets = data.datasets.map((ds, idx) => {
             const labelLower = (ds.label || '').toLowerCase();
-            const metricKey = ds.metric || ds.metric_key || '';
-            const keyLower = metricKey.toLowerCase();
+            let metricKey = ds.metric || ds.metric_key || '';
+            let seriesIdx = ds.series_index;
+
+            if (!metricKey && ds.key) {
+                const mMatch = String(ds.key).match(/^series_(\d+)_(.+)$/);
+                if (mMatch) {
+                    if (seriesIdx === undefined || seriesIdx === null) seriesIdx = parseInt(mMatch[1], 10);
+                    metricKey = mMatch[2];
+                } else {
+                    metricKey = ds.key;
+                }
+            }
+            if (seriesIdx === undefined || seriesIdx === null) {
+                seriesIdx = idx;
+            }
+
+            const keyLower = String(metricKey).toLowerCase();
 
             // 1. Determine if this dataset is a rate / ratio or volume metric
             const isRateOrPercentage = ds.percentage ||
@@ -1424,59 +1439,67 @@ window.dashboardRenderer = {
             );
 
             // 2. Determine Chart Type (User override > Dataset default > Heuristic)
-            let chartType = ds.type;
-            const seriesIdx = ds.series_index !== undefined ? ds.series_index : idx;
             const comboEntry = comboConfig[seriesIdx + '_' + metricKey] ||
+                comboConfig[seriesIdx + '_' + keyLower] ||
                 comboConfig[idx + '_' + metricKey] ||
+                comboConfig[idx + '_' + keyLower] ||
                 comboConfig[metricKey] ||
+                comboConfig[keyLower] ||
                 comboConfig[idx] ||
-                comboConfig[ds.label];
+                comboConfig[ds.label] ||
+                comboConfig[ds.key];
 
-            if (comboEntry?.type) {
-                chartType = comboEntry.type;
-            } else if (!chartType) {
-                const hasSpendOrCurrency = data.datasets.some(d => {
-                    const l = (d.label || '').toLowerCase();
-                    const m = (d.metric || d.metric_key || '').toLowerCase();
-                    return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
-                });
+            let chartType = comboEntry?.type || null;
 
-                if (hasSpendOrCurrency) {
-                    // When Spend/Cost/Revenue is present, make Spend the Bar, and non-currency counts/rates the Lines
-                    const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
-                    chartType = isThisCurrency ? 'bar' : 'line';
-                } else if (isRateOrPercentage && !data.datasets.every(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
-                    // If mixed volumes and rates, rates are lines
-                    chartType = 'line';
-                } else if (data.datasets.length > 1 && idx > 0) {
-                    // Fallback when no spend/currency: primary series is bar, others are lines
-                    chartType = 'line';
+            if (!chartType) {
+                if (ds.type) {
+                    chartType = ds.type;
                 } else {
-                    chartType = 'bar';
+                    const hasSpendOrCurrency = data.datasets.some(d => {
+                        const l = (d.label || '').toLowerCase();
+                        const m = (d.metric || d.metric_key || '').toLowerCase();
+                        return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
+                    });
+
+                    if (hasSpendOrCurrency) {
+                        // When Spend/Cost/Revenue is present, make Spend the Bar, and non-currency counts/rates the Lines
+                        const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
+                        chartType = isThisCurrency ? 'bar' : 'line';
+                    } else if (isRateOrPercentage && !data.datasets.every(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
+                        // If mixed volumes and rates, rates are lines
+                        chartType = 'line';
+                    } else if (data.datasets.length > 1 && idx > 0) {
+                        // Fallback when no spend/currency: primary series is bar, others are lines
+                        chartType = 'line';
+                    } else {
+                        chartType = 'bar';
+                    }
                 }
             }
 
             // 3. Determine Axis Assignment (User override > Default)
-            let yAxisID = ds.yAxisID;
-            if (comboConfig[idx]?.axis) {
-                yAxisID = comboConfig[idx].axis;
-            } else if (comboConfig[ds.label]?.axis) {
-                yAxisID = comboConfig[ds.label].axis;
-            } else if (!yAxisID) {
-                const hasCurrencyInAny = data.datasets.some(d => {
-                    const l = (d.label || '').toLowerCase();
-                    const m = (d.metric || d.metric_key || '').toLowerCase();
-                    return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
-                });
-
-                if (hasCurrencyInAny) {
-                    // Currency on left ('y'), count/rate lines on right ('y1')
-                    const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
-                    yAxisID = isThisCurrency ? 'y' : 'y1';
-                } else if (chartType === 'line' && isRateOrPercentage) {
-                    yAxisID = 'y1';
+            let yAxisID = comboEntry?.axis || ds.yAxisID || null;
+            if (!yAxisID) {
+                if (comboConfig[idx]?.axis) {
+                    yAxisID = comboConfig[idx].axis;
+                } else if (comboConfig[ds.label]?.axis) {
+                    yAxisID = comboConfig[ds.label].axis;
                 } else {
-                    yAxisID = 'y';
+                    const hasCurrencyInAny = data.datasets.some(d => {
+                        const l = (d.label || '').toLowerCase();
+                        const m = (d.metric || d.metric_key || '').toLowerCase();
+                        return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
+                    });
+
+                    if (hasCurrencyInAny) {
+                        // Currency on left ('y'), count/rate lines on right ('y1')
+                        const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
+                        yAxisID = isThisCurrency ? 'y' : 'y1';
+                    } else if (chartType === 'line' && isRateOrPercentage) {
+                        yAxisID = 'y1';
+                    } else {
+                        yAxisID = 'y';
+                    }
                 }
             }
 
