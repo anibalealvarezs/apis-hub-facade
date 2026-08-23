@@ -135,6 +135,7 @@ class KpiPayloadBuilder
         // If channel is facebook_organic:
         // Automatically inject account_type = 'instagram_account' if dependency is instagram_account
         // OR if the metric requested is an Instagram-specific metric (views, profile_views, website_clicks, profile_links_taps, etc.)
+        // Otherwise set 'facebook_page' if dependency is facebook_page
         if (($state['dependent_channel'] ?? '') === 'facebook_organic' && empty($dependentNode['filters']['account_type'])) {
             $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
             $depMetric = $state['dependent_metric'] ?? '';
@@ -142,6 +143,8 @@ class KpiPayloadBuilder
             $isIgScope = $depDep === 'instagram_account' || in_array($depMetric, $igMetrics, true);
             if ($isIgScope) {
                 $dependentNode['filters']['account_type'] = 'instagram_account';
+            } elseif ($depDep === 'facebook_page') {
+                $dependentNode['filters']['account_type'] = 'facebook_page';
             }
         }
 
@@ -323,6 +326,8 @@ class KpiPayloadBuilder
             $isIgScope = $indDep === 'instagram_account' || in_array($indMetric, $igMetrics, true);
             if ($isIgScope) {
                 $node['filters']['account_type'] = 'instagram_account';
+            } elseif ($indDep === 'facebook_page') {
+                $node['filters']['account_type'] = 'facebook_page';
             }
         }
 

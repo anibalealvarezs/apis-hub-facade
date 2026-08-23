@@ -2409,6 +2409,7 @@
                                                 <div class="my-2">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
                                                     <select x-model="sandboxForm.series_dependencies[vKey]"
+                                                            @change="onSandboxDependencyChange(vKey, vConfig)"
                                                             class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
                                                         <template x-for="(label, key) in (allChannelDependencies[vConfig.channel] || {})" :key="key">
                                                             <option :value="key" x-text="label" :selected="sandboxForm.series_dependencies[vKey] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
@@ -2418,12 +2419,12 @@
                                             </template>
 
                                             {{-- Metric selector for KPI Widgets --}}
-                                            <template x-if="sandboxTargetWidget?.source_type === 'kpi' && allChannelMetrics[vConfig.channel] && Object.keys(allChannelMetrics[vConfig.channel]).length > 0">
+                                            <template x-if="sandboxTargetWidget?.source_type === 'kpi' && Object.keys(getSandboxMetricsForSeries(vKey, vConfig)).length > 0">
                                                 <div class="my-2">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
                                                     <select x-model="sandboxForm.metrics[vConfig.index]"
                                                             class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
-                                                        <template x-for="(label, key) in (allChannelMetrics[vConfig.channel] || {})" :key="key">
+                                                        <template x-for="(label, key) in getSandboxMetricsForSeries(vKey, vConfig)" :key="key">
                                                             <option :value="key" x-text="label" :selected="sandboxForm.metrics[vConfig.index] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                         </template>
                                                     </select>
@@ -2443,7 +2444,7 @@
                                                     </div>
                                                     <div class="flex-1 relative min-h-0 h-36 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
-                                                            <template x-for="(label, key) in (vConfig.allowed_metrics && vConfig.allowed_metrics.length > 0 ? Object.fromEntries(Object.entries(allChannelMetrics[vConfig.channel] || {}).filter(([k]) => vConfig.allowed_metrics.includes(k))) : (allChannelMetrics[vConfig.channel] || {}))" :key="key">
+                                                            <template x-for="(label, key) in (vConfig.allowed_metrics && vConfig.allowed_metrics.length > 0 ? Object.fromEntries(Object.entries(getSandboxMetricsForSeries(vKey, vConfig)).filter(([k]) => vConfig.allowed_metrics.includes(k))) : getSandboxMetricsForSeries(vKey, vConfig))" :key="key">
                                                                 <div class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
                                                                      :class="sandboxIsMetricSelected(vKey, key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                     <div @click="sandboxToggleMetric(vKey, key)" class="flex gap-x-3 items-center min-w-0 flex-1">

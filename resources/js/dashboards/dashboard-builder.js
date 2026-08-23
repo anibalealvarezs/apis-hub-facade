@@ -260,6 +260,47 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
+        _scopedMetricsCache: {},
+        _fetchingScopedMetrics: {},
+
+        getSandboxMetricsForSeries(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            if (!ch) return {};
+            const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+            const cacheKey = ch + '::' + dep;
+            if (this._scopedMetricsCache && this._scopedMetricsCache[cacheKey]) {
+                return this._scopedMetricsCache[cacheKey];
+            }
+            if (this.$wire && (!this._fetchingScopedMetrics || !this._fetchingScopedMetrics[cacheKey])) {
+                if (!this._fetchingScopedMetrics) this._fetchingScopedMetrics = {};
+                this._fetchingScopedMetrics[cacheKey] = true;
+                this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+                    if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
+                    this._scopedMetricsCache[cacheKey] = metrics || {};
+                    delete this._fetchingScopedMetrics[cacheKey];
+                });
+            }
+            return this._scopedMetricsCache?.[cacheKey] || this.allChannelMetrics[ch] || {};
+        },
+
+        onSandboxDependencyChange(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+            if (!ch || !this.$wire) return;
+            const cacheKey = ch + '::' + dep;
+            this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+                if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
+                this._scopedMetricsCache[cacheKey] = metrics || {};
+                const availableKeys = Object.keys(metrics || {});
+                if (availableKeys.length > 0 && vConfig?.index !== undefined) {
+                    const currentM = this.sandboxForm.metrics[vConfig.index];
+                    if (!currentM || !availableKeys.includes(currentM)) {
+                        this.sandboxForm.metrics[vConfig.index] = availableKeys[0];
+                    }
+                }
+            });
+        },
+
         sandboxIsMetricSelected(vKey, metricKey) {
             if (this.sandboxTargetWidget?.source_type === 'kpi') {
                 const idx = this.sandboxVariables[vKey]?.index ?? 0;
@@ -271,9 +312,10 @@ export function dashboardBuilder(config = {}) {
         sandboxSelectAllMetrics(vKey) {
             const vConfig = this.sandboxVariables[vKey];
             const ch = vConfig?.channel;
+            const scopedMetrics = this.getSandboxMetricsForSeries(vKey, vConfig);
             const available = vConfig?.allowed_metrics && vConfig.allowed_metrics.length > 0
-                ? vConfig.allowed_metrics
-                : Object.keys(this.allChannelMetrics[ch] || {});
+                ? vConfig.allowed_metrics.filter(m => Object.keys(scopedMetrics).includes(m))
+                : Object.keys(scopedMetrics);
             this.sandboxForm.metrics = [...new Set([...(this.sandboxForm.metrics || []), ...available])];
         },
 
