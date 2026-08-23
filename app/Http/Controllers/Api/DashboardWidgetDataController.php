@@ -1546,22 +1546,15 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 
-                if (isset($controls['series_assets']["independent_{$key}"]) && ! empty($controls['series_assets']["independent_{$key}"])) {
+                if (isset($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } elseif (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"]) && ! empty($controls['series_assets']["independent_{$var['key']}"])) {
+                } elseif (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$var['key']}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } elseif (! empty($controls['series_assets']) && is_array($controls['series_assets'])) {
-                    // Match independent_UUID or independent_0 keys
-                    foreach ($controls['series_assets'] as $sKey => $sAssets) {
-                        if (str_starts_with($sKey, 'independent_') && ! empty($sAssets)) {
-                            $uiState['independent_variables'][$key]['independent_asset_filter'] = $sAssets;
-                            $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-
-                            break;
-                        }
-                    }
+                } elseif (is_numeric($key) && isset($controls['series_assets'][(string)($key + 1)])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets'][(string)($key + 1)];
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
                 }
                 if (! empty($controls['series_asset_groups']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
