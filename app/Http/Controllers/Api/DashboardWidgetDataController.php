@@ -1082,6 +1082,7 @@ class DashboardWidgetDataController extends Controller
 
                             $dataset = [
                                 'label' => $isRatio ? $label . ' (%)' : $label,
+                                'key' => $key,
                                 'data' => $values,
                                 'borderColor' => $color,
                                 'backgroundColor' => $color . '1a',
@@ -2280,6 +2281,7 @@ class DashboardWidgetDataController extends Controller
 
             $dataset = [
                 'label' => $curve['label'],
+                'key' => $curve['key'],
                 'data' => $alignedValues,
                 'borderColor' => $color,
                 'backgroundColor' => $color . '1a',
