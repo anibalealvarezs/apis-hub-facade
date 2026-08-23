@@ -690,7 +690,7 @@
                                             x-text="'{{ __('Inherited:') }} ' + (inheritedControlLabel('granularity', (widgetKpiConfig && widgetKpiConfig.granularity !== undefined ? widgetKpiConfig.granularity : dashboardControls.granularity)) || '{{ __('Default') }}')"></div>
                                     </template>
                                     <template x-if="!widgetControlsForm.granularity_inherit">
-                                        <div class="space-y-4">
+                                        <div class="flex flex-col gap-4">
                                             <!-- Dependency/Matrix Selector (KPI only) -->
                                             <template
                                                 x-if="widgetControlsTarget && widgetControlsTarget.source_type === 'kpi' && Object.keys(availableDependencies).length > 0">
