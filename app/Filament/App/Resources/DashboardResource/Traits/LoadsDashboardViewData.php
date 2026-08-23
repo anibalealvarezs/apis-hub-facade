@@ -543,8 +543,9 @@ trait LoadsDashboardViewData
 
             if ($widgetArray['source_type'] === 'kpi') {
                 $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
+                $depDependency = $uiState['dependent_dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
                 $depMetrics = ! empty($depChannel)
-                    ? KpiFormBuilder::getMetricOptionsForChannel($depChannel)
+                    ? KpiFormBuilder::getMetricOptionsForChannel($depChannel, null, $depDependency)
                     : [];
                 $variables['dependent'] = [
                     'index' => $varIndex++,
@@ -557,8 +558,9 @@ trait LoadsDashboardViewData
                 if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                     foreach ($uiState['independent_variables'] as $key => $var) {
                         $indChannel = $var['independent_channel'] ?? '';
+                        $indDependency = $var['independent_dependency'] ?? $var['dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
                         $indMetrics = ! empty($indChannel)
-                            ? KpiFormBuilder::getMetricOptionsForChannel($indChannel)
+                            ? KpiFormBuilder::getMetricOptionsForChannel($indChannel, null, $indDependency)
                             : [];
                         $variables['independent_' . $key] = [
                             'index' => $varIndex++,
