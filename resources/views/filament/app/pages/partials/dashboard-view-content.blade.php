@@ -453,7 +453,6 @@
                                             <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
                                                 <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
                                                     <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                                        <x-ui.select-option value="">{{ __('Dashboard Default') }}</x-ui.select-option>
                                                         <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
                                                         <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
                                                         <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>

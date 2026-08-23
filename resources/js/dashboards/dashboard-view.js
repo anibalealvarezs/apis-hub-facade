@@ -366,6 +366,10 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            if (!this.settingsControls.granularity) {
+                this.settingsControls.granularity = this.settingsBuilderControls.granularity || 'daily';
+            }
+
             this.settingsGranularityOnTheGo = granularityOnTheGo;
             this.settingsSourceType = sourceType || '';
             this.openSettings = true;
