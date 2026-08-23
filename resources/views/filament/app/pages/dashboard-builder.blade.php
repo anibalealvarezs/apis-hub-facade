@@ -980,7 +980,7 @@
                                                                 </div>
                                                             </template>
 
-                                                            <div class="my-1">
+                                                            <div class="my-1 flex flex-col">
                                                                 <div class="flex items-center justify-between mb-2">
                                                                     <label
                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
@@ -994,7 +994,7 @@
                                                                     </template>
                                                                 </div>
                                                                 <div
-                                                                    class="flex-1 relative min-h-0 h-36 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                                    class="relative h-36 shrink-0 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                                                                     <div
                                                                         class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
                                                                         <template
