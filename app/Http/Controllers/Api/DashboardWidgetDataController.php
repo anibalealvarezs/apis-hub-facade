@@ -2095,6 +2095,14 @@ class DashboardWidgetDataController extends Controller
                     $payload['dependency'] = $seriesDependency;
                 }
 
+                if ($channel === 'facebook_organic') {
+                    if ($granularity === 'ig_post' || ($seriesDependency ?? '') === 'instagram_account') {
+                        $payload['activeTab'] = 'instagram';
+                    } else {
+                        $payload['activeTab'] = 'facebook';
+                    }
+                }
+
                 $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 
                 foreach ($metrics as $metric) {
@@ -2754,7 +2762,7 @@ class DashboardWidgetDataController extends Controller
 
             if ($channel === 'facebook_organic' && ! empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
-                $activeTab = $payload['activeTab'] ?? 'facebook';
+                $activeTab = $payload['activeTab'] ?? (($payload['dependency'] ?? '') === 'instagram_account' ? 'instagram' : 'facebook');
                 $pages = $project
                     ? ($project->sync_config['facebook_organic']['assets']['pages']
                         ?? $project->sync_config['facebook_organic']['pages']
