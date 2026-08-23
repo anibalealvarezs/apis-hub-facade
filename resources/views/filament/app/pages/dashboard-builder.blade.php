@@ -450,6 +450,20 @@
                             </button>
                         </div>
 
+                        <span x-show="widgetControlsError" x-cloak x-text="widgetControlsError"
+                              class="text-xs text-red-600 dark:text-red-400 font-medium max-w-[200px] truncate"></span>
+
+                        <button
+                            type="button"
+                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
+                            x-on:click="showWidgetControls = false">{{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="button"
+                            class="text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 px-5 py-2 rounded-lg shadow-sm transition-colors border border-transparent"
+                            x-on:click="confirmWidgetControls()">{{ __('Save Controls') }}
+                        </button>
+
                         <button @click="showWidgetControls = false"
                                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -461,7 +475,7 @@
                 </div>
 
                 <div
-                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col">
+                    class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col rounded-b-xl">
                     {{-- Mobile Accordion Navigation Bar (Visible on mobile only) --}}
                     <div
                         class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
@@ -592,10 +606,10 @@
                                             x-text="widgetControlsForm.date_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                     </label>
                                 </div>
-                                <div class="p-4 flex flex-row items-center gap-2">
+                                <div class="p-6">
                                     <template x-if="widgetControlsForm.date_inherit">
                                         <div
-                                            class="w-full text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 truncate"
+                                            class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
                                             x-text="'{{ __('Inherited:') }} ' + ((((widgetKpiConfig && widgetKpiConfig.start_date) || dashboardControls.date_start) || '—')) + ' → ' + ((((widgetKpiConfig && widgetKpiConfig.end_date) || dashboardControls.date_end) || '—'))"></div>
                                     </template>
                                     <template x-if="!widgetControlsForm.date_inherit">
@@ -710,8 +724,6 @@
 
                                             <!-- Granularity Selector -->
                                             <div>
-                                                <label
-                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
                                                 <x-ui.select-input x-model="widgetControlsForm.granularity"
                                                                    @change="updateSeriesMetrics()" class="w-full">
                                                     <x-ui.select-option
@@ -1843,20 +1855,6 @@
                             </div>
                         </template>
                     </div>
-                </div>
-
-                <div
-                    class="flex items-center justify-end gap-3 p-6 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-xl">
-                    <span x-show="widgetControlsError" x-cloak x-text="widgetControlsError"
-                          class="text-sm text-red-600 dark:text-red-400 mr-auto font-medium"></span>
-                    <button
-                        class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-6 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
-                        x-on:click="showWidgetControls = false">{{ __('Cancel') }}
-                    </button>
-                    <button
-                        class="text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 px-6 py-2.5 rounded-lg shadow-sm transition-colors border border-transparent"
-                        x-on:click="confirmWidgetControls()">{{ __('Save Controls') }}
-                    </button>
                 </div>
             </div>
         </div>
