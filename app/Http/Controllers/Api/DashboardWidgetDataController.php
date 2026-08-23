@@ -21,7 +21,14 @@ class DashboardWidgetDataController extends Controller
 
     public function show(Request $request, DashboardWidget $widget): JsonResponse
     {
-        $locale = $request->query('lang') ?? $request->cookie('pv_lang') ?? session('locale') ?? app()->getLocale();
+        $user = $request->user();
+        $locale = $request->query('lang') 
+            ?? $request->input('lang')
+            ?? ($user?->locale)
+            ?? session('locale') 
+            ?? $request->cookie('pv_lang') 
+            ?? app()->getLocale();
+
         if (in_array($locale, ['en', 'es'])) {
             app()->setLocale($locale);
         }

@@ -122,7 +122,8 @@ window.dashboardRenderer = {
                 }
                 if (Object.keys(overrides).length > 0) body.controls = overrides;
             }
-            const response = await fetch('/api/dashboard/widget/' + widgetId + '/data', {
+            const currentLang = document.documentElement.lang || (window.Filament?.locale) || 'en';
+            const response = await fetch('/api/dashboard/widget/' + widgetId + '/data?lang=' + encodeURIComponent(currentLang), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
