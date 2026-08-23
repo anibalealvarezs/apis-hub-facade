@@ -513,7 +513,7 @@ it('normalizes Google Search Console table rows for the data explorer', function
     expect($data['table'])->toHaveCount(2);
     expect($data['table'][0]['id'])->toBe('keyword one');
     expect($data['table'][0]['name'])->toBe('keyword one');
-    expect($data['table'][0]['ctr'])->toBe(5);
+    expect($data['table'][0]['ctr'])->toBe(0.05);
     expect($data['table'][1]['id'])->toBe('keyword two');
 });
 

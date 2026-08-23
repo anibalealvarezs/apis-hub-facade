@@ -2122,6 +2122,12 @@ class DashboardWidgetDataController extends Controller
                     $timeSeries = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
                     $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
                     $isRatio = in_array($cleanMetric, $ratioMetrics);
+
+                    if ($granularity !== 'daily' && ! empty($timeSeries)) {
+                        $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                        $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
+                    }
+
                     $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
                     $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
                     $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
