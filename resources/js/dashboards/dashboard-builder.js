@@ -1417,17 +1417,22 @@ export function dashboardBuilder(config = {}) {
 
             if (widget.source_type !== 'kpi') {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
-                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
-                        type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
-                        dm_id: s.dm_id ? String(s.dm_id) : undefined,
-                        dm_name: s.dm_name || undefined,
-                        dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
-                        label: s.label || '',
-                        channel: s.channel || '',
-                        dependency: s.dependency || wc.dependency || '',
-                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
-                        assets: Array.isArray(s.assets) ? [...s.assets] : []
-                    }));
+                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => {
+                        const rawAllowed = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : (Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []));
+                        const rawSelected = Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []);
+                        return {
+                            type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                            dm_id: s.dm_id ? String(s.dm_id) : undefined,
+                            dm_name: s.dm_name || undefined,
+                            dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
+                            label: s.label || '',
+                            channel: s.channel || '',
+                            dependency: s.dependency || wc.dependency || '',
+                            allowed_metrics: rawAllowed,
+                            metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
+                            assets: Array.isArray(s.assets) ? [...s.assets] : []
+                        };
+                    });
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
                     const seriesKeys = Object.keys(wc.series_channels);
                     const groupedSeries = [];
@@ -1448,9 +1453,11 @@ export function dashboardBuilder(config = {}) {
                         } else if (wc.metrics && typeof wc.metrics === 'object') {
                             metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
                         }
+                        const allowed = (wc.series_allowed_metrics && wc.series_allowed_metrics[key]) ? [...wc.series_allowed_metrics[key]] : [...metrics];
                         groupedSeries.push({
                             channel,
                             dependency: wc.dependency || '',
+                            allowed_metrics: allowed,
                             metrics,
                             assets
                         });
@@ -1460,13 +1467,14 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series = [{
                         channel: wc.channel || '',
                         dependency: wc.dependency || '',
+                        allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', metrics: [], assets: wc.assets || [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [] });
                 }
 
                 if (this.$wire) {
@@ -1751,7 +1759,8 @@ export function dashboardBuilder(config = {}) {
             const series = this.widgetControlsForm.raw_series[index];
             const ch = series.channel;
 
-            // Reset selected metrics, dependency, and assets because channel changed
+            // Reset selected metrics, allowed metrics, dependency, and assets because channel changed
+            series.allowed_metrics = [];
             series.metrics = [];
             series.dependency = '';
             series.assets = [];
@@ -1780,6 +1789,61 @@ export function dashboardBuilder(config = {}) {
                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                 });
             }
+        },
+
+        toggleRawMetricIncluded(index, metricKey) {
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
+            if (!Array.isArray(series.metrics)) series.metrics = [];
+
+            if (series.allowed_metrics.includes(metricKey)) {
+                // Remove from allowed and active
+                series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
+                series.metrics = series.metrics.filter(m => m !== metricKey);
+            } else {
+                // Add to allowed and by default mark as active
+                series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                if (!series.metrics.includes(metricKey)) {
+                    series.metrics = [...series.metrics, metricKey];
+                }
+            }
+        },
+
+        toggleRawMetricDefaultActive(index, metricKey) {
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
+            if (!Array.isArray(series.metrics)) series.metrics = [];
+
+            // If not included yet, include it first
+            if (!series.allowed_metrics.includes(metricKey)) {
+                series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                series.metrics = [...series.metrics, metricKey];
+                return;
+            }
+
+            // Toggle active state
+            if (series.metrics.includes(metricKey)) {
+                series.metrics = series.metrics.filter(m => m !== metricKey);
+            } else {
+                series.metrics = [...series.metrics, metricKey];
+            }
+        },
+
+        selectAllRawMetrics(index) {
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series || !series.channel) return;
+            const availableKeys = Object.keys(this.allChannelMetrics[series.channel] || {});
+            series.allowed_metrics = [...availableKeys];
+            series.metrics = [...availableKeys];
+        },
+
+        clearAllRawMetrics(index) {
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            series.allowed_metrics = [];
+            series.metrics = [];
         },
 
         toggleRawAsset(index, id) {
@@ -2019,6 +2083,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_assets = {};
                 payload.series_channels = {};
                 payload.series_dependencies = {};
+                payload.series_allowed_metrics = {};
 
                 c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
@@ -2038,6 +2103,7 @@ export function dashboardBuilder(config = {}) {
                     payload.series_assets[sIdx] = validAssets;
                     payload.series_channels[sIdx] = s.channel || '';
                     payload.series_dependencies[sIdx] = s.dependency || '';
+                    payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
                 });
                 payload.raw_series = c.raw_series.map(s => ({
                     type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
@@ -2047,6 +2113,7 @@ export function dashboardBuilder(config = {}) {
                     label: s.label || '',
                     channel: s.channel || '',
                     dependency: s.dependency || '',
+                    allowed_metrics: Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [],
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     assets: Array.isArray(s.assets) ? [...s.assets] : []
                 }));

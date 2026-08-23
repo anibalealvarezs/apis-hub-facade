@@ -612,7 +612,16 @@ trait LoadsDashboardViewData
                         if (!empty($sChannel)) {
                             $granularity = $resolved['granularity'] ?? null;
                             $dependency  = $s['dependency'] ?? $resolved['series_dependencies'][$sIdx] ?? $resolved['dependency'] ?? null;
-                            $metrics     = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            
+                            // Whitelist to allowed_metrics if defined
+                            $allowed = $s['allowed_metrics'] ?? $resolved['series_allowed_metrics'][$sIdx] ?? [];
+                            if (!empty($allowed) && is_array($allowed)) {
+                                $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                            } else {
+                                $metrics = $allChannelMetrics;
+                            }
+
                             $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
                             $variables[(string)$sIdx] = [
                                 'index' => $sIdx,
@@ -629,7 +638,16 @@ trait LoadsDashboardViewData
                         if (!empty($sChannel)) {
                             $granularity = $resolved['granularity'] ?? null;
                             $dependency  = $resolved['series_dependencies'][$sIdx] ?? $resolved['dependency'] ?? null;
-                            $metrics     = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            
+                            // Whitelist to allowed_metrics if defined
+                            $allowed = $resolved['series_allowed_metrics'][$sIdx] ?? [];
+                            if (!empty($allowed) && is_array($allowed)) {
+                                $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                            } else {
+                                $metrics = $allChannelMetrics;
+                            }
+
                             $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
                             $variables[(string)$sIdx] = [
                                 'index' => (int)$sIdx,
