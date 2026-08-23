@@ -569,7 +569,7 @@ trait LoadsDashboardViewData
                     foreach ($uiState['independent_variables'] as $key => $var) {
                         $indChannel = $var['independent_channel'] ?? '';
                         $indDependency = $resolved['series_dependencies']['independent_' . $key]
-                            ?? $resolved['series_dependencies'][(string)($key + 1)]
+                            ?? (is_numeric($key) ? ($resolved['series_dependencies'][(string)($key + 1)] ?? null) : null)
                             ?? $var['independent_dependency']
                             ?? $var['dependency']
                             ?? $uiState['dependency']

@@ -1539,7 +1539,7 @@ class DashboardWidgetDataController extends Controller
                 }
                 if (! empty($controls['series_dependencies']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies']["independent_{$key}"];
-                } elseif (! empty($controls['series_dependencies'][(string)($key + 1)])) {
+                } elseif (is_numeric($key) && ! empty($controls['series_dependencies'][(string)($key + 1)])) {
                     $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies'][(string)($key + 1)];
                 }
             }
