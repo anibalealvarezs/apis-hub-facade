@@ -599,7 +599,6 @@
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
                                                         <x-ui.select-input x-model="settingsControls.metrics[vConfig.index]" class="w-full">
-                                                            <x-ui.select-option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></x-ui.select-option>
                                                             <template x-for="(label, key) in vConfig.metrics" :key="key">
                                                                 <x-ui.select-option x-bind:value="key" x-text="label" x-bind:selected="settingsControls.metrics[vConfig.index] == key"></x-ui.select-option>
                                                             </template>

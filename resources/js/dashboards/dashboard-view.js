@@ -366,6 +366,18 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            if (sourceType === 'kpi') {
+                for (const vKey in this.settingsVariables) {
+                    const vConfig = this.settingsVariables[vKey];
+                    if (vConfig && vConfig.index !== undefined && !vConfig.selected_metric) {
+                        const idx = vConfig.index;
+                        if (!this.settingsControls.metrics[idx] && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
+                            this.settingsControls.metrics[idx] = Object.keys(vConfig.metrics)[0];
+                        }
+                    }
+                }
+            }
+
             if (!this.settingsControls.granularity) {
                 this.settingsControls.granularity = this.settingsBuilderControls.granularity || 'daily';
             }
