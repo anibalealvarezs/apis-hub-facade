@@ -81,7 +81,17 @@ export function dashboardBuilder(config = {}) {
                     this.$wire.getDependenciesForChannel(ch).then(deps => { this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps }; });
                 }
                 if (!this.allChannelMetrics[ch]) {
-                    this.$wire.getMetricsForChannel(ch).then(metrics => { this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics }; });
+                    this.$wire.getMetricsForChannel(ch).then(metrics => {
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        if (this.sandboxVariables) {
+                            Object.values(this.sandboxVariables).forEach(v => {
+                                if (v.channel === ch && !this.sandboxForm.metrics[v.index]) {
+                                    const mKeys = Object.keys(metrics || {});
+                                    if (mKeys.length > 0) this.sandboxForm.metrics[v.index] = mKeys[0];
+                                }
+                            });
+                        }
+                    });
                 }
             };
 
@@ -91,27 +101,30 @@ export function dashboardBuilder(config = {}) {
                     const uiState = config?.filters?._ui_state || config || {};
                     const vars = {};
                     let indIndex = 1;
-                    if (uiState.dependent_channel) {
-                        ensureChannelLoaded(uiState.dependent_channel);
-                        vars['dependent'] = {
-                            index: 0,
-                            channel: uiState.dependent_channel,
-                            channel_name: uiState.dependent_channel,
-                            selected_metric: uiState.dependent_metric || '',
-                            dm_id: uiState.dependent_dm_id || null,
-                            dm_name: uiState.dependent_dm_id && this.derivedMetrics?.[uiState.dependent_dm_id] ? this.derivedMetrics[uiState.dependent_dm_id].name : null,
-                        };
-                        this.sandboxSearchQueries['dependent'] = '';
-                        if (!this.sandboxForm.series_assets['dependent']) {
-                            const defaultAssets = uiState.dependent_asset_filter || (current.assets && current.assets.length > 0 ? current.assets : []);
-                            this.sandboxForm.series_assets['dependent'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
-                        }
-                        if (uiState.dependent_metric && (!this.sandboxForm.metrics || this.sandboxForm.metrics.length === 0)) {
-                            this.sandboxForm.metrics[0] = uiState.dependent_metric;
-                        }
-                        if (uiState.dependent_dependency && !this.sandboxForm.series_dependencies['dependent']) {
-                            this.sandboxForm.series_dependencies['dependent'] = uiState.dependent_dependency;
-                        }
+                    const depChannel = uiState.dependent_channel || current.channel || this.dashboardControls.channel || 'facebook_marketing';
+                    ensureChannelLoaded(depChannel);
+                    vars['dependent'] = {
+                        index: 0,
+                        channel: depChannel,
+                        channel_name: depChannel,
+                        selected_metric: uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : ''),
+                        dm_id: uiState.dependent_dm_id || null,
+                        dm_name: uiState.dependent_dm_id && this.derivedMetrics?.[uiState.dependent_dm_id] ? this.derivedMetrics[uiState.dependent_dm_id].name : null,
+                    };
+                    this.sandboxSearchQueries['dependent'] = '';
+                    if (!this.sandboxForm.series_assets['dependent']) {
+                        const defaultAssets = uiState.dependent_asset_filter || (current.assets && current.assets.length > 0 ? current.assets : []);
+                        this.sandboxForm.series_assets['dependent'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                    }
+                    const defaultMetric = uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : null);
+                    if (defaultMetric && (!this.sandboxForm.metrics || this.sandboxForm.metrics.length === 0 || !this.sandboxForm.metrics[0])) {
+                        this.sandboxForm.metrics[0] = defaultMetric;
+                    } else if (!this.sandboxForm.metrics[0] && this.allChannelMetrics[depChannel]) {
+                        const mKeys = Object.keys(this.allChannelMetrics[depChannel]);
+                        if (mKeys.length > 0) this.sandboxForm.metrics[0] = mKeys[0];
+                    }
+                    if (uiState.dependent_dependency && !this.sandboxForm.series_dependencies['dependent']) {
+                        this.sandboxForm.series_dependencies['dependent'] = uiState.dependent_dependency;
                     }
                     if (uiState.independent_variables) {
                         for (let k in uiState.independent_variables) {

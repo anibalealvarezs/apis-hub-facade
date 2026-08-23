@@ -1750,15 +1750,26 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if (empty($mergedState['dependent_metric']) && empty($mergedState['dependent_dm_id'])) {
-            $channelMetrics = ! empty($uiState['dependent_channel'])
-                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
-                : [];
+            $depChannel = ! empty($mergedState['dependent_channel'])
+                ? $mergedState['dependent_channel']
+                : (! empty($uiState['dependent_channel'])
+                    ? $uiState['dependent_channel']
+                    : (! empty($controls['channel'])
+                        ? $controls['channel']
+                        : (! empty($widget->source_config['channel'])
+                            ? $widget->source_config['channel']
+                            : (! empty($dashboard->controls['channel'])
+                                ? $dashboard->controls['channel']
+                                : 'facebook_marketing'))));
+
+            $mergedState['dependent_channel'] = $depChannel;
+            $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel);
 
             if (! empty($channelMetrics)) {
                 $metricKeys = array_keys($channelMetrics);
                 $mergedState['dependent_metric'] = $metricKeys[0];
             } else {
-                throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured, no runtime metric was provided, and no default metrics are available for the channel.");
+                $mergedState['dependent_metric'] = 'reach';
             }
         } elseif (! empty($mergedState['dependent_dm_id'])) {
             $mergedState['dependent_source_type'] = 'derived_metric';
